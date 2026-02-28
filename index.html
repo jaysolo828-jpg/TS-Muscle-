@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#0a0a0a"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="T&S Muscle"/>
+<title>T&S Muscle</title>
+
+<link rel="manifest" href="manifest.json"/>
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+
+<style>
+body {
+  background:#0a0a0a;
+  color:white;
+  font-family:'Barlow',sans-serif;
+  margin:0;
+  padding-bottom:80px;
+}
+
+/* Header */
+.app-header{
+  background:#111;
+  border-bottom:2px solid #CC2027;
+  padding:14px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.logo-area{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logo-icon{
+  width:42px;
+  height:42px;
+  border-radius:8px;
+}
+
+.app-title{
+  font-family:'Bebas Neue',cursive;
+  font-size:28px;
+  letter-spacing:2px;
+  color:#F5E6C8;
+}
+
+.app-title span{color:#CC2027;}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="logo-area">
+    <!-- YOUR REAL IMAGE -->
+    <img src="1772296886305.png" class="logo-icon" alt="T&S Muscle"/>
+    <div class="app-title">T<span>&</span>S MUSCLE</div>
+  </div>
+</header>
+
+<div style="padding:20px; font-family:'Barlow Condensed',sans-serif;">
+  <h2>App Loaded Successfully</h2>
+  <p>If you see this screen, your GitHub site is working.</p>
+</div>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner" style="display:none; position:fixed; bottom:20px; left:16px; right:16px;">
+  <div style="background:#CC2027; border-radius:14px; padding:16px; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <!-- YOUR REAL IMAGE HERE TOO -->
+      <img src="1772296886305.png" style="width:44px; height:44px; border-radius:8px;" alt="icon"/>
+      <div>
+        <div style="font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; color:#F5E6C8;">
+          INSTALL T&S MUSCLE
+        </div>
+        <div style="font-size:11px; color:white;">
+          Add to Home Screen
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Service Worker for installability
+if ('serviceWorker' in navigator) {
+  const swCode = `
+  self.addEventListener('install', e => self.skipWaiting());
+  self.addEventListener('activate', e => self.clients.claim());
+  self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
+  `;
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  const url = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url);
+}
+
+// Install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'block';
+});
+</script>
+
+</body>
+</html>
