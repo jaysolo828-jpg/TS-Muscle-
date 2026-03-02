@@ -6341,6 +6341,11 @@ try {
   console.error('T&S Muscle init error:', e);
 }
 
+// ── Request persistent storage so Android/Chrome won't wipe data on restart ──
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().catch(() => {});
+}
+
 // ── IDB recovery: if localStorage was cleared by the OS, restore from backup ──
 (async () => {
   try {
