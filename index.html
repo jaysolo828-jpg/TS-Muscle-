@@ -1417,6 +1417,20 @@
     </div>
   </div>
 
+  <!-- REST WEEK BANNER (hidden by default — shown when user picks Rest Week from deload modal) -->
+  <div id="rest-week-banner" style="display:none; margin:0 16px 12px;">
+    <div style="background:linear-gradient(135deg, #0a0e1a, #111828); border:1px solid rgba(100,149,237,0.4); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:14px;">
+      <div style="flex-shrink:0;">
+        <svg viewBox="0 0 24 24" width="28" height="28" stroke="#6495ED" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:#6495ED;letter-spacing:1px;">REST WEEK ACTIVE</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:2px;line-height:1.4;">Program paused — rest up and recover. Resume when you're ready.</div>
+      </div>
+      <button onclick="resumeDeloadRest()" style="flex-shrink:0; background:rgba(100,149,237,0.15); border:1px solid rgba(100,149,237,0.4); color:#6495ED; padding:8px 14px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; cursor:pointer; white-space:nowrap;">RESUME</button>
+    </div>
+  </div>
+
   <div class="stat-grid">
     <div class="stat-box" onclick="showStatInfo('sessions')" style="cursor:pointer;">
       <div class="stat-num" id="stat-sessions">0</div>
@@ -3292,7 +3306,7 @@ function renderHome() {
     streakEl.style.color = 'var(--cream)';
     if (weekLabelEl) { weekLabelEl.textContent = 'Current Week'; weekLabelEl.style.color = ''; }
     if (streakLabelEl) { streakLabelEl.textContent = 'Week Streak'; streakLabelEl.style.color = ''; }
-  } state.streak || 0;
+  }
   let pausedSession = null;
   try {
     const p = localStorage.getItem('ts-muscle-paused');
@@ -3325,14 +3339,18 @@ function renderHome() {
     pauseBanner.style.display = 'none';
   }
 
-  // Deload / rest week banner
+  // Rest week banner (separate from deload banner)
+  const restWeekBanner = document.getElementById('rest-week-banner');
+  if (state.isRestWeek) {
+    restWeekBanner.style.display = 'block';
+  } else {
+    restWeekBanner.style.display = 'none';
+  }
+
+  // Deload / recovery week banner
   const deloadBanner = document.getElementById('deload-banner');
   if (state.isRestWeek) {
-    deloadBanner.style.display = 'block';
-    deloadBanner.querySelector('.deload-title').textContent = 'REST WEEK ACTIVE';
-    deloadBanner.querySelector('.deload-text').innerHTML = 'Your program is paused. Rest up — start your next session when ready and the program will resume.<br><button onclick="endRecoveryWeekEarly()" style="margin-top:12px; background:rgba(255,255,255,0.08); border:1px solid #555; color:var(--gray-light); padding:8px 18px; border-radius:8px; font-family:\'Barlow Condensed\',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer;">END EARLY →</button>';
-    deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
-    deloadBanner.querySelector('.deload-banner').onclick = null;
+    deloadBanner.style.display = 'none';
   } else if (state.isDeloadWeek) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'DELOAD WEEK ACTIVE';
@@ -3697,6 +3715,7 @@ function applyRestWeek() {
   saveState();
   document.getElementById('deload-modal').style.display = 'none';
   showToast('Rest week — program paused. Come back strong 💤');
+  activateDeloadRest();
   renderHome();
 }
 
@@ -3724,6 +3743,17 @@ function endRecoveryWeek() {
   state.isDeloadWeek = false;
   state.isRestWeek = false;
   saveState();
+}
+
+function activateDeloadRest() {
+  const banner = document.getElementById('rest-week-banner');
+  if (banner) banner.style.display = 'block';
+}
+
+function resumeDeloadRest() {
+  endRecoveryWeek();
+  renderHome();
+  showToast('Rest week ended — back to full training 💪');
 }
 
 // ============================================================
