@@ -3700,6 +3700,34 @@ function applyRestWeek() {
   renderHome();
 }
 
+// Aliases used by the 5-week deload suggestion modal
+function activateDeloadWeek() {
+  if (!state.startingWeights) state.startingWeights = {};
+  if (!state.deloadBaseWeights) {
+    state.deloadBaseWeights = { ...state.startingWeights };
+  }
+  Object.keys(state.startingWeights).forEach(id => {
+    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * 0.6 / 2.5) * 2.5;
+  });
+  state.isDeloadWeek = true;
+  state.weeksSinceDeload = 0;
+  saveState();
+  const m = document.getElementById('deload-suggest-modal');
+  if (m) m.remove();
+  showToast('Light week active — weights reduced 40% ⚡');
+  renderHome();
+}
+
+function activateDeloadRest() {
+  state.isRestWeek = true;
+  state.weeksSinceDeload = 0;
+  saveState();
+  const m = document.getElementById('deload-suggest-modal');
+  if (m) m.remove();
+  showToast('Rest week active — program paused. Come back strong 💤');
+  renderHome();
+}
+
 function endRecoveryWeekEarly() {
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -5018,19 +5046,23 @@ function finalizeEndSession(save) {
                 💤 <strong style="color:white;">Stop 3–4 reps before failure</strong>
               </div>
             </div>
-            <div style="display:flex;gap:10px;">
-              <button onclick="this.closest('[style*=position]').remove();" style="
+            <div style="display:flex;gap:10px;margin-bottom:10px;">
+              <button onclick="this.closest('[style*=position]').remove(); activateDeloadWeek();" style="
                 flex:1;padding:14px;border-radius:12px;
-                background:#1a1a1a;border:1px solid #333;color:var(--gray);
+                background:linear-gradient(135deg,var(--dark3),#2a1f00);border:2px solid var(--warning);color:var(--warning);
                 font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;cursor:pointer;
-              ">SKIP FOR NOW</button>
-              <button onclick="this.closest('[style*=position]').remove(); showTab('settings');" style="
+              ">⚡ LIGHT WEEK</button>
+              <button onclick="this.closest('[style*=position]').remove(); activateDeloadRest();" style="
                 flex:1;padding:14px;border-radius:12px;
-                background:var(--red);border:none;color:white;
+                background:var(--dark3);border:2px solid #555;color:var(--gray-light);
                 font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;cursor:pointer;
-                box-shadow:0 4px 16px rgba(204,32,39,0.35);
-              ">PLAN MY DELOAD</button>
+              ">💤 REST WEEK</button>
             </div>
+            <button onclick="this.closest('[style*=position]').remove();" style="
+              width:100%;padding:11px;border-radius:12px;
+              background:none;border:1px solid #333;color:var(--gray);
+              font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;
+            ">NOT NOW</button>
           </div>`;
         document.body.appendChild(deloadModal);
       }, 1800);
@@ -5103,13 +5135,19 @@ function checkDeloadSuggestion() {
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">What is a deload?</div>
         <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);line-height:1.55;">A planned week at reduced weight or volume — usually 40–60% of normal. It lets your body recover and come back stronger. Skipping it risks injury and stalled progress.</div>
       </div>
-      <button onclick="document.getElementById('deload-suggest-modal').remove(); showTab('settings');"
-        style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:1px;cursor:pointer;margin-bottom:10px;">
-        SET DELOAD WEEK IN SETTINGS
-      </button>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <button onclick="activateDeloadWeek();"
+          style="flex:1;background:linear-gradient(135deg,var(--dark3),#2a1f00);border:2px solid var(--warning);color:var(--warning);padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;cursor:pointer;">
+          ⚡ LIGHT WEEK
+        </button>
+        <button onclick="activateDeloadRest();"
+          style="flex:1;background:var(--dark3);border:2px solid #555;color:var(--gray-light);padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;cursor:pointer;">
+          💤 REST WEEK
+        </button>
+      </div>
       <button onclick="document.getElementById('deload-suggest-modal').remove();"
-        style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:11px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;cursor:pointer;">
-        NOT YET
+        style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:11px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">
+        NOT NOW
       </button>
     </div>
   `;
@@ -5919,9 +5957,13 @@ self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() =>
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.0.4';
+const APP_VERSION = '1.0.5';
 
 const APP_CHANGELOG = {
+  '1.0.5': [
+    'Deload reminder now lets you choose directly — tap Light Week (weights drop 40%) or Rest Week (full pause)',
+    'Light Week and Rest Week activate instantly from the reminder — no trip to Settings required',
+  ],
   '1.0.4': [
     'Adjustable weight increments — choose Small (2.5 lb), Medium (5 lb), or Large (10 lb) in Settings',
     'Deload reminder surfaces after 5 weeks of training or when your RPE trend signals fatigue',
