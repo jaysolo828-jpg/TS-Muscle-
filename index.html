@@ -537,7 +537,7 @@
   .session-header {
     background: var(--dark);
     border-bottom: 2px solid var(--red);
-    padding: 14px 20px;
+    padding: calc(env(safe-area-inset-top) + 14px) 20px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2447,7 +2447,7 @@
     <a id="contact-email-link" style="font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:15px; color:var(--red); letter-spacing:0; text-decoration:none; cursor:pointer;"></a>
     <script>(function(){ var u='Jay@'+'therapyandsneakers'+'.org'; var a=document.getElementById('contact-email-link'); if(a){a.textContent=u;a.href='mailto:'+u;} })();</script>
   </div>
-  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#444; letter-spacing:2px;">T&S MUSCLE v1.0.6 · THERAPY & SNEAKERS</div>
+  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#444; letter-spacing:2px;">T&S MUSCLE v1.0.7 · THERAPY & SNEAKERS</div>
 
   <!-- MUSIC PLAYER SELECTOR -->
   <div style="margin-top:8px;">
@@ -6023,10 +6023,33 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     if ('serviceWorker' in navigator) {
       const swCode = `
-const CACHE_NAME = 'ts-muscle-v3';
-self.addEventListener('install', e => { self.skipWaiting(); });
-self.addEventListener('activate', e => { self.clients.claim(); });
-self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() => new Response(''))); });
+const CACHE_NAME = 'ts-muscle-v4';
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(
+    self.clients.matchAll({type:'window'}).then(clients => {
+      if (clients.length) return caches.open(CACHE_NAME).then(cache => cache.add(clients[0].url)).catch(()=>{});
+    }).catch(()=>{})
+  );
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(Promise.all([
+    self.clients.claim(),
+    caches.keys().then(keys => Promise.all(keys.filter(k => k \!== CACHE_NAME).map(k => caches.delete(k))))
+  ]));
+});
+self.addEventListener('fetch', e => {
+  if (e.request.method \!== 'GET') return;
+  e.respondWith(
+    fetch(e.request).then(response => {
+      if (response && response.status === 200 && response.type \!== 'opaque') {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone)).catch(()=>{});
+      }
+      return response;
+    }).catch(() => caches.match(e.request).then(r => r || new Response('', {status:503})))
+  );
+});
       `;
       const swBlob = new Blob([swCode], {type: 'application/javascript'});
       const swURL = URL.createObjectURL(swBlob);
@@ -6048,6 +6071,8 @@ const APP_CHANGELOG = {
   '1.0.7': [
     'PRs now trigger a full-screen confetti celebration',
     'PR popup now shows how much you beat your previous record by',
+    'Fixed: App now caches properly so it loads after phone restarts without internet',
+    'Fixed: iOS session header now respects the notch — COMPLETE and music buttons are fully visible',
   ],
   '1.0.6': [
     'Fixed: Weight increment buttons now correctly show your saved setting when reopening the app',
