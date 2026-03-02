@@ -2424,6 +2424,14 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
   </div>
 
+  <div class="settings-item" onclick="showChangelogModal()">
+    <div>
+      <div class="settings-label">What's New</div>
+      <div class="settings-sub" id="whats-new-sub">Version history &amp; updates</div>
+    </div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+  </div>
+
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)"/>
 
   <!-- Contact -->
@@ -5981,10 +5989,15 @@ const APP_CHANGELOG = {
 
 function checkForAppUpdate() {
   const stored = localStorage.getItem('ts_muscle_version');
-  if (stored && stored !== APP_VERSION) {
+  if (!stored) {
+    // First install — save silently, no banner
+    localStorage.setItem('ts_muscle_version', APP_VERSION);
+    return;
+  }
+  if (stored !== APP_VERSION) {
+    // Don't save version yet — banner stays until user taps RELOAD
     showUpdateBanner();
   }
-  localStorage.setItem('ts_muscle_version', APP_VERSION);
 }
 
 function showUpdateBanner() {
@@ -6077,6 +6090,9 @@ function showUpdateBanner() {
 function reloadForUpdate() {
   document.body.style.paddingTop = '0';
 
+  // Mark version as seen NOW — user has acted, banner won't reappear after reload
+  localStorage.setItem('ts_muscle_version', APP_VERSION);
+
   // Show brief "Updating..." feedback so user knows something is happening
   const btn = document.querySelector('#update-banner button');
   if (btn) {
@@ -6108,6 +6124,49 @@ function reloadForUpdate() {
 
 // Banner never auto-dismisses — it stays until the page actually reloads
 // Once reloaded the new version matches stored version so banner won't reappear
+
+function showChangelogModal() {
+  if (document.getElementById('changelog-modal')) return;
+
+  const versions = Object.keys(APP_CHANGELOG);
+
+  const versionBlocks = versions.map((v, i) => {
+    const isCurrent = v === APP_VERSION;
+    const items = APP_CHANGELOG[v].map(c =>
+      `<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
+        <span style="color:#CC2027;flex-shrink:0;margin-top:2px;font-size:10px;">◆</span>
+        <span style="font-family:'Barlow',sans-serif;font-size:14px;color:rgba(255,255,255,0.8);line-height:1.5;">${c}</span>
+      </div>`
+    ).join('');
+
+    return `
+      <div style="margin-bottom:${i < versions.length - 1 ? '20px' : '0'};">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">v${v}</div>
+          ${isCurrent ? `<span style="background:rgba(204,32,39,0.15);border:1px solid rgba(204,32,39,0.4);color:#CC2027;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:2px 8px;border-radius:20px;">CURRENT</span>` : ''}
+        </div>
+        ${items}
+      </div>
+      ${i < versions.length - 1 ? '<div style="border-top:1px solid var(--dark3);margin-bottom:20px;"></div>' : ''}
+    `;
+  }).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'changelog-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10001;display:flex;align-items:flex-end;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;">WHAT'S NEW</div>
+        <button onclick="document.getElementById('changelog-modal').remove();"
+          style="background:var(--dark3);border:1px solid var(--dark4);color:var(--gray);border-radius:8px;padding:6px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">
+          CLOSE
+        </button>
+      </div>
+      <div>${versionBlocks}</div>
+    </div>`;
+  document.body.appendChild(modal);
+}
 
 // ============================================================
 // INIT
@@ -8044,6 +8103,9 @@ document.addEventListener('DOMContentLoaded', () => {
   checkTestWeekReview();
   updateTrainingDaysSub();
   updateProgressiveOverloadUI();
+  // Set "What's New" sub-label to current version
+  const whatsNewSub = document.getElementById('whats-new-sub');
+  if (whatsNewSub) whatsNewSub.textContent = 'Latest: v' + APP_VERSION;
 });
 
 
