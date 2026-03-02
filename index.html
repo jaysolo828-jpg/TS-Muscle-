@@ -2446,7 +2446,7 @@
     <a id="contact-email-link" style="font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:15px; color:var(--red); letter-spacing:0; text-decoration:none; cursor:pointer;"></a>
     <script>(function(){ var u='Jay@'+'therapyandsneakers'+'.org'; var a=document.getElementById('contact-email-link'); if(a){a.textContent=u;a.href='mailto:'+u;} })();</script>
   </div>
-  <div style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#444; letter-spacing:2px;">T&S MUSCLE v1.0 · THERAPY & SNEAKERS</div>
+  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#444; letter-spacing:2px;">T&S MUSCLE v1.0.6 · THERAPY & SNEAKERS</div>
 
   <!-- MUSIC PLAYER SELECTOR -->
   <div style="margin-top:8px;">
@@ -8133,6 +8133,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set "What's New" sub-label to current version
   const whatsNewSub = document.getElementById('whats-new-sub');
   if (whatsNewSub) whatsNewSub.textContent = 'Latest: v' + APP_VERSION;
+  const footerVer = document.getElementById('footer-version');
+  if (footerVer) footerVer.textContent = 'T\u0026S MUSCLE v' + APP_VERSION + ' · THERAPY & SNEAKERS';
 });
 
 
