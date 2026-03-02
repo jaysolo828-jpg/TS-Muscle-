@@ -3007,6 +3007,39 @@ let state = {
 let activeSession = null;
 let pendingSwap = null;
 
+// ============================================================
+// INDEXEDDB BACKUP
+// localStorage can be wiped by Android/iOS when storage is low.
+// IDB is treated as more persistent — we write a backup on every
+// save and restore silently on startup if localStorage is empty.
+// ============================================================
+const _IDB_NAME = 'ts-muscle-backup';
+const _IDB_STORE = 'kv';
+
+function _openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(_IDB_NAME, 1);
+    req.onupgradeneeded = e => { e.target.result.createObjectStore(_IDB_STORE); };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = () => reject();
+  });
+}
+
+function _idbSet(key, value) {
+  _openIDB().then(db => {
+    const tx = db.transaction(_IDB_STORE, 'readwrite');
+    tx.objectStore(_IDB_STORE).put(value, key);
+  }).catch(() => {});
+}
+
+function _idbGet(key) {
+  return _openIDB().then(db => new Promise((resolve, reject) => {
+    const req = db.transaction(_IDB_STORE, 'readonly').objectStore(_IDB_STORE).get(key);
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = () => reject();
+  }));
+}
+
 function loadState() {
   const saved = localStorage.getItem('ts-muscle-state');
   if (saved) {
@@ -3029,13 +3062,17 @@ function saveState() {
   if (state.implementationIntentions && state.implementationIntentions.length > 50) state.implementationIntentions = state.implementationIntentions.slice(0, 50);
 
   try {
-    localStorage.setItem('ts-muscle-state', JSON.stringify(state));
+    const _json = JSON.stringify(state);
+    localStorage.setItem('ts-muscle-state', _json);
+    _idbSet('ts-muscle-state', _json);
   } catch(e) {
     // localStorage quota hit — trim aggressively and retry
     try {
       state.history = (state.history || []).slice(-50);
       state.cardioHistory = (state.cardioHistory || []).slice(-50);
-      localStorage.setItem('ts-muscle-state', JSON.stringify(state));
+      const _json = JSON.stringify(state);
+      localStorage.setItem('ts-muscle-state', _json);
+      _idbSet('ts-muscle-state', _json);
     } catch(e2) {
       console.warn('T&S Muscle: could not save state', e2);
     }
@@ -4812,7 +4849,9 @@ function saveYtLink(type) {
     document.getElementById('edit-yt-alt').style.display = 'none';
   }
 
-  localStorage.setItem('ts-yt-links', JSON.stringify(customLinks));
+  const _ytJson = JSON.stringify(customLinks);
+  localStorage.setItem('ts-yt-links', _ytJson);
+  _idbSet('ts-yt-links', _ytJson);
   showToast('YouTube link saved ✓');
 }
 
@@ -4869,7 +4908,9 @@ function closeExitModal() {
 function saveAndExitSession() {
   activeSession.notes = document.getElementById('session-notes').value;
   activeSession.savedAt = Date.now();
-  localStorage.setItem('ts-muscle-paused', JSON.stringify(activeSession));
+  const _pausedJson = JSON.stringify(activeSession);
+  localStorage.setItem('ts-muscle-paused', _pausedJson);
+  _idbSet('ts-muscle-paused', _pausedJson);
   closeExitModal();
   document.getElementById('workout-session').classList.remove('active');
   document.getElementById('yt-music-btn').style.display = 'none';
@@ -4879,6 +4920,7 @@ function saveAndExitSession() {
 
 function discardSession() {
   localStorage.removeItem('ts-muscle-paused');
+  _idbSet('ts-muscle-paused', null);
   activeSession = null;
   closeExitModal();
   document.getElementById('workout-session').classList.remove('active');
@@ -6065,9 +6107,12 @@ self.addEventListener('fetch', e => {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.0.7';
+const APP_VERSION = '1.0.8';
 
 const APP_CHANGELOG = {
+  '1.0.8': [
+    'Fixed: App data is now backed up to IndexedDB — if Android or iOS clears storage, your workouts are automatically restored next time you open the app',
+  ],
   '1.0.7': [
     'PRs now trigger a full-screen confetti celebration',
     'PR popup now shows how much you beat your previous record by',
@@ -6295,6 +6340,31 @@ try {
 } catch(e) {
   console.error('T&S Muscle init error:', e);
 }
+
+// ── IDB recovery: if localStorage was cleared by the OS, restore from backup ──
+(async () => {
+  try {
+    if (!localStorage.getItem('ts-muscle-state')) {
+      const backup = await _idbGet('ts-muscle-state');
+      if (backup) {
+        localStorage.setItem('ts-muscle-state', backup);
+        const parsed = JSON.parse(backup);
+        state = { ...state, ...parsed };
+        if (!state.program) state.program = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
+        renderHome();
+        showToast('Your data has been restored ✓');
+      }
+    }
+    if (!localStorage.getItem('ts-yt-links')) {
+      const backup = await _idbGet('ts-yt-links');
+      if (backup) localStorage.setItem('ts-yt-links', backup);
+    }
+    if (!localStorage.getItem('ts-muscle-paused')) {
+      const backup = await _idbGet('ts-muscle-paused');
+      if (backup && backup !== 'null') localStorage.setItem('ts-muscle-paused', backup);
+    }
+  } catch(e) {}
+})();
 
 // ── Android back button handler ──────────────────────────────
 // Push an initial state so we have something to catch
