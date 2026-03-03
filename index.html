@@ -6118,9 +6118,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.1.7';
+const APP_VERSION = '1.1.8';
 
 const APP_CHANGELOG = {
+  '1.1.8': [
+    'Fixed: App no longer gets stuck on Your Profile screen after a page reload mid-setup — "Back to Settings" button now survives refreshes',
+  ],
   '1.1.7': [
     'Fixed: Completing Redo Initial Setup now takes you Home — no longer left on the Settings screen',
     'Fixed: Redo Initial Setup pre-fills your current name, bodyweight, and selections so you only change what you need',
@@ -7296,6 +7299,14 @@ let onermTargetId = null;
 function checkOnboarding() {
   if (!state.onboardingComplete) {
     document.getElementById('onboarding-modal').style.display = 'block';
+    // Restore redo-mode context if the page was reloaded mid-setup
+    if (localStorage.getItem('ts-redo-mode') && !window._onboardBackup) {
+      const raw = localStorage.getItem('ts-redo-backup');
+      if (raw) {
+        try { window._onboardBackup = JSON.parse(raw); } catch(e) {}
+      }
+      document.getElementById('ob-exit-bar').style.display = 'block';
+    }
   }
 }
 
@@ -7566,6 +7577,9 @@ function buildOnboardingSummary() {
 function completeOnboarding() {
   // Commit the redo — backup no longer cancellable
   window._onboardBackup = null;
+  // Clear persisted redo context
+  localStorage.removeItem('ts-redo-mode');
+  localStorage.removeItem('ts-redo-backup');
   document.getElementById('ob-exit-bar').style.display = 'none';
   // Fill in all isolation defaults for any exercises not entered by user
   applyAllDefaults();
@@ -7648,6 +7662,9 @@ function closeOnboardingModal() {
     window._onboardBackup = null;
     renderHome();  // refresh home with restored values
   }
+  // Clear persisted redo context so a future reload doesn't re-enter redo mode
+  localStorage.removeItem('ts-redo-mode');
+  localStorage.removeItem('ts-redo-backup');
   document.getElementById('ob-exit-bar').style.display = 'none';
   document.getElementById('onboarding-modal').style.display = 'none';
 }
@@ -7655,6 +7672,9 @@ function closeOnboardingModal() {
 function resetOnboarding() {
   // Save a full snapshot so the user can tap "← BACK TO SETTINGS" and restore everything
   window._onboardBackup = JSON.parse(JSON.stringify(state));
+  // Persist backup to localStorage so it survives a page reload mid-setup
+  localStorage.setItem('ts-redo-backup', JSON.stringify(window._onboardBackup));
+  localStorage.setItem('ts-redo-mode', '1');
   document.getElementById('ob-exit-bar').style.display = 'block';
   state.onboardingComplete = false;
   state.profile = null;
