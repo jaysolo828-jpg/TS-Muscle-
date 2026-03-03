@@ -6118,9 +6118,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.1.8';
+const APP_VERSION = '1.1.9';
 
 const APP_CHANGELOG = {
+  '1.1.9': [
+    'Fixed: "← Back to Settings" button always appears on the Profile screen if you already have data — you can never get fully trapped there',
+    'Fixed: Exiting setup without a backup now safely unlocks the app and takes you home instead of doing nothing',
+  ],
   '1.1.8': [
     'Fixed: App no longer gets stuck on Your Profile screen after a page reload mid-setup — "Back to Settings" button now survives refreshes',
   ],
@@ -7307,6 +7311,13 @@ function checkOnboarding() {
       }
       document.getElementById('ob-exit-bar').style.display = 'block';
     }
+    // Always show exit bar for existing users — never trap someone who already has data
+    const hasData = (state.history && state.history.length > 0) ||
+                    (state.cardioHistory && state.cardioHistory.length > 0) ||
+                    (state.moodLog && state.moodLog.length > 0);
+    if (hasData) {
+      document.getElementById('ob-exit-bar').style.display = 'block';
+    }
   }
 }
 
@@ -7661,6 +7672,12 @@ function closeOnboardingModal() {
     saveState();
     window._onboardBackup = null;
     renderHome();  // refresh home with restored values
+  } else {
+    // No backup available (e.g. stuck via unexpected reload) — just unlock the app
+    // and send the user home. Their data is intact; they can redo profile via Settings.
+    state.onboardingComplete = true;
+    saveState();
+    renderHome();
   }
   // Clear persisted redo context so a future reload doesn't re-enter redo mode
   localStorage.removeItem('ts-redo-mode');
