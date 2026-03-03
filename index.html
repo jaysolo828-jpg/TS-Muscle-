@@ -507,6 +507,8 @@
   }
   .start-btn:active { background: var(--red-dark); transform: scale(0.96); }
   .start-btn:hover { background: var(--red-dark); }
+  .start-btn.done-today:hover  { background: #219a52 !important; }
+  .start-btn.done-today:active { background: #1a7a41 !important; transform: scale(0.96); }
 
   /* EXERCISE LIST */
   .exercise-list { padding: 0 16px 16px; }
@@ -3531,7 +3533,21 @@ function renderHome() {
   container.innerHTML = '';
   const maxDays = state.trainingDaysPerWeek || 4;
   const visibleDays = state.program.slice(0, maxDays);
+
+  // Which days were completed today (have at least one done set)?
+  const today = new Date().toDateString();
+  const completedTodayIds = new Set(
+    state.history
+      .filter(e =>
+        new Date(e.date).toDateString() === today &&
+        Object.values(e.sets || {}).some(sets => sets.some(s => s.done))
+      )
+      .map(e => e.dayId)
+  );
+
   visibleDays.forEach(day => {
+    const doneToday = completedTodayIds.has(day.id);
+    const isResuming = pausedSession && pausedSession.dayId === day.id;
     const card = document.createElement('div');
     card.className = 'day-card';
     card.innerHTML = `
@@ -3547,10 +3563,17 @@ function renderHome() {
               </span>
             </div>
             <div class="day-sub">${day.name}</div>
+            ${doneToday ? `
+            <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.35);color:#27ae60;border-radius:20px;padding:3px 10px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:5px;">
+              <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              COMPLETED TODAY
+            </div>` : ''}
           </div>
         </div>
-        <button class="start-btn" onclick="event.stopPropagation(); startSession('${day.id}')" style="${pausedSession && pausedSession.dayId === day.id ? 'background:var(--warning);' : ''}">
-          ${pausedSession && pausedSession.dayId === day.id
+        <button class="start-btn${doneToday ? ' done-today' : ''}" onclick="event.stopPropagation(); startSession('${day.id}')" style="${doneToday ? 'background:#27ae60;' : isResuming ? 'background:var(--warning);' : ''}">
+          ${doneToday
+            ? `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> DONE`
+            : isResuming
             ? `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="currentColor" stroke-width="0"><polygon points="5,3 19,12 5,21"/></svg> RESUME`
             : `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="currentColor" stroke-width="0"><polygon points="5,3 19,12 5,21"/></svg> START`}
         </button>
@@ -6170,9 +6193,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.2.5';
+const APP_VERSION = '1.2.6';
 
 const APP_CHANGELOG = {
+  '1.2.6': [
+    'New: Day cards now show a green "Completed Today" badge after you finish a workout',
+    'New: Tap the green Done button to start the same day again if you want',
+  ],
   '1.2.5': [
     'Fixed: Starting a workout and tapping Finish without logging any sets no longer saves an empty session or inflates your session count',
     'Fixed: Session count on the home screen now reflects only completed workouts',
