@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "io.github.jaysolo828_jpg",
+    "sha256_cert_fingerprints": [
+      "4D:C2:D2:BA:E9:39:6A:13:9C:53:A9:39:C3:CA:C5:35:B7:E5:54:05:C8:D8:02:EE:42:79:23:01:0C:98:6D:B6"
+    ]
+  }
+}]
