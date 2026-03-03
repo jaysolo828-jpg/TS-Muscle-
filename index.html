@@ -6142,15 +6142,27 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     window.location.reload();
   });
+  // iOS PWA stays suspended in memory — force a SW update check every time the app
+  // is brought to the foreground so updates aren't skipped when launching from home screen
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      navigator.serviceWorker.getRegistration()
+        .then(reg => { if (reg) reg.update(); })
+        .catch(() => {});
+    }
+  });
 }
 
 
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.2.3';
+const APP_VERSION = '1.2.4';
 
 const APP_CHANGELOG = {
+  '1.2.4': [
+    'Fixed: Installed app on iPhone/Android now receives updates automatically — no need to open in browser',
+  ],
   '1.2.3': [
     'Fixed: App now shows the update banner automatically — no more silent updates',
     'Fixed: Several crash guards added for edge cases on iOS and Android',
