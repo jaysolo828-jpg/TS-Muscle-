@@ -6191,7 +6191,7 @@ function showUpdateBanner() {
   const banner = document.createElement('div');
   banner.id = 'update-banner';
   banner.style.cssText = `
-    position:fixed; top:0; left:0; right:0; z-index:99999;
+    position:fixed; top:0; left:0; right:0; z-index:100000;
     animation: slideDownBanner 0.45s cubic-bezier(0.175,0.885,0.32,1.1);
   `;
 
@@ -6266,45 +6266,32 @@ function showUpdateBanner() {
 
   document.body.prepend(banner);
 
-  // Push page content down so banner doesn't cover anything
+  // Push .app-content down so banner doesn't cover app content.
+  // body.paddingTop is a no-op here (body is position:fixed + overflow:hidden,
+  // all children are also position:fixed). Must offset .app-content directly.
   const bannerH = banner.querySelector('div').offsetHeight;
-  document.body.style.paddingTop = bannerH + 'px';
-  document.body.style.transition = 'padding-top 0.3s ease';
+  const appContent = document.querySelector('.app-content');
+  if (appContent) {
+    appContent.style.transition = 'top 0.3s ease';
+    appContent.style.top = bannerH + 'px';
+  }
 }
 
 function reloadForUpdate() {
-  document.body.style.paddingTop = '0';
-
-  // Mark version as seen NOW — user has acted, banner won't reappear after reload
   localStorage.setItem('ts_muscle_version', APP_VERSION);
-
-  // Show brief "Updating..." feedback so user knows something is happening
+  // Reset .app-content top offset that was set by showUpdateBanner
+  const appContent = document.querySelector('.app-content');
+  if (appContent) appContent.style.top = '0';
   const btn = document.querySelector('#update-banner button');
   if (btn) {
     btn.textContent = 'UPDATING...';
     btn.style.opacity = '0.7';
     btn.style.pointerEvents = 'none';
   }
-
-  // Clear service worker cache first, then reload
-  // This guarantees iOS PWA gets the fresh version, not cached old one
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      const unregisterAll = registrations.map(r => r.unregister());
-      return Promise.all(unregisterAll);
-    }).then(() => {
-      // Also clear caches API if available
-      if ('caches' in window) {
-        return caches.keys().then(keys =>
-          Promise.all(keys.map(key => caches.delete(key)))
-        );
-      }
-    }).catch(() => {}).finally(() => {
-      window.location.reload(true);
-    });
-  } else {
-    window.location.reload(true);
-  }
+  // Plain reload — SW is network-first so fresh files always load when online.
+  // Do NOT unregister the SW: on iOS that exits standalone mode and reopens
+  // in Safari (URL bar reappears, Safari toolbar covers the bottom nav).
+  window.location.reload();
 }
 
 // Banner never auto-dismisses — it stays until the page actually reloads
@@ -6428,13 +6415,15 @@ try {
   updateWeightIncrementUI();
   checkIOSDeleteWarning();
   checkBackupReminder();
-  // Show iOS install banner proactively on Safari when not yet installed
-  // Don't show during onboarding — it hides behind the modal and confuses users
-  if (_isIOS() && !window.navigator.standalone && state.onboardingComplete) {
+  // Show install banner when not already installed — covers iOS and Android.
+  // Don't show during onboarding: banner hides behind the modal (z-index:150 < 99999).
+  const _isInstalled = window.navigator.standalone ||
+    window.matchMedia('(display-mode: standalone)').matches;
+  if (!_isInstalled && state.onboardingComplete && (_isIOS() || deferredPrompt)) {
     document.getElementById('install-banner').style.display = 'block';
   }
   // Hide install row if already running as installed PWA
-  if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+  if (_isInstalled) {
     const row = document.getElementById('install-app-row');
     if (row) {
       row.querySelector('.settings-label').textContent = 'App Installed';
@@ -7551,10 +7540,12 @@ function completeOnboarding() {
   saveState();
   document.getElementById('onboarding-modal').style.display = 'none';
   renderHome();
-  // Now that onboarding is done, show install banner if applicable
-  if (_isIOS() && !window.navigator.standalone) {
-    document.getElementById('install-banner').style.display = 'block';
-  } else if (deferredPrompt) {
+  // Now that onboarding is done, show install banner if not already installed.
+  // Covers iOS (no deferredPrompt — shows share-sheet instructions) and Android
+  // (deferredPrompt set by beforeinstallprompt if Chrome offered install).
+  const _wasInstalled = window.navigator.standalone ||
+    window.matchMedia('(display-mode: standalone)').matches;
+  if (!_wasInstalled && (_isIOS() || deferredPrompt)) {
     document.getElementById('install-banner').style.display = 'block';
   }
 
