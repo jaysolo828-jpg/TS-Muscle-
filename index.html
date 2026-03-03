@@ -3401,7 +3401,10 @@ function showStatInfo(type) {
 }
 
 function renderHome() {
-  document.getElementById('stat-sessions').textContent = state.totalSessions;
+  const realSessions = state.history.filter(entry =>
+    Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
+  ).length;
+  document.getElementById('stat-sessions').textContent = realSessions;
 
   // Show paused state on week and streak cards
   const isPaused = state.programPaused;
@@ -5167,6 +5170,14 @@ function saveWrapupNotesAndFinish() {
 
 function finalizeEndSession(save) {
   if (save && activeSession) {
+    const completedSetsCount = Object.values(activeSession.sets || {})
+      .reduce((sum, sets) => sum + sets.filter(s => s.done).length, 0);
+    if (completedSetsCount === 0) {
+      showToast('No sets recorded — session not saved.');
+      save = false;
+    }
+  }
+  if (save && activeSession) {
     activeSession.notes = document.getElementById('session-notes').value;
     activeSession.endTime = Date.now();
     activeSession.date = new Date().toISOString();
@@ -5752,7 +5763,9 @@ function renderHistory() {
     return;
   }
 
-  const sorted = [...state.history].reverse();
+  const sorted = [...state.history].reverse().filter(entry =>
+    Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
+  );
   sorted.forEach(entry => {
     const date = new Date(entry.date);
     const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
