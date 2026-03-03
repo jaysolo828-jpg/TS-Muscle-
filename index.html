@@ -44,14 +44,29 @@
     background: var(--black);
     color: var(--white);
     font-family: 'Barlow', sans-serif;
-    min-height: 100%;
     height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+  }
+
+  /* Scrollable app shell — prevents Android Chrome URL bar from appearing */
+  .app-content {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
     overscroll-behavior: none;
     overscroll-behavior-y: none;
-    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    z-index: 1;
   }
 
   /* HEADER */
@@ -1401,6 +1416,9 @@
 </script>
 
 
+<!-- SCROLLABLE APP SHELL -->
+<div class="app-content">
+
 <!-- HEADER -->
 <header class="app-header">
   <div class="logo-area">
@@ -2658,6 +2676,8 @@
 </div>
 
 
+</div><!-- end .app-content -->
+
 <!-- INSTALL BANNER -->
 <div id="install-banner" style="display:none; position:fixed; bottom:calc(80px + env(safe-area-inset-bottom)); left:16px; right:16px; z-index:150;">
   <div style="background:linear-gradient(135deg,#CC2027,#9e181d); border-radius:14px; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 8px 30px rgba(204,32,39,0.5);">
@@ -3093,6 +3113,8 @@ function saveState() {
 // NAVIGATION
 // ============================================================
 function showScreen(name, el) {
+  const appContent = document.querySelector(".app-content");
+  if (appContent) appContent.scrollTop = 0;
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const screen = document.getElementById('screen-' + name);
@@ -5957,20 +5979,42 @@ function renderProgressChart() {
 // ============================================================
 function exportData() {
   const data = JSON.stringify(state, null, 2);
-  // iOS Safari standalone doesn't support a.click() downloads — use clipboard fallback
+  const filename = 'ts-muscle-backup-' + new Date().toISOString().slice(0,10) + '.json';
+
+  function markBackupDone() {
+    state.lastBackupDate = Date.now();
+    saveState();
+  }
+
+  // iOS: use Web Share API with file so user can save to Files/iCloud Drive
+  if (navigator.canShare) {
+    try {
+      const blob = new Blob([data], { type: 'application/json' });
+      const file = new File([blob], filename, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'T&S Muscle Backup' })
+          .then(() => { markBackupDone(); showToast('Backup saved! ✓'); })
+          .catch(() => {});
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // Standard download link (Android Chrome, desktop)
   try {
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'ts-muscle-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    markBackupDone();
     showToast('Data exported! ✓');
   } catch(e) {
-    // Fallback: copy to clipboard
+    // Final fallback: copy to clipboard
     if (navigator.clipboard) {
       navigator.clipboard.writeText(data).then(() => {
         showToast('Data copied to clipboard — paste into a notes app to save ✓');
@@ -6053,9 +6097,18 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.0.9';
+const APP_VERSION = '1.1.1';
 
 const APP_CHANGELOG = {
+  '1.1.1': [
+    'Fixed: Exporting a backup on iPhone now opens the iOS share sheet — save directly to Files or iCloud Drive',
+    'Fixed: iPhone users now see a one-time warning that deleting the app from the home screen erases all data',
+    'Added: Periodic reminder to export a backup if you haven\'t in 14+ days (iPhone app only)',
+  ],
+  '1.1.0': [
+    'Fixed: URL bar no longer appears on Android — app runs truly fullscreen',
+    'Improved PWA manifest for better Android integration',
+  ],
   '1.0.9': [
     'App now installs properly on Android — appears in your app drawer like a native app',
     'Fixed: Android and iOS no longer delete app data on phone restart',
@@ -6278,6 +6331,64 @@ function showChangelogModal() {
 }
 
 // ============================================================
+// iOS PWA DATA DELETION PROTECTION
+// ============================================================
+// On iPhone, deleting the app from the home screen wipes ALL storage
+// (localStorage + IndexedDB) simultaneously, so IDB backup cannot help.
+// These functions warn users and encourage regular file exports.
+
+function _isIOSStandalone() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && window.navigator.standalone === true;
+}
+
+// One-time warning shown to iOS PWA users about data deletion risk
+function checkIOSDeleteWarning() {
+  if (!_isIOSStandalone()) return;
+  if (!state.onboardingComplete) return;
+  if (localStorage.getItem('ts-ios-delete-warned')) return;
+  localStorage.setItem('ts-ios-delete-warned', '1');
+
+  setTimeout(() => {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+    modal.innerHTML = `
+      <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:400px;border:1px solid var(--dark3);">
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">PROTECT YOUR DATA</div>
+        <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:14px;">
+          On iPhone, <strong style="color:var(--cream);">deleting this app from your home screen permanently erases all your workout history and progress</strong> — there is no undo.
+        </div>
+        <div style="background:rgba(204,32,39,0.1);border:1px solid rgba(204,32,39,0.3);border-radius:10px;padding:12px;margin-bottom:20px;font-size:13px;color:#e05a5f;line-height:1.5;">
+          Export a backup regularly from <strong>Settings → Export Backup</strong>. It takes 5 seconds and saves your data to your Files or iCloud.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button onclick="this.closest('[style*=fixed]').remove();exportData();" style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">EXPORT BACKUP NOW</button>
+          <button onclick="this.closest('[style*=fixed]').remove();" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;">GOT IT</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }, 1500);
+}
+
+// Periodic toast reminder if iOS PWA user hasn't exported in 14+ days
+function checkBackupReminder() {
+  if (!_isIOSStandalone()) return;
+  if (!state.onboardingComplete) return;
+  if (!state.history || state.history.length < 3) return;
+
+  const lastBackup = state.lastBackupDate || 0;
+  const msSinceBackup = Date.now() - lastBackup;
+  const daysSinceBackup = msSinceBackup / 86400000;
+
+  const lastReminderTs = parseInt(localStorage.getItem('ts-backup-reminder-ts') || '0');
+  const daysSinceReminder = (Date.now() - lastReminderTs) / 86400000;
+
+  if (daysSinceBackup > 14 && daysSinceReminder > 7) {
+    localStorage.setItem('ts-backup-reminder-ts', Date.now().toString());
+    setTimeout(() => showToast('Reminder: export a backup in Settings to protect your data'), 2000);
+  }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 try {
@@ -6288,6 +6399,8 @@ try {
   updatePauseSettingsLabel();
   checkForAppUpdate();
   updateWeightIncrementUI();
+  checkIOSDeleteWarning();
+  checkBackupReminder();
 } catch(e) {
   console.error('T&S Muscle init error:', e);
 }
