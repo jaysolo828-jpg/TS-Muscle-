@@ -179,6 +179,8 @@
     width: 100%; background: var(--red); border: none; color: white;
     padding: 14px; border-radius: 12px; font-family: 'Bebas Neue', cursive;
     font-size: 18px; letter-spacing: 2px; cursor: pointer;
+    position: sticky;
+    bottom: 24px;
   }
   .onboard-back-btn {
     background: var(--dark3); border: 1px solid #444; color: var(--gray);
@@ -6107,9 +6109,14 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.1.4';
+const APP_VERSION = '1.1.5';
 
 const APP_CHANGELOG = {
+  '1.1.5': [
+    'Fixed: NEXT button always visible during setup — no more scrolling to find it',
+    'Fixed: Install app button now appears automatically after setup on all devices',
+    'Fixed: All devices now receive updates reliably — phone caching issue resolved',
+  ],
   '1.1.4': [
     'Fixed: Buttons now respond to taps immediately — toast notifications no longer block interaction',
     'Fixed: App is fully tappable from the moment it opens — no more 3-second freeze on startup',
@@ -6423,7 +6430,7 @@ try {
   // Don't show during onboarding: banner hides behind the modal (z-index:150 < 99999).
   const _isInstalled = window.navigator.standalone ||
     window.matchMedia('(display-mode: standalone)').matches;
-  if (!_isInstalled && state.onboardingComplete && (_isIOS() || deferredPrompt)) {
+  if (!_isInstalled && state.onboardingComplete) {
     document.getElementById('install-banner').style.display = 'block';
   }
   // Hide install row if already running as installed PWA
@@ -7549,7 +7556,7 @@ function completeOnboarding() {
   // (deferredPrompt set by beforeinstallprompt if Chrome offered install).
   const _wasInstalled = window.navigator.standalone ||
     window.matchMedia('(display-mode: standalone)').matches;
-  if (!_wasInstalled && (_isIOS() || deferredPrompt)) {
+  if (!_wasInstalled) {
     document.getElementById('install-banner').style.display = 'block';
   }
 
