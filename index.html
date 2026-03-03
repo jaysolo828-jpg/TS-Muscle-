@@ -188,9 +188,10 @@
   .ob-button-row {
     display: flex; gap: 10px;
     position: sticky;
-    bottom: calc(env(safe-area-inset-bottom) + 16px);
+    bottom: 0;
     background: #0a0a0a;
-    padding-top: 8px;
+    padding-top: 12px;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
   }
   .ob-exercise-row {
     background: var(--dark2); border: 1px solid var(--dark3);
@@ -1961,7 +1962,7 @@
 <div id="onboarding-modal" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:99999; overflow-y:auto;">
   <!-- Exit bar: visible only when entering via Settings → Redo Initial Setup -->
   <div id="ob-exit-bar" style="display:none; position:sticky; top:0; z-index:1; background:#0a0a0a; padding:14px 20px 0; text-align:right;">
-    <button onclick="closeOnboardingModal()" style="background:none; border:none; color:var(--gray); font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; padding:4px 0;">← BACK TO SETTINGS</button>
+    <button onclick="closeOnboardingModal()" style="background:none; border:none; color:var(--red); font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; padding:4px 0;">← BACK TO SETTINGS</button>
   </div>
   <div style="max-width:480px; margin:0 auto; padding:calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 40px);">
 
@@ -2012,7 +2013,9 @@
         </div>
         <input type="hidden" id="ob-experience" value=""/>
       </div>
-      <button onclick="onboardNext(2)" class="onboard-next-btn" style="position:sticky; bottom:calc(env(safe-area-inset-bottom) + 16px);">NEXT →</button>
+      <div class="ob-button-row">
+        <button onclick="onboardNext(2)" class="onboard-next-btn">NEXT →</button>
+      </div>
     </div>
 
     <!-- STEP 2: Training Days -->
@@ -2174,7 +2177,9 @@
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-bottom:10px;">YOUR WEEK 1 PLAN</div>
         <div id="ob-summary" style="font-size:13px; color:var(--cream); line-height:1.8;"></div>
       </div>
-      <button onclick="completeOnboarding()" style="width:100%; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:22px; letter-spacing:3px; cursor:pointer; position:sticky; bottom:calc(env(safe-area-inset-bottom) + 16px);">LET'S TRAIN →</button>
+      <div class="ob-button-row">
+        <button onclick="completeOnboarding()" style="flex:1; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:22px; letter-spacing:3px; cursor:pointer;">LET'S TRAIN →</button>
+      </div>
       <div style="margin-top:16px; font-size:11px; color:var(--gray); line-height:1.6; text-align:center; padding:0 8px;">
         Consult a qualified medical professional before beginning any new exercise program, especially if you have a pre-existing health condition or injury.
       </div>
