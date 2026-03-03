@@ -6138,15 +6138,23 @@ function showToast(msg) {
 // Register service worker — real sw.js file so Chrome/iOS treat this as a proper PWA
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
+  // When a new SW activates (skipWaiting fired), reload so the fresh JS + version check run
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
 }
 
 
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.2.2';
+const APP_VERSION = '1.2.3';
 
 const APP_CHANGELOG = {
+  '1.2.3': [
+    'Fixed: App now shows the update banner automatically — no more silent updates',
+    'Fixed: Several crash guards added for edge cases on iOS and Android',
+  ],
   '1.2.2': [
     'Fixed: App no longer crashes on navigation edge cases on iOS and Android',
     'Fixed: Input fields no longer cause errors when quickly switching screens',
