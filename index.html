@@ -6053,9 +6053,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.0.9';
+const APP_VERSION = '1.1.0';
 
 const APP_CHANGELOG = {
+  '1.1.0': [
+    'Fixed: URL bar no longer appears on Android — app runs truly fullscreen',
+    'Improved PWA manifest for better Android integration',
+  ],
   '1.0.9': [
     'App now installs properly on Android — appears in your app drawer like a native app',
     'Fixed: Android and iOS no longer delete app data on phone restart',
