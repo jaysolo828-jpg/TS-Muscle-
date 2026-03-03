@@ -1353,7 +1353,7 @@
     letter-spacing: 0.5px;
     opacity: 0;
     transition: all 0.3s;
-    z-index: 1000;
+    z-index: 999999;
     white-space: nowrap;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -6108,9 +6108,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.1.2';
+const APP_VERSION = '1.1.3';
 
 const APP_CHANGELOG = {
+  '1.1.3': [
+    'Fixed: Validation messages now visible during profile setup — NEXT button works correctly',
+    'Fixed: Install prompt no longer appears hidden behind the setup screen',
+  ],
   '1.1.2': [
     'Fixed: Setup wizard no longer gets cut off — all buttons fully reachable on Android and iPhone',
     'Fixed: App header now sits below the status bar in standalone / installed mode',
@@ -6425,7 +6429,8 @@ try {
   checkIOSDeleteWarning();
   checkBackupReminder();
   // Show iOS install banner proactively on Safari when not yet installed
-  if (_isIOS() && !window.navigator.standalone) {
+  // Don't show during onboarding — it hides behind the modal and confuses users
+  if (_isIOS() && !window.navigator.standalone && state.onboardingComplete) {
     document.getElementById('install-banner').style.display = 'block';
   }
   // Hide install row if already running as installed PWA
@@ -6535,7 +6540,10 @@ let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  document.getElementById('install-banner').style.display = 'block';
+  // Only show banner after onboarding — during setup it hides behind the modal
+  if (state.onboardingComplete) {
+    document.getElementById('install-banner').style.display = 'block';
+  }
 });
 
 window.addEventListener('appinstalled', () => {
@@ -7543,6 +7551,12 @@ function completeOnboarding() {
   saveState();
   document.getElementById('onboarding-modal').style.display = 'none';
   renderHome();
+  // Now that onboarding is done, show install banner if applicable
+  if (_isIOS() && !window.navigator.standalone) {
+    document.getElementById('install-banner').style.display = 'block';
+  } else if (deferredPrompt) {
+    document.getElementById('install-banner').style.display = 'block';
+  }
 
   // Ask user if they want weights auto-populated
   setTimeout(() => {
