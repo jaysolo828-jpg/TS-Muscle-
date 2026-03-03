@@ -2448,6 +2448,17 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.11"/></svg></div>
   </div>
 
+  <!-- APP -->
+  <div class="section-title" style="margin-top:8px;">APP</div>
+
+  <div id="install-app-row" class="settings-item" onclick="doInstall()">
+    <div>
+      <div class="settings-label">Install App to Home Screen</div>
+      <div class="settings-sub" id="install-app-sub">Add T&amp;S Muscle to your home screen for full-screen offline use</div>
+    </div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg></div>
+  </div>
+
   <!-- HELP -->
   <div class="section-title" style="margin-top:8px;">HELP</div>
 
@@ -6349,6 +6360,10 @@ function _isIOSStandalone() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && window.navigator.standalone === true;
 }
 
+function _isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
 // One-time warning shown to iOS PWA users about data deletion risk
 function checkIOSDeleteWarning() {
   if (!_isIOSStandalone()) return;
@@ -6409,6 +6424,20 @@ try {
   updateWeightIncrementUI();
   checkIOSDeleteWarning();
   checkBackupReminder();
+  // Show iOS install banner proactively on Safari when not yet installed
+  if (_isIOS() && !window.navigator.standalone) {
+    document.getElementById('install-banner').style.display = 'block';
+  }
+  // Hide install row if already running as installed PWA
+  if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+    const row = document.getElementById('install-app-row');
+    if (row) {
+      row.querySelector('.settings-label').textContent = 'App Installed';
+      row.querySelector('.settings-sub').textContent = 'T&S Muscle is on your home screen';
+      row.style.opacity = '0.5';
+      row.style.pointerEvents = 'none';
+    }
+  }
 } catch(e) {
   console.error('T&S Muscle init error:', e);
 }
@@ -6512,7 +6541,14 @@ window.addEventListener('beforeinstallprompt', (e) => {
 window.addEventListener('appinstalled', () => {
   document.getElementById('install-banner').style.display = 'none';
   deferredPrompt = null;
-  showToast('T&S Muscle installed! 💪');
+  const row = document.getElementById('install-app-row');
+  if (row) {
+    row.querySelector('.settings-label').textContent = 'App Installed';
+    row.querySelector('.settings-sub').textContent = 'T&S Muscle is on your home screen';
+    row.style.opacity = '0.5';
+    row.style.pointerEvents = 'none';
+  }
+  showToast('T&S Muscle installed!');
 });
 
 function doInstall() {
@@ -6527,7 +6563,9 @@ function doInstall() {
       document.getElementById('install-banner').style.display = 'none';
     });
   } else {
-    // Show manual install instructions modal
+    // Show manual install instructions modal with platform-appropriate steps
+    document.getElementById('install-steps-ios').style.display = _isIOS() ? 'block' : 'none';
+    document.getElementById('install-steps-android').style.display = _isIOS() ? 'none' : 'block';
     document.getElementById('install-instructions').style.display = 'flex';
   }
 }
@@ -8428,22 +8466,47 @@ document.addEventListener('DOMContentLoaded', () => {
   <div style="background:var(--dark2); border:1px solid var(--dark3); border-radius:20px 20px 0 0; padding:28px 24px calc(env(safe-area-inset-bottom) + 24px); width:100%; animation: slideUp 0.3s ease;">
     <div style="font-family:'Bebas Neue',cursive; font-size:24px; letter-spacing:2px; color:var(--cream); margin-bottom:6px;">INSTALL T&S MUSCLE</div>
     <div style="font-size:13px; color:var(--gray); margin-bottom:22px;">Follow these steps to add to your home screen:</div>
-    
-    <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:18px;">
-      <div style="background:var(--red); color:white; font-family:'Bebas Neue',cursive; font-size:18px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</div>
-      <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--white); line-height:1.4;">Tap the <strong style="color:var(--cream);">three-dot menu ⋮</strong> in the top right of Chrome</div>
-    </div>
-    <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:18px;">
-      <div style="background:var(--red); color:white; font-family:'Bebas Neue',cursive; font-size:18px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">2</div>
-      <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--white); line-height:1.4;">Scroll down and tap <strong style="color:var(--cream);">"Add to Home screen"</strong></div>
-    </div>
-    <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:24px;">
-      <div style="background:var(--red); color:white; font-family:'Bebas Neue',cursive; font-size:18px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3</div>
-      <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--white); line-height:1.4;">Tap <strong style="color:var(--cream);">"Add"</strong> — T&S Muscle will appear on your home screen</div>
+
+    <!-- iOS steps -->
+    <div id="install-steps-ios" style="display:none;">
+      <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:18px;">
+        <div style="background:var(--red); color:white; font-family:'Bebas Neue',cursive; font-size:18px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--white); line-height:1.4;">Make sure you're in <strong style="color:var(--cream);">Safari</strong> — PWA install only works in Safari on iPhone</div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:18px;">
+        <div style="background:var(--red); color:white; font-family:'Bebas Neue',cursive; font-size:18px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">2</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--white); line-height:1.4;">Tap the <strong style="color:var(--cream);">Share button</strong> (the box with an arrow pointing up) at the bottom of Safari</div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:18px;">
+        <div style="background:var(--red); color:white; font-family:'Bebas Neue',cursive; font-size:18px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--white); line-height:1.4;">Scroll down in the share sheet and tap <strong style="color:var(--cream);">"Add to Home Screen"</strong></div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:24px;">
+        <div style="background:var(--red); color:white; font-family:'Bebas Neue',cursive; font-size:18px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">4</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--white); line-height:1.4;">Tap <strong style="color:var(--cream);">"Add"</strong> — T&S Muscle will appear on your home screen</div>
+      </div>
+      <div style="background:var(--dark3); border-radius:10px; padding:12px 14px; margin-bottom:20px; font-size:13px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; line-height:1.5;">
+        💡 <strong>Not in Safari?</strong> Copy the URL, open Safari, paste it in the address bar, then follow the steps above.
+      </div>
     </div>
 
-    <div style="background:var(--dark3); border-radius:10px; padding:12px 14px; margin-bottom:20px; font-size:13px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; line-height:1.5;">
-      💡 <strong>Tip:</strong> Make sure you're viewing this in <strong>Chrome</strong> (not Samsung Browser or another browser) for the best experience.
+    <!-- Android/Chrome steps -->
+    <div id="install-steps-android" style="display:none;">
+      <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:18px;">
+        <div style="background:var(--red); color:white; font-family:'Bebas Neue',cursive; font-size:18px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--white); line-height:1.4;">Tap the <strong style="color:var(--cream);">three-dot menu ⋮</strong> in the top right of Chrome</div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:18px;">
+        <div style="background:var(--red); color:white; font-family:'Bebas Neue',cursive; font-size:18px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">2</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--white); line-height:1.4;">Scroll down and tap <strong style="color:var(--cream);">"Add to Home screen"</strong></div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:24px;">
+        <div style="background:var(--red); color:white; font-family:'Bebas Neue',cursive; font-size:18px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--white); line-height:1.4;">Tap <strong style="color:var(--cream);">"Add"</strong> — T&S Muscle will appear on your home screen</div>
+      </div>
+      <div style="background:var(--dark3); border-radius:10px; padding:12px 14px; margin-bottom:20px; font-size:13px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; line-height:1.5;">
+        💡 <strong>Tip:</strong> Make sure you're viewing this in <strong>Chrome</strong> (not Samsung Browser or another browser) for the best experience.
+      </div>
     </div>
 
     <button onclick="document.getElementById('install-instructions').style.display='none'">CLOSE</button>
