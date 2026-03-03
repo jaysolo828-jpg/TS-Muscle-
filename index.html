@@ -179,13 +179,18 @@
     width: 100%; background: var(--red); border: none; color: white;
     padding: 14px; border-radius: 12px; font-family: 'Bebas Neue', cursive;
     font-size: 18px; letter-spacing: 2px; cursor: pointer;
-    position: sticky;
-    bottom: 24px;
   }
   .onboard-back-btn {
     background: var(--dark3); border: 1px solid #444; color: var(--gray);
     padding: 14px 20px; border-radius: 12px; font-family: 'Bebas Neue', cursive;
     font-size: 16px; letter-spacing: 1px; cursor: pointer;
+  }
+  .ob-button-row {
+    display: flex; gap: 10px;
+    position: sticky;
+    bottom: calc(env(safe-area-inset-bottom) + 16px);
+    background: #0a0a0a;
+    padding-top: 8px;
   }
   .ob-exercise-row {
     background: var(--dark2); border: 1px solid var(--dark3);
@@ -1954,6 +1959,10 @@
      ONBOARDING MODAL
      ============================================================ -->
 <div id="onboarding-modal" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:99999; overflow-y:auto;">
+  <!-- Exit bar: visible only when entering via Settings → Redo Initial Setup -->
+  <div id="ob-exit-bar" style="display:none; position:sticky; top:0; z-index:1; background:#0a0a0a; padding:14px 20px 0; text-align:right;">
+    <button onclick="closeOnboardingModal()" style="background:none; border:none; color:var(--gray); font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; padding:4px 0;">← BACK TO SETTINGS</button>
+  </div>
   <div style="max-width:480px; margin:0 auto; padding:calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 40px);">
 
     <!-- Header -->
@@ -2003,7 +2012,7 @@
         </div>
         <input type="hidden" id="ob-experience" value=""/>
       </div>
-      <button onclick="onboardNext(2)" class="onboard-next-btn">NEXT →</button>
+      <button onclick="onboardNext(2)" class="onboard-next-btn" style="position:sticky; bottom:calc(env(safe-area-inset-bottom) + 16px);">NEXT →</button>
     </div>
 
     <!-- STEP 2: Training Days -->
@@ -2025,7 +2034,7 @@
         </button>
       </div>
       <input type="hidden" id="ob-goal" value=""/>
-      <div style="display:flex; gap:10px;">
+      <div class="ob-button-row">
         <button onclick="onboardBack(1)" class="onboard-back-btn">← BACK</button>
         <button onclick="onboardNext(3)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
       </div>
@@ -2078,7 +2087,7 @@
       <!-- Below-minimum advisory (shows if they pick under the goal minimum) -->
       <div id="ob-days-warning" style="display:none; background:rgba(243,156,18,0.1); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--warning); margin-bottom:14px; line-height:1.6;"></div>
 
-      <div style="display:flex; gap:10px;">
+      <div class="ob-button-row">
         <button onclick="onboardBack(2)" class="onboard-back-btn">← BACK</button>
         <button onclick="onboardNext(4)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
       </div>
@@ -2108,7 +2117,7 @@
         </div>
       </div>
 
-      <div style="display:flex; gap:10px;">
+      <div class="ob-button-row">
         <button onclick="onboardBack(3)" class="onboard-back-btn">← BACK</button>
         <button onclick="onboardNext(5)" class="onboard-next-btn" style="flex:1;">GOT IT →</button>
       </div>
@@ -2150,7 +2159,7 @@
         </div>
       </div>
 
-      <div style="display:flex; gap:10px;">
+      <div class="ob-button-row">
         <button onclick="onboardBack(4)" class="onboard-back-btn">← BACK</button>
         <button onclick="onboardNext(6)" class="onboard-next-btn" style="flex:1;">FINISH SETUP →</button>
       </div>
@@ -2165,7 +2174,7 @@
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-bottom:10px;">YOUR WEEK 1 PLAN</div>
         <div id="ob-summary" style="font-size:13px; color:var(--cream); line-height:1.8;"></div>
       </div>
-      <button onclick="completeOnboarding()" style="width:100%; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:22px; letter-spacing:3px; cursor:pointer;">LET'S TRAIN →</button>
+      <button onclick="completeOnboarding()" style="width:100%; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:22px; letter-spacing:3px; cursor:pointer; position:sticky; bottom:calc(env(safe-area-inset-bottom) + 16px);">LET'S TRAIN →</button>
       <div style="margin-top:16px; font-size:11px; color:var(--gray); line-height:1.6; text-align:center; padding:0 8px;">
         Consult a qualified medical professional before beginning any new exercise program, especially if you have a pre-existing health condition or injury.
       </div>
@@ -6109,9 +6118,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.1.5';
+const APP_VERSION = '1.1.6';
 
 const APP_CHANGELOG = {
+  '1.1.6': [
+    'Fixed: NEXT/BACK buttons always visible during setup — sticky at the bottom of every screen',
+    'Fixed: Can now exit Redo Initial Setup and return to settings without losing your data',
+  ],
   '1.1.5': [
     'Fixed: NEXT button always visible during setup — no more scrolling to find it',
     'Fixed: Install app button now appears automatically after setup on all devices',
@@ -7317,6 +7330,7 @@ function onboardBack(step) {
   document.getElementById('onboard-step-' + step).style.display = 'block';
   document.querySelectorAll('.onboard-dot').forEach(d => d.classList.remove('active'));
   document.querySelector(`.onboard-dot[data-step="${step}"]`)?.classList.add('active');
+  document.getElementById('onboarding-modal').scrollTop = 0;
 }
 
 function selectOption(fieldId, value, btn) {
@@ -7545,6 +7559,9 @@ function buildOnboardingSummary() {
 }
 
 function completeOnboarding() {
+  // Commit the redo — backup no longer cancellable
+  window._onboardBackup = null;
+  document.getElementById('ob-exit-bar').style.display = 'none';
   // Fill in all isolation defaults for any exercises not entered by user
   applyAllDefaults();
   state.onboardingComplete = true;
@@ -7597,7 +7614,22 @@ function confirmAutoPopulate(yes, modal) {
   }
 }
 
+function closeOnboardingModal() {
+  if (window._onboardBackup) {
+    // Restore state to exactly what it was before "Redo Initial Setup" was tapped
+    const bk = window._onboardBackup;
+    Object.keys(bk).forEach(k => { state[k] = bk[k]; });
+    saveState();
+    window._onboardBackup = null;
+  }
+  document.getElementById('ob-exit-bar').style.display = 'none';
+  document.getElementById('onboarding-modal').style.display = 'none';
+}
+
 function resetOnboarding() {
+  // Save a full snapshot so the user can tap "← BACK TO SETTINGS" and restore everything
+  window._onboardBackup = JSON.parse(JSON.stringify(state));
+  document.getElementById('ob-exit-bar').style.display = 'block';
   state.onboardingComplete = false;
   state.profile = null;
   state.startingWeights = {};
