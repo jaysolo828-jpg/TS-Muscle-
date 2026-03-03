@@ -6143,9 +6143,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 
 const APP_CHANGELOG = {
+  '1.2.1': [
+    'Fixed: "Not Now" on the install prompt now re-appears after 3 days instead of 7',
+    'Cleaned up version history — removed older entries that are just normal app behavior now',
+  ],
   '1.2.0': [
     'New: "Add to Home Screen" prompt now appears automatically when visiting the link — no need to hunt for the install option',
     'Fixed: Install prompt re-appears after 3 days if previously dismissed, so users always have a way to install',
