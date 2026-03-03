@@ -6118,9 +6118,14 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.1.6';
+const APP_VERSION = '1.1.7';
 
 const APP_CHANGELOG = {
+  '1.1.7': [
+    'Fixed: Completing Redo Initial Setup now takes you Home — no longer left on the Settings screen',
+    'Fixed: Redo Initial Setup pre-fills your current name, bodyweight, and selections so you only change what you need',
+    'Fixed: Auto-populate weights question no longer re-appears every time you redo setup',
+  ],
   '1.1.6': [
     'Fixed: NEXT/BACK buttons always visible during setup — sticky at the bottom of every screen',
     'Fixed: Can now exit Redo Initial Setup and return to settings without losing your data',
@@ -7568,6 +7573,14 @@ function completeOnboarding() {
   saveState();
   document.getElementById('onboarding-modal').style.display = 'none';
   renderHome();
+
+  // Always navigate to home screen (handles redo-from-settings where settings was active)
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-home').classList.add('active');
+  const homeNav = document.querySelector('[onclick*="\'home\'"]');
+  if (homeNav) homeNav.classList.add('active');
+
   // Now that onboarding is done, show install banner if not already installed.
   // Covers iOS (no deferredPrompt — shows share-sheet instructions) and Android
   // (deferredPrompt set by beforeinstallprompt if Chrome offered install).
@@ -7577,26 +7590,38 @@ function completeOnboarding() {
     document.getElementById('install-banner').style.display = 'block';
   }
 
-  // Ask user if they want weights auto-populated
-  setTimeout(() => {
-    const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
-    modal.innerHTML = `
-      <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:400px;border:1px solid var(--dark3);">
-        <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">AUTO-POPULATE WEIGHTS?</div>
-        <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">
-          Your recommended starting weights are ready. Want them pre-filled in every workout so you don't have to enter them manually each time?
-        </div>
-        <div style="background:var(--dark3);border-radius:10px;padding:12px;margin-bottom:20px;font-size:12px;color:var(--gray);">
-          You can always change a weight mid-workout. These are just your starting point.
-        </div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <button onclick="confirmAutoPopulate(true, this.closest('div').parentElement.parentElement)" style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">YES, PRE-FILL MY WEIGHTS</button>
-          <button onclick="confirmAutoPopulate(false, this.closest('div').parentElement.parentElement)" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">NO, I'LL ENTER THEM MANUALLY</button>
-        </div>
-      </div>`;
-    document.body.appendChild(modal);
-  }, 400);
+  // Ask user if they want weights auto-populated — first time only.
+  // On redo (state.autoPopulateWeights already set), skip the modal.
+  if (state.autoPopulateWeights === undefined || state.autoPopulateWeights === null) {
+    setTimeout(() => {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+      modal.innerHTML = `
+        <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:400px;border:1px solid var(--dark3);">
+          <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">AUTO-POPULATE WEIGHTS?</div>
+          <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">
+            Your recommended starting weights are ready. Want them pre-filled in every workout so you don't have to enter them manually each time?
+          </div>
+          <div style="background:var(--dark3);border-radius:10px;padding:12px;margin-bottom:20px;font-size:12px;color:var(--gray);">
+            You can always change a weight mid-workout. These are just your starting point.
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button onclick="confirmAutoPopulate(true, this.closest('div').parentElement.parentElement)" style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">YES, PRE-FILL MY WEIGHTS</button>
+            <button onclick="confirmAutoPopulate(false, this.closest('div').parentElement.parentElement)" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">NO, I'LL ENTER THEM MANUALLY</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }, 400);
+  } else {
+    // Redo path — preference already set; just launch tutorial if needed
+    if (!state.tutorialAutoLaunched) {
+      state.tutorialAutoLaunched = true;
+      saveState();
+      setTimeout(() => openTutorial(), 800);
+    }
+    const name = state.profile?.name || 'there';
+    showToast(`Setup updated, ${name}! Your program is ready.`);
+  }
 }
 
 function confirmAutoPopulate(yes, modal) {
@@ -7621,6 +7646,7 @@ function closeOnboardingModal() {
     Object.keys(bk).forEach(k => { state[k] = bk[k]; });
     saveState();
     window._onboardBackup = null;
+    renderHome();  // refresh home with restored values
   }
   document.getElementById('ob-exit-bar').style.display = 'none';
   document.getElementById('onboarding-modal').style.display = 'none';
@@ -7642,6 +7668,38 @@ function resetOnboarding() {
   delete state.pauseWeekCount;
   delete state.pauseStreak;
   saveState();
+
+  // Pre-populate form with current profile so user sees what they had and can adjust
+  const bk = window._onboardBackup;
+  if (bk && bk.profile) {
+    const nameEl = document.getElementById('ob-name');
+    const bwEl   = document.getElementById('ob-bodyweight');
+    if (nameEl) nameEl.value = bk.profile.name || '';
+    if (bwEl)   bwEl.value   = bk.profile.bodyweight || '';
+
+    if (bk.profile.experience) {
+      document.getElementById('ob-experience').value = bk.profile.experience;
+      const expBtns = document.querySelectorAll('#onboard-step-1 .onboard-select-btn');
+      expBtns.forEach(b => b.classList.remove('selected'));
+      const expIdx = { beginner: 0, intermediate: 1, advanced: 2 }[bk.profile.experience];
+      if (expIdx !== undefined && expBtns[expIdx]) expBtns[expIdx].classList.add('selected');
+    }
+    if (bk.profile.goal) {
+      document.getElementById('ob-goal').value = bk.profile.goal;
+      const goalBtns = document.querySelectorAll('#onboard-step-2 .onboard-select-btn');
+      goalBtns.forEach(b => b.classList.remove('selected'));
+      const goalIdx = { size: 0, strength: 1, both: 2 }[bk.profile.goal];
+      if (goalIdx !== undefined && goalBtns[goalIdx]) goalBtns[goalIdx].classList.add('selected');
+    }
+    if (bk.trainingDaysPerWeek) {
+      const days = bk.trainingDaysPerWeek;
+      document.getElementById('ob-training-days').value = days;
+      document.querySelectorAll('#onboard-step-3 .onboard-select-btn').forEach(b => b.classList.remove('selected'));
+      const dayBtn = document.getElementById('ob-day-btn-' + days);
+      if (dayBtn) dayBtn.classList.add('selected');
+    }
+  }
+
   // Reset steps
   document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
   document.getElementById('onboard-step-1').style.display = 'block';
