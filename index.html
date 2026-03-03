@@ -6642,9 +6642,9 @@ function doInstall() {
 function showInstallWelcome() {
   // Skip if already running as an installed PWA
   if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) return;
-  // Skip if the user dismissed this recently (7-day cooldown)
+  // Skip if the user dismissed this recently (3-day cooldown)
   const ts = localStorage.getItem('ts-install-dismissed');
-  if (ts && Date.now() - parseInt(ts) < 7 * 24 * 60 * 60 * 1000) return;
+  if (ts && Date.now() - parseInt(ts) < 3 * 24 * 60 * 60 * 1000) return;
   // Show after a short delay so the page renders first and
   // beforeinstallprompt has time to fire on Android
   setTimeout(() => {
