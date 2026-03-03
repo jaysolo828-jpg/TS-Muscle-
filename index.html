@@ -2721,6 +2721,26 @@
   </div>
 </div>
 
+<!-- INSTALL WELCOME PROMPT (shown on first visit to non-installed users) -->
+<div id="install-welcome" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:100000; align-items:flex-end; justify-content:center;">
+  <div style="background:var(--dark2); border:1px solid var(--dark3); border-radius:20px 20px 0 0; padding:28px 24px calc(env(safe-area-inset-bottom) + 28px); width:100%; max-width:520px; animation:slideUp 0.35s ease;">
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+      <img src="./icon.png" style="width:56px; height:56px; border-radius:14px; box-shadow:0 4px 16px rgba(204,32,39,0.4);"/>
+      <div>
+        <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; line-height:1;">T&amp;S MUSCLE</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-top:2px;">THERAPY &amp; SNEAKERS</div>
+      </div>
+    </div>
+    <div style="font-size:14px; color:var(--gray-light); line-height:1.65; margin-bottom:22px;">
+      Add T&amp;S Muscle to your home screen — works offline, loads instantly, and feels like a real app. No App Store needed.
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button onclick="doWelcomeInstall()" style="width:100%; background:var(--red); border:none; color:white; padding:15px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">ADD TO HOME SCREEN</button>
+      <button onclick="dismissWelcomeInstall()" style="width:100%; background:transparent; border:none; color:var(--gray); padding:10px; font-family:'Barlow Condensed',sans-serif; font-size:15px; letter-spacing:1px; cursor:pointer;">NOT NOW</button>
+    </div>
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <button class="nav-item active" onclick="showScreen('home', this)">
@@ -6123,9 +6143,15 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.1.9';
+const APP_VERSION = '1.2.0';
 
 const APP_CHANGELOG = {
+  '1.2.0': [
+    'New: "Add to Home Screen" prompt now appears automatically when visiting the link — no need to hunt for the install option',
+    'Fixed: Install prompt re-appears after 7 days if previously dismissed, so users always have a way to install',
+    'Fixed: "← Back to Settings" button is now red so it stands out clearly',
+    'Fixed: Onboarding bottom buttons are fully visible and tappable on all iOS and Android devices',
+  ],
   '1.1.9': [
     'Fixed: "← Back to Settings" button always appears on the Profile screen if you already have data — you can never get fully trapped there',
     'Fixed: Exiting setup without a backup now safely unlocks the app and takes you home instead of doing nothing',
@@ -6463,6 +6489,8 @@ try {
   if (!_isInstalled && state.onboardingComplete) {
     document.getElementById('install-banner').style.display = 'block';
   }
+  // Show the install welcome prompt to any non-installed visitor
+  showInstallWelcome();
   // Hide install row if already running as installed PWA
   if (_isInstalled) {
     const row = document.getElementById('install-app-row');
@@ -6606,6 +6634,43 @@ function doInstall() {
     document.getElementById('install-steps-android').style.display = _isIOS() ? 'none' : 'block';
     document.getElementById('install-instructions').style.display = 'flex';
   }
+}
+
+// ============================================================
+// INSTALL WELCOME PROMPT
+// ============================================================
+function showInstallWelcome() {
+  // Skip if already running as an installed PWA
+  if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) return;
+  // Skip if the user dismissed this recently (7-day cooldown)
+  const ts = localStorage.getItem('ts-install-dismissed');
+  if (ts && Date.now() - parseInt(ts) < 7 * 24 * 60 * 60 * 1000) return;
+  // Show after a short delay so the page renders first and
+  // beforeinstallprompt has time to fire on Android
+  setTimeout(() => {
+    const el = document.getElementById('install-welcome');
+    if (el) el.style.display = 'flex';
+  }, 1500);
+}
+
+function doWelcomeInstall() {
+  document.getElementById('install-welcome').style.display = 'none';
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(choice => {
+      if (choice.outcome === 'accepted') showToast('Installing T&S Muscle...');
+      deferredPrompt = null;
+    });
+  } else {
+    document.getElementById('install-steps-ios').style.display = _isIOS() ? 'block' : 'none';
+    document.getElementById('install-steps-android').style.display = _isIOS() ? 'none' : 'block';
+    document.getElementById('install-instructions').style.display = 'flex';
+  }
+}
+
+function dismissWelcomeInstall() {
+  document.getElementById('install-welcome').style.display = 'none';
+  localStorage.setItem('ts-install-dismissed', Date.now().toString());
 }
 
 // ============================================================
