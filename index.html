@@ -3164,6 +3164,7 @@ function showScreen(name, el) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const screen = document.getElementById('screen-' + name);
+  if (!screen) return;
   screen.classList.add('active');
   if (el) el.classList.add('active');
 
@@ -3457,34 +3458,33 @@ function renderHome() {
 
   // Rest week banner (separate from deload banner)
   const restWeekBanner = document.getElementById('rest-week-banner');
-  if (state.isRestWeek) {
-    restWeekBanner.style.display = 'block';
-  } else {
-    restWeekBanner.style.display = 'none';
+  if (restWeekBanner) {
+    restWeekBanner.style.display = state.isRestWeek ? 'block' : 'none';
   }
 
   // Deload / recovery week banner
   const deloadBanner = document.getElementById('deload-banner');
-  if (state.isRestWeek) {
+  if (deloadBanner && state.isRestWeek) {
     deloadBanner.style.display = 'none';
-  } else if (state.isDeloadWeek) {
+  } else if (deloadBanner && state.isDeloadWeek) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'DELOAD WEEK ACTIVE';
     deloadBanner.querySelector('.deload-text').innerHTML = 'Weights are reduced 40%. Train normally — weights restore automatically after this week.<br><button onclick="endRecoveryWeekEarly()" style="margin-top:12px; background:rgba(255,255,255,0.08); border:1px solid #555; color:var(--gray-light); padding:8px 18px; border-radius:8px; font-family:\'Barlow Condensed\',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer;">END EARLY →</button>';
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = null;
-  } else if (state.weekCount === 7) {
+  } else if (deloadBanner && state.weekCount === 7) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK';
     deloadBanner.querySelector('.deload-text').innerHTML = 'You\'ve hit week 7. Tap to choose: <strong style="color:var(--warning);">Deload</strong> (reduced weights) or <strong style="color:#aaa;">Rest Week</strong> (take the week off).';
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
-  } else {
+  } else if (deloadBanner) {
     deloadBanner.style.display = 'none';
   }
 
   // Week dots
   const dotsEl = document.getElementById('week-dots');
+  if (!dotsEl) return;
   dotsEl.innerHTML = '';
   for (let w = 1; w <= 8; w++) {
     const dot = document.createElement('div');
@@ -3524,6 +3524,7 @@ function renderHome() {
 
   // Day cards — respect training days limit
   const container = document.getElementById('day-cards');
+  if (!container) return;
   container.innerHTML = '';
   const maxDays = state.trainingDaysPerWeek || 4;
   const visibleDays = state.program.slice(0, maxDays);
@@ -6143,9 +6144,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.2.2';
 
 const APP_CHANGELOG = {
+  '1.2.2': [
+    'Fixed: App no longer crashes on navigation edge cases on iOS and Android',
+    'Fixed: Input fields no longer cause errors when quickly switching screens',
+  ],
   '1.2.1': [
     'Fixed: "Not Now" on the install prompt now re-appears after 3 days instead of 7',
     'Cleaned up version history — removed older entries that are just normal app behavior now',
@@ -6454,7 +6459,7 @@ if (navigator.storage && navigator.storage.persist) {
 document.addEventListener('focusin', function(e) {
   var el = e.target;
   if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-    setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 350);
+    setTimeout(function() { if (document.contains(el)) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 350);
   }
 });
 
@@ -7232,11 +7237,13 @@ function tutorialNav(dir) {
 (function() {
   let startX = 0;
   document.addEventListener('touchstart', e => {
-    if (!document.getElementById('tutorial-modal').style.display || document.getElementById('tutorial-modal').style.display === 'none') return;
+    const modal = document.getElementById('tutorial-modal');
+    if (!modal || !modal.style.display || modal.style.display === 'none') return;
     startX = e.touches[0].clientX;
   }, { passive: true });
   document.addEventListener('touchend', e => {
-    if (!document.getElementById('tutorial-modal').style.display || document.getElementById('tutorial-modal').style.display === 'none') return;
+    const modal = document.getElementById('tutorial-modal');
+    if (!modal || !modal.style.display || modal.style.display === 'none') return;
     const diff = startX - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 50) tutorialNav(diff > 0 ? 1 : -1);
   }, { passive: true });
