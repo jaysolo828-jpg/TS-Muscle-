@@ -6170,9 +6170,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.2.4';
+const APP_VERSION = '1.2.5';
 
 const APP_CHANGELOG = {
+  '1.2.5': [
+    'Fixed: Starting a workout and tapping Finish without logging any sets no longer saves an empty session or inflates your session count',
+    'Fixed: Session count on the home screen now reflects only completed workouts',
+  ],
   '1.2.4': [
     'Fixed: Installed app on iPhone/Android now receives updates automatically — no need to open in browser',
   ],
