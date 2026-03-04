@@ -5137,6 +5137,8 @@ function discardSession() {
   localStorage.removeItem('ts-muscle-paused');
   _idbSet('ts-muscle-paused', null);
   activeSession = null;
+  recalcPRsFromHistory();
+  saveState();
   closeExitModal();
   document.getElementById('workout-session').classList.remove('active');
   document.getElementById('yt-music-btn').style.display = 'none';
