@@ -1920,8 +1920,8 @@
 <!-- ============================================================
      TUTORIAL MODAL
      ============================================================ -->
-<div id="tutorial-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:99998; overflow:hidden;">
-  <div style="height:100%; display:flex; flex-direction:column; max-width:480px; margin:0 auto;">
+<div id="tutorial-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:99998; overflow:hidden; flex-direction:column;">
+  <div style="flex:1; min-height:0; display:flex; flex-direction:column; max-width:480px; width:100%; margin:0 auto;">
 
     <!-- Top bar -->
     <div style="display:flex; justify-content:space-between; align-items:center; padding:calc(env(safe-area-inset-top) + 16px) 20px 8px;">
@@ -6193,7 +6193,7 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.2.7';
+const APP_VERSION = '1.2.8';
 
 const APP_CHANGELOG = {
   '1.2.6': [
@@ -7244,7 +7244,7 @@ function openTutorial() {
   tutorialStep = 0;
   buildTutorialSlides();
   updateTutorialUI();
-  document.getElementById('tutorial-modal').style.display = 'block';
+  document.getElementById('tutorial-modal').style.display = 'flex';
 }
 
 function closeTutorial() {
