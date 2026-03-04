@@ -6193,9 +6193,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.2.8';
+const APP_VERSION = '1.2.9';
 
 const APP_CHANGELOG = {
+  '1.2.9': [
+    'Fixed: Tutorial NEXT/DONE button is now always visible — no longer hidden behind slide content',
+    'Fixed: App updates now deliver reliably every time — browser caching issue resolved',
+  ],
   '1.2.6': [
     'New: Day cards now show a green "Completed Today" badge after you finish a workout',
     'New: Tap the green Done button to start the same day again if you want',
