@@ -1944,14 +1944,14 @@
     </div>
 
     <!-- Slides container -->
-    <div style="flex:1; overflow:hidden; position:relative;" id="tutorial-slides-wrapper">
+    <div style="flex:1; min-height:0; overflow:hidden; position:relative;" id="tutorial-slides-wrapper">
       <div id="tutorial-slides" style="display:flex; height:100%; transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);">
         <!-- Slides injected by JS -->
       </div>
     </div>
 
     <!-- Nav buttons -->
-    <div style="padding:16px 20px calc(env(safe-area-inset-bottom) + 28px); display:flex; gap:12px; align-items:center;">
+    <div style="padding:16px 20px calc(env(safe-area-inset-bottom) + 28px); display:flex; gap:12px; align-items:center; flex-shrink:0;">
       <button id="tutorial-back-btn" onclick="tutorialNav(-1)" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); padding:14px 20px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer; display:none;">← BACK</button>
       <button id="tutorial-next-btn" onclick="tutorialNav(1)" style="flex:1; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">NEXT →</button>
     </div>
@@ -6193,7 +6193,7 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.2.6';
+const APP_VERSION = '1.2.7';
 
 const APP_CHANGELOG = {
   '1.2.6': [
