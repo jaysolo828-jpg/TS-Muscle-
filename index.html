@@ -3624,6 +3624,10 @@ function checkForPR(exId, set) {
 
   if (!state.prs) state.prs = {};
   state.prs[exId] = { weight: w, reps: r, date: new Date().toISOString() };
+  if (activeSession) {
+    if (!activeSession.prs) activeSession.prs = [];
+    if (!activeSession.prs.includes(exId)) activeSession.prs.push(exId);
+  }
   saveState();
 
   // Find display name
@@ -5219,7 +5223,8 @@ function finalizeEndSession(save) {
       notes: activeSession.notes,
       swaps: activeSession.swaps,
       duration: Math.round((activeSession.endTime - activeSession.startTime) / 60000),
-      isDeload: activeSession.isDeload || false
+      isDeload: activeSession.isDeload || false,
+      prs: activeSession.prs || []
     };
 
     state.history.push(entry);
@@ -5799,7 +5804,7 @@ function renderHistory() {
     const totalSets = Object.values(entry.sets).reduce((sum, sets) => sum + sets.filter(s => s.done).length, 0);
 
     // Check if this session had any PRs
-    const hasPR = entry.prs && Object.keys(entry.prs).length > 0;
+    const hasPR = entry.prs && entry.prs.length > 0;
 
     const el = document.createElement('div');
     el.className = 'history-item';
@@ -5842,9 +5847,7 @@ function renderHistoryDetail(entry) {
 
     const displayName = (entry.swaps && entry.swaps[ex.id]) ? entry.swaps[ex.id].name : ex.name;
     const exNote = entry.exNotes?.[ex.id];
-    // Check if this was a PR
-    const pr = state.prs?.[ex.id];
-    const wasPR = pr && new Date(pr.date).toDateString() === new Date(entry.date).toDateString();
+    const wasPR = entry.prs?.includes(ex.id);
 
     html += `<div class="history-ex">
       <div class="history-ex-name">${displayName}${wasPR ? ' <span style="color:#f0a500;font-size:11px;">🏆 PR</span>' : ''}</div>
