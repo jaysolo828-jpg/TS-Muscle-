@@ -1918,47 +1918,6 @@
 </div>
 
 <!-- ============================================================
-     TUTORIAL MODAL
-     ============================================================ -->
-<div id="tutorial-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:99998; overflow:hidden; flex-direction:column;">
-  <div style="flex:1; min-height:0; display:flex; flex-direction:column; max-width:480px; width:100%; margin:0 auto;">
-
-    <!-- Top bar -->
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:calc(env(safe-area-inset-top) + 16px) 20px 8px;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:20px; color:var(--gray); letter-spacing:2px;">T&S MUSCLE <span style="color:var(--red);">GUIDE</span></div>
-      <button onclick="closeTutorial()" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); padding:7px 14px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13px; letter-spacing:1px; cursor:pointer; display:flex; align-items:center; gap:6px;">
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        EXIT GUIDE
-      </button>
-    </div>
-
-    <!-- Progress bar -->
-    <div style="padding:0 20px 12px;">
-      <div style="background:var(--dark3); border-radius:4px; height:3px; overflow:hidden;">
-        <div id="tutorial-progress-bar" style="background:var(--red); height:100%; border-radius:4px; transition:width 0.3s; width:0%;"></div>
-      </div>
-      <div style="display:flex; justify-content:space-between; margin-top:6px;">
-        <div id="tutorial-step-label" style="font-size:11px; color:var(--gray); letter-spacing:1px;"></div>
-        <div id="tutorial-step-counter" style="font-size:11px; color:var(--gray);"></div>
-      </div>
-    </div>
-
-    <!-- Slides container -->
-    <div style="flex:1; min-height:0; overflow:hidden; position:relative;" id="tutorial-slides-wrapper">
-      <div id="tutorial-slides" style="display:flex; height:100%; transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);">
-        <!-- Slides injected by JS -->
-      </div>
-    </div>
-
-    <!-- Nav buttons -->
-    <div style="padding:16px 20px calc(env(safe-area-inset-bottom) + 28px); display:flex; gap:12px; align-items:center; flex-shrink:0;">
-      <button id="tutorial-back-btn" onclick="tutorialNav(-1)" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); padding:14px 20px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer; display:none;">← BACK</button>
-      <button id="tutorial-next-btn" onclick="tutorialNav(1)" style="flex:1; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">NEXT →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ============================================================
      ONBOARDING MODAL
      ============================================================ -->
 <div id="onboarding-modal" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:99999; overflow-y:auto;">
@@ -2705,6 +2664,49 @@
 
 
 </div><!-- end .app-content -->
+
+<!-- ============================================================
+     TUTORIAL MODAL — must live OUTSIDE .app-content so its z-index
+     is not trapped inside that stacking context (z-index:1), which
+     would let the bottom nav (z-index:100) paint over it.
+     ============================================================ -->
+<div id="tutorial-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:99998; overflow:hidden; flex-direction:column;">
+  <div style="flex:1; min-height:0; display:flex; flex-direction:column; max-width:480px; width:100%; margin:0 auto;">
+
+    <!-- Top bar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:calc(env(safe-area-inset-top) + 16px) 20px 8px;">
+      <div style="font-family:'Bebas Neue',cursive; font-size:20px; color:var(--gray); letter-spacing:2px;">T&S MUSCLE <span style="color:var(--red);">GUIDE</span></div>
+      <button onclick="closeTutorial()" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); padding:7px 14px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13px; letter-spacing:1px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        EXIT GUIDE
+      </button>
+    </div>
+
+    <!-- Progress bar -->
+    <div style="padding:0 20px 12px;">
+      <div style="background:var(--dark3); border-radius:4px; height:3px; overflow:hidden;">
+        <div id="tutorial-progress-bar" style="background:var(--red); height:100%; border-radius:4px; transition:width 0.3s; width:0%;"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:6px;">
+        <div id="tutorial-step-label" style="font-size:11px; color:var(--gray); letter-spacing:1px;"></div>
+        <div id="tutorial-step-counter" style="font-size:11px; color:var(--gray);"></div>
+      </div>
+    </div>
+
+    <!-- Slides container -->
+    <div style="flex:1; min-height:0; overflow:hidden; position:relative;" id="tutorial-slides-wrapper">
+      <div id="tutorial-slides" style="display:flex; height:100%; transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);">
+        <!-- Slides injected by JS -->
+      </div>
+    </div>
+
+    <!-- Nav buttons -->
+    <div style="padding:16px 20px calc(env(safe-area-inset-bottom) + 28px); display:flex; gap:12px; align-items:center; flex-shrink:0;">
+      <button id="tutorial-back-btn" onclick="tutorialNav(-1)" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); padding:14px 20px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer; display:none;">← BACK</button>
+      <button id="tutorial-next-btn" onclick="tutorialNav(1)" style="flex:1; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">NEXT →</button>
+    </div>
+  </div>
+</div>
 
 <!-- INSTALL BANNER -->
 <div id="install-banner" style="display:none; position:fixed; bottom:calc(80px + env(safe-area-inset-bottom)); left:16px; right:16px; z-index:150;">
