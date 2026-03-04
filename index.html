@@ -718,6 +718,50 @@
   }
   .set-done-btn.done { background: var(--success); border-color: var(--success); color: var(--white); box-shadow: 0 0 10px rgba(46,204,113,0.3); }
 
+  /* RPE NUDGE — inline row shown after completing set without RPE */
+  .rpe-nudge-row {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.35s ease;
+    background: var(--dark3);
+    border-top: 1px solid var(--dark4);
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 16px;
+    flex-wrap: nowrap;
+  }
+  .rpe-nudge-row.open {
+    max-height: 56px;
+    opacity: 1;
+    padding: 8px 16px;
+  }
+  .rpe-nudge-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gray); white-space: nowrap; margin-right: 4px; flex-shrink: 0;
+  }
+  .rpe-nudge-pills {
+    display: flex; gap: 5px; flex-wrap: nowrap; overflow-x: auto; flex: 1;
+    scrollbar-width: none;
+  }
+  .rpe-nudge-pills::-webkit-scrollbar { display: none; }
+  .rpe-nudge-btn {
+    background: var(--dark4); border: 1px solid #3a3a3a;
+    color: var(--white); border-radius: 8px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600;
+    padding: 5px 8px; cursor: pointer; transition: all 0.15s;
+    white-space: nowrap; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .rpe-nudge-btn:active { background: var(--red); border-color: var(--red); transform: scale(0.92); }
+  .rpe-nudge-dismiss {
+    flex-shrink: 0; background: none; border: none;
+    color: var(--gray); font-size: 15px; cursor: pointer; padding: 4px 4px 4px 8px;
+    opacity: 0.5; transition: opacity 0.15s; line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .rpe-nudge-dismiss:active { opacity: 1; }
+
   /* REST TIMER — inline row */
   .rest-timer-row {
     display: flex; align-items: center; gap: 8px;
@@ -4512,6 +4556,35 @@ function updateSet(exId, setIndex, field, value) {
   updateSessionProgress();
 }
 
+function _showRpeNudge(exId, setIndex) {
+  const nudgeId = `rpe-nudge-${exId}-${setIndex}`;
+  if (document.getElementById(nudgeId)) return;
+  const setRow = document.getElementById(`set-row-${exId}-${setIndex}`);
+  if (!setRow) return;
+  const rpeVals = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+  const nudge = document.createElement('div');
+  nudge.className = 'rpe-nudge-row';
+  nudge.id = nudgeId;
+  nudge.innerHTML = `<span class="rpe-nudge-label">How'd that feel?</span><div class="rpe-nudge-pills">${rpeVals.map(r => `<button class="rpe-nudge-btn" onclick="selectRpeFromNudge('${exId}',${setIndex},${r})">${r}</button>`).join('')}</div><button class="rpe-nudge-dismiss" onclick="_removeRpeNudge('${exId}',${setIndex})">✕</button>`;
+  setRow.insertAdjacentElement('afterend', nudge);
+  requestAnimationFrame(() => requestAnimationFrame(() => nudge.classList.add('open')));
+}
+
+function _removeRpeNudge(exId, setIndex) {
+  const nudge = document.getElementById(`rpe-nudge-${exId}-${setIndex}`);
+  if (!nudge) return;
+  nudge.classList.remove('open');
+  setTimeout(() => nudge.remove(), 350);
+}
+
+function selectRpeFromNudge(exId, setIndex, rpe) {
+  updateSet(exId, setIndex, 'rpe', rpe);
+  const row = document.getElementById(`set-row-${exId}-${setIndex}`);
+  const sel = row ? row.querySelector('.rpe-select') : null;
+  if (sel) sel.value = rpe;
+  _removeRpeNudge(exId, setIndex);
+}
+
 function toggleSetDone(exId, setIndex) {
   const set = activeSession.sets[exId][setIndex];
   set.done = !set.done;
@@ -4531,29 +4604,17 @@ function toggleSetDone(exId, setIndex) {
     // Stamp persistent rep outcome badge on the set row
     stampRepBadge(exId, setIndex);
 
-    // RPE nudge — show once per session, also pulse the RPE dropdown
-    if (!set.rpe && !activeSession._rpnNudged) {
-      activeSession._rpnNudged = true;
-      setTimeout(() => {
-        showToast('Tip: Adding RPE makes weight suggestions smarter', 3500);
-        // Pulse the RPE dropdown on this row to draw attention
-        const row = document.getElementById('set-row-' + exId + '-' + setIndex);
-        const rpeSelect = row ? row.querySelector('select') : null;
-        if (rpeSelect) {
-          rpeSelect.style.transition = 'border-color 0.3s, box-shadow 0.3s';
-          rpeSelect.style.borderColor = 'var(--red)';
-          rpeSelect.style.boxShadow = '0 0 8px rgba(204,32,39,0.5)';
-          setTimeout(() => {
-            rpeSelect.style.borderColor = '';
-            rpeSelect.style.boxShadow = '';
-          }, 2500);
-        }
-      }, 600);
+    // RPE nudge — show inline row if RPE not selected
+    if (!set.rpe) {
+      setTimeout(() => _showRpeNudge(exId, setIndex), 400);
+    } else {
+      _removeRpeNudge(exId, setIndex);
     }
   } else {
-    // Remove badge when unchecking
+    // Remove badge and RPE nudge when unchecking
     const badge = document.getElementById(`rep-badge-${exId}-${setIndex}`);
     if (badge) badge.remove();
+    _removeRpeNudge(exId, setIndex);
   }
 
   const day = state.program.find(d => d.id === activeSession.dayId);
