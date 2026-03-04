@@ -1497,8 +1497,13 @@
   <div class="section-title">WORKOUT <span>HISTORY</span></div>
   <!-- PR BOARD -->
   <div id="pr-board" style="margin-bottom:16px; display:none;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:2px; margin-bottom:8px;">PERSONAL RECORDS 🏆</div>
-    <div id="pr-board-list" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+    <div onclick="togglePRBoard()" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 14px; background:linear-gradient(135deg,#1a1200,#2a1c00); border:1px solid #c47d00; border-radius:12px; user-select:none;">
+      <span style="font-size:16px; line-height:1;">🏆</span>
+      <span style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:#c47d00; letter-spacing:2px; font-weight:700;">PERSONAL RECORDS</span>
+      <span id="pr-board-count" style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1px;"></span>
+      <span id="pr-board-chevron" style="margin-left:auto; font-size:11px; color:var(--gray); transition:transform 0.2s;">▶</span>
+    </div>
+    <div id="pr-board-list" style="display:none; flex-wrap:wrap; gap:8px; margin-top:10px;"></div>
   </div>
   <div id="history-list"></div>
 
@@ -5704,6 +5709,15 @@ function renderPRBoard() {
   board.style.display = 'block';
   list.innerHTML = '';
 
+  // Update count label
+  const countEl = document.getElementById('pr-board-count');
+  if (countEl) countEl.textContent = `· ${prEntries.length} lift${prEntries.length === 1 ? '' : 's'}`;
+
+  // Ensure collapsed state is reflected (chevron)
+  const chevron = document.getElementById('pr-board-chevron');
+  const isOpen = list.style.display !== 'none';
+  if (chevron) chevron.textContent = isOpen ? '▼' : '▶';
+
   // Get exercise names
   const nameMap = {};
   DEFAULT_PROGRAM.forEach(day => day.exercises.forEach(ex => { nameMap[ex.id] = ex.name; }));
@@ -5716,6 +5730,15 @@ function renderPRBoard() {
     chip.innerHTML = `<div style="font-size:11px;color:#c47d00;letter-spacing:1px;margin-bottom:2px;">🏆 ${shortName.toUpperCase()}</div><div style="font-size:15px;color:var(--cream);font-weight:700;">${pr.weight} lbs × ${pr.reps}</div>`;
     list.appendChild(chip);
   });
+}
+
+function togglePRBoard() {
+  const list = document.getElementById('pr-board-list');
+  const chevron = document.getElementById('pr-board-chevron');
+  if (!list) return;
+  const open = list.style.display !== 'none';
+  list.style.display = open ? 'none' : 'flex';
+  if (chevron) chevron.textContent = open ? '▶' : '▼';
 }
 
 
@@ -5824,7 +5847,8 @@ function renderHistoryItem(entry, container, insertBefore) {
   const date = new Date(entry.date);
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   const totalSets = Object.values(entry.sets).reduce((sum, sets) => sum + sets.filter(s => s.done).length, 0);
-  const hasPR = entry.prs && entry.prs.length > 0;
+  const prCount = entry.prs ? entry.prs.length : 0;
+  const prLabel = prCount === 1 ? '🏆 PR' : prCount > 1 ? `🏆 ${prCount} PRs` : '';
 
   const el = document.createElement('div');
   el.className = 'history-item';
@@ -5835,7 +5859,7 @@ function renderHistoryItem(entry, container, insertBefore) {
         <div class="history-day">${entry.dayName} — ${entry.dayFocus}</div>
         <div class="history-summary" style="display:flex;align-items:center;gap:8px;">
           ${totalSets} sets completed
-          ${hasPR ? '<span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:2px 8px;border-radius:20px;">&#9733; NEW PR</span>' : ''}
+          ${prCount > 0 ? `<span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:2px 8px;border-radius:20px;">${prLabel}</span>` : ''}
         </div>
       </div>
       <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px 0 4px 12px; opacity:0.4; flex-shrink:0;" title="Delete session">
