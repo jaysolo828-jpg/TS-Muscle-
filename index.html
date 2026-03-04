@@ -3214,6 +3214,13 @@ function loadState() {
           });
         });
       }
+
+      // One-time migration: rebuild state.prs from history to fix any contamination
+      // caused by PRs detected during a discarded session being left in state.prs.
+      if (!state.prsSyncedFromHistory) {
+        recalcPRsFromHistory();
+        state.prsSyncedFromHistory = true;
+      }
     } catch(e) {}
   }
 }
