@@ -105,7 +105,7 @@
 
   .app-sub {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--gray);
@@ -325,7 +325,7 @@
   .nav-icon { font-size: 22px; display: flex; align-items: center; justify-content: center; }
   .nav-icon svg { width: 24px; height: 24px; stroke: var(--gray); fill: none; transition: stroke 0.2s; }
   .nav-item.active .nav-icon svg { stroke: var(--red); }
-  .nav-label { font-size: 11px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  .nav-label { font-size: 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
 
   /* SCREENS */
   .screen { display: none; padding: 16px; }
@@ -618,7 +618,7 @@
     overflow: hidden;
   }
 
-  .session-exercise.completed { border-color: var(--success); opacity: 0.7; }
+  .session-exercise.completed { border-color: var(--success); opacity: 0.75; }
 
   .session-ex-header {
     padding: 14px 16px;
@@ -684,7 +684,7 @@
     transition: border-color 0.2s;
   }
   .set-input:focus { border-color: var(--red); }
-  .set-input::placeholder { color: #555; }
+  .set-input::placeholder { color: #888; }
 
   /* Larger touch target for set done button on mobile */
   /* MUSIC APP SELECTOR */
@@ -757,7 +757,7 @@
   .rpe-nudge-dismiss {
     flex-shrink: 0; background: none; border: none;
     color: var(--gray); font-size: 15px; cursor: pointer; padding: 4px 4px 4px 8px;
-    opacity: 0.5; transition: opacity 0.15s; line-height: 1;
+    opacity: 0.65; transition: opacity 0.15s; line-height: 1;
     -webkit-tap-highlight-color: transparent;
   }
   .rpe-nudge-dismiss:active { opacity: 1; }
@@ -842,7 +842,7 @@
     transition: border-color 0.2s, color 0.2s;
   }
   .rpe-select[data-empty="true"] {
-    color: #555;
+    color: #888;
     border-color: var(--dark4);
   }
   .rpe-select[data-empty="false"] {
@@ -988,7 +988,7 @@
     transition: border-color 0.2s;
   }
   .ex-note-input:focus { border-color: var(--red); color: var(--cream); }
-  .ex-note-input::placeholder { color: #444; font-style: italic; }
+  .ex-note-input::placeholder { color: #777; font-style: italic; }
 
   /* FINISH BUTTON */
   .finish-btn {
@@ -1362,7 +1362,7 @@
   .week-dot.deload { background: var(--warning); border-color: var(--warning); color: var(--black); }
   .week-dot.done { background: var(--red); border-color: var(--red); color: var(--white); }
   .week-dot.current-deload { border: 2px solid var(--warning); color: var(--warning); }
-  .week-dot.final { border: 2px solid #555; color: var(--gray-light); font-size: 11px; }
+  .week-dot.final { border: 2px solid #777; color: var(--gray-light); font-size: 12px; }
   .week-dot.final.done { background: var(--red); border-color: var(--red); color: var(--white); font-size: 14px; }
 
   .stat-grid {
@@ -2260,7 +2260,7 @@
     <!-- Footer buttons -->
     <div style="padding:0 24px 24px; display:flex; gap:10px; margin-top:4px;">
       <button onclick="document.getElementById('pause-program-modal').style.display='none'" style="flex:1; background:var(--dark3); border:1px solid #444; color:var(--gray); padding:13px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
-      <button id="pause-confirm-btn" onclick="confirmPauseProgram()" disabled style="flex:2; background:#333; border:none; color:#555; padding:13px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:not-allowed;">PAUSE PROGRAM</button>
+      <button id="pause-confirm-btn" onclick="confirmPauseProgram()" disabled style="flex:2; background:#333; border:none; color:#777; padding:13px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:not-allowed;">PAUSE PROGRAM</button>
     </div>
   </div>
 </div>
@@ -2310,7 +2310,7 @@
       <div style="background:var(--dark3); border-radius:12px; padding:16px; margin-bottom:20px;">
         <div style="font-size:13px; color:var(--gray-light); line-height:1.7; border-left:2px solid var(--red); padding-left:12px;">"I don't need to punish myself. I can simply decide what comes next — and that decision doesn't need to be perfect, just forward."</div>
       </div>
-      <div style="font-size:13px; color:var(--gray); margin-bottom:6px;">When will you train next? <span style="color:#555;">(Implementation intention — proven to 2-3x follow-through)</span></div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:6px;">When will you train next? <span style="color:#888;">(Implementation intention — proven to 2-3x follow-through)</span></div>
       <input type="text" id="sc-plan" class="notes-input" placeholder="e.g. Tomorrow morning before work, or Thursday at 6pm" style="min-height:44px; margin-bottom:20px; resize:none;"/>
       <button onclick="saveSelfCompassionEntry()" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; margin-bottom:10px; min-height:44px;">SAVE & CLOSE</button>
       <button onclick="closeSelfCompassionModal()" style="width:100%; background:transparent; border:none; color:var(--gray); padding:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; cursor:pointer; min-height:44px;">CLOSE WITHOUT SAVING</button>
@@ -2521,7 +2521,7 @@
     <a id="contact-email-link" style="font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:15px; color:var(--red); letter-spacing:0; text-decoration:none; cursor:pointer;"></a>
     <script>(function(){ var u='Jay@'+'therapyandsneakers'+'.org'; var a=document.getElementById('contact-email-link'); if(a){a.textContent=u;a.href='mailto:'+u;} })();</script>
   </div>
-  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#444; letter-spacing:2px;">T&S MUSCLE v1.0.7 · THERAPY & SNEAKERS</div>
+  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#777; letter-spacing:2px;">T&S MUSCLE v1.0.7 · THERAPY & SNEAKERS</div>
 
   <!-- MUSIC PLAYER SELECTOR -->
   <div style="margin-top:8px;">
@@ -2563,7 +2563,7 @@
     <!-- Optional playlist link -->
     <div id="music-playlist-section" style="display:none;">
       <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">PLAYLIST LINK (OPTIONAL)</div>
-      <div style="font-size:12px; color:#555; margin-bottom:8px; line-height:1.5;" id="music-playlist-hint"></div>
+      <div style="font-size:12px; color:#888; margin-bottom:8px; line-height:1.5;" id="music-playlist-hint"></div>
       <div style="display:flex; gap:8px; margin-bottom:8px;">
         <input type="url" id="custom-music-url" class="set-input" placeholder="Paste playlist URL (optional)..." style="flex:1; padding:10px 12px; text-align:left; font-size:16px;"/>
         <button onclick="saveCustomMusicLink()" style="background:var(--red); border:none; color:white; padding:10px 16px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer;">SAVE</button>
@@ -2637,10 +2637,10 @@
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         <div class="notes-label" style="margin:0;">SESSION NOTES</div>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#444;letter-spacing:0.5px;margin-left:auto;">OPTIONAL</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#777;letter-spacing:0.5px;margin-left:auto;">OPTIONAL</span>
       </div>
       <textarea class="notes-input" id="session-notes" placeholder="Form cues, how it felt, anything to remember for next time..." style="border-color:var(--dark4);"></textarea>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#444;letter-spacing:0.3px;margin-top:8px;">You can also add notes in the session summary before saving.</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#777;letter-spacing:0.3px;margin-top:8px;">You can also add notes in the session summary before saving.</div>
     </div>
   </div>
 
@@ -3636,7 +3636,7 @@ function renderHome() {
 
   // Legend for deload week marker
   const dotsLegend = document.createElement('div');
-  dotsLegend.style.cssText = 'font-size:10px;color:#555;text-align:center;margin-top:5px;letter-spacing:0.8px;font-family:"Barlow Condensed",sans-serif;';
+  dotsLegend.style.cssText = 'font-size:11px;color:#888;text-align:center;margin-top:5px;letter-spacing:0.8px;font-family:"Barlow Condensed",sans-serif;';
   dotsLegend.textContent = 'D = DELOAD WEEK';
   dotsEl.parentNode.insertBefore(dotsLegend, dotsEl.nextSibling);
 
@@ -4542,7 +4542,7 @@ function renderSession() {
       ${buildPlateCalc(ex.id, sets[0]?.weight)}
       ${setsHTML}
       <div class="ex-note-row">
-        ${(() => { const ln = getLastExNote(ex.id, activeSession.dayId); return ln ? `<div style="font-size:11px; color:#555; letter-spacing:0.5px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif;">LAST: ${ln.replace(/"/g, '&quot;')}</div>` : ''; })()}
+        ${(() => { const ln = getLastExNote(ex.id, activeSession.dayId); return ln ? `<div style="font-size:12px; color:#888; letter-spacing:0.5px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif;">LAST: ${ln.replace(/"/g, '&quot;')}</div>` : ''; })()}
         <input type="text" class="ex-note-input"
           placeholder="Note (form cue, how it felt…)"
           value="${(activeSession.exNotes?.[ex.id] || '').replace(/"/g, '&quot;')}"
@@ -5321,7 +5321,7 @@ function showSessionWrapUp() {
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
           <svg viewBox="0 0 24 24" width="12" height="12" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">Session Notes</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#444;letter-spacing:0.5px;margin-left:auto;">Optional</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#777;letter-spacing:0.5px;margin-left:auto;">Optional</span>
         </div>
         <textarea id="wrapup-notes" style="
           width:100%;min-height:72px;background:#1a1a1a;
@@ -5985,7 +5985,7 @@ function renderHistoryItem(entry, container, insertBefore) {
           ${prCount > 0 ? `<span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:2px 8px;border-radius:20px;">${prLabel}</span>` : ''}
         </div>
       </div>
-      <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px 0 4px 12px; opacity:0.4; flex-shrink:0;" title="Delete session">
+      <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px 0 4px 12px; opacity:0.6; flex-shrink:0;" title="Delete session">
         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
       </button>
     </div>
@@ -8204,7 +8204,7 @@ function renderMoodHistory() {
               <div style="font-size:12px; color:var(--gray);">${dateStr}</div>
               <div style="font-size:11px; color:var(--gray);">${timeStr}</div>
             </div>
-            <button onclick="deleteMoodEntry(${idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.5; font-size:16px; line-height:1;" title="Delete entry">
+            <button onclick="deleteMoodEntry(${idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.65; font-size:16px; line-height:1;" title="Delete entry">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
             </button>
           </div>
@@ -8526,7 +8526,7 @@ function renderBarrierHistory() {
           <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:1px; text-transform:uppercase;">${entry.barrier}</div>
           <div style="display:flex; align-items:center; gap:10px;">
             <div style="font-size:11px; color:var(--gray);">${dateStr}</div>
-            <button onclick="deleteBarrierEntry(${idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.5; font-size:16px; line-height:1;" title="Delete entry">
+            <button onclick="deleteBarrierEntry(${idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.65; font-size:16px; line-height:1;" title="Delete entry">
               <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
             </button>
           </div>
