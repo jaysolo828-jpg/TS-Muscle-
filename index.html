@@ -839,6 +839,15 @@
     width: 100%;
     outline: none;
     cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .rpe-select[data-empty="true"] {
+    color: #555;
+    border-color: var(--dark4);
+  }
+  .rpe-select[data-empty="false"] {
+    color: var(--white);
+    border-color: rgba(196,125,0,0.5);
   }
 
   /* Active nav dot */
@@ -1900,7 +1909,8 @@
      PR CELEBRATION MODAL
      ============================================================ -->
 <div id="pr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99995; align-items:center; justify-content:center; padding:24px; pointer-events:none;">
-  <div id="pr-modal-inner" style="background:linear-gradient(135deg,#1a1200,#2d2000); border:2px solid #f0a500; border-radius:20px; padding:24px; width:100%; max-width:340px; text-align:center; pointer-events:auto; box-shadow:0 0 40px rgba(196,125,0,0.4);">
+  <div id="pr-modal-inner" style="background:linear-gradient(135deg,#1a1200,#2d2000); border:2px solid #f0a500; border-radius:20px; padding:24px; width:100%; max-width:340px; text-align:center; pointer-events:auto; box-shadow:0 0 40px rgba(196,125,0,0.4); position:relative;">
+    <button onclick="document.getElementById('pr-modal').style.display='none'" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#666;font-size:20px;cursor:pointer;line-height:1;padding:4px;">✕</button>
     <div style="margin-bottom:12px;"><svg viewBox="0 0 24 24" width="56" height="56" stroke="#ffe066" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H2V5h4M18 9h4V5h-4M8 21h8M12 17v4"/><path d="M6 5h12v8a6 6 0 01-12 0V5z"/></svg></div>
     <div style="font-family:'Bebas Neue',cursive; font-size:30px; color:#ffe066; letter-spacing:3px; margin-bottom:4px;">PERSONAL RECORD</div>
     <div id="pr-modal-exercise" style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--gray-light); margin-bottom:12px;"></div>
@@ -3542,17 +3552,18 @@ function renderHome() {
   if (state.programPaused) {
     const pausedDays = Math.floor((Date.now() - new Date(state.pausedAt)) / (1000 * 60 * 60 * 24));
     const daysLeft = Math.max(0, 14 - pausedDays);
+    const urgency = pausedDays > 10;
     const reasonIcons = { illness: '🤒', injury: '🩹', emergency: '🏠', travel: '✈️' };
     const icon = reasonIcons[state.pauseReason] || '⏸';
-    pauseBanner.style.cssText = 'margin:0 16px 12px; background:var(--dark2); border:1px solid rgba(243,156,18,0.4); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:14px; cursor:pointer;';
+    pauseBanner.style.cssText = `margin:0 16px 12px; background:var(--dark2); border:1px solid ${urgency ? 'rgba(255,107,107,0.5)' : 'rgba(243,156,18,0.4)'}; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:14px; cursor:pointer;`;
     pauseBanner.onclick = () => showResumeProgramModal();
     pauseBanner.innerHTML = `
       <div style="font-size:28px;">${icon}</div>
       <div style="flex:1;">
-        <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:var(--warning);letter-spacing:1px;">PROGRAM PAUSED</div>
-        <div style="font-size:12px;color:var(--gray);margin-top:2px;">Day ${pausedDays} of 14 max · ${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining · Tap to resume</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:${urgency ? '#ff6b6b' : 'var(--warning)'};letter-spacing:1px;">PROGRAM PAUSED</div>
+        <div style="font-size:12px;color:${urgency ? '#ff6b6b' : 'var(--gray)'};font-weight:${urgency ? '700' : 'normal'};margin-top:2px;">Day ${pausedDays} of 14 · ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left${urgency ? ' — ⚠️ Resume soon!' : ''} · Tap to resume</div>
       </div>
-      <svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+      <svg viewBox="0 0 24 24" width="18" height="18" stroke="${urgency ? '#ff6b6b' : 'var(--gray)'}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
   } else {
     pauseBanner.style.display = 'none';
   }
@@ -3622,6 +3633,12 @@ function renderHome() {
 
     dotsEl.appendChild(dot);
   }
+
+  // Legend for deload week marker
+  const dotsLegend = document.createElement('div');
+  dotsLegend.style.cssText = 'font-size:10px;color:#555;text-align:center;margin-top:5px;letter-spacing:0.8px;font-family:"Barlow Condensed",sans-serif;';
+  dotsLegend.textContent = 'D = DELOAD WEEK';
+  dotsEl.parentNode.insertBefore(dotsLegend, dotsEl.nextSibling);
 
   // Day cards — respect training days limit
   const container = document.getElementById('day-cards');
@@ -3806,6 +3823,7 @@ function showPRModal(exName, weight, reps, improvement) {
   }
   const modal = document.getElementById('pr-modal');
   modal.style.display = 'flex';
+  modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
   launchConfetti();
   // Auto-dismiss after 5 seconds
   setTimeout(() => { if (modal.style.display === 'flex') modal.style.display = 'none'; }, 5000);
@@ -4484,7 +4502,7 @@ function renderSession() {
               oninput="updateRepIndicator('${ex.id}',${si},'${ex.reps}')"/>
             <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:6px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
           </div>
-          <select class="rpe-select" onchange="updateSet('${ex.id}',${si},'rpe',this.value)">
+          <select class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" onchange="updateSet('${ex.id}',${si},'rpe',this.value);this.dataset.empty=this.value?'false':'true';">
             <option value="">RPE</option>
             ${[6,6.5,7,7.5,8,8.5,9,9.5,10].map(r => `<option value="${r}" ${set.rpe == r ? 'selected' : ''}>${r}</option>`).join('')}
           </select>
@@ -4493,9 +4511,10 @@ function renderSession() {
       `;
     });
 
-    // Rest timer row — shows after first set is marked done
+    // Rest timer row — hidden until first set is marked done
+    const _anySetDone = (activeSession.sets[ex.id] || []).some(s => s.done);
     setsHTML += `
-      <div class="rest-timer-row" id="rest-row-${ex.id}">
+      <div class="rest-timer-row" id="rest-row-${ex.id}" style="display:${_anySetDone ? 'flex' : 'none'};"
         <div class="rest-timer-label">⏱ REST TIMER</div>
         <button class="rest-timer-btn" id="rest-btn-${ex.id}" onclick="toggleRestTimer('${ex.id}')">
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -4604,8 +4623,11 @@ function toggleSetDone(exId, setIndex) {
     if (row) {
       const wInput = row.querySelector('input[type="number"]:first-of-type');
       const rInput = row.querySelectorAll('input[type="number"]')[1];
-      if (wInput && wInput.value) set.weight = wInput.value;
-      if (rInput && rInput.value) set.reps = rInput.value;
+      // Dispatch change to flush any pending onchange handlers before reading
+      if (wInput) wInput.dispatchEvent(new Event('change'));
+      if (rInput) rInput.dispatchEvent(new Event('change'));
+      if (wInput && wInput.value !== '') set.weight = wInput.value;
+      if (rInput && rInput.value !== '') set.reps = rInput.value;
     }
     checkForPR(exId, set);
     // Stamp persistent rep outcome badge on the set row
@@ -4630,7 +4652,11 @@ function toggleSetDone(exId, setIndex) {
   const exEl = document.getElementById('session-ex-' + exId);
   if (exEl) exEl.classList.toggle('completed', allDone);
 
-  // Rest timer is always visible — no need to hide/show
+  // Reveal rest timer row on first set completion
+  if (set.done) {
+    const restRow = document.getElementById('rest-row-' + exId);
+    if (restRow) restRow.style.display = 'flex';
+  }
 
   updateSessionProgress();
 }
@@ -4848,6 +4874,7 @@ function updateRestTimerUI(exId, remaining, running, finished) {
     btn.classList.remove('active');
     btn.classList.add('finished');
     label.textContent = 'REST DONE ✓';
+    showToast('Rest done — back to work! ⚡');
   } else if (running) {
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
@@ -5140,6 +5167,28 @@ function saveAndExitSession() {
   showToast('Workout saved — resume anytime 💾');
 }
 
+function showDiscardConfirm() {
+  closeExitModal();
+  const overlay = document.createElement('div');
+  overlay.id = 'discard-confirm-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  overlay.innerHTML = `
+    <div style="background:var(--dark2);border:1px solid #8b0000;border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">🗑</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">DISCARD WORKOUT?</div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.5;margin-bottom:24px;">All logged sets will be permanently lost.<br>This cannot be undone.</div>
+      <button onclick="discardSession();document.getElementById('discard-confirm-modal').remove();"
+        style="width:100%;background:#8b0000;border:none;color:var(--cream);padding:16px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;margin-bottom:10px;">
+        YES, DISCARD
+      </button>
+      <button onclick="document.getElementById('discard-confirm-modal').remove();openExitModal();"
+        style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">
+        KEEP WORKOUT
+      </button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
 function discardSession() {
   localStorage.removeItem('ts-muscle-paused');
   _idbSet('ts-muscle-paused', null);
@@ -5292,6 +5341,7 @@ function showSessionWrapUp() {
       </button>
     </div>`;
   document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 function saveWrapupNotesAndFinish() {
@@ -5342,6 +5392,7 @@ function finalizeEndSession(save) {
     state.history.push(entry);
     state.totalSessions++;
     state.inactivityPromptShown = false;
+    showToast('Workout saved! ✓');
 
     // Increment week every 4 sessions
     if (state.totalSessions % 4 === 0) {
@@ -5794,10 +5845,12 @@ function renderPRBoard() {
 
   prEntries.sort((a, b) => new Date(b[1].date) - new Date(a[1].date)).forEach(([exId, pr]) => {
     const name = nameMap[exId] || exId;
-    const shortName = name.split('(')[0].split('or')[0].trim().split(' ').slice(0,3).join(' ');
+    const cleanName = name.split('(')[0].split(' / ')[0].trim();
+    const displayName = cleanName.length > 22 ? cleanName.slice(0, 20) + '…' : cleanName;
+    const prDate = pr.date ? new Date(pr.date).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '';
     const chip = document.createElement('div');
     chip.style.cssText = 'background:linear-gradient(135deg,#1a1200,#2a1c00);border:1px solid #c47d00;border-radius:10px;padding:8px 12px;font-family:"Barlow Condensed",sans-serif;';
-    chip.innerHTML = `<div style="font-size:11px;color:#c47d00;letter-spacing:1px;margin-bottom:2px;">🏆 ${shortName.toUpperCase()}</div><div style="font-size:15px;color:var(--cream);font-weight:700;">${pr.weight} lbs × ${pr.reps}</div>`;
+    chip.innerHTML = `<div style="font-size:11px;color:#c47d00;letter-spacing:1px;margin-bottom:2px;">🏆 ${displayName.toUpperCase()}</div><div style="font-size:15px;color:var(--cream);font-weight:700;">${pr.weight} lbs × ${pr.reps}</div>${prDate ? `<div style="font-size:10px;color:#8a6a00;margin-top:3px;letter-spacing:0.5px;">${prDate}</div>` : ''}`;
     list.appendChild(chip);
   });
 }
@@ -8838,7 +8891,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <button onclick="saveAndExitSession()" style="width:100%; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; margin-bottom:10px;">
       💾 SAVE & EXIT — RESUME LATER
     </button>
-    <button onclick="discardSession()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; margin-bottom:10px;">
+    <button onclick="showDiscardConfirm()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; margin-bottom:10px;">
       🗑 DISCARD & EXIT
     </button>
     <button onclick="closeExitModal()" style="width:100%; background:none; border:none; color:var(--gray); padding:12px; font-family:'Barlow Condensed',sans-serif; font-size:15px; cursor:pointer; letter-spacing:1px;">
