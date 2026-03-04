@@ -3081,7 +3081,8 @@ let state = {
   history: [],
   weekCount: 1,
   totalSessions: 0,
-  weightIncrement: 'medium'   // 'small'=2.5lb | 'medium'=5lb | 'large'=10lb
+  weightIncrement: 'medium',  // 'small'=2.5lb | 'medium'=5lb | 'large'=10lb
+  startingWeights: {}
 };
 
 let activeSession = null;
@@ -4026,7 +4027,7 @@ function getProgressiveWeight(exId, dayId) {
   // Collect up to last 3 sessions for this same day
   const sameDaySessions = [...state.history]
     .reverse()
-    .filter(h => h.dayId === dayId && h.sets?.[exId]);
+    .filter(h => h.dayId === dayId && h.sets?.[exId] && !h.isDeload);
 
   if (sameDaySessions.length === 0) {
     if (state.autoPopulateWeights !== false && state.startingWeights?.[exId]) {
@@ -4316,7 +4317,8 @@ function startSession(dayId) {
     startTime: Date.now(),
     sets: {},
     notes: '',
-    swaps: {}
+    swaps: {},
+    isDeload: !!(state.isDeloadWeek || state.isRestWeek)
   };
   day.exercises.forEach(ex => {
     const suggested = getProgressiveWeight(ex.id, day.id);
@@ -5216,7 +5218,8 @@ function finalizeEndSession(save) {
       exNotes: activeSession.exNotes || {},
       notes: activeSession.notes,
       swaps: activeSession.swaps,
-      duration: Math.round((activeSession.endTime - activeSession.startTime) / 60000)
+      duration: Math.round((activeSession.endTime - activeSession.startTime) / 60000),
+      isDeload: activeSession.isDeload || false
     };
 
     state.history.push(entry);
