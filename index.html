@@ -4565,7 +4565,7 @@ function _showRpeNudge(exId, setIndex) {
   const nudge = document.createElement('div');
   nudge.className = 'rpe-nudge-row';
   nudge.id = nudgeId;
-  nudge.innerHTML = `<span class="rpe-nudge-label">How'd that feel?</span><div class="rpe-nudge-pills">${rpeVals.map(r => `<button class="rpe-nudge-btn" onclick="selectRpeFromNudge('${exId}',${setIndex},${r})">${r}</button>`).join('')}</div><button class="rpe-nudge-dismiss" onclick="_removeRpeNudge('${exId}',${setIndex})">✕</button>`;
+  nudge.innerHTML = `<span class="rpe-nudge-label">Effort level?</span><div class="rpe-nudge-pills">${rpeVals.map(r => `<button class="rpe-nudge-btn" onclick="selectRpeFromNudge('${exId}',${setIndex},${r})">${r}</button>`).join('')}</div><button class="rpe-nudge-dismiss" onclick="_removeRpeNudge('${exId}',${setIndex})">✕</button>`;
   setRow.insertAdjacentElement('afterend', nudge);
   requestAnimationFrame(() => requestAnimationFrame(() => nudge.classList.add('open')));
 }
