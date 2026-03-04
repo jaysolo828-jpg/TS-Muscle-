@@ -3130,6 +3130,41 @@ function loadState() {
       const parsed = JSON.parse(saved);
       state = { ...state, ...parsed };
       if (!state.program) state.program = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
+
+      // One-time migration: backfill entry.prs on history entries that predate PR tracking.
+      // Process oldest→newest, track running best per exercise, assign PR list to any
+      // entry missing the field so history badges are consistent with all-time records.
+      if (state.history && state.history.some(e => !Array.isArray(e.prs))) {
+        const runningBest = {};
+        [...state.history].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(entry => {
+          if (!Array.isArray(entry.prs)) {
+            entry.prs = [];
+            Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
+              sets.filter(s => s.done && s.weight && s.reps).forEach(set => {
+                const w = parseFloat(set.weight);
+                const r = parseInt(set.reps);
+                if (!w || !r) return;
+                const best = runningBest[exId];
+                if (!best || w > best.weight || (w === best.weight && r > best.reps)) {
+                  if (!entry.prs.includes(exId)) entry.prs.push(exId);
+                }
+              });
+            });
+          }
+          // Update running best regardless (so later entries compare correctly)
+          Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
+            sets.filter(s => s.done && s.weight && s.reps).forEach(set => {
+              const w = parseFloat(set.weight);
+              const r = parseInt(set.reps);
+              if (!w || !r) return;
+              const best = runningBest[exId];
+              if (!best || w > best.weight || (w === best.weight && r > best.reps)) {
+                runningBest[exId] = { weight: w, reps: r };
+              }
+            });
+          });
+        });
+      }
     } catch(e) {}
   }
 }
