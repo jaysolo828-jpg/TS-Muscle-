@@ -3536,19 +3536,18 @@ function renderHome() {
   const maxDays = state.trainingDaysPerWeek || 4;
   const visibleDays = state.program.slice(0, maxDays);
 
-  // Which days were completed today (have at least one done set)?
-  const today = new Date().toDateString();
-  const completedTodayIds = new Set(
-    state.history
-      .filter(e =>
-        new Date(e.date).toDateString() === today &&
-        Object.values(e.sets || {}).some(sets => sets.some(s => s.done))
-      )
-      .map(e => e.dayId)
-  );
+  // Which days were completed this training week (last totalSessions % 4 real sessions)?
+  // Using the training week rather than calendar day so badges persist across days
+  // until the 4-session week resets.
+  const realSessionsOrdered = (state.history || [])
+    .filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done)))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  const weekRemainder = (state.totalSessions || 0) % 4;
+  const sessionsThisWeek = weekRemainder === 0 ? [] : realSessionsOrdered.slice(-weekRemainder);
+  const completedThisWeekIds = new Set(sessionsThisWeek.map(e => e.dayId));
 
   visibleDays.forEach(day => {
-    const doneToday = completedTodayIds.has(day.id);
+    const doneThisWeek = completedThisWeekIds.has(day.id);
     const isResuming = pausedSession && pausedSession.dayId === day.id;
     const card = document.createElement('div');
     card.className = 'day-card';
@@ -3565,15 +3564,15 @@ function renderHome() {
               </span>
             </div>
             <div class="day-sub">${day.name}</div>
-            ${doneToday ? `
+            ${doneThisWeek ? `
             <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.35);color:#27ae60;border-radius:20px;padding:3px 10px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:5px;">
               <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              COMPLETED TODAY
+              COMPLETED ✓
             </div>` : ''}
           </div>
         </div>
-        <button class="start-btn${doneToday ? ' done-today' : ''}" onclick="event.stopPropagation(); startSession('${day.id}')" style="${doneToday ? 'background:#27ae60;' : isResuming ? 'background:var(--warning);' : ''}">
-          ${doneToday
+        <button class="start-btn${doneThisWeek ? ' done-today' : ''}" onclick="event.stopPropagation(); startSession('${day.id}')" style="${doneThisWeek ? 'background:#27ae60;' : isResuming ? 'background:var(--warning);' : ''}">
+          ${doneThisWeek
             ? `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> DONE`
             : isResuming
             ? `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="currentColor" stroke-width="0"><polygon points="5,3 19,12 5,21"/></svg> RESUME`
@@ -6484,11 +6483,28 @@ function checkBackupReminder() {
   }
 }
 
+// One-time migration: correct state.totalSessions and state.weekCount that were
+// inflated by empty sessions before the v1.2.5 fix. Runs once per device and
+// gates itself with a localStorage flag so it never fires again.
+function migrateSessionCount() {
+  if (localStorage.getItem('ts-session-count-migrated')) return;
+  const realCount = (state.history || []).filter(e =>
+    Object.values(e.sets || {}).some(sets => sets.some(s => s.done))
+  ).length;
+  if (state.totalSessions !== realCount) {
+    state.totalSessions = realCount;
+    state.weekCount = Math.max(1, Math.min(8, Math.floor(realCount / 4) + 1));
+    saveState();
+  }
+  localStorage.setItem('ts-session-count-migrated', '1');
+}
+
 // ============================================================
 // INIT
 // ============================================================
 try {
   loadState();
+  migrateSessionCount();
   checkPauseAutoExpiry();
   renderHome();
   checkOnboarding();
