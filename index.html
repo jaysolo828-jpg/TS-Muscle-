@@ -174,7 +174,7 @@
     font-size: 14px;
   }
   .onboard-select-btn:hover { border-color: #555; }
-  .onboard-select-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.15); }
+  .onboard-select-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); }
   .onboard-next-btn {
     width: 100%; background: var(--red); border: none; color: white;
     padding: 14px; border-radius: 12px; font-family: 'Bebas Neue', cursive;
@@ -191,7 +191,7 @@
     bottom: 0;
     background: #0a0a0a;
     padding-top: 12px;
-    padding-bottom: calc(80px + env(safe-area-inset-bottom) + 20px);
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
   .ob-exercise-row {
     background: var(--dark2); border: 1px solid var(--dark3);
@@ -204,21 +204,21 @@
     transition: border-color 0.2s, background 0.2s; line-height: 1.4;
     min-width: 80px;
   }
-  .review-weight-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.15); }
+  .review-weight-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); }
 
   .mood-btn {
     flex: 1; background: var(--dark3); border: 2px solid transparent;
     border-radius: 12px; padding: 14px 4px; cursor: pointer;
     text-align: center; transition: border-color 0.2s, background 0.2s;
   }
-  .mood-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.15); }
+  .mood-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); }
   .mood-timing-btn {
     flex: 1; background: var(--dark3); border: 1px solid #333;
     color: var(--gray); padding: 10px; border-radius: 10px;
     font-family: 'Barlow Condensed', sans-serif; font-size: 13px;
     letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
   }
-  .mood-timing-btn.selected { border-color: var(--red); color: var(--red); background: rgba(204,32,39,0.1); }
+  .mood-timing-btn.selected { border-color: var(--red); color: var(--red); background: rgba(204,32,39,0.12); }
 
   .cardio-type-btn {
     padding: 12px 8px;
@@ -289,7 +289,7 @@
     text-align: left; cursor: pointer; transition: border-color 0.2s, background 0.2s;
   }
   .settings-day-btn:hover { border-color: #555; }
-  .settings-day-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.15); }
+  .settings-day-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); }
 
 
   .cbt-barrier-btn {
@@ -306,7 +306,7 @@
   }
   .cbt-barrier-btn:hover, .cbt-barrier-btn.selected {
     border-color: var(--red);
-    background: rgba(204,32,39,0.15);
+    background: rgba(204,32,39,0.12);
   }
   .cbt-suggestion-chip {
     background: var(--dark3);
@@ -1481,6 +1481,7 @@
     white-space: nowrap;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: #e74c3c; background: #1a0808; color: #ff8a8a; }
 
   .empty-state {
     text-align: center;
@@ -1525,7 +1526,7 @@
 </head>
 <body>
 <!-- SPLASH SCREEN -->
-<div id="splash-screen" style="position:fixed; inset:0; background:#0a0a0a; z-index:9999; pointer-events:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;">
+<div id="splash-screen" style="position:fixed; inset:0; background:#0a0a0a; z-index:10000; pointer-events:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;">
   <img src="./icon.png" style="width:200px; height:200px; border-radius:24px; box-shadow:0 0 40px rgba(204,32,39,0.5); mix-blend-mode:screen;"/>
   <div style="font-family:'Bebas Neue',cursive; font-size:36px; letter-spacing:4px; color:#F5E6C8;">T&amp;S MUSCLE</div>
   <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:#888; letter-spacing:2px; text-transform:uppercase;">Where Strength and Culture Collide</div>
@@ -1718,7 +1719,7 @@
       </div>
       <div>
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="tm-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
+        <input type="number" id="tm-calories" placeholder="—" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
@@ -2052,7 +2053,7 @@
 <!-- ============================================================
      ONBOARDING MODAL
      ============================================================ -->
-<div id="onboarding-modal" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:99999; overflow-y:auto;">
+<div id="onboarding-modal" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:9900; overflow-y:auto;">
   <!-- Exit bar: visible only when entering via Settings → Redo Initial Setup -->
   <div id="ob-exit-bar" style="display:none; position:sticky; top:0; z-index:1; background:#0a0a0a; padding:14px 20px 0; text-align:right;">
     <button onclick="closeOnboardingModal()" style="background:none; border:none; color:var(--red); font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; padding:4px 0;">← BACK TO SETTINGS</button>
@@ -2340,7 +2341,7 @@
 
 <!-- SELF-COMPASSION MODAL -->
 <!-- Based on Kristin Neff's 3-component model: Mindfulness, Common Humanity, Self-Kindness -->
-<div id="self-compassion-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9998; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+<div id="self-compassion-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9700; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid #333; margin:auto; position:relative;">
     <button onclick="closeSelfCompassionModal()" style="position:absolute; top:14px; right:16px; background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:32px; height:32px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">✕</button>
 
@@ -2355,7 +2356,7 @@
         <div style="font-size:13px; color:var(--gray-light); line-height:1.7; border-left:2px solid var(--red); padding-left:12px;">"This is a moment of struggle. Struggle is part of the human experience. I don't have to pretend it's not there."</div>
       </div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:20px;">What's actually going on for you right now?</div>
-      <textarea id="sc-feeling" class="notes-input" placeholder="Write anything — tired, overwhelmed, frustrated, sick of it... no wrong answers." style="min-height:80px; margin-bottom:20px;"></textarea>
+      <textarea id="sc-feeling" class="notes-input" placeholder="Write anything — tired, overwhelmed, frustrated, burnt out... no wrong answers." style="min-height:80px; margin-bottom:20px;"></textarea>
       <button onclick="scNext(2)" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; min-height:44px;">I'VE ACKNOWLEDGED IT</button>
     </div>
 
@@ -2394,7 +2395,7 @@
 </div>
 
 <!-- CBT MODAL -->
-<div id="cbt-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+<div id="cbt-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9800; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid var(--dark3);">
     <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">COGNITIVE REFRAME</div>
     <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">LET'S WORK THROUGH THIS</div>
@@ -2608,7 +2609,7 @@
     <!-- No Music — prominent first option -->
     <div class="music-no-app-toggle" id="music-no-music-toggle" onclick="selectMusicApp('none')">
       <div style="flex:1;">
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:15px; letter-spacing:1px; color:var(--cream);">No music during workouts</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:15px; letter-spacing:1px; color:var(--cream);">NO MUSIC DURING WORKOUTS</div>
         <div style="font-size:12px; color:var(--gray); margin-top:2px;">No widget appears — keep it distraction-free</div>
       </div>
       <div id="music-no-check" style="width:22px; height:22px; border-radius:50%; border:2px solid var(--dark4); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s;">
@@ -2898,18 +2899,18 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <button class="nav-item active" onclick="showScreen('home', this)">
+  <button class="nav-item active" onclick="showScreen('home', this)" aria-label="Home">
     <span class="nav-icon">
-      <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M3 11L12 3l9 8v9a1 1 0 01-1 1H5a1 1 0 01-1-1v-9z"/>
         <polyline points="9,22 9,12 15,12 15,22"/>
       </svg>
     </span>
     <span class="nav-label">Home</span>
   </button>
-  <button class="nav-item" onclick="showScreen('history', this)">
+  <button class="nav-item" onclick="showScreen('history', this)" aria-label="History">
     <span class="nav-icon">
-      <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
         <rect x="9" y="3" width="6" height="4" rx="1"/>
         <line x1="9" y1="12" x2="15" y2="12"/>
@@ -2918,17 +2919,17 @@
     </span>
     <span class="nav-label">History</span>
   </button>
-  <button class="nav-item" onclick="showScreen('cardio', this)">
+  <button class="nav-item" onclick="showScreen('cardio', this)" aria-label="Cardio">
     <span class="nav-icon">
-      <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/>
       </svg>
     </span>
     <span class="nav-label">Cardio</span>
   </button>
-  <button class="nav-item" onclick="showScreen('mindset', this)">
+  <button class="nav-item" onclick="showScreen('mindset', this)" aria-label="Mindset">
     <span class="nav-icon">
-      <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12 2a6 6 0 016 6c0 2.5-1.5 4.5-3 5.5V16H9v-2.5C7.5 12.5 6 10.5 6 8a6 6 0 016-6z"/>
         <line x1="9" y1="19" x2="15" y2="19"/>
         <line x1="10" y1="22" x2="14" y2="22"/>
@@ -2938,9 +2939,9 @@
     </span>
     <span class="nav-label">Mindset</span>
   </button>
-  <button class="nav-item" onclick="showScreen('settings', this)">
+  <button class="nav-item" onclick="showScreen('settings', this)" aria-label="Settings">
     <span class="nav-icon">
-      <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <line x1="4" y1="6" x2="20" y2="6"/>
         <line x1="4" y1="12" x2="20" y2="12"/>
         <line x1="4" y1="18" x2="20" y2="18"/>
@@ -3350,7 +3351,7 @@ function saveState() {
       localStorage.setItem('ts-muscle-state', _json);
       _idbSet('ts-muscle-state', _json);
     } catch(e2) {
-      console.warn('T&S Muscle: could not save state', e2);
+      showToast('Storage full — oldest history trimmed to save space', 'error');
     }
   }
 }
@@ -3428,7 +3429,7 @@ function openBodyweightModal() {
 function saveBodyweight() {
   const input = document.getElementById('bw-modal-input');
   const val = parseFloat(input?.value);
-  if (!val || val < 50 || val > 500) { showToast('Enter a valid weight (50–500 lbs)'); return; }
+  if (!val || val < 50 || val > 500) { showToast('Enter a valid weight (50–500 lbs)', 'error'); return; }
   if (!state.profile) state.profile = {};
   state.profile.bodyweight = val;
   saveState();
@@ -5195,7 +5196,7 @@ function saveYtLink(type) {
 
 function doSwapFromDropdown(permanent) {
   const idx = document.getElementById('alt-dropdown').value;
-  if (idx === '') { showToast('Select an exercise first'); return; }
+  if (idx === '') { showToast('Select an exercise first', 'error'); return; }
   const { dayId, exId } = pendingSwap;
   const day = state.program.find(d => d.id === dayId);
   const ex = day.exercises.find(e => e.id === exId);
@@ -5204,7 +5205,7 @@ function doSwapFromDropdown(permanent) {
 
 function doCustomSwap(permanent) {
   const name = document.getElementById('custom-exercise-input').value.trim();
-  if (!name) { showToast('Enter an exercise name first'); return; }
+  if (!name) { showToast('Enter an exercise name first', 'error'); return; }
   doSwap(name, permanent);
 }
 
@@ -6398,7 +6399,7 @@ function exportData() {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(data).then(() => {
         showToast('Data copied to clipboard — paste into a notes app to save ✓');
-      }).catch(() => showToast('Export failed. Try on desktop.'));
+      }).catch(() => showToast('Export failed. Try on desktop.', 'error'));
     } else {
       showToast('Export not supported on this browser.');
     }
@@ -6421,7 +6422,7 @@ function handleImport(e) {
       renderHome();
       showToast('Data imported successfully! ✓');
     } catch(err) {
-      showToast('Import failed — invalid file');
+      showToast('Import failed — invalid file', 'error');
     }
   };
   reader.readAsText(file);
@@ -6460,11 +6461,13 @@ function cancelRestoreDefaults() {
 // ============================================================
 // TOAST
 // ============================================================
-function showToast(msg) {
+function showToast(msg, type) {
   const toast = document.getElementById('toast');
   toast.textContent = msg;
+  toast.classList.remove('error');
+  if (type === 'error') toast.classList.add('error');
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2500);
+  setTimeout(() => { toast.classList.remove('show'); toast.classList.remove('error'); }, 2500);
 }
 
 
@@ -7329,7 +7332,7 @@ function openNativeMusicApp() {
 
 function saveCustomMusicLink() {
   const url = document.getElementById('custom-music-url')?.value.trim();
-  if (!url) { showToast('Paste a link first'); return; }
+  if (!url) { showToast('Paste a link first', 'error'); return; }
   state.customMusicUrl = url;
   saveState();
   updateMusicSettingsUI();
