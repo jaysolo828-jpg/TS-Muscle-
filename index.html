@@ -3311,6 +3311,28 @@ function _idbGet(key) {
   }));
 }
 
+function migrateExerciseNames() {
+  const NAME_MAP = {
+    'Barbell or DB Bench Press':          'Barbell Bench Press',
+    'Cable or Machine Flye':              'Cable Flye',
+    'Lateral Raises (Cable or DB)':       'Cable Lateral Raise',
+    'Lying or Seated Hamstring Curl':     'Lying Hamstring Curl',
+    'Hip Thrust (Barbell or Machine)':    'Barbell Hip Thrust',
+    'Barbell or EZ Bar Curl':             'EZ Bar Curl',
+    'Preacher Curl (EZ Bar or DB)':       'EZ Bar Preacher Curl',
+    'Nordic Curl or Hamstring Curl':      'Nordic Curl',
+    'Cable Pull-Through or Hip Thrust':   'Cable Pull-Through',
+  };
+  if (!state.program) return;
+  let changed = false;
+  state.program.forEach(day => {
+    day.exercises.forEach(ex => {
+      if (NAME_MAP[ex.name]) { ex.name = NAME_MAP[ex.name]; changed = true; }
+    });
+  });
+  if (changed) saveState();
+}
+
 function loadState() {
   const saved = localStorage.getItem('ts-muscle-state');
   if (saved) {
@@ -3318,6 +3340,7 @@ function loadState() {
       const parsed = JSON.parse(saved);
       state = { ...state, ...parsed };
       if (!state.program) state.program = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
+      migrateExerciseNames();
 
       // One-time migration: backfill entry.prs on history entries that predate PR tracking.
       // Process oldest→newest, track running best per exercise, assign PR list to any
