@@ -4552,7 +4552,7 @@ function startSession(dayId) {
           <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">RESUME SESSION?</div>
           <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">You have a saved session for this workout. Pick up where you left off?</div>
           <div style="display:flex;gap:10px;">
-            <button onclick="this.closest('[style*=fixed]').remove();localStorage.removeItem('ts-muscle-paused');" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">START FRESH</button>
+            <button onclick="this.closest('[style*=fixed]').remove();localStorage.removeItem('ts-muscle-paused');_idbSet('ts-muscle-paused',null);" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">START FRESH</button>
             <button id="resume-confirm-btn" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">RESUME</button>
           </div>
         </div>`;
