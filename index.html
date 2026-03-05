@@ -635,6 +635,16 @@
     color: var(--cream);
   }
 
+  .muscle-pill {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+
   .swap-btn {
     background: none;
     border: 1px solid var(--dark4);
@@ -3225,6 +3235,24 @@ const DEFAULT_PROGRAM = [
   }
 ];
 
+const MUSCLE_MAP = {
+  bench: 'CHEST', incline: 'CHEST', flye: 'CHEST',
+  pushdown: 'TRICEPS', 'overhead-tri': 'TRICEPS',
+  lateral: 'SHOULDERS', 'rear-delt': 'SHOULDERS',
+  'chest-row': 'BACK', pulldown: 'BACK', 'db-row': 'BACK',
+  'ez-curl': 'BICEPS', preacher: 'BICEPS',
+  'legpress-a': 'QUADS', 'leg-ext-a': 'QUADS',
+  'legpress-b': 'QUADS', 'single-legpress': 'QUADS', 'leg-ext-b': 'QUADS',
+  rdl: 'HAMSTRINGS', 'ham-curl-a': 'HAMSTRINGS', 'ham-curl-b': 'HAMSTRINGS',
+  'hip-thrust-a': 'GLUTES', 'pull-through': 'GLUTES',
+  'calf-a': 'CALVES', 'calf-b': 'CALVES',
+};
+const MUSCLE_COLORS = {
+  CHEST: '#4a9eff', BACK: '#20b2aa', QUADS: '#e8934a',
+  HAMSTRINGS: '#c07855', GLUTES: '#d47fa0', CALVES: '#8da060',
+  TRICEPS: '#9b7fd4', BICEPS: '#6e9bd4', SHOULDERS: '#c4a547',
+};
+
 // ============================================================
 // STATE
 // ============================================================
@@ -4566,6 +4594,9 @@ function renderSession() {
     const exEl = document.createElement('div');
     exEl.className = 'session-exercise' + (isCompleted ? ' completed' : '');
     exEl.id = 'session-ex-' + ex.id;
+    const _muscle = MUSCLE_MAP[ex.id];
+    const _mColor = _muscle ? MUSCLE_COLORS[_muscle] : null;
+    if (_mColor) exEl.style.borderLeft = `3px solid ${_mColor}`;
 
     let setsHTML = `
       <div class="set-labels">
@@ -4624,6 +4655,7 @@ function renderSession() {
       <div class="session-ex-header">
         <div style="display:flex; align-items:center; gap:8px;">
           <div class="session-ex-name">${displayName}</div>
+          ${_muscle ? `<span class="muscle-pill" style="background:${_mColor}22;color:${_mColor};border:1px solid ${_mColor}55;">${_muscle}</span>` : ''}
           ${state.prs?.[ex.id] ? `<span id="pr-badge-${ex.id}" style="font-size:11px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:2px 7px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
