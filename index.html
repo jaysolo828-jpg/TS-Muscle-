@@ -4839,9 +4839,15 @@ function stopSessionTimer() {
 
 // Restart the timer interval when the page returns to foreground (iOS/Android
 // suspend setInterval when the screen locks or the app is backgrounded).
+// Guard: only restart if the workout session overlay is actually visible —
+// prevents restarting while the session is paused (Save & Exit) and the
+// user is back on the home screen.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && activeSession) {
-    startSessionTimer();
+    const sessionEl = document.getElementById('workout-session');
+    if (sessionEl && sessionEl.classList.contains('active')) {
+      startSessionTimer();
+    }
   }
 });
 
