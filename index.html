@@ -1861,6 +1861,12 @@
     </button>
   </div>
 
+  <!-- Self-Compassion Log -->
+  <div class="section-title">SELF-COMPASSION <span>LOG</span></div>
+  <div id="self-compassion-history-list" style="margin-bottom:14px;">
+    <div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet. Use "I need a moment" when you're being hard on yourself.</div></div>
+  </div>
+
   <!-- Skip Logger -->
   <div class="section-title">COGNITIVE <span>REFRAME</span></div>
   <div class="card" style="margin-bottom:14px;">
@@ -2335,6 +2341,10 @@
         <button class="cbt-barrier-btn" onclick="selectBarrier('anxious or stressed')">😰 Anxious or stressed</button>
         <button class="cbt-barrier-btn" onclick="selectBarrier('physical pain or sickness')">🤕 Physical pain or sickness</button>
         <button class="cbt-barrier-btn" onclick="selectBarrier('other')">💬 Something else</button>
+      </div>
+      <div id="barrier-other-input" style="display:none; margin-top:12px;">
+        <input id="barrier-other-text" type="text" class="notes-input" placeholder="Briefly describe what got in the way..." style="width:100%; padding:12px; border-radius:10px; box-sizing:border-box; margin-bottom:10px;"/>
+        <button onclick="proceedFromOtherBarrier()" style="width:100%; background:var(--red); border:none; color:white; padding:12px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">CONTINUE</button>
       </div>
     </div>
 
@@ -3286,7 +3296,7 @@ function showScreen(name, el) {
   if (name === 'history') { renderHistory(); renderProgress(); }
 
   if (name === 'cardio') renderCardioHistory();
-  if (name === 'mindset') { renderBarrierHistory(); renderMoodHistory(); renderMoodInsights(); }
+  if (name === 'mindset') { renderBarrierHistory(); renderMoodHistory(); renderMoodInsights(); renderSelfCompassionLog(); }
 }
 
 // ============================================================
@@ -8401,10 +8411,11 @@ function saveSelfCompassionEntry() {
   // If they set a plan, save it as an implementation intention
   if (plan) {
     if (!state.implementationIntentions) state.implementationIntentions = [];
-    state.implementationIntentions.push({ date: new Date().toISOString(), plan });
+    state.implementationIntentions.push({ date: new Date().toISOString(), plan, checkedIn: false });
   }
 
   saveState();
+  renderSelfCompassionLog();
   closeSelfCompassionModal();
   showToast(plan ? `Plan set: "${plan}" — you've got this` : 'Saved. Be kind to yourself.');
 }
@@ -8448,6 +8459,8 @@ function openCBTModal(trigger) {
   document.getElementById('cbt-step-3').style.display = 'none';
   document.querySelectorAll('.cbt-barrier-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('cbt-own-response').value = '';
+  document.getElementById('barrier-other-input').style.display = 'none';
+  document.getElementById('barrier-other-text').value = '';
   const modal = document.getElementById('cbt-modal');
   modal.style.display = 'flex';
 }
@@ -8461,6 +8474,17 @@ function selectBarrier(barrier) {
   document.querySelectorAll('.cbt-barrier-btn').forEach(b => b.classList.remove('selected'));
   event.target.closest('.cbt-barrier-btn').classList.add('selected');
 
+  // Show free-text input only for "other"
+  const otherInput = document.getElementById('barrier-other-input');
+  if (barrier === 'other') {
+    otherInput.style.display = 'block';
+    document.getElementById('barrier-other-text').focus();
+    return; // wait for user to fill in and press next — we add a Continue button below
+  } else {
+    otherInput.style.display = 'none';
+    document.getElementById('barrier-other-text').value = '';
+  }
+
   setTimeout(() => {
     document.getElementById('cbt-step-1').style.display = 'none';
     document.getElementById('cbt-step-2').style.display = 'block';
@@ -8473,6 +8497,17 @@ function selectBarrier(barrier) {
   }, 200);
 }
 
+function proceedFromOtherBarrier() {
+  document.getElementById('barrier-other-input').style.display = 'none';
+  document.getElementById('cbt-step-1').style.display = 'none';
+  document.getElementById('cbt-step-2').style.display = 'block';
+  const data = CBT_REFRAMES['other'];
+  const container = document.getElementById('cbt-suggestions');
+  container.innerHTML = data.suggestions.map(s =>
+    `<button class="cbt-suggestion-chip" onclick="selectSuggestion(this)">${s}</button>`
+  ).join('');
+}
+
 function selectSuggestion(el) {
   document.getElementById('cbt-own-response').value = el.textContent;
 }
@@ -8480,11 +8515,14 @@ function selectSuggestion(el) {
 function saveCBTEntry() {
   const response = document.getElementById('cbt-own-response').value.trim();
   const data = CBT_REFRAMES[cbtSelectedBarrier] || CBT_REFRAMES['other'];
+  // For "other", use the user's typed description as the barrier label if provided
+  const otherText = document.getElementById('barrier-other-text')?.value?.trim();
+  const barrierLabel = (cbtSelectedBarrier === 'other' && otherText) ? otherText : cbtSelectedBarrier;
 
   const entry = {
     id: Date.now(),
     date: new Date().toISOString(),
-    barrier: cbtSelectedBarrier,
+    barrier: barrierLabel,
     response: response,
     reframe: data.reframe
   };
@@ -8534,7 +8572,44 @@ function renderBarrierHistory() {
   }).join('');
 }
 
+function renderSelfCompassionLog() {
+  const container = document.getElementById('self-compassion-history-list');
+  if (!container) return;
+  if (!state.selfCompassionLog || state.selfCompassionLog.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet. Use "I need a moment" when you\'re being hard on yourself.</div></div>';
+    return;
+  }
+  const entries = state.selfCompassionLog.slice().reverse().slice(0, 20);
+  container.innerHTML = entries.map((entry, idx) => {
+    const realIdx = state.selfCompassionLog.length - 1 - idx;
+    const d = new Date(entry.date);
+    const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    return `
+      <div class="card" style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1px;">SELF-COMPASSION CHECK-IN</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="font-size:11px; color:var(--gray);">${dateStr}</div>
+            <button onclick="deleteSelfCompassionEntry(${realIdx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.65; font-size:16px; line-height:1;" title="Delete entry">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div>
+        </div>
+        ${entry.feeling ? `<div style="font-size:13px; color:var(--cream); margin-bottom:6px;">${entry.feeling}</div>` : ''}
+        ${entry.plan ? `<div style="font-size:12px; color:var(--gray); border-top:1px solid var(--dark3); padding-top:8px; margin-top:6px;">Plan: ${entry.plan}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function deleteSelfCompassionEntry(idx) {
+  if (!state.selfCompassionLog || idx < 0 || idx >= state.selfCompassionLog.length) return;
+  state.selfCompassionLog.splice(idx, 1);
+  saveState();
+  renderSelfCompassionLog();
+}
+
 function checkInactivityPrompt() {
+  if (state.programPaused) return;
   if (!state.history || state.history.length === 0) return;
   const lastSession = state.history[state.history.length - 1];
   if (!lastSession) return;
@@ -8559,6 +8634,48 @@ function checkInactivityPrompt() {
     }, 1500);
   }
   // Reset prompt flag when user logs a new workout
+}
+
+function checkImplementationIntention() {
+  if (!state.implementationIntentions || state.implementationIntentions.length === 0) return;
+  // Find the most recent unchecked intention
+  const pending = [...state.implementationIntentions].reverse().find(i => !i.checkedIn);
+  if (!pending) return;
+
+  const intentionDate = new Date(pending.date);
+  // Give a 2-day buffer before following up
+  const followUpDate = new Date(intentionDate.getTime() + 2 * 24 * 60 * 60 * 1000);
+  if (Date.now() < followUpDate.getTime()) return;
+
+  // Check if a session was logged after the intention was set
+  const sessionAfter = state.history && state.history.some(s => new Date(s.date) > intentionDate);
+  if (sessionAfter) {
+    // They followed through — mark as checked without prompting
+    state.implementationIntentions.forEach(i => { if (!i.checkedIn && i.date === pending.date) i.checkedIn = true; });
+    saveState();
+    return;
+  }
+
+  // Mark as checked so it only fires once
+  state.implementationIntentions.forEach(i => { if (!i.checkedIn && i.date === pending.date) i.checkedIn = true; });
+  saveState();
+
+  setTimeout(() => {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = `
+      <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">CHECKING IN</div>
+        <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:6px;">You planned to get back to training:</div>
+        <div style="font-size:14px;color:var(--cream);font-style:italic;line-height:1.6;margin-bottom:20px;">"${pending.plan}"</div>
+        <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:20px;">Still on track? No pressure — just checking in.</div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">I'M GOOD</button>
+          <button onclick="this.closest('[style*=fixed]').remove();showScreen('mindset',document.querySelector('[onclick*=mindset]'));openSelfCompassionModal();" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">NEED A MOMENT</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }, 2000);
 }
 
 // ============================================================
@@ -8862,9 +8979,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initMusicPlayerUI();
   renderCardioHistory();
   renderBarrierHistory();
+  renderSelfCompassionLog();
   renderMoodHistory();
   renderMoodInsights();
   checkInactivityPrompt();
+  checkImplementationIntention();
   checkTestWeekReview();
   updateTrainingDaysSub();
   updateProgressiveOverloadUI();
