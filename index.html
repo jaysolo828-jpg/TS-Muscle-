@@ -2279,7 +2279,8 @@
 <!-- SELF-COMPASSION MODAL -->
 <!-- Based on Kristin Neff's 3-component model: Mindfulness, Common Humanity, Self-Kindness -->
 <div id="self-compassion-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9998; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
-  <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid #333; margin:auto;">
+  <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid #333; margin:auto; position:relative;">
+    <button onclick="closeSelfCompassionModal()" style="position:absolute; top:14px; right:16px; background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:32px; height:32px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">✕</button>
 
     <!-- Step 1: Acknowledge -->
     <div id="sc-step-1">
@@ -2368,7 +2369,7 @@
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">YOUR REFRAME</div>
         <div id="cbt-reframe-text" style="font-size:15px; color:var(--cream); line-height:1.6;"></div>
       </div>
-      <div style="font-size:12px; color:var(--gray); margin-bottom:16px; text-align:center;">Logged and saved to your barrier history.</div>
+      <div id="cbt-win-message" style="font-size:12px; color:var(--gray); margin-bottom:16px; text-align:center;"></div>
       <button onclick="closeCBTModal()" style="width:100%; background:var(--dark3); border:1px solid var(--gray); color:var(--cream); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">CLOSE</button>
     </div>
 
@@ -8253,8 +8254,55 @@ function renderMoodInsights() {
   const container = document.getElementById('mood-insights-panel');
   if (!container) return;
   const log = state.moodLog || [];
-  if (log.length < 2) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-text">Log a few moods to see your patterns here.</div></div>';
+
+  if (log.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">Log a few moods to unlock your Workout Mood Lift score.</div></div>';
+    return;
+  }
+
+  // Compute check-in day streak
+  const logDays = new Set(log.map(e => e.date.slice(0, 10)));
+  let mindsetStreak = 0;
+  const today = new Date();
+  const todayKey = today.toISOString().slice(0, 10);
+  const startFrom = logDays.has(todayKey) ? 0 : 1;
+  for (let i = startFrom; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    if (logDays.has(d.toISOString().slice(0, 10))) mindsetStreak++;
+    else break;
+  }
+
+  // Compute logs this week (Mon–Sun)
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  weekStart.setHours(0, 0, 0, 0);
+  const logsThisWeek = log.filter(e => new Date(e.date) >= weekStart).length;
+
+  const statsGrid = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+      <div class="card" style="text-align:center; padding:14px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">CHECK-IN STREAK</div>
+        <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${mindsetStreak}</div>
+        <div style="font-size:11px; color:var(--gray);">day${mindsetStreak !== 1 ? 's' : ''} in a row</div>
+      </div>
+      <div class="card" style="text-align:center; padding:14px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">THIS WEEK</div>
+        <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${logsThisWeek}</div>
+        <div style="font-size:11px; color:var(--gray);">mood log${logsThisWeek !== 1 ? 's' : ''}</div>
+      </div>
+    </div>`;
+
+  if (log.length < 3) {
+    const needed = 3 - log.length;
+    container.innerHTML = statsGrid + `
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">UNLOCKING INSIGHTS</div>
+        <div style="background:var(--dark3); border-radius:8px; overflow:hidden; margin-bottom:8px; height:6px;">
+          <div style="background:var(--red); height:100%; width:${Math.round((log.length / 3) * 100)}%; border-radius:8px;"></div>
+        </div>
+        <div style="font-size:12px; color:var(--gray-light);">${log.length} of 3 entries logged — ${needed} more to unlock mood pattern insights.</div>
+      </div>`;
     return;
   }
 
@@ -8302,7 +8350,7 @@ function renderMoodInsights() {
     }
   }
 
-  let html = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">`;
+  let html = statsGrid + `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">`;
 
   if (avgPre) html += `
     <div class="card" style="text-align:center; padding:14px;">
@@ -8554,6 +8602,19 @@ function saveCBTEntry() {
   document.getElementById('cbt-reframe-text').textContent = data.reframe;
   document.getElementById('cbt-step-2').style.display = 'none';
   document.getElementById('cbt-step-3').style.display = 'block';
+
+  const cbtWinMessages = [
+    "You just did something most people don't — you thought instead of spiraled.",
+    "Logged. That reflection is the difference between a setback and a step forward.",
+    "Self-awareness is a skill. You just used it.",
+    "Most people avoid this moment. You leaned in. That counts.",
+    "Acknowledging what got in the way is the first step to getting past it.",
+    "Saved. One honest reflection at a time.",
+    "You didn't just skip — you examined it. That's the harder thing.",
+    "The fact you're here means you haven't given up. Keep going."
+  ];
+  document.getElementById('cbt-win-message').textContent =
+    cbtWinMessages[Math.floor(Math.random() * cbtWinMessages.length)];
 }
 
 
