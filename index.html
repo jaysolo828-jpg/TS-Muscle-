@@ -2976,7 +2976,7 @@ const DEFAULT_PROGRAM = [
   {
     id: 'upperA', day: 'Monday', badge: 'UPPER A', name: 'Chest + Triceps + Shoulders',
     exercises: [
-      { id: 'bench', name: 'Barbell or DB Bench Press', sets: 4, reps: '8–10', rest: '2 min',
+      { id: 'bench', name: 'Barbell Bench Press', sets: 4, reps: '8–10', rest: '2 min',
         ytLink: 'https://youtu.be/vcBig73ojpE',
         alts: [
           { name: 'DB Bench Press', note: 'More natural shoulder path', ytLink: 'https://youtu.be/QsYre__-aro' },
@@ -2996,7 +2996,7 @@ const DEFAULT_PROGRAM = [
           { name: 'Landmine Press', note: 'Arc motion, shoulder-friendly', ytLink: 'https://youtu.be/lh6jbwAkXaQ' }
         ]
       },
-      { id: 'flye', name: 'Cable or Machine Flye', sets: 3, reps: '12–15', rest: '60 sec',
+      { id: 'flye', name: 'Cable Flye', sets: 3, reps: '12–15', rest: '60 sec',
         ytLink: 'https://youtu.be/Iwe6AmxVf7o',
         alts: [
           { name: 'Pec Deck Flye', note: 'Constant tension, excellent isolation', ytLink: 'https://youtu.be/Z57CtFmRMxA' },
@@ -3026,7 +3026,7 @@ const DEFAULT_PROGRAM = [
           { name: 'Close Grip Bench Press', note: 'Compound tricep builder', ytLink: 'https://youtu.be/nEF0biza6ek' }
         ]
       },
-      { id: 'lateral', name: 'Lateral Raises (Cable or DB)', sets: 3, reps: '15', rest: '60 sec',
+      { id: 'lateral', name: 'Cable Lateral Raise', sets: 3, reps: '15', rest: '60 sec',
         ytLink: 'https://youtu.be/3VcKaXpzqRo',
         alts: [
           { name: 'Machine Lateral Raise', note: 'If cable station is busy', ytLink: 'https://youtu.be/3VcKaXpzqRo' },
@@ -3072,17 +3072,16 @@ const DEFAULT_PROGRAM = [
           { name: 'Terminal Knee Extension (Band)', note: 'Rehab-friendly quad finisher', ytLink: 'https://youtu.be/JTNyhlBdmgk' }
         ]
       },
-      { id: 'ham-curl-a', name: 'Lying or Seated Hamstring Curl', sets: 3, reps: '12–15', rest: '60 sec',
-        ytLink: 'https://youtu.be/ELOCsoDSmrg',
+      { id: 'ham-curl-a', name: 'Lying Hamstring Curl', sets: 3, reps: '12–15', rest: '60 sec',
+        ytLink: 'https://youtu.be/1Tq3QdYUuHs',
         alts: [
           { name: 'Seated Hamstring Curl', note: 'Better stretch at top', ytLink: 'https://youtu.be/ELOCsoDSmrg' },
-          { name: 'Lying Hamstring Curl', note: 'Better contraction at bottom', ytLink: 'https://youtu.be/1Tq3QdYUuHs' },
           { name: 'Nordic Curl', note: 'Bodyweight, elite hamstring builder', ytLink: 'https://youtu.be/d1WFMd9zvbo' },
           { name: 'Stability Ball Curl', note: 'Core + hamstring combo', ytLink: 'https://youtu.be/1Tq3QdYUuHs' },
           { name: 'DB Hamstring Curl (Prone)', note: 'DB between feet variation', ytLink: 'https://youtu.be/ELOCsoDSmrg' }
         ]
       },
-      { id: 'hip-thrust-a', name: 'Hip Thrust (Barbell or Machine)', sets: 3, reps: '12–15', rest: '90 sec',
+      { id: 'hip-thrust-a', name: 'Barbell Hip Thrust', sets: 3, reps: '12–15', rest: '90 sec',
         ytLink: 'https://youtu.be/SEdqd1n0cvg',
         alts: [
           { name: 'Machine Hip Thrust', note: 'If barbell setup is taken', ytLink: 'https://youtu.be/SEdqd1n0cvg' },
@@ -3137,9 +3136,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Renegade Row', note: 'Core + back combo', ytLink: 'https://youtu.be/1kHLkOl5oWs' }
         ]
       },
-      { id: 'ez-curl', name: 'Barbell or EZ Bar Curl', sets: 3, reps: '10–12', rest: '60 sec',
+      { id: 'ez-curl', name: 'EZ Bar Curl', sets: 3, reps: '10–12', rest: '60 sec',
         ytLink: 'https://youtu.be/kwG2ipFRgfo',
         alts: [
+          { name: 'Barbell Curl', note: 'Traditional grip, heavier load', ytLink: 'https://youtu.be/kwG2ipFRgfo' },
           { name: 'DB Curl', note: 'Allows natural supination', ytLink: 'https://youtu.be/ykJmrZ5v0Oo' },
           { name: 'Cable Curl', note: 'Constant tension throughout ROM', ytLink: 'https://youtu.be/NFzTWp2qpiE' },
           { name: 'Hammer Curl', note: 'Hits brachialis and brachioradialis', ytLink: 'https://youtu.be/zC3nLlEvin4' },
@@ -3147,9 +3147,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Reverse Curl', note: 'Forearm and outer bicep focus', ytLink: 'https://youtu.be/nkufQDQm9sA' }
         ]
       },
-      { id: 'preacher', name: 'Preacher Curl (EZ Bar or DB)', sets: 3, reps: '10–12', rest: '60 sec',
+      { id: 'preacher', name: 'EZ Bar Preacher Curl', sets: 3, reps: '10–12', rest: '60 sec',
         ytLink: 'https://youtu.be/fIWP-FRFNU0',
         alts: [
+          { name: 'DB Preacher Curl', note: 'Natural grip, easier on wrists', ytLink: 'https://youtu.be/fIWP-FRFNU0' },
           { name: 'Machine Preacher Curl', note: 'If preacher bench is taken', ytLink: 'https://youtu.be/fIWP-FRFNU0' },
           { name: 'Concentration Curl', note: 'Peak contraction focus', ytLink: 'https://youtu.be/0AUGkch3tzc' },
           { name: 'Cable Preacher Curl', note: 'Constant tension version', ytLink: 'https://youtu.be/NFzTWp2qpiE' },
@@ -3203,7 +3204,7 @@ const DEFAULT_PROGRAM = [
           { name: 'Wall Sit', note: 'Isometric quad hold', ytLink: 'https://youtu.be/y-wV4Venusw' }
         ]
       },
-      { id: 'ham-curl-b', name: 'Nordic Curl or Hamstring Curl', sets: 3, reps: '10–12', rest: '90 sec',
+      { id: 'ham-curl-b', name: 'Nordic Curl', sets: 3, reps: '10–12', rest: '90 sec',
         ytLink: 'https://youtu.be/d1WFMd9zvbo',
         alts: [
           { name: 'Seated Hamstring Curl', note: 'Machine variation', ytLink: 'https://youtu.be/ELOCsoDSmrg' },
@@ -3213,7 +3214,7 @@ const DEFAULT_PROGRAM = [
           { name: 'Good Mornings', note: 'Barbell hamstring stretch', ytLink: 'https://youtu.be/YA-h3n9L4YU' }
         ]
       },
-      { id: 'pull-through', name: 'Cable Pull-Through or Hip Thrust', sets: 3, reps: '12–15', rest: '60 sec',
+      { id: 'pull-through', name: 'Cable Pull-Through', sets: 3, reps: '12–15', rest: '60 sec',
         ytLink: 'https://youtu.be/mr_JFAFbJEA',
         alts: [
           { name: 'Hip Thrust (Barbell)', note: 'Heavier load option', ytLink: 'https://youtu.be/SEdqd1n0cvg' },
