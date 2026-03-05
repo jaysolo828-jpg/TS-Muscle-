@@ -1845,12 +1845,6 @@
     <div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">Log a few moods to unlock your Workout Mood Lift score.</div></div>
   </div>
 
-  <!-- Mood History -->
-  <div class="section-title">MOOD <span>LOG</span></div>
-  <div id="mood-history-list">
-    <div class="empty-state"><div class="empty-state-icon">💭</div><div class="empty-state-text">No mood entries yet — log one before or after your next session.</div></div>
-  </div>
-
   <!-- Self-Compassion Module -->
   <div class="section-title">SELF-<span>COMPASSION</span></div>
   <div class="card" style="margin-bottom:14px;">
@@ -1859,12 +1853,6 @@
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       I need a moment
     </button>
-  </div>
-
-  <!-- Self-Compassion Log -->
-  <div class="section-title">SELF-COMPASSION <span>LOG</span></div>
-  <div id="self-compassion-history-list" style="margin-bottom:14px;">
-    <div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet. Use "I need a moment" when you're being hard on yourself.</div></div>
   </div>
 
   <!-- Skip Logger -->
@@ -1877,11 +1865,22 @@
     </button>
   </div>
 
+  <!-- Mood History -->
+  <div class="section-title">MOOD <span>LOG</span></div>
+  <div id="mood-history-list" style="margin-bottom:14px;">
+    <div class="empty-state"><div class="empty-state-icon">💭</div><div class="empty-state-text">No mood entries yet — log one before or after your next session.</div></div>
+  </div>
+
+  <!-- Self-Compassion Log -->
+  <div class="section-title">SELF-COMPASSION <span>LOG</span></div>
+  <div id="self-compassion-history-list" style="margin-bottom:14px;">
+    <div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet. Use "I need a moment" when you're being hard on yourself.</div></div>
+  </div>
+
   <!-- Barrier History -->
   <div class="section-title">BARRIER <span>LOG</span></div>
   <div id="barrier-history-list">
     <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No reframes yet. Use this when something gets in the way of training.</div></div>
-
   </div>
 </div>
 
@@ -8183,14 +8182,15 @@ function saveMoodEntry() {
   renderMoodInsights();
 }
 
-function renderMoodHistory() {
+function renderMoodHistory(showAll = false) {
   const container = document.getElementById('mood-history-list');
   if (!container) return;
   if (!state.moodLog || state.moodLog.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">😐</div><div class="empty-state-text">No mood entries yet.</div></div>';
     return;
   }
-  container.innerHTML = state.moodLog.slice(0, 20).map((entry, idx) => {
+  const visible = showAll ? state.moodLog : state.moodLog.slice(0, 3);
+  container.innerHTML = visible.map((entry, idx) => {
     const d = new Date(entry.date);
     const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -8219,6 +8219,9 @@ function renderMoodHistory() {
         ${entry.note ? `<div style="font-size:12px; color:var(--gray); border-top:1px solid var(--dark3); padding-top:8px; margin-top:4px;">${entry.note}</div>` : ''}
       </div>`;
   }).join('');
+  if (!showAll && state.moodLog.length > 3) {
+    container.innerHTML += `<button onclick="renderMoodHistory(true)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW ALL ${state.moodLog.length} ENTRIES</button>`;
+  }
 }
 
 
@@ -8545,14 +8548,15 @@ function deleteBarrierEntry(idx) {
   renderBarrierHistory();
 }
 
-function renderBarrierHistory() {
+function renderBarrierHistory(showAll = false) {
   const container = document.getElementById('barrier-history-list');
   if (!container) return;
   if (!state.barrierLog || state.barrierLog.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No entries yet. When you log a skip, your reframes will show here.</div></div>';
     return;
   }
-  container.innerHTML = state.barrierLog.map((entry, idx) => {
+  const visible = showAll ? state.barrierLog : state.barrierLog.slice(0, 3);
+  container.innerHTML = visible.map((entry, idx) => {
     const d = new Date(entry.date);
     const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     return `
@@ -8570,16 +8574,20 @@ function renderBarrierHistory() {
         <div style="font-size:12px; color:var(--gray); line-height:1.5; border-top:1px solid var(--dark3); padding-top:8px;">${entry.reframe}</div>
       </div>`;
   }).join('');
+  if (!showAll && state.barrierLog.length > 3) {
+    container.innerHTML += `<button onclick="renderBarrierHistory(true)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW ALL ${state.barrierLog.length} ENTRIES</button>`;
+  }
 }
 
-function renderSelfCompassionLog() {
+function renderSelfCompassionLog(showAll = false) {
   const container = document.getElementById('self-compassion-history-list');
   if (!container) return;
   if (!state.selfCompassionLog || state.selfCompassionLog.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet. Use "I need a moment" when you\'re being hard on yourself.</div></div>';
     return;
   }
-  const entries = state.selfCompassionLog.slice().reverse().slice(0, 20);
+  const allReversed = state.selfCompassionLog.slice().reverse();
+  const entries = showAll ? allReversed : allReversed.slice(0, 3);
   container.innerHTML = entries.map((entry, idx) => {
     const realIdx = state.selfCompassionLog.length - 1 - idx;
     const d = new Date(entry.date);
@@ -8599,6 +8607,9 @@ function renderSelfCompassionLog() {
         ${entry.plan ? `<div style="font-size:12px; color:var(--gray); border-top:1px solid var(--dark3); padding-top:8px; margin-top:6px;">Plan: ${entry.plan}</div>` : ''}
       </div>`;
   }).join('');
+  if (!showAll && state.selfCompassionLog.length > 3) {
+    container.innerHTML += `<button onclick="renderSelfCompassionLog(true)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW ALL ${state.selfCompassionLog.length} ENTRIES</button>`;
+  }
 }
 
 function deleteSelfCompassionEntry(idx) {
