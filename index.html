@@ -4505,7 +4505,7 @@ function startSession(dayId) {
         renderSession();
         startSessionTimer();
         document.getElementById('workout-session').classList.add('active');
-        if (state.musicPlayer !== 'none') document.getElementById('yt-music-btn').style.display = 'flex';
+        updateMusicDockUI();
         showToast('Workout resumed 💪');
       };
         return;
@@ -4537,7 +4537,7 @@ function startSession(dayId) {
   renderSession();
   startSessionTimer();
   document.getElementById('workout-session').classList.add('active');
-  if (state.musicPlayer !== 'none') document.getElementById('yt-music-btn').style.display = 'flex';
+  updateMusicDockUI();
 }
 
 function renderSession() {
@@ -5251,7 +5251,7 @@ function saveAndExitSession() {
   _idbSet('ts-muscle-paused', _pausedJson);
   closeExitModal();
   document.getElementById('workout-session').classList.remove('active');
-  document.getElementById('yt-music-btn').style.display = 'none';
+  state.musicDockOpen = false; updateMusicDockUI();
   showScreen('home', document.querySelector('.nav-item'));
   showToast('Workout saved — resume anytime 💾');
 }
@@ -5286,7 +5286,7 @@ function discardSession() {
   saveState();
   closeExitModal();
   document.getElementById('workout-session').classList.remove('active');
-  document.getElementById('yt-music-btn').style.display = 'none';
+  state.musicDockOpen = false; updateMusicDockUI();
   showScreen('home', document.querySelector('.nav-item'));
   showToast('Workout discarded');
 }
@@ -5502,7 +5502,7 @@ function finalizeEndSession(save) {
         updateStreak();
         setTimeout(() => showCycleCompleteModal(), 600);
         document.getElementById('workout-session').classList.remove('active');
-        document.getElementById('yt-music-btn').style.display = 'none';
+        state.musicDockOpen = false; updateMusicDockUI();
         document.getElementById('session-notes').value = '';
         activeSession = null;
         return;
@@ -5574,7 +5574,7 @@ function finalizeEndSession(save) {
   }
 
   document.getElementById('workout-session').classList.remove('active');
-  document.getElementById('yt-music-btn').style.display = 'none';
+  state.musicDockOpen = false; updateMusicDockUI();
   document.getElementById('session-notes').value = '';
   activeSession = null;
 
