@@ -636,13 +636,15 @@
   }
 
   .muscle-pill {
+    display: inline-block;
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 1px;
-    padding: 2px 8px;
+    letter-spacing: 1.2px;
+    padding: 1px 7px;
     border-radius: 20px;
-    flex-shrink: 0;
+    border: 1px solid;
+    background: transparent;
   }
 
   .swap-btn {
@@ -3248,9 +3250,9 @@ const MUSCLE_MAP = {
   'calf-a': 'CALVES', 'calf-b': 'CALVES',
 };
 const MUSCLE_COLORS = {
-  CHEST: '#4a9eff', BACK: '#20b2aa', QUADS: '#e8934a',
-  HAMSTRINGS: '#c07855', GLUTES: '#d47fa0', CALVES: '#8da060',
-  TRICEPS: '#9b7fd4', BICEPS: '#6e9bd4', SHOULDERS: '#c4a547',
+  CHEST: '#5b9cf6', BACK: '#3bbfb8', QUADS: '#e07b54',
+  HAMSTRINGS: '#b87558', GLUTES: '#c97dae', CALVES: '#78aa6a',
+  TRICEPS: '#9d84d4', BICEPS: '#6b9fd4', SHOULDERS: '#6ab8e0',
 };
 
 // ============================================================
@@ -4596,7 +4598,6 @@ function renderSession() {
     exEl.id = 'session-ex-' + ex.id;
     const _muscle = MUSCLE_MAP[ex.id];
     const _mColor = _muscle ? MUSCLE_COLORS[_muscle] : null;
-    if (_mColor) exEl.style.borderLeft = `3px solid ${_mColor}`;
 
     let setsHTML = `
       <div class="set-labels">
@@ -4653,10 +4654,12 @@ function renderSession() {
 
     exEl.innerHTML = `
       <div class="session-ex-header">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <div class="session-ex-name">${displayName}</div>
-          ${_muscle ? `<span class="muscle-pill" style="background:${_mColor}22;color:${_mColor};border:1px solid ${_mColor}55;">${_muscle}</span>` : ''}
-          ${state.prs?.[ex.id] ? `<span id="pr-badge-${ex.id}" style="font-size:11px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:2px 7px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
+        <div style="display:flex; flex-direction:column; gap:3px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="session-ex-name">${displayName}</div>
+            ${state.prs?.[ex.id] ? `<span id="pr-badge-${ex.id}" style="font-size:11px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:2px 7px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
+          </div>
+          ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
           <div style="font-size:12px; color:var(--gray); font-family:'Barlow Condensed',sans-serif;">${sets.length} sets × ${ex.reps}</div>
