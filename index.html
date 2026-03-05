@@ -3311,6 +3311,28 @@ function _idbGet(key) {
   }));
 }
 
+function migrateExerciseNames() {
+  const NAME_MAP = {
+    'Barbell or DB Bench Press':          'Barbell Bench Press',
+    'Cable or Machine Flye':              'Cable Flye',
+    'Lateral Raises (Cable or DB)':       'Cable Lateral Raise',
+    'Lying or Seated Hamstring Curl':     'Lying Hamstring Curl',
+    'Hip Thrust (Barbell or Machine)':    'Barbell Hip Thrust',
+    'Barbell or EZ Bar Curl':             'EZ Bar Curl',
+    'Preacher Curl (EZ Bar or DB)':       'EZ Bar Preacher Curl',
+    'Nordic Curl or Hamstring Curl':      'Nordic Curl',
+    'Cable Pull-Through or Hip Thrust':   'Cable Pull-Through',
+  };
+  if (!state.program) return;
+  let changed = false;
+  state.program.forEach(day => {
+    day.exercises.forEach(ex => {
+      if (NAME_MAP[ex.name]) { ex.name = NAME_MAP[ex.name]; changed = true; }
+    });
+  });
+  if (changed) saveState();
+}
+
 function loadState() {
   const saved = localStorage.getItem('ts-muscle-state');
   if (saved) {
@@ -3318,6 +3340,7 @@ function loadState() {
       const parsed = JSON.parse(saved);
       state = { ...state, ...parsed };
       if (!state.program) state.program = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
+      migrateExerciseNames();
 
       // One-time migration: backfill entry.prs on history entries that predate PR tracking.
       // Process oldest→newest, track running best per exercise, assign PR list to any
@@ -7771,11 +7794,11 @@ function tutorialNav(dir) {
 // Compounds only — the 8 movements where starting weight genuinely matters
 // Isolations are auto-set from experience level defaults
 const ONBOARD_EXERCISES = [
-  { id: 'bench',        name: 'Bench Press (Barbell or DB)',         day: 'Upper A', defaults: { beginner: 95,  intermediate: 135, advanced: 185 }, compound: true },
+  { id: 'bench',        name: 'Barbell Bench Press',                 day: 'Upper A', defaults: { beginner: 95,  intermediate: 135, advanced: 185 }, compound: true },
   { id: 'incline',      name: 'Incline DB Press',                    day: 'Upper A', defaults: { beginner: 25,  intermediate: 40,  advanced: 60  }, compound: true },
   { id: 'legpress-a',   name: 'Leg Press',                           day: 'Lower A', defaults: { beginner: 90,  intermediate: 180, advanced: 270 }, compound: true },
   { id: 'rdl',          name: 'Romanian Deadlift',                   day: 'Lower A', defaults: { beginner: 65,  intermediate: 115, advanced: 165 }, compound: true },
-  { id: 'hip-thrust-a', name: 'Hip Thrust (Barbell or Machine)',     day: 'Lower A', defaults: { beginner: 65,  intermediate: 135, advanced: 185 }, compound: true },
+  { id: 'hip-thrust-a', name: 'Barbell Hip Thrust',                  day: 'Lower A', defaults: { beginner: 65,  intermediate: 135, advanced: 185 }, compound: true },
   { id: 'chest-row',    name: 'Chest Supported Row',                 day: 'Upper B', defaults: { beginner: 50,  intermediate: 90,  advanced: 130 }, compound: true },
   { id: 'pulldown',     name: 'Lat Pulldown',                        day: 'Upper B', defaults: { beginner: 60,  intermediate: 100, advanced: 140 }, compound: true },
   { id: 'legpress-b',   name: 'Leg Press (Wide / High Foot)',        day: 'Lower B', defaults: { beginner: 90,  intermediate: 180, advanced: 270 }, compound: true },
