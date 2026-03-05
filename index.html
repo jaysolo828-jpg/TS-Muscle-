@@ -567,6 +567,13 @@
 
   .workout-session.active { display: block; }
 
+  .session-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--dark);
+  }
+
   .session-header {
     background: var(--dark);
     border-bottom: 2px solid var(--red);
@@ -574,9 +581,6 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 10;
   }
 
   .session-title {
@@ -2691,29 +2695,30 @@
 
 <!-- ACTIVE WORKOUT SESSION -->
 <div class="workout-session" id="workout-session">
-  <div class="session-header">
-    <div style="display:flex; align-items:center; gap:10px;">
-      <button onclick="exitSessionMenu()" id="session-back-btn" style="background:var(--dark3); border:1px solid #444; color:var(--cream); padding:8px 14px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer; display:flex; align-items:center; gap:6px; animation: backBtnPulse 1.5s ease 0.8s 2;">
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        EXIT
-      </button>
-      <div>
-        <div class="session-title" id="session-title">UPPER <span>A</span></div>
-        <div style="font-size:12px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;" id="session-subtitle"></div>
+  <div class="session-sticky-header">
+    <div class="session-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button onclick="exitSessionMenu()" id="session-back-btn" style="background:var(--dark3); border:1px solid #444; color:var(--cream); padding:8px 14px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer; display:flex; align-items:center; gap:6px; animation: backBtnPulse 1.5s ease 0.8s 2;">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          EXIT
+        </button>
+        <div>
+          <div class="session-title" id="session-title">UPPER <span>A</span></div>
+          <div style="font-size:12px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;" id="session-subtitle"></div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="close-session" onclick="endSession(true)" style="background:rgba(46,204,113,0.15); border-color:#2ecc71; color:#2ecc71;">COMPLETE ✓</button>
       </div>
     </div>
-    <div style="display:flex; align-items:center; gap:8px;">
-      <button class="close-session" onclick="endSession(true)" style="background:rgba(46,204,113,0.15); border-color:#2ecc71; color:#2ecc71;">COMPLETE ✓</button>
+    <div class="session-progress-header">
+      <span id="session-progress-text">0 / 0 exercises done</span>
+      <span id="session-timer-display" style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:1px;">0:00</span>
+      <span id="session-sets-text">0 sets logged</span>
     </div>
-  </div>
-
-  <div class="session-progress-header">
-    <span id="session-progress-text">0 / 0 exercises done</span>
-    <span id="session-timer-display" style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:1px;">0:00</span>
-    <span id="session-sets-text">0 sets logged</span>
-  </div>
-  <div class="progress-bar-wrap">
-    <div class="progress-bar-fill" id="session-progress-bar" style="width:0%"></div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="session-progress-bar" style="width:0%"></div>
+    </div>
   </div>
 
   <!-- MUSIC DOCK -->
