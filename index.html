@@ -208,7 +208,7 @@
 
   .mood-btn {
     flex: 1; background: var(--dark3); border: 2px solid transparent;
-    border-radius: 12px; padding: 10px 4px; cursor: pointer;
+    border-radius: 12px; padding: 14px 4px; cursor: pointer;
     text-align: center; transition: border-color 0.2s, background 0.2s;
   }
   .mood-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.15); }
@@ -1795,6 +1795,7 @@
 
 <div id="screen-mindset" class="screen">
   <div class="section-title">MINDSET <span>CHECK-IN</span></div>
+  <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:16px;">Track your mood, work through setbacks, and stay kind to yourself.</div>
 
   <!-- Mood Check-In Card -->
   <div class="card" style="margin-bottom:14px;">
@@ -1811,30 +1812,35 @@
     <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">HOW ARE YOU FEELING?</div>
     <div style="display:flex; justify-content:space-between; gap:6px; margin-bottom:16px;" id="mood-scale">
       <button class="mood-btn" onclick="selectMood(1, this)" data-value="1">
-        <div style="font-size:28px;">😞</div>
+        <div style="font-size:32px;">😞</div>
         <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Distressed</div>
       </button>
       <button class="mood-btn" onclick="selectMood(2, this)" data-value="2">
-        <div style="font-size:28px;">😔</div>
+        <div style="font-size:32px;">😔</div>
         <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Low</div>
       </button>
       <button class="mood-btn" onclick="selectMood(3, this)" data-value="3">
-        <div style="font-size:28px;">😐</div>
+        <div style="font-size:32px;">😐</div>
         <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Neutral</div>
       </button>
       <button class="mood-btn" onclick="selectMood(4, this)" data-value="4">
-        <div style="font-size:28px;">🙂</div>
+        <div style="font-size:32px;">🙂</div>
         <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Good</div>
       </button>
       <button class="mood-btn" onclick="selectMood(5, this)" data-value="5">
-        <div style="font-size:28px;">🔥</div>
+        <div style="font-size:32px;">🔥</div>
         <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Energized</div>
       </button>
     </div>
     <input type="hidden" id="mood-value" value=""/>
 
-    <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">OPTIONAL NOTE</div>
-    <textarea id="mood-note" class="notes-input" placeholder="Anything on your mind?" style="min-height:50px; margin-bottom:14px;"></textarea>
+    <button onclick="toggleMoodNote(this)" style="background:none; border:none; color:var(--gray); font-size:13px; padding:0; cursor:pointer; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+      <svg id="mood-note-chevron" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;"><polyline points="9 18 15 12 9 6"/></svg>
+      Add a note
+    </button>
+    <div id="mood-note-wrap" style="display:none; margin-bottom:14px;">
+      <textarea id="mood-note" class="notes-input" placeholder="Anything on your mind?" style="min-height:50px;"></textarea>
+    </div>
 
     <button onclick="saveMoodEntry()" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">LOG MOOD</button>
   </div>
@@ -1848,7 +1854,7 @@
   <!-- Self-Compassion Module -->
   <div class="section-title">SELF-<span>COMPASSION</span></div>
   <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:16px;">Research shows self-criticism after a missed session <strong style="color:var(--cream);">increases</strong> the chance of quitting. Self-compassion <strong style="color:var(--cream);">increases</strong> the chance of returning. Use this when you skipped, stopped early, or are being hard on yourself.</div>
+    <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:14px;">Being hard on yourself? Use this to work through it.</div>
     <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:14px 18px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:12px;">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       I need a moment
@@ -1856,10 +1862,10 @@
   </div>
 
   <!-- Skip Logger -->
-  <div class="section-title">COGNITIVE <span>REFRAME</span></div>
+  <div class="section-title">MISSED A <span>SESSION?</span></div>
   <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:13px; color:var(--gray-light); margin:0 0 14px; line-height:1.6;">Missed a session? No judgment — let's understand what got in the way and move forward.</div>
-    <button onclick="openCBTModal('manual')" style="width:100%; background:var(--dark3); border:1px solid var(--red); color:var(--red); padding:14px 18px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:12px;">
+    <div style="font-size:13px; color:var(--gray); margin:0 0 14px; line-height:1.6;">Something got in the way. Let's work through it and move forward.</div>
+    <button onclick="openCBTModal('manual')" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:14px 18px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:12px;">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       I missed a workout
     </button>
@@ -1878,7 +1884,7 @@
   </div>
 
   <!-- Barrier History -->
-  <div class="section-title">BARRIER <span>LOG</span></div>
+  <div class="section-title">REFRAME <span>HISTORY</span></div>
   <div id="barrier-history-list">
     <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No reframes yet. Use this when something gets in the way of training.</div></div>
   </div>
@@ -3506,7 +3512,7 @@ function showStatInfo(type) {
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:28px 24px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-        <div style="font-size:28px;">${icon}</div>
+        <div style="font-size:32px;">${icon}</div>
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;">${title}</div>
       </div>
       <div style="font-size:15px;color:var(--gray-light);line-height:1.6;margin-bottom:10px;">${body}</div>
@@ -5447,7 +5453,7 @@ function finalizeEndSession(save) {
         deloadModal.innerHTML = `
           <div style="background:#111;border-top:2px solid var(--red);border-radius:20px 20px 0 0;padding:28px 24px calc(36px + env(safe-area-inset-bottom));width:100%;box-sizing:border-box;animation:slideUpFade 0.35s ease;">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-              <div style="font-size:28px;">🔋</div>
+              <div style="font-size:32px;">🔋</div>
               <div>
                 <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;color:var(--cream);letter-spacing:1px;text-transform:uppercase;">Time for a Deload?</div>
                 <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:2px;">Week ${weeksLogged} complete</div>
@@ -8136,6 +8142,14 @@ function applyTestWeekWeights() {
 // ============================================================
 // MOOD TRACKER
 // ============================================================
+function toggleMoodNote(btn) {
+  const wrap = document.getElementById('mood-note-wrap');
+  const chevron = document.getElementById('mood-note-chevron');
+  const open = wrap.style.display === 'block';
+  wrap.style.display = open ? 'none' : 'block';
+  chevron.style.transform = open ? '' : 'rotate(90deg)';
+}
+
 const MOOD_LABELS = { 1: 'Distressed', 2: 'Low', 3: 'Neutral', 4: 'Good', 5: 'Energized' };
 const MOOD_EMOJIS = { 1: '😞', 2: '😔', 3: '😐', 4: '🙂', 5: '🔥' };
 
@@ -8175,6 +8189,8 @@ function saveMoodEntry() {
   // Reset UI
   document.getElementById('mood-value').value = '';
   document.getElementById('mood-note').value = '';
+  document.getElementById('mood-note-wrap').style.display = 'none';
+  document.getElementById('mood-note-chevron').style.transform = '';
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
 
   showToast(`Mood logged: ${entry.emoji} ${entry.label}`);
