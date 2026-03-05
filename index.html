@@ -4727,8 +4727,6 @@ function toggleSetDone(exId, setIndex) {
       if (rInput && rInput.value !== '') set.reps = rInput.value;
     }
     checkForPR(exId, set);
-    // Stamp persistent rep outcome badge on the set row
-    stampRepBadge(exId, setIndex);
 
     // RPE nudge — show inline row if RPE not selected
     if (!set.rpe) {
@@ -4758,58 +4756,6 @@ function toggleSetDone(exId, setIndex) {
   updateSessionProgress();
 }
 
-function stampRepBadge(exId, setIndex) {
-  // Remove existing badge first
-  const old = document.getElementById(`rep-badge-${exId}-${setIndex}`);
-  if (old) old.remove();
-
-  // Get target rep range for this exercise
-  const day = state.program.find(d => d.id === activeSession.dayId);
-  const ex = day?.exercises.find(e => e.id === exId);
-  if (!ex) return;
-
-  const logged = parseInt(activeSession.sets[exId][setIndex]?.reps);
-  if (!logged || isNaN(logged)) return;
-
-  const repStr = String(ex.reps);
-  const parts = repStr.split(/[–-]/);
-  const minReps = parseInt(parts[0]) || 0;
-  const maxReps = parseInt(parts[1]) || minReps;
-
-  let icon, color, bg;
-  if (logged > maxReps) {
-    icon = '▲'; color = '#2ecc71'; bg = 'rgba(46,204,113,0.12)';
-  } else if (logged >= minReps) {
-    icon = '✓'; color = '#2ecc71'; bg = 'rgba(46,204,113,0.12)';
-  } else {
-    icon = '▼'; color = '#CC2027'; bg = 'rgba(204,32,39,0.12)';
-  }
-
-  // Find the done button in the row and insert badge before it
-  const row = document.getElementById(`set-row-${exId}-${setIndex}`);
-  if (!row) return;
-  const doneBtn = row.querySelector('.set-done-btn');
-  if (!doneBtn) return;
-
-  const badge = document.createElement('div');
-  badge.id = `rep-badge-${exId}-${setIndex}`;
-  badge.style.cssText = `
-    position:absolute; top:2px; left:2px;
-    width:14px; height:14px; border-radius:50%;
-    background:${color}; color:#000;
-    font-size:10px; font-weight:900; line-height:1;
-    display:flex; align-items:center; justify-content:center;
-    border:1.5px solid var(--dark2);
-    pointer-events:none; z-index:3;
-    animation: badgePop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  `;
-  badge.textContent = icon;
-
-  // Place badge inside the done button (stays within card bounds)
-  doneBtn.style.position = 'relative';
-  doneBtn.style.overflow = 'visible';
-  doneBtn.appendChild(badge);
-}
 
 
 
