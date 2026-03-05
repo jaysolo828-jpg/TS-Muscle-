@@ -5303,6 +5303,7 @@ function saveAndExitSession() {
   document.getElementById('workout-session').classList.remove('active');
   state.musicDockOpen = false; updateMusicDockUI();
   showScreen('home', document.querySelector('.nav-item'));
+  renderHome();
   showToast('Workout saved — resume anytime 💾');
 }
 
@@ -5338,6 +5339,7 @@ function discardSession() {
   document.getElementById('workout-session').classList.remove('active');
   state.musicDockOpen = false; updateMusicDockUI();
   showScreen('home', document.querySelector('.nav-item'));
+  renderHome();
   showToast('Workout discarded');
 }
 
