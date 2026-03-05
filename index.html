@@ -4818,6 +4818,11 @@ function toggleSetDone(exId, setIndex) {
   }
 
   updateSessionProgress();
+
+  // Checkpoint: auto-save after every completed set so crash/swipe-away recovery has recent data
+  if (set.done && activeSession) {
+    try { localStorage.setItem('ts-muscle-paused', JSON.stringify(activeSession)); } catch(e) {}
+  }
 }
 
 
@@ -4859,6 +4864,16 @@ document.addEventListener('visibilitychange', () => {
       startSessionTimer();
     }
   }
+});
+
+// Save in-progress session when the app is hidden or swiped away on mobile
+window.addEventListener('pagehide', () => {
+  if (!activeSession) return;
+  activeSession.elapsedMs = Date.now() - activeSession.startTime;
+  activeSession.savedAt = Date.now();
+  const json = JSON.stringify(activeSession);
+  try { localStorage.setItem('ts-muscle-paused', json); } catch(e) {}
+  try { _idbSet('ts-muscle-paused', json); } catch(e) {}
 });
 
 // ============================================================
@@ -5485,6 +5500,10 @@ function saveWrapupNotesAndFinish() {
 }
 
 function finalizeEndSession(save) {
+  // Always clear the crash-recovery snapshot — session is now fully completed or discarded
+  localStorage.removeItem('ts-muscle-paused');
+  _idbSet('ts-muscle-paused', null);
+
   if (save && activeSession) {
     const completedSetsCount = Object.values(activeSession.sets || {})
       .reduce((sum, sets) => sum + sets.filter(s => s.done).length, 0);
