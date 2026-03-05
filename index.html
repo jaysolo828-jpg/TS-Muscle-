@@ -4501,6 +4501,10 @@ function startSession(dayId) {
       document.getElementById('resume-confirm-btn').onclick = () => {
         resumeModal.remove();
         activeSession = parsed;
+        // Shift startTime forward so break time isn't counted in the display
+        if (activeSession.elapsedMs) {
+          activeSession.startTime = Date.now() - activeSession.elapsedMs;
+        }
         localStorage.removeItem('ts-muscle-paused');
         document.getElementById('session-notes').value = activeSession.notes || '';
         renderSession();
@@ -4697,7 +4701,10 @@ function selectRpeFromNudge(exId, setIndex, rpe) {
   updateSet(exId, setIndex, 'rpe', rpe);
   const row = document.getElementById(`set-row-${exId}-${setIndex}`);
   const sel = row ? row.querySelector('.rpe-select') : null;
-  if (sel) sel.value = rpe;
+  if (sel) {
+    sel.value = rpe;
+    sel.dispatchEvent(new Event('change')); // triggers onchange to update data-empty & lit-up styling
+  }
   _removeRpeNudge(exId, setIndex);
 }
 
@@ -4829,6 +4836,14 @@ function stopSessionTimer() {
     sessionTimerInterval = null;
   }
 }
+
+// Restart the timer interval when the page returns to foreground (iOS/Android
+// suspend setInterval when the screen locks or the app is backgrounded).
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && activeSession) {
+    startSessionTimer();
+  }
+});
 
 // ============================================================
 // REST TIMER
@@ -5245,6 +5260,9 @@ function closeExitModal() {
 }
 
 function saveAndExitSession() {
+  // Snapshot how far the timer had reached so break time is excluded on resume
+  activeSession.elapsedMs = Date.now() - activeSession.startTime;
+  stopSessionTimer();
   activeSession.notes = document.getElementById('session-notes').value;
   activeSession.savedAt = Date.now();
   const _pausedJson = JSON.stringify(activeSession);
