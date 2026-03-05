@@ -3959,14 +3959,11 @@ function updateStreak() {
   let checkWeek = getISOWeek(now);
   const currentWeekKey = checkWeek;
 
-  // Don't penalize current in-progress week
+  // Don't penalize current in-progress week — skip it entirely, only evaluate completed past weeks
   for (let i = 0; i < 52; i++) {
     const count = weekCounts[checkWeek] || 0;
-    if (i === 0 && count < target) {
-      // Current week — only break streak if week is over (Friday+)
-      const day = now.getDay(); // 0=Sun, 5=Fri
-      if (day >= 5 && count < Math.ceil(target * 0.75)) break;
-      // Week still in progress — skip but don't break
+    if (i === 0) {
+      // Current week is never complete until it ends — always skip, never break
       checkWeek = prevISOWeek(checkWeek);
       continue;
     }
