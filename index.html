@@ -5204,13 +5204,12 @@ function _dragScrollLoop() {
   const ZONE = 80, MAX_SPEED = 14;
   const vh = window.innerHeight;
   const y = _drag.lastClientY;
+  const scroller = document.getElementById('workout-session');
   if (y < ZONE) {
-    window.scrollBy(0, -Math.round(MAX_SPEED * (1 - y / ZONE)));
-    _drag.ghost.style.top = (y - _drag.offsetY) + 'px';
+    scroller.scrollBy(0, -Math.round(MAX_SPEED * (1 - y / ZONE)));
     _dragUpdateDropTarget(y);
   } else if (y > vh - ZONE) {
-    window.scrollBy(0, Math.round(MAX_SPEED * (1 - (vh - y) / ZONE)));
-    _drag.ghost.style.top = (y - _drag.offsetY) + 'px';
+    scroller.scrollBy(0, Math.round(MAX_SPEED * (1 - (vh - y) / ZONE)));
     _dragUpdateDropTarget(y);
   }
   requestAnimationFrame(_dragScrollLoop);
