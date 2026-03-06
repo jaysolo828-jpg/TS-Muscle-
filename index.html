@@ -2747,7 +2747,10 @@
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
-        <button id="session-reorder-btn" onclick="toggleReorderMode()" style="background:var(--dark3); border:1px solid #444; color:var(--gray); padding:8px 14px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer;">REORDER</button>
+        <button id="session-reorder-btn" onclick="toggleReorderMode()" title="Reorder exercises" style="background:var(--dark3); border:1px solid #444; color:var(--gray); padding:8px 10px; border-radius:10px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          <span id="session-reorder-label" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; display:none;">DONE</span>
+        </button>
         <button class="close-session" onclick="endSession(true)" style="background:rgba(46,204,113,0.15); border-color:#2ecc71; color:#2ecc71;">COMPLETE ✓</button>
       </div>
     </div>
@@ -5137,9 +5140,10 @@ function clearAllRestTimers() {
 function toggleReorderMode() {
   const session = document.getElementById('workout-session');
   const btn = document.getElementById('session-reorder-btn');
+  const label = document.getElementById('session-reorder-label');
   const isNowActive = session.classList.toggle('reorder-mode');
   btn.classList.toggle('active', isNowActive);
-  btn.textContent = isNowActive ? 'DONE' : 'REORDER';
+  label.style.display = isNowActive ? 'inline' : 'none';
 }
 
 let _drag = null;
