@@ -628,6 +628,41 @@
 
   .session-exercise.completed { border-color: var(--success); opacity: 0.75; }
 
+  /* ── Reorder mode ── */
+  .drag-handle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px 0 0;
+    cursor: grab;
+    touch-action: none;
+    flex-shrink: 0;
+  }
+  .workout-session.reorder-mode .drag-handle { display: flex; }
+  .workout-session.reorder-mode .session-exercise {
+    transition: transform 0.18s ease;
+    user-select: none;
+  }
+  .workout-session.reorder-mode .session-exercise.drag-nudge-down { transform: translateY(6px); }
+  .session-exercise.is-dragging { opacity: 0; }
+  .drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.93;
+    border: 2px solid var(--red);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(204,32,39,0.35);
+    transform: scale(1.02);
+    background: var(--dark2);
+    overflow: hidden;
+  }
+  #session-reorder-btn.active {
+    color: #2ecc71;
+    border-color: #2ecc71;
+    background: rgba(46,204,113,0.1);
+  }
+
   .session-ex-header {
     padding: 14px 16px;
     display: flex;
@@ -2712,6 +2747,7 @@
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
+        <button id="session-reorder-btn" onclick="toggleReorderMode()" style="background:var(--dark3); border:1px solid #444; color:var(--gray); padding:8px 14px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer;">REORDER</button>
         <button class="close-session" onclick="endSession(true)" style="background:rgba(46,204,113,0.15); border-color:#2ecc71; color:#2ecc71;">COMPLETE ✓</button>
       </div>
     </div>
@@ -4590,7 +4626,8 @@ function startSession(dayId) {
     sets: {},
     notes: '',
     swaps: {},
-    isDeload: !!(state.isDeloadWeek || state.isRestWeek)
+    isDeload: !!(state.isDeloadWeek || state.isRestWeek),
+    exerciseOrder: day.exercises.map(e => e.id)
   };
   day.exercises.forEach(ex => {
     const suggested = getProgressiveWeight(ex.id, day.id);
@@ -4619,7 +4656,11 @@ function renderSession() {
   const container = document.getElementById('session-exercises');
   container.innerHTML = '';
 
-  day.exercises.forEach(ex => {
+  const orderedExercises = (activeSession.exerciseOrder || day.exercises.map(e => e.id))
+    .map(id => day.exercises.find(e => e.id === id))
+    .filter(Boolean);
+
+  orderedExercises.forEach(ex => {
     const sets = activeSession.sets[ex.id];
     const doneSets = sets.filter(s => s.done).length;
     const isCompleted = doneSets === sets.length;
@@ -4687,6 +4728,9 @@ function renderSession() {
 
     exEl.innerHTML = `
       <div class="session-ex-header">
+        <div class="drag-handle" data-ex-id="${ex.id}" aria-label="Drag to reorder">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--red)" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        </div>
         <div style="display:flex; flex-direction:column; gap:3px;">
           <div style="display:flex; align-items:center; gap:8px;">
             <div class="session-ex-name">${displayName}</div>
@@ -4716,6 +4760,7 @@ function renderSession() {
   });
 
   updateSessionProgress();
+  _initDragHandles();
 }
 
 
@@ -5087,6 +5132,90 @@ function clearAllRestTimers() {
   updateStickyRestTimer(0, false, false);
 }
 
+
+// ── EXERCISE REORDER ─────────────────────────────────────────────────────────
+function toggleReorderMode() {
+  const session = document.getElementById('workout-session');
+  const btn = document.getElementById('session-reorder-btn');
+  const isNowActive = session.classList.toggle('reorder-mode');
+  btn.classList.toggle('active', isNowActive);
+  btn.textContent = isNowActive ? 'DONE' : 'REORDER';
+}
+
+let _drag = null;
+
+function _onDragHandlePointerDown(e) {
+  if (!document.getElementById('workout-session').classList.contains('reorder-mode')) return;
+  e.preventDefault();
+  const exId = e.currentTarget.dataset.exId;
+  const sourceCard = document.getElementById('session-ex-' + exId);
+  const rect = sourceCard.getBoundingClientRect();
+
+  const ghost = sourceCard.cloneNode(true);
+  ghost.className = 'session-exercise drag-ghost';
+  ghost.style.width = rect.width + 'px';
+  ghost.style.left = rect.left + 'px';
+  ghost.style.top = rect.top + 'px';
+  document.body.appendChild(ghost);
+
+  sourceCard.classList.add('is-dragging');
+
+  _drag = {
+    exId,
+    ghost,
+    sourceCard,
+    offsetY: e.clientY - rect.top,
+    newIndex: activeSession.exerciseOrder.indexOf(exId),
+  };
+
+  document.addEventListener('pointermove', _onDragPointerMove, { passive: false });
+  document.addEventListener('pointerup', _onDragPointerUp);
+}
+
+function _onDragPointerMove(e) {
+  if (!_drag) return;
+  e.preventDefault();
+  _drag.ghost.style.top = (e.clientY - _drag.offsetY) + 'px';
+
+  const cards = [...document.querySelectorAll('#session-exercises .session-exercise:not(.is-dragging)')];
+  let newIndex = cards.length;
+  for (let i = 0; i < cards.length; i++) {
+    const r = cards[i].getBoundingClientRect();
+    if (e.clientY < r.top + r.height / 2) { newIndex = i; break; }
+  }
+  cards.forEach((card, i) => {
+    card.classList.toggle('drag-nudge-down', i >= newIndex);
+  });
+  _drag.newIndex = newIndex;
+}
+
+function _onDragPointerUp() {
+  if (!_drag) return;
+  document.removeEventListener('pointermove', _onDragPointerMove);
+  document.removeEventListener('pointerup', _onDragPointerUp);
+
+  document.querySelectorAll('#session-exercises .session-exercise').forEach(c => {
+    c.classList.remove('drag-nudge-down', 'is-dragging');
+  });
+  _drag.ghost.remove();
+
+  const order = activeSession.exerciseOrder;
+  const fromIndex = order.indexOf(_drag.exId);
+  const toIndex = Math.min(_drag.newIndex, order.length - 1);
+  if (fromIndex !== toIndex) {
+    order.splice(fromIndex, 1);
+    order.splice(toIndex, 0, _drag.exId);
+    renderSession();
+  }
+  _drag = null;
+}
+
+function _initDragHandles() {
+  document.querySelectorAll('.drag-handle').forEach(handle => {
+    handle.addEventListener('pointerdown', _onDragHandlePointerDown);
+  });
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function updateSessionProgress() {
   const day = state.program.find(d => d.id === activeSession.dayId);
@@ -6552,9 +6681,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 
 const APP_CHANGELOG = {
+  '1.3.1': [
+    'New: Reorder exercises mid-workout — tap REORDER in the workout header, drag any exercise to a new position, tap DONE when finished',
+  ],
   '1.3.0': [
     'New: Music player redesigned — Spotify users get an embedded mini player during workouts (play, pause, skip — without leaving the app)',
     'New: All other services show a polished Quick Launch card — one tap opens your app directly',
