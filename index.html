@@ -3837,11 +3837,15 @@ function renderHome() {
     dotsEl.appendChild(dot);
   }
 
-  // Legend for deload week marker
-  const dotsLegend = document.createElement('div');
-  dotsLegend.style.cssText = 'font-size:11px;color:#888;text-align:center;margin-top:5px;letter-spacing:0.8px;font-family:"Barlow Condensed",sans-serif;';
-  dotsLegend.textContent = 'D = DELOAD WEEK';
-  dotsEl.parentNode.insertBefore(dotsLegend, dotsEl.nextSibling);
+  // Legend for deload week marker — reuse existing element to avoid duplicates
+  let dotsLegend = document.getElementById('week-dots-legend');
+  if (!dotsLegend) {
+    dotsLegend = document.createElement('div');
+    dotsLegend.id = 'week-dots-legend';
+    dotsLegend.style.cssText = 'font-size:11px;color:#888;text-align:center;margin-top:5px;letter-spacing:0.8px;font-family:"Barlow Condensed",sans-serif;';
+    dotsLegend.textContent = 'D = DELOAD WEEK';
+    dotsEl.parentNode.insertBefore(dotsLegend, dotsEl.nextSibling);
+  }
 
   // Day cards — respect training days limit
   const container = document.getElementById('day-cards');
