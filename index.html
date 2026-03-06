@@ -5177,27 +5177,51 @@ function _onDragHandlePointerDown(e) {
     sourceCard,
     offsetY: e.clientY - rect.top,
     newIndex: activeSession.exerciseOrder.indexOf(exId),
+    lastClientY: e.clientY,
   };
 
   document.addEventListener('pointermove', _onDragPointerMove, { passive: false });
   document.addEventListener('pointerup', _onDragPointerUp);
+  _dragScrollLoop();
 }
 
-function _onDragPointerMove(e) {
+function _dragUpdateDropTarget(clientY) {
   if (!_drag) return;
-  e.preventDefault();
-  _drag.ghost.style.top = (e.clientY - _drag.offsetY) + 'px';
-
   const cards = [...document.querySelectorAll('#session-exercises .session-exercise:not(.is-dragging)')];
   let newIndex = cards.length;
   for (let i = 0; i < cards.length; i++) {
     const r = cards[i].getBoundingClientRect();
-    if (e.clientY < r.top + r.height / 2) { newIndex = i; break; }
+    if (clientY < r.top + r.height / 2) { newIndex = i; break; }
   }
   cards.forEach((card, i) => {
     card.classList.toggle('drag-nudge-down', i >= newIndex);
   });
   _drag.newIndex = newIndex;
+}
+
+function _dragScrollLoop() {
+  if (!_drag) return;
+  const ZONE = 80, MAX_SPEED = 14;
+  const vh = window.innerHeight;
+  const y = _drag.lastClientY;
+  if (y < ZONE) {
+    window.scrollBy(0, -Math.round(MAX_SPEED * (1 - y / ZONE)));
+    _drag.ghost.style.top = (y - _drag.offsetY) + 'px';
+    _dragUpdateDropTarget(y);
+  } else if (y > vh - ZONE) {
+    window.scrollBy(0, Math.round(MAX_SPEED * (1 - (vh - y) / ZONE)));
+    _drag.ghost.style.top = (y - _drag.offsetY) + 'px';
+    _dragUpdateDropTarget(y);
+  }
+  requestAnimationFrame(_dragScrollLoop);
+}
+
+function _onDragPointerMove(e) {
+  if (!_drag) return;
+  e.preventDefault();
+  _drag.lastClientY = e.clientY;
+  _drag.ghost.style.top = (e.clientY - _drag.offsetY) + 'px';
+  _dragUpdateDropTarget(e.clientY);
 }
 
 function _onDragPointerUp() {
