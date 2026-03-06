@@ -5746,7 +5746,10 @@ function finalizeEndSession(save) {
 
     // Deload suggestion — after 5+ consecutive weeks
     const weeksLogged = state.weekCount || 1;
-    if (weeksLogged > 0 && weeksLogged % 5 === 0) {
+    const _deloadDaysSince = (Date.now() - (state.lastDeloadPrompt || 0)) / (1000 * 60 * 60 * 24);
+    if (weeksLogged > 0 && weeksLogged % 5 === 0 && _deloadDaysSince >= 14) {
+      state.lastDeloadPrompt = Date.now();
+      saveState();
       setTimeout(() => {
         const deloadModal = document.createElement('div');
         deloadModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9000;display:flex;align-items:flex-end;';
