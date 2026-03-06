@@ -657,6 +657,19 @@
     background: var(--dark2);
     overflow: hidden;
   }
+  #session-reorder-btn {
+    background: transparent;
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 3px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1px;
+    line-height: 1.4;
+  }
   #session-reorder-btn.active {
     color: #2ecc71;
     border-color: #2ecc71;
@@ -2752,7 +2765,7 @@
       <span id="session-progress-text">0 / 0 exercises done</span>
       <span id="session-timer-display" style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:1px;">0:00</span>
       <span id="session-sets-text">0 sets logged</span>
-      <button id="session-reorder-btn" onclick="toggleReorderMode()" title="Reorder exercises" style="background:transparent; border:1px solid var(--red); color:var(--red); padding:3px 8px; border-radius:6px; cursor:pointer; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1px; line-height:1.4;">REORDER</button>
+      <button id="session-reorder-btn" onclick="toggleReorderMode()" title="Reorder exercises" >REORDER</button>
     </div>
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="session-progress-bar" style="width:0%"></div>
