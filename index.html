@@ -7041,10 +7041,14 @@ function showInstallWelcome() {
   const ts = localStorage.getItem('ts-install-dismissed');
   if (ts && Date.now() - parseInt(ts) < 3 * 24 * 60 * 60 * 1000) return;
   // Show after a short delay so the page renders first and
-  // beforeinstallprompt has time to fire on Android
+  // beforeinstallprompt has time to fire on Android.
+  // Hide the bottom banner while the welcome overlay is up — no double prompt.
   setTimeout(() => {
     const el = document.getElementById('install-welcome');
-    if (el) el.style.display = 'flex';
+    if (el) {
+      document.getElementById('install-banner').style.display = 'none';
+      el.style.display = 'flex';
+    }
   }, 1500);
 }
 
@@ -7066,6 +7070,11 @@ function doWelcomeInstall() {
 function dismissWelcomeInstall() {
   document.getElementById('install-welcome').style.display = 'none';
   localStorage.setItem('ts-install-dismissed', Date.now().toString());
+  // Show the bottom banner now that the welcome overlay is gone
+  const isInstalled = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  if (!isInstalled && state.onboardingComplete) {
+    document.getElementById('install-banner').style.display = 'block';
+  }
 }
 
 // ============================================================
