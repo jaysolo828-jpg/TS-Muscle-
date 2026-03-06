@@ -2746,18 +2746,13 @@
           <div style="font-size:12px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;" id="session-subtitle"></div>
         </div>
       </div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button id="session-reorder-btn" onclick="toggleReorderMode()" title="Reorder exercises" style="background:var(--dark3); border:1px solid #444; color:var(--gray); padding:8px 10px; border-radius:10px; cursor:pointer; display:flex; align-items:center; gap:5px;">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          <span id="session-reorder-label" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; display:none;">DONE</span>
-        </button>
-        <button class="close-session" onclick="endSession(true)" style="background:rgba(46,204,113,0.15); border-color:#2ecc71; color:#2ecc71;">COMPLETE ✓</button>
-      </div>
+      <button class="close-session" onclick="endSession(true)" style="background:rgba(46,204,113,0.15); border-color:#2ecc71; color:#2ecc71;">COMPLETE ✓</button>
     </div>
     <div class="session-progress-header">
       <span id="session-progress-text">0 / 0 exercises done</span>
       <span id="session-timer-display" style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:1px;">0:00</span>
       <span id="session-sets-text">0 sets logged</span>
+      <button id="session-reorder-btn" onclick="toggleReorderMode()" title="Reorder exercises" style="background:transparent; border:1px solid #555; color:var(--gray); padding:3px 8px; border-radius:6px; cursor:pointer; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1px; line-height:1.4;">REORDER</button>
     </div>
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="session-progress-bar" style="width:0%"></div>
@@ -5140,10 +5135,9 @@ function clearAllRestTimers() {
 function toggleReorderMode() {
   const session = document.getElementById('workout-session');
   const btn = document.getElementById('session-reorder-btn');
-  const label = document.getElementById('session-reorder-label');
   const isNowActive = session.classList.toggle('reorder-mode');
   btn.classList.toggle('active', isNowActive);
-  label.style.display = isNowActive ? 'inline' : 'none';
+  btn.textContent = isNowActive ? 'DONE' : 'REORDER';
 }
 
 let _drag = null;
