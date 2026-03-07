@@ -2144,6 +2144,30 @@
       <div class="onboard-dot" data-step="6"></div>
     </div>
 
+    <!-- STEP 0: New or Returning? -->
+    <div id="onboard-step-0" class="onboard-step" style="display:none;">
+      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">WELCOME BACK?</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:28px; line-height:1.6;">
+        If you tracked workouts on another device, you can restore all your history, weights, and progress from a backup file.
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <button class="onboard-select-btn" onclick="onboardStartFresh()" style="padding:18px 16px;">
+          <div style="font-weight:bold;">Start Fresh</div>
+          <div style="font-size:12px; color:var(--gray);">New to T&amp;S Muscle — set up my program from scratch</div>
+        </button>
+        <button class="onboard-select-btn" onclick="onboardRestoreBackup()" style="padding:18px 16px;">
+          <div style="font-weight:bold;">Restore from Backup File</div>
+          <div style="font-size:12px; color:var(--gray);">I have a backup .json file from my previous device</div>
+        </button>
+      </div>
+      <div style="margin-top:20px; font-size:11px; color:var(--gray); text-align:center; line-height:1.5;">
+        Don't have a backup? Choose "Start Fresh" — you can always export from Settings later.
+      </div>
+    </div>
+
+    <!-- Hidden file input for onboarding restore path (inside modal for iOS compatibility) -->
+    <input type="file" id="import-file-onboard" accept=".json" style="display:none" onchange="handleImportOnboarding(event)"/>
+
     <!-- STEP 1: Profile -->
     <div id="onboard-step-1" class="onboard-step">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR PROFILE</div>
@@ -5709,6 +5733,7 @@ function finalizeEndSession(save) {
     state.totalSessions++;
     state.inactivityPromptShown = false;
     showToast('Workout saved! ✓');
+    setTimeout(() => checkBackupReminder(), 3000);
 
     // Increment week every 4 sessions
     if (state.totalSessions % 4 === 0) {
@@ -6642,19 +6667,50 @@ function importData() {
 function handleImport(e) {
   const file = e.target.files[0];
   if (!file) return;
+  // Reset so the same file can be re-selected if needed
+  e.target.value = '';
   const reader = new FileReader();
   reader.onload = (ev) => {
     try {
       const parsed = JSON.parse(ev.target.result);
+      const sessionCount = (parsed.history || []).length;
+      const cardioCount  = (parsed.cardioHistory || []).length;
+      const name         = parsed.profile?.name || '';
+      const backupDate   = parsed.lastBackupDate
+        ? new Date(parsed.lastBackupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : null;
       state = { ...state, ...parsed };
       saveState();
       renderHome();
-      showToast('Data imported successfully! ✓');
+      showImportSuccessModal({ name, sessionCount, cardioCount, backupDate });
     } catch(err) {
       showToast('Import failed — invalid file', 'error');
     }
   };
   reader.readAsText(file);
+}
+
+function showImportSuccessModal({ name, sessionCount, cardioCount, backupDate }) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  const greeting = name ? `Welcome back, ${name}!` : 'Data Restored!';
+  const rows = [];
+  if (sessionCount > 0) rows.push(`<div>Workout sessions: <strong style="color:var(--cream);">${sessionCount}</strong></div>`);
+  if (cardioCount > 0)  rows.push(`<div>Cardio sessions: <strong style="color:var(--cream);">${cardioCount}</strong></div>`);
+  if (backupDate)       rows.push(`<div>Backup dated: <strong style="color:var(--cream);">${backupDate}</strong></div>`);
+  if (rows.length === 0) rows.push(`<div style="color:var(--gray);">Your settings and program have been restored.</div>`);
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:400px;border:1px solid var(--dark3);">
+      <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">${greeting}</div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.8;margin-bottom:20px;">
+        ${rows.join('')}
+      </div>
+      <button onclick="this.closest('[style*=fixed]').remove();"
+        style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">
+        LET'S GO
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 function resetWeeks() {
@@ -7001,23 +7057,52 @@ function checkIOSDeleteWarning() {
   }, 1500);
 }
 
-// Periodic toast reminder if iOS PWA user hasn't exported in 14+ days
+// Periodic reminder if user hasn't exported a backup recently (any platform)
 function checkBackupReminder() {
-  if (!_isIOSStandalone()) return;
   if (!state.onboardingComplete) return;
   if (!state.history || state.history.length < 3) return;
 
   const lastBackup = state.lastBackupDate || 0;
-  const msSinceBackup = Date.now() - lastBackup;
-  const daysSinceBackup = msSinceBackup / 86400000;
+  const daysSinceBackup = (Date.now() - lastBackup) / 86400000;
 
   const lastReminderTs = parseInt(localStorage.getItem('ts-backup-reminder-ts') || '0');
   const daysSinceReminder = (Date.now() - lastReminderTs) / 86400000;
 
-  if (daysSinceBackup > 14 && daysSinceReminder > 7) {
+  // Don't remind more than once per 7 days
+  if (daysSinceReminder < 7) return;
+
+  const neverBacked = lastBackup === 0;
+  const staleBacked = daysSinceBackup > 7;
+  if (neverBacked || staleBacked) {
     localStorage.setItem('ts-backup-reminder-ts', Date.now().toString());
-    setTimeout(() => showToast('Reminder: export a backup in Settings to protect your data'), 2000);
+    showBackupReminderBanner();
   }
+}
+
+function showBackupReminderBanner() {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:400px;border:1px solid var(--dark3);">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">BACK UP YOUR DATA</div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:14px;">
+        Your workout history lives only on this device. If you switch phones or reinstall the app, you'll lose everything without a backup.
+      </div>
+      <div style="background:rgba(204,32,39,0.1);border:1px solid rgba(204,32,39,0.3);border-radius:10px;padding:12px;margin-bottom:20px;font-size:13px;color:#e05a5f;line-height:1.5;">
+        It takes 5 seconds — tap "Export Backup Now" and save the file somewhere safe.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button onclick="this.closest('[style*=fixed]').remove();exportData();"
+          style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">
+          EXPORT BACKUP NOW
+        </button>
+        <button onclick="this.closest('[style*=fixed]').remove();"
+          style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;">
+          MAYBE LATER
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 // One-time migration: correct state.totalSessions and state.weekCount that were
@@ -8081,7 +8166,60 @@ function checkOnboarding() {
     if (hasData) {
       document.getElementById('ob-exit-bar').style.display = 'block';
     }
+    // Show "New or Returning?" choice screen for genuine fresh installs
+    const isFreshInstall = !state.profile &&
+      (!state.history || state.history.length === 0) &&
+      !localStorage.getItem('ts-redo-mode');
+    if (isFreshInstall) {
+      document.getElementById('onboard-dots').style.display = 'none';
+      document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
+      document.getElementById('onboard-step-0').style.display = 'block';
+    }
   }
+}
+
+function onboardStartFresh() {
+  document.getElementById('onboard-dots').style.display = 'flex';
+  document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
+  document.getElementById('onboard-step-1').style.display = 'block';
+  document.querySelector('.onboard-dot[data-step="1"]')?.classList.add('active');
+  document.getElementById('onboarding-modal').scrollTop = 0;
+}
+
+function onboardRestoreBackup() {
+  document.getElementById('import-file-onboard').click();
+}
+
+function handleImportOnboarding(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      const sessionCount = (parsed.history || []).length;
+      const name = parsed.profile?.name || '';
+      state = { ...state, ...parsed };
+      saveState();
+      document.getElementById('onboarding-modal').style.display = 'none';
+      document.getElementById('onboard-dots').style.display = 'flex'; // reset for future redo
+      renderHome();
+      // Navigate to home screen
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('screen-home')?.classList.add('active');
+      document.querySelector('[onclick*="\'home\'"]')?.classList.add('active');
+      const who = name ? `Welcome back, ${name}!` : 'Welcome back!';
+      const detail = sessionCount > 0
+        ? `${sessionCount} session${sessionCount !== 1 ? 's' : ''} restored.`
+        : 'Your data has been restored.';
+      showToast(`${who} ${detail} ✓`);
+    } catch(err) {
+      showToast('Could not read that file — make sure it\'s a T&S Muscle backup (.json)', 'error');
+      e.target.value = '';
+    }
+  };
+  reader.readAsText(file);
 }
 
 function onboardNext(step) {
