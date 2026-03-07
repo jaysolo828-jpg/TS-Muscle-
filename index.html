@@ -847,6 +847,7 @@
     transition: all 0.15s;
   }
   .set-done-btn.done { background: var(--success); border-color: var(--success); color: var(--white); box-shadow: 0 0 10px rgba(46,204,113,0.3); }
+  .set-row input:disabled, .set-row select:disabled { opacity: 0.45; pointer-events: none; }
 
   /* RPE NUDGE — inline row shown after completing set without RPE */
   .rpe-nudge-row {
@@ -4735,16 +4736,17 @@ function renderSession() {
         <div class="set-row" id="set-row-${ex.id}-${si}">
           <div class="set-num">${si + 1}</div>
           <input type="number" inputmode="decimal" class="set-input" placeholder="${weightPlaceholder || '0'}"
-            value="${set.weight}" onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
+            value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
           <div style="position:relative;">
             <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
               placeholder="${repsPlaceholder || ex.reps.split('–')[0]}"
               value="${set.reps}"
+              ${set.done ? 'disabled' : ''}
               onchange="updateSet('${ex.id}',${si},'reps',this.value); updateRepIndicator('${ex.id}',${si},'${ex.reps}')"
               oninput="updateRepIndicator('${ex.id}',${si},'${ex.reps}')"/>
             <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:6px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
           </div>
-          <select class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" onchange="updateSet('${ex.id}',${si},'rpe',this.value);this.dataset.empty=this.value?'false':'true';">
+          <select class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'rpe',this.value);this.dataset.empty=this.value?'false':'true';">
             <option value="">RPE</option>
             ${[6,6.5,7,7.5,8,8.5,9,9.5,10].map(r => `<option value="${r}" ${set.rpe == r ? 'selected' : ''}>${r}</option>`).join('')}
           </select>
@@ -4868,6 +4870,8 @@ function toggleSetDone(exId, setIndex) {
   set.done = !set.done;
   const btn = document.querySelector(`#set-row-${exId}-${setIndex} .set-done-btn`);
   btn.classList.toggle('done', set.done);
+  const row = document.getElementById(`set-row-${exId}-${setIndex}`);
+  if (row) row.querySelectorAll('input, select').forEach(el => el.disabled = set.done);
 
   // Capture any unsaved input values before PR check
   if (set.done) {
