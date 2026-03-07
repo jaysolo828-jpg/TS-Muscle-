@@ -5750,8 +5750,8 @@ function finalizeEndSession(save) {
         delete state.pauseWeekCount;
         delete state.pauseStreak;
         saveState();
-        renderHome();
         updateStreak();
+        renderHome();
         setTimeout(() => showCycleCompleteModal(), 600);
         document.getElementById('workout-session').classList.remove('active');
         state.musicDockOpen = false; updateMusicDockUI();
@@ -6721,6 +6721,7 @@ function handleImport(e) {
         : null;
       state = { ...state, ...parsed };
       saveState();
+      updateStreak();
       renderHome();
       showImportSuccessModal({ name, sessionCount, cardioCount, backupDate });
     } catch(err) {
@@ -7168,6 +7169,7 @@ try {
   loadState();
   migrateSessionCount();
   checkPauseAutoExpiry();
+  updateStreak();
   renderHome();
   checkOnboarding();
   updatePauseSettingsLabel();
@@ -8241,6 +8243,7 @@ function handleImportOnboarding(e) {
       const name = parsed.profile?.name || '';
       state = { ...state, ...parsed };
       saveState();
+      updateStreak();
       document.getElementById('onboarding-modal').style.display = 'none';
       document.getElementById('onboard-dots').style.display = 'flex'; // reset for future redo
       renderHome();
