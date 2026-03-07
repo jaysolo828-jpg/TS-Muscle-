@@ -3998,6 +3998,35 @@ function checkForPR(exId, set) {
   setTimeout(() => showPRModal(name, w, r, improvement), 400);
 }
 
+function recalcPRForExercise(exId) {
+  let best = null;
+  (state.history || []).forEach(entry => {
+    (entry.sets?.[exId] || []).filter(s => s.done && s.weight && s.reps).forEach(s => {
+      const w = parseFloat(s.weight), r = parseInt(s.reps);
+      if (!w || !r) return;
+      if (!best || w > best.weight || (w === best.weight && r > best.reps))
+        best = { weight: w, reps: r, date: entry.date };
+    });
+  });
+  if (activeSession?.sets?.[exId]) {
+    activeSession.sets[exId].filter(s => s.done && s.weight && s.reps).forEach(s => {
+      const w = parseFloat(s.weight), r = parseInt(s.reps);
+      if (!w || !r) return;
+      if (!best || w > best.weight || (w === best.weight && r > best.reps))
+        best = { weight: w, reps: r, date: new Date().toISOString() };
+    });
+  }
+  if (!state.prs) state.prs = {};
+  if (best) { state.prs[exId] = best; } else { delete state.prs[exId]; }
+  saveState();
+  const persistentBadge = document.getElementById('pr-badge-' + exId);
+  if (persistentBadge) persistentBadge.style.display = state.prs[exId] ? 'inline-flex' : 'none';
+  if (!state.prs[exId]) {
+    const exEl = document.getElementById('session-ex-' + exId);
+    if (exEl) exEl.querySelector('.pr-flash')?.remove();
+  }
+}
+
 function launchConfetti() {
   const canvas = document.createElement('canvas');
   canvas.style.cssText = 'position:fixed;inset:0;z-index:9999999;pointer-events:none;';
@@ -4898,6 +4927,7 @@ function toggleSetDone(exId, setIndex) {
     const badge = document.getElementById(`rep-badge-${exId}-${setIndex}`);
     if (badge) badge.remove();
     _removeRpeNudge(exId, setIndex);
+    recalcPRForExercise(exId);
   }
 
   const day = state.program.find(d => d.id === activeSession.dayId);
