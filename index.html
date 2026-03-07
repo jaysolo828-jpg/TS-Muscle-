@@ -4188,17 +4188,20 @@ function updateStreak() {
   // Walk back from current week, counting consecutive hit weeks
   let streak = 0;
   let checkWeek = getISOWeek(now);
-  const currentWeekKey = checkWeek;
+  const threshold = Math.ceil(target * 0.75);
 
-  // Don't penalize current in-progress week — skip it entirely, only evaluate completed past weeks
+  // If the current week already hit the target, count it — otherwise skip it
+  // without breaking the streak (week is still in progress)
   for (let i = 0; i < 52; i++) {
     const count = weekCounts[checkWeek] || 0;
     if (i === 0) {
-      // Current week is never complete until it ends — always skip, never break
+      if (count >= threshold) {
+        streak++;
+      }
       checkWeek = prevISOWeek(checkWeek);
       continue;
     }
-    if (count >= Math.ceil(target * 0.75)) {
+    if (count >= threshold) {
       streak++;
       checkWeek = prevISOWeek(checkWeek);
     } else {
