@@ -4990,11 +4990,13 @@ function renderSession() {
     // In pairing mode, make non-source cards tappable to complete the pair
     if (isPairingMode) {
       exEl.style.cursor = 'pointer';
-      exEl.style.outline = '1px dashed var(--red)';
+      exEl.style.outline = '2px dashed var(--red)';
       exEl.style.outlineOffset = '-2px';
       exEl.onclick = (e) => { if (e.target.closest('button,input,select')) return; completePair(ex.id); };
     } else if (isPaired) {
-      exEl.style.borderLeft = '3px solid var(--red)';
+      // Bold top accent + subtle red-tinted background so it reads immediately as "linked"
+      exEl.style.borderTop = '3px solid var(--red)';
+      exEl.style.background = 'rgba(220,38,38,0.04)';
     } else {
       exEl.onclick = null;
     }
@@ -5095,6 +5097,19 @@ function renderSession() {
     `;
 
     container.appendChild(exEl);
+
+    // Connector strip between adjacent paired exercises
+    const nextEx = orderedExercises[orderedExercises.indexOf(ex) + 1];
+    if (isPaired && nextEx && activeSession.supersets?.[ex.id] === nextEx.id) {
+      const connector = document.createElement('div');
+      connector.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:7px 16px;background:rgba(220,38,38,0.08);border-left:3px solid var(--red);border-right:3px solid var(--red);margin:0;';
+      connector.innerHTML = `
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="8 15 12 19 16 15"/></svg>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--red);letter-spacing:2px;">SUPERSET ${supersetLabel} — ALTERNATE</span>
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="8 9 12 5 16 9"/></svg>
+      `;
+      container.appendChild(connector);
+    }
   });
 
   updateSessionProgress();
