@@ -9245,13 +9245,20 @@ function renderMoodInsights() {
       </div>
     </div>`);
 
-  // Slide 1 — Mood Lift + bar chart
+  // Slide 1 — Mood Lift + narrative inline + bar chart
   if (avgLift !== null) {
-    const liftNum    = parseFloat(avgLift);
-    const liftColor  = liftNum > 0 ? '#4caf50' : liftNum < 0 ? 'var(--red)' : 'var(--gray)';
-    const liftArrow  = liftNum > 0 ? '↑' : liftNum < 0 ? '↓' : '→';
+    const liftNum     = parseFloat(avgLift);
+    const liftColor   = liftNum > 0 ? '#4caf50' : liftNum < 0 ? 'var(--red)' : 'var(--gray)';
+    const liftArrow   = liftNum > 0 ? '↑' : liftNum < 0 ? '↓' : '→';
     const liftDisplay = liftNum > 0 ? `+${avgLift}` : `${avgLift}`;
-    const liftLabel  = liftNum > 0 ? 'AVG MOOD BOOST PER SESSION' : liftNum < 0 ? 'AVG MOOD DROP PER SESSION' : 'NO CHANGE ON AVERAGE';
+    const liftLabel   = liftNum > 0 ? 'AVG MOOD BOOST PER SESSION' : liftNum < 0 ? 'AVG MOOD DROP PER SESSION' : 'NO CHANGE ON AVERAGE';
+    const liftNarrative = lifts.length >= 3 ? (() => {
+      if (liftNum >= 1.5) return "Consistent, meaningful. Exercise is working as a mood regulator — not because you're motivated to feel better, but because the body responds. This is behavioral activation.";
+      if (liftNum >= 0.5) return "A measurable lift every session. This data is your evidence — not something to believe in, something you've actually measured about yourself.";
+      if (liftNum > 0)   return "Even a small consistent lift matters. You tend to feel better after training. That's real, and it's yours.";
+      if (liftNum === 0) return "Your mood stays stable across sessions. Consistent emotional regulation can itself be a sign that training is helping you stay even.";
+      return "Some sessions feel harder. That's normal. The goal isn't to always feel better — it's to keep showing up.";
+    })() : null;
 
     // Bar chart
     let barChartHtml = '';
@@ -9292,27 +9299,11 @@ function renderMoodInsights() {
         <div style="font-family:'Bebas Neue',cursive; font-size:42px; color:${liftColor}; line-height:1;">${liftArrow} ${liftDisplay}</div>
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-top:6px;">${liftLabel}</div>
         <div style="font-size:11px; color:var(--gray); margin-top:4px;">across ${lifts.length} session${lifts.length !== 1 ? 's' : ''} with pre + post logs</div>
+        ${liftNarrative ? `<div style="font-size:12px; color:var(--gray); line-height:1.6; margin-top:12px; padding-top:12px; border-top:1px solid #333; text-align:left;">${liftNarrative}</div>` : ''}
         ${barChartHtml}
       </div>`);
 
-    // Slide 2 — What this means (narrative)
-    const liftNarrative = (() => {
-      if (lifts.length < 3) return null;
-      if (liftNum >= 1.5) return "That's a consistent, meaningful shift. Exercise is working as a mood regulator for you — not because you're motivated to feel better, but because the body responds. This is behavioral activation: the action creates the feeling.";
-      if (liftNum >= 0.5) return "A measurable lift every session. Over time, this data is your evidence — not something to believe in, something you've actually measured about yourself.";
-      if (liftNum > 0)   return "Even a small consistent lift matters. You tend to feel better after training. That's real, and it's yours.";
-      if (liftNum === 0) return "Your mood stays stable across sessions. Consistent emotional regulation can itself be a sign that training is helping you stay even.";
-      return "Some sessions feel harder than others. That's normal. The goal isn't to always feel better — it's to keep showing up when you can.";
-    })();
-    if (liftNarrative) {
-      slides.push(`
-        <div class="card" style="padding:16px; border-left:3px solid var(--red);">
-          <div style="font-size:10px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px;">WHAT THIS MEANS</div>
-          <div style="font-size:14px; color:var(--gray-light); line-height:1.8;">${liftNarrative}</div>
-        </div>`);
-    }
-
-    // Slide 3 — Best session + Showed up anyway
+    // Slide 2 — Best session + Showed up anyway
     const statCards = [];
     if (bestSession && bestSession.lift > 0) {
       const bd    = new Date(bestSession.day + 'T12:00:00');
@@ -9340,7 +9331,9 @@ function renderMoodInsights() {
     }
   }
 
-  // Slide — Average PRE vs POST
+  // Slide 3 — All supporting data in one place (avg pre/post + trend + patterns)
+  let deepDataHtml = '';
+
   if (avgPre || avgPost) {
     const preSide = avgPre
       ? `<div style="font-size:26px; margin-bottom:4px;">${MOOD_EMOJIS[Math.round(avgPre)]}</div>
@@ -9352,8 +9345,8 @@ function renderMoodInsights() {
          <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgPost}</div>
          <div style="font-size:11px; color:var(--gray);">${MOOD_LABELS[Math.round(avgPost)]}</div>`
       : `<div style="font-size:20px; color:var(--gray); margin-bottom:4px;">—</div><div style="font-size:11px; color:var(--gray);">No data</div>`;
-    slides.push(`
-      <div class="card" style="padding:14px;">
+    deepDataHtml += `
+      <div class="card" style="padding:14px; margin-bottom:10px;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:12px;">AVERAGE PRE vs POST</div>
         <div style="display:flex; align-items:center; gap:6px;">
           <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
@@ -9364,10 +9357,9 @@ function renderMoodInsights() {
             <div style="font-size:10px; color:var(--success); letter-spacing:1.5px; margin-bottom:8px;">POST</div>${postSide}
           </div>
         </div>
-      </div>`);
+      </div>`;
   }
 
-  // Slide — Weekly trend
   if (weeklyData.length >= 2) {
     let trendBars = '';
     weeklyData.forEach(w => {
@@ -9380,17 +9372,15 @@ function renderMoodInsights() {
           <div style="font-size:11px; color:var(--gray-light);">${w.label}</div>
         </div>`;
     });
-    slides.push(`
-      <div class="card" style="padding:14px;">
+    deepDataHtml += `
+      <div class="card" style="padding:14px; margin-bottom:10px;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:12px;">WEEKLY MOOD TREND</div>
         <div style="display:flex; align-items:flex-end; gap:6px; height:60px;">${trendBars}</div>
-      </div>`);
+      </div>`;
   }
 
-  // Slide — Patterns (most common pre + workout day mood combined)
-  let patternsHtml = '';
   if (mostCommonPre) {
-    patternsHtml += `
+    deepDataHtml += `
       <div class="card" style="padding:14px; margin-bottom:10px;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOST COMMON PRE-WORKOUT MOOD</div>
         <div style="display:flex; align-items:center; gap:10px;">
@@ -9402,8 +9392,9 @@ function renderMoodInsights() {
         </div>
       </div>`;
   }
+
   if (avgMoodWorkoutDay) {
-    patternsHtml += `
+    deepDataHtml += `
       <div class="card" style="padding:14px;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOOD ON WORKOUT DAYS</div>
         <div style="display:flex; align-items:center; gap:10px;">
@@ -9415,7 +9406,8 @@ function renderMoodInsights() {
         </div>
       </div>`;
   }
-  if (patternsHtml) slides.push(`<div>${patternsHtml}</div>`);
+
+  if (deepDataHtml) slides.push(`<div>${deepDataHtml}</div>`);
 
   // ── Assemble carousel ────────────────────────────────────────
   const showCarousel = slides.length > 1;
