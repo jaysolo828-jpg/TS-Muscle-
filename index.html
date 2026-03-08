@@ -642,6 +642,16 @@
 
   .session-exercise.completed { border-color: var(--success); opacity: 0.75; }
 
+  @keyframes supersetPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+    50% { box-shadow: 0 0 0 7px rgba(245,158,11,0.25); }
+  }
+  .superset-up-next {
+    border: 2px solid #f59e0b !important;
+    border-top: 3px solid var(--red) !important;
+    animation: supersetPulse 1.2s ease-in-out 3;
+  }
+
   /* ── Reorder mode ── */
   .drag-handle {
     display: none;
@@ -4957,6 +4967,32 @@ function getSupersetLabel(exId) {
   return '';
 }
 
+function refreshConnectorStrip(exId) {
+  if (!activeSession?.supersets?.[exId]) return;
+  const partnerId = activeSession.supersets[exId];
+  const connectorId = 'superset-connector-' + [exId, partnerId].sort().join('-');
+  const connector = document.getElementById(connectorId);
+  if (!connector) return;
+
+  const setsA = activeSession.sets[exId] || [];
+  const setsB = activeSession.sets[partnerId] || [];
+  const roundsDone = Math.min(setsA.filter(s => s.done).length, setsB.filter(s => s.done).length);
+  const totalRounds = setsA.length;
+  const allDone = roundsDone >= totalRounds;
+  const label = getSupersetLabel(exId);
+  const roundLabel = allDone
+    ? `SUPERSET ${label} · ALL ${totalRounds} ROUNDS DONE ✓`
+    : `SUPERSET ${label} · ROUND ${roundsDone + 1} OF ${totalRounds}`;
+  const color = allDone ? '#16a34a' : 'var(--red)';
+
+  connector.style.background = allDone ? 'rgba(22,163,74,0.08)' : 'rgba(220,38,38,0.08)';
+  connector.style.borderLeft = `3px solid ${color}`;
+  connector.style.borderRight = `3px solid ${color}`;
+  connector.innerHTML = allDone
+    ? `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:${color};letter-spacing:2px;">${roundLabel}</span><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+    : `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="8 15 12 19 16 15"/></svg><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:${color};letter-spacing:2px;">${roundLabel}</span><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="8 9 12 5 16 9"/></svg>`;
+}
+
 function renderSession() {
   if (!activeSession) return;
   const day = state.program.find(d => d.id === activeSession.dayId);
@@ -5101,13 +5137,21 @@ function renderSession() {
     // Connector strip between adjacent paired exercises
     const nextEx = orderedExercises[orderedExercises.indexOf(ex) + 1];
     if (isPaired && nextEx && activeSession.supersets?.[ex.id] === nextEx.id) {
+      const setsA = activeSession.sets[ex.id] || [];
+      const setsB = activeSession.sets[nextEx.id] || [];
+      const roundsDone = Math.min(setsA.filter(s => s.done).length, setsB.filter(s => s.done).length);
+      const totalRounds = setsA.length;
+      const allDone = roundsDone >= totalRounds;
+      const roundLabel = allDone
+        ? `SUPERSET ${supersetLabel} · ALL ${totalRounds} ROUNDS DONE ✓`
+        : `SUPERSET ${supersetLabel} · ROUND ${roundsDone + 1} OF ${totalRounds}`;
       const connector = document.createElement('div');
-      connector.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:7px 16px;background:rgba(220,38,38,0.08);border-left:3px solid var(--red);border-right:3px solid var(--red);margin:0;';
-      connector.innerHTML = `
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="8 15 12 19 16 15"/></svg>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--red);letter-spacing:2px;">SUPERSET ${supersetLabel} — ALTERNATE</span>
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="8 9 12 5 16 9"/></svg>
-      `;
+      connector.id = 'superset-connector-' + [ex.id, nextEx.id].sort().join('-');
+      connector.style.cssText = `display:flex;align-items:center;justify-content:center;gap:8px;padding:7px 16px;background:${allDone ? 'rgba(22,163,74,0.08)' : 'rgba(220,38,38,0.08)'};border-left:3px solid ${allDone ? '#16a34a' : 'var(--red)'};border-right:3px solid ${allDone ? '#16a34a' : 'var(--red)'};margin:0;`;
+      const arrowColor = allDone ? '#16a34a' : 'var(--red)';
+      connector.innerHTML = allDone
+        ? `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${arrowColor}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:${arrowColor};letter-spacing:2px;">${roundLabel}</span><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${arrowColor}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+        : `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${arrowColor}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="8 15 12 19 16 15"/></svg><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:${arrowColor};letter-spacing:2px;">${roundLabel}</span><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${arrowColor}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="8 9 12 5 16 9"/></svg>`;
       container.appendChild(connector);
     }
   });
@@ -5175,6 +5219,9 @@ function selectRpeFromNudge(exId, setIndex, rpe) {
 }
 
 function toggleSetDone(exId, setIndex) {
+  // Clear any "up next" pulse on this card (user is now acting on it)
+  document.getElementById('session-ex-' + exId)?.classList.remove('superset-up-next');
+
   const set = activeSession.sets[exId][setIndex];
   set.done = !set.done;
   const btn = document.querySelector(`#set-row-${exId}-${setIndex} .set-done-btn`);
@@ -5239,6 +5286,32 @@ function toggleSetDone(exId, setIndex) {
   }
 
   updateSessionProgress();
+
+  // Update the connector strip round counter in-place (no full re-render needed)
+  if (activeSession.supersets?.[exId]) {
+    refreshConnectorStrip(exId);
+  }
+
+  // "Up next" pulse + scroll to partner when a set is marked done
+  if (set.done && activeSession.supersets?.[exId]) {
+    const partnerId = activeSession.supersets[exId];
+    const partnerSets = activeSession.sets[partnerId] || [];
+    // Only pulse if the partner still has sets left to do
+    if (!partnerSets.every(s => s.done)) {
+      const partnerEl = document.getElementById('session-ex-' + partnerId);
+      if (partnerEl) {
+        // Restart animation cleanly even on rapid tapping
+        partnerEl.classList.remove('superset-up-next');
+        void partnerEl.offsetWidth;
+        // Small delay so user sees their own checkmark land first
+        setTimeout(() => {
+          partnerEl.classList.add('superset-up-next');
+          partnerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => partnerEl.classList.remove('superset-up-next'), 4000);
+        }, 300);
+      }
+    }
+  }
 
   // Checkpoint: auto-save after every completed set so crash/swipe-away recovery has recent data
   if (set.done && activeSession) {
@@ -6059,7 +6132,8 @@ function finalizeEndSession(save) {
       swaps: activeSession.swaps,
       duration: Math.round((activeSession.endTime - activeSession.startTime) / 60000),
       isDeload: activeSession.isDeload || false,
-      prs: activeSession.prs || []
+      prs: activeSession.prs || [],
+      supersets: activeSession.supersets || {}
     };
 
     state.history.push(entry);
@@ -6745,9 +6819,27 @@ function renderHistoryDetail(entry) {
     const displayName = (entry.swaps && entry.swaps[ex.id]) ? entry.swaps[ex.id].name : ex.name;
     const exNote = entry.exNotes?.[ex.id];
     const wasPR = entry.prs?.includes(ex.id);
+    // Superset badge: compute label letter from the entry's saved supersets
+    let supersetBadge = '';
+    if (entry.supersets?.[ex.id]) {
+      const ssOrder = day.exercises.map(e => e.id);
+      const seen = new Set(); let letter = 65;
+      for (const sid of ssOrder) {
+        if (!entry.supersets[sid]) continue;
+        const key = [sid, entry.supersets[sid]].sort().join('|');
+        if (!seen.has(key)) {
+          seen.add(key);
+          if (sid === ex.id || entry.supersets[sid] === ex.id) {
+            supersetBadge = `<span style="font-size:10px;font-weight:700;color:var(--red);background:rgba(220,38,38,0.1);padding:1px 6px;border-radius:4px;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">SS ${String.fromCharCode(letter)}</span>`;
+            break;
+          }
+          letter++;
+        }
+      }
+    }
 
     html += `<div class="history-ex">
-      <div class="history-ex-name">${displayName}${wasPR ? ' <span style="color:#f0a500;font-size:11px;">🏆 PR</span>' : ''}</div>
+      <div class="history-ex-name" style="display:flex;align-items:center;gap:6px;">${displayName}${wasPR ? ' <span style="color:#f0a500;font-size:11px;">🏆 PR</span>' : ''}${supersetBadge}</div>
       <div class="history-sets">
         ${doneSets.map((s, i) => `<div class="history-set-pill">${s.weight ? s.weight + 'lb' : '--'} × ${s.reps || '--'}${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`).join('')}
       </div>
