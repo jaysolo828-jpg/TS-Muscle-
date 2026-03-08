@@ -8982,7 +8982,10 @@ function renderMoodCheckinLabel() {
   const todayKey = new Date().toISOString().slice(0, 10);
   const todayEntries = (state.moodLog || []).filter(e => e.date.slice(0, 10) === todayKey);
   if (todayEntries.length === 0) { el.textContent = 'MOOD CHECK-IN'; return; }
-  const summary = todayEntries.map(e => `${e.emoji} ${e.timing === 'pre' ? 'Pre' : 'Post'}`).join(' · ');
+  // Deduplicate — keep only the most recent entry per timing (moodLog is newest-first)
+  const seen = {};
+  const deduped = todayEntries.filter(e => { if (seen[e.timing]) return false; seen[e.timing] = true; return true; });
+  const summary = deduped.map(e => `${e.emoji} ${e.timing === 'pre' ? 'Pre' : 'Post'}`).join(' · ');
   el.textContent = `MOOD CHECK-IN · ✓ ${summary}`;
   el.style.color = 'var(--success)';
 }
