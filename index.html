@@ -1623,7 +1623,7 @@
     50%       { box-shadow: 0 0 22px 6px rgba(204,32,39,0.55); }
   }
   .start-btn:not(.done-today) {
-    animation: glowPulse 2.2s ease-in-out infinite;
+    animation: glowPulse 2.5s ease-in-out 2;
   }
   .start-btn:active { animation: none; }
 
@@ -11020,111 +11020,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const footerVer = document.getElementById('footer-version');
   if (footerVer) footerVer.textContent = 'T\u0026S MUSCLE v' + APP_VERSION + ' · THERAPY & SNEAKERS';
 
-  // ── VISUAL EFFECTS INIT ──
-
-  // 2. Sliding nav pill — position indicator under active nav item
-  (function initNavPill() {
-    const indicator = document.getElementById('nav-indicator');
-    if (!indicator) return;
-    function updatePill(activeEl) {
-      const nav = activeEl.closest('nav');
-      if (!nav) return;
-      const navRect = nav.getBoundingClientRect();
-      const btnRect = activeEl.getBoundingClientRect();
-      const offsetX = btnRect.left - navRect.left;
-      indicator.style.transform = 'translateX(' + offsetX + 'px)';
-      indicator.style.width = btnRect.width + 'px';
-    }
-    // Position on first render
-    const firstActive = document.querySelector('.nav-item.active');
-    if (firstActive) updatePill(firstActive);
-    // Patch showScreen to move pill
-    const _origShowScreen = showScreen;
-    window.showScreen = function(name, el) {
-      _origShowScreen(name, el);
-      if (el && el.classList.contains('nav-item')) updatePill(el);
-    };
-  })();
-
-  // 3. Tap ripple on buttons and nav items
-  (function initRipple() {
-    const SELECTORS = '.start-btn, .button, .nav-item, .cardio-type-btn, .mood-btn, .onboard-next-btn';
-    function addRippleHost(el) {
-      if (!el.classList.contains('ripple-host')) el.classList.add('ripple-host');
-    }
-    document.querySelectorAll(SELECTORS).forEach(addRippleHost);
-    // Handle dynamically added elements
-    document.addEventListener('pointerdown', function(e) {
-      const btn = e.target.closest(SELECTORS);
-      if (!btn) return;
-      addRippleHost(btn);
-      const rect = btn.getBoundingClientRect();
-      const ripple = document.createElement('span');
-      ripple.className = 'ripple';
-      ripple.style.top = (e.clientY - rect.top) + 'px';
-      ripple.style.left = (e.clientX - rect.left) + 'px';
-      btn.appendChild(ripple);
-      ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
-    }, { passive: true });
-  })();
-
-  // 4. Count-up animation for home stats (MutationObserver-based)
-  (function initCountUp() {
-    function watchStat(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      function animateCount(target) {
-        obs.disconnect();
-        const start = performance.now();
-        function step(now) {
-          const p = Math.min((now - start) / 650, 1);
-          el.textContent = Math.round((1 - Math.pow(1 - p, 4)) * target);
-          if (p < 1) requestAnimationFrame(step);
-          else {
-            el.textContent = target;
-            obs.observe(el, { childList: true, characterData: true, subtree: true });
-          }
-        }
-        requestAnimationFrame(step);
-      }
-      var obs = new MutationObserver(function() {
-        var target = parseInt(el.textContent) || 0;
-        if (target > 0) animateCount(target);
-      });
-      obs.observe(el, { childList: true, characterData: true, subtree: true });
-    }
-    ['stat-sessions', 'stat-week', 'stat-streak'].forEach(watchStat);
-  })();
-
-  // 5. Scroll reveal for history & exercise list items
-  (function initScrollReveal() {
-    const observer = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('revealed');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.05 });
-
-    function observeRevealItems() {
-      document.querySelectorAll('.history-item, .exercise-item').forEach(function(el, i) {
-        if (!el.classList.contains('reveal-item')) {
-          el.classList.add('reveal-item');
-          el.style.animationDelay = Math.min(i * 55, 330) + 'ms';
-        }
-        if (!el.classList.contains('revealed')) observer.observe(el);
-      });
-    }
-    // Run after DOM settles and on any screen change
-    setTimeout(observeRevealItems, 300);
-    const _origShowScreenForReveal = window.showScreen;
-    window.showScreen = function(name, el) {
-      _origShowScreenForReveal(name, el);
-      setTimeout(observeRevealItems, 80);
-    };
-  })();
-
 });
 
 /* ── NAV PILL ── */
@@ -11132,8 +11027,10 @@ document.addEventListener('DOMContentLoaded', () => {
   var indicator = document.getElementById('nav-indicator');
   if (!indicator) return;
   function movePill(btn) {
-    indicator.style.left  = btn.offsetLeft + 'px';
-    indicator.style.width = btn.offsetWidth + 'px';
+    var navRect = btn.closest('nav').getBoundingClientRect();
+    var btnRect = btn.getBoundingClientRect();
+    indicator.style.left  = (btnRect.left - navRect.left) + 'px';
+    indicator.style.width = btnRect.width + 'px';
   }
   var firstActive = document.querySelector('.nav-item.active');
   if (firstActive) movePill(firstActive);
@@ -11148,11 +11045,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('pointerdown', function(e) {
     var btn = e.target.closest(TARGETS);
     if (!btn) return;
-    var saved = btn.style.overflow;
+    var savedOverflow = btn.style.overflow;
+    var savedPosition = btn.style.position;
     btn.style.overflow = 'hidden';
-    if (!btn.style.position || btn.style.position === 'static') {
-      btn.style.position = 'relative';
-    }
+    if (getComputedStyle(btn).position === 'static') btn.style.position = 'relative';
     var r = document.createElement('span');
     r.className = 'ripple';
     var rect = btn.getBoundingClientRect();
@@ -11161,7 +11057,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.appendChild(r);
     r.addEventListener('animationend', function() {
       r.remove();
-      btn.style.overflow = saved;
+      btn.style.overflow = savedOverflow;
+      btn.style.position = savedPosition;
     }, { once: true });
   }, { passive: true });
 })();
