@@ -226,7 +226,7 @@
   .mood-timing-btn.selected { border-color: var(--warning); color: var(--warning); background: rgba(243,156,18,0.12); }
 
   /* Mood insights carousel */
-  #mood-insights-scroller { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:10px; align-items:flex-start; transition:height 0.25s ease; }
+  #mood-insights-scroller { display:flex; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:10px; align-items:flex-start; transition:height 0.25s ease; }
   #mood-insights-scroller::-webkit-scrollbar { display:none; }
   .mood-slide { min-width:100%; flex-shrink:0; scroll-snap-align:start; box-sizing:border-box; align-self:flex-start; }
   .mood-dot { width:6px; height:6px; border-radius:50%; background:#3a3a3a; transition:all 0.25s; flex-shrink:0; }
