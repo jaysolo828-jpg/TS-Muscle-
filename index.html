@@ -226,9 +226,9 @@
   .mood-timing-btn.selected { border-color: var(--warning); color: var(--warning); background: rgba(243,156,18,0.12); }
 
   /* Mood insights carousel */
-  #mood-insights-scroller { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:10px; }
+  #mood-insights-scroller { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:10px; align-items:flex-start; transition:height 0.25s ease; }
   #mood-insights-scroller::-webkit-scrollbar { display:none; }
-  .mood-slide { min-width:100%; flex-shrink:0; scroll-snap-align:start; box-sizing:border-box; }
+  .mood-slide { min-width:100%; flex-shrink:0; scroll-snap-align:start; box-sizing:border-box; align-self:flex-start; }
   .mood-dot { width:6px; height:6px; border-radius:50%; background:#3a3a3a; transition:all 0.25s; flex-shrink:0; }
   .mood-dot.active { width:18px; border-radius:3px; background:var(--red); }
 
@@ -9107,8 +9107,11 @@ function deleteMoodEntry(idx) {
 function updateMoodDots(scroller) {
   const idx = Math.round(scroller.scrollLeft / scroller.offsetWidth);
   document.querySelectorAll('#mood-dots .mood-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
-  const hint = document.getElementById('mood-scroll-hint');
-  if (hint) hint.style.opacity = (scroller.scrollLeft + scroller.offsetWidth >= scroller.scrollWidth - 4) ? '0' : '1';
+  const currentSlide = scroller.querySelectorAll('.mood-slide')[idx];
+  if (currentSlide) scroller.style.height = currentSlide.scrollHeight + 'px';
+  // hide swipe hint after first scroll
+  const swipeHint = document.getElementById('mood-swipe-hint');
+  if (swipeHint && idx > 0) swipeHint.style.opacity = '0';
 }
 
 function reselectMood(timing) {
@@ -9235,11 +9238,13 @@ function renderMoodInsights() {
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div class="card" style="text-align:center; padding:14px;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">CHECK-IN STREAK</div>
+        <div style="font-size:22px; margin-bottom:2px;">🔥</div>
         <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${mindsetStreak}</div>
         <div style="font-size:11px; color:var(--gray);">day${mindsetStreak !== 1 ? 's' : ''} in a row</div>
       </div>
       <div class="card" style="text-align:center; padding:14px;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">THIS WEEK</div>
+        <div style="font-size:22px; margin-bottom:2px;">📅</div>
         <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${logsThisWeek}</div>
         <div style="font-size:11px; color:var(--gray);">mood log${logsThisWeek !== 1 ? 's' : ''}</div>
       </div>
@@ -9415,18 +9420,20 @@ function renderMoodInsights() {
   const dotsHtml  = showCarousel
     ? slides.map((_, i) => `<div class="mood-dot${i === 0 ? ' active' : ''}"></div>`).join('')
     : '';
-  const hintHtml  = showCarousel
-    ? `<div id="mood-scroll-hint" style="position:absolute; right:0; top:0; bottom:24px; width:48px; background:linear-gradient(to right, transparent, var(--dark2)); pointer-events:none; display:flex; align-items:center; justify-content:flex-end; padding-right:6px; z-index:1; transition:opacity 0.3s;">
-         <span style="color:var(--gray-light); font-size:20px; line-height:1;">›</span>
-       </div>`
-    : '';
 
   container.innerHTML = `
     <div style="position:relative;">
-      ${hintHtml}
       <div id="mood-insights-scroller" onscroll="updateMoodDots(this)">${slideHtml}</div>
-      ${showCarousel ? `<div id="mood-dots" style="display:flex; justify-content:center; align-items:center; gap:6px; padding-top:10px;">${dotsHtml}</div>` : ''}
+      ${showCarousel ? `
+        <div id="mood-dots" style="display:flex; justify-content:center; align-items:center; gap:6px; padding-top:12px; border-top:1px solid #2a2a2a; margin-top:2px;">${dotsHtml}</div>
+        <div id="mood-swipe-hint" style="text-align:center; font-size:9px; color:var(--gray); letter-spacing:1px; margin-top:5px; transition:opacity 0.4s;">SWIPE TO EXPLORE</div>
+      ` : ''}
     </div>`;
+
+  // Set initial scroller height to match slide 0's content height
+  const sc = container.querySelector('#mood-insights-scroller');
+  const s0 = sc && sc.querySelector('.mood-slide');
+  if (sc && s0) sc.style.height = s0.scrollHeight + 'px';
 }
 
 // ============================================================
