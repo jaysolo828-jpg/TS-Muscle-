@@ -2977,6 +2977,62 @@
   </div>
 </div>
 
+<!-- EXERCISE INFO MODAL -->
+<div class="modal-overlay" id="ex-info-modal" onclick="if(event.target===this)closeExInfoModal()">
+  <div class="modal" style="max-height:88vh; overflow-y:auto; padding:0; border-radius:24px 24px 0 0;">
+
+    <!-- Drag pill -->
+    <div style="display:flex; justify-content:center; padding:12px 0 0;">
+      <div style="width:36px; height:4px; background:var(--dark4); border-radius:2px;"></div>
+    </div>
+
+    <!-- Header band -->
+    <div id="ex-info-header" style="padding:16px 20px 14px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <span id="ex-info-muscle-pill" style="font-size:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:1.5px; padding:3px 9px; border-radius:20px; border:1px solid; flex-shrink:0;"></span>
+        <span id="ex-info-meta" style="font-size:12px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;"></span>
+      </div>
+      <div id="ex-info-name" style="font-family:'Bebas Neue',cursive; font-size:26px; letter-spacing:2px; color:var(--cream); line-height:1.1;"></div>
+    </div>
+
+    <!-- Divider -->
+    <div style="height:1px; background:var(--dark3); margin:0 20px;"></div>
+
+    <!-- Form cues section -->
+    <div id="ex-info-cues-section" style="padding:18px 20px 14px;">
+      <div style="font-size:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2px; color:var(--gray); margin-bottom:14px;">FORM CUES</div>
+      <div id="ex-info-cues" style="display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+
+    <!-- Divider -->
+    <div style="height:1px; background:var(--dark3); margin:0 20px;"></div>
+
+    <!-- YouTube section -->
+    <div style="padding:16px 20px 8px;">
+      <div style="font-size:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2px; color:var(--gray); margin-bottom:12px;">WATCH & LEARN</div>
+      <a id="ex-info-yt-btn" href="#" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:#CC0000; color:white; border-radius:12px; padding:13px; font-family:'Bebas Neue',cursive; font-size:17px; letter-spacing:2px; text-decoration:none; transition:opacity 0.2s;" onclick="if(!this.href||this.href==='#'){event.preventDefault();openExInfoSearch();}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+        <span id="ex-info-yt-label">WATCH ON YOUTUBE</span>
+      </a>
+      <!-- Custom link edit row -->
+      <div style="display:flex; align-items:center; justify-content:flex-end; margin-top:8px;">
+        <button id="ex-info-edit-link-btn" onclick="toggleExInfoLinkEdit()" style="background:none; border:none; color:var(--gray); font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px; cursor:pointer; padding:4px 0; display:flex; align-items:center; gap:4px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit link
+        </button>
+      </div>
+      <div id="ex-info-link-edit" style="display:none; margin-top:6px;">
+        <input type="url" id="ex-info-link-input" placeholder="Paste a YouTube link…" class="set-input" style="width:100%; text-align:left; padding:10px 12px; font-size:16px; border-radius:10px; margin-bottom:8px;"/>
+        <button onclick="saveExInfoLink()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:11px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; cursor:pointer;">SAVE LINK</button>
+      </div>
+    </div>
+
+    <div style="padding:12px 20px calc(env(safe-area-inset-bottom) + 16px);">
+      <button class="modal-cancel" onclick="closeExInfoModal()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
 
 </div><!-- end .app-content -->
 
@@ -3405,6 +3461,33 @@ const MUSCLE_COLORS = {
   CHEST: '#5b9cf6', BACK: '#3bbfb8', QUADS: '#e07b54',
   HAMSTRINGS: '#e07070', GLUTES: '#c97dae', CALVES: '#78aa6a',
   TRICEPS: '#9d84d4', BICEPS: '#6b9fd4', SHOULDERS: '#6ab8e0',
+};
+
+const FORM_CUES = {
+  'bench':          ["Retract shoulder blades firmly into the bench", "Bar touches lower chest, elbows at ~45° from torso", "Drive feet into the floor for full-body tension", "Full lockout at top, controlled 3-second descent"],
+  'incline':        ["Set bench to 30–45° — any steeper hits shoulders, not chest", "Lower to upper chest, elbows at ~60° from torso", "Press up and slightly inward, squeeze chest at top", "Keep wrists stacked over elbows throughout"],
+  'flye':           ["Arms wide with a slight, fixed elbow bend — never straighten", "Think 'hugging a barrel', not pressing", "Stretch fully at the bottom, strong squeeze at the top", "Control the return — don't let the cable yank you back"],
+  'pushdown':       ["Pin elbows tight to your sides — they don't move", "Push to full lockout and squeeze triceps hard", "Slow 3-count return — don't let the weight pull you up", "Stand tall, slight forward lean from the hips"],
+  'overhead-tri':   ["Start with elbows pointing straight at the ceiling", "Lower weight behind your head, keeping elbows in", "Extend fully at the top without flaring your elbows out", "Brace your core — this protects your lower back"],
+  'lateral':        ["Slight forward lean at the hips, slight elbow bend throughout", "Lead with your elbows, not your hands or wrists", "Raise to shoulder height — going higher takes over the traps", "Hold briefly at top, slow 3-second descent is key"],
+  'legpress-a':     ["Feet hip-width, mid-foot on the platform", "Lower until knees reach ~90° — don't compress the knee past that", "Push through your full foot, not just your toes", "Don't lock out knees at the top — keep a soft bend"],
+  'rdl':            ["Push your hips back — this is a hip hinge, not a squat", "Keep the bar dragging close to your shins and thighs", "Feel a deep hamstring stretch at the bottom", "Drive hips forward to stand, squeeze glutes at the top"],
+  'leg-ext-a':      ["Adjust seat so your knee joint lines up with the machine's axis", "Extend fully — pause 1 second at the top", "Lower on a slow 3-count, don't let it drop", "Avoid swinging or using momentum to get the weight up"],
+  'ham-curl-a':     ["Lie flat, adjust so the pad sits just above your heels", "Curl heels toward glutes without lifting your hips off the bench", "Squeeze the hamstrings hard at the peak", "Lower slowly — the eccentric phase builds the muscle"],
+  'hip-thrust-a':   ["Bar rests across your hip crease, use a pad for comfort", "Drive through your heels and squeeze glutes at the very top", "Body forms a straight line — shoulders to knees at the top", "Control the descent — don't let the weight drop you down"],
+  'calf-a':         ["Let your heel drop to a full stretch at the bottom", "Drive up onto the balls of your feet and pause at the top", "Don't bounce — use the stretch reflex, not momentum", "Knees straight targets gastrocnemius (outer calf)"],
+  'chest-row':      ["Keep your chest flat against the pad the entire set", "Pull elbows straight back — don't flare them out to the sides", "Squeeze shoulder blades together hard at the peak", "Let arms extend fully at the bottom for a complete stretch"],
+  'pulldown':       ["Grip just outside shoulder width, palms facing away", "Pull the bar to your upper chest, driving elbows down and back", "Lean back slightly — not aggressively, just a natural angle", "Let arms extend fully at the top — stretch the lats"],
+  'db-row':         ["Support yourself on bench, keep back flat and parallel to floor", "Pull elbow straight up past your hip, not out to the side", "Don't rotate your torso to help — let the lat do the work", "Full hang at the bottom each rep — get the stretch"],
+  'ez-curl':        ["Elbows pinned to your sides — don't let them drift forward", "Curl to full peak contraction, forearms past vertical", "Supinate (rotate palms up) as you curl for peak flex", "3-second lowering phase — this is where growth happens"],
+  'preacher':       ["Upper arms flush against the pad at all times", "Don't fully lock out at the bottom — keep slight tension on the bicep", "Curl to full peak contraction, hold for 1 second", "Lower under complete control — no dropping allowed"],
+  'rear-delt':      ["Reverse the pec deck arms to widest setting, reverse grip", "Keep a slight, fixed elbow bend throughout the set", "Think: pull your elbows back, not your hands", "Pause at peak contraction and squeeze between shoulder blades"],
+  'legpress-b':     ["High, wide foot placement shifts load to glutes and hamstrings", "Lower until knees reach ~90° — no deeper", "Push through your heels to maximize glute activation", "Don't lock knees at the top — keep a slight bend"],
+  'single-legpress':["Keep your working knee tracking over your second toe", "Match the same range of motion on both legs", "Note any strength difference — address the weaker side", "Push through the heel of your working foot"],
+  'leg-ext-b':      ["Adjust seat so knee joint aligns with the machine's axis", "Extend fully — pause 1 second at the top to maximize tension", "Lower on a slow 3-count", "No bouncing or momentum — clean, controlled reps"],
+  'ham-curl-b':     ["Nordic: anchor feet firmly, hips fully extended throughout", "Lower as slowly as humanly possible — this is the whole point", "Use your hands to catch yourself at the bottom if needed", "Goal over time: lower under full control with no hand catch"],
+  'pull-through':   ["Stand facing away from cable, rope between your legs", "Hinge at the hips — push them back, keep spine neutral", "Drive hips forward to stand, squeezing glutes hard at the top", "Let the cable pull your arms back through your legs on the way down"],
+  'calf-b':         ["Seated raises target the soleus — the deeper calf muscle", "Let heel drop to a full, complete stretch at the bottom", "Drive up and pause at the top for 2 seconds", "Use a plate under your toes for maximum range of motion"],
 };
 
 // ============================================================
@@ -5111,6 +5194,7 @@ function renderSession() {
           </div>
         </div>
         <div style="display:flex; align-items:flex-start; gap:6px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="swap-btn" onclick="openExInfo('${ex.id}')" title="How to do this exercise" style="padding:5px 9px; font-size:14px; line-height:1;">?</button>
           ${ex.alts && ex.alts.length ? `<button class="swap-btn" onclick="openSessionSwap('${ex.id}')">SWAP ⇔</button>` : ''}
           <button class="swap-btn" id="pair-btn-${ex.id}"
             onclick="${isSource ? 'pairingSourceId=null;renderSession();' : `startPairSelection('${ex.id}')`}"
@@ -5882,6 +5966,124 @@ function closeAltModal() {
   document.getElementById('alt-modal').classList.remove('open');
   pendingSwap = null;
 }
+
+// ── EXERCISE INFO MODAL ────────────────────────────────────────
+let _exInfoCurrentId = null;
+
+function openExInfo(exId) {
+  const day = activeSession ? state.program.find(d => d.id === activeSession.dayId) : null;
+  let ex = null;
+  if (day) ex = day.exercises.find(e => e.id === exId);
+  // Fallback: search all days
+  if (!ex) {
+    for (const d of state.program) {
+      ex = d.exercises.find(e => e.id === exId);
+      if (ex) break;
+    }
+  }
+  if (!ex) return;
+
+  _exInfoCurrentId = exId;
+
+  // Header
+  const muscle = MUSCLE_MAP[exId];
+  const mColor = muscle ? MUSCLE_COLORS[muscle] : null;
+  const musclePill = document.getElementById('ex-info-muscle-pill');
+  if (muscle && mColor) {
+    musclePill.textContent = muscle;
+    musclePill.style.color = mColor;
+    musclePill.style.borderColor = mColor + '55';
+    musclePill.style.background = mColor + '18';
+    musclePill.style.display = '';
+  } else {
+    musclePill.style.display = 'none';
+  }
+  document.getElementById('ex-info-name').textContent = (activeSession?.swaps?.[exId]?.name) || ex.name;
+  document.getElementById('ex-info-meta').textContent = ex.sets + ' sets · ' + ex.reps + ' reps · ' + ex.rest + ' rest';
+
+  // Form cues
+  const cues = FORM_CUES[exId] || [];
+  const cuesEl = document.getElementById('ex-info-cues');
+  if (cues.length) {
+    cuesEl.innerHTML = cues.map((c, i) => `
+      <div style="display:flex; align-items:flex-start; gap:12px;">
+        <div style="flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--dark3); border:1px solid var(--dark4); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',cursive; font-size:13px; color:var(--red); margin-top:1px;">${i + 1}</div>
+        <div style="font-size:14px; color:var(--gray-light); line-height:1.5; font-family:'Barlow',sans-serif;">${c}</div>
+      </div>
+    `).join('');
+    document.getElementById('ex-info-cues-section').style.display = '';
+  } else {
+    document.getElementById('ex-info-cues-section').style.display = 'none';
+  }
+
+  // YouTube link — custom override wins, then default ytLink, then search fallback
+  const customLinks = JSON.parse(localStorage.getItem('ts-yt-links') || '{}');
+  const ytUrl = customLinks[exId + '_main'] || ex.ytLink || '';
+  const ytBtn = document.getElementById('ex-info-yt-btn');
+  const ytLabel = document.getElementById('ex-info-yt-label');
+  if (ytUrl) {
+    ytBtn.href = ytUrl;
+    ytLabel.textContent = 'WATCH ON YOUTUBE';
+    ytBtn.style.background = '#CC0000';
+  } else {
+    ytBtn.href = '#';
+    ytLabel.textContent = 'SEARCH ON YOUTUBE';
+    ytBtn.style.background = '#555';
+  }
+
+  // Reset link edit panel
+  document.getElementById('ex-info-link-edit').style.display = 'none';
+  document.getElementById('ex-info-link-input').value = ytUrl;
+
+  lockBodyScroll();
+  document.getElementById('ex-info-modal').classList.add('open');
+}
+
+function closeExInfoModal() {
+  document.getElementById('ex-info-modal').classList.remove('open');
+  unlockBodyScroll();
+  _exInfoCurrentId = null;
+}
+
+function toggleExInfoLinkEdit() {
+  const panel = document.getElementById('ex-info-link-edit');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'block') {
+    setTimeout(() => document.getElementById('ex-info-link-input').focus(), 80);
+  }
+}
+
+function saveExInfoLink() {
+  if (!_exInfoCurrentId) return;
+  const url = document.getElementById('ex-info-link-input').value.trim();
+  if (!url) return;
+  const customLinks = JSON.parse(localStorage.getItem('ts-yt-links') || '{}');
+  customLinks[_exInfoCurrentId + '_main'] = url;
+  const json = JSON.stringify(customLinks);
+  localStorage.setItem('ts-yt-links', json);
+  _idbSet('ts-yt-links', json);
+
+  const ytBtn = document.getElementById('ex-info-yt-btn');
+  const ytLabel = document.getElementById('ex-info-yt-label');
+  ytBtn.href = url;
+  ytLabel.textContent = 'WATCH ON YOUTUBE';
+  ytBtn.style.background = '#CC0000';
+  document.getElementById('ex-info-link-edit').style.display = 'none';
+  showToast('Video link saved ✓');
+}
+
+function openExInfoSearch() {
+  const exId = _exInfoCurrentId;
+  if (!exId) return;
+  let name = exId;
+  for (const d of state.program) {
+    const ex = d.exercises.find(e => e.id === exId);
+    if (ex) { name = (activeSession?.swaps?.[exId]?.name) || ex.name; break; }
+  }
+  const query = encodeURIComponent('how to ' + name + ' exercise form');
+  window.open('https://www.youtube.com/results?search_query=' + query, '_blank');
+}
+// ── END EXERCISE INFO MODAL ────────────────────────────────────
 
 function exitSessionMenu() {
   const modal = document.getElementById('exit-session-modal');
@@ -7707,7 +7909,7 @@ window.addEventListener('popstate', (e) => {
   const staticModals = [
     'deload-modal', 'pr-modal', 'training-days-modal', 'tutorial-modal',
     'self-compassion-modal', 'cbt-modal', 'alt-modal', 'exit-session-modal',
-    'edit-day-modal', 'restore-defaults-modal'
+    'edit-day-modal', 'restore-defaults-modal', 'ex-info-modal'
   ];
   for (const id of staticModals) {
     const el = document.getElementById(id);
