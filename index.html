@@ -1983,14 +1983,10 @@
     <div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">Log a few moods to unlock your Workout Mood Lift score.</div></div>
   </div>
 
-  <!-- Self-Compassion Module -->
-  <div class="section-title">SELF-<span>COMPASSION</span></div>
-  <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:14px;">Being hard on yourself? Use this to work through it.</div>
-    <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:14px 18px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:12px;">
-      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-      I need a moment
-    </button>
+  <!-- Mood History -->
+  <div class="section-title">MOOD <span>LOG</span></div>
+  <div id="mood-history-list" style="margin-bottom:14px;">
+    <div class="empty-state"><div class="empty-state-icon">💭</div><div class="empty-state-text">No mood entries yet — log one before or after your next session.</div></div>
   </div>
 
   <!-- Skip Logger -->
@@ -2003,22 +1999,26 @@
     </button>
   </div>
 
-  <!-- Mood History -->
-  <div class="section-title">MOOD <span>LOG</span></div>
-  <div id="mood-history-list" style="margin-bottom:14px;">
-    <div class="empty-state"><div class="empty-state-icon">💭</div><div class="empty-state-text">No mood entries yet — log one before or after your next session.</div></div>
+  <!-- Barrier History -->
+  <div class="section-title">REFRAME <span>HISTORY</span></div>
+  <div id="barrier-history-list" style="margin-bottom:14px;">
+    <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No reframes yet. Use this when something gets in the way of training.</div></div>
+  </div>
+
+  <!-- Self-Compassion Module -->
+  <div class="section-title">SELF-<span>COMPASSION</span></div>
+  <div class="card" style="margin-bottom:14px;">
+    <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:14px;">Being hard on yourself? Use this to work through it.</div>
+    <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:14px 18px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:12px;">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      I need a moment
+    </button>
   </div>
 
   <!-- Self-Compassion Log -->
   <div class="section-title">SELF-COMPASSION <span>LOG</span></div>
-  <div id="self-compassion-history-list" style="margin-bottom:14px;">
+  <div id="self-compassion-history-list">
     <div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet. Use "I need a moment" when you're being hard on yourself.</div></div>
-  </div>
-
-  <!-- Barrier History -->
-  <div class="section-title">REFRAME <span>HISTORY</span></div>
-  <div id="barrier-history-list">
-    <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No reframes yet. Use this when something gets in the way of training.</div></div>
   </div>
 </div>
 
