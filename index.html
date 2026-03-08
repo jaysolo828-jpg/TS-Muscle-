@@ -1929,6 +1929,9 @@
   <div class="section-title">MINDSET <span>CHECK-IN</span></div>
   <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:16px;">Track your mood, work through setbacks, and stay kind to yourself.</div>
 
+  <!-- Why I Train Values Card -->
+  <div id="values-card" class="card" style="margin-bottom:14px;"></div>
+
   <!-- Mood Check-In Card -->
   <div class="card" style="margin-bottom:14px;">
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:8px;" id="mood-checkin-label">MOOD CHECK-IN</div>
@@ -1971,6 +1974,7 @@
       Add a note
     </button>
     <div id="mood-note-wrap" style="display:none; margin-bottom:14px;">
+      <div id="mood-note-prompt" style="font-size:12px; color:var(--gray); margin-bottom:6px;"></div>
       <textarea id="mood-note" class="notes-input" placeholder="Anything on your mind?" style="min-height:50px;"></textarea>
     </div>
 
@@ -1989,10 +1993,14 @@
     <div class="empty-state"><div class="empty-state-icon">💭</div><div class="empty-state-text">No mood entries yet — log one before or after your next session.</div></div>
   </div>
 
+  <!-- Support Tools -->
+  <div class="section-title">TOOLS FOR <span>HARD DAYS</span></div>
+  <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:16px;">When something gets in the way — mentally or physically — use these to work through it.</div>
+
   <!-- Skip Logger -->
   <div class="section-title">MISSED A <span>SESSION?</span></div>
   <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:13px; color:var(--gray); margin:0 0 14px; line-height:1.6;">Something got in the way. Let's work through it and move forward.</div>
+    <div style="font-size:13px; color:var(--gray); margin:0 0 14px; line-height:1.6;">Something got in the way. Let's name what your inner voice is saying — and work through it.</div>
     <button onclick="openCBTModal('manual')" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:14px 18px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:12px;">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       I missed a workout
@@ -2478,6 +2486,10 @@
       <div style="background:var(--dark3); border-radius:12px; padding:16px; margin-bottom:20px;">
         <div style="font-size:13px; color:var(--gray-light); line-height:1.7; border-left:2px solid var(--red); padding-left:12px;">"I don't need to punish myself. I can simply decide what comes next — and that decision doesn't need to be perfect, just forward."</div>
       </div>
+      <div id="sc-values-reminder" style="display:none; background:var(--dark3); border-radius:12px; padding:14px; margin-bottom:16px; border-left:2px solid #555;">
+        <div style="font-size:10px; color:var(--gray); letter-spacing:1.5px; margin-bottom:6px;">REMEMBER WHY YOU TRAIN</div>
+        <div id="sc-values-text" style="font-size:13px; color:var(--gray-light); line-height:1.6; font-style:italic;"></div>
+      </div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:6px;">When will you train next? <span style="color:#888;">(Implementation intention — proven to 2-3x follow-through)</span></div>
       <input type="text" id="sc-plan" class="notes-input" placeholder="e.g. Tomorrow morning before work, or Thursday at 6pm" style="min-height:44px; margin-bottom:20px; resize:none;"/>
       <button onclick="saveSelfCompassionEntry()" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; margin-bottom:10px; min-height:44px;">SAVE & CLOSE</button>
@@ -2493,8 +2505,24 @@
     <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">COGNITIVE REFRAME</div>
     <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">LET'S WORK THROUGH THIS</div>
 
+    <!-- Step 0: Automatic Thought -->
+    <div id="cbt-step-0">
+      <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">WHAT'S YOUR INNER VOICE SAYING?</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 1 OF 4 · IDENTIFY THE THOUGHT</div>
+      <div style="font-size:14px; color:var(--cream); line-height:1.7; margin-bottom:20px;">Before we dig into what happened — notice what your mind is telling you right now. These thoughts show up fast and feel like facts. They're usually not.</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="cbt-barrier-btn" onclick="selectThought('I\'m failing')">I'm failing</button>
+        <button class="cbt-barrier-btn" onclick="selectThought('I\'ve ruined my progress')">I've ruined my progress</button>
+        <button class="cbt-barrier-btn" onclick="selectThought('I\'m lazy')">I'm lazy</button>
+        <button class="cbt-barrier-btn" onclick="selectThought('What\'s the point')">What's the point</button>
+        <button class="cbt-barrier-btn" onclick="selectThought('I can\'t do this')">I can't do this</button>
+        <button class="cbt-barrier-btn" onclick="selectThought('other')">Something else / not sure</button>
+      </div>
+    </div>
+
     <!-- Step 1 -->
-    <div id="cbt-step-1">
+    <div id="cbt-step-1" style="display:none;">
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:16px;">STEP 2 OF 4 · WHAT GOT IN THE WAY?</div>
       <div style="font-size:15px; color:var(--cream); margin-bottom:14px; line-height:1.5;">What got in the way?</div>
       <div style="display:flex; flex-direction:column; gap:10px;">
         <button class="cbt-barrier-btn" onclick="selectBarrier('too tired')">😴 Too tired</button>
@@ -2512,6 +2540,7 @@
 
     <!-- Step 2 -->
     <div id="cbt-step-2" style="display:none;">
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:16px;">STEP 3 OF 4 · CHOOSE YOUR RESPONSE</div>
       <div style="font-size:15px; color:var(--cream); margin-bottom:6px; line-height:1.5;">What's one small thing you could do instead — or next time?</div>
       <div style="font-size:12px; color:var(--gray); margin-bottom:12px;">Even 10 minutes counts. Be honest with yourself.</div>
       <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;" id="cbt-suggestions"></div>
@@ -2521,11 +2550,20 @@
 
     <!-- Step 3: Reframe display -->
     <div id="cbt-step-3" style="display:none;">
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:16px;">STEP 4 OF 4 · YOUR REFRAME</div>
+      <div id="cbt-thought-reframe" style="display:none; background:var(--dark3); border-radius:14px; padding:16px; margin-bottom:12px; border-left:3px solid #555;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">ON THAT THOUGHT</div>
+        <div id="cbt-thought-reframe-text" style="font-size:14px; color:var(--cream); line-height:1.6;"></div>
+      </div>
       <div style="background:var(--dark3); border-radius:14px; padding:18px; margin-bottom:16px; border-left:3px solid var(--red);">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">YOUR REFRAME</div>
         <div id="cbt-reframe-text" style="font-size:15px; color:var(--cream); line-height:1.6;"></div>
       </div>
       <div id="cbt-win-message" style="font-size:12px; color:var(--gray); margin-bottom:16px; text-align:center;"></div>
+      <div id="cbt-values-reminder" style="display:none; background:var(--dark3); border-radius:12px; padding:14px; margin-bottom:16px; border-left:2px solid #555;">
+        <div style="font-size:10px; color:var(--gray); letter-spacing:1.5px; margin-bottom:6px;">REMEMBER WHY YOU TRAIN</div>
+        <div id="cbt-values-text" style="font-size:13px; color:var(--gray-light); line-height:1.6; font-style:italic;"></div>
+      </div>
       <button onclick="closeCBTModal()" style="width:100%; background:var(--dark3); border:1px solid var(--gray); color:var(--cream); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">CLOSE</button>
     </div>
 
@@ -3514,7 +3552,7 @@ function showScreen(name, el) {
   if (name === 'history') { renderHistory(); renderProgress(); }
 
   if (name === 'cardio') renderCardioHistory();
-  if (name === 'mindset') { renderBarrierHistory(); renderMoodHistory(); renderMoodInsights(); renderSelfCompassionLog(); }
+  if (name === 'mindset') { renderValuesCard(); renderBarrierHistory(); renderMoodHistory(); renderMoodInsights(); renderSelfCompassionLog(); }
 }
 
 // ============================================================
@@ -8799,6 +8837,47 @@ function applyTestWeekWeights() {
 }
 
 // ============================================================
+// WHY I TRAIN — VALUES CARD
+// ============================================================
+function renderValuesCard() {
+  const card = document.getElementById('values-card');
+  if (!card) return;
+  const val = state.trainingValues || '';
+  if (val) {
+    card.innerHTML = `
+      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WHY I TRAIN</div>
+      <div id="values-display-text" style="font-size:14px; color:var(--cream); line-height:1.7; margin-bottom:12px;">${val}</div>
+      <button onclick="editTrainingValues()" style="background:none; border:none; color:var(--gray); font-size:12px; cursor:pointer; padding:0; letter-spacing:1px;">EDIT</button>`;
+  } else {
+    card.innerHTML = `
+      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WHY I TRAIN</div>
+      <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:14px;">Connecting training to your real reasons makes it harder to quit when it gets tough. What does showing up make possible for you?</div>
+      <textarea id="values-input" class="notes-input" placeholder="e.g. To manage my anxiety. To have energy for my kids. To feel at home in my body..." style="min-height:70px; margin-bottom:12px;"></textarea>
+      <button onclick="saveTrainingValues()" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:12px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SAVE MY WHY</button>`;
+  }
+}
+
+function saveTrainingValues() {
+  const input = document.getElementById('values-input');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) { showToast('Write something first'); return; }
+  state.trainingValues = val;
+  saveState();
+  renderValuesCard();
+}
+
+function editTrainingValues() {
+  const card = document.getElementById('values-card');
+  if (!card) return;
+  const current = state.trainingValues || '';
+  card.innerHTML = `
+    <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WHY I TRAIN</div>
+    <textarea id="values-input" class="notes-input" style="min-height:70px; margin-bottom:12px;">${current}</textarea>
+    <button onclick="saveTrainingValues()" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:12px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SAVE</button>`;
+}
+
+// ============================================================
 // MOOD TRACKER
 // ============================================================
 function toggleMoodNote(btn) {
@@ -8812,16 +8891,39 @@ function toggleMoodNote(btn) {
 const MOOD_LABELS = { 1: 'Distressed', 2: 'Low', 3: 'Neutral', 4: 'Good', 5: 'Energized' };
 const MOOD_EMOJIS = { 1: '😞', 2: '😔', 3: '😐', 4: '🙂', 5: '🔥' };
 
+function updateMoodNotePrompt() {
+  const promptEl = document.getElementById('mood-note-prompt');
+  const noteEl = document.getElementById('mood-note');
+  if (!promptEl || !noteEl) return;
+  const timing = document.getElementById('mood-timing').value;
+  const value = parseInt(document.getElementById('mood-value').value) || 0;
+  if (!value) { promptEl.textContent = ''; noteEl.placeholder = 'Anything on your mind?'; return; }
+  let prompt;
+  if (timing === 'pre') {
+    if (value <= 2) prompt = 'What\'s weighing on you right now?';
+    else if (value === 3) prompt = 'What\'s on your mind heading into this?';
+    else prompt = 'What\'s got you feeling good today?';
+  } else {
+    if (value <= 2) prompt = 'What made today feel hard?';
+    else if (value === 3) prompt = 'What did you notice about yourself during this session?';
+    else prompt = 'What felt good today?';
+  }
+  promptEl.textContent = prompt;
+  noteEl.placeholder = prompt;
+}
+
 function selectMoodTiming(timing, btn) {
   document.getElementById('mood-timing').value = timing;
   document.querySelectorAll('.mood-timing-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  updateMoodNotePrompt();
 }
 
 function selectMood(value, btn) {
   document.getElementById('mood-value').value = value;
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  updateMoodNotePrompt();
 }
 
 function saveMoodEntry() {
@@ -9077,6 +9179,14 @@ function renderMoodInsights() {
     const liftArrow = liftNum > 0 ? '↑' : liftNum < 0 ? '↓' : '→';
     const liftDisplay = liftNum > 0 ? `+${avgLift}` : `${avgLift}`;
     const liftLabel = liftNum > 0 ? 'AVG MOOD BOOST PER SESSION' : liftNum < 0 ? 'AVG MOOD DROP PER SESSION' : 'NO CHANGE ON AVERAGE';
+    const liftNarrative = (() => {
+      if (lifts.length < 3) return null;
+      if (liftNum >= 1.5) return "That's a consistent, meaningful shift. Exercise is working as a mood regulator for you — not because you're motivated to feel better, but because the body responds. This is behavioral activation: the action creates the feeling.";
+      if (liftNum >= 0.5) return "A measurable lift every session. Over time, this data is your evidence — not something to believe in, something you've actually measured about yourself.";
+      if (liftNum > 0) return "Even a small consistent lift matters. You tend to feel better after training. That's real, and it's yours.";
+      if (liftNum === 0) return "Your mood stays stable across sessions. Consistent emotional regulation can itself be a sign that training is helping you stay even.";
+      return "Some sessions feel harder than others. That's normal. The goal isn't to always feel better — it's to keep showing up when you can.";
+    })();
     html += `
       <div class="card" style="margin-bottom:10px; padding:16px; text-align:center;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WORKOUT MOOD LIFT</div>
@@ -9084,6 +9194,13 @@ function renderMoodInsights() {
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-top:6px;">${liftLabel}</div>
         <div style="font-size:11px; color:var(--gray); margin-top:4px;">across ${lifts.length} session${lifts.length !== 1 ? 's' : ''} with pre + post logs</div>
       </div>`;
+    if (liftNarrative) {
+      html += `
+      <div class="card" style="margin-bottom:10px; padding:14px; border-left:3px solid var(--red);">
+        <div style="font-size:10px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">WHAT THIS MEANS</div>
+        <div style="font-size:13px; color:var(--gray-light); line-height:1.7;">${liftNarrative}</div>
+      </div>`;
+    }
   }
 
   // 2. AVG PRE → POST — paired card, mirrors the mood log card design
@@ -9198,6 +9315,17 @@ function scNext(step) {
     next.style.display = 'block';
     document.getElementById('self-compassion-modal').scrollTop = 0;
   }
+  // Show values reminder on step 3 if set
+  if (step === 3) {
+    const valuesEl = document.getElementById('sc-values-reminder');
+    const valuesTextEl = document.getElementById('sc-values-text');
+    if (state.trainingValues && valuesEl && valuesTextEl) {
+      valuesTextEl.textContent = state.trainingValues;
+      valuesEl.style.display = 'block';
+    } else if (valuesEl) {
+      valuesEl.style.display = 'none';
+    }
+  }
 }
 
 function saveSelfCompassionEntry() {
@@ -9228,6 +9356,15 @@ function saveSelfCompassionEntry() {
 // ============================================================
 // CBT / MINDSET
 // ============================================================
+const THOUGHT_REFRAMES = {
+  "I'm failing": "Failing would mean giving up permanently. You're here, working through this — that's not failing, that's recovery. A setback is not the same as a pattern.",
+  "I've ruined my progress": "Fitness doesn't work like a streak that resets to zero. Missing sessions doesn't erase what you've built. The body adapts over weeks, not days — your work is still there.",
+  "I'm lazy": "'Lazy' is a character judgment, not a fact. You're a person who didn't train today, probably for real reasons. That's all. People miss sessions — it doesn't define who you are.",
+  "What's the point": "This thought usually shows up when we're depleted, not when we're clear-headed. It's worth asking: is this thought speaking for your exhaustion, or for you? They're not the same.",
+  "I can't do this": "Can't, or struggling right now? There's a difference. You've shown up before. You have the evidence. What you can't do today isn't the same as what you're capable of.",
+  "other": "Whatever your inner critic is saying — try to notice it as a thought, not a fact. Ask yourself: would I say this to someone I care about? If not, it might not deserve the authority you're giving it."
+};
+
 const CBT_REFRAMES = {
   'too tired': {
     suggestions: ['10-min walk', 'Light stretch', 'Just show up', 'Shorter session'],
@@ -9256,10 +9393,13 @@ const CBT_REFRAMES = {
 };
 
 let cbtSelectedBarrier = '';
+let cbtSelectedThought = '';
 
 function openCBTModal(trigger) {
   cbtSelectedBarrier = '';
-  document.getElementById('cbt-step-1').style.display = 'block';
+  cbtSelectedThought = '';
+  document.getElementById('cbt-step-0').style.display = 'block';
+  document.getElementById('cbt-step-1').style.display = 'none';
   document.getElementById('cbt-step-2').style.display = 'none';
   document.getElementById('cbt-step-3').style.display = 'none';
   document.querySelectorAll('.cbt-barrier-btn').forEach(b => b.classList.remove('selected'));
@@ -9272,6 +9412,12 @@ function openCBTModal(trigger) {
 
 function closeCBTModal() {
   document.getElementById('cbt-modal').style.display = 'none';
+}
+
+function selectThought(thought) {
+  cbtSelectedThought = thought;
+  document.getElementById('cbt-step-0').style.display = 'none';
+  document.getElementById('cbt-step-1').style.display = 'block';
 }
 
 function selectBarrier(barrier) {
@@ -9340,6 +9486,27 @@ function saveCBTEntry() {
   document.getElementById('cbt-reframe-text').textContent = data.reframe;
   document.getElementById('cbt-step-2').style.display = 'none';
   document.getElementById('cbt-step-3').style.display = 'block';
+
+  // Show thought reframe if a thought was selected
+  const thoughtReframe = cbtSelectedThought ? THOUGHT_REFRAMES[cbtSelectedThought] || THOUGHT_REFRAMES['other'] : null;
+  const thoughtReframeEl = document.getElementById('cbt-thought-reframe');
+  const thoughtReframeTextEl = document.getElementById('cbt-thought-reframe-text');
+  if (thoughtReframe && thoughtReframeEl && thoughtReframeTextEl) {
+    thoughtReframeTextEl.textContent = thoughtReframe;
+    thoughtReframeEl.style.display = 'block';
+  } else if (thoughtReframeEl) {
+    thoughtReframeEl.style.display = 'none';
+  }
+
+  // Show values reminder if set
+  const valuesEl = document.getElementById('cbt-values-reminder');
+  const valuesTextEl = document.getElementById('cbt-values-text');
+  if (state.trainingValues && valuesEl && valuesTextEl) {
+    valuesTextEl.textContent = state.trainingValues;
+    valuesEl.style.display = 'block';
+  } else if (valuesEl) {
+    valuesEl.style.display = 'none';
+  }
 
   const cbtWinMessages = [
     "You just did something most people don't — you thought instead of spiraled.",
@@ -9808,6 +9975,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   initMusicPlayerUI();
   renderCardioHistory();
+  renderValuesCard();
   renderBarrierHistory();
   renderSelfCompassionLog();
   renderMoodHistory();
