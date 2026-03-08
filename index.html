@@ -2633,6 +2633,14 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="8" y="14" width="3" height="3" rx="0.5"/></svg></div>
   </div>
 
+  <div class="settings-item" onclick="openGoalPickerFromSettings()">
+    <div>
+      <div class="settings-label">Training Goal</div>
+      <div id="goal-settings-sub" class="settings-sub">Tap to change</div>
+    </div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+  </div>
+
   <div class="settings-item" onclick="toggleProgressiveOverload()">
     <div>
       <div class="settings-label">Progressive Overload Suggestions</div>
@@ -3483,6 +3491,46 @@ const FORM_CUES = {
   'calf-b':         ["Seated raises target the soleus — the deeper calf muscle", "Let heel drop to a full, complete stretch at the bottom", "Drive up and pause at the top for 2 seconds", "Use a plate under your toes for maximum range of motion"],
 };
 
+// Goal-aligned rep ranges per exercise
+// Keys map to state.profile.goal values: 'strength' | 'size' | 'both'
+const GOAL_REPS = {
+  // ── UPPER A ────────────────────────────────────────────────
+  'bench':           { strength: '3–5',   size: '8–12',  both: '5–8'   },
+  'incline':         { strength: '4–6',   size: '10–12', both: '6–10'  },
+  'flye':            { strength: '8–10',  size: '12–15', both: '10–12' },
+  'pushdown':        { strength: '8–10',  size: '12–15', both: '10–12' },
+  'overhead-tri':    { strength: '6–8',   size: '10–12', both: '8–10'  },
+  'lateral':         { strength: '10–12', size: '15–20', both: '12–15' },
+  // ── LOWER A ────────────────────────────────────────────────
+  'legpress-a':      { strength: '6–8',   size: '10–12', both: '8–10'  },
+  'rdl':             { strength: '5–8',   size: '10–12', both: '8–10'  },
+  'leg-ext-a':       { strength: '8–10',  size: '12–15', both: '10–12' },
+  'ham-curl-a':      { strength: '8–10',  size: '12–15', both: '10–12' },
+  'hip-thrust-a':    { strength: '6–8',   size: '12–15', both: '8–12'  },
+  'calf-a':          { strength: '10–12', size: '15–20', both: '12–15' },
+  // ── UPPER B ────────────────────────────────────────────────
+  'chest-row':       { strength: '3–5',   size: '8–12',  both: '5–8'   },
+  'pulldown':        { strength: '5–8',   size: '10–12', both: '6–10'  },
+  'db-row':          { strength: '5–8',   size: '10–12', both: '6–10'  },
+  'ez-curl':         { strength: '6–8',   size: '10–12', both: '8–10'  },
+  'preacher':        { strength: '6–8',   size: '10–12', both: '8–10'  },
+  'rear-delt':       { strength: '8–10',  size: '12–15', both: '10–12' },
+  // ── LOWER B ────────────────────────────────────────────────
+  'legpress-b':      { strength: '6–8',   size: '10–12', both: '8–10'  },
+  'single-legpress': { strength: '6–8',   size: '10–12', both: '8–10'  },
+  'leg-ext-b':       { strength: '8–10',  size: '12–15', both: '10–12' },
+  'ham-curl-b':      { strength: '6–8',   size: '10–12', both: '8–10'  },
+  'pull-through':    { strength: '8–10',  size: '12–15', both: '10–12' },
+  'calf-b':          { strength: '10–12', size: '15–20', both: '12–15' },
+};
+
+// Returns the goal-adjusted rep range string for an exercise.
+// Falls back to the stored ex.reps if no mapping exists (e.g. custom exercises).
+function getGoalReps(exId, fallback) {
+  const goal = state.profile?.goal || 'both';
+  return GOAL_REPS[exId]?.[goal] || fallback || '8–12';
+}
+
 // ============================================================
 // STATE
 // ============================================================
@@ -4094,7 +4142,7 @@ function renderHome() {
           <div class="exercise-item">
             <div>
               <div class="exercise-name">${ex.name}</div>
-              <div class="exercise-meta">${ex.sets} sets × ${ex.reps}${ex.note ? ' · <span style="color:var(--gray-light);">' + ex.note + '</span>' : ''}</div>
+              <div class="exercise-meta">${ex.sets} sets × ${getGoalReps(ex.id, ex.reps)}${ex.note ? ' · <span style="color:var(--gray-light);">' + ex.note + '</span>' : ''}</div>
             </div>
             ${ex.alts && ex.alts.length ? `<button class="alt-btn" onclick="showAltsPreview('${day.id}','${ex.id}')">ALT</button>` : ''}
           </div>
@@ -4597,7 +4645,7 @@ function getProgressiveWeight(exId, dayId) {
 
   const day = state.program.find(d => d.id === dayId);
   const ex = day?.exercises.find(e => e.id === exId);
-  const repStr = ex ? String(ex.reps) : '8–12';
+  const repStr = ex ? getGoalReps(ex.id, ex.reps) : '8–12';
   const repParts = repStr.split(/[–\-]/);
   const repRangeMin = parseInt(repParts[0]) || 8;
   const repRangeTop = parseInt(repParts[1]) || repRangeMin;
@@ -4785,7 +4833,7 @@ function buildOverloadHint(exId) {
         const day = state.program.find(d => d.id === activeSession?.dayId);
         const ex = day?.exercises.find(e => e.id === exId);
         if (!ex) return '';
-        const repStr = String(ex.reps);
+        const repStr = getGoalReps(ex.id, ex.reps);
         const parts = repStr.split(/[–-]/);
         const minR = parseInt(parts[0])||0;
         const maxR = parseInt(parts[1])||minR;
@@ -5115,11 +5163,12 @@ function renderSession() {
     const _muscle = MUSCLE_MAP[ex.id];
     const _mColor = _muscle ? MUSCLE_COLORS[_muscle] : null;
 
+    const _goalReps = getGoalReps(ex.id, ex.reps);
     let setsHTML = `
       <div class="set-labels">
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
-        <div class="set-label">Reps <span style="color:var(--red);font-size:11px;font-weight:700;">(${ex.reps})</span></div>
+        <div class="set-label">Reps <span style="color:var(--red);font-size:11px;font-weight:700;">(${_goalReps})</span></div>
         <div class="set-label" title="Rate of Perceived Exertion: 6=easy, 8=hard, 9=very hard, 10=max" style="cursor:help;">RPE ⓘ</div>
         <div class="set-label"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       </div>
@@ -5138,11 +5187,11 @@ function renderSession() {
             value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
           <div style="position:relative;">
             <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
-              placeholder="${repsPlaceholder || ex.reps.split('–')[0]}"
+              placeholder="${repsPlaceholder || _goalReps.split('–')[0]}"
               value="${set.reps}"
               ${set.done ? 'disabled' : ''}
-              onchange="updateSet('${ex.id}',${si},'reps',this.value); updateRepIndicator('${ex.id}',${si},'${ex.reps}')"
-              oninput="updateRepIndicator('${ex.id}',${si},'${ex.reps}')"/>
+              onchange="updateSet('${ex.id}',${si},'reps',this.value); updateRepIndicator('${ex.id}',${si},'${_goalReps}')"
+              oninput="updateRepIndicator('${ex.id}',${si},'${_goalReps}')"/>
             <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:6px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
           </div>
           <select class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'rpe',this.value);this.dataset.empty=this.value?'false':'true';">
@@ -5181,7 +5230,7 @@ function renderSession() {
           </div>
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
-            <span style="font-size:11px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${ex.reps}</span>
+            <span style="font-size:11px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${_goalReps}</span>
             ${isPaired ? `<span style="font-size:10px;font-weight:700;color:var(--red);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(220,38,38,0.1);padding:2px 6px;border-radius:4px;">SUPERSET ${supersetLabel}</span>` : ''}
             ${isSource ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:2px 6px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
@@ -5992,7 +6041,7 @@ function openExInfo(exId) {
     musclePill.style.display = 'none';
   }
   document.getElementById('ex-info-name').textContent = (activeSession?.swaps?.[exId]?.name) || ex.name;
-  document.getElementById('ex-info-meta').textContent = ex.sets + ' sets · ' + ex.reps + ' reps · ' + ex.rest + ' rest';
+  document.getElementById('ex-info-meta').textContent = ex.sets + ' sets · ' + getGoalReps(exId, ex.reps) + ' reps · ' + ex.rest + ' rest';
 
   // Form cues
   const cues = FORM_CUES[exId] || [];
@@ -6169,7 +6218,7 @@ function showSessionWrapUp() {
     const sets = (activeSession.sets[ex.id] || []).filter(s => s.done && s.reps);
     if (!sets.length) return;
 
-    const repStr = String(ex.reps);
+    const repStr = getGoalReps(ex.id, ex.reps);
     const parts = repStr.split(/[–-]/);
     const minReps = parseInt(parts[0]) || 0;
     const maxReps = parseInt(parts[1]) || minReps;
@@ -6720,6 +6769,19 @@ function applyCycleGoal(newGoal, btn) {
   document.getElementById('cycle-goal-picker').remove();
   const labels = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' };
   showToast('Goal updated to ' + labels[newGoal] + ' 🎯');
+  updateGoalSettingsSub();
+}
+
+function updateGoalSettingsSub() {
+  const el = document.getElementById('goal-settings-sub');
+  if (!el) return;
+  const goal = state.profile?.goal;
+  const labels = { size: 'Build Size (Hypertrophy) — 8–12 reps', strength: 'Build Strength — 3–5 reps', both: 'Size & Strength — 5–10 reps' };
+  el.textContent = goal ? 'Currently: ' + (labels[goal] || goal) : 'Not set — tap to choose';
+}
+
+function openGoalPickerFromSettings() {
+  cycleChoiceChangeGoal();
 }
 
 function cycleChoiceChangeDays() {
@@ -7821,6 +7883,7 @@ try {
   renderHome();
   checkOnboarding();
   updatePauseSettingsLabel();
+  updateGoalSettingsSub();
   checkForAppUpdate();
   updateWeightIncrementUI();
   checkIOSDeleteWarning();
