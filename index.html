@@ -1993,38 +1993,30 @@
     <div class="empty-state"><div class="empty-state-icon">💭</div><div class="empty-state-text">No mood entries yet — log one before or after your next session.</div></div>
   </div>
 
-  <!-- Support Tools -->
+  <!-- Support Tools — combined card -->
   <div class="section-title">TOOLS FOR <span>HARD DAYS</span></div>
-  <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:16px;">When something gets in the way — mentally or physically — use these to work through it.</div>
-
-  <!-- Skip Logger -->
-  <div class="section-title">MISSED A <span>SESSION?</span></div>
-  <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:13px; color:var(--gray); margin:0 0 14px; line-height:1.6;">Something got in the way. Let's name what your inner voice is saying — and work through it.</div>
-    <button onclick="openCBTModal('manual')" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:14px 18px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:12px;">
-      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      I missed a workout
+  <div class="card" style="margin-bottom:14px; padding:16px;">
+    <button onclick="openCBTModal('manual')" style="width:100%; background:var(--dark3); border:1px solid #444; color:var(--cream); padding:14px 16px; border-radius:12px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:14px; margin-bottom:10px;">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; opacity:0.7;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px;">I missed a workout</div>
+        <div style="font-size:12px; color:#888; margin-top:2px;">Work through what got in the way</div>
+      </div>
+    </button>
+    <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark3); border:1px solid #444; color:var(--cream); padding:14px 16px; border-radius:12px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:14px;">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; opacity:0.7;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px;">I need a moment</div>
+        <div style="font-size:12px; color:#888; margin-top:2px;">Self-compassion check-in</div>
+      </div>
     </button>
   </div>
 
-  <!-- Barrier History -->
-  <div class="section-title">REFRAME <span>HISTORY</span></div>
-  <div id="barrier-history-list" style="margin-bottom:14px;">
+  <!-- Combined history -->
+  <div class="section-title">SESSION <span>HISTORY</span></div>
+  <div id="barrier-history-list" style="margin-bottom:10px;">
     <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No reframes yet. Use this when something gets in the way of training.</div></div>
   </div>
-
-  <!-- Self-Compassion Module -->
-  <div class="section-title">SELF-<span>COMPASSION</span></div>
-  <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:14px;">Being hard on yourself? Use this to work through it.</div>
-    <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:14px 18px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:12px;">
-      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-      I need a moment
-    </button>
-  </div>
-
-  <!-- Self-Compassion Log -->
-  <div class="section-title">SELF-COMPASSION <span>LOG</span></div>
   <div id="self-compassion-history-list">
     <div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet. Use "I need a moment" when you're being hard on yourself.</div></div>
   </div>
