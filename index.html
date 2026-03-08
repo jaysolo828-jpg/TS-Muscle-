@@ -8877,39 +8877,84 @@ function renderMoodHistory(showAll = false) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">😐</div><div class="empty-state-text">No mood entries yet.</div></div>';
     return;
   }
-  const visible = showAll ? state.moodLog : state.moodLog.slice(0, 1);
-  container.innerHTML = visible.map((entry, idx) => {
-    const d = new Date(entry.date);
+
+  // Group entries by calendar day, tracking original indices for delete
+  const byDay = {};
+  state.moodLog.forEach((entry, idx) => {
+    const day = entry.date.slice(0, 10);
+    if (!byDay[day]) byDay[day] = { pre: null, post: null };
+    // Keep the last entry logged for each timing on that day
+    byDay[day][entry.timing] = { entry, idx };
+  });
+  const sortedDays = Object.keys(byDay).sort().reverse();
+  const visibleDays = showAll ? sortedDays : sortedDays.slice(0, 1);
+  const trashIcon = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+
+  container.innerHTML = visibleDays.map(day => {
+    const { pre, post } = byDay[day];
+    const d = new Date(day + 'T12:00:00');
     const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    const timingLabel = entry.timing === 'pre' ? 'Pre-Workout' : 'Post-Workout';
-    const timingColor = entry.timing === 'pre' ? '#888' : 'var(--red)';
+
+    // Mood lift badge
+    let liftHtml = '';
+    if (pre && post) {
+      const lift = post.entry.value - pre.entry.value;
+      if (lift > 0) liftHtml = `<span style="font-size:11px; color:var(--success); letter-spacing:1px;">+${lift} MOOD LIFT</span>`;
+      else if (lift < 0) liftHtml = `<span style="font-size:11px; color:#888; letter-spacing:1px;">${lift} MOOD DROP</span>`;
+      else liftHtml = `<span style="font-size:11px; color:var(--gray); letter-spacing:1px;">SAME MOOD</span>`;
+    }
+
+    // Pre side
+    const preSide = pre
+      ? `<div style="font-size:28px; line-height:1; margin-bottom:4px;">${pre.entry.emoji}</div>
+         <div style="font-size:12px; color:var(--cream);">${pre.entry.label}</div>`
+      : `<div style="font-size:22px; color:var(--dark3); line-height:1; margin-bottom:4px;">—</div>
+         <div style="font-size:11px; color:var(--gray);">Not logged</div>`;
+
+    // Post side
+    const postSide = post
+      ? `<div style="font-size:28px; line-height:1; margin-bottom:4px;">${post.entry.emoji}</div>
+         <div style="font-size:12px; color:var(--cream);">${post.entry.label}</div>`
+      : `<div style="font-size:22px; color:var(--dark3); line-height:1; margin-bottom:4px;">—</div>
+         <div style="font-size:11px; color:var(--gray);">Not logged</div>`;
+
+    // Notes (pre takes priority if both have notes)
+    const note = (pre && pre.entry.note) || (post && post.entry.note) || '';
+
+    // Delete buttons
+    const deleteButtons = [
+      pre ? `<button onclick="deleteMoodEntry(${pre.idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.6; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Delete pre entry">PRE ${trashIcon}</button>` : '',
+      post ? `<button onclick="deleteMoodEntry(${post.idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.6; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Delete post entry">POST ${trashIcon}</button>` : ''
+    ].join('');
+
     return `
-      <div class="card" style="margin-bottom:10px; padding:14px; position:relative;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div style="font-size:26px; line-height:1;">${entry.emoji}</div>
-            <div>
-              <div style="font-size:14px; color:var(--cream); font-weight:bold;">${entry.label}</div>
-              <div style="font-size:11px; color:${timingColor}; letter-spacing:1px;">${timingLabel}</div>
-            </div>
+      <div class="card" style="margin-bottom:10px; padding:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:11px; color:var(--gray); letter-spacing:1px;">${dateStr}</div>
+          ${liftHtml}
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
+            <div style="font-size:10px; color:#888; letter-spacing:1.5px; margin-bottom:8px;">PRE</div>
+            ${preSide}
           </div>
-          <div style="display:flex; align-items:center; gap:12px;">
-            <div style="text-align:right;">
-              <div style="font-size:12px; color:var(--gray);">${dateStr}</div>
-              <div style="font-size:11px; color:var(--gray);">${timeStr}</div>
-            </div>
-            <button onclick="deleteMoodEntry(${idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.65; font-size:16px; line-height:1;" title="Delete entry">
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-            </button>
+          <div style="color:var(--gray); font-size:18px; flex-shrink:0; padding:0 2px;">→</div>
+          <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
+            <div style="font-size:10px; color:var(--red); letter-spacing:1.5px; margin-bottom:8px;">POST</div>
+            ${postSide}
           </div>
         </div>
-        ${entry.note ? `<div style="font-size:12px; color:var(--gray); border-top:1px solid var(--dark3); padding-top:8px; margin-top:4px;">${entry.note}</div>` : ''}
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid var(--dark3);">
+          <div style="font-size:12px; color:var(--gray); flex:1;">${note}</div>
+          <div style="display:flex; gap:4px; flex-shrink:0; margin-left:8px;">${deleteButtons}</div>
+        </div>
       </div>`;
   }).join('');
-  if (!showAll && state.moodLog.length > 1) {
-    container.innerHTML += `<button onclick="renderMoodHistory(true)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW ALL ${state.moodLog.length} ENTRIES</button>`;
-  } else if (showAll && state.moodLog.length > 1) {
+
+  const sessionCount = sortedDays.length;
+  if (!showAll && sessionCount > 1) {
+    container.innerHTML += `<button onclick="renderMoodHistory(true)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW ALL ${sessionCount} SESSIONS</button>`;
+  } else if (showAll && sessionCount > 1) {
     container.innerHTML += `<button onclick="renderMoodHistory(false)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW LESS</button>`;
   }
 }
