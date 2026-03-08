@@ -11023,20 +11023,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-/* ── NAV PILL ── */
+/* ── NAV PILL + GLOW RESTART ── */
 (function() {
   var indicator = document.getElementById('nav-indicator');
-  if (!indicator) return;
   function movePill(btn) {
+    if (!indicator) return;
     var navRect = btn.closest('nav').getBoundingClientRect();
     var btnRect = btn.getBoundingClientRect();
     indicator.style.left  = (btnRect.left - navRect.left) + 'px';
     indicator.style.width = btnRect.width + 'px';
   }
+  function restartGlow() {
+    document.querySelectorAll('.start-btn:not(.done-today)').forEach(function(btn) {
+      btn.style.animation = 'none';
+      void btn.offsetWidth; // force reflow
+      btn.style.animation = '';
+    });
+  }
   var firstActive = document.querySelector('.nav-item.active');
   if (firstActive) movePill(firstActive);
   document.querySelectorAll('.nav-item').forEach(function(btn) {
-    btn.addEventListener('click', function() { movePill(btn); });
+    btn.addEventListener('click', function() {
+      movePill(btn);
+      if (btn.getAttribute('aria-label') === 'Home') restartGlow();
+    });
   });
 })();
 
