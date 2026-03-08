@@ -225,6 +225,13 @@
   }
   .mood-timing-btn.selected { border-color: var(--warning); color: var(--warning); background: rgba(243,156,18,0.12); }
 
+  /* Mood insights carousel */
+  #mood-insights-scroller { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:10px; }
+  #mood-insights-scroller::-webkit-scrollbar { display:none; }
+  .mood-slide { min-width:100%; flex-shrink:0; scroll-snap-align:start; box-sizing:border-box; }
+  .mood-dot { width:6px; height:6px; border-radius:50%; background:#3a3a3a; transition:all 0.25s; flex-shrink:0; }
+  .mood-dot.active { width:18px; border-radius:3px; background:var(--red); }
+
   /* PRE = amber, POST = green — applied via data-timing on the card */
   #mood-checkin-card[data-timing="pre"] .mood-timing-btn.selected  { border-color: #5b8dee; color: #5b8dee; background: rgba(91,141,238,0.13); }
   #mood-checkin-card[data-timing="pre"] .mood-btn.selected          { border-color: #5b8dee; background: rgba(91,141,238,0.13); }
@@ -9097,6 +9104,13 @@ function deleteMoodEntry(idx) {
   renderMoodInsights();
 }
 
+function updateMoodDots(scroller) {
+  const idx = Math.round(scroller.scrollLeft / scroller.offsetWidth);
+  document.querySelectorAll('#mood-dots .mood-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+  const hint = document.getElementById('mood-scroll-hint');
+  if (hint) hint.style.opacity = (scroller.scrollLeft + scroller.offsetWidth >= scroller.scrollWidth - 4) ? '0' : '1';
+}
+
 function reselectMood(timing) {
   const btn = document.querySelector(`.mood-timing-btn[onclick*="'${timing}'"]`);
   if (btn) selectMoodTiming(timing, btn);
@@ -9213,36 +9227,44 @@ function renderMoodInsights() {
     return;
   }
 
-  let html = statsGrid;
+  // ── Build slides ─────────────────────────────────────────────
+  const slides = [];
 
-  // ── 1. WORKOUT MOOD LIFT ─────────────────────────────────────
+  // Slide 0 — Overview (always)
+  slides.push(`
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="card" style="text-align:center; padding:14px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">CHECK-IN STREAK</div>
+        <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${mindsetStreak}</div>
+        <div style="font-size:11px; color:var(--gray);">day${mindsetStreak !== 1 ? 's' : ''} in a row</div>
+      </div>
+      <div class="card" style="text-align:center; padding:14px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">THIS WEEK</div>
+        <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${logsThisWeek}</div>
+        <div style="font-size:11px; color:var(--gray);">mood log${logsThisWeek !== 1 ? 's' : ''}</div>
+      </div>
+    </div>`);
+
+  // Slide 1 — Mood Lift + bar chart
   if (avgLift !== null) {
-    const liftNum  = parseFloat(avgLift);
+    const liftNum    = parseFloat(avgLift);
     const liftColor  = liftNum > 0 ? '#4caf50' : liftNum < 0 ? 'var(--red)' : 'var(--gray)';
     const liftArrow  = liftNum > 0 ? '↑' : liftNum < 0 ? '↓' : '→';
     const liftDisplay = liftNum > 0 ? `+${avgLift}` : `${avgLift}`;
     const liftLabel  = liftNum > 0 ? 'AVG MOOD BOOST PER SESSION' : liftNum < 0 ? 'AVG MOOD DROP PER SESSION' : 'NO CHANGE ON AVERAGE';
-    const liftNarrative = (() => {
-      if (lifts.length < 3) return null;
-      if (liftNum >= 1.5) return "That's a consistent, meaningful shift. Exercise is working as a mood regulator for you — not because you're motivated to feel better, but because the body responds. This is behavioral activation: the action creates the feeling.";
-      if (liftNum >= 0.5) return "A measurable lift every session. Over time, this data is your evidence — not something to believe in, something you've actually measured about yourself.";
-      if (liftNum > 0)  return "Even a small consistent lift matters. You tend to feel better after training. That's real, and it's yours.";
-      if (liftNum === 0) return "Your mood stays stable across sessions. Consistent emotional regulation can itself be a sign that training is helping you stay even.";
-      return "Some sessions feel harder than others. That's normal. The goal isn't to always feel better — it's to keep showing up when you can.";
-    })();
 
-    // Session lift bar chart — last 8 sessions, centred on 0-axis
+    // Bar chart
     let barChartHtml = '';
     if (lifts.length >= 2) {
-      const recent   = lifts.slice(-8);
-      const HALF_H   = 30; // px per half (positive / negative)
-      const PX_UNIT  = HALF_H / 4;
+      const recent  = lifts.slice(-8);
+      const HALF_H  = 30;
+      const PX_UNIT = HALF_H / 4;
       const bars = recent.map(s => {
-        const l     = s.lift;
-        const col   = l > 0 ? '#4caf50' : l < 0 ? 'var(--red)' : '#555';
-        const barH  = Math.min(Math.abs(l) * PX_UNIT, HALF_H);
-        const d     = new Date(s.day + 'T12:00:00');
-        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const l    = s.lift;
+        const col  = l > 0 ? '#4caf50' : l < 0 ? 'var(--red)' : '#555';
+        const barH = Math.min(Math.abs(l) * PX_UNIT, HALF_H);
+        const d    = new Date(s.day + 'T12:00:00');
+        const lbl  = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         return `
           <div style="flex:1; display:flex; flex-direction:column; align-items:center; min-width:0;">
             <div style="font-size:9px; color:${l > 0 ? col : 'transparent'}; margin-bottom:2px; font-family:'Barlow Condensed',sans-serif;">${l > 0 ? '+' + l : '·'}</div>
@@ -9254,7 +9276,7 @@ function renderMoodInsights() {
               ${l < 0 ? `<div style="width:55%; height:${barH}px; background:${col}; border-radius:0 0 3px 3px;"></div>` : ''}
             </div>
             <div style="font-size:9px; color:${l < 0 ? col : 'transparent'}; margin-top:2px; font-family:'Barlow Condensed',sans-serif;">${l < 0 ? l : '·'}</div>
-            <div style="font-size:9px; color:var(--gray); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; text-align:center; font-family:'Barlow Condensed',sans-serif;">${label}</div>
+            <div style="font-size:9px; color:var(--gray); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; text-align:center; font-family:'Barlow Condensed',sans-serif;">${lbl}</div>
           </div>`;
       }).join('');
       barChartHtml = `
@@ -9264,24 +9286,33 @@ function renderMoodInsights() {
         </div>`;
     }
 
-    html += `
-      <div class="card" style="margin-bottom:10px; padding:16px; text-align:center;">
+    slides.push(`
+      <div class="card" style="padding:16px; text-align:center;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WORKOUT MOOD LIFT</div>
         <div style="font-family:'Bebas Neue',cursive; font-size:42px; color:${liftColor}; line-height:1;">${liftArrow} ${liftDisplay}</div>
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-top:6px;">${liftLabel}</div>
         <div style="font-size:11px; color:var(--gray); margin-top:4px;">across ${lifts.length} session${lifts.length !== 1 ? 's' : ''} with pre + post logs</div>
         ${barChartHtml}
-      </div>`;
+      </div>`);
 
+    // Slide 2 — What this means (narrative)
+    const liftNarrative = (() => {
+      if (lifts.length < 3) return null;
+      if (liftNum >= 1.5) return "That's a consistent, meaningful shift. Exercise is working as a mood regulator for you — not because you're motivated to feel better, but because the body responds. This is behavioral activation: the action creates the feeling.";
+      if (liftNum >= 0.5) return "A measurable lift every session. Over time, this data is your evidence — not something to believe in, something you've actually measured about yourself.";
+      if (liftNum > 0)   return "Even a small consistent lift matters. You tend to feel better after training. That's real, and it's yours.";
+      if (liftNum === 0) return "Your mood stays stable across sessions. Consistent emotional regulation can itself be a sign that training is helping you stay even.";
+      return "Some sessions feel harder than others. That's normal. The goal isn't to always feel better — it's to keep showing up when you can.";
+    })();
     if (liftNarrative) {
-      html += `
-      <div class="card" style="margin-bottom:10px; padding:14px; border-left:3px solid var(--red);">
-        <div style="font-size:10px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">WHAT THIS MEANS</div>
-        <div style="font-size:13px; color:var(--gray-light); line-height:1.7;">${liftNarrative}</div>
-      </div>`;
+      slides.push(`
+        <div class="card" style="padding:16px; border-left:3px solid var(--red);">
+          <div style="font-size:10px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px;">WHAT THIS MEANS</div>
+          <div style="font-size:14px; color:var(--gray-light); line-height:1.8;">${liftNarrative}</div>
+        </div>`);
     }
 
-    // Best session + Showed up anyway side-by-side
+    // Slide 3 — Best session + Showed up anyway
     const statCards = [];
     if (bestSession && bestSession.lift > 0) {
       const bd    = new Date(bestSession.day + 'T12:00:00');
@@ -9303,13 +9334,13 @@ function renderMoodInsights() {
         </div>`);
     }
     if (statCards.length === 2) {
-      html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">${statCards.join('')}</div>`;
+      slides.push(`<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">${statCards.join('')}</div>`);
     } else if (statCards.length === 1) {
-      html += `<div style="margin-bottom:10px;">${statCards[0]}</div>`;
+      slides.push(statCards[0]);
     }
   }
 
-  // ── 2. AVERAGE PRE vs POST ───────────────────────────────────
+  // Slide — Average PRE vs POST
   if (avgPre || avgPost) {
     const preSide = avgPre
       ? `<div style="font-size:26px; margin-bottom:4px;">${MOOD_EMOJIS[Math.round(avgPre)]}</div>
@@ -9321,8 +9352,8 @@ function renderMoodInsights() {
          <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgPost}</div>
          <div style="font-size:11px; color:var(--gray);">${MOOD_LABELS[Math.round(avgPost)]}</div>`
       : `<div style="font-size:20px; color:var(--gray); margin-bottom:4px;">—</div><div style="font-size:11px; color:var(--gray);">No data</div>`;
-    html += `
-      <div class="card" style="margin-bottom:10px; padding:14px;">
+    slides.push(`
+      <div class="card" style="padding:14px;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:12px;">AVERAGE PRE vs POST</div>
         <div style="display:flex; align-items:center; gap:6px;">
           <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
@@ -9333,55 +9364,77 @@ function renderMoodInsights() {
             <div style="font-size:10px; color:var(--success); letter-spacing:1.5px; margin-bottom:8px;">POST</div>${postSide}
           </div>
         </div>
-      </div>`;
+      </div>`);
   }
 
-  // ── 3. WEEKLY MOOD TREND ─────────────────────────────────────
+  // Slide — Weekly trend
   if (weeklyData.length >= 2) {
-    html += `
-      <div class="card" style="margin-bottom:10px; padding:14px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:12px;">WEEKLY MOOD TREND</div>
-        <div style="display:flex; align-items:flex-end; gap:6px; height:60px;">`;
+    let trendBars = '';
     weeklyData.forEach(w => {
       const pct = ((w.avg - 1) / 4) * 100;
       const barColor = w.avg >= 4 ? 'var(--red)' : w.avg >= 3 ? '#888' : '#555';
-      html += `
-          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
-            <div style="font-size:11px; color:var(--gray-light);">${w.avg}</div>
-            <div style="width:100%; background:${barColor}; border-radius:4px 4px 0 0; height:${Math.max(pct * 0.6, 6)}px;"></div>
-            <div style="font-size:11px; color:var(--gray-light);">${w.label}</div>
-          </div>`;
+      trendBars += `
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="font-size:11px; color:var(--gray-light);">${w.avg}</div>
+          <div style="width:100%; background:${barColor}; border-radius:4px 4px 0 0; height:${Math.max(pct * 0.6, 6)}px;"></div>
+          <div style="font-size:11px; color:var(--gray-light);">${w.label}</div>
+        </div>`;
     });
-    html += `</div></div>`;
+    slides.push(`
+      <div class="card" style="padding:14px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:12px;">WEEKLY MOOD TREND</div>
+        <div style="display:flex; align-items:flex-end; gap:6px; height:60px;">${trendBars}</div>
+      </div>`);
   }
 
-  // ── 4. MOST COMMON PRE-WORKOUT MOOD ─────────────────────────
-  if (mostCommonPre) html += `
-    <div class="card" style="margin-bottom:10px; padding:14px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOST COMMON PRE-WORKOUT MOOD</div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <div style="font-size:30px;">${MOOD_EMOJIS[Object.keys(MOOD_LABELS).find(k => MOOD_LABELS[k] === mostCommonPre[0])]}</div>
-        <div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${mostCommonPre[0]}</div>
-          <div style="font-size:12px; color:var(--gray);">${mostCommonPre[1]} time${mostCommonPre[1] !== 1 ? 's' : ''} logged</div>
+  // Slide — Patterns (most common pre + workout day mood combined)
+  let patternsHtml = '';
+  if (mostCommonPre) {
+    patternsHtml += `
+      <div class="card" style="padding:14px; margin-bottom:10px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOST COMMON PRE-WORKOUT MOOD</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="font-size:30px;">${MOOD_EMOJIS[Object.keys(MOOD_LABELS).find(k => MOOD_LABELS[k] === mostCommonPre[0])]}</div>
+          <div>
+            <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${mostCommonPre[0]}</div>
+            <div style="font-size:12px; color:var(--gray);">${mostCommonPre[1]} time${mostCommonPre[1] !== 1 ? 's' : ''} logged</div>
+          </div>
         </div>
-      </div>
-    </div>`;
-
-  // ── 5. MOOD ON WORKOUT DAYS ──────────────────────────────────
-  if (avgMoodWorkoutDay) html += `
-    <div class="card" style="margin-bottom:10px; padding:14px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOOD ON WORKOUT DAYS</div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <div style="font-size:30px;">${MOOD_EMOJIS[Math.round(avgMoodWorkoutDay)]}</div>
-        <div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgMoodWorkoutDay} avg</div>
-          <div style="font-size:12px; color:var(--gray);">across ${moodOnWorkoutDays.length} log${moodOnWorkoutDays.length !== 1 ? 's' : ''} on training days</div>
+      </div>`;
+  }
+  if (avgMoodWorkoutDay) {
+    patternsHtml += `
+      <div class="card" style="padding:14px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOOD ON WORKOUT DAYS</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="font-size:30px;">${MOOD_EMOJIS[Math.round(avgMoodWorkoutDay)]}</div>
+          <div>
+            <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgMoodWorkoutDay} avg</div>
+            <div style="font-size:12px; color:var(--gray);">across ${moodOnWorkoutDays.length} log${moodOnWorkoutDays.length !== 1 ? 's' : ''} on training days</div>
+          </div>
         </div>
-      </div>
-    </div>`;
+      </div>`;
+  }
+  if (patternsHtml) slides.push(`<div>${patternsHtml}</div>`);
 
-  container.innerHTML = html;
+  // ── Assemble carousel ────────────────────────────────────────
+  const showCarousel = slides.length > 1;
+  const slideHtml = slides.map(s => `<div class="mood-slide">${s}</div>`).join('');
+  const dotsHtml  = showCarousel
+    ? slides.map((_, i) => `<div class="mood-dot${i === 0 ? ' active' : ''}"></div>`).join('')
+    : '';
+  const hintHtml  = showCarousel
+    ? `<div id="mood-scroll-hint" style="position:absolute; right:0; top:0; bottom:24px; width:48px; background:linear-gradient(to right, transparent, var(--dark2)); pointer-events:none; display:flex; align-items:center; justify-content:flex-end; padding-right:6px; z-index:1; transition:opacity 0.3s;">
+         <span style="color:var(--gray-light); font-size:20px; line-height:1;">›</span>
+       </div>`
+    : '';
+
+  container.innerHTML = `
+    <div style="position:relative;">
+      ${hintHtml}
+      <div id="mood-insights-scroller" onscroll="updateMoodDots(this)">${slideHtml}</div>
+      ${showCarousel ? `<div id="mood-dots" style="display:flex; justify-content:center; align-items:center; gap:6px; padding-top:10px;">${dotsHtml}</div>` : ''}
+    </div>`;
 }
 
 // ============================================================
