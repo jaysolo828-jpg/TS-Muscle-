@@ -1615,6 +1615,60 @@
     margin-bottom: 8px;
   }
 
+  /* ── VISUAL EFFECTS ── */
+
+  /* 1. Glow pulse on start button */
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 0px rgba(204,32,39,0); }
+    50%       { box-shadow: 0 0 18px 5px rgba(204,32,39,0.45); }
+  }
+  .start-btn:not(.done-today):not(:disabled) {
+    animation: glowPulse 2.2s ease-in-out infinite;
+  }
+  .start-btn:active { animation: none; }
+
+  /* 2. Sliding nav indicator pill */
+  .nav-indicator {
+    position: absolute;
+    top: 0;
+    height: 2px;
+    width: 20%;
+    background: var(--red);
+    box-shadow: 0 0 8px 2px rgba(204,32,39,0.6);
+    border-radius: 0 0 3px 3px;
+    transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+  .bottom-nav { position: relative; }
+
+  /* 3. Tap ripple */
+  @keyframes rippleOut {
+    to { transform: scale(4); opacity: 0; }
+  }
+  .ripple-host { position: relative; overflow: hidden; }
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    width: 60px; height: 60px;
+    margin-top: -30px; margin-left: -30px;
+    background: rgba(255,255,255,0.22);
+    pointer-events: none;
+    animation: rippleOut 0.5s ease-out forwards;
+  }
+
+  /* 4. Scroll reveal */
+  @keyframes revealUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .reveal-item {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  .reveal-item.revealed {
+    animation: revealUp 0.38s ease-out forwards;
+  }
+
 </style>
 </head>
 <body>
@@ -3134,6 +3188,7 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
+  <div class="nav-indicator" id="nav-indicator"></div>
   <button class="nav-item active" onclick="showScreen('home', this)" aria-label="Home">
     <span class="nav-icon">
       <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -10978,6 +11033,112 @@ document.addEventListener('DOMContentLoaded', () => {
   if (whatsNewSub) whatsNewSub.textContent = 'Latest: v' + APP_VERSION;
   const footerVer = document.getElementById('footer-version');
   if (footerVer) footerVer.textContent = 'T\u0026S MUSCLE v' + APP_VERSION + ' · THERAPY & SNEAKERS';
+
+  // ── VISUAL EFFECTS INIT ──
+
+  // 2. Sliding nav pill — position indicator under active nav item
+  (function initNavPill() {
+    const indicator = document.getElementById('nav-indicator');
+    if (!indicator) return;
+    function updatePill(activeEl) {
+      const nav = activeEl.closest('nav');
+      if (!nav) return;
+      const navRect = nav.getBoundingClientRect();
+      const btnRect = activeEl.getBoundingClientRect();
+      const offsetX = btnRect.left - navRect.left;
+      indicator.style.transform = 'translateX(' + offsetX + 'px)';
+      indicator.style.width = btnRect.width + 'px';
+    }
+    // Position on first render
+    const firstActive = document.querySelector('.nav-item.active');
+    if (firstActive) updatePill(firstActive);
+    // Patch showScreen to move pill
+    const _origShowScreen = showScreen;
+    window.showScreen = function(name, el) {
+      _origShowScreen(name, el);
+      if (el && el.classList.contains('nav-item')) updatePill(el);
+    };
+  })();
+
+  // 3. Tap ripple on buttons and nav items
+  (function initRipple() {
+    const SELECTORS = '.start-btn, .button, .nav-item, .cardio-type-btn, .mood-btn, .onboard-next-btn';
+    function addRippleHost(el) {
+      if (!el.classList.contains('ripple-host')) el.classList.add('ripple-host');
+    }
+    document.querySelectorAll(SELECTORS).forEach(addRippleHost);
+    // Handle dynamically added elements
+    document.addEventListener('pointerdown', function(e) {
+      const btn = e.target.closest(SELECTORS);
+      if (!btn) return;
+      addRippleHost(btn);
+      const rect = btn.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      ripple.style.top = (e.clientY - rect.top) + 'px';
+      ripple.style.left = (e.clientX - rect.left) + 'px';
+      btn.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+    }, { passive: true });
+  })();
+
+  // 4. Count-up animation for home stats (MutationObserver-based)
+  (function initCountUp() {
+    function watchStat(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      function animateCount(target) {
+        obs.disconnect();
+        const start = performance.now();
+        function step(now) {
+          const p = Math.min((now - start) / 650, 1);
+          el.textContent = Math.round((1 - Math.pow(1 - p, 4)) * target);
+          if (p < 1) requestAnimationFrame(step);
+          else {
+            el.textContent = target;
+            obs.observe(el, { childList: true, characterData: true, subtree: true });
+          }
+        }
+        requestAnimationFrame(step);
+      }
+      var obs = new MutationObserver(function() {
+        var target = parseInt(el.textContent) || 0;
+        if (target > 0) animateCount(target);
+      });
+      obs.observe(el, { childList: true, characterData: true, subtree: true });
+    }
+    ['stat-sessions', 'stat-week', 'stat-streak'].forEach(watchStat);
+  })();
+
+  // 5. Scroll reveal for history & exercise list items
+  (function initScrollReveal() {
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.05 });
+
+    function observeRevealItems() {
+      document.querySelectorAll('.history-item, .exercise-item').forEach(function(el, i) {
+        if (!el.classList.contains('reveal-item')) {
+          el.classList.add('reveal-item');
+          el.style.animationDelay = Math.min(i * 55, 330) + 'ms';
+        }
+        if (!el.classList.contains('revealed')) observer.observe(el);
+      });
+    }
+    // Run after DOM settles and on any screen change
+    setTimeout(observeRevealItems, 300);
+    const _origShowScreenForReveal = window.showScreen;
+    window.showScreen = function(name, el) {
+      _origShowScreenForReveal(name, el);
+      setTimeout(observeRevealItems, 80);
+    };
+  })();
+
 });
 
 
