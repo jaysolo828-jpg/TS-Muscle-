@@ -5315,10 +5315,9 @@ function renderSession() {
       `;
     });
 
-    // Rest timer row — hidden until first set is marked done
-    const _anySetDone = (activeSession.sets[ex.id] || []).some(s => s.done);
+    // Rest timer row — always visible
     setsHTML += `
-      <div class="rest-timer-row" id="rest-row-${ex.id}" style="display:${_anySetDone ? 'flex' : 'none'};">
+      <div class="rest-timer-row" id="rest-row-${ex.id}" style="display:flex;">
         <div class="rest-timer-label">⏱ REST TIMER</div>
         <button class="rest-timer-btn" id="rest-btn-${ex.id}" onclick="toggleRestTimer('${ex.id}', +(document.getElementById('rest-cycle-${ex.id}').dataset.secs) || 90)">
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
