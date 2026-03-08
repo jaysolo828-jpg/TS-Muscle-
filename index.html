@@ -5081,7 +5081,7 @@ function renderSession() {
     // Rest timer row — hidden until first set is marked done
     const _anySetDone = (activeSession.sets[ex.id] || []).some(s => s.done);
     setsHTML += `
-      <div class="rest-timer-row" id="rest-row-${ex.id}" style="display:${_anySetDone ? 'flex' : 'none'};"
+      <div class="rest-timer-row" id="rest-row-${ex.id}" style="display:${_anySetDone ? 'flex' : 'none'};">
         <div class="rest-timer-label">⏱ REST TIMER</div>
         <button class="rest-timer-btn" id="rest-btn-${ex.id}" onclick="toggleRestTimer('${ex.id}')">
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -5147,7 +5147,8 @@ function renderSession() {
         : `SUPERSET ${supersetLabel} · ROUND ${roundsDone + 1} OF ${totalRounds}`;
       const connector = document.createElement('div');
       connector.id = 'superset-connector-' + [ex.id, nextEx.id].sort().join('-');
-      connector.style.cssText = `display:flex;align-items:center;justify-content:center;gap:8px;padding:7px 16px;background:${allDone ? 'rgba(22,163,74,0.08)' : 'rgba(220,38,38,0.08)'};border-left:3px solid ${allDone ? '#16a34a' : 'var(--red)'};border-right:3px solid ${allDone ? '#16a34a' : 'var(--red)'};margin:0;`;
+      // margin matches .session-exercise (14px 16px 0) so borders line up with card edges
+      connector.style.cssText = `display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 16px;background:${allDone ? 'rgba(22,163,74,0.08)' : 'rgba(220,38,38,0.08)'};border-left:3px solid ${allDone ? '#16a34a' : 'var(--red)'};border-right:3px solid ${allDone ? '#16a34a' : 'var(--red)'};margin:0 16px;`;
       const arrowColor = allDone ? '#16a34a' : 'var(--red)';
       connector.innerHTML = allDone
         ? `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${arrowColor}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:${arrowColor};letter-spacing:2px;">${roundLabel}</span><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${arrowColor}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
