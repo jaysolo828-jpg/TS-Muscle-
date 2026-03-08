@@ -8038,14 +8038,6 @@ const TUTORIAL_SLIDES = [
     </div>`,
   },
   {
-    section: 'INITIAL SETUP',
-    icon: '⚙️',
-    title: 'Setup & Starting Weights',
-    body: `When you first open the app you'll go through a quick setup: your <strong style="color:var(--cream);">name, bodyweight, training days, goal, and experience level</strong>.<br><br>
-    Then you set starting weights for your compound lifts. If you're unsure, tap <strong style="color:var(--red);">1RM CALC</strong> next to any exercise — enter a weight you've done for a known number of reps and the app estimates your working weight automatically using the Epley formula.<br><br>
-    You can redo setup anytime from <strong style="color:var(--cream);">Settings → Redo Initial Setup</strong>.`,
-  },
-  {
     section: 'MUSIC & INSTALL',
     icon: '🎵',
     title: 'Install the App + Music',
@@ -8054,7 +8046,15 @@ const TUTORIAL_SLIDES = [
     <strong style="color:var(--red);">iPhone (Safari):</strong> tap the Share icon → <strong style="color:var(--cream);">Add to Home Screen</strong><br>
     <strong style="color:var(--red);">Android (Chrome):</strong> tap the menu (⋮) → <strong style="color:var(--cream);">Install app</strong> — installs like a normal app in your app drawer<br><br>
     <strong style="color:var(--gray);font-size:12px;">Updates happen automatically — when the app is improved, just refresh or reopen it. You won't need to reinstall.</strong><br><br>
-    <strong style="color:var(--cream);">Music (optional):</strong> Go to <strong style="color:var(--red);">Settings → Music Player</strong> to set this up — or select "No Music" to keep workouts distraction-free. Spotify users can paste a playlist link for an <strong style="color:var(--cream);">embedded mini player</strong> that lives right in the workout screen. All other services show a one-tap Quick Launch card instead.`,
+    <strong style="color:var(--cream);">Music (optional):</strong> Go to <strong style="color:var(--red);">Settings → Music Player</strong> to set this up — or select <strong style="color:var(--cream);">No Music</strong> — no widget appears in your workout screen at all. Spotify users can paste a playlist link for an <strong style="color:var(--cream);">embedded mini player</strong> that lives right in the workout screen. All other services show a one-tap <strong style="color:var(--cream);">Quick Launch card</strong> instead.`,
+  },
+  {
+    section: 'INITIAL SETUP',
+    icon: '⚙️',
+    title: 'Setup & Starting Weights',
+    body: `When you first open the app you'll go through a quick setup: your <strong style="color:var(--cream);">name, bodyweight, experience level, goal, and training days</strong>.<br><br>
+    Then you set starting weights for your compound lifts. If you're unsure, tap <strong style="color:var(--red);">1RM CALC</strong> next to any exercise — enter a weight you've done for a known number of reps and the app estimates your working weight automatically using the Epley formula.<br><br>
+    You can redo setup anytime from <strong style="color:var(--cream);">Settings → Redo Initial Setup</strong>.`,
   },
   {
     section: 'TEST WEEK',
@@ -8065,23 +8065,13 @@ const TUTORIAL_SLIDES = [
     After 4 sessions, the app triggers a <strong style="color:var(--cream);">Test Week Review</strong> where you fine-tune each weight: lighter, same, or heavier. Your real program starts after that.`,
   },
   {
-    section: 'PROGRESSIVE OVERLOAD',
-    icon: '📈',
-    title: 'Smart Weight Progression',
-    body: `T&S Muscle uses a <strong style="color:var(--cream);">hybrid progression system</strong> that gets smarter the more you log.<br><br>
-    <strong style="color:var(--red);">Early on (1–2 sessions):</strong> Suggestions are based on your last session — reps hit and RPE logged. Good enough to get started.<br><br>
-    <strong style="color:var(--red);">After 3+ sessions:</strong> The app switches to <strong style="color:var(--cream);">trend-based logic</strong> — averaging your RPE and reps across the last 3 sessions before deciding to increase, hold, or reduce. One great day won't spike your weight. One tough day won't tank it.<br><br>
-    <strong style="color:var(--cream);">While you train:</strong> Reps turn green (✓ hit, ▲ exceeded) or red (▼ missed). A badge locks in the outcome when you check the set done.<br><br>
-    <strong style="color:var(--cream);">Session summary:</strong> Before saving, a screen shows every exercise with set outcomes and next-session weight targets.<br><br>
-    <strong style="color:var(--cream);">Next session banner:</strong> Shows the weight change, the reason, and whether it came from a single session or a 3-session trend. Toggle off in <strong style="color:var(--red);">Settings → Progressive Overload</strong>.`,
-  },
-  {
     section: 'WORKOUT TRACKING',
     icon: '🗓️',
     title: 'Logging a Workout',
-    body: `From <strong style="color:var(--cream);">Home</strong>, tap a day card to expand it, then tap <strong style="color:var(--red);">START</strong>.<br><br>
+    body: `From <strong style="color:var(--cream);">Home</strong>, tap a day card to expand it, then tap <strong style="color:var(--red);">START</strong>. Once you finish, the card shows a green <strong style="color:var(--cream);">Completed Today</strong> badge — tap it again if you want to run a second session that day.<br><br>
     For each exercise, enter <strong style="color:var(--red);">weight, reps, and RPE</strong>. The reps column shows your target range — as you type, the input lights up green (✓ hit it, ▲ exceeded) or red (▼ fell short). Tap the checkmark to mark the set done and a small badge locks in the outcome on the row.<br><br>
-    Each exercise also has a <strong style="color:var(--cream);">note field</strong>, a <strong style="color:var(--cream);">plate calculator</strong>, a <strong style="color:var(--cream);">rest timer</strong> that vibrates when time's up, and a <strong style="color:var(--cream);">music button</strong> in the header to launch your player mid-set.<br><br>
+    Each exercise also has a <strong style="color:var(--cream);">note field</strong>, a <strong style="color:var(--cream);">plate calculator</strong>, a <strong style="color:var(--cream);">rest timer</strong> that vibrates when time's up, and a <strong style="color:var(--cream);">music button</strong> to launch your player mid-workout.<br><br>
+    Need to reorder exercises on the fly? Tap <strong style="color:var(--red);">REORDER</strong> in the workout header, drag any exercise to a new position, then tap <strong style="color:var(--red);">DONE</strong>.<br><br>
     When you tap <strong style="color:var(--red);">COMPLETE ✓</strong>, a session summary shows every exercise with set-by-set outcomes and your weight adjustments for next time — before anything saves.<br><br>
     Need to stop early? Tap <strong style="color:var(--cream);">EXIT</strong> — save progress and resume later.`,
   },
@@ -8093,6 +8083,17 @@ const TUTORIAL_SLIDES = [
     <strong style="color:var(--cream);">Swap for today only</strong> — program keeps the original for next time.<br><br>
     <strong style="color:var(--cream);">Swap permanently</strong> — replaces it going forward. Undo anytime from <strong style="color:var(--red);">Settings → Restore Default Exercises</strong>.<br><br>
     Each exercise also has a <strong style="color:var(--cream);">YouTube link</strong> for form demos — you can set a custom link to your preferred coach's video.`,
+  },
+  {
+    section: 'PROGRESSIVE OVERLOAD',
+    icon: '📈',
+    title: 'Smart Weight Progression',
+    body: `T&S Muscle uses a <strong style="color:var(--cream);">hybrid progression system</strong> that gets smarter the more you log.<br><br>
+    <strong style="color:var(--red);">Early on (1–2 sessions):</strong> Suggestions are based on your last session — reps hit and RPE logged. Good enough to get started.<br><br>
+    <strong style="color:var(--red);">After 3+ sessions:</strong> The app switches to <strong style="color:var(--cream);">trend-based logic</strong> — averaging your RPE and reps across the last 3 sessions before deciding to increase, hold, or reduce. One great day won't spike your weight. One tough day won't tank it.<br><br>
+    <strong style="color:var(--cream);">While you train:</strong> Reps turn green (✓ hit, ▲ exceeded) or red (▼ missed). A badge locks in the outcome when you check the set done.<br><br>
+    <strong style="color:var(--cream);">Session summary:</strong> Before saving, a screen shows every exercise with set outcomes and next-session weight targets.<br><br>
+    <strong style="color:var(--cream);">Next session banner:</strong> Shows the weight change, the reason, and whether it came from a single session or a 3-session trend. Toggle off in <strong style="color:var(--red);">Settings → Progressive Overload</strong>.`,
   },
   {
     section: 'DELOAD & REST',
