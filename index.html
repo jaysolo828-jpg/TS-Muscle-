@@ -957,6 +957,14 @@
     transition: all 0.15s; -webkit-tap-highlight-color: transparent;
   }
   .rest-preset:active { background: #333; transform: scale(0.95); }
+  .rest-cycle-btn { min-width: 72px; color: var(--cream); border-color: #666; }
+  .rest-custom-inp {
+    background: var(--dark3); border: 1.5px solid var(--red);
+    color: var(--white); border-radius: 10px;
+    padding: 10px 8px; width: 56px; text-align: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 700; letter-spacing: 1px; outline: none;
+  }
 
   /* STICKY REST TIMER — floats above nav when active */
   #sticky-rest-timer {
@@ -5312,13 +5320,12 @@ function renderSession() {
     setsHTML += `
       <div class="rest-timer-row" id="rest-row-${ex.id}" style="display:${_anySetDone ? 'flex' : 'none'};">
         <div class="rest-timer-label">⏱ REST TIMER</div>
-        <button class="rest-timer-btn" id="rest-btn-${ex.id}" onclick="toggleRestTimer('${ex.id}')">
+        <button class="rest-timer-btn" id="rest-btn-${ex.id}" onclick="toggleRestTimer('${ex.id}', +(document.getElementById('rest-cycle-${ex.id}').dataset.secs) || 90)">
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <span id="rest-label-${ex.id}">START</span>
         </button>
-        <button class="rest-preset" onclick="startRestTimer('${ex.id}',60)">1:00</button>
-        <button class="rest-preset" onclick="startRestTimer('${ex.id}',90)">1:30</button>
-        <button class="rest-preset" onclick="startRestTimer('${ex.id}',120)">2:00</button>
+        <button class="rest-preset rest-cycle-btn" id="rest-cycle-${ex.id}" data-secs="90" onclick="cycleRestDuration('${ex.id}')">1:30 ↻</button>
+        <input id="rest-custom-inp-${ex.id}" class="rest-custom-inp" type="text" inputmode="numeric" placeholder="M:SS" maxlength="5" style="display:none;" onkeydown="if(event.key==='Enter'){event.preventDefault();submitCustomRestInline('${ex.id}')}" onblur="submitCustomRestInline('${ex.id}')">
       </div>
     `;
 
@@ -5695,6 +5702,37 @@ function toggleRestTimer(exId, defaultSecs) {
   } else {
     startRestTimer(exId, defaultSecs || 90);
   }
+}
+
+var REST_STEPS  = [30, 60, 90, 120, 150, 180, 'custom'];
+var REST_LABELS = ['0:30','1:00','1:30','2:00','2:30','3:00','CUSTOM ✎'];
+
+function cycleRestDuration(exId) {
+  var btn   = document.getElementById('rest-cycle-' + exId);
+  var input = document.getElementById('rest-custom-inp-' + exId);
+  var curVal = btn.dataset.secs === 'custom' ? 'custom' : +btn.dataset.secs;
+  var cur   = REST_STEPS.indexOf(curVal);
+  var next  = (cur + 1) % REST_STEPS.length;
+  var val   = REST_STEPS[next];
+  btn.dataset.secs = val;
+  btn.textContent  = REST_LABELS[next];
+  if (input) input.style.display = val === 'custom' ? 'inline-block' : 'none';
+  if (val === 'custom' && input) { input.value = ''; input.focus(); }
+}
+
+function submitCustomRestInline(exId) {
+  var input = document.getElementById('rest-custom-inp-' + exId);
+  var btn   = document.getElementById('rest-cycle-' + exId);
+  if (!input || input.style.display === 'none') return;
+  var raw  = (input.value || '').trim();
+  var secs = raw.includes(':')
+    ? (parseInt(raw) || 0) * 60 + (parseInt(raw.split(':')[1]) || 0)
+    : parseInt(raw, 10) || 0;
+  if (secs < 5 || secs > 3600) return;
+  btn.dataset.secs = secs;
+  btn.textContent  = Math.floor(secs / 60) + ':' + ('0' + (secs % 60)).slice(-2) + ' ↻';
+  input.style.display = 'none';
+  startRestTimer(exId, secs);
 }
 
 function startRestTimer(exId, seconds) {
