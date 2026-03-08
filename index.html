@@ -4796,7 +4796,8 @@ function startSession(dayId) {
     sets: {},
     notes: '',
     swaps: {},
-    supersets: {},
+    // Pre-load any permanently saved supersets for this day
+    supersets: day.supersets ? { ...day.supersets } : {},
     isDeload: !!(state.isDeloadWeek || state.isRestWeek),
     exerciseOrder: day.exercises.map(e => e.id)
   };
@@ -4816,20 +4817,66 @@ function startSession(dayId) {
 // ============================================================
 function startPairSelection(exId) {
   if (!activeSession) return;
-  // If already paired, remove the pair
+  // If already paired, ask whether to remove just this session or also the saved cycle pair
   if (activeSession.supersets?.[exId]) {
     const partner = activeSession.supersets[exId];
-    delete activeSession.supersets[exId];
-    delete activeSession.supersets[partner];
-    pairingSourceId = null;
-    renderSession();
-    showToast('Superset removed');
+    const progDay = state.program.find(d => d.id === activeSession.dayId);
+    const isPermanent = !!(progDay?.supersets?.[exId]);
+
+    if (isPermanent) {
+      // Offer choice: remove just this session, or remove from cycle too
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+      modal.innerHTML = `
+        <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:20px 20px 0 0;padding:28px 24px calc(env(safe-area-inset-bottom) + 24px);width:100%;animation:slideUp 0.3s ease;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);margin-bottom:4px;">REMOVE SUPERSET</div>
+          <div style="font-size:13px;color:var(--gray);margin-bottom:20px;">This is a saved cycle pairing. How far should the removal go?</div>
+          <button id="_unpair-session-btn" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:1.5px;cursor:pointer;margin-bottom:10px;text-align:left;display:flex;flex-direction:column;gap:3px;">
+            <span>THIS SESSION ONLY</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);font-weight:400;letter-spacing:0;">Removes the pair today — still saved for future workouts</span>
+          </button>
+          <button id="_unpair-cycle-btn" style="width:100%;background:var(--red);border:none;color:white;padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:3px;">
+            <span>REMOVE FROM FULL CYCLE</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(255,255,255,0.7);font-weight:400;letter-spacing:0;">Removes today and stops auto-pairing in future sessions</span>
+          </button>
+          <button onclick="this.closest('[style*=fixed]').remove();" style="width:100%;background:transparent;border:none;color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;margin-top:6px;">CANCEL</button>
+        </div>`;
+      document.body.appendChild(modal);
+
+      document.getElementById('_unpair-session-btn').onclick = () => {
+        modal.remove();
+        delete activeSession.supersets[exId];
+        delete activeSession.supersets[partner];
+        renderSession();
+        showToast('Superset removed for this session');
+      };
+
+      document.getElementById('_unpair-cycle-btn').onclick = () => {
+        modal.remove();
+        delete activeSession.supersets[exId];
+        delete activeSession.supersets[partner];
+        if (progDay?.supersets) {
+          delete progDay.supersets[exId];
+          delete progDay.supersets[partner];
+          saveState();
+        }
+        renderSession();
+        showToast('Superset removed from cycle');
+      };
+    } else {
+      // Session-only pair — just remove
+      delete activeSession.supersets[exId];
+      delete activeSession.supersets[partner];
+      pairingSourceId = null;
+      renderSession();
+      showToast('Superset removed');
+    }
     return;
   }
   // Enter pairing mode
   pairingSourceId = exId;
   renderSession();
-  showToast('Tap another exercise header to pair it');
+  showToast('Tap another exercise to pair with it');
 }
 
 function completePair(targetExId) {
@@ -4838,12 +4885,56 @@ function completePair(targetExId) {
     renderSession();
     return;
   }
-  if (!activeSession.supersets) activeSession.supersets = {};
-  activeSession.supersets[pairingSourceId] = targetExId;
-  activeSession.supersets[targetExId] = pairingSourceId;
+  const sourceId = pairingSourceId;
   pairingSourceId = null;
-  renderSession();
-  showToast('Superset paired — alternate between the two exercises ✓');
+
+  // Ask: session only or save for the full cycle?
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  const srcName = (activeSession.swaps[sourceId]?.name) || day.exercises.find(e => e.id === sourceId)?.name || sourceId;
+  const tgtName = (activeSession.swaps[targetExId]?.name) || day.exercises.find(e => e.id === targetExId)?.name || targetExId;
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:20px 20px 0 0;padding:28px 24px calc(env(safe-area-inset-bottom) + 24px);width:100%;animation:slideUp 0.3s ease;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);margin-bottom:4px;">SUPERSET PAIRING</div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.5;">${srcName} <span style="color:var(--red);">+</span> ${tgtName}</div>
+      <button id="_pair-session-btn" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:1.5px;cursor:pointer;margin-bottom:10px;text-align:left;display:flex;flex-direction:column;gap:3px;">
+        <span>THIS SESSION ONLY</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);font-weight:400;letter-spacing:0;">Paired just for today — resets next workout</span>
+      </button>
+      <button id="_pair-cycle-btn" style="width:100%;background:var(--red);border:none;color:white;padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:3px;">
+        <span>SAVE FOR FULL CYCLE</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(255,255,255,0.7);font-weight:400;letter-spacing:0;">Always paired on this workout day until you remove it</span>
+      </button>
+      <button onclick="this.closest('[style*=fixed]').remove();renderSession();" style="width:100%;background:transparent;border:none;color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;margin-top:6px;">CANCEL</button>
+    </div>`;
+  document.body.appendChild(modal);
+
+  document.getElementById('_pair-session-btn').onclick = () => {
+    modal.remove();
+    if (!activeSession.supersets) activeSession.supersets = {};
+    activeSession.supersets[sourceId] = targetExId;
+    activeSession.supersets[targetExId] = sourceId;
+    renderSession();
+    showToast('Superset set for this session ✓');
+  };
+
+  document.getElementById('_pair-cycle-btn').onclick = () => {
+    modal.remove();
+    if (!activeSession.supersets) activeSession.supersets = {};
+    activeSession.supersets[sourceId] = targetExId;
+    activeSession.supersets[targetExId] = sourceId;
+    // Persist to the program day so it loads in future sessions
+    const progDay = state.program.find(d => d.id === activeSession.dayId);
+    if (progDay) {
+      if (!progDay.supersets) progDay.supersets = {};
+      progDay.supersets[sourceId] = targetExId;
+      progDay.supersets[targetExId] = sourceId;
+      saveState();
+    }
+    renderSession();
+    showToast('Superset saved for the full cycle ✓');
+  };
 }
 
 function getSupersetLabel(exId) {
@@ -4983,7 +5074,8 @@ function renderSession() {
         <div style="display:flex; align-items:center; gap:8px; padding-top:2px; flex-wrap:wrap; justify-content:flex-end;">
           <div style="font-size:12px; color:var(--gray); font-family:'Barlow Condensed',sans-serif;">${sets.length} sets × ${ex.reps}</div>
           ${ex.alts && ex.alts.length ? `<button class="swap-btn" onclick="openSessionSwap('${ex.id}')">SWAP ↔</button>` : ''}
-          <button class="swap-btn" id="pair-btn-${ex.id}" onclick="startPairSelection('${ex.id}')"
+          <button class="swap-btn" id="pair-btn-${ex.id}"
+            onclick="${isSource ? 'pairingSourceId=null;renderSession();' : `startPairSelection('${ex.id}')`}"
             style="${isPaired ? 'border-color:var(--red);color:var(--red);' : isSource ? 'border-color:#f59e0b;color:#f59e0b;' : ''}">
             ${isPaired ? 'PAIRED ✕' : isSource ? 'CANCEL' : 'PAIR'}
           </button>
