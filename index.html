@@ -2833,7 +2833,7 @@
     <a id="contact-email-link" style="font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:15px; color:var(--red); letter-spacing:0; text-decoration:none; cursor:pointer;"></a>
     <script>(function(){ var u='Jay@'+'therapyandsneakers'+'.org'; var a=document.getElementById('contact-email-link'); if(a){a.textContent=u;a.href='mailto:'+u;} })();</script>
   </div>
-  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#777; letter-spacing:2px;">T&S MUSCLE v1.0.7 · THERAPY & SNEAKERS</div>
+  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#777; letter-spacing:2px;">T&S MUSCLE v1.3.2 · THERAPY & SNEAKERS</div>
 
   <div style="text-align:center; margin-top:30px; color: var(--gray); font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">
     T&S MUSCLE — WHERE CULTURE AND PURPOSE COLLIDE
@@ -7265,9 +7265,16 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.3.1';
+const APP_VERSION = '1.3.2';
 
 const APP_CHANGELOG = {
+  '1.3.2': [
+    'New: Superset pairing — tap PAIR on any exercise during a workout to link it with another exercise',
+    'New: Choose to keep the pairing for today only, or save it for every session on that workout day',
+    'New: Live round counter between paired exercises — shows "Round 2 of 4" and turns green when all rounds are done',
+    'New: After marking a set done, the partner exercise pulses amber and scrolls into view so you always know where to go next',
+    'New: Superset pairings are now saved with your workout history and shown in session detail view',
+  ],
   '1.3.1': [
     'New: Reorder exercises mid-workout — tap REORDER in the workout header, drag any exercise to a new position, tap DONE when finished',
   ],
@@ -8448,6 +8455,18 @@ const TUTORIAL_SLIDES = [
     Need to reorder exercises on the fly? Tap <strong style="color:var(--red);">REORDER</strong> in the workout header, drag any exercise to a new position, then tap <strong style="color:var(--red);">DONE</strong>.<br><br>
     When you tap <strong style="color:var(--red);">COMPLETE ✓</strong>, a session summary shows every exercise with set-by-set outcomes and your weight adjustments for next time — before anything saves.<br><br>
     Need to stop early? Tap <strong style="color:var(--cream);">EXIT</strong> — save progress and resume later.`,
+  },
+  {
+    section: 'SUPERSETS',
+    icon: '🔗',
+    title: 'Superset Pairing',
+    body: `A <strong style="color:var(--cream);">superset</strong> is when you alternate between two exercises back-to-back with minimal rest between them — then rest after completing both. It saves time and keeps intensity high.<br><br>
+    <strong style="color:var(--red);">To pair two exercises:</strong> tap <strong style="color:var(--cream);">PAIR</strong> on any exercise, then tap any other exercise card to link them. You'll be asked:<br><br>
+    <strong style="color:var(--cream);">This session only</strong> — paired just for today, resets next workout<br>
+    <strong style="color:var(--cream);">Save for full cycle</strong> — auto-paired every time you do this workout day<br><br>
+    Once paired, a <strong style="color:var(--red);">connector strip</strong> between the two exercises shows your round count — <em>Round 2 of 4</em> — and turns green when all rounds are done.<br><br>
+    After you check a set done on one exercise, the <strong style="color:var(--cream);">partner card pulses amber</strong> and scrolls into view — your signal to go do the other exercise.<br><br>
+    To remove a pair, tap <strong style="color:var(--cream);">PAIRED ✕</strong> on either exercise. If it's a saved cycle pair, you'll be asked whether to remove it for today only or for the full cycle.`,
   },
   {
     section: 'EXERCISE SWAPS',
