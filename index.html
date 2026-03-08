@@ -213,9 +213,10 @@
   .mood-btn {
     flex: 1; background: var(--dark3); border: 2px solid transparent;
     border-radius: 12px; padding: 14px 4px; cursor: pointer;
-    text-align: center; transition: border-color 0.2s, background 0.2s;
+    text-align: center; transition: border-color 0.2s, background 0.2s, transform 0.15s;
   }
-  .mood-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); }
+  .mood-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); transform: scale(1.08); }
+  .mood-btn.selected div:first-child { font-size: 36px; }
   .mood-timing-btn {
     flex: 1; background: var(--dark3); border: 1px solid #333;
     color: var(--gray); padding: 10px; border-radius: 10px;
@@ -1937,14 +1938,14 @@
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:8px;" id="mood-checkin-label">MOOD CHECK-IN</div>
     <div style="font-size:13px; color:var(--gray); margin-bottom:16px;">Log how you're feeling before or after a workout. Takes 10 seconds.</div>
 
-    <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">WHEN IS THIS?</div>
+    <div style="font-size:11px; color:var(--gray); letter-spacing:2px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHEN IS THIS?</div>
     <div style="display:flex; gap:8px; margin-bottom:16px;">
       <button class="mood-timing-btn selected" onclick="selectMoodTiming('pre', this)">PRE-WORKOUT</button>
       <button class="mood-timing-btn" onclick="selectMoodTiming('post', this)">POST-WORKOUT</button>
     </div>
     <input type="hidden" id="mood-timing" value="pre"/>
 
-    <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">HOW ARE YOU FEELING?</div>
+    <div style="font-size:11px; color:var(--gray); letter-spacing:2px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">HOW ARE YOU FEELING?</div>
     <div style="display:flex; justify-content:space-between; gap:6px; margin-bottom:16px;" id="mood-scale">
       <button class="mood-btn" onclick="selectMood(1, this)" data-value="1">
         <div style="font-size:32px;">😞</div>
@@ -1969,8 +1970,8 @@
     </div>
     <input type="hidden" id="mood-value" value=""/>
 
-    <button onclick="toggleMoodNote(this)" style="background:none; border:none; color:var(--gray); font-size:13px; padding:0; cursor:pointer; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-      <svg id="mood-note-chevron" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;"><polyline points="9 18 15 12 9 6"/></svg>
+    <button onclick="toggleMoodNote(this)" style="width:100%; background:var(--dark3); border:1px solid #333; color:var(--gray); font-size:13px; padding:10px 14px; border-radius:10px; cursor:pointer; margin-bottom:10px; display:flex; align-items:center; gap:8px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">
+      <svg id="mood-note-chevron" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
       Add a note
     </button>
     <div id="mood-note-wrap" style="display:none; margin-bottom:14px;">
@@ -2014,11 +2015,15 @@
 
   <!-- Combined history -->
   <div class="section-title">SESSION <span>HISTORY</span></div>
-  <div id="barrier-history-list" style="margin-bottom:10px;">
-    <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No reframes yet. Use this when something gets in the way of training.</div></div>
+
+  <div style="font-size:10px; color:#555; letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px; padding-left:10px; border-left:2px solid #333;">MISSED SESSION</div>
+  <div id="barrier-history-list" style="margin-bottom:14px;">
+    <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No reframes yet.</div></div>
   </div>
+
+  <div style="font-size:10px; color:#555; letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px; padding-left:10px; border-left:2px solid #333;">COMPASSION CHECK-IN</div>
   <div id="self-compassion-history-list">
-    <div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet. Use "I need a moment" when you're being hard on yourself.</div></div>
+    <div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet.</div></div>
   </div>
 </div>
 
