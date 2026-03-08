@@ -4246,7 +4246,7 @@ function renderHome() {
           <div class="exercise-item">
             <div>
               <div class="exercise-name">${ex.name}</div>
-              <div class="exercise-meta">${ex.sets} sets × ${getGoalReps(ex.id, ex.reps)}${ex.note ? ' · <span style="color:var(--gray-light);">' + ex.note + '</span>' : ''}</div>
+              <div class="exercise-meta">${ex.sets} sets × ${getGoalReps(ex.id, ex.reps)}${ex.rest ? ' · ⏱ rest' : ''}${ex.note ? ' · <span style="color:var(--gray-light);">' + ex.note + '</span>' : ''}</div>
             </div>
             ${ex.alts && ex.alts.length ? `<button class="alt-btn" onclick="showAltsPreview('${day.id}','${ex.id}')">ALT</button>` : ''}
           </div>
