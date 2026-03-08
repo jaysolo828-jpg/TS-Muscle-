@@ -226,8 +226,8 @@
   .mood-timing-btn.selected { border-color: var(--warning); color: var(--warning); background: rgba(243,156,18,0.12); }
 
   /* PRE = amber, POST = green — applied via data-timing on the card */
-  #mood-checkin-card[data-timing="pre"] .mood-timing-btn.selected  { border-color: var(--warning); color: var(--warning); background: rgba(243,156,18,0.12); }
-  #mood-checkin-card[data-timing="pre"] .mood-btn.selected          { border-color: var(--warning); background: rgba(243,156,18,0.12); }
+  #mood-checkin-card[data-timing="pre"] .mood-timing-btn.selected  { border-color: #5b8dee; color: #5b8dee; background: rgba(91,141,238,0.13); }
+  #mood-checkin-card[data-timing="pre"] .mood-btn.selected          { border-color: #5b8dee; background: rgba(91,141,238,0.13); }
   #mood-checkin-card[data-timing="post"] .mood-timing-btn.selected  { border-color: var(--success); color: var(--success); background: rgba(46,204,113,0.12); }
   #mood-checkin-card[data-timing="post"] .mood-btn.selected         { border-color: var(--success); background: rgba(46,204,113,0.12); }
 
@@ -1985,7 +1985,7 @@
       <textarea id="mood-note" class="notes-input" placeholder="Anything on your mind?" style="min-height:50px;"></textarea>
     </div>
 
-    <button id="log-mood-btn" onclick="saveMoodEntry()" style="width:100%; background:var(--warning); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; transition:background 0.2s;">LOG MOOD</button>
+    <button id="log-mood-btn" onclick="saveMoodEntry()" style="width:100%; background:#5b8dee; border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; transition:background 0.2s;">LOG MOOD</button>
   </div>
 
   <!-- Mood Stats -->
@@ -8924,7 +8924,7 @@ function selectMoodTiming(timing, btn) {
   card.dataset.timing = timing;
 
   const logBtn = document.getElementById('log-mood-btn');
-  logBtn.style.background = timing === 'post' ? 'var(--success)' : 'var(--warning)';
+  logBtn.style.background = timing === 'post' ? 'var(--success)' : '#5b8dee';
 
   updateMoodNotePrompt();
 }
@@ -9004,12 +9004,15 @@ function renderMoodHistory(showAll = false) {
     // Keep the last entry logged for each timing on that day
     byDay[day][entry.timing] = { entry, idx };
   });
+  const todayKey = new Date().toISOString().slice(0, 10);
   const sortedDays = Object.keys(byDay).sort().reverse();
   const visibleDays = showAll ? sortedDays : sortedDays.slice(0, 1);
   const trashIcon = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+  const editIcon = `<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 
   container.innerHTML = visibleDays.map(day => {
     const { pre, post } = byDay[day];
+    const isToday = day === todayKey;
     const d = new Date(day + 'T12:00:00');
     const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -9053,7 +9056,7 @@ function renderMoodHistory(showAll = false) {
         </div>
         <div style="display:flex; align-items:center; gap:6px;">
           <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
-            <div style="font-size:10px; color:var(--warning); letter-spacing:1.5px; margin-bottom:8px;">PRE</div>
+            <div style="font-size:10px; color:#5b8dee; letter-spacing:1.5px; margin-bottom:8px;">PRE</div>
             ${preSide}
           </div>
           <div style="color:var(--gray); font-size:18px; flex-shrink:0; padding:0 2px;">→</div>
@@ -9064,7 +9067,13 @@ function renderMoodHistory(showAll = false) {
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid var(--dark3);">
           <div style="font-size:12px; color:var(--gray); flex:1;">${note}</div>
-          <div style="display:flex; gap:4px; flex-shrink:0; margin-left:8px;">${deleteButtons}</div>
+          <div style="display:flex; gap:4px; flex-shrink:0; margin-left:8px; align-items:center;">
+            ${isToday ? `
+              <button onclick="reselectMood('pre')" style="background:rgba(91,141,238,0.1); border:1px solid rgba(91,141,238,0.35); color:#5b8dee; cursor:pointer; padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Change pre-workout mood">PRE ${editIcon}</button>
+              <button onclick="reselectMood('post')" style="background:rgba(46,204,113,0.08); border:1px solid rgba(46,204,113,0.3); color:var(--success); cursor:pointer; padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Change post-workout mood">POST ${editIcon}</button>
+            ` : ''}
+            ${deleteButtons}
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -9084,6 +9093,12 @@ function deleteMoodEntry(idx) {
   saveState();
   renderMoodHistory();
   renderMoodInsights();
+}
+
+function reselectMood(timing) {
+  const btn = document.querySelector(`.mood-timing-btn[onclick*="'${timing}'"]`);
+  if (btn) selectMoodTiming(timing, btn);
+  document.getElementById('mood-checkin-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderMoodInsights() {
@@ -9238,7 +9253,7 @@ function renderMoodInsights() {
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:12px;">AVERAGE PRE vs POST</div>
         <div style="display:flex; align-items:center; gap:6px;">
           <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
-            <div style="font-size:10px; color:var(--warning); letter-spacing:1.5px; margin-bottom:8px;">PRE</div>
+            <div style="font-size:10px; color:#5b8dee; letter-spacing:1.5px; margin-bottom:8px;">PRE</div>
             ${preSide}
           </div>
           <div style="color:var(--gray); font-size:18px; flex-shrink:0; padding:0 2px;">→</div>
