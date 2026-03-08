@@ -9068,62 +9068,56 @@ function renderMoodInsights() {
     }
   }
 
-  let html = statsGrid + `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">`;
+  let html = statsGrid;
 
-  if (avgPre) html += `
-    <div class="card" style="text-align:center; padding:14px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">AVG PRE-WORKOUT</div>
-      <div style="font-size:28px;">${MOOD_EMOJIS[Math.round(avgPre)]}</div>
-      <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgPre}</div>
-      <div style="font-size:11px; color:var(--gray);">${MOOD_LABELS[Math.round(avgPre)]}</div>
-    </div>`;
-
-  if (avgPost) html += `
-    <div class="card" style="text-align:center; padding:14px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">AVG POST-WORKOUT</div>
-      <div style="font-size:28px;">${MOOD_EMOJIS[Math.round(avgPost)]}</div>
-      <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgPost}</div>
-      <div style="font-size:11px; color:var(--gray);">${MOOD_LABELS[Math.round(avgPost)]}</div>
-    </div>`;
-
-  html += `</div>`;
-
+  // 1. WORKOUT MOOD LIFT — headline metric, shown first
   if (avgLift !== null) {
     const liftNum = parseFloat(avgLift);
     const liftColor = liftNum > 0 ? '#4caf50' : liftNum < 0 ? 'var(--red)' : 'var(--gray)';
-    const liftText = liftNum > 0 ? `+${avgLift} mood points after training` : liftNum < 0 ? `${avgLift} mood points after training` : 'No average change after training';
+    const liftArrow = liftNum > 0 ? '↑' : liftNum < 0 ? '↓' : '→';
+    const liftDisplay = liftNum > 0 ? `+${avgLift}` : `${avgLift}`;
+    const liftLabel = liftNum > 0 ? 'AVG MOOD BOOST PER SESSION' : liftNum < 0 ? 'AVG MOOD DROP PER SESSION' : 'NO CHANGE ON AVERAGE';
     html += `
-      <div class="card" style="margin-bottom:10px; padding:14px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">WORKOUT MOOD LIFT</div>
-        <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:${liftColor};">${liftNum > 0 ? '↑' : liftNum < 0 ? '↓' : '→'} ${liftText}</div>
-        <div style="font-size:12px; color:var(--gray); margin-top:4px;">Across ${lifts.length} session${lifts.length !== 1 ? 's' : ''} with pre + post logs</div>
+      <div class="card" style="margin-bottom:10px; padding:16px; text-align:center;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WORKOUT MOOD LIFT</div>
+        <div style="font-family:'Bebas Neue',cursive; font-size:42px; color:${liftColor}; line-height:1;">${liftArrow} ${liftDisplay}</div>
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-top:6px;">${liftLabel}</div>
+        <div style="font-size:11px; color:var(--gray); margin-top:4px;">across ${lifts.length} session${lifts.length !== 1 ? 's' : ''} with pre + post logs</div>
       </div>`;
   }
 
-  if (mostCommonPre) html += `
-    <div class="card" style="margin-bottom:10px; padding:14px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOST COMMON PRE-WORKOUT MOOD</div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <div style="font-size:30px;">${MOOD_EMOJIS[Object.keys(MOOD_LABELS).find(k => MOOD_LABELS[k] === mostCommonPre[0])]}</div>
-        <div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${mostCommonPre[0]}</div>
-          <div style="font-size:12px; color:var(--gray);">${mostCommonPre[1]} time${mostCommonPre[1] !== 1 ? 's' : ''} logged</div>
+  // 2. AVG PRE → POST — paired card, mirrors the mood log card design
+  if (avgPre || avgPost) {
+    const preSide = avgPre
+      ? `<div style="font-size:26px; margin-bottom:4px;">${MOOD_EMOJIS[Math.round(avgPre)]}</div>
+         <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgPre}</div>
+         <div style="font-size:11px; color:var(--gray);">${MOOD_LABELS[Math.round(avgPre)]}</div>`
+      : `<div style="font-size:20px; color:var(--gray); margin-bottom:4px;">—</div>
+         <div style="font-size:11px; color:var(--gray);">No data</div>`;
+    const postSide = avgPost
+      ? `<div style="font-size:26px; margin-bottom:4px;">${MOOD_EMOJIS[Math.round(avgPost)]}</div>
+         <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgPost}</div>
+         <div style="font-size:11px; color:var(--gray);">${MOOD_LABELS[Math.round(avgPost)]}</div>`
+      : `<div style="font-size:20px; color:var(--gray); margin-bottom:4px;">—</div>
+         <div style="font-size:11px; color:var(--gray);">No data</div>`;
+    html += `
+      <div class="card" style="margin-bottom:10px; padding:14px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:12px;">AVERAGE PRE vs POST</div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
+            <div style="font-size:10px; color:#888; letter-spacing:1.5px; margin-bottom:8px;">PRE</div>
+            ${preSide}
+          </div>
+          <div style="color:var(--gray); font-size:18px; flex-shrink:0; padding:0 2px;">→</div>
+          <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
+            <div style="font-size:10px; color:var(--red); letter-spacing:1.5px; margin-bottom:8px;">POST</div>
+            ${postSide}
+          </div>
         </div>
-      </div>
-    </div>`;
+      </div>`;
+  }
 
-  if (avgMoodWorkoutDay) html += `
-    <div class="card" style="margin-bottom:10px; padding:14px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOOD ON WORKOUT DAYS</div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <div style="font-size:30px;">${MOOD_EMOJIS[Math.round(avgMoodWorkoutDay)]}</div>
-        <div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgMoodWorkoutDay} avg</div>
-          <div style="font-size:12px; color:var(--gray);">across ${moodOnWorkoutDays.length} log${moodOnWorkoutDays.length !== 1 ? 's' : ''} on training days</div>
-        </div>
-      </div>
-    </div>`;
-
+  // 3. WEEKLY MOOD TREND
   if (weeklyData.length >= 2) {
     html += `
       <div class="card" style="margin-bottom:10px; padding:14px;">
@@ -9142,6 +9136,32 @@ function renderMoodInsights() {
     });
     html += `</div></div>`;
   }
+
+  // 4. MOST COMMON PRE-WORKOUT MOOD
+  if (mostCommonPre) html += `
+    <div class="card" style="margin-bottom:10px; padding:14px;">
+      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOST COMMON PRE-WORKOUT MOOD</div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="font-size:30px;">${MOOD_EMOJIS[Object.keys(MOOD_LABELS).find(k => MOOD_LABELS[k] === mostCommonPre[0])]}</div>
+        <div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${mostCommonPre[0]}</div>
+          <div style="font-size:12px; color:var(--gray);">${mostCommonPre[1]} time${mostCommonPre[1] !== 1 ? 's' : ''} logged</div>
+        </div>
+      </div>
+    </div>`;
+
+  // 5. MOOD ON WORKOUT DAYS
+  if (avgMoodWorkoutDay) html += `
+    <div class="card" style="margin-bottom:10px; padding:14px;">
+      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOOD ON WORKOUT DAYS</div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="font-size:30px;">${MOOD_EMOJIS[Math.round(avgMoodWorkoutDay)]}</div>
+        <div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgMoodWorkoutDay} avg</div>
+          <div style="font-size:12px; color:var(--gray);">across ${moodOnWorkoutDays.length} log${moodOnWorkoutDays.length !== 1 ? 's' : ''} on training days</div>
+        </div>
+      </div>
+    </div>`;
 
   container.innerHTML = html;
 }
