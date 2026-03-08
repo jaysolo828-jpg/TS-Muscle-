@@ -8877,7 +8877,7 @@ function renderMoodHistory(showAll = false) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">😐</div><div class="empty-state-text">No mood entries yet.</div></div>';
     return;
   }
-  const visible = showAll ? state.moodLog : state.moodLog.slice(0, 3);
+  const visible = showAll ? state.moodLog : state.moodLog.slice(0, 1);
   container.innerHTML = visible.map((entry, idx) => {
     const d = new Date(entry.date);
     const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -8907,8 +8907,10 @@ function renderMoodHistory(showAll = false) {
         ${entry.note ? `<div style="font-size:12px; color:var(--gray); border-top:1px solid var(--dark3); padding-top:8px; margin-top:4px;">${entry.note}</div>` : ''}
       </div>`;
   }).join('');
-  if (!showAll && state.moodLog.length > 3) {
+  if (!showAll && state.moodLog.length > 1) {
     container.innerHTML += `<button onclick="renderMoodHistory(true)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW ALL ${state.moodLog.length} ENTRIES</button>`;
+  } else if (showAll && state.moodLog.length > 1) {
+    container.innerHTML += `<button onclick="renderMoodHistory(false)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW LESS</button>`;
   }
 }
 
@@ -9303,7 +9305,7 @@ function renderBarrierHistory(showAll = false) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No entries yet. When you log a skip, your reframes will show here.</div></div>';
     return;
   }
-  const visible = showAll ? state.barrierLog : state.barrierLog.slice(0, 3);
+  const visible = showAll ? state.barrierLog : state.barrierLog.slice(0, 1);
   container.innerHTML = visible.map((entry, idx) => {
     const d = new Date(entry.date);
     const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
@@ -9322,8 +9324,10 @@ function renderBarrierHistory(showAll = false) {
         <div style="font-size:12px; color:var(--gray); line-height:1.5; border-top:1px solid var(--dark3); padding-top:8px;">${entry.reframe}</div>
       </div>`;
   }).join('');
-  if (!showAll && state.barrierLog.length > 3) {
+  if (!showAll && state.barrierLog.length > 1) {
     container.innerHTML += `<button onclick="renderBarrierHistory(true)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW ALL ${state.barrierLog.length} ENTRIES</button>`;
+  } else if (showAll && state.barrierLog.length > 1) {
+    container.innerHTML += `<button onclick="renderBarrierHistory(false)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW LESS</button>`;
   }
 }
 
@@ -9335,7 +9339,7 @@ function renderSelfCompassionLog(showAll = false) {
     return;
   }
   const allReversed = state.selfCompassionLog.slice().reverse();
-  const entries = showAll ? allReversed : allReversed.slice(0, 3);
+  const entries = showAll ? allReversed : allReversed.slice(0, 1);
   container.innerHTML = entries.map((entry, idx) => {
     const realIdx = state.selfCompassionLog.length - 1 - idx;
     const d = new Date(entry.date);
@@ -9355,8 +9359,10 @@ function renderSelfCompassionLog(showAll = false) {
         ${entry.plan ? `<div style="font-size:12px; color:var(--gray); border-top:1px solid var(--dark3); padding-top:8px; margin-top:6px;">Plan: ${entry.plan}</div>` : ''}
       </div>`;
   }).join('');
-  if (!showAll && state.selfCompassionLog.length > 3) {
+  if (!showAll && state.selfCompassionLog.length > 1) {
     container.innerHTML += `<button onclick="renderSelfCompassionLog(true)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW ALL ${state.selfCompassionLog.length} ENTRIES</button>`;
+  } else if (showAll && state.selfCompassionLog.length > 1) {
+    container.innerHTML += `<button onclick="renderSelfCompassionLog(false)" style="width:100%; background:none; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:4px;">SHOW LESS</button>`;
   }
 }
 
