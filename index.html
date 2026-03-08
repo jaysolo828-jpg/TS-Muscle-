@@ -4480,6 +4480,14 @@ function getProgressiveWeight(exId, dayId) {
     return '';
   }
 
+  // During deload week, bypass progression — use 60% of last session's weight
+  if (state.isDeloadWeek) {
+    const lastSessionSets = (sameDaySessions[0].sets[exId] || []).filter(s => s.done);
+    const lastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
+    if (lastWeight) return String(Math.max(5, Math.round(lastWeight * 0.6 / 2.5) * 2.5));
+    return state.startingWeights?.[exId] ? String(state.startingWeights[exId]) : '';
+  }
+
   const day = state.program.find(d => d.id === dayId);
   const ex = day?.exercises.find(e => e.id === exId);
   const repStr = ex ? String(ex.reps) : '8–12';
@@ -4569,7 +4577,7 @@ function getProgressiveWeight(exId, dayId) {
     } else if (exceededRange && avgRPE <= 7 && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('large');
       reason = `▲ ${Math.round(avgReps)} reps at RPE ${avgRPE.toFixed(1)} (${modeLabel}) — big jump`;
-    } else if (avgRPE <= 7 && allSetsCompleted && trendReadyToIncrease) {
+    } else if (avgRPE <= 7 && !missedRange && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('small');
       reason = `RPE ${avgRPE.toFixed(1)} avg (${modeLabel}) — felt easy`;
     } else if (avgRPE <= 8 && hitRepRangeTop && allSetsCompleted && trendReadyToIncrease) {
@@ -4599,10 +4607,10 @@ function getProgressiveWeight(exId, dayId) {
     } else if (exceededRange && avgRPE <= 7 && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('large');
       reason = `▲ ${Math.round(avgReps)} reps at RPE ${avgRPE.toFixed(1)} (${modeLabel})`;
-    } else if (avgRPE <= 7 && allSetsCompleted && trendReadyToIncrease) {
+    } else if (avgRPE <= 7 && !missedRange && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('medium');
       reason = `RPE ${avgRPE.toFixed(1)} (${modeLabel}) — add load`;
-    } else if (avgRPE <= 8 && allSetsCompleted && trendReadyToIncrease) {
+    } else if (avgRPE <= 8 && !missedRange && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('small');
       reason = `RPE ${avgRPE.toFixed(1)} (${modeLabel}) — small increase`;
     } else {
@@ -4623,7 +4631,7 @@ function getProgressiveWeight(exId, dayId) {
     } else if (exceededRange && avgRPE <= 7 && trendReadyToIncrease) {
       newWeight = lastWeight + Math.round(getWeightIncrement(goal) * 1.5 / 2.5) * 2.5;
       reason = `▲ ${Math.round(avgReps)} reps at RPE ${avgRPE.toFixed(1)} (${modeLabel})`;
-    } else if (avgRPE <= 7 && allSetsCompleted && trendReadyToIncrease) {
+    } else if (avgRPE <= 7 && !missedRange && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getWeightIncrement(goal);
       reason = `RPE ${avgRPE.toFixed(1)} (${modeLabel}) — ready to progress`;
     } else if (avgRPE <= 8 && hitRepRangeTop && allSetsCompleted && trendReadyToIncrease) {
@@ -4773,11 +4781,6 @@ function startSession(dayId) {
     const suggested = getProgressiveWeight(ex.id, day.id);
     activeSession.sets[ex.id] = Array.from({length: ex.sets}, () => ({ weight: suggested, reps: '', rpe: '', done: false }));
   });
-
-  // If coming off a deload/rest week, restore original weights
-  if (state.isDeloadWeek || state.isRestWeek) {
-    endRecoveryWeek();
-  }
 
   renderSession();
   startSessionTimer();
@@ -5837,6 +5840,12 @@ function finalizeEndSession(save) {
     state.history.push(entry);
     state.totalSessions++;
     state.inactivityPromptShown = false;
+
+    // End deload/rest week after the first completed session is saved
+    if (activeSession.isDeload && (state.isDeloadWeek || state.isRestWeek)) {
+      endRecoveryWeek();
+    }
+
     showToast('Workout saved! ✓');
     setTimeout(() => checkBackupReminder(), 3000);
 
