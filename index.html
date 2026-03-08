@@ -2784,6 +2784,18 @@
     </div>
   </div>
 
+  <!-- NOTIFICATIONS -->
+  <div class="section-title" style="margin-top:8px;">NOTIFICATIONS</div>
+  <div class="settings-item" onclick="toggleTrainingReminders()">
+    <div>
+      <div class="settings-label">Training Reminders</div>
+      <div class="settings-sub" id="notifications-sub">Off — tap to enable nudges on training days</div>
+    </div>
+    <div class="settings-arrow" id="notifications-icon">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+    </div>
+  </div>
+
   <!-- HELP -->
   <div class="section-title" style="margin-top:8px;">HELP</div>
 
@@ -3399,6 +3411,7 @@ let state = {
 
 let activeSession = null;
 let pendingSwap = null;
+let pairingSourceId = null; // exercise ID currently waiting for a pair partner
 const HISTORY_PAGE_SIZE = 15;
 let historyPage = 1;
 
@@ -4347,6 +4360,8 @@ function applyDeloadWeek() {
     state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * 0.6 / 2.5) * 2.5;
   });
   state.isDeloadWeek = true;
+  state.deloadStartDate = Date.now();
+  state.deloadSessionsCompleted = 0;
   saveState();
   document.getElementById('deload-modal').style.display = 'none';
   showToast('Deload week active — weights reduced 40% ⚡');
@@ -4355,6 +4370,8 @@ function applyDeloadWeek() {
 
 function applyRestWeek() {
   state.isRestWeek = true;
+  state.deloadStartDate = Date.now();
+  state.deloadSessionsCompleted = 0;
   saveState();
   document.getElementById('deload-modal').style.display = 'none';
   showToast('Rest week — program paused. Come back strong 💤');
@@ -4373,6 +4390,8 @@ function activateDeloadWeek() {
   });
   state.isDeloadWeek = true;
   state.weeksSinceDeload = 0;
+  state.deloadStartDate = Date.now();
+  state.deloadSessionsCompleted = 0;
   saveState();
   const m = document.getElementById('deload-suggest-modal');
   if (m) m.remove();
@@ -4406,13 +4425,15 @@ function endRecoveryWeekEarly() {
 }
 
 function endRecoveryWeek() {
-  // Called when user completes their first session after deload/rest
+  // Called after enough sessions or days have passed during a deload/rest week
   if (state.deloadBaseWeights) {
     state.startingWeights = { ...state.deloadBaseWeights };
     delete state.deloadBaseWeights;
   }
   state.isDeloadWeek = false;
   state.isRestWeek = false;
+  delete state.deloadStartDate;
+  delete state.deloadSessionsCompleted;
   saveState();
 }
 
@@ -4765,6 +4786,7 @@ function startSession(dayId) {
     } catch(e) {}
   }
 
+  pairingSourceId = null;
   const day = state.program.find(d => d.id === dayId);
   activeSession = {
     dayId,
@@ -4774,6 +4796,8 @@ function startSession(dayId) {
     sets: {},
     notes: '',
     swaps: {},
+    // Pre-load any permanently saved supersets for this day
+    supersets: day.supersets ? { ...day.supersets } : {},
     isDeload: !!(state.isDeloadWeek || state.isRestWeek),
     exerciseOrder: day.exercises.map(e => e.id)
   };
@@ -4786,6 +4810,151 @@ function startSession(dayId) {
   startSessionTimer();
   document.getElementById('workout-session').classList.add('active');
   updateMusicDockUI();
+}
+
+// ============================================================
+// SUPERSET PAIRING
+// ============================================================
+function startPairSelection(exId) {
+  if (!activeSession) return;
+  // If already paired, ask whether to remove just this session or also the saved cycle pair
+  if (activeSession.supersets?.[exId]) {
+    const partner = activeSession.supersets[exId];
+    const progDay = state.program.find(d => d.id === activeSession.dayId);
+    const isPermanent = !!(progDay?.supersets?.[exId]);
+
+    if (isPermanent) {
+      // Offer choice: remove just this session, or remove from cycle too
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+      modal.innerHTML = `
+        <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:20px 20px 0 0;padding:28px 24px calc(env(safe-area-inset-bottom) + 24px);width:100%;animation:slideUp 0.3s ease;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);margin-bottom:4px;">REMOVE SUPERSET</div>
+          <div style="font-size:13px;color:var(--gray);margin-bottom:20px;">This is a saved cycle pairing. How far should the removal go?</div>
+          <button id="_unpair-session-btn" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:1.5px;cursor:pointer;margin-bottom:10px;text-align:left;display:flex;flex-direction:column;gap:3px;">
+            <span>THIS SESSION ONLY</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);font-weight:400;letter-spacing:0;">Removes the pair today — still saved for future workouts</span>
+          </button>
+          <button id="_unpair-cycle-btn" style="width:100%;background:var(--red);border:none;color:white;padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:3px;">
+            <span>REMOVE FROM FULL CYCLE</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(255,255,255,0.7);font-weight:400;letter-spacing:0;">Removes today and stops auto-pairing in future sessions</span>
+          </button>
+          <button onclick="this.closest('[style*=fixed]').remove();" style="width:100%;background:transparent;border:none;color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;margin-top:6px;">CANCEL</button>
+        </div>`;
+      document.body.appendChild(modal);
+
+      document.getElementById('_unpair-session-btn').onclick = () => {
+        modal.remove();
+        delete activeSession.supersets[exId];
+        delete activeSession.supersets[partner];
+        renderSession();
+        showToast('Superset removed for this session');
+      };
+
+      document.getElementById('_unpair-cycle-btn').onclick = () => {
+        modal.remove();
+        delete activeSession.supersets[exId];
+        delete activeSession.supersets[partner];
+        if (progDay?.supersets) {
+          delete progDay.supersets[exId];
+          delete progDay.supersets[partner];
+          saveState();
+        }
+        renderSession();
+        showToast('Superset removed from cycle');
+      };
+    } else {
+      // Session-only pair — just remove
+      delete activeSession.supersets[exId];
+      delete activeSession.supersets[partner];
+      pairingSourceId = null;
+      renderSession();
+      showToast('Superset removed');
+    }
+    return;
+  }
+  // Enter pairing mode
+  pairingSourceId = exId;
+  renderSession();
+  showToast('Tap another exercise to pair with it');
+}
+
+function completePair(targetExId) {
+  if (!pairingSourceId || pairingSourceId === targetExId) {
+    pairingSourceId = null;
+    renderSession();
+    return;
+  }
+  const sourceId = pairingSourceId;
+  pairingSourceId = null;
+
+  // Ask: session only or save for the full cycle?
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  const srcName = (activeSession.swaps[sourceId]?.name) || day.exercises.find(e => e.id === sourceId)?.name || sourceId;
+  const tgtName = (activeSession.swaps[targetExId]?.name) || day.exercises.find(e => e.id === targetExId)?.name || targetExId;
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:20px 20px 0 0;padding:28px 24px calc(env(safe-area-inset-bottom) + 24px);width:100%;animation:slideUp 0.3s ease;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);margin-bottom:4px;">SUPERSET PAIRING</div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.5;">${srcName} <span style="color:var(--red);">+</span> ${tgtName}</div>
+      <button id="_pair-session-btn" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:1.5px;cursor:pointer;margin-bottom:10px;text-align:left;display:flex;flex-direction:column;gap:3px;">
+        <span>THIS SESSION ONLY</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);font-weight:400;letter-spacing:0;">Paired just for today — resets next workout</span>
+      </button>
+      <button id="_pair-cycle-btn" style="width:100%;background:var(--red);border:none;color:white;padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:3px;">
+        <span>SAVE FOR FULL CYCLE</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(255,255,255,0.7);font-weight:400;letter-spacing:0;">Always paired on this workout day until you remove it</span>
+      </button>
+      <button onclick="this.closest('[style*=fixed]').remove();renderSession();" style="width:100%;background:transparent;border:none;color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;margin-top:6px;">CANCEL</button>
+    </div>`;
+  document.body.appendChild(modal);
+
+  document.getElementById('_pair-session-btn').onclick = () => {
+    modal.remove();
+    if (!activeSession.supersets) activeSession.supersets = {};
+    activeSession.supersets[sourceId] = targetExId;
+    activeSession.supersets[targetExId] = sourceId;
+    renderSession();
+    showToast('Superset set for this session ✓');
+  };
+
+  document.getElementById('_pair-cycle-btn').onclick = () => {
+    modal.remove();
+    if (!activeSession.supersets) activeSession.supersets = {};
+    activeSession.supersets[sourceId] = targetExId;
+    activeSession.supersets[targetExId] = sourceId;
+    // Persist to the program day so it loads in future sessions
+    const progDay = state.program.find(d => d.id === activeSession.dayId);
+    if (progDay) {
+      if (!progDay.supersets) progDay.supersets = {};
+      progDay.supersets[sourceId] = targetExId;
+      progDay.supersets[targetExId] = sourceId;
+      saveState();
+    }
+    renderSession();
+    showToast('Superset saved for the full cycle ✓');
+  };
+}
+
+function getSupersetLabel(exId) {
+  // Assign A, B, C... labels to pairs based on order they appear in the exercise list
+  if (!activeSession?.supersets) return '';
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  const order = (activeSession.exerciseOrder || day.exercises.map(e => e.id));
+  const seen = new Set();
+  let letter = 65; // 'A'
+  for (const id of order) {
+    if (!activeSession.supersets[id]) continue;
+    const partner = activeSession.supersets[id];
+    const key = [id, partner].sort().join('|');
+    if (!seen.has(key)) {
+      seen.add(key);
+      if (id === exId || partner === exId) return String.fromCharCode(letter);
+      letter++;
+    }
+  }
+  return '';
 }
 
 function renderSession() {
@@ -4810,9 +4979,27 @@ function renderSession() {
     const swappedName = activeSession.swaps[ex.id] ? activeSession.swaps[ex.id].name : null;
     const displayName = swappedName || ex.name;
 
+    const isPaired = !!activeSession.supersets?.[ex.id];
+    const isSource = pairingSourceId === ex.id;
+    const isPairingMode = !!pairingSourceId && !isSource;
+    const supersetLabel = isPaired ? getSupersetLabel(ex.id) : '';
+
     const exEl = document.createElement('div');
     exEl.className = 'session-exercise' + (isCompleted ? ' completed' : '');
     exEl.id = 'session-ex-' + ex.id;
+    // In pairing mode, make non-source cards tappable to complete the pair
+    if (isPairingMode) {
+      exEl.style.cursor = 'pointer';
+      exEl.style.outline = '2px dashed var(--red)';
+      exEl.style.outlineOffset = '-2px';
+      exEl.onclick = (e) => { if (e.target.closest('button,input,select')) return; completePair(ex.id); };
+    } else if (isPaired) {
+      // Bold top accent + subtle red-tinted background so it reads immediately as "linked"
+      exEl.style.borderTop = '3px solid var(--red)';
+      exEl.style.background = 'rgba(220,38,38,0.04)';
+    } else {
+      exEl.onclick = null;
+    }
     const _muscle = MUSCLE_MAP[ex.id];
     const _mColor = _muscle ? MUSCLE_COLORS[_muscle] : null;
 
@@ -4880,11 +5067,20 @@ function renderSession() {
             <div class="session-ex-name">${displayName}</div>
             ${state.prs?.[ex.id] ? `<span id="pr-badge-${ex.id}" style="font-size:11px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:2px 7px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
           </div>
-          ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
+            ${isPaired ? `<span style="font-size:10px;font-weight:700;color:var(--red);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(220,38,38,0.1);padding:2px 6px;border-radius:4px;">SUPERSET ${supersetLabel}</span>` : ''}
+            ${isSource ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:2px 6px;border-radius:4px;">PAIRING…</span>` : ''}
+          </div>
         </div>
-        <div style="display:flex; align-items:center; gap:8px; padding-top:2px;">
+        <div style="display:flex; align-items:center; gap:8px; padding-top:2px; flex-wrap:wrap; justify-content:flex-end;">
           <div style="font-size:12px; color:var(--gray); font-family:'Barlow Condensed',sans-serif;">${sets.length} sets × ${ex.reps}</div>
           ${ex.alts && ex.alts.length ? `<button class="swap-btn" onclick="openSessionSwap('${ex.id}')">SWAP ↔</button>` : ''}
+          <button class="swap-btn" id="pair-btn-${ex.id}"
+            onclick="${isSource ? 'pairingSourceId=null;renderSession();' : `startPairSelection('${ex.id}')`}"
+            style="${isPaired ? 'border-color:var(--red);color:var(--red);' : isSource ? 'border-color:#f59e0b;color:#f59e0b;' : ''}">
+            ${isPaired ? 'PAIRED ✕' : isSource ? 'CANCEL' : 'PAIR'}
+          </button>
           <button class="swap-btn" id="skip-btn-${ex.id}" onclick="toggleSkipExercise('${ex.id}')" style="background:transparent; border-color:var(--dark4); color:var(--gray);">SKIP</button>
         </div>
       </div>
@@ -4901,6 +5097,19 @@ function renderSession() {
     `;
 
     container.appendChild(exEl);
+
+    // Connector strip between adjacent paired exercises
+    const nextEx = orderedExercises[orderedExercises.indexOf(ex) + 1];
+    if (isPaired && nextEx && activeSession.supersets?.[ex.id] === nextEx.id) {
+      const connector = document.createElement('div');
+      connector.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:7px 16px;background:rgba(220,38,38,0.08);border-left:3px solid var(--red);border-right:3px solid var(--red);margin:0;';
+      connector.innerHTML = `
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="8 15 12 19 16 15"/></svg>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--red);letter-spacing:2px;">SUPERSET ${supersetLabel} — ALTERNATE</span>
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="8 9 12 5 16 9"/></svg>
+      `;
+      container.appendChild(connector);
+    }
   });
 
   updateSessionProgress();
@@ -5007,10 +5216,26 @@ function toggleSetDone(exId, setIndex) {
   const exEl = document.getElementById('session-ex-' + exId);
   if (exEl) exEl.classList.toggle('completed', allDone);
 
-  // Reveal rest timer row on first set completion
+  // Reveal rest timer row on set completion.
+  // For supersets: only show after BOTH exercises in the pair have completed a set this round
   if (set.done) {
-    const restRow = document.getElementById('rest-row-' + exId);
-    if (restRow) restRow.style.display = 'flex';
+    const partnerId = activeSession.supersets?.[exId];
+    let showRest = true;
+    if (partnerId) {
+      // Count how many sets are done on each side — rest fires after both match
+      const myDone = (activeSession.sets[exId] || []).filter(s => s.done).length;
+      const partnerDone = (activeSession.sets[partnerId] || []).filter(s => s.done).length;
+      showRest = partnerDone >= myDone; // partner has caught up to this exercise
+    }
+    if (showRest) {
+      const restRow = document.getElementById('rest-row-' + exId);
+      if (restRow) restRow.style.display = 'flex';
+      // Also show partner's rest row if partner is behind (they complete after us)
+      if (partnerId) {
+        const partnerRestRow = document.getElementById('rest-row-' + partnerId);
+        if (partnerRestRow) partnerRestRow.style.display = 'flex';
+      }
+    }
   }
 
   updateSessionProgress();
@@ -5841,16 +6066,29 @@ function finalizeEndSession(save) {
     state.totalSessions++;
     state.inactivityPromptShown = false;
 
-    // End deload/rest week after the first completed session is saved
+    // End deload/rest week after 4 sessions OR 7 calendar days — whichever comes first
     if (activeSession.isDeload && (state.isDeloadWeek || state.isRestWeek)) {
-      endRecoveryWeek();
+      state.deloadSessionsCompleted = (state.deloadSessionsCompleted || 0) + 1;
+      const _deloadDaysElapsed = (Date.now() - (state.deloadStartDate || Date.now())) / 86400000;
+      if (state.deloadSessionsCompleted >= 4 || _deloadDaysElapsed >= 7) {
+        endRecoveryWeek();
+        showToast('Deload complete — back to full weight next session 💪');
+      } else {
+        saveState();
+      }
     }
 
     showToast('Workout saved! ✓');
     setTimeout(() => checkBackupReminder(), 3000);
 
-    // Increment week every 4 sessions
-    if (state.totalSessions % 4 === 0) {
+    // Increment week every 4 sessions OR after 7 calendar days — whichever comes first.
+    // This prevents low-frequency users from waiting a month to reach the next week.
+    if (!state.weekStartTimestamp) state.weekStartTimestamp = Date.now();
+    const _sessionBased = state.totalSessions % 4 === 0;
+    const _daysSinceWeekStart = (Date.now() - state.weekStartTimestamp) / 86400000;
+    const _calendarBased = _daysSinceWeekStart >= 7 && !_sessionBased;
+    if (_sessionBased || _calendarBased) {
+      state.weekStartTimestamp = Date.now();
       const prevWeek = state.weekCount;
       state.weekCount = Math.min(state.weekCount + 1, 8);
       // Cycle complete — was on week 8, now would roll over
@@ -6925,6 +7163,7 @@ if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistration()
         .then(reg => { if (reg) reg.update(); })
         .catch(() => {});
+      checkTrainingReminder();
     }
   });
 }
@@ -8003,6 +8242,39 @@ function updateIncrementUI() {
   });
   const sub = document.getElementById('increment-sub');
   if (sub) sub.textContent = 'Currently: ' + lbs[current] + ' lb steps per progression';
+}
+
+async function toggleTrainingReminders() {
+  if (state.notificationsEnabled) {
+    // Turn off
+    state.notificationsEnabled = false;
+    saveState();
+    updateNotificationsUI();
+    showToast('Training reminders off');
+  } else {
+    // Request permission then enable
+    const granted = await requestNotificationPermission();
+    if (!granted) {
+      showToast('Enable notifications in your browser/device settings first');
+      return;
+    }
+    state.notificationsEnabled = true;
+    saveState();
+    updateNotificationsUI();
+    showToast('Training reminders on ✓');
+  }
+}
+
+function updateNotificationsUI() {
+  const on = !!state.notificationsEnabled;
+  const sub = document.getElementById('notifications-sub');
+  const icon = document.getElementById('notifications-icon');
+  if (sub) sub.textContent = on
+    ? 'On — nudge if you miss a scheduled training day'
+    : 'Off — tap to enable nudges on training days';
+  if (icon) icon.innerHTML = on
+    ? '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--red)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 }
 
 function toggleProgressiveOverload() {
@@ -9798,6 +10070,52 @@ function deleteSelfCompassionEntry(idx) {
   renderSelfCompassionLog();
 }
 
+// ============================================================
+// TRAINING REMINDER NOTIFICATIONS
+// ============================================================
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  const result = await Notification.requestPermission();
+  return result === 'granted';
+}
+
+function checkTrainingReminder() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  if (state.notificationsEnabled === false) return;
+  if (!state.history || state.history.length === 0) return;
+
+  // Check if today is a scheduled training day (reads live from state.program — always current)
+  const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  const todayIsTrainingDay = (state.program || []).some(d => d.day === todayName);
+  if (!todayIsTrainingDay) return;
+
+  // Check if already trained today
+  const todayStr = new Date().toDateString();
+  const trainedToday = state.history.some(e => new Date(e.date).toDateString() === todayStr);
+  if (trainedToday) return;
+
+  // Only nudge if 2+ days since last session
+  const last = state.history[state.history.length - 1];
+  const daysSinceLast = last ? Math.floor((Date.now() - new Date(last.date)) / 86400000) : 99;
+  if (daysSinceLast < 2) return;
+
+  // Throttle: don't fire more than once per day
+  const lastNudge = state._lastReminderFired || 0;
+  if ((Date.now() - lastNudge) < 86400000) return;
+  state._lastReminderFired = Date.now();
+  saveState();
+
+  new Notification('Time to train 💪', {
+    body: `You haven't logged a session in ${daysSinceLast} day${daysSinceLast !== 1 ? 's' : ''}. Today is a training day — let's go.`,
+    icon: './icon-192.png',
+    tag: 'training-reminder',
+    renotify: false
+  });
+}
+
 function checkInactivityPrompt() {
   if (state.programPaused) return;
   if (!state.history || state.history.length === 0) return;
@@ -10179,6 +10497,8 @@ document.addEventListener('DOMContentLoaded', () => {
   updateTrainingDaysSub();
   updateProgressiveOverloadUI();
   updateIncrementUI();
+  updateNotificationsUI();
+  checkTrainingReminder();
   // Set "What's New" sub-label to current version
   const whatsNewSub = document.getElementById('whats-new-sub');
   if (whatsNewSub) whatsNewSub.textContent = 'Latest: v' + APP_VERSION;
