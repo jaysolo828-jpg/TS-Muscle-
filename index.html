@@ -2452,7 +2452,7 @@
 
 <!-- SELF-COMPASSION MODAL -->
 <!-- Based on Kristin Neff's 3-component model: Mindfulness, Common Humanity, Self-Kindness -->
-<div id="self-compassion-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9700; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+<div id="self-compassion-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9700; align-items:flex-start; justify-content:center; padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); overflow-y:auto;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid #333; margin:auto; position:relative;">
     <button onclick="closeSelfCompassionModal()" style="position:absolute; top:14px; right:16px; background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:32px; height:32px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">✕</button>
 
@@ -2510,7 +2510,7 @@
 </div>
 
 <!-- CBT MODAL -->
-<div id="cbt-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9800; align-items:center; justify-content:center; padding:20px;">
+<div id="cbt-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9800; align-items:center; justify-content:center; padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); overflow-y:auto;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid var(--dark3);">
     <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">COGNITIVE REFRAME</div>
     <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">LET'S WORK THROUGH THIS</div>
@@ -2543,7 +2543,7 @@
         <button class="cbt-barrier-btn" onclick="selectBarrier('other')">💬 Something else</button>
       </div>
       <div id="barrier-other-input" style="display:none; margin-top:12px;">
-        <input id="barrier-other-text" type="text" class="notes-input" placeholder="Briefly describe what got in the way..." style="width:100%; padding:12px; border-radius:10px; box-sizing:border-box; margin-bottom:10px;"/>
+        <input id="barrier-other-text" type="text" class="notes-input" placeholder="Briefly describe what got in the way..." style="width:100%; padding:12px; border-radius:10px; box-sizing:border-box; margin-bottom:10px; font-size:16px;"/>
         <button onclick="proceedFromOtherBarrier()" style="width:100%; background:var(--red); border:none; color:white; padding:12px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">CONTINUE</button>
       </div>
     </div>
@@ -3418,6 +3418,26 @@ function _openIDB() {
     req.onsuccess = e => resolve(e.target.result);
     req.onerror = () => reject();
   });
+}
+
+// iOS-safe localStorage remove (private browsing throws QuotaExceededError)
+function _lsRemove(key) { try { localStorage.removeItem(key); } catch(e) {} }
+
+// iOS scroll lock: prevents body scroll behind modals on Safari
+let _scrollLockY = 0;
+function lockBodyScroll() {
+  _scrollLockY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${_scrollLockY}px`;
+  document.body.style.width = '100%';
+  document.body.style.overflow = 'hidden';
+}
+function unlockBodyScroll() {
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  document.body.style.overflow = '';
+  window.scrollTo(0, _scrollLockY);
 }
 
 function _idbSet(key, value) {
@@ -4712,7 +4732,7 @@ function startSession(dayId) {
           <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">RESUME SESSION?</div>
           <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">You have a saved session for this workout. Pick up where you left off?</div>
           <div style="display:flex;gap:10px;">
-            <button onclick="this.closest('[style*=fixed]').remove();localStorage.removeItem('ts-muscle-paused');_idbSet('ts-muscle-paused',null);renderHome();" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">START FRESH</button>
+            <button onclick="this.closest('[style*=fixed]').remove();_lsRemove('ts-muscle-paused');_idbSet('ts-muscle-paused',null);renderHome();" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">START FRESH</button>
             <button id="resume-confirm-btn" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">RESUME</button>
           </div>
         </div>`;
@@ -4724,7 +4744,7 @@ function startSession(dayId) {
         if (activeSession.elapsedMs) {
           activeSession.startTime = Date.now() - activeSession.elapsedMs;
         }
-        localStorage.removeItem('ts-muscle-paused');
+        _lsRemove('ts-muscle-paused');
         document.getElementById('session-notes').value = activeSession.notes || '';
         renderSession();
         startSessionTimer();
@@ -5577,7 +5597,7 @@ function saveAndExitSession() {
   activeSession.notes = document.getElementById('session-notes').value;
   activeSession.savedAt = Date.now();
   const _pausedJson = JSON.stringify(activeSession);
-  localStorage.setItem('ts-muscle-paused', _pausedJson);
+  try { localStorage.setItem('ts-muscle-paused', _pausedJson); } catch(e) {}
   _idbSet('ts-muscle-paused', _pausedJson);
   closeExitModal();
   document.getElementById('workout-session').classList.remove('active');
@@ -5610,7 +5630,7 @@ function showDiscardConfirm() {
 }
 
 function discardSession() {
-  localStorage.removeItem('ts-muscle-paused');
+  _lsRemove('ts-muscle-paused');
   _idbSet('ts-muscle-paused', null);
   activeSession = null;
   recalcPRsFromHistory();
@@ -5783,7 +5803,7 @@ function saveWrapupNotesAndFinish() {
 
 function finalizeEndSession(save) {
   // Always clear the crash-recovery snapshot — session is now fully completed or discarded
-  localStorage.removeItem('ts-muscle-paused');
+  _lsRemove('ts-muscle-paused');
   _idbSet('ts-muscle-paused', null);
 
   if (save && activeSession) {
@@ -7345,6 +7365,7 @@ window.addEventListener('popstate', (e) => {
     const el = document.getElementById(id);
     if (el && (el.style.display === 'flex' || el.style.display === 'block')) {
       el.style.display = 'none';
+      unlockBodyScroll();
       history.pushState({ page: 'home' }, '');
       return;
     }
@@ -9117,7 +9138,12 @@ function updateMoodDots(scroller) {
 function reselectMood(timing) {
   const btn = document.querySelector(`.mood-timing-btn[onclick*="'${timing}'"]`);
   if (btn) selectMoodTiming(timing, btn);
-  document.getElementById('mood-checkin-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const el = document.getElementById('mood-checkin-card');
+  if (el) {
+    const opts = { block: 'start' };
+    if ('scrollBehavior' in document.documentElement.style) opts.behavior = 'smooth';
+    el.scrollIntoView(opts);
+  }
 }
 
 function renderMoodInsights() {
@@ -9455,10 +9481,12 @@ function openSelfCompassionModal() {
   const modal = document.getElementById('self-compassion-modal');
   modal.style.display = 'flex';
   modal.scrollTop = 0;
+  lockBodyScroll();
 }
 
 function closeSelfCompassionModal() {
   document.getElementById('self-compassion-modal').style.display = 'none';
+  unlockBodyScroll();
 }
 
 function scNext(step) {
@@ -9561,10 +9589,12 @@ function openCBTModal(trigger) {
   document.getElementById('barrier-other-text').value = '';
   const modal = document.getElementById('cbt-modal');
   modal.style.display = 'flex';
+  lockBodyScroll();
 }
 
 function closeCBTModal() {
   document.getElementById('cbt-modal').style.display = 'none';
+  unlockBodyScroll();
 }
 
 function selectThought(thought) {
