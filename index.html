@@ -1625,6 +1625,7 @@
   }
   .start-btn:not(.done-today) {
     animation: glowPulse 2.5s ease-in-out 1;
+    animation-delay: 3.2s;
   }
   .start-btn:active { animation: none; }
 
@@ -11037,7 +11038,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.start-btn:not(.done-today)').forEach(function(btn) {
       btn.style.animation = 'none';
       void btn.offsetWidth; // force reflow
-      btn.style.animation = '';
+      btn.style.animation = 'glowPulse 2.5s ease-in-out 1';
     });
   }
   var firstActive = document.querySelector('.nav-item.active');
