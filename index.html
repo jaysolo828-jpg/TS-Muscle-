@@ -2919,6 +2919,16 @@
     <div class="modal-title">SWAP EXERCISE</div>
     <div class="modal-sub" id="alt-modal-sub">Choose an alternate</div>
 
+    <!-- SWAP RESET BANNER — shown only when exercise has been renamed -->
+    <div id="alt-reset-banner" style="display:none; background:#3a2a10; border:1px solid #7a5a20; border-radius:10px; padding:10px 14px; margin-bottom:14px; align-items:center; gap:10px;">
+      <span style="font-size:16px;">↩</span>
+      <div style="flex:1;">
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#f0a830; letter-spacing:0.5px; font-weight:700;">CURRENTLY SWAPPED</div>
+        <div id="alt-reset-label" style="font-family:'Barlow',sans-serif; font-size:13px; color:#d4a96a; margin-top:2px;"></div>
+      </div>
+      <button id="alt-reset-btn" onclick="resetExerciseToDefault()" style="background:#7a5a20; border:none; color:#f0d090; border-radius:8px; padding:7px 12px; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.5px; cursor:pointer; white-space:nowrap;">RESET</button>
+    </div>
+
     <!-- CURRENT EXERCISE YOUTUBE LINK -->
     <div id="current-yt-section" style="background:var(--dark3); border-radius:12px; padding:12px 14px; margin-bottom:16px;">
       <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">📺 WATCH CURRENT EXERCISE</div>
@@ -3009,6 +3019,11 @@
 
     <!-- Scrollable middle: form cues only -->
     <div id="ex-info-cues-section" style="flex:1; min-height:0; overflow-y:auto; padding:12px 20px 10px;">
+      <!-- Stale cues warning — shown when exercise has been renamed -->
+      <div id="ex-info-stale-warning" style="display:none; background:#2e2010; border:1px solid #6b4d12; border-radius:10px; padding:10px 12px; margin-bottom:12px; align-items:flex-start; gap:8px;">
+        <span style="font-size:15px; flex-shrink:0; margin-top:1px;">⚠️</span>
+        <div style="font-family:'Barlow',sans-serif; font-size:12px; color:#d4a96a; line-height:1.5;" id="ex-info-stale-text"></div>
+      </div>
       <div style="font-size:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">FORM CUES</div>
       <div id="ex-info-cues" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
@@ -3191,7 +3206,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Machine Chest Press', note: 'Great if shoulder is sensitive', ytLink: 'https://youtu.be/xUm0BiZCX_I' },
           { name: 'Weighted Push-Up', note: 'Bodyweight + plate or vest', ytLink: 'https://youtu.be/IODxDxX7oi4' },
           { name: 'Cable Chest Press', note: 'Constant tension on chest', ytLink: 'https://youtu.be/6zfIGzT8rQQ' },
-          { name: 'Smith Machine Bench', note: 'Fixed path, good for solo training', ytLink: 'https://youtu.be/kL_E2LHsNgs' }
+          { name: 'Smith Machine Bench', note: 'Fixed path, good for solo training', ytLink: 'https://youtu.be/kL_E2LHsNgs' },
+          { name: 'Chest Dips', note: 'Lean forward to target chest over triceps', ytLink: 'https://youtu.be/2z8JmcrW-As' },
+          { name: 'Floor Press', note: 'Limits ROM, great for shoulder issues', ytLink: 'https://youtu.be/G9UkOEBpJXs' },
+          { name: 'Decline Barbell Press', note: 'Lower chest emphasis, less shoulder stress', ytLink: 'https://youtu.be/LfyQTbU05IM' }
         ]
       },
       { id: 'incline', name: 'Incline DB Press', sets: 3, reps: '10–12', rest: '90 sec',
@@ -3201,7 +3219,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Incline Machine Press', note: 'No stabilizer requirement', ytLink: 'https://youtu.be/kBeieaQcaJ4' },
           { name: 'Cable Incline Press', note: 'Constant tension throughout', ytLink: 'https://youtu.be/6zfIGzT8rQQ' },
           { name: 'Incline Hammer Press', note: 'Neutral grip, easier on shoulders', ytLink: 'https://youtu.be/8iPEnn-ltC8' },
-          { name: 'Landmine Press', note: 'Arc motion, shoulder-friendly', ytLink: 'https://youtu.be/lh6jbwAkXaQ' }
+          { name: 'Landmine Press', note: 'Arc motion, shoulder-friendly', ytLink: 'https://youtu.be/lh6jbwAkXaQ' },
+          { name: 'Decline DB Press', note: 'Lower chest, completes the angle spectrum', ytLink: 'https://youtu.be/LfyQTbU05IM' },
+          { name: 'Low-to-High Cable Press', note: 'Excellent upper chest constant tension', ytLink: 'https://youtu.be/taI4XduLpTk' },
+          { name: 'Smith Machine Incline', note: 'Controlled path, good for progressive overload', ytLink: 'https://youtu.be/DbFgADa2PL8' }
         ]
       },
       { id: 'flye', name: 'Cable Flye', sets: 3, reps: '12–15', rest: '60 sec',
@@ -3211,7 +3232,9 @@ const DEFAULT_PROGRAM = [
           { name: 'DB Flye', note: 'Requires careful shoulder position', ytLink: 'https://youtu.be/eozdVDA78K0' },
           { name: 'Low Cable Crossover', note: 'Great for upper chest', ytLink: 'https://youtu.be/taI4XduLpTk' },
           { name: 'High Cable Crossover', note: 'Targets lower chest', ytLink: 'https://youtu.be/Iwe6AmxVf7o' },
-          { name: 'Resistance Band Flye', note: 'No equipment needed', ytLink: 'https://youtu.be/8lDC4Ri9zAQ' }
+          { name: 'Resistance Band Flye', note: 'No equipment needed', ytLink: 'https://youtu.be/8lDC4Ri9zAQ' },
+          { name: 'Svend Press', note: 'Inner chest squeeze, plates pressed together', ytLink: 'https://youtu.be/t8MT6F4pqHQ' },
+          { name: 'Decline Cable Flye', note: 'Lower chest isolation with constant tension', ytLink: 'https://youtu.be/Iwe6AmxVf7o' }
         ]
       },
       { id: 'pushdown', name: 'Tricep Pushdown (Cable)', sets: 3, reps: '12–15', rest: '60 sec',
@@ -3238,10 +3261,13 @@ const DEFAULT_PROGRAM = [
         ytLink: 'https://youtu.be/3VcKaXpzqRo',
         alts: [
           { name: 'Machine Lateral Raise', note: 'If cable station is busy', ytLink: 'https://youtu.be/3VcKaXpzqRo' },
-          { name: 'Cable Lateral Raise', note: 'Constant tension, very effective', ytLink: 'https://youtu.be/PPdLkRpPRsg' },
+          { name: 'DB Lateral Raise', note: 'Classic dumbbell version', ytLink: 'https://youtu.be/3VcKaXpzqRo' },
           { name: 'Leaning DB Lateral Raise', note: 'Better range of motion', ytLink: 'https://youtu.be/OFg6k3nrxFk' },
           { name: 'Upright Row', note: 'Compound shoulder builder', ytLink: 'https://youtu.be/Uxq6RQBrg8I' },
-          { name: 'Band Lateral Raise', note: 'Light resistance, high reps', ytLink: 'https://youtu.be/ppQHMPBz6KA' }
+          { name: 'Band Lateral Raise', note: 'Light resistance, high reps', ytLink: 'https://youtu.be/ppQHMPBz6KA' },
+          { name: 'Arnold Press', note: 'Hits all three delt heads through rotation', ytLink: 'https://youtu.be/6Z15_WdXmVw' },
+          { name: 'Overhead DB Press', note: 'Compound shoulder mass builder', ytLink: 'https://youtu.be/qEwKCR5JCog' },
+          { name: 'Face Pull', note: 'Rear delt + external rotation, great for health', ytLink: 'https://youtu.be/HSoHeSJ4JsA' }
         ]
       }
     ]
@@ -3257,7 +3283,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Leg Press (Single Leg)', note: 'Unilateral if bilateral bothers knees', ytLink: 'https://youtu.be/GvRgijoJ2xY' },
           { name: 'Hack Squat Machine', note: 'Great quad isolation', ytLink: 'https://youtu.be/02EnkNZvqhQ' },
           { name: 'Bulgarian Split Squat', note: 'Unilateral quad/glute builder', ytLink: 'https://youtu.be/2C-uNgKwPLE' },
-          { name: 'Goblet Squat', note: 'Easier on knees, great form builder', ytLink: 'https://youtu.be/MeIiIdhvXT4' }
+          { name: 'Goblet Squat', note: 'Easier on knees, great form builder', ytLink: 'https://youtu.be/MeIiIdhvXT4' },
+          { name: 'Front Squat', note: 'Barbell front rack, quad-dominant', ytLink: 'https://youtu.be/m4ytaCJZpl0' },
+          { name: 'Dumbbell Squat', note: 'Dumbbells at sides, beginner-friendly', ytLink: 'https://youtu.be/Geg7mNBHmXA' },
+          { name: 'Box Squat', note: 'Sit to box, reduces knee stress', ytLink: 'https://youtu.be/VpkFYijLjOU' }
         ]
       },
       { id: 'rdl', name: 'Romanian Deadlift', sets: 3, reps: '10–12', rest: '90 sec',
@@ -3267,7 +3296,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Cable Pull-Through', note: 'Hip hinge, zero knee stress', ytLink: 'https://youtu.be/mr_JFAFbJEA' },
           { name: 'DB Romanian Deadlift', note: 'Same movement, easier to balance', ytLink: 'https://youtu.be/JCXUYuzwNrM' },
           { name: 'Trap Bar Deadlift', note: 'More quad friendly version', ytLink: 'https://youtu.be/IG9PF3kJWDQ' },
-          { name: 'Good Mornings', note: 'Barbell on traps, hip hinge', ytLink: 'https://youtu.be/YA-h3n9L4YU' }
+          { name: 'Good Mornings', note: 'Barbell on traps, hip hinge', ytLink: 'https://youtu.be/YA-h3n9L4YU' },
+          { name: 'Sumo Deadlift', note: 'Wide stance, glute and inner hamstring focus', ytLink: 'https://youtu.be/WLmFQ0QSbdE' },
+          { name: 'Deficit RDL', note: 'Stand on plate for deeper stretch', ytLink: 'https://youtu.be/JCXUYuzwNrM' },
+          { name: 'Glute-Ham Raise', note: 'Elite posterior chain builder', ytLink: 'https://youtu.be/aSjvdcGDUkU' }
         ]
       },
       { id: 'leg-ext-a', name: 'Leg Extension (Machine)', sets: 3, reps: '12–15', rest: '60 sec',
@@ -3277,7 +3309,9 @@ const DEFAULT_PROGRAM = [
           { name: 'Wall Sit', note: 'Isometric quad hold', ytLink: 'https://youtu.be/y-wV4Venusw' },
           { name: 'Step-Up (DB)', note: 'Functional quad builder', ytLink: 'https://youtu.be/dQqApCGd5Ss' },
           { name: 'Sissy Squat', note: 'Advanced quad isolation', ytLink: 'https://youtu.be/cp1T3KHnF2E' },
-          { name: 'Terminal Knee Extension (Band)', note: 'Rehab-friendly quad finisher', ytLink: 'https://youtu.be/JTNyhlBdmgk' }
+          { name: 'Terminal Knee Extension (Band)', note: 'Rehab-friendly quad finisher', ytLink: 'https://youtu.be/JTNyhlBdmgk' },
+          { name: 'Spanish Squat (Band)', note: 'Band around post, knees forward quad focus', ytLink: 'https://youtu.be/fIQHZOjCCb8' },
+          { name: 'Peterson Step-Up', note: 'Knee strength and VMO builder', ytLink: 'https://youtu.be/Lp0yjukBMXM' }
         ]
       },
       { id: 'ham-curl-a', name: 'Lying Hamstring Curl', sets: 3, reps: '12–15', rest: '60 sec',
@@ -3286,7 +3320,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Seated Hamstring Curl', note: 'Better stretch at top', ytLink: 'https://youtu.be/ELOCsoDSmrg' },
           { name: 'Nordic Curl', note: 'Bodyweight, elite hamstring builder', ytLink: 'https://youtu.be/d1WFMd9zvbo' },
           { name: 'Stability Ball Curl', note: 'Core + hamstring combo', ytLink: 'https://youtu.be/1Tq3QdYUuHs' },
-          { name: 'DB Hamstring Curl (Prone)', note: 'DB between feet variation', ytLink: 'https://youtu.be/ELOCsoDSmrg' }
+          { name: 'DB Hamstring Curl (Prone)', note: 'DB between feet variation', ytLink: 'https://youtu.be/ELOCsoDSmrg' },
+          { name: 'Single Leg Lying Curl', note: 'Unilateral for imbalance correction', ytLink: 'https://youtu.be/1Tq3QdYUuHs' },
+          { name: 'Banded Hamstring Curl', note: 'Band around ankle, home-friendly', ytLink: 'https://youtu.be/KVCDtfABQbI' },
+          { name: 'Glute-Ham Raise', note: 'Elite eccentric hamstring builder', ytLink: 'https://youtu.be/aSjvdcGDUkU' }
         ]
       },
       { id: 'hip-thrust-a', name: 'Barbell Hip Thrust', sets: 3, reps: '12–15', rest: '90 sec',
@@ -3296,7 +3333,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Glute Bridge (Floor)', note: 'Bodyweight or DB on hips', ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
           { name: 'Cable Pull-Through', note: 'Hip hinge glute builder', ytLink: 'https://youtu.be/mr_JFAFbJEA' },
           { name: 'Smith Machine Hip Thrust', note: 'More stable barbell option', ytLink: 'https://youtu.be/SEdqd1n0cvg' },
-          { name: 'Donkey Kick (Cable)', note: 'Glute isolation, unilateral', ytLink: 'https://youtu.be/wqUKcXy8tBE' }
+          { name: 'Donkey Kick (Cable)', note: 'Glute isolation, unilateral', ytLink: 'https://youtu.be/wqUKcXy8tBE' },
+          { name: 'Single Leg Hip Thrust', note: 'Unilateral for max glute activation', ytLink: 'https://youtu.be/SEdqd1n0cvg' },
+          { name: 'Banded Hip Thrust', note: 'Band across hips adds hip abduction', ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
+          { name: 'Frog Pump', note: 'Feet together, short ROM glute pump', ytLink: 'https://youtu.be/OUgsJ8-Vi0E' }
         ]
       },
       { id: 'calf-a', name: 'Calf Raise (Machine)', sets: 3, reps: '15–20', rest: '60 sec',
@@ -3321,7 +3361,10 @@ const DEFAULT_PROGRAM = [
           { name: 'T-Bar Row', note: 'Heavy compound rowing', ytLink: 'https://youtu.be/j3y8KUd2E4M' },
           { name: 'Pendlay Row', note: 'Explosive row from floor', ytLink: 'https://youtu.be/6MNIlRGHEMM' },
           { name: 'Barbell Bent Over Row', note: 'Classic back builder', ytLink: 'https://youtu.be/FWJR5Ve8bnQ' },
-          { name: 'Inverted Row', note: 'Bodyweight horizontal pull', ytLink: 'https://youtu.be/LK91OELE6R4' }
+          { name: 'Inverted Row', note: 'Bodyweight horizontal pull', ytLink: 'https://youtu.be/LK91OELE6R4' },
+          { name: 'Seal Row', note: 'Chest on bench, eliminates cheating', ytLink: 'https://youtu.be/WQqpZFOGZsw' },
+          { name: 'Underhand Barbell Row', note: 'Supinated grip hits lower lats', ytLink: 'https://youtu.be/TK1HCkb5ykI' },
+          { name: 'Wide Grip Cable Row', note: 'Wide grip for upper back width', ytLink: 'https://youtu.be/DKCMFn4ZSh8' }
         ]
       },
       { id: 'pulldown', name: 'Lat Pulldown', sets: 3, reps: '10–12', rest: '90 sec',
@@ -3331,7 +3374,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Neutral Grip Pulldown', note: 'Easier on shoulder joint', ytLink: 'https://youtu.be/CAwf7n6Luuc' },
           { name: 'Single Arm Pulldown', note: 'Unilateral, great isolation', ytLink: 'https://youtu.be/CAwf7n6Luuc' },
           { name: 'Straight Arm Pulldown', note: 'Isolates lats without biceps', ytLink: 'https://youtu.be/F6OBnFRnlhA' },
-          { name: 'Pull-Up / Assisted Pull-Up', note: 'Bodyweight king of back', ytLink: 'https://youtu.be/eGo4IYlbE5g' }
+          { name: 'Pull-Up / Assisted Pull-Up', note: 'Bodyweight king of back', ytLink: 'https://youtu.be/eGo4IYlbE5g' },
+          { name: 'Weighted Pull-Up', note: 'Add belt or vest for overload', ytLink: 'https://youtu.be/8oFuOtQJvZs' },
+          { name: 'Close Grip Pulldown', note: 'Neutral grip, deeper lat contraction', ytLink: 'https://youtu.be/CAwf7n6Luuc' },
+          { name: 'Banded Pulldown', note: 'Home-friendly lat builder', ytLink: 'https://youtu.be/XB_7En-zf_M' }
         ]
       },
       { id: 'db-row', name: 'Single Arm DB Row', sets: 3, reps: '10–12', rest: '90 sec',
@@ -3341,7 +3387,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Meadows Row', note: 'Landmine variation, great stretch', ytLink: 'https://youtu.be/gSlEGrHFJXk' },
           { name: 'Kroc Row', note: 'Heavy, explosive DB row', ytLink: 'https://youtu.be/roCP6wCXPqo' },
           { name: 'Hammer Strength Row', note: 'Machine unilateral option', ytLink: 'https://youtu.be/GOhWM3WAAcY' },
-          { name: 'Renegade Row', note: 'Core + back combo', ytLink: 'https://youtu.be/1kHLkOl5oWs' }
+          { name: 'Renegade Row', note: 'Core + back combo', ytLink: 'https://youtu.be/1kHLkOl5oWs' },
+          { name: 'Chest-Supported DB Row', note: 'Incline bench removes momentum', ytLink: 'https://youtu.be/k5Z8FPdSFyQ' },
+          { name: 'Pendlay Row', note: 'Explosive barbell row from floor', ytLink: 'https://youtu.be/6MNIlRGHEMM' },
+          { name: 'Wide Grip Cable Row', note: 'Wide grip targets upper back', ytLink: 'https://youtu.be/DKCMFn4ZSh8' }
         ]
       },
       { id: 'ez-curl', name: 'EZ Bar Curl', sets: 3, reps: '10–12', rest: '60 sec',
@@ -3389,7 +3438,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Leg Press (Mid-foot)', note: 'Same as Lower A if needed', ytLink: 'https://youtu.be/GvRgijoJ2xY' },
           { name: 'Hack Squat', note: 'Machine squat variation', ytLink: 'https://youtu.be/02EnkNZvqhQ' },
           { name: 'Sumo Squat (DB)', note: 'Wide stance, inner thigh focus', ytLink: 'https://youtu.be/qrr3EEXE2_4' },
-          { name: 'Belt Squat', note: 'No spinal load option', ytLink: 'https://youtu.be/6eFPBqz3ZwI' }
+          { name: 'Belt Squat', note: 'No spinal load option', ytLink: 'https://youtu.be/6eFPBqz3ZwI' },
+          { name: 'Wide Stance Barbell Squat', note: 'More glute/ham recruitment', ytLink: 'https://youtu.be/Dy28eq2PjcM' },
+          { name: 'Good Morning', note: 'Hip hinge for posterior chain', ytLink: 'https://youtu.be/YA-h3n9L4YU' },
+          { name: 'Stiff-Leg Deadlift', note: 'Legs straighter than RDL, more hamstring stretch', ytLink: 'https://youtu.be/1uDiW5--rAE' }
         ]
       },
       { id: 'single-legpress', name: 'Single Leg Press (Unilateral)', sets: 3, reps: '10–12', rest: '90 sec',
@@ -3399,7 +3451,9 @@ const DEFAULT_PROGRAM = [
           { name: 'Bulgarian Split Squat', note: 'Unilateral quad/glute builder', ytLink: 'https://youtu.be/2C-uNgKwPLE' },
           { name: 'Reverse Lunge (DB)', note: 'Less knee stress than forward lunge', ytLink: 'https://youtu.be/wp9EsT_bBxo' },
           { name: 'Step-Up (DB)', note: 'Functional single leg press', ytLink: 'https://youtu.be/dQqApCGd5Ss' },
-          { name: 'Pistol Squat (Assisted)', note: 'Advanced unilateral squat', ytLink: 'https://youtu.be/WPXlMR48aLA' }
+          { name: 'Pistol Squat (Assisted)', note: 'Advanced unilateral squat', ytLink: 'https://youtu.be/WPXlMR48aLA' },
+          { name: 'Forward Lunge (DB)', note: 'Classic lunge for quad and glute balance', ytLink: 'https://youtu.be/D7KaRcUTQeE' },
+          { name: 'Lateral Lunge (DB)', note: 'Side lunge hits adductors and glutes', ytLink: 'https://youtu.be/uwWKTFMbPHc' }
         ]
       },
       { id: 'leg-ext-b', name: 'Leg Extension (Machine)', sets: 3, reps: '12–15', rest: '60 sec',
@@ -3409,7 +3463,9 @@ const DEFAULT_PROGRAM = [
           { name: 'Sissy Squat', note: 'Advanced quad isolation', ytLink: 'https://youtu.be/cp1T3KHnF2E' },
           { name: 'Terminal Knee Extension (Band)', note: 'Rehab-friendly finisher', ytLink: 'https://youtu.be/JTNyhlBdmgk' },
           { name: 'Step-Up (DB)', note: 'Functional quad builder', ytLink: 'https://youtu.be/dQqApCGd5Ss' },
-          { name: 'Wall Sit', note: 'Isometric quad hold', ytLink: 'https://youtu.be/y-wV4Venusw' }
+          { name: 'Wall Sit', note: 'Isometric quad hold', ytLink: 'https://youtu.be/y-wV4Venusw' },
+          { name: 'Spanish Squat (Band)', note: 'Band around post, forward knee drive', ytLink: 'https://youtu.be/fIQHZOjCCb8' },
+          { name: 'Peterson Step-Up', note: 'VMO and knee strength builder', ytLink: 'https://youtu.be/Lp0yjukBMXM' }
         ]
       },
       { id: 'ham-curl-b', name: 'Nordic Curl', sets: 3, reps: '10–12', rest: '90 sec',
@@ -3419,7 +3475,10 @@ const DEFAULT_PROGRAM = [
           { name: 'Lying Hamstring Curl', note: 'Classic machine curl', ytLink: 'https://youtu.be/1Tq3QdYUuHs' },
           { name: 'Stability Ball Curl', note: 'If machine is taken', ytLink: 'https://youtu.be/1Tq3QdYUuHs' },
           { name: 'Single Leg RDL', note: 'Unilateral hamstring builder', ytLink: 'https://youtu.be/TCHLy35LHbE' },
-          { name: 'Good Mornings', note: 'Barbell hamstring stretch', ytLink: 'https://youtu.be/YA-h3n9L4YU' }
+          { name: 'Good Mornings', note: 'Barbell hamstring stretch', ytLink: 'https://youtu.be/YA-h3n9L4YU' },
+          { name: 'Glute-Ham Raise', note: 'Elite eccentric hamstring builder', ytLink: 'https://youtu.be/aSjvdcGDUkU' },
+          { name: 'Banded Nordic Curl', note: 'Band-assisted for beginners', ytLink: 'https://youtu.be/d1WFMd9zvbo' },
+          { name: 'Swiss Ball Leg Curl', note: 'Unstable surface adds core demand', ytLink: 'https://youtu.be/XaKbBCNZgLw' }
         ]
       },
       { id: 'pull-through', name: 'Cable Pull-Through', sets: 3, reps: '12–15', rest: '60 sec',
@@ -3429,7 +3488,9 @@ const DEFAULT_PROGRAM = [
           { name: 'Glute Bridge', note: 'Bodyweight or DB on hips', ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
           { name: 'Kettlebell Swing', note: 'If cable is occupied', ytLink: 'https://youtu.be/sSESeQAir2w' },
           { name: 'Romanian Deadlift', note: 'Hip hinge glute/ham builder', ytLink: 'https://youtu.be/JCXUYuzwNrM' },
-          { name: 'Donkey Kick (Cable)', note: 'Glute isolation, unilateral', ytLink: 'https://youtu.be/wqUKcXy8tBE' }
+          { name: 'Donkey Kick (Cable)', note: 'Glute isolation, unilateral', ytLink: 'https://youtu.be/wqUKcXy8tBE' },
+          { name: 'Single Leg Hip Thrust', note: 'Unilateral glute max activation', ytLink: 'https://youtu.be/SEdqd1n0cvg' },
+          { name: 'Banded Kickback', note: 'Band around ankle, targets glute max', ytLink: 'https://youtu.be/wqUKcXy8tBE' }
         ]
       },
       { id: 'calf-b', name: 'Seated Calf Raise', sets: 3, reps: '15–20', rest: '60 sec',
@@ -5859,6 +5920,17 @@ function openAltModal(ex) {
   document.getElementById('edit-yt-current').style.display = 'none';
   document.getElementById('edit-yt-alt').style.display = 'none';
 
+  // Show reset banner if this exercise has been renamed from default
+  const defaultEx = DEFAULT_PROGRAM.flatMap(d => d.exercises).find(e => e.id === ex.id);
+  const resetBanner = document.getElementById('alt-reset-banner');
+  if (defaultEx && defaultEx.name !== ex.name) {
+    document.getElementById('alt-reset-label').textContent = `Restore to "${defaultEx.name}"`;
+    document.getElementById('alt-reset-btn').dataset.exid = ex.id;
+    resetBanner.style.display = 'flex';
+  } else {
+    resetBanner.style.display = 'none';
+  }
+
   // Set current exercise YouTube link
   const customLinks = JSON.parse(localStorage.getItem('ts-yt-links') || '{}');
   const currentYt = customLinks[ex.id + '_main'] || ex.ytLink || '';
@@ -5891,6 +5963,26 @@ function openAltModal(ex) {
   }
 
   modal.classList.add('open');
+}
+
+function resetExerciseToDefault() {
+  const btn = document.getElementById('alt-reset-btn');
+  const exId = btn.dataset.exid;
+  if (!exId) return;
+
+  const defaultEx = DEFAULT_PROGRAM.flatMap(d => d.exercises).find(e => e.id === exId);
+  if (!defaultEx) return;
+
+  // Restore name in state.program
+  for (const day of state.program) {
+    const ex = day.exercises.find(e => e.id === exId);
+    if (ex) { ex.name = defaultEx.name; break; }
+  }
+  saveState();
+  closeAltModal();
+  showToast(`↩ Restored to "${defaultEx.name}"`);
+  if (activeSession) renderSession();
+  else renderHome();
 }
 
 function onAltDropdownChange() {
@@ -6042,6 +6134,18 @@ function openExInfo(exId) {
   }
   document.getElementById('ex-info-name').textContent = (activeSession?.swaps?.[exId]?.name) || ex.name;
   document.getElementById('ex-info-meta').textContent = ex.sets + ' sets · ' + getGoalReps(exId, ex.reps) + ' reps · ' + ex.rest + ' rest';
+
+  // Stale cues warning — show if exercise has been renamed
+  const defaultEx2 = DEFAULT_PROGRAM.flatMap(d => d.exercises).find(e => e.id === exId);
+  const displayedName = (activeSession?.swaps?.[exId]?.name) || ex.name;
+  const staleWarning = document.getElementById('ex-info-stale-warning');
+  const staleText = document.getElementById('ex-info-stale-text');
+  if (defaultEx2 && defaultEx2.name !== displayedName && FORM_CUES[exId]) {
+    staleText.innerHTML = `These cues are for <strong style="color:#f0c070;">${defaultEx2.name}</strong> — you've renamed this exercise. They may not apply.`;
+    staleWarning.style.display = 'flex';
+  } else {
+    staleWarning.style.display = 'none';
+  }
 
   // Form cues
   const cues = FORM_CUES[exId] || [];
