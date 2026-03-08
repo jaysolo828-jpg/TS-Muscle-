@@ -5095,23 +5095,23 @@ function renderSession() {
 
     exEl.innerHTML = `
       <div class="session-ex-header">
-        <div class="drag-handle" data-ex-id="${ex.id}" aria-label="Drag to reorder">
+        <div class="drag-handle" data-ex-id="${ex.id}" aria-label="Drag to reorder" style="padding-top:2px; flex-shrink:0;">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--red)" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
         </div>
-        <div style="display:flex; flex-direction:column; gap:3px;">
-          <div style="display:flex; align-items:center; gap:8px;">
+        <div style="display:flex; flex-direction:column; gap:5px; flex:1; min-width:0; margin:0 10px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <div class="session-ex-name">${displayName}</div>
             ${state.prs?.[ex.id] ? `<span id="pr-badge-${ex.id}" style="font-size:11px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:2px 7px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
           </div>
-          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
+            <span style="font-size:11px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${ex.reps}</span>
             ${isPaired ? `<span style="font-size:10px;font-weight:700;color:var(--red);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(220,38,38,0.1);padding:2px 6px;border-radius:4px;">SUPERSET ${supersetLabel}</span>` : ''}
             ${isSource ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:2px 6px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
         </div>
-        <div style="display:flex; align-items:center; gap:8px; padding-top:2px; flex-wrap:wrap; justify-content:flex-end;">
-          <div style="font-size:12px; color:var(--gray); font-family:'Barlow Condensed',sans-serif;">${sets.length} sets × ${ex.reps}</div>
-          ${ex.alts && ex.alts.length ? `<button class="swap-btn" onclick="openSessionSwap('${ex.id}')">SWAP ↔</button>` : ''}
+        <div style="display:flex; align-items:flex-start; gap:6px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end;">
+          ${ex.alts && ex.alts.length ? `<button class="swap-btn" onclick="openSessionSwap('${ex.id}')">SWAP ⇔</button>` : ''}
           <button class="swap-btn" id="pair-btn-${ex.id}"
             onclick="${isSource ? 'pairingSourceId=null;renderSession();' : `startPairSelection('${ex.id}')`}"
             style="${isPaired ? 'border-color:var(--red);color:var(--red);' : isSource ? 'border-color:#f59e0b;color:#f59e0b;' : ''}">
