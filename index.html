@@ -5295,12 +5295,21 @@ function toggleSetDone(exId, setIndex) {
   // "Up next" pulse + scroll to partner when a set is marked done
   if (set.done && activeSession.supersets?.[exId]) {
     const partnerId = activeSession.supersets[exId];
-    const partnerEl = document.getElementById('session-ex-' + partnerId);
-    if (partnerEl) {
-      document.querySelectorAll('.superset-up-next').forEach(el => el.classList.remove('superset-up-next'));
-      partnerEl.classList.add('superset-up-next');
-      partnerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => partnerEl.classList.remove('superset-up-next'), 4000);
+    const partnerSets = activeSession.sets[partnerId] || [];
+    // Only pulse if the partner still has sets left to do
+    if (!partnerSets.every(s => s.done)) {
+      const partnerEl = document.getElementById('session-ex-' + partnerId);
+      if (partnerEl) {
+        // Restart animation cleanly even on rapid tapping
+        partnerEl.classList.remove('superset-up-next');
+        void partnerEl.offsetWidth;
+        // Small delay so user sees their own checkmark land first
+        setTimeout(() => {
+          partnerEl.classList.add('superset-up-next');
+          partnerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => partnerEl.classList.remove('superset-up-next'), 4000);
+        }, 300);
+      }
     }
   }
 
