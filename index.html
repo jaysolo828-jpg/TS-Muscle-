@@ -198,6 +198,15 @@
     padding: 14px 20px; border-radius: 12px; font-family: 'Bebas Neue', cursive;
     font-size: 16px; letter-spacing: 1px; cursor: pointer;
   }
+  .ob-slot-opt {
+    background: var(--dark2); border: 1px solid #444; color: var(--gray);
+    padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.5px;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+  }
+  .ob-slot-opt.selected {
+    border-color: var(--red); background: rgba(204,32,39,0.15); color: var(--cream);
+  }
   .ob-button-row {
     display: flex; gap: 10px;
     position: sticky;
@@ -2313,6 +2322,7 @@
       <div class="onboard-dot" data-step="5"></div>
       <div class="onboard-dot" data-step="6"></div>
       <div class="onboard-dot" data-step="7"></div>
+      <div class="onboard-dot" data-step="8"></div>
     </div>
 
     <!-- STEP 0: New or Returning? -->
@@ -2430,8 +2440,35 @@
       </div>
     </div>
 
-    <!-- STEP 4: Training Days -->
+    <!-- STEP 4: Exercise Selection -->
     <div id="onboard-step-4" class="onboard-step" style="display:none;">
+      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR EXERCISES</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:20px; line-height:1.6;">We've picked proven exercises for every slot. You can use ours or choose your own — and you can swap anything later inside the app.</div>
+
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;" id="ob-exercise-mode-btns">
+        <button class="onboard-select-btn" onclick="selectExerciseMode('auto', this)">
+          <div style="font-weight:bold;">Pick For Me</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Use the recommended exercises — you can always swap later</div>
+        </button>
+        <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)">
+          <div style="font-weight:bold;">I'll Choose</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Pick an exercise for each major movement — type in your own if your gym has something different</div>
+        </button>
+      </div>
+
+      <!-- Manual selection panel — shown when "I'll Choose" is picked -->
+      <div id="ob-manual-select" style="display:none; margin-bottom:8px;"></div>
+
+      <input type="hidden" id="ob-exercise-mode" value=""/>
+
+      <div class="ob-button-row">
+        <button onclick="onboardBack(3)" class="onboard-back-btn">← BACK</button>
+        <button onclick="onboardNext(5)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: Training Days -->
+    <div id="onboard-step-5" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TRAINING DAYS</div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:16px; line-height:1.6;">How many days per week can you realistically commit? Be honest — consistency beats ambition.</div>
 
@@ -2478,13 +2515,13 @@
       <div id="ob-days-warning" style="display:none; background:rgba(243,156,18,0.1); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--warning); margin-bottom:14px; line-height:1.6;"></div>
 
       <div class="ob-button-row">
-        <button onclick="onboardBack(3)" class="onboard-back-btn">← BACK</button>
-        <button onclick="onboardNext(5)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
+        <button onclick="onboardBack(4)" class="onboard-back-btn">← BACK</button>
+        <button onclick="onboardNext(6)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
       </div>
     </div>
 
-    <!-- STEP 5: Test Week -->
-    <div id="onboard-step-5" class="onboard-step" style="display:none;">
+    <!-- STEP 6: Test Week -->
+    <div id="onboard-step-6" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TEST WEEK</div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:20px;">Before we set your working weights, you need a baseline.</div>
 
@@ -2508,13 +2545,13 @@
       </div>
 
       <div class="ob-button-row">
-        <button onclick="onboardBack(4)" class="onboard-back-btn">← BACK</button>
-        <button onclick="onboardNext(6)" class="onboard-next-btn" style="flex:1;">GOT IT →</button>
+        <button onclick="onboardBack(5)" class="onboard-back-btn">← BACK</button>
+        <button onclick="onboardNext(7)" class="onboard-next-btn" style="flex:1;">GOT IT →</button>
       </div>
     </div>
 
-    <!-- STEP 6: Starting Weights -->
-    <div id="onboard-step-6" class="onboard-step" style="display:none;">
+    <!-- STEP 7: Starting Weights -->
+    <div id="onboard-step-7" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">STARTING WEIGHTS</div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:8px; line-height:1.6;">We only need your <strong style="color:var(--cream);">compound lifts</strong> — the big movements where starting weight matters most. Isolations like curls and laterals are auto-set based on your experience level.</div>
       <div style="font-size:11px; color:var(--gray); background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:16px;">These are <strong style="color:var(--cream);">test week weights</strong> — conservative on purpose. The app will adjust after week 1.</div>
@@ -2550,13 +2587,13 @@
       </div>
 
       <div class="ob-button-row">
-        <button onclick="onboardBack(5)" class="onboard-back-btn">← BACK</button>
-        <button onclick="onboardNext(7)" class="onboard-next-btn" style="flex:1;">FINISH SETUP →</button>
+        <button onclick="onboardBack(6)" class="onboard-back-btn">← BACK</button>
+        <button onclick="onboardNext(8)" class="onboard-next-btn" style="flex:1;">FINISH SETUP →</button>
       </div>
     </div>
 
-    <!-- STEP 7: Done -->
-    <div id="onboard-step-7" class="onboard-step" style="display:none; text-align:center; padding-top:20px;">
+    <!-- STEP 8: Done -->
+    <div id="onboard-step-8" class="onboard-step" style="display:none; text-align:center; padding-top:20px;">
       <div style="font-size:48px; margin-bottom:16px;">💪</div>
       <div style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:3px; margin-bottom:8px;">YOU'RE SET UP</div>
       <div id="ob-greeting" style="font-size:15px; color:var(--gray); margin-bottom:24px; line-height:1.6;"></div>
@@ -3360,6 +3397,18 @@ const DEFAULT_PROGRAM = [
           { name: 'Close Grip Bench Press', note: 'Compound tricep builder', ytLink: 'https://youtu.be/nEF0biza6ek' }
         ]
       },
+      { id: 'ohp', name: 'Overhead Press (Barbell)', sets: 3, reps: '8–10', rest: '90 sec',
+        ytLink: 'https://youtu.be/2yjwXTZQDDI',
+        alts: [
+          { name: 'DB Shoulder Press', note: 'Natural shoulder path, great for all levels', ytLink: 'https://youtu.be/qEwKCR5JCog' },
+          { name: 'Machine Shoulder Press', note: 'No stabilizer needed, great for beginners or Planet Fitness', ytLink: 'https://youtu.be/WvLMauqrnK8' },
+          { name: 'Smith Machine OHP', note: 'Fixed path, good for solo training', ytLink: 'https://youtu.be/2yjwXTZQDDI' },
+          { name: 'Arnold Press', note: 'Hits all three delt heads through rotation', ytLink: 'https://youtu.be/6Z15_WdXmVw' },
+          { name: 'Landmine Press', note: 'Shoulder-friendly arc path, easy on joints', ytLink: 'https://youtu.be/lh6jbwAkXaQ' },
+          { name: 'Cable Shoulder Press', note: 'Constant tension, can be done standing or seated', ytLink: 'https://youtu.be/qEwKCR5JCog' },
+          { name: 'Push Press', note: 'Leg drive allows heavier loads, builds power', ytLink: 'https://youtu.be/X6-DMh-t4nQ' }
+        ]
+      },
       { id: 'lateral', name: 'Cable Lateral Raise', sets: 3, reps: '15', rest: '60 sec',
         ytLink: 'https://youtu.be/3VcKaXpzqRo',
         alts: [
@@ -3641,7 +3690,7 @@ const FULLBODY_PROGRAM = [
       DEFAULT_PROGRAM[0].exercises[0], // bench
       DEFAULT_PROGRAM[2].exercises[0], // chest-row
       DEFAULT_PROGRAM[1].exercises[0], // legpress-a
-      DEFAULT_PROGRAM[0].exercises[5], // lateral
+      DEFAULT_PROGRAM[0].exercises[6], // lateral
       DEFAULT_PROGRAM[2].exercises[3], // ez-curl
       DEFAULT_PROGRAM[1].exercises[2], // leg-ext-a
     ]
@@ -3675,7 +3724,7 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
 const MUSCLE_MAP = {
   bench: 'CHEST', incline: 'CHEST', flye: 'CHEST',
   pushdown: 'TRICEPS', 'overhead-tri': 'TRICEPS',
-  lateral: 'SHOULDERS', 'rear-delt': 'SHOULDERS',
+  ohp: 'SHOULDERS', lateral: 'SHOULDERS', 'rear-delt': 'SHOULDERS',
   'chest-row': 'BACK', pulldown: 'BACK', 'db-row': 'BACK',
   'ez-curl': 'BICEPS', preacher: 'BICEPS',
   'legpress-a': 'QUADS', 'leg-ext-a': 'QUADS',
@@ -9442,6 +9491,7 @@ const ALL_EXERCISE_DEFAULTS = {
   'flye':           { beginner: 30,  intermediate: 50,  advanced: 70  },
   'pushdown':       { beginner: 30,  intermediate: 50,  advanced: 70  },
   'overhead-tri':   { beginner: 20,  intermediate: 35,  advanced: 55  },
+  'ohp':            { beginner: 45,  intermediate: 75,  advanced: 115 },
   'lateral':        { beginner: 10,  intermediate: 20,  advanced: 30  },
   'legpress-a':     { beginner: 90,  intermediate: 180, advanced: 270 },
   'rdl':            { beginner: 65,  intermediate: 115, advanced: 165 },
@@ -9482,7 +9532,7 @@ function skipWeightSetup() {
     state.startingWeights[id] = defaults[exp] || defaults.beginner;
   });
   state.autoPopulateWeights = true;
-  onboardNext(7);
+  onboardNext(8);
 }
 
 let onermTargetId = null;
@@ -9577,17 +9627,23 @@ function onboardNext(step) {
   }
   if (step === 4) {
     if (!document.getElementById('ob-split-type').value) { showToast('Please select your training split'); return; }
-    // Trigger goal+split-aware badges on the training days screen
+  }
+  if (step === 5) {
+    // Validate exercise selection step
+    const mode = document.getElementById('ob-exercise-mode').value;
+    if (!mode) { showToast('Please choose an option'); return; }
+    if (mode === 'manual') applyObExerciseSelections();
+    // Prep training days display
     renderDayRecommendations();
     updateDayButtonsForSplit(document.getElementById('ob-split-type').value);
   }
-  if (step === 5) {
+  if (step === 6) {
     if (!document.getElementById('ob-training-days').value) { showToast('Please select how many days per week you can train'); return; }
   }
-  if (step === 6) {
+  if (step === 7) {
     buildExerciseList();
   }
-  if (step === 7) {
+  if (step === 8) {
     buildOnboardingSummary();
   }
   document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
@@ -9686,6 +9742,141 @@ function selectSplitOnboard(type, btn) {
   const tip = document.getElementById('ob-split-tip');
   tip.style.display = 'block';
   tip.innerHTML = tips[type] || '';
+}
+
+// ── EXERCISE SELECTION STEP ──────────────────────────────────────
+const OB_PRIMARY_SLOTS = [
+  {
+    id: 'bench', label: 'CHEST PRESS',
+    options: [
+      { display: 'Barbell Bench Press',  apply: 'Barbell Bench Press' },
+      { display: 'DB Bench Press',        apply: 'DB Bench Press' },
+      { display: 'Machine Chest Press',   apply: 'Machine Chest Press' },
+      { display: 'Smith Machine Bench',   apply: 'Smith Machine Bench' },
+      { display: 'Cable Chest Press',     apply: 'Cable Chest Press' },
+    ]
+  },
+  {
+    id: 'ohp', label: 'SHOULDER PRESS',
+    options: [
+      { display: 'Barbell OHP',             apply: 'Overhead Press (Barbell)' },
+      { display: 'DB Shoulder Press',       apply: 'DB Shoulder Press' },
+      { display: 'Machine Shoulder Press',  apply: 'Machine Shoulder Press' },
+      { display: 'Smith Machine OHP',       apply: 'Smith Machine OHP' },
+      { display: 'Arnold Press',            apply: 'Arnold Press' },
+    ]
+  },
+  {
+    id: 'chest-row', label: 'ROW / BACK PULL',
+    options: [
+      { display: 'Machine Row',         apply: 'Chest Supported Machine Row' },
+      { display: 'Cable Row',           apply: 'Cable Row (Seated)' },
+      { display: 'Barbell Row',         apply: 'Barbell Bent Over Row' },
+      { display: 'Smith Machine Row',   apply: 'Smith Machine Row' },
+      { display: 'Single Arm DB Row',   apply: 'Single Arm DB Row' },
+    ]
+  },
+  {
+    id: 'legpress-a', label: 'SQUAT / LEG PRESS',
+    options: [
+      { display: 'Leg Press',              apply: 'Leg Press (Mid-foot, moderate stance)' },
+      { display: 'Hack Squat Machine',     apply: 'Hack Squat Machine' },
+      { display: 'Smith Machine Squat',    apply: 'Smith Machine Squat' },
+      { display: 'Bulgarian Split Squat',  apply: 'Bulgarian Split Squat' },
+      { display: 'Goblet Squat',           apply: 'Goblet Squat' },
+    ]
+  },
+  {
+    id: 'rdl', label: 'HIP HINGE',
+    options: [
+      { display: 'Romanian Deadlift',     apply: 'Romanian Deadlift' },
+      { display: 'DB Romanian Deadlift',  apply: 'DB Romanian Deadlift' },
+      { display: 'Smith Machine RDL',     apply: 'Smith Machine RDL' },
+      { display: 'Cable Pull-Through',    apply: 'Cable Pull-Through' },
+      { display: 'Trap Bar Deadlift',     apply: 'Trap Bar Deadlift' },
+    ]
+  },
+];
+
+window._obSlots = {};
+
+function selectExerciseMode(mode, btn) {
+  document.getElementById('ob-exercise-mode').value = mode;
+  document.getElementById('ob-exercise-mode-btns').querySelectorAll('.onboard-select-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const panel = document.getElementById('ob-manual-select');
+  if (mode === 'manual') {
+    if (!panel.innerHTML) buildObManualSlots();
+    panel.style.display = 'block';
+  } else {
+    panel.style.display = 'none';
+    window._obSlots = {};
+  }
+}
+
+function buildObManualSlots() {
+  const panel = document.getElementById('ob-manual-select');
+  let html = '<div style="font-size:12px; color:var(--gray); margin-bottom:14px; line-height:1.6;">Select one exercise per movement. First option is the default. Type your own at the bottom of each slot if your gym has something different.</div>';
+  OB_PRIMARY_SLOTS.forEach(slot => {
+    const safeId = slot.id.replace('-', '_');
+    let optBtns = slot.options.map((opt, i) => {
+      const sel = i === 0 ? ' selected' : '';
+      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${opt.apply.replace(/'/g, "\\'")}',this)">${opt.display}</button>`;
+    }).join('');
+    html += `
+      <div style="background:var(--dark3); border-radius:12px; padding:14px; margin-bottom:12px;">
+        <div style="font-size:11px; color:var(--red); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; margin-bottom:8px;">${slot.label}</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;" id="ob-slot-${safeId}-btns">${optBtns}</div>
+        <input type="text" class="set-input" id="ob-slot-${safeId}-custom"
+          placeholder="My gym has something else — type it here"
+          oninput="handleSlotCustomInput('${slot.id}',this)"
+          style="width:100%; padding:9px 12px; text-align:left; font-size:13px;"/>
+      </div>`;
+    // Pre-select the first option in state
+    window._obSlots[slot.id] = slot.options[0].apply;
+  });
+  panel.innerHTML = html;
+}
+
+function selectSlotOption(slotId, apply, btn) {
+  window._obSlots[slotId] = apply;
+  const safeId = slotId.replace('-', '_');
+  const customInput = document.getElementById('ob-slot-' + safeId + '-custom');
+  if (customInput) customInput.value = '';
+  const container = document.getElementById('ob-slot-' + safeId + '-btns');
+  if (container) container.querySelectorAll('.ob-slot-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function handleSlotCustomInput(slotId, input) {
+  const val = input.value.trim();
+  const safeId = slotId.replace('-', '_');
+  const container = document.getElementById('ob-slot-' + safeId + '-btns');
+  if (val) {
+    window._obSlots[slotId] = val;
+    if (container) container.querySelectorAll('.ob-slot-opt').forEach(b => b.classList.remove('selected'));
+  } else {
+    // Restore the first option as default when field is cleared
+    const slot = OB_PRIMARY_SLOTS.find(s => s.id === slotId);
+    if (slot) {
+      window._obSlots[slotId] = slot.options[0].apply;
+      if (container) {
+        const first = container.querySelector('.ob-slot-opt');
+        if (first) first.classList.add('selected');
+      }
+    }
+  }
+}
+
+function applyObExerciseSelections() {
+  if (!window._obSlots || !state.program) return;
+  Object.entries(window._obSlots).forEach(([exId, name]) => {
+    if (!name) return;
+    for (const day of state.program) {
+      const ex = day.exercises.find(e => e.id === exId);
+      if (ex) { ex.name = name; break; }
+    }
+  });
 }
 
 function updateDayButtonsForSplit(type) {
@@ -9844,7 +10035,7 @@ function buildExerciseList() {
 
   // Core compounds worth setting starting weights for (by exercise ID)
   const ONBOARD_COMPOUND_IDS = new Set([
-    'bench', 'incline', 'legpress-a', 'rdl', 'hip-thrust-a',
+    'bench', 'ohp', 'incline', 'legpress-a', 'rdl', 'hip-thrust-a',
     'chest-row', 'pulldown', 'db-row', 'legpress-b'
   ]);
 
