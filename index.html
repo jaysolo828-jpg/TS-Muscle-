@@ -179,6 +179,15 @@
   }
   .onboard-select-btn:hover { border-color: #555; }
   .onboard-select-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); }
+  .rep-range-option {
+    width: 100%; background: var(--dark3); border: 1px solid var(--dark4);
+    color: var(--cream); padding: 12px 14px; border-radius: 12px;
+    text-align: left; cursor: pointer; display: block;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 8px;
+  }
+  .rep-range-option:hover { border-color: #555; }
+  .rep-range-option.selected { border-color: var(--red); background: rgba(204,32,39,0.10); }
   .onboard-next-btn {
     width: 100%; background: var(--red); border: none; color: white;
     padding: 14px; border-radius: 12px; font-family: 'Bebas Neue', cursive;
@@ -3559,6 +3568,7 @@ const GOAL_REPS = {
 // Returns the goal-adjusted rep range string for an exercise.
 // Falls back to the stored ex.reps if no mapping exists (e.g. custom exercises).
 function getGoalReps(exId, fallback) {
+  if (activeSession?.repOverrides?.[exId]) return activeSession.repOverrides[exId];
   const goal = state.profile?.goal || 'both';
   return GOAL_REPS[exId]?.[goal] || fallback || '8–12';
 }
@@ -4468,6 +4478,163 @@ function toggleRpeSheet() {
   }
 }
 
+// ============================================================
+// REP RANGE SHEET
+// ============================================================
+function openRepRangeSheet(exId) {
+  const day = state.program.find(d => d.id === activeSession?.dayId);
+  const ex = day?.exercises.find(e => e.id === exId);
+  if (!ex || !activeSession) return;
+
+  const goal = state.profile?.goal || 'both';
+  const displayName = activeSession.swaps?.[exId]?.name || ex.name;
+  const currentRange = activeSession.repOverrides?.[exId] || getGoalReps(exId, ex.reps);
+
+  const goalMeta = {
+    size:     { label: 'Hypertrophy',   color: '#a855f7' },
+    strength: { label: 'Strength',      color: '#3b82f6' },
+    both:     { label: 'Powerbuilding', color: '#f59e0b' },
+  };
+  const gm = goalMeta[goal] || goalMeta.both;
+
+  // Build range options — pull from GOAL_REPS, fall back to sensible defaults
+  const fallbackRanges = { strength: '3–5', size: '8–12', both: '5–8' };
+  const exRanges = GOAL_REPS[exId] || {};
+  const options = [
+    {
+      key: 'size',
+      range: exRanges.size || fallbackRanges.size,
+      label: 'Hypertrophy',
+      color: '#a855f7',
+      note: 'Optimal mechanical tension for muscle growth',
+      tradeoff: 'Less strength stimulus — great for size, slower max-strength gains.',
+    },
+    {
+      key: 'both',
+      range: exRanges.both || fallbackRanges.both,
+      label: 'Powerbuilding',
+      color: '#f59e0b',
+      note: 'Blends strength and size — balanced stimulus',
+      tradeoff: '',
+    },
+    {
+      key: 'strength',
+      range: exRanges.strength || fallbackRanges.strength,
+      label: 'Strength',
+      color: '#3b82f6',
+      note: 'Heavy loads, high CNS recruitment, max strength',
+      tradeoff: 'Less metabolic stress — builds force but slower muscle volume gains.',
+    },
+  ];
+
+  // Recent session context
+  let recentHTML = '';
+  const lastSets = Array.from({ length: activeSession.sets[exId]?.length || 3 }, (_, i) => getLastSetData(exId, i)).filter(Boolean);
+  if (lastSets.length) {
+    const avgReps = Math.round(lastSets.reduce((s, d) => s + (parseInt(d.reps) || 0), 0) / lastSets.length);
+    const rpeEntries = lastSets.filter(d => d.rpe);
+    const avgRpe = rpeEntries.length ? (rpeEntries.reduce((s, d) => s + (parseFloat(d.rpe) || 0), 0) / rpeEntries.length).toFixed(1) : null;
+    const parts = currentRange.split(/[–\-]/);
+    const minR = parseInt(parts[0]) || 0, maxR = parseInt(parts[1]) || minR;
+    const missed = avgReps < minR, exceeded = avgReps > maxR;
+    const statusColor = missed ? 'var(--red)' : '#2ecc71';
+    const statusNote = missed
+      ? `↓ ${avgReps} avg reps — below your ${currentRange} target. Consider reducing weight or trying a lower range.`
+      : exceeded
+      ? `↑ ${avgReps} avg reps — above your ${currentRange} target. You may be ready to move up in weight.`
+      : `✓ ${avgReps} avg reps — right on target.`;
+    recentHTML = `
+      <div style="background:var(--dark3);border-radius:10px;padding:11px 14px;margin-bottom:18px;">
+        <div style="font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:5px;">LAST SESSION</div>
+        <div style="font-size:14px;color:var(--cream);font-family:'Barlow Condensed',sans-serif;">${avgReps} reps avg${avgRpe ? ' · RPE ' + avgRpe : ''}</div>
+        <div style="font-size:12px;color:${statusColor};font-family:'Barlow Condensed',sans-serif;margin-top:3px;">${statusNote}</div>
+      </div>`;
+  }
+
+  // Build suggestion cards
+  const cardsHTML = options.map(opt => {
+    const isGoal = opt.key === goal;
+    const isCurrent = opt.range === currentRange;
+    const badgeHTML = isGoal
+      ? `<span style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--red);background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.3);border-radius:4px;padding:2px 6px;flex-shrink:0;">RECOMMENDED</span>`
+      : `<span style="font-size:9px;font-weight:700;letter-spacing:1px;color:${opt.color};background:${opt.color}18;border:1px solid ${opt.color}44;border-radius:4px;padding:2px 6px;flex-shrink:0;">${opt.label.toUpperCase()}</span>`;
+    const tradeoffHTML = (!isGoal && opt.tradeoff)
+      ? `<div style="font-size:11px;color:#f59e0b;font-family:'Barlow Condensed',sans-serif;margin-top:5px;">⚠ ${opt.tradeoff}</div>`
+      : '';
+    return `
+      <button class="rep-range-option${isCurrent ? ' selected' : ''}" onclick="applyRepRange('${exId}','${opt.range}')">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+          <span style="font-family:'Bebas Neue',cursive;font-size:24px;letter-spacing:2px;color:var(--cream);">${opt.range}</span>
+          ${badgeHTML}
+        </div>
+        <div style="font-size:12px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;">${opt.note}</div>
+        ${tradeoffHTML}
+      </button>`;
+  }).join('');
+
+  document.getElementById('rep-range-sheet-body').innerHTML = `
+    <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);margin-bottom:3px;">REP TARGET</div>
+    <div style="font-size:13px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;margin-bottom:14px;">${displayName}</div>
+    <div style="display:inline-flex;align-items:center;gap:6px;background:${gm.color}14;border:1px solid ${gm.color}44;border-radius:20px;padding:4px 12px;margin-bottom:18px;">
+      <span style="width:7px;height:7px;border-radius:50%;background:${gm.color};display:inline-block;flex-shrink:0;"></span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:${gm.color};">${gm.label.toUpperCase()} GOAL</span>
+    </div>
+    ${recentHTML}
+    <div style="font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:10px;">CHOOSE A RANGE</div>
+    ${cardsHTML}
+    <div style="border-top:1px solid var(--dark3);padding-top:16px;margin-top:6px;">
+      <div style="font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:8px;">CUSTOM RANGE</div>
+      <input id="rep-range-custom-input" class="set-input" placeholder="e.g. 6–8" inputmode="text"
+        style="width:100%;text-align:left;padding:10px 14px;font-size:16px;border-radius:10px;margin-bottom:8px;box-sizing:border-box;"/>
+      <button onclick="applyCustomRepRange('${exId}')"
+        style="width:100%;background:var(--red);border:none;color:white;border-radius:12px;padding:13px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;cursor:pointer;transition:background 0.2s;">
+        USE CUSTOM
+      </button>
+    </div>
+  `;
+
+  const sheet = document.getElementById('rep-range-sheet');
+  const overlay = document.getElementById('rep-range-overlay');
+  sheet.style.display = 'block';
+  overlay.style.display = 'block';
+  requestAnimationFrame(() => { sheet.style.transform = 'translateY(0)'; });
+}
+
+function closeRepRangeSheet() {
+  const sheet = document.getElementById('rep-range-sheet');
+  const overlay = document.getElementById('rep-range-overlay');
+  if (!sheet) return;
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(() => { sheet.style.display = 'none'; overlay.style.display = 'none'; }, 300);
+}
+
+function applyRepRange(exId, range) {
+  if (!activeSession) return;
+  activeSession.repOverrides[exId] = range;
+
+  // Update column header label in-place
+  const labelEl = document.getElementById('rep-goal-label-' + exId);
+  if (labelEl) labelEl.innerHTML = '(' + range + ') ✎';
+
+  // Update meta line in-place
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  const ex = day?.exercises.find(e => e.id === exId);
+  const metaEl = document.getElementById('rep-goal-meta-' + exId);
+  if (metaEl && ex) metaEl.textContent = activeSession.sets[exId].length + ' sets · ' + range;
+
+  // Refresh all per-set indicators for this exercise
+  activeSession.sets[exId]?.forEach((_, si) => updateRepIndicator(exId, si));
+
+  closeRepRangeSheet();
+  showToast('Rep target → ' + range);
+}
+
+function applyCustomRepRange(exId) {
+  const val = (document.getElementById('rep-range-custom-input')?.value || '').trim();
+  if (!val) { showToast('Enter a range first', 'error'); return; }
+  applyRepRange(exId, val);
+}
+
 function adjustPlateCalcWeight(exId, delta) {
   const barType = exId === 'ez-curl' ? 'ez' : 'standard';
   const barWeight = BAR_WEIGHTS[barType];
@@ -5005,6 +5172,7 @@ function startSession(dayId) {
     sets: {},
     notes: '',
     swaps: {},
+    repOverrides: {},
     // Pre-load any permanently saved supersets for this day
     supersets: day.supersets ? { ...day.supersets } : {},
     isDeload: !!(state.isDeloadWeek || state.isRestWeek),
@@ -5258,7 +5426,7 @@ function renderSession() {
       <div class="set-labels">
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
-        <div class="set-label">Reps <span style="color:var(--red);font-size:11px;font-weight:700;">(${_goalReps})</span></div>
+        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:var(--red);font-size:11px;font-weight:700;cursor:pointer;border-bottom:1px dashed rgba(204,32,39,0.45);padding-bottom:1px;" title="Edit rep target">(${_goalReps}) ✎</span></div>
         <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
         <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
       </div>
@@ -5319,7 +5487,7 @@ function renderSession() {
           </div>
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
-            <span style="font-size:11px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${_goalReps}</span>
+            <span id="rep-goal-meta-${ex.id}" style="font-size:11px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${_goalReps}</span>
             ${isPaired ? `<span style="font-size:10px;font-weight:700;color:var(--red);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(220,38,38,0.1);padding:2px 6px;border-radius:4px;">SUPERSET ${supersetLabel}</span>` : ''}
             ${isSource ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:2px 6px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
@@ -5599,7 +5767,7 @@ let restTimers = {}; // { exId: { interval, seconds, total } }
 // ============================================================
 // REP TARGET INDICATOR
 // ============================================================
-function updateRepIndicator(exId, setIndex, targetReps) {
+function updateRepIndicator(exId, setIndex, _ignored) {
   const input = document.getElementById('reps-input-' + exId + '-' + setIndex);
   const indicator = document.getElementById('rep-indicator-' + exId + '-' + setIndex);
   if (!input || !indicator) return;
@@ -5611,6 +5779,11 @@ function updateRepIndicator(exId, setIndex, targetReps) {
     input.style.color = '';
     return;
   }
+
+  // Always resolve the current rep target dynamically so session overrides apply instantly
+  const _day = state.program.find(d => d.id === activeSession?.dayId);
+  const _ex = _day?.exercises.find(e => e.id === exId);
+  const targetReps = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ex?.reps);
 
   // Parse target range — handles "8", "8–12", "8-12", "10–15"
   let minReps = 0, maxReps = 999;
@@ -10951,6 +11124,13 @@ document.addEventListener('DOMContentLoaded', () => {
       <button onclick="confirmRestoreDefaults()" style="flex:1; background:rgba(204,32,39,0.2); border:1px solid var(--red); color:var(--red); padding:14px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer;">RESTORE</button>
     </div>
   </div>
+</div>
+
+<!-- Rep Range bottom sheet -->
+<div id="rep-range-overlay" onclick="closeRepRangeSheet()" style="display:none;position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,0.65);"></div>
+<div id="rep-range-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99991;background:var(--dark2);border-radius:20px 20px 0 0;box-shadow:0 -4px 30px rgba(0,0,0,0.7);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1);max-height:82vh;overflow-y:auto;">
+  <div style="width:36px;height:4px;background:var(--dark4);border-radius:2px;margin:12px auto 0;flex-shrink:0;"></div>
+  <div id="rep-range-sheet-body" style="padding:18px 20px calc(32px + env(safe-area-inset-bottom));"></div>
 </div>
 
 <!-- RPE info bottom sheet -->
