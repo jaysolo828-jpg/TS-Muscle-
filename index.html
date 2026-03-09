@@ -4258,7 +4258,15 @@ function checkForPR(exId, set) {
   if (!w || !r) return;
 
   const existing = state.prs?.[exId];
-  const isNewPR = !existing || w > existing.weight || (w === existing.weight && r > existing.reps);
+  if (!existing) {
+    // No prior record — store as baseline only, not a PR
+    if (!state.prs) state.prs = {};
+    state.prs[exId] = { weight: w, reps: r, date: new Date().toISOString() };
+    saveState();
+    return;
+  }
+
+  const isNewPR = w > existing.weight || (w === existing.weight && r > existing.reps);
   if (!isNewPR) return;
 
   if (!state.prs) state.prs = {};
