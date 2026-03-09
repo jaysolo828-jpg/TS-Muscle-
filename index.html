@@ -828,82 +828,6 @@
 
 
   /* Larger touch target for set done button on mobile */
-  /* MUSIC APP SELECTOR */
-  .music-app-btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    background: var(--dark3); border: 1px solid var(--dark4);
-    color: var(--gray); border-radius: 12px; padding: 14px 10px;
-    font-family: 'Barlow Condensed', sans-serif; font-size: 13px;
-    letter-spacing: 1px; cursor: pointer; transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .music-app-btn.selected {
-    border-color: var(--red); color: var(--cream);
-    background: rgba(204,32,39,0.12);
-  }
-  .music-app-btn:active { transform: scale(0.97); opacity: 0.85; }
-
-  /* MUSIC DOCK — workout screen mini player */
-  .music-dock-bar {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 16px; background: var(--dark2); border-bottom: 1px solid var(--dark3);
-    cursor: pointer; -webkit-tap-highlight-color: transparent;
-  }
-  .music-dock-bar:active { opacity: 0.75; }
-  .music-dock-icon {
-    width: 30px; height: 30px; border-radius: 8px;
-    background: rgba(204,32,39,0.15); border: 1px solid rgba(204,32,39,0.3);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .music-dock-label {
-    flex: 1; font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px; letter-spacing: 1.5px; color: var(--gray);
-  }
-  .music-dock-arrow { color: var(--gray); transition: transform 0.25s; flex-shrink: 0; }
-  .music-dock-arrow.open { transform: rotate(180deg); }
-  .music-dock-panel {
-    overflow: hidden; max-height: 0;
-    transition: max-height 0.3s ease; background: var(--dark2);
-  }
-  .music-dock-panel.open { max-height: 220px; }
-  .music-embed-frame {
-    display: block; width: 100%; height: 160px; border: none; background: #000;
-  }
-  .quick-launch-card {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 8px; padding: 20px; cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    animation: musicPulse 3s ease-in-out infinite;
-  }
-  .quick-launch-card:active { opacity: 0.75; }
-  .quick-launch-card-icon {
-    width: 46px; height: 46px; border-radius: 12px;
-    background: rgba(204,32,39,0.1); border: 1px solid rgba(204,32,39,0.25);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .quick-launch-card-label {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
-    letter-spacing: 2px; color: var(--cream); text-transform: uppercase;
-  }
-  .quick-launch-card-sub {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
-    letter-spacing: 1.5px; color: var(--gray);
-  }
-  @keyframes musicPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.75; }
-  }
-  /* MUSIC SETTINGS — no-music toggle */
-  .music-no-app-toggle {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 14px; background: var(--dark3); border: 1px solid var(--dark4);
-    border-radius: 12px; cursor: pointer; margin-bottom: 16px;
-    -webkit-tap-highlight-color: transparent; transition: all 0.15s;
-  }
-  .music-no-app-toggle.active {
-    background: rgba(204,32,39,0.08); border-color: var(--red);
-  }
-  .music-no-app-toggle:active { opacity: 0.8; }
 
   .set-done-btn {
     width: 40px;
@@ -2847,76 +2771,6 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg></div>
   </div>
 
-  <!-- MUSIC PLAYER -->
-  <div style="margin-top:8px;">
-    <div class="section-title" style="margin-bottom:12px;">MUSIC <span>PLAYER</span></div>
-
-    <!-- No Music — prominent first option -->
-    <div class="music-no-app-toggle" id="music-no-music-toggle" onclick="selectMusicApp('none')">
-      <div style="flex:1;">
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:15px; letter-spacing:1px; color:var(--cream);">NO MUSIC DURING WORKOUTS</div>
-        <div style="font-size:12px; color:var(--gray); margin-top:2px;">No widget appears — keep it distraction-free</div>
-      </div>
-      <div id="music-no-check" style="width:22px; height:22px; border-radius:50%; border:2px solid var(--dark4); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s;">
-        <svg id="music-no-check-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-    </div>
-
-    <!-- App selector -->
-    <div id="music-app-section">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px;">OR CHOOSE YOUR APP</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;" id="music-app-grid">
-        <button onclick="selectMusicApp('spotify')" id="music-btn-spotify" class="music-app-btn">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-          Spotify
-        </button>
-        <button onclick="selectMusicApp('apple')" id="music-btn-apple" class="music-app-btn">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M23.994 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043a5.022 5.022 0 00-1.877-.726 10.496 10.496 0 00-1.564-.15c-.04-.003-.083-.01-.124-.013H5.986c-.152.01-.303.017-.455.026C4.786.07 4.043.15 3.34.428 2.004.958 1.04 1.88.475 3.208A4.98 4.98 0 00.194 4.8a12.753 12.753 0 00-.16 1.582c0 .055-.008.11-.013.166v11.963c.003.024.006.047.007.07.04.86.14 1.714.469 2.521.44 1.079 1.177 1.916 2.205 2.467.605.33 1.257.497 1.926.55.985.076 1.97.063 2.955.065h8.537c.573-.003 1.144-.026 1.71-.114 1.18-.19 2.194-.666 2.974-1.527.523-.575.878-1.257 1.063-2.013.218-.88.22-1.773.22-2.664V9.146c0-.07.003-.14.003-.21l-.003-.812zM12 18.317c-3.479 0-6.317-2.838-6.317-6.317S8.521 5.683 12 5.683s6.317 2.838 6.317 6.317-2.838 6.317-6.317 6.317zm0-10.217a3.9 3.9 0 100 7.8 3.9 3.9 0 000-7.8zm6.406-3.512a1.476 1.476 0 110 2.951 1.476 1.476 0 010-2.951z"/></svg>
-          Apple Music
-        </button>
-        <button onclick="selectMusicApp('youtube')" id="music-btn-youtube" class="music-app-btn">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
-          YouTube Music
-        </button>
-        <button onclick="selectMusicApp('amazon')" id="music-btn-amazon" class="music-app-btn">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M13.958 10.09c0 1.232.029 2.256-.591 3.351-.502.891-1.301 1.438-2.186 1.438-1.214 0-1.922-.924-1.922-2.292 0-2.692 2.415-3.182 4.699-3.182v.685zm3.186 7.705c-.209.189-.512.201-.745.074-1.052-.872-1.238-1.276-1.814-2.106-1.734 1.767-2.962 2.297-5.209 2.297-2.66 0-4.731-1.641-4.731-4.925 0-2.565 1.391-4.309 3.37-5.164 1.715-.754 4.11-.891 5.942-1.095v-.41c0-.753.06-1.642-.384-2.294-.385-.581-1.134-.822-1.789-.822-1.215 0-2.298.625-2.562 1.919-.054.285-.261.567-.549.582l-3.077-.333c-.259-.056-.548-.266-.472-.66C5.57 2.058 8.479 1.123 11.11 1.123c1.342 0 3.095.357 4.153 1.373 1.342 1.254 1.212 2.926 1.212 4.748v4.296c0 1.292.535 1.859 1.038 2.557.176.248.215.545-.009.73l-2.36 2.968zm3.29 1.987C18.979 21.4 16.641 22.5 14.395 22.5c-3.853 0-6.104-2.994-6.104-6.5 0-3.506 2.271-6.452 6.081-6.452 3.81 0 6.148 2.946 6.148 6.452 0 .906-.179 1.803-.513 2.639zM21.5 19c0-3.5-1.5-7-5-7s-5 3.5-5 7 1.5 7 5 7 5-3.5 5-7z"/></svg>
-          Amazon Music
-        </button>
-        <button onclick="selectMusicApp('tidal')" id="music-btn-tidal" class="music-app-btn">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12.012 3.992L8.008 7.996 4.004 3.992 0 7.996l4.004 4.004 4.004-4.004 4.004 4.004 4.004-4.004zM8.008 16.008l-4.004-4.004L0 16.008 4.004 20.012zM16.016 11.996l-4.004 4.012 4.004 4.004L20.02 16.008zM24.012 7.996l-4.004-4.004-4.004 4.004 4.004 4.004z"/></svg>
-          Tidal
-        </button>
-        <button onclick="selectMusicApp('pandora')" id="music-btn-pandora" class="music-app-btn">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M0 0v24h5.09V0zm6.818 0v17.272c0 3.695 2.97 6.728 6.666 6.728C17.178 24 20.182 21 20.182 17.272c0-3.695-3.004-6.727-6.698-6.727h-1.848V7.03h1.848C17.239 7.03 24 13.578 24 17.273 24 21 17.239 24 13.484 24H0V0z"/></svg>
-          Pandora
-        </button>
-        <button onclick="selectMusicApp('other')" id="music-btn-other" class="music-app-btn" style="grid-column:span 2;">
-          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-          My Own Music App
-        </button>
-      </div>
-
-      <!-- Spotify embed playlist section -->
-      <div id="music-playlist-section" style="display:none;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:6px;">SPOTIFY PLAYLIST LINK <span style="color:#555;">(OPTIONAL)</span></div>
-        <div style="display:flex; gap:8px; margin-bottom:8px;">
-          <input type="url" id="custom-music-url" class="set-input" placeholder="Paste Spotify playlist URL..." style="flex:1; padding:10px 12px; text-align:left; font-size:16px;"/>
-          <button onclick="saveCustomMusicLink()" style="background:var(--red); border:none; color:white; padding:10px 16px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer;">SAVE</button>
-        </div>
-        <div id="custom-music-saved" style="font-size:12px; color:var(--gray); margin-bottom:8px; display:none;">
-          Saved: <span id="custom-music-url-display" style="color:var(--red);"></span>
-          <button onclick="clearCustomMusicLink()" style="background:none; border:none; color:var(--gray); font-size:11px; cursor:pointer; margin-left:8px; text-decoration:underline;">clear</button>
-        </div>
-        <div id="music-context-note" style="font-size:12px; color:var(--gray); line-height:1.5; padding:9px 12px; background:var(--dark3); border-radius:8px;"></div>
-      </div>
-
-      <!-- Quick launch note for non-Spotify apps -->
-      <div id="music-other-note" style="display:none; font-size:12px; color:var(--gray); line-height:1.5; padding:9px 12px; background:var(--dark3); border-radius:8px;">
-        A Quick Launch card will appear during workouts — tap it to open your app in one tap.
-      </div>
-    </div>
-  </div>
-
   <!-- NOTIFICATIONS -->
   <div class="section-title" style="margin-top:8px;">NOTIFICATIONS</div>
   <div class="settings-item" onclick="toggleTrainingReminders()">
@@ -2988,18 +2842,6 @@
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="session-progress-bar" style="width:0%"></div>
     </div>
-  </div>
-
-  <!-- MUSIC DOCK -->
-  <div id="music-dock" style="display:none; border-bottom:1px solid var(--dark3);">
-    <div class="music-dock-bar" onclick="toggleMusicDock()">
-      <div class="music-dock-icon">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="var(--red)"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-      </div>
-      <span id="music-dock-label" class="music-dock-label">MUSIC</span>
-      <svg id="music-dock-arrow" class="music-dock-arrow" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-    </div>
-    <div id="music-dock-panel" class="music-dock-panel"></div>
   </div>
 
   <!-- STICKY REST TIMER — appears when any timer is running -->
@@ -5139,7 +4981,6 @@ function startSession(dayId) {
         renderSession();
         startSessionTimer();
         document.getElementById('workout-session').classList.add('active');
-        updateMusicDockUI();
         showToast('Workout resumed 💪');
       };
         return;
@@ -5170,7 +5011,6 @@ function startSession(dayId) {
   renderSession();
   startSessionTimer();
   document.getElementById('workout-session').classList.add('active');
-  updateMusicDockUI();
 }
 
 // ============================================================
@@ -6488,7 +6328,6 @@ function saveAndExitSession() {
   _idbSet('ts-muscle-paused', _pausedJson);
   closeExitModal();
   document.getElementById('workout-session').classList.remove('active');
-  state.musicDockOpen = false; updateMusicDockUI();
   showScreen('home', document.querySelector('.nav-item'));
   renderHome();
   showToast('Workout saved — resume anytime 💾');
@@ -6524,7 +6363,6 @@ function discardSession() {
   saveState();
   closeExitModal();
   document.getElementById('workout-session').classList.remove('active');
-  state.musicDockOpen = false; updateMusicDockUI();
   showScreen('home', document.querySelector('.nav-item'));
   renderHome();
   showToast('Workout discarded');
@@ -6814,8 +6652,7 @@ function finalizeEndSession(save) {
         renderHome();
         setTimeout(() => showCycleCompleteModal(), 600);
         document.getElementById('workout-session').classList.remove('active');
-        state.musicDockOpen = false; updateMusicDockUI();
-        document.getElementById('session-notes').value = '';
+              document.getElementById('session-notes').value = '';
         activeSession = null;
         return;
       }
@@ -6889,7 +6726,6 @@ function finalizeEndSession(save) {
   }
 
   document.getElementById('workout-session').classList.remove('active');
-  state.musicDockOpen = false; updateMusicDockUI();
   document.getElementById('session-notes').value = '';
   activeSession = null;
 
@@ -7928,12 +7764,6 @@ const APP_CHANGELOG = {
   '1.3.1': [
     'New: Reorder exercises mid-workout — tap REORDER in the workout header, drag any exercise to a new position, tap DONE when finished',
   ],
-  '1.3.0': [
-    'New: Music player redesigned — Spotify users get an embedded mini player during workouts (play, pause, skip — without leaving the app)',
-    'New: All other services show a polished Quick Launch card — one tap opens your app directly',
-    'New: "No Music" is now a clear first option — selecting it removes the widget entirely during workouts',
-    'Improved: Music settings clearly shows what you\'ll see during workouts based on your setup',
-  ],
   '1.2.9': [
     'Fixed: Tutorial NEXT/DONE button is now always visible — no longer hidden behind slide content',
     'Fixed: App updates now deliver reliably every time — browser caching issue resolved',
@@ -8533,22 +8363,6 @@ function closeEditDayModal() {
   editingDayId = null;
 }
 
-// ============================================================
-// MUSIC PLAYER
-// ============================================================
-// ============================================================
-// MUSIC PLAYER — APP SELECTOR
-// ============================================================
-const MUSIC_APPS = {
-  spotify:  { name: 'Spotify',       uri: 'spotify://',               url: 'https://open.spotify.com',         hint: 'Paste a Spotify playlist link (optional)' },
-  apple:    { name: 'Apple Music',   uri: 'music://',                 url: 'https://music.apple.com',          hint: 'Paste an Apple Music playlist link (optional)' },
-  youtube:  { name: 'YouTube Music', uri: 'youtubemusic://',          url: 'https://music.youtube.com',        hint: 'Paste a YouTube Music playlist link (optional)' },
-  amazon:   { name: 'Amazon Music',  uri: 'amznmp3://',               url: 'https://music.amazon.com',         hint: 'Paste an Amazon Music playlist link (optional)' },
-  tidal:    { name: 'Tidal',         uri: 'tidal://',                 url: 'https://tidal.com',                hint: 'Paste a Tidal playlist link (optional)' },
-  pandora:  { name: 'Pandora',       uri: 'pandora://',               url: 'https://www.pandora.com',          hint: 'Paste a Pandora station link (optional)' },
-  other:    { name: 'My Music App',  uri: 'music://',                 url: null,                               hint: "Opens your phone's default music app" },
-  none:     { name: 'None',          uri: null,                       url: null,                               hint: '' },
-};
 
 // ============================================================
 // WEIGHT INCREMENT
@@ -8578,296 +8392,6 @@ function updateWeightIncrementUI() {
 
 function getWeightIncrement(goal) {
   return getIncrement('small');
-}
-
-function selectMusicApp(appKey) {
-  state.musicApp = appKey;
-  state.musicPlayer = appKey === 'none' ? 'none' : 'app';
-  // Collapse dock when switching apps
-  state.musicDockOpen = false;
-  saveState();
-  updateMusicAppUI();
-  updateMusicDockUI();
-  if (appKey === 'none') {
-    showToast('Music widget hidden — no distractions during workouts');
-  } else {
-    showToast((MUSIC_APPS[appKey]?.name || 'Music app') + ' selected ✓');
-  }
-}
-
-function updateMusicAppUI() {
-  const appKey = state.musicApp || 'none';
-
-  // No-music toggle visual state
-  const toggle = document.getElementById('music-no-music-toggle');
-  const checkIcon = document.getElementById('music-no-check-icon');
-  const checkCircle = document.getElementById('music-no-check');
-  if (toggle) toggle.classList.toggle('active', appKey === 'none');
-  if (checkIcon) checkIcon.style.display = appKey === 'none' ? 'block' : 'none';
-  if (checkCircle) checkCircle.style.borderColor = appKey === 'none' ? 'var(--red)' : 'var(--dark4)';
-
-  // App button selected states
-  Object.keys(MUSIC_APPS).forEach(key => {
-    const btn = document.getElementById('music-btn-' + key);
-    if (btn) btn.classList.toggle('selected', key === appKey);
-  });
-
-  // Show Spotify playlist section only for Spotify
-  const playlistSection = document.getElementById('music-playlist-section');
-  const otherNote = document.getElementById('music-other-note');
-  if (playlistSection) playlistSection.style.display = appKey === 'spotify' ? 'block' : 'none';
-  if (otherNote) otherNote.style.display = (appKey !== 'none' && appKey !== 'spotify') ? 'block' : 'none';
-
-  updateMusicContextNote();
-  updateMusicSettingsUI();
-}
-
-// Returns a Spotify embed URL if the pasted URL is a valid Spotify playlist/album/track
-function getSpotifyEmbedUrl(url) {
-  if (!url) return null;
-  const m = url.match(/spotify\.com\/(playlist|album|track)\/([A-Za-z0-9]+)/);
-  return m ? 'https://open.spotify.com/embed/' + m[1] + '/' + m[2] + '?utm_source=generator&theme=0' : null;
-}
-
-// Gets the icon SVG HTML for a given music app key by reading from the settings DOM
-function getMusicAppIconHTML(appKey) {
-  const btn = document.getElementById('music-btn-' + appKey);
-  if (btn) {
-    const svg = btn.querySelector('svg');
-    if (svg) return svg.outerHTML;
-  }
-  return '<svg viewBox="0 0 24 24" width="26" height="26" fill="var(--red)"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
-}
-
-// Toggles the music dock open/closed
-function toggleMusicDock() {
-  state.musicDockOpen = !state.musicDockOpen;
-  saveState();
-  const panel = document.getElementById('music-dock-panel');
-  const arrow = document.getElementById('music-dock-arrow');
-  if (state.musicDockOpen) {
-    renderMusicDockPanel();
-    if (panel) panel.classList.add('open');
-    if (arrow) arrow.classList.add('open');
-  } else {
-    if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
-    if (arrow) arrow.classList.remove('open');
-  }
-}
-
-// Renders the content inside the expanded dock panel
-function renderMusicDockPanel() {
-  const panel = document.getElementById('music-dock-panel');
-  if (!panel) return;
-  const appKey = state.musicApp;
-
-  // Spotify with a valid embed URL — show the iframe player
-  if (appKey === 'spotify' && state.customMusicUrl) {
-    const embedUrl = getSpotifyEmbedUrl(state.customMusicUrl);
-    if (embedUrl) {
-      panel.innerHTML = '<iframe class="music-embed-frame" src="' + embedUrl + '" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>';
-      return;
-    }
-  }
-
-  // All other cases — Quick Launch card
-  const app = MUSIC_APPS[appKey] || {};
-  const iconHTML = getMusicAppIconHTML(appKey);
-  panel.innerHTML = '<div class="quick-launch-card" onclick="openMusicPlayer()">'
-    + '<div class="quick-launch-card-icon">' + iconHTML + '</div>'
-    + '<div class="quick-launch-card-label">' + (app.name || 'My Music') + '</div>'
-    + '<div class="quick-launch-card-sub">TAP TO OPEN</div>'
-    + '</div>';
-}
-
-// Shows/hides the dock and updates its label
-function updateMusicDockUI() {
-  const dock = document.getElementById('music-dock');
-  if (!dock) return;
-  const appKey = state.musicApp;
-  const hidden = !appKey || appKey === 'none';
-  dock.style.display = hidden ? 'none' : 'block';
-  if (hidden) return;
-
-  const label = document.getElementById('music-dock-label');
-  if (label) {
-    const app = MUSIC_APPS[appKey];
-    if (appKey === 'spotify' && state.customMusicUrl) {
-      label.textContent = 'SPOTIFY PLAYLIST';
-    } else {
-      label.textContent = (app?.name || 'MUSIC').toUpperCase();
-    }
-  }
-
-  // Re-render panel if it was open
-  if (state.musicDockOpen) {
-    renderMusicDockPanel();
-    const panel = document.getElementById('music-dock-panel');
-    const arrow = document.getElementById('music-dock-arrow');
-    if (panel) panel.classList.add('open');
-    if (arrow) arrow.classList.add('open');
-  }
-}
-
-// Legacy — still called from showMusicAppPicker modal
-function handleMusicBtn(e) {
-  if (e) { e.preventDefault(); e.stopPropagation(); }
-  if (state.musicApp && state.musicApp !== 'none') {
-    openMusicPlayer();
-  } else {
-    showMusicAppPicker();
-  }
-}
-
-function openMusicPlayer() {
-  const appKey = state.musicApp || 'none';
-  if (appKey === 'none') return;
-
-  // Custom playlist URL — open directly
-  if (state.customMusicUrl) {
-    window.open(state.customMusicUrl, '_blank');
-    return;
-  }
-
-  const app = MUSIC_APPS[appKey];
-  if (!app) return;
-
-  // For "other" / no URL — use hidden iframe trick to fire URI without
-  // navigating the PWA (window.location.href kills the app on iOS)
-  if (app.uri && !app.url) {
-    launchUriScheme(app.uri);
-    return;
-  }
-
-  // For streaming services: open web URL directly in new tab
-  // This is the most reliable cross-platform approach —
-  // deep link URI schemes are blocked in most PWA/WebView contexts anyway
-  if (app.url) {
-    window.open(app.url, '_blank');
-    return;
-  }
-
-  // Fallback for uri-only apps
-  if (app.uri) {
-    launchUriScheme(app.uri);
-  }
-}
-
-function launchUriScheme(uri) {
-  // Use hidden iframe to fire URI scheme — avoids navigating the PWA
-  try {
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'display:none;width:0;height:0;border:none;';
-    iframe.src = uri;
-    document.body.appendChild(iframe);
-    setTimeout(() => {
-      if (document.body.contains(iframe)) document.body.removeChild(iframe);
-    }, 2000);
-  } catch(e) {
-    // Iframe failed — last resort, show toast
-    showToast('Open your music app manually');
-  }
-}
-
-// First-time music picker — shows when tapping music btn with no app set
-function showMusicAppPicker() {
-  const modal = document.createElement('div');
-  modal.id = 'music-picker-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;align-items:flex-end;';
-  modal.innerHTML = `
-    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(32px + env(safe-area-inset-bottom));width:100%;max-width:480px;margin:0 auto;border:1px solid var(--dark3);">
-      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">WHAT DO YOU LISTEN ON?</div>
-      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;">Pick your music app — we'll open it directly during workouts.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-        ${Object.entries(MUSIC_APPS).filter(([k]) => k !== 'none').map(([key, app]) => `
-          <button onclick="pickMusicAppFromModal('${key}')"
-            style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray);border-radius:12px;padding:14px 10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;${key==='other'?'grid-column:span 2;':''}">
-            ${app.name}
-          </button>`).join('')}
-      </div>
-      <button onclick="document.getElementById('music-picker-modal').remove()" style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:12px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
-        NOT NOW
-      </button>
-    </div>`;
-  document.body.appendChild(modal);
-}
-
-function pickMusicAppFromModal(appKey) {
-  const modal = document.getElementById('music-picker-modal');
-  if (modal) modal.remove();
-  selectMusicApp(appKey); // selectMusicApp handles toast + state save
-}
-
-function openNativeMusicApp() {
-  // Legacy — redirect to new system
-  openMusicPlayer();
-}
-
-function saveCustomMusicLink() {
-  const url = document.getElementById('custom-music-url')?.value.trim();
-  if (!url) { showToast('Paste a link first', 'error'); return; }
-  state.customMusicUrl = url;
-  saveState();
-  updateMusicSettingsUI();
-  updateMusicContextNote();
-  updateMusicDockUI();
-  showToast('Playlist link saved ✓');
-}
-
-function clearCustomMusicLink() {
-  state.customMusicUrl = null;
-  saveState();
-  updateMusicSettingsUI();
-  updateMusicContextNote();
-  updateMusicDockUI();
-  showToast('Playlist link cleared');
-}
-
-function selectMusicPlayer(key) {
-  state.musicPlayer = key;
-  saveState();
-  updateMusicDockUI();
-  if (key === 'none') showToast('Music widget hidden during workouts');
-}
-
-// Updates the context note in the Spotify settings section
-function updateMusicContextNote() {
-  const note = document.getElementById('music-context-note');
-  if (!note) return;
-  if (state.customMusicUrl && state.musicApp === 'spotify') {
-    const embedUrl = getSpotifyEmbedUrl(state.customMusicUrl);
-    if (embedUrl) {
-      note.textContent = 'Embedded player will appear during workouts ✓';
-      note.style.color = '#2ecc71';
-    } else {
-      note.textContent = 'Link saved — tap the music bar to open Spotify directly.';
-      note.style.color = 'var(--gray)';
-    }
-  } else {
-    note.textContent = 'Add a playlist link to get an embedded player during workouts — or leave empty to use a Quick Launch card.';
-    note.style.color = 'var(--gray)';
-  }
-}
-
-function updateMusicSettingsUI() {
-  const saved = document.getElementById('custom-music-saved');
-  const display = document.getElementById('custom-music-url-display');
-  const input = document.getElementById('custom-music-url');
-  if (!saved) return;
-  if (state.customMusicUrl) {
-    saved.style.display = 'block';
-    const url = state.customMusicUrl;
-    if (display) display.textContent = url.length > 40 ? url.slice(0, 40) + '...' : url;
-    if (input) input.value = url;
-  } else {
-    saved.style.display = 'none';
-  }
-}
-
-function initMusicPlayerUI() {
-  updateMusicDockUI();
-  updateMusicSettingsUI();
-  updateMusicAppUI();
 }
 
 // ============================================================
@@ -9077,8 +8601,7 @@ const TUTORIAL_SLIDES = [
     T&S Muscle is a Progressive Web App. Install it to your home screen and it works like a native app — full screen, no browser bar, works offline.<br><br>
     <strong style="color:var(--red);">iPhone (Safari):</strong> tap the Share icon → <strong style="color:var(--cream);">Add to Home Screen</strong><br>
     <strong style="color:var(--red);">Android (Chrome):</strong> tap the menu (⋮) → <strong style="color:var(--cream);">Install app</strong> — installs like a normal app in your app drawer<br><br>
-    <strong style="color:var(--gray);font-size:12px;">Updates happen automatically — when the app is improved, just refresh or reopen it. You won't need to reinstall.</strong><br><br>
-    <strong style="color:var(--cream);">Music (optional):</strong> Go to <strong style="color:var(--red);">Settings → Music Player</strong> to set this up — or select <strong style="color:var(--cream);">No Music</strong> — no widget appears in your workout screen at all. Spotify users can paste a playlist link for an <strong style="color:var(--cream);">embedded mini player</strong> that lives right in the workout screen. All other services show a one-tap <strong style="color:var(--cream);">Quick Launch card</strong> instead.`,
+    <strong style="color:var(--gray);font-size:12px;">Updates happen automatically — when the app is improved, just refresh or reopen it. You won't need to reinstall.</strong>`,
   },
   {
     section: 'INITIAL SETUP',
@@ -11247,7 +10770,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', calcPace);
   });
-  initMusicPlayerUI();
   renderCardioHistory();
   renderValuesCard();
   renderBarrierHistory();
