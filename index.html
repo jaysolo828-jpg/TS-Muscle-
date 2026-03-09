@@ -778,22 +778,40 @@
   .set-input:focus { border-color: var(--red); }
   .set-input::placeholder { color: #888; }
 
-  /* Weight cell — contains input; prev label floats inside it without affecting row height */
-  .weight-cell { position: relative; width: 100%; }
-
-  .prev-set-label {
-    position: absolute;
-    bottom: 3px;
-    left: 1px;
-    right: 1px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 9px;
-    color: #5a5a5a;
-    text-align: center;
-    letter-spacing: 0.3px;
-    line-height: 1;
-    pointer-events: none;
+  /* Previous session collapsible panel */
+  .prev-session-toggle {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 16px 4px;
   }
+  .prev-session-btn {
+    background: none;
+    border: none;
+    color: var(--gray);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 4px 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .prev-session-btn:active { color: var(--cream); }
+  .prev-session-panel {
+    padding: 4px 16px 10px;
+    border-bottom: 1px solid var(--dark3);
+  }
+  .prev-session-row {
+    display: grid;
+    grid-template-columns: 42px 1fr 56px;
+    align-items: center;
+    padding: 3px 0;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+  }
+  .prev-s-label { color: var(--gray); font-size: 11px; letter-spacing: 0.5px; }
+  .prev-s-val   { color: var(--cream); font-weight: 600; }
+  .prev-s-rpe   { color: var(--gray); font-size: 11px; text-align: right; }
 
 
   /* Larger touch target for set done button on mobile */
@@ -4549,6 +4567,15 @@ function togglePlateCalc(exId) {
   }
 }
 
+function togglePrevPanel(exId) {
+  const panel = document.getElementById('prev-panel-' + exId);
+  const arrow = document.getElementById('prev-arrow-' + exId);
+  if (!panel) return;
+  const opening = panel.style.display === 'none';
+  panel.style.display = opening ? 'block' : 'none';
+  if (arrow) arrow.textContent = opening ? '▴' : '▾';
+}
+
 function adjustPlateCalcWeight(exId, delta) {
   const barType = exId === 'ez-curl' ? 'ez' : 'standard';
   const barWeight = BAR_WEIGHTS[barType];
@@ -5315,7 +5342,23 @@ function renderSession() {
     const _mColor = _muscle ? MUSCLE_COLORS[_muscle] : null;
 
     const _goalReps = getGoalReps(ex.id, ex.reps);
-    let setsHTML = `
+
+    // Build prev-session panel (only if history exists for this exercise)
+    const _lastSets = sets.map((_, si) => getLastSetData(ex.id, si)).filter(Boolean);
+    const _prevToggleHTML = _lastSets.length ? `
+      <div class="prev-session-toggle">
+        <button class="prev-session-btn" onclick="togglePrevPanel('${ex.id}')">PREV <span id="prev-arrow-${ex.id}">▾</span></button>
+      </div>
+      <div class="prev-session-panel" id="prev-panel-${ex.id}" style="display:none;">
+        ${_lastSets.map((d, i) => `
+          <div class="prev-session-row">
+            <span class="prev-s-label">Set ${i + 1}</span>
+            <span class="prev-s-val">${d.weight} lbs × ${d.reps}</span>
+            <span class="prev-s-rpe">${d.rpe ? 'RPE ' + d.rpe : ''}</span>
+          </div>`).join('')}
+      </div>` : '';
+
+    let setsHTML = _prevToggleHTML + `
       <div class="set-labels">
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
@@ -5334,11 +5377,8 @@ function renderSession() {
       setsHTML += `
         <div class="set-row" id="set-row-${ex.id}-${si}">
           <div class="set-num">${si + 1}</div>
-          <div class="weight-cell">
-            <input type="number" inputmode="decimal" class="set-input" id="weight-input-${ex.id}-${si}" placeholder="${weightPlaceholder || '0'}"
-              value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
-            ${lastData ? `<div class="prev-set-label">prev: ${lastData.weight} × ${lastData.reps}</div>` : ''}
-          </div>
+          <input type="number" inputmode="decimal" class="set-input" placeholder="${weightPlaceholder || '0'}"
+            value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
           <div style="position:relative;">
             <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
               placeholder="${repsPlaceholder || _goalReps.split('–')[0]}"
