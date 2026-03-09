@@ -3029,7 +3029,8 @@
     <!-- WRITE YOUR OWN -->
     <div style="border-top:1px solid var(--dark3); padding-top:14px; margin-bottom:4px;">
       <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">✍️ WRITE YOUR OWN</div>
-      <input type="text" id="custom-exercise-input" class="set-input" placeholder="e.g. Hammer Curl, Box Jump..." style="width:100%; text-align:left; padding:10px 14px; margin-bottom:10px;"/>
+      <input type="text" id="custom-exercise-input" class="set-input" placeholder="e.g. Hammer Curl, Box Jump..." style="width:100%; text-align:left; padding:10px 14px; margin-bottom:6px;" oninput="checkCustomExerciseMuscle(this.value)"/>
+      <div id="custom-muscle-warning" style="display:none; font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#f39c12; letter-spacing:0.5px; margin-bottom:8px; padding:0 2px;">⚠️ This looks like a <span id="custom-muscle-warning-type"></span> exercise — you're swapping a <span id="custom-muscle-warning-cur"></span> exercise. That's fine, just double-check!</div>
       <div id="custom-swap-btns" style="display:none; flex-direction:column; gap:8px;">
         <div style="display:flex; gap:8px;">
           <button class="swap-today-btn" style="flex:1;" onclick="doCustomSwap(false)">JUST TODAY</button>
@@ -3318,7 +3319,8 @@ const DEFAULT_PROGRAM = [
           { name: 'Band Lateral Raise', note: 'Light resistance, high reps', ytLink: 'https://youtu.be/ppQHMPBz6KA' },
           { name: 'Arnold Press', note: 'Hits all three delt heads through rotation', ytLink: 'https://youtu.be/6Z15_WdXmVw' },
           { name: 'Overhead DB Press', note: 'Compound shoulder mass builder', ytLink: 'https://youtu.be/qEwKCR5JCog' },
-          { name: 'Face Pull', note: 'Rear delt + external rotation, great for health', ytLink: 'https://youtu.be/HSoHeSJ4JsA' }
+          { name: 'Face Pull', note: 'Rear delt + external rotation, great for health', ytLink: 'https://youtu.be/HSoHeSJ4JsA' },
+          { name: 'Smith Machine Shoulder Press', note: 'Compound press — great if no barbell available', ytLink: 'https://youtu.be/qEwKCR5JCog' }
         ]
       }
     ]
@@ -3337,7 +3339,8 @@ const DEFAULT_PROGRAM = [
           { name: 'Goblet Squat', note: 'Easier on knees, great form builder', ytLink: 'https://youtu.be/MeIiIdhvXT4' },
           { name: 'Front Squat', note: 'Barbell front rack, quad-dominant', ytLink: 'https://youtu.be/m4ytaCJZpl0' },
           { name: 'Dumbbell Squat', note: 'Dumbbells at sides, beginner-friendly', ytLink: 'https://youtu.be/Geg7mNBHmXA' },
-          { name: 'Box Squat', note: 'Sit to box, reduces knee stress', ytLink: 'https://youtu.be/VpkFYijLjOU' }
+          { name: 'Box Squat', note: 'Sit to box, reduces knee stress', ytLink: 'https://youtu.be/VpkFYijLjOU' },
+          { name: 'Smith Machine Squat', note: 'Planet Fitness staple — no squat rack needed', ytLink: 'https://youtu.be/02EnkNZvqhQ' }
         ]
       },
       { id: 'rdl', name: 'Romanian Deadlift', sets: 3, reps: '10–12', rest: '90 sec',
@@ -3350,7 +3353,8 @@ const DEFAULT_PROGRAM = [
           { name: 'Good Mornings', note: 'Barbell on traps, hip hinge', ytLink: 'https://youtu.be/YA-h3n9L4YU' },
           { name: 'Sumo Deadlift', note: 'Wide stance, glute and inner hamstring focus', ytLink: 'https://youtu.be/WLmFQ0QSbdE' },
           { name: 'Deficit RDL', note: 'Stand on plate for deeper stretch', ytLink: 'https://youtu.be/JCXUYuzwNrM' },
-          { name: 'Glute-Ham Raise', note: 'Elite posterior chain builder', ytLink: 'https://youtu.be/aSjvdcGDUkU' }
+          { name: 'Glute-Ham Raise', note: 'Elite posterior chain builder', ytLink: 'https://youtu.be/aSjvdcGDUkU' },
+          { name: 'Smith Machine RDL', note: 'Good stability for learning the hip hinge', ytLink: 'https://youtu.be/JCXUYuzwNrM' }
         ]
       },
       { id: 'leg-ext-a', name: 'Leg Extension (Machine)', sets: 3, reps: '12–15', rest: '60 sec',
@@ -3415,7 +3419,8 @@ const DEFAULT_PROGRAM = [
           { name: 'Inverted Row', note: 'Bodyweight horizontal pull', ytLink: 'https://youtu.be/LK91OELE6R4' },
           { name: 'Seal Row', note: 'Chest on bench, eliminates cheating', ytLink: 'https://youtu.be/WQqpZFOGZsw' },
           { name: 'Underhand Barbell Row', note: 'Supinated grip hits lower lats', ytLink: 'https://youtu.be/TK1HCkb5ykI' },
-          { name: 'Wide Grip Cable Row', note: 'Wide grip for upper back width', ytLink: 'https://youtu.be/DKCMFn4ZSh8' }
+          { name: 'Wide Grip Cable Row', note: 'Wide grip for upper back width', ytLink: 'https://youtu.be/DKCMFn4ZSh8' },
+          { name: 'Smith Machine Row', note: 'Fixed path — easier to keep form on back day', ytLink: 'https://youtu.be/FWJR5Ve8bnQ' }
         ]
       },
       { id: 'pulldown', name: 'Lat Pulldown', sets: 3, reps: '10–12', rest: '90 sec',
@@ -3492,7 +3497,8 @@ const DEFAULT_PROGRAM = [
           { name: 'Belt Squat', note: 'No spinal load option', ytLink: 'https://youtu.be/6eFPBqz3ZwI' },
           { name: 'Wide Stance Barbell Squat', note: 'More glute/ham recruitment', ytLink: 'https://youtu.be/Dy28eq2PjcM' },
           { name: 'Good Morning', note: 'Hip hinge for posterior chain', ytLink: 'https://youtu.be/YA-h3n9L4YU' },
-          { name: 'Stiff-Leg Deadlift', note: 'Legs straighter than RDL, more hamstring stretch', ytLink: 'https://youtu.be/1uDiW5--rAE' }
+          { name: 'Stiff-Leg Deadlift', note: 'Legs straighter than RDL, more hamstring stretch', ytLink: 'https://youtu.be/1uDiW5--rAE' },
+          { name: 'Smith Machine Squat', note: 'Planet Fitness staple — no squat rack needed', ytLink: 'https://youtu.be/02EnkNZvqhQ' }
         ]
       },
       { id: 'single-legpress', name: 'Single Leg Press (Unilateral)', sets: 3, reps: '10–12', rest: '90 sec',
@@ -6048,6 +6054,30 @@ function openAltModal(ex) {
   modal.classList.add('open');
 }
 
+const _UPPER_KW = ['curl','bench','press','pulldown','fly','flye','dip','pushup','push-up','row','pull-up','pullup','shrug','tricep','bicep','chest','lat ','delt','shoulder','overhead'];
+const _LOWER_KW = ['squat','lunge','leg press','deadlift',' rdl','hip thrust','calf','glute','hamstring','quad','step-up','kickback','leg extension','leg curl'];
+const _MUSCLE_BUCKET = { CHEST:'upper', BACK:'upper', SHOULDERS:'upper', TRICEPS:'upper', BICEPS:'upper', QUADS:'lower', HAMSTRINGS:'lower', GLUTES:'lower', CALVES:'lower' };
+
+function checkCustomExerciseMuscle(val) {
+  const w = document.getElementById('custom-muscle-warning');
+  if (!val || !pendingSwap) { w.style.display = 'none'; return; }
+  const muscle = MUSCLE_MAP[pendingSwap.exId];
+  if (!muscle) { w.style.display = 'none'; return; }
+  const curBucket = _MUSCLE_BUCKET[muscle];
+  if (!curBucket) { w.style.display = 'none'; return; }
+  const lc = val.toLowerCase();
+  const oppBucket = curBucket === 'upper' ? 'lower' : 'upper';
+  const oppKw = oppBucket === 'upper' ? _UPPER_KW : _LOWER_KW;
+  const matched = oppKw.some(k => lc.includes(k));
+  if (matched) {
+    document.getElementById('custom-muscle-warning-type').textContent = oppBucket + ' body';
+    document.getElementById('custom-muscle-warning-cur').textContent = curBucket + ' body';
+    w.style.display = 'block';
+  } else {
+    w.style.display = 'none';
+  }
+}
+
 function resetExerciseToDefault() {
   const btn = document.getElementById('alt-reset-btn');
   const exId = btn.dataset.exid;
@@ -6181,6 +6211,7 @@ function doSwap(altName, permanent) {
 
 function closeAltModal() {
   document.getElementById('alt-modal').classList.remove('open');
+  document.getElementById('custom-muscle-warning').style.display = 'none';
   pendingSwap = null;
 }
 
