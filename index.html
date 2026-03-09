@@ -7327,20 +7327,17 @@ function renderHistory() {
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
   );
 
-  const slice = sorted.slice(0, HISTORY_PAGE_SIZE);
-  slice.forEach(entry => renderHistoryItem(entry, container, null));
+  // Always show only the most recent session by default
+  renderHistoryItem(sorted[0], container, null);
 
-  if (sorted.length > HISTORY_PAGE_SIZE) {
+  if (sorted.length > 1) {
     const btn = document.createElement('button');
     btn.id = 'history-load-more';
-    btn.textContent = 'Load More';
+    btn.textContent = `View all ${sorted.length} sessions`;
     btn.style.cssText = 'width:100%;margin:12px 0;padding:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:14px;cursor:pointer;letter-spacing:0.5px;';
     btn.onclick = () => {
-      historyPage++;
-      const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
-      const nextSlice = sorted.slice(start, start + HISTORY_PAGE_SIZE);
-      nextSlice.forEach(entry => renderHistoryItem(entry, container, btn));
-      if (historyPage * HISTORY_PAGE_SIZE >= sorted.length) btn.remove();
+      btn.remove();
+      sorted.slice(1).forEach(entry => renderHistoryItem(entry, container, null));
     };
     container.appendChild(btn);
   }
