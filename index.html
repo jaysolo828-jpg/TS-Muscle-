@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"/>
 <meta name="theme-color" content="#0a0a0a"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -9036,8 +9036,33 @@ const DAYS_EXPLANATIONS = {
 
 let pendingDaysCount = null;
 
+function updateSettingsDayButtonDescriptions() {
+  const split = state.splitType || 'ul';
+  const descs = {
+    ul:        { 2: 'Upper A + Lower A. Full body coverage, maximum recovery time.',
+                 3: 'Upper A, Lower A, Upper B. Good balance with plenty of recovery.',
+                 4: 'The full 4-day program. Optimal for hypertrophy with structured recovery.',
+                 5: 'Full program + one extra session for weak points or cardio focus.' },
+    ppl:       { 2: 'Push + Pull. Covers upper body with full recovery before legs.',
+                 3: 'Full PPL cycle. One Push, one Pull, one Legs day.',
+                 4: 'PPL + repeat day. Good for prioritising a lagging muscle group.',
+                 5: 'PPL + 2 repeat days. High volume, suits intermediate lifters.' },
+    fullbody:  { 2: 'Full Body A + B. Two balanced sessions covering all major muscles.',
+                 3: 'Full Body A, B, C. Three varied sessions per week.',
+                 4: 'Full Body A–D. High frequency, good for skill development.',
+                 5: 'Full Body A–E. Very high frequency — ensure sleep and nutrition are dialled.' },
+  };
+  [2, 3, 4, 5].forEach(n => {
+    const btn = document.getElementById('sdb-' + n);
+    if (!btn) return;
+    const descDiv = btn.querySelector('div:last-child');
+    if (descDiv) descDiv.textContent = (descs[split] || descs.ul)[n] || '';
+  });
+}
+
 function openTrainingDaysModal() {
   pendingDaysCount = state.trainingDaysPerWeek || 4;
+  updateSettingsDayButtonDescriptions();
 
   // Reset all buttons
   document.querySelectorAll('.settings-day-btn').forEach(b => b.classList.remove('selected'));
