@@ -2449,6 +2449,7 @@
         <button class="onboard-select-btn" onclick="selectExerciseMode('auto', this)">
           <div style="font-weight:bold;">Pick For Me</div>
           <div style="font-size:12px; color:var(--gray); margin-top:2px;">Use the recommended exercises — you can always swap later</div>
+          <div style="font-size:11px; color:#666; margin-top:5px; letter-spacing:0.3px;">Bench · Overhead Press · Machine Row · Leg Press · Romanian Deadlift</div>
         </button>
         <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)">
           <div style="font-weight:bold;">I'll Choose</div>
@@ -9748,52 +9749,72 @@ function selectSplitOnboard(type, btn) {
 const OB_PRIMARY_SLOTS = [
   {
     id: 'bench', label: 'CHEST PRESS',
+    desc: 'Primary upper body push — chest, front delts, triceps',
     options: [
-      { display: 'Barbell Bench Press',  apply: 'Barbell Bench Press' },
-      { display: 'DB Bench Press',        apply: 'DB Bench Press' },
-      { display: 'Machine Chest Press',   apply: 'Machine Chest Press' },
-      { display: 'Smith Machine Bench',   apply: 'Smith Machine Bench' },
-      { display: 'Cable Chest Press',     apply: 'Cable Chest Press' },
+      { display: 'Barbell Bench Press',  apply: 'Barbell Bench Press',  ytLink: 'https://youtu.be/vcBig73ojpE' },
+      { display: 'DB Bench Press',       apply: 'DB Bench Press',       ytLink: 'https://youtu.be/QsYre__-aro' },
+      { display: 'Machine Chest Press',  apply: 'Machine Chest Press',  ytLink: 'https://youtu.be/xUm0BiZCX_I' },
+      { display: 'Smith Machine Bench',  apply: 'Smith Machine Bench',  ytLink: 'https://youtu.be/kL_E2LHsNgs' },
+      { display: 'Cable Chest Press',    apply: 'Cable Chest Press',    ytLink: 'https://youtu.be/6zfIGzT8rQQ' },
+      { display: 'Weighted Push-Up',     apply: 'Weighted Push-Up',     ytLink: 'https://youtu.be/IODxDxX7oi4' },
+      { display: 'Chest Dips',           apply: 'Chest Dips',           ytLink: 'https://youtu.be/2z8JmcrW-As' },
+      { display: 'Floor Press',          apply: 'Floor Press',          ytLink: 'https://youtu.be/G9UkOEBpJXs' },
     ]
   },
   {
     id: 'ohp', label: 'SHOULDER PRESS',
+    desc: 'Overhead compound — shoulders, upper traps, triceps',
     options: [
-      { display: 'Barbell OHP',             apply: 'Overhead Press (Barbell)' },
-      { display: 'DB Shoulder Press',       apply: 'DB Shoulder Press' },
-      { display: 'Machine Shoulder Press',  apply: 'Machine Shoulder Press' },
-      { display: 'Smith Machine OHP',       apply: 'Smith Machine OHP' },
-      { display: 'Arnold Press',            apply: 'Arnold Press' },
+      { display: 'Barbell OHP',             apply: 'Overhead Press (Barbell)',   ytLink: 'https://youtu.be/2yjwXTZQDDI' },
+      { display: 'DB Shoulder Press',       apply: 'DB Shoulder Press',          ytLink: 'https://youtu.be/qEwKCR5JCog' },
+      { display: 'Machine Shoulder Press',  apply: 'Machine Shoulder Press',     ytLink: 'https://youtu.be/WvLMauqrnK8' },
+      { display: 'Smith Machine OHP',       apply: 'Smith Machine OHP',          ytLink: 'https://youtu.be/2yjwXTZQDDI' },
+      { display: 'Arnold Press',            apply: 'Arnold Press',               ytLink: 'https://youtu.be/6Z15_WdXmVw' },
+      { display: 'Landmine Press',          apply: 'Landmine Press',             ytLink: 'https://youtu.be/lh6jbwAkXaQ' },
+      { display: 'Push Press',              apply: 'Push Press',                 ytLink: 'https://youtu.be/X6-DMh-t4nQ' },
+      { display: 'Seated DB Press',         apply: 'Seated DB Shoulder Press',   ytLink: 'https://youtu.be/qEwKCR5JCog' },
     ]
   },
   {
     id: 'chest-row', label: 'ROW / BACK PULL',
+    desc: 'Horizontal pull — lats, rhomboids, rear delts, biceps',
     options: [
-      { display: 'Machine Row',         apply: 'Chest Supported Machine Row' },
-      { display: 'Cable Row',           apply: 'Cable Row (Seated)' },
-      { display: 'Barbell Row',         apply: 'Barbell Bent Over Row' },
-      { display: 'Smith Machine Row',   apply: 'Smith Machine Row' },
-      { display: 'Single Arm DB Row',   apply: 'Single Arm DB Row' },
+      { display: 'Machine Row',         apply: 'Chest Supported Machine Row',  ytLink: 'https://youtu.be/GOhWM3WAAcY' },
+      { display: 'Cable Row',           apply: 'Cable Row (Seated)',            ytLink: 'https://youtu.be/GZbfZ033f74' },
+      { display: 'Barbell Row',         apply: 'Barbell Bent Over Row',         ytLink: 'https://youtu.be/FWJR5Ve8bnQ' },
+      { display: 'Smith Machine Row',   apply: 'Smith Machine Row',             ytLink: 'https://youtu.be/FWJR5Ve8bnQ' },
+      { display: 'Single Arm DB Row',   apply: 'Single Arm DB Row',             ytLink: 'https://youtu.be/roCP6wCXPqo' },
+      { display: 'T-Bar Row',           apply: 'T-Bar Row',                     ytLink: 'https://youtu.be/j3y8KUd2E4M' },
+      { display: 'Lat Pulldown',        apply: 'Lat Pulldown',                  ytLink: 'https://youtu.be/CAwf7n6Luuc' },
+      { display: 'Inverted Row',        apply: 'Inverted Row',                  ytLink: 'https://youtu.be/LK91OELE6R4' },
     ]
   },
   {
     id: 'legpress-a', label: 'SQUAT / LEG PRESS',
+    desc: 'Knee-dominant — quads, glutes, hamstrings',
     options: [
-      { display: 'Leg Press',              apply: 'Leg Press (Mid-foot, moderate stance)' },
-      { display: 'Hack Squat Machine',     apply: 'Hack Squat Machine' },
-      { display: 'Smith Machine Squat',    apply: 'Smith Machine Squat' },
-      { display: 'Bulgarian Split Squat',  apply: 'Bulgarian Split Squat' },
-      { display: 'Goblet Squat',           apply: 'Goblet Squat' },
+      { display: 'Leg Press',              apply: 'Leg Press (Mid-foot, moderate stance)',  ytLink: 'https://youtu.be/GvRgijoJ2xY' },
+      { display: 'Hack Squat Machine',     apply: 'Hack Squat Machine',                    ytLink: 'https://youtu.be/02EnkNZvqhQ' },
+      { display: 'Smith Machine Squat',    apply: 'Smith Machine Squat',                   ytLink: 'https://youtu.be/02EnkNZvqhQ' },
+      { display: 'Bulgarian Split Squat',  apply: 'Bulgarian Split Squat',                 ytLink: 'https://youtu.be/2C-uNgKwPLE' },
+      { display: 'Goblet Squat',           apply: 'Goblet Squat',                          ytLink: 'https://youtu.be/MeIiIdhvXT4' },
+      { display: 'Barbell Back Squat',     apply: 'Barbell Back Squat',                    ytLink: 'https://youtu.be/Dy28eq2PjcM' },
+      { display: 'Box Squat',              apply: 'Box Squat',                             ytLink: 'https://youtu.be/VpkFYijLjOU' },
+      { display: 'DB Squat',               apply: 'Dumbbell Squat',                        ytLink: 'https://youtu.be/Geg7mNBHmXA' },
     ]
   },
   {
     id: 'rdl', label: 'HIP HINGE',
+    desc: 'Hip-dominant — hamstrings, glutes, lower back',
     options: [
-      { display: 'Romanian Deadlift',     apply: 'Romanian Deadlift' },
-      { display: 'DB Romanian Deadlift',  apply: 'DB Romanian Deadlift' },
-      { display: 'Smith Machine RDL',     apply: 'Smith Machine RDL' },
-      { display: 'Cable Pull-Through',    apply: 'Cable Pull-Through' },
-      { display: 'Trap Bar Deadlift',     apply: 'Trap Bar Deadlift' },
+      { display: 'Romanian Deadlift',     apply: 'Romanian Deadlift',      ytLink: 'https://youtu.be/JCXUYuzwNrM' },
+      { display: 'DB Romanian Deadlift',  apply: 'DB Romanian Deadlift',   ytLink: 'https://youtu.be/JCXUYuzwNrM' },
+      { display: 'Smith Machine RDL',     apply: 'Smith Machine RDL',      ytLink: 'https://youtu.be/JCXUYuzwNrM' },
+      { display: 'Cable Pull-Through',    apply: 'Cable Pull-Through',     ytLink: 'https://youtu.be/mr_JFAFbJEA' },
+      { display: 'Trap Bar Deadlift',     apply: 'Trap Bar Deadlift',      ytLink: 'https://youtu.be/IG9PF3kJWDQ' },
+      { display: 'Sumo Deadlift',         apply: 'Sumo Deadlift',          ytLink: 'https://youtu.be/WLmFQ0QSbdE' },
+      { display: 'Single Leg RDL',        apply: 'Single Leg RDL',         ytLink: 'https://youtu.be/TCHLy35LHbE' },
+      { display: 'Stiff-Leg Deadlift',    apply: 'Stiff-Leg Deadlift',     ytLink: 'https://youtu.be/1uDiW5--rAE' },
     ]
   },
 ];
@@ -9816,21 +9837,27 @@ function selectExerciseMode(mode, btn) {
 
 function buildObManualSlots() {
   const panel = document.getElementById('ob-manual-select');
-  let html = '<div style="font-size:12px; color:var(--gray); margin-bottom:14px; line-height:1.6;">Select one exercise per movement. First option is the default. Type your own at the bottom of each slot if your gym has something different.</div>';
+  let html = '<div style="font-size:12px; color:var(--gray); margin-bottom:14px; line-height:1.6;">Pick one per movement — the ★ option is pre-selected. Tap ▶ on any exercise to watch a tutorial before deciding.</div>';
   OB_PRIMARY_SLOTS.forEach(slot => {
     const safeId = slot.id.replace('-', '_');
     let optBtns = slot.options.map((opt, i) => {
       const sel = i === 0 ? ' selected' : '';
-      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${opt.apply.replace(/'/g, "\\'")}',this)">${opt.display}</button>`;
+      const label = i === 0 ? `★ ${opt.display}` : opt.display;
+      const escaped = opt.apply.replace(/'/g, "\\'");
+      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${escaped}',this)">${label}<span onclick="event.stopPropagation();window.open('${opt.ytLink}','_blank')" style="margin-left:5px;color:var(--red);font-size:10px;opacity:0.8;" title="Watch tutorial">▶</span></button>`;
     }).join('');
     html += `
       <div style="background:var(--dark3); border-radius:12px; padding:14px; margin-bottom:12px;">
-        <div style="font-size:11px; color:var(--red); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; margin-bottom:8px;">${slot.label}</div>
+        <div style="font-size:11px; color:var(--red); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; margin-bottom:3px;">${slot.label}</div>
+        <div style="font-size:11px; color:var(--gray); margin-bottom:10px;">${slot.desc}</div>
         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;" id="ob-slot-${safeId}-btns">${optBtns}</div>
         <input type="text" class="set-input" id="ob-slot-${safeId}-custom"
-          placeholder="My gym has something else — type it here"
+          placeholder="Or type your own exercise name…"
           oninput="handleSlotCustomInput('${slot.id}',this)"
           style="width:100%; padding:9px 12px; text-align:left; font-size:13px;"/>
+        <div id="ob-slot-${safeId}-yt" style="display:none; margin-top:7px; font-size:11px; color:var(--gray); line-height:1.6;">
+          Not sure how to do it? <a id="ob-slot-${safeId}-yt-link" href="" target="_blank" rel="noopener" style="color:var(--red); text-decoration:none;">Search YouTube for a tutorial →</a>
+        </div>
       </div>`;
     // Pre-select the first option in state
     window._obSlots[slot.id] = slot.options[0].apply;
@@ -9852,9 +9879,15 @@ function handleSlotCustomInput(slotId, input) {
   const val = input.value.trim();
   const safeId = slotId.replace('-', '_');
   const container = document.getElementById('ob-slot-' + safeId + '-btns');
+  const ytDiv  = document.getElementById('ob-slot-' + safeId + '-yt');
+  const ytAnchor = document.getElementById('ob-slot-' + safeId + '-yt-link');
   if (val) {
     window._obSlots[slotId] = val;
     if (container) container.querySelectorAll('.ob-slot-opt').forEach(b => b.classList.remove('selected'));
+    if (ytDiv && ytAnchor) {
+      ytAnchor.href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(val + ' exercise how to');
+      ytDiv.style.display = 'block';
+    }
   } else {
     // Restore the first option as default when field is cleared
     const slot = OB_PRIMARY_SLOTS.find(s => s.id === slotId);
@@ -9865,6 +9898,7 @@ function handleSlotCustomInput(slotId, input) {
         if (first) first.classList.add('selected');
       }
     }
+    if (ytDiv) ytDiv.style.display = 'none';
   }
 }
 
