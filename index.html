@@ -4610,6 +4610,12 @@ function closeRepRangeSheet() {
 
 function applyRepRange(exId, range) {
   if (!activeSession) return;
+
+  // Capture old range before overwriting — needed for direction nudge
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  const ex = day?.exercises.find(e => e.id === exId);
+  const oldRange = activeSession.repOverrides[exId] || getGoalReps(exId, ex?.reps);
+
   activeSession.repOverrides[exId] = range;
 
   // Update column header label in-place
@@ -4617,16 +4623,62 @@ function applyRepRange(exId, range) {
   if (labelEl) labelEl.innerHTML = '(' + range + ') ✎';
 
   // Update meta line in-place
-  const day = state.program.find(d => d.id === activeSession.dayId);
-  const ex = day?.exercises.find(e => e.id === exId);
   const metaEl = document.getElementById('rep-goal-meta-' + exId);
   if (metaEl && ex) metaEl.textContent = activeSession.sets[exId].length + ' sets · ' + range;
 
   // Refresh all per-set indicators for this exercise
   activeSession.sets[exId]?.forEach((_, si) => updateRepIndicator(exId, si));
 
+  // Directional weight nudge
+  const _parseRange = r => { const p = (r || '').split(/[–\-]/); return [parseInt(p[0]) || 0, parseInt(p[1]) || parseInt(p[0]) || 0]; };
+  const [oldMin, oldMax] = _parseRange(oldRange);
+  const [newMin, newMax] = _parseRange(range);
+  const oldMid = (oldMin + oldMax) / 2;
+  const newMid = (newMin + newMax) / 2;
+  if (newMid < oldMid - 0.5)      _showWeightNudge(exId, 'up');
+  else if (newMid > oldMid + 0.5) _showWeightNudge(exId, 'down');
+
   closeRepRangeSheet();
   showToast('Rep target → ' + range);
+}
+
+function _showWeightNudge(exId, direction) {
+  const exEl = document.getElementById('session-ex-' + exId);
+  if (!exEl) return;
+
+  // Remove any existing nudge for this exercise
+  exEl.querySelector('.weight-nudge-banner')?.remove();
+
+  const icon  = direction === 'up' ? '⚡' : '↓';
+  const line1 = direction === 'up' ? 'Fewer reps = heavier weight.' : 'More reps = lighter weight.';
+  const line2 = direction === 'up' ? 'Increase your load.'          : 'Reduce your load.';
+
+  const nudge = document.createElement('div');
+  nudge.className = 'weight-nudge-banner';
+  nudge.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-top:2px solid rgba(245,158,11,0.35);background:rgba(245,158,11,0.07);overflow:hidden;max-height:0;transition:max-height 0.3s ease;';
+  nudge.innerHTML = `
+    <span style="font-size:16px;line-height:1.3;flex-shrink:0;margin-top:1px;">${icon}</span>
+    <div style="flex:1;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:#f59e0b;letter-spacing:0.3px;">${line1}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:#c47d00;letter-spacing:0.3px;">${line2}</div>
+    </div>
+    <button onclick="this.closest('.weight-nudge-banner').remove()" style="background:none;border:none;color:#f59e0b;font-size:18px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;opacity:0.7;">×</button>
+  `;
+
+  const setLabels = exEl.querySelector('.set-labels');
+  if (setLabels) setLabels.after(nudge);
+  else exEl.prepend(nudge);
+
+  // Slide in
+  requestAnimationFrame(() => { nudge.style.maxHeight = '70px'; });
+
+  // Auto-dismiss after 6s
+  setTimeout(() => {
+    nudge.style.transition = 'max-height 0.3s ease, opacity 0.3s ease';
+    nudge.style.maxHeight = '0';
+    nudge.style.opacity = '0';
+    setTimeout(() => nudge.remove(), 300);
+  }, 6000);
 }
 
 function applyCustomRepRange(exId) {
