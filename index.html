@@ -778,17 +778,21 @@
   .set-input:focus { border-color: var(--red); }
   .set-input::placeholder { color: #888; }
 
-  /* Weight cell — wraps input + persistent prev-session label */
-  .weight-cell { display: flex; flex-direction: column; width: 100%; }
+  /* Weight cell — contains input; prev label floats inside it without affecting row height */
+  .weight-cell { position: relative; width: 100%; }
 
   .prev-set-label {
+    position: absolute;
+    bottom: 3px;
+    left: 1px;
+    right: 1px;
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 10px;
-    color: #555;
+    font-size: 9px;
+    color: #5a5a5a;
     text-align: center;
     letter-spacing: 0.3px;
-    margin-top: 2px;
     line-height: 1;
+    pointer-events: none;
   }
 
 
