@@ -5039,7 +5039,7 @@ function buildOverloadHint(exId) {
   // Only motivational/consistency messages get the gold shimmer
   const isMotivational = /consistency|maintain and build quality/i.test(info.reason);
   const reasonHTML = isMotivational
-    ? `${reasonHTML}`
+    ? `<span class="overload-reason">${info.reason}</span>`
     : info.reason;
 
   if (info.changed && info.newWeight > info.lastWeight) {
