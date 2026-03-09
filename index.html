@@ -5394,6 +5394,7 @@ function getLastSetData(exId, setIndex) {
 }
 
 function updateSet(exId, setIndex, field, value) {
+  if (!activeSession?.sets[exId]?.[setIndex]) return;
   activeSession.sets[exId][setIndex][field] = value;
   updateSessionProgress();
 }
