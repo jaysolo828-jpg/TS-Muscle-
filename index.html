@@ -1810,7 +1810,7 @@
     <div class="week-dots" id="week-dots"></div>
   </div>
 
-  <div class="section-title">YOUR <span>PROGRAM</span></div>
+  <div class="section-title">YOUR <span>PROGRAM</span><span id="home-split-badge" style="margin-left:auto; font-size:10px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.3); color:var(--red); padding:2px 9px; border-radius:20px; letter-spacing:1.5px; font-weight:700; font-family:'Barlow Condensed',sans-serif;"></span></div>
 
   <div id="day-cards"></div>
 </div>
@@ -4253,6 +4253,13 @@ function renderHome() {
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
   ).length;
   document.getElementById('stat-sessions').textContent = realSessions;
+
+  // Update split type badge next to "YOUR PROGRAM"
+  const splitBadge = document.getElementById('home-split-badge');
+  if (splitBadge) {
+    const splitLabels = { ul: 'UPPER / LOWER', ppl: 'PUSH / PULL / LEGS', fullbody: 'FULL BODY' };
+    splitBadge.textContent = splitLabels[state.splitType || 'ul'] || 'UPPER / LOWER';
+  }
 
   // Show paused state on week and streak cards
   const isPaused = state.programPaused;
