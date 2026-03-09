@@ -778,6 +778,45 @@
   .set-input:focus { border-color: var(--red); }
   .set-input::placeholder { color: #888; }
 
+  /* Weight cell — wraps input + prev label + quick-adjust strip */
+  .weight-cell { display: flex; flex-direction: column; gap: 0; width: 100%; }
+
+  .prev-set-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    color: #555;
+    text-align: center;
+    letter-spacing: 0.5px;
+    margin-top: 3px;
+    line-height: 1;
+  }
+
+  .weight-adj-strip {
+    display: flex;
+    gap: 2px;
+    margin-top: 4px;
+  }
+  .weight-adj-btn {
+    flex: 1;
+    background: var(--dark3);
+    border: 1px solid var(--dark4);
+    border-radius: 5px;
+    color: var(--gray);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    padding: 4px 0;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .weight-adj-btn:active {
+    background: rgba(204,32,39,0.18);
+    color: var(--cream);
+    border-color: rgba(204,32,39,0.4);
+  }
+
   /* Larger touch target for set done button on mobile */
   /* MUSIC APP SELECTOR */
   .music-app-btn {
@@ -2136,7 +2175,8 @@
     <div style="font-family:'Bebas Neue',cursive; font-size:30px; color:#ffe066; letter-spacing:3px; margin-bottom:4px;">PERSONAL RECORD</div>
     <div id="pr-modal-exercise" style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--gray-light); margin-bottom:12px;"></div>
     <div id="pr-modal-detail" style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); margin-bottom:6px;"></div>
-    <div id="pr-modal-improvement" style="font-family:'Barlow Condensed',sans-serif; font-size:15px; color:#f0a500; font-weight:700; letter-spacing:1px; margin-bottom:20px; min-height:20px;"></div>
+    <div id="pr-modal-improvement" style="font-family:'Barlow Condensed',sans-serif; font-size:15px; color:#f0a500; font-weight:700; letter-spacing:1px; margin-bottom:6px; min-height:20px;"></div>
+    <div id="pr-modal-1rm" style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:#888; letter-spacing:0.5px; margin-bottom:18px; min-height:16px;"></div>
     <button onclick="document.getElementById('pr-modal').style.display='none'" style="background:#f0a500; border:none; color:#000; padding:12px 32px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">LET'S GO! 💪</button>
   </div>
 </div>
@@ -4415,6 +4455,16 @@ function showPRModal(exName, weight, reps, improvement) {
       impEl.textContent = 'First time hitting this weight — new benchmark set!';
     }
   }
+  const oneRmEl = document.getElementById('pr-modal-1rm');
+  if (oneRmEl) {
+    // Epley formula: estimated 1RM = weight × (1 + reps / 30)
+    if (reps > 1) {
+      const est1rm = Math.round(weight * (1 + reps / 30));
+      oneRmEl.textContent = `Est. 1RM: ~${est1rm} lbs (Epley)`;
+    } else {
+      oneRmEl.textContent = '';
+    }
+  }
   const modal = document.getElementById('pr-modal');
   modal.style.display = 'flex';
   modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
@@ -5305,8 +5355,17 @@ function renderSession() {
       setsHTML += `
         <div class="set-row" id="set-row-${ex.id}-${si}">
           <div class="set-num">${si + 1}</div>
-          <input type="number" inputmode="decimal" class="set-input" placeholder="${weightPlaceholder || '0'}"
-            value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
+          <div class="weight-cell">
+            <input type="number" inputmode="decimal" class="set-input" id="weight-input-${ex.id}-${si}" placeholder="${weightPlaceholder || '0'}"
+              value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
+            ${lastData ? `<div class="prev-set-label">prev: ${lastData.weight} × ${lastData.reps}</div>` : ''}
+            ${!set.done ? `<div class="weight-adj-strip">
+              <button class="weight-adj-btn" onclick="adjustSetWeight('${ex.id}',${si},-5)">−5</button>
+              <button class="weight-adj-btn" onclick="adjustSetWeight('${ex.id}',${si},-2.5)">−2½</button>
+              <button class="weight-adj-btn" onclick="adjustSetWeight('${ex.id}',${si},2.5)">+2½</button>
+              <button class="weight-adj-btn" onclick="adjustSetWeight('${ex.id}',${si},5)">+5</button>
+            </div>` : ''}
+          </div>
           <div style="position:relative;">
             <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
               placeholder="${repsPlaceholder || _goalReps.split('–')[0]}"
@@ -5430,6 +5489,21 @@ function getLastSetData(exId, setIndex) {
 
 function updateSet(exId, setIndex, field, value) {
   activeSession.sets[exId][setIndex][field] = value;
+  updateSessionProgress();
+}
+
+function adjustSetWeight(exId, setIndex, delta) {
+  const sets = activeSession.sets[exId];
+  if (!sets?.[setIndex] || sets[setIndex].done) return;
+  const inp = document.getElementById(`weight-input-${exId}-${setIndex}`);
+  const lastData = getLastSetData(exId, setIndex);
+  const base = parseFloat(sets[setIndex].weight)
+    || (inp ? parseFloat(inp.placeholder) : 0)
+    || parseFloat(lastData?.weight)
+    || 0;
+  const newVal = Math.max(0, Math.round((base + delta) * 10) / 10);
+  sets[setIndex].weight = newVal;
+  if (inp) inp.value = newVal;
   updateSessionProgress();
 }
 
@@ -7788,9 +7862,14 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.3.2';
+const APP_VERSION = '1.3.3';
 
 const APP_CHANGELOG = {
+  '1.3.3': [
+    'New: Weight quick-adjust buttons (−5, −2½, +2½, +5) on every set row — no keyboard needed for small adjustments',
+    'New: Persistent "prev: X × Y" label under each weight input so last session data stays visible while you type',
+    'New: Estimated 1RM shown in the PR celebration modal using the Epley formula',
+  ],
   '1.3.2': [
     'New: Superset pairing — tap PAIR on any exercise during a workout to link it with another exercise',
     'New: Choose to keep the pairing for today only, or save it for every session on that workout day',
