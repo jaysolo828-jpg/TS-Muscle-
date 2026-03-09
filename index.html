@@ -2874,9 +2874,12 @@
 </div>
 
 <!-- ALTERNATE EXERCISE MODAL -->
-<div class="modal-overlay" id="alt-modal">
+<div class="modal-overlay" id="alt-modal" onclick="if(event.target===this)closeAltModal()">
   <div class="modal" style="max-height:85vh; overflow-y:auto;">
-    <div class="modal-title">SWAP EXERCISE</div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+      <div class="modal-title" style="margin-bottom:0;">SWAP EXERCISE</div>
+      <button onclick="closeAltModal()" style="background:none; border:none; color:var(--gray); font-size:22px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
+    </div>
     <div class="modal-sub" id="alt-modal-sub">Choose an alternate</div>
 
     <!-- SWAP RESET BANNER — shown only when exercise has been renamed -->
