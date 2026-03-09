@@ -5324,7 +5324,7 @@ function renderSession() {
           <span id="rest-label-${ex.id}">START</span>
         </button>
         <button class="rest-preset rest-cycle-btn" id="rest-cycle-${ex.id}" data-secs="90" onclick="cycleRestDuration('${ex.id}')">1:30 ↻</button>
-        <input id="rest-custom-inp-${ex.id}" class="rest-custom-inp" type="text" inputmode="numeric" placeholder="M:SS" maxlength="5" style="display:none;" onkeydown="if(event.key==='Enter'){event.preventDefault();submitCustomRestInline('${ex.id}')}" onblur="submitCustomRestInline('${ex.id}')">
+        <input id="rest-custom-inp-${ex.id}" class="rest-custom-inp" type="text" inputmode="numeric" placeholder="M:SS" maxlength="5" style="display:none;" onkeydown="if(event.key==='Enter'){event.preventDefault();submitCustomRestInline('${ex.id}')}">
       </div>
     `;
 
@@ -5731,7 +5731,6 @@ function submitCustomRestInline(exId) {
   btn.dataset.secs = secs;
   btn.textContent  = Math.floor(secs / 60) + ':' + ('0' + (secs % 60)).slice(-2) + ' ↻';
   input.style.display = 'none';
-  startRestTimer(exId, secs);
 }
 
 function startRestTimer(exId, seconds) {
