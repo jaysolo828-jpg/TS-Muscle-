@@ -7349,15 +7349,35 @@ function renderHistory() {
     }
     updateBtn();
 
+    const older = sorted.slice(1);
+    const PAGE = 10;
+    let page = 0;
+
+    function appendPage() {
+      const slice = older.slice(page * PAGE, (page + 1) * PAGE);
+      slice.forEach(entry => renderHistoryItem(entry, olderDiv, loadMoreBtn));
+      page++;
+      if (page * PAGE >= older.length) loadMoreBtn.remove();
+      else loadMoreBtn.textContent = `Load ${Math.min(PAGE, older.length - page * PAGE)} more (${older.length - page * PAGE} remaining)`;
+    }
+
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.style.cssText = 'width:100%;margin:8px 0 0;padding:10px;background:transparent;border:1px solid var(--dark4);color:var(--gray);border-radius:8px;font-size:13px;cursor:pointer;letter-spacing:0.5px;';
+
     btn.onclick = () => {
       if (!expanded) {
         olderDiv = document.createElement('div');
         olderDiv.id = 'history-older';
-        sorted.slice(1).forEach(entry => renderHistoryItem(entry, olderDiv, null));
+        page = 0;
+        loadMoreBtn.textContent = `Load ${Math.min(PAGE, older.length - PAGE)} more (${older.length - PAGE} remaining)`;
+        olderDiv.appendChild(loadMoreBtn);
+        loadMoreBtn.onclick = appendPage;
         container.appendChild(olderDiv);
+        appendPage();
         expanded = true;
       } else {
         if (olderDiv) { olderDiv.remove(); olderDiv = null; }
+        page = 0;
         expanded = false;
       }
       updateBtn();
