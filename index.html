@@ -3792,6 +3792,7 @@ function saveState() {
 // NAVIGATION
 // ============================================================
 function showScreen(name, el) {
+  if (document.getElementById('workout-session').classList.contains('active')) return;
   const appContent = document.querySelector(".app-content");
   if (appContent) appContent.scrollTop = 0;
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -11213,6 +11214,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (firstActive) movePill(firstActive);
   document.querySelectorAll('.nav-item').forEach(function(btn) {
     btn.addEventListener('click', function() {
+      if (document.getElementById('workout-session').classList.contains('active')) return;
       movePill(btn);
       if (btn.getAttribute('aria-label') === 'Home') restartGlow();
     });
