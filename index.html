@@ -4776,6 +4776,7 @@ function getProgressiveWeight(exId, dayId) {
 
   if (allSets.length === 0) return state.startingWeights?.[exId] ? String(state.startingWeights[exId]) : '';
 
+
   // Use most recent session's last weight as baseline
   const lastSessionSets = (sameDaySessions[0].sets[exId] || []).filter(s => s.done);
   const lastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
@@ -4787,8 +4788,11 @@ function getProgressiveWeight(exId, dayId) {
     ? rpeSets.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / rpeSets.length
     : null;
 
-  // Avg reps across window
-  const avgReps = allSets.reduce((sum, s) => sum + (parseInt(s.reps) || 0), 0) / allSets.length;
+  // Avg reps across window — only count sets where reps were actually logged
+  // (sets marked done without entering reps default to "" which would falsely drag the average to 0)
+  const repLoggedSets = allSets.filter(s => parseInt(s.reps) > 0);
+  if (repLoggedSets.length === 0) return String(lastWeight); // no rep data: maintain weight, no hint
+  const avgReps = repLoggedSets.reduce((sum, s) => sum + parseInt(s.reps), 0) / repLoggedSets.length;
 
   // For trend mode: check consistency — how many sessions had high RPE
   let highRPESessionCount = 0;
