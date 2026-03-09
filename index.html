@@ -6376,10 +6376,58 @@ function discardSession() {
   showToast('Workout discarded');
 }
 
+function showIncompleteWarning(setCount, exCount) {
+  const overlay = document.createElement('div');
+  overlay.id = 'incomplete-warning-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  const setsLabel = setCount === 1 ? '1 unchecked set' : `${setCount} unchecked sets`;
+  const exLabel = exCount === 1 ? '1 exercise' : `${exCount} exercises`;
+  overlay.innerHTML = `
+    <div style="background:var(--dark2);border:1px solid #f39c12;border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">⚠️</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">SETS NOT DONE</div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.5;margin-bottom:24px;">You have <span style="color:#f39c12;font-weight:700;">${setsLabel}</span> across ${exLabel}.<br>They won't be counted in your results.</div>
+      <button onclick="document.getElementById('incomplete-warning-modal').remove();proceedEndSession();"
+        style="width:100%;background:#f39c12;border:none;color:#000;padding:16px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;margin-bottom:10px;">
+        FINISH ANYWAY
+      </button>
+      <button onclick="document.getElementById('incomplete-warning-modal').remove();"
+        style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">
+        GO BACK
+      </button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function proceedEndSession() {
+  const hasData = Object.values(activeSession.sets || {}).some(sets =>
+    sets.some(s => s.done && s.reps)
+  );
+  if (hasData) {
+    showSessionWrapUp();
+  } else {
+    finalizeEndSession(true);
+  }
+}
+
 function endSession(save) {
   clearAllRestTimers();
   stopSessionTimer();
   clearRepIndicators();
+  // Warn if any non-skipped exercise has unchecked sets
+  if (save && activeSession) {
+    const skipped = activeSession.skipped || {};
+    let incompleteSets = 0, incompleteExercises = 0;
+    Object.entries(activeSession.sets).forEach(([exId, sets]) => {
+      if (skipped[exId]) return;
+      const missing = sets.filter(s => !s.done).length;
+      if (missing > 0) { incompleteSets += missing; incompleteExercises++; }
+    });
+    if (incompleteSets > 0) {
+      showIncompleteWarning(incompleteSets, incompleteExercises);
+      return;
+    }
+  }
   // Show wrap-up summary before saving
   if (save && activeSession) {
     const hasData = Object.values(activeSession.sets || {}).some(sets =>
