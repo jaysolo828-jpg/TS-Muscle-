@@ -779,7 +779,39 @@
   .set-input::placeholder { color: #888; }
 
   /* Previous session collapsible panel */
-.prev-session-btn {
+.rpe-info-btn {
+    background: none;
+    border: none;
+    color: var(--gray);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .rpe-info-btn:active { color: var(--cream); }
+  .rpe-info-i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--gray);
+    color: var(--dark1);
+    font-size: 9px;
+    font-weight: 900;
+    font-style: italic;
+    line-height: 1;
+  }
+  .rpe-info-btn:active .rpe-info-i { background: var(--cream); }
+  .prev-session-btn {
     background: none;
     border: none;
     color: var(--gray);
@@ -4586,6 +4618,21 @@ function togglePrevPanel(exId) {
   if (arrow) arrow.textContent = opening ? '▴' : '▾';
 }
 
+function toggleRpeSheet() {
+  const sheet = document.getElementById('rpe-sheet');
+  const overlay = document.getElementById('rpe-sheet-overlay');
+  if (!sheet) return;
+  const opening = sheet.style.display === 'none';
+  if (opening) {
+    sheet.style.display = 'block';
+    overlay.style.display = 'block';
+    requestAnimationFrame(() => { sheet.style.transform = 'translateY(0)'; });
+  } else {
+    sheet.style.transform = 'translateY(100%)';
+    setTimeout(() => { sheet.style.display = 'none'; overlay.style.display = 'none'; }, 300);
+  }
+}
+
 function adjustPlateCalcWeight(exId, delta) {
   const barType = exId === 'ez-curl' ? 'ez' : 'standard';
   const barWeight = BAR_WEIGHTS[barType];
@@ -5379,7 +5426,7 @@ function renderSession() {
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
         <div class="set-label">Reps <span style="color:var(--red);font-size:11px;font-weight:700;">(${_goalReps})</span></div>
-        <div class="set-label" title="Rate of Perceived Exertion: 6=easy, 8=hard, 9=very hard, 10=max" style="cursor:help;">RPE ⓘ</div>
+        <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <span class="rpe-info-i">i</span></button></div>
         <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
       </div>
       ${_prevPanelHTML}
@@ -11387,6 +11434,24 @@ document.addEventListener('DOMContentLoaded', () => {
       <button onclick="confirmRestoreDefaults()" style="flex:1; background:rgba(204,32,39,0.2); border:1px solid var(--red); color:var(--red); padding:14px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer;">RESTORE</button>
     </div>
   </div>
+</div>
+
+<!-- RPE info bottom sheet -->
+<div id="rpe-sheet-overlay" onclick="toggleRpeSheet()" style="display:none; position:fixed; inset:0; z-index:99990; background:rgba(0,0,0,0.5);"></div>
+<div id="rpe-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99991; background:var(--dark2); border-radius:20px 20px 0 0; padding:24px 20px 40px; box-shadow:0 -4px 30px rgba(0,0,0,0.6); transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1);">
+  <div style="width:36px; height:4px; background:var(--dark4); border-radius:2px; margin:0 auto 20px;"></div>
+  <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:var(--gray); letter-spacing:2px; margin-bottom:10px;">WHAT IS RPE?</div>
+  <div style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:16px;">
+    Rate of Perceived Exertion — how hard a set felt on a <strong>1–10 scale</strong>. Log it after every set so the app can track your effort over time.
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:0.3px; margin-bottom:20px;">
+    <div style="color:var(--gray);">RPE 6 — 4+ reps left</div>
+    <div style="color:var(--gray);">RPE 7 — 3 reps left</div>
+    <div style="color:var(--gray);">RPE 8 — 2 reps left</div>
+    <div style="color:var(--gray);">RPE 9 — 1 rep left</div>
+    <div style="color:var(--red); grid-column:1/-1;">RPE 10 — absolute max, nothing left</div>
+  </div>
+  <button onclick="toggleRpeSheet()" style="width:100%; background:var(--dark3); border:none; border-radius:12px; padding:14px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1px; cursor:pointer;">GOT IT</button>
 </div>
 
 </body>
