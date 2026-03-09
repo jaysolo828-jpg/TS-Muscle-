@@ -4304,29 +4304,57 @@ function checkForPR(exId, set) {
 }
 
 function recalcPRForExercise(exId) {
-  let best = null;
+  const appearsInHistPRs = (state.history || []).some(entry => (entry.prs || []).includes(exId));
+
+  let histBest = null;
   (state.history || []).forEach(entry => {
     (entry.sets?.[exId] || []).filter(s => s.done && s.weight && s.reps).forEach(s => {
       const w = parseFloat(s.weight), r = parseInt(s.reps);
       if (!w || !r) return;
-      if (!best || w > best.weight || (w === best.weight && r > best.reps))
-        best = { weight: w, reps: r, date: entry.date };
+      if (!histBest || w > histBest.weight || (w === histBest.weight && r > histBest.reps))
+        histBest = { weight: w, reps: r, date: entry.date };
     });
   });
+
+  let sessionBest = null;
   if (activeSession?.sets?.[exId]) {
     activeSession.sets[exId].filter(s => s.done && s.weight && s.reps).forEach(s => {
       const w = parseFloat(s.weight), r = parseInt(s.reps);
       if (!w || !r) return;
-      if (!best || w > best.weight || (w === best.weight && r > best.reps))
-        best = { weight: w, reps: r, date: new Date().toISOString() };
+      if (!sessionBest || w > sessionBest.weight || (w === sessionBest.weight && r > sessionBest.reps))
+        sessionBest = { weight: w, reps: r, date: new Date().toISOString() };
     });
   }
+
+  let best = histBest;
+  if (sessionBest && (!best || sessionBest.weight > best.weight || (sessionBest.weight === best.weight && sessionBest.reps > best.reps)))
+    best = sessionBest;
+
+  // A session PR requires beating an existing history record — nothing to compare to = no PR
+  const sessionIsPR = !!(sessionBest && histBest &&
+    (sessionBest.weight > histBest.weight || (sessionBest.weight === histBest.weight && sessionBest.reps > histBest.reps)));
+
+  const hasRealPR = appearsInHistPRs || sessionIsPR;
+
   if (!state.prs) state.prs = {};
-  if (best) { state.prs[exId] = best; } else { delete state.prs[exId]; }
+  if (best) {
+    state.prs[exId] = { ...best, isBaseline: !hasRealPR };
+  } else {
+    delete state.prs[exId];
+  }
+
+  // Keep activeSession.prs in sync
+  if (activeSession?.prs) {
+    if (sessionIsPR && !activeSession.prs.includes(exId)) activeSession.prs.push(exId);
+    if (!sessionIsPR) activeSession.prs = activeSession.prs.filter(id => id !== exId);
+  }
+
   saveState();
+
+  const isRealPR = state.prs[exId] && !state.prs[exId].isBaseline;
   const persistentBadge = document.getElementById('pr-badge-' + exId);
-  if (persistentBadge) persistentBadge.style.display = state.prs[exId] ? 'inline-flex' : 'none';
-  if (!state.prs[exId]) {
+  if (persistentBadge) persistentBadge.style.display = isRealPR ? 'inline-flex' : 'none';
+  if (!isRealPR) {
     const exEl = document.getElementById('session-ex-' + exId);
     if (exEl) exEl.querySelector('.pr-flash')?.remove();
   }
@@ -5587,7 +5615,7 @@ function renderSession() {
         <div style="display:flex; flex-direction:column; gap:5px; flex:1; min-width:0; margin:0 10px;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <div class="session-ex-name">${displayName}</div>
-            ${state.prs?.[ex.id] ? `<span id="pr-badge-${ex.id}" style="font-size:11px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:2px 7px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
+            ${state.prs?.[ex.id] && !state.prs[ex.id].isBaseline ? `<span id="pr-badge-${ex.id}" style="font-size:11px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:2px 7px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
           </div>
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
