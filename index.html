@@ -4624,7 +4624,7 @@ function applyRepRange(exId, range) {
 
   // Update column header label in-place
   const labelEl = document.getElementById('rep-goal-label-' + exId);
-  if (labelEl) labelEl.innerHTML = '(' + range + ') ✎';
+  if (labelEl) labelEl.innerHTML = '(' + range + ')';
 
   // Update meta line in-place
   const metaEl = document.getElementById('rep-goal-meta-' + exId);
@@ -5482,7 +5482,7 @@ function renderSession() {
       <div class="set-labels">
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
-        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:var(--red);font-size:11px;font-weight:700;cursor:pointer;border-bottom:1px dashed rgba(204,32,39,0.45);padding-bottom:1px;" title="Edit rep target">(${_goalReps}) ✎</span></div>
+        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:var(--red);font-size:11px;font-weight:700;cursor:pointer;border-bottom:1px dashed rgba(204,32,39,0.45);padding-bottom:1px;" title="Edit rep target">(${_goalReps})</span></div>
         <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
         <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
       </div>
