@@ -2449,6 +2449,7 @@
         <button class="onboard-select-btn" onclick="selectExerciseMode('auto', this)">
           <div style="font-weight:bold;">Pick For Me</div>
           <div style="font-size:12px; color:var(--gray); margin-top:2px;">Use the recommended exercises — you can always swap later</div>
+          <div style="font-size:11px; color:#666; margin-top:5px; letter-spacing:0.3px;">Bench · Overhead Press · Machine Row · Leg Press · Romanian Deadlift</div>
         </button>
         <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)">
           <div style="font-weight:bold;">I'll Choose</div>
@@ -9748,52 +9749,72 @@ function selectSplitOnboard(type, btn) {
 const OB_PRIMARY_SLOTS = [
   {
     id: 'bench', label: 'CHEST PRESS',
+    desc: 'Primary upper body push — chest, front delts, triceps',
     options: [
       { display: 'Barbell Bench Press',  apply: 'Barbell Bench Press' },
-      { display: 'DB Bench Press',        apply: 'DB Bench Press' },
-      { display: 'Machine Chest Press',   apply: 'Machine Chest Press' },
-      { display: 'Smith Machine Bench',   apply: 'Smith Machine Bench' },
-      { display: 'Cable Chest Press',     apply: 'Cable Chest Press' },
+      { display: 'DB Bench Press',       apply: 'DB Bench Press' },
+      { display: 'Machine Chest Press',  apply: 'Machine Chest Press' },
+      { display: 'Smith Machine Bench',  apply: 'Smith Machine Bench' },
+      { display: 'Cable Chest Press',    apply: 'Cable Chest Press' },
+      { display: 'Weighted Push-Up',     apply: 'Weighted Push-Up' },
+      { display: 'Chest Dips',           apply: 'Chest Dips' },
+      { display: 'Floor Press',          apply: 'Floor Press' },
     ]
   },
   {
     id: 'ohp', label: 'SHOULDER PRESS',
+    desc: 'Overhead compound — shoulders, upper traps, triceps',
     options: [
       { display: 'Barbell OHP',             apply: 'Overhead Press (Barbell)' },
       { display: 'DB Shoulder Press',       apply: 'DB Shoulder Press' },
       { display: 'Machine Shoulder Press',  apply: 'Machine Shoulder Press' },
       { display: 'Smith Machine OHP',       apply: 'Smith Machine OHP' },
       { display: 'Arnold Press',            apply: 'Arnold Press' },
+      { display: 'Landmine Press',          apply: 'Landmine Press' },
+      { display: 'Push Press',              apply: 'Push Press' },
+      { display: 'Seated DB Press',         apply: 'Seated DB Shoulder Press' },
     ]
   },
   {
     id: 'chest-row', label: 'ROW / BACK PULL',
+    desc: 'Horizontal pull — lats, rhomboids, rear delts, biceps',
     options: [
       { display: 'Machine Row',         apply: 'Chest Supported Machine Row' },
       { display: 'Cable Row',           apply: 'Cable Row (Seated)' },
       { display: 'Barbell Row',         apply: 'Barbell Bent Over Row' },
       { display: 'Smith Machine Row',   apply: 'Smith Machine Row' },
       { display: 'Single Arm DB Row',   apply: 'Single Arm DB Row' },
+      { display: 'T-Bar Row',           apply: 'T-Bar Row' },
+      { display: 'Lat Pulldown',        apply: 'Lat Pulldown' },
+      { display: 'Inverted Row',        apply: 'Inverted Row' },
     ]
   },
   {
     id: 'legpress-a', label: 'SQUAT / LEG PRESS',
+    desc: 'Knee-dominant — quads, glutes, hamstrings',
     options: [
       { display: 'Leg Press',              apply: 'Leg Press (Mid-foot, moderate stance)' },
       { display: 'Hack Squat Machine',     apply: 'Hack Squat Machine' },
       { display: 'Smith Machine Squat',    apply: 'Smith Machine Squat' },
       { display: 'Bulgarian Split Squat',  apply: 'Bulgarian Split Squat' },
       { display: 'Goblet Squat',           apply: 'Goblet Squat' },
+      { display: 'Barbell Back Squat',     apply: 'Barbell Back Squat' },
+      { display: 'Box Squat',              apply: 'Box Squat' },
+      { display: 'DB Squat',               apply: 'Dumbbell Squat' },
     ]
   },
   {
     id: 'rdl', label: 'HIP HINGE',
+    desc: 'Hip-dominant — hamstrings, glutes, lower back',
     options: [
       { display: 'Romanian Deadlift',     apply: 'Romanian Deadlift' },
       { display: 'DB Romanian Deadlift',  apply: 'DB Romanian Deadlift' },
       { display: 'Smith Machine RDL',     apply: 'Smith Machine RDL' },
       { display: 'Cable Pull-Through',    apply: 'Cable Pull-Through' },
       { display: 'Trap Bar Deadlift',     apply: 'Trap Bar Deadlift' },
+      { display: 'Sumo Deadlift',         apply: 'Sumo Deadlift' },
+      { display: 'Single Leg RDL',        apply: 'Single Leg RDL' },
+      { display: 'Stiff-Leg Deadlift',    apply: 'Stiff-Leg Deadlift' },
     ]
   },
 ];
@@ -9816,19 +9837,21 @@ function selectExerciseMode(mode, btn) {
 
 function buildObManualSlots() {
   const panel = document.getElementById('ob-manual-select');
-  let html = '<div style="font-size:12px; color:var(--gray); margin-bottom:14px; line-height:1.6;">Select one exercise per movement. First option is the default. Type your own at the bottom of each slot if your gym has something different.</div>';
+  let html = '<div style="font-size:12px; color:var(--gray); margin-bottom:14px; line-height:1.6;">Pick one per movement — the ★ option is pre-selected. Type any name in the field below if your gym has something different.</div>';
   OB_PRIMARY_SLOTS.forEach(slot => {
     const safeId = slot.id.replace('-', '_');
     let optBtns = slot.options.map((opt, i) => {
       const sel = i === 0 ? ' selected' : '';
-      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${opt.apply.replace(/'/g, "\\'")}',this)">${opt.display}</button>`;
+      const label = i === 0 ? `★ ${opt.display}` : opt.display;
+      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${opt.apply.replace(/'/g, "\\'")}',this)">${label}</button>`;
     }).join('');
     html += `
       <div style="background:var(--dark3); border-radius:12px; padding:14px; margin-bottom:12px;">
-        <div style="font-size:11px; color:var(--red); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; margin-bottom:8px;">${slot.label}</div>
+        <div style="font-size:11px; color:var(--red); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; margin-bottom:3px;">${slot.label}</div>
+        <div style="font-size:11px; color:var(--gray); margin-bottom:10px;">${slot.desc}</div>
         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;" id="ob-slot-${safeId}-btns">${optBtns}</div>
         <input type="text" class="set-input" id="ob-slot-${safeId}-custom"
-          placeholder="My gym has something else — type it here"
+          placeholder="Or type your own exercise name…"
           oninput="handleSlotCustomInput('${slot.id}',this)"
           style="width:100%; padding:9px 12px; text-align:left; font-size:13px;"/>
       </div>`;
