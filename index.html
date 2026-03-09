@@ -2253,6 +2253,42 @@
 </div>
 
 <!-- ============================================================
+     SPLIT TYPE MODAL
+     ============================================================ -->
+<div id="split-type-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid var(--dark3);">
+    <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">SPLIT TYPE</div>
+    <div style="font-size:13px; color:var(--gray); margin-bottom:16px; line-height:1.6;">Your workout days will be restructured. Your history and weights are preserved — any custom exercise swaps will reset.</div>
+
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+      <button class="settings-day-btn" id="stb-ul" onclick="selectSplitTypeSettings('ul', this)">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Upper / Lower</span>
+        </div>
+        <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">4 days. Each muscle group trained twice per week. Classic hypertrophy split.</div>
+      </button>
+      <button class="settings-day-btn" id="stb-ppl" onclick="selectSplitTypeSettings('ppl', this)">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Push / Pull / Legs</span>
+        </div>
+        <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">3 days. One focused session per movement pattern. Push, Pull, and Legs.</div>
+      </button>
+      <button class="settings-day-btn" id="stb-fullbody" onclick="selectSplitTypeSettings('fullbody', this)">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Full Body</span>
+        </div>
+        <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">3 days. Every major muscle group trained each session. Best for 2–3 days/week.</div>
+      </button>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <button onclick="closeSplitTypeModal()" style="flex:1; background:var(--dark3); border:1px solid #444; color:var(--gray); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
+      <button onclick="applySplitType()" style="flex:2; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">APPLY</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
      ONBOARDING MODAL
      ============================================================ -->
 <div id="onboarding-modal" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:9900; overflow-y:auto;">
@@ -2276,6 +2312,7 @@
       <div class="onboard-dot" data-step="4"></div>
       <div class="onboard-dot" data-step="5"></div>
       <div class="onboard-dot" data-step="6"></div>
+      <div class="onboard-dot" data-step="7"></div>
     </div>
 
     <!-- STEP 0: New or Returning? -->
@@ -2363,8 +2400,38 @@
       </div>
     </div>
 
-    <!-- STEP 3: Training Days -->
+    <!-- STEP 3: Split Type -->
     <div id="onboard-step-3" class="onboard-step" style="display:none;">
+      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR SPLIT</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:24px; line-height:1.6;">How do you want to structure your training? This determines how your workout days are organized.</div>
+
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('ul', this)">
+          <div style="font-weight:bold;">Upper / Lower</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">2 upper days + 2 lower days. Each muscle group trained twice per week. Best for hypertrophy. 4 days optimal.</div>
+        </button>
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('ppl', this)">
+          <div style="font-weight:bold;">Push / Pull / Legs</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">One focused session per movement pattern. Push (chest/shoulder/tri), Pull (back/bi), Legs. 3 days optimal.</div>
+        </button>
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('fullbody', this)">
+          <div style="font-weight:bold;">Full Body</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Every major muscle group trained each session. Great for 2–3 days per week. Maximizes frequency.</div>
+        </button>
+      </div>
+
+      <input type="hidden" id="ob-split-type" value=""/>
+
+      <div id="ob-split-tip" style="display:none; background:var(--dark3); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--gray); margin-bottom:14px; line-height:1.6;"></div>
+
+      <div class="ob-button-row">
+        <button onclick="onboardBack(2)" class="onboard-back-btn">← BACK</button>
+        <button onclick="onboardNext(4)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Training Days -->
+    <div id="onboard-step-4" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TRAINING DAYS</div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:16px; line-height:1.6;">How many days per week can you realistically commit? Be honest — consistency beats ambition.</div>
 
@@ -2411,13 +2478,13 @@
       <div id="ob-days-warning" style="display:none; background:rgba(243,156,18,0.1); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--warning); margin-bottom:14px; line-height:1.6;"></div>
 
       <div class="ob-button-row">
-        <button onclick="onboardBack(2)" class="onboard-back-btn">← BACK</button>
-        <button onclick="onboardNext(4)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
+        <button onclick="onboardBack(3)" class="onboard-back-btn">← BACK</button>
+        <button onclick="onboardNext(5)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
       </div>
     </div>
 
-    <!-- STEP 4: Test Week -->
-    <div id="onboard-step-4" class="onboard-step" style="display:none;">
+    <!-- STEP 5: Test Week -->
+    <div id="onboard-step-5" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TEST WEEK</div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:20px;">Before we set your working weights, you need a baseline.</div>
 
@@ -2441,13 +2508,13 @@
       </div>
 
       <div class="ob-button-row">
-        <button onclick="onboardBack(3)" class="onboard-back-btn">← BACK</button>
-        <button onclick="onboardNext(5)" class="onboard-next-btn" style="flex:1;">GOT IT →</button>
+        <button onclick="onboardBack(4)" class="onboard-back-btn">← BACK</button>
+        <button onclick="onboardNext(6)" class="onboard-next-btn" style="flex:1;">GOT IT →</button>
       </div>
     </div>
 
-    <!-- STEP 4: Starting Weights -->
-    <div id="onboard-step-5" class="onboard-step" style="display:none;">
+    <!-- STEP 6: Starting Weights -->
+    <div id="onboard-step-6" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">STARTING WEIGHTS</div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:8px; line-height:1.6;">We only need your <strong style="color:var(--cream);">compound lifts</strong> — the big movements where starting weight matters most. Isolations like curls and laterals are auto-set based on your experience level.</div>
       <div style="font-size:11px; color:var(--gray); background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:16px;">These are <strong style="color:var(--cream);">test week weights</strong> — conservative on purpose. The app will adjust after week 1.</div>
@@ -2483,13 +2550,13 @@
       </div>
 
       <div class="ob-button-row">
-        <button onclick="onboardBack(4)" class="onboard-back-btn">← BACK</button>
-        <button onclick="onboardNext(6)" class="onboard-next-btn" style="flex:1;">FINISH SETUP →</button>
+        <button onclick="onboardBack(5)" class="onboard-back-btn">← BACK</button>
+        <button onclick="onboardNext(7)" class="onboard-next-btn" style="flex:1;">FINISH SETUP →</button>
       </div>
     </div>
 
-    <!-- STEP 5: Done -->
-    <div id="onboard-step-6" class="onboard-step" style="display:none; text-align:center; padding-top:20px;">
+    <!-- STEP 7: Done -->
+    <div id="onboard-step-7" class="onboard-step" style="display:none; text-align:center; padding-top:20px;">
       <div style="font-size:48px; margin-bottom:16px;">💪</div>
       <div style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:3px; margin-bottom:8px;">YOU'RE SET UP</div>
       <div id="ob-greeting" style="font-size:15px; color:var(--gray); margin-bottom:24px; line-height:1.6;"></div>
@@ -2736,6 +2803,14 @@
       <div id="training-days-sub" class="settings-sub">Currently: all 4 days active</div>
     </div>
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="8" y="14" width="3" height="3" rx="0.5"/></svg></div>
+  </div>
+
+  <div class="settings-item" onclick="openSplitTypeModal()">
+    <div>
+      <div class="settings-label">Split Type</div>
+      <div id="split-type-sub" class="settings-sub">Currently: Upper / Lower</div>
+    </div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
   </div>
 
   <div class="settings-item" onclick="openGoalPickerFromSettings()">
@@ -3540,6 +3615,63 @@ const DEFAULT_PROGRAM = [
   }
 ];
 
+// ── PPL PROGRAM (Push / Pull / Legs — 3 days) ─────────────────
+// Reuses the same exercise objects from DEFAULT_PROGRAM (deep-copied at load time)
+const PPL_PROGRAM = [
+  {
+    id: 'push', day: 'Monday', badge: 'PUSH', name: 'Chest + Shoulders + Triceps',
+    exercises: DEFAULT_PROGRAM[0].exercises   // bench, incline, flye, pushdown, overhead-tri, lateral
+  },
+  {
+    id: 'pull', day: 'Wednesday', badge: 'PULL', name: 'Back + Biceps + Rear Delts',
+    exercises: DEFAULT_PROGRAM[2].exercises   // chest-row, pulldown, db-row, ez-curl, preacher, rear-delt
+  },
+  {
+    id: 'legs', day: 'Friday', badge: 'LEGS', name: 'Quad + Hamstrings + Glutes',
+    exercises: DEFAULT_PROGRAM[1].exercises   // legpress-a, rdl, leg-ext-a, ham-curl-a, hip-thrust-a, calf-a
+  }
+];
+
+// ── FULL BODY PROGRAM (3 days — A/B/C rotation) ───────────────
+// Each session hits upper + lower. Same exercise pool, redistributed across 3 days.
+const FULLBODY_PROGRAM = [
+  {
+    id: 'fullA', day: 'Monday', badge: 'FULL BODY A', name: 'Press + Row + Squat',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[0], // bench
+      DEFAULT_PROGRAM[2].exercises[0], // chest-row
+      DEFAULT_PROGRAM[1].exercises[0], // legpress-a
+      DEFAULT_PROGRAM[0].exercises[5], // lateral
+      DEFAULT_PROGRAM[2].exercises[3], // ez-curl
+      DEFAULT_PROGRAM[1].exercises[2], // leg-ext-a
+    ]
+  },
+  {
+    id: 'fullB', day: 'Wednesday', badge: 'FULL BODY B', name: 'Incline + Pull + Hinge',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[1], // incline
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown
+      DEFAULT_PROGRAM[1].exercises[1], // rdl
+      DEFAULT_PROGRAM[0].exercises[4], // overhead-tri
+      DEFAULT_PROGRAM[2].exercises[4], // preacher
+      DEFAULT_PROGRAM[1].exercises[3], // ham-curl-a
+    ]
+  },
+  {
+    id: 'fullC', day: 'Friday', badge: 'FULL BODY C', name: 'Fly + Row + Glute',
+    exercises: [
+      DEFAULT_PROGRAM[1].exercises[4], // hip-thrust-a
+      DEFAULT_PROGRAM[2].exercises[2], // db-row
+      DEFAULT_PROGRAM[3].exercises[0], // legpress-b
+      DEFAULT_PROGRAM[0].exercises[2], // flye
+      DEFAULT_PROGRAM[2].exercises[5], // rear-delt
+      DEFAULT_PROGRAM[1].exercises[5], // calf-a
+    ]
+  }
+];
+
+const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBODY_PROGRAM };
+
 const MUSCLE_MAP = {
   bench: 'CHEST', incline: 'CHEST', flye: 'CHEST',
   pushdown: 'TRICEPS', 'overhead-tri': 'TRICEPS',
@@ -4208,7 +4340,7 @@ function renderHome() {
   const realSessionsOrdered = (state.history || [])
     .filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done)))
     .sort((a, b) => new Date(a.date) - new Date(b.date));
-  const weekRemainder = (state.totalSessions || 0) % 4;
+  const weekRemainder = (state.totalSessions || 0) % (state.trainingDaysPerWeek || state.program?.length || 4);
   const sessionsThisWeek = weekRemainder === 0 ? [] : realSessionsOrdered.slice(-weekRemainder);
   const completedThisWeekIds = new Set(sessionsThisWeek.map(e => e.dayId));
 
@@ -6493,7 +6625,21 @@ function doCustomSwap(permanent) {
 
 function doSwap(altName, permanent) {
   if (!pendingSwap) return;
-  const { dayId, exId } = pendingSwap;
+  const { dayId, exId, onboardMode } = pendingSwap;
+
+  // Onboard mode: update the program exercise name + refresh the UI label
+  if (onboardMode) {
+    const day = state.program.find(d => d.id === dayId);
+    if (day) {
+      const ex = day.exercises.find(e => e.id === exId);
+      if (ex) ex.name = altName;
+    }
+    const label = document.getElementById('ob-ex-name-' + exId);
+    if (label) label.textContent = altName;
+    closeAltModal();
+    showToast('Exercise updated ✓');
+    return;
+  }
 
   if (permanent) {
     const day = state.program.find(d => d.id === dayId);
@@ -8173,9 +8319,14 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.3.3';
+const APP_VERSION = '1.4.0';
 
 const APP_CHANGELOG = {
+  '1.4.0': [
+    'New: Choose your training split during setup — Upper / Lower, Push / Pull / Legs, or Full Body',
+    'New: Swap exercises before your first workout — tap ALT on any exercise in the Starting Weights step',
+    'New: Change your split type any time from Settings → Split Type',
+  ],
   '1.3.3': [
     'New: Persistent "prev: X × Y" label under each weight input so last session data stays visible while you type',
     'New: Estimated 1RM shown in the PR celebration modal using the Epley formula',
@@ -8908,7 +9059,7 @@ function selectDaysPerWeek(n, btn) {
 function updateDaysExplanation(n) {
   const el = document.getElementById('days-explanation');
   if (!el) return;
-  const text = DAYS_EXPLANATIONS[n];
+  const text = getSplitAwareDayExplanation(n);
   if (text) { el.textContent = text; el.style.display = 'block'; } else { el.style.display = 'none'; }
 }
 
@@ -8920,6 +9071,52 @@ function applyTrainingDays() {
   updateTrainingDaysSub();
   renderHome();
   showToast(`Training set to ${pendingDaysCount} day${pendingDaysCount !== 1 ? 's' : ''}/week ✓`);
+}
+
+// ── Split Type Modal (Settings) ──────────────────────────────
+let pendingSplitType = null;
+
+function openSplitTypeModal() {
+  pendingSplitType = state.splitType || 'ul';
+  document.querySelectorAll('#split-type-modal .settings-day-btn').forEach(b => b.classList.remove('selected'));
+  const activeBtn = document.getElementById('stb-' + pendingSplitType);
+  if (activeBtn) activeBtn.classList.add('selected');
+  document.getElementById('split-type-modal').style.display = 'flex';
+}
+
+function closeSplitTypeModal() {
+  document.getElementById('split-type-modal').style.display = 'none';
+}
+
+function selectSplitTypeSettings(type, btn) {
+  pendingSplitType = type;
+  document.querySelectorAll('#split-type-modal .settings-day-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function applySplitType() {
+  if (!pendingSplitType) return;
+  state.splitType = pendingSplitType;
+  state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[pendingSplitType] || DEFAULT_PROGRAM));
+  // Reset training days to match the new split's default if current days > program length
+  const programLen = state.program.length;
+  if (!state.trainingDaysPerWeek || state.trainingDaysPerWeek > programLen * 2) {
+    state.trainingDaysPerWeek = programLen;
+  }
+  saveState();
+  closeSplitTypeModal();
+  updateSplitTypeSub();
+  updateTrainingDaysSub();
+  renderHome();
+  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body' };
+  showToast(`Split changed to ${splitLabels[pendingSplitType]} ✓`);
+}
+
+function updateSplitTypeSub() {
+  const el = document.getElementById('split-type-sub');
+  if (!el) return;
+  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body' };
+  el.textContent = 'Currently: ' + (splitLabels[state.splitType] || 'Upper / Lower');
 }
 
 function setWeightIncrement(size) {
@@ -9285,7 +9482,7 @@ function skipWeightSetup() {
     state.startingWeights[id] = defaults[exp] || defaults.beginner;
   });
   state.autoPopulateWeights = true;
-  onboardNext(5);
+  onboardNext(7);
 }
 
 let onermTargetId = null;
@@ -9377,16 +9574,20 @@ function onboardNext(step) {
   }
   if (step === 3) {
     if (!document.getElementById('ob-goal').value) { showToast('Please select your training goal'); return; }
-    // Trigger goal-aware badges on the days screen
-    renderDayRecommendations();
   }
   if (step === 4) {
-    if (!document.getElementById('ob-training-days').value) { showToast('Please select how many days per week you can train'); return; }
+    if (!document.getElementById('ob-split-type').value) { showToast('Please select your training split'); return; }
+    // Trigger goal+split-aware badges on the training days screen
+    renderDayRecommendations();
+    updateDayButtonsForSplit(document.getElementById('ob-split-type').value);
   }
   if (step === 5) {
-    buildExerciseList();
+    if (!document.getElementById('ob-training-days').value) { showToast('Please select how many days per week you can train'); return; }
   }
   if (step === 6) {
+    buildExerciseList();
+  }
+  if (step === 7) {
     buildOnboardingSummary();
   }
   document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
@@ -9410,12 +9611,112 @@ function selectOption(fieldId, value, btn) {
   btn.classList.add('selected');
 }
 
-const DAY_TIPS = {
-  2: 'You\'ll train Upper A and Lower A. Both sessions hit every major muscle group. With 5 days between sessions, recovery is never a problem.',
-  3: 'You\'ll rotate Upper A, Lower A, and Upper B. Your lower body gets a full week of recovery while upper body gets more frequency.',
-  4: 'The full 4-day program. Each muscle group gets trained twice per week — the sweet spot for hypertrophy based on current research.',
-  5: 'All 4 days plus a 5th session. Use the extra day for a weak point, extra volume, or an active recovery cardio session.',
+const SPLIT_DAY_TIPS = {
+  ul: {
+    2: 'You\'ll train Upper A and Lower A. Both sessions hit every major muscle group. With 5 days between sessions, recovery is never a problem.',
+    3: 'You\'ll rotate Upper A, Lower A, and Upper B. Your lower body gets a full week of recovery while upper body gets more frequency.',
+    4: 'The full 4-day program. Each muscle group gets trained twice per week — the sweet spot for hypertrophy based on current research.',
+    5: 'All 4 days plus a 5th session. Use the extra day for a weak point, extra volume, or an active recovery cardio session.',
+  },
+  ppl: {
+    2: 'Push + Pull. Your legs won\'t get a dedicated session, so add some squats or leg press to the end of one day.',
+    3: 'Push, Pull, and Legs — the classic PPL cycle. Each muscle group gets one focused session per week.',
+    4: 'PPL + one repeat day. One pattern gets extra volume and frequency each week.',
+    5: 'Full PPL cycle + two repeat days. High frequency — excellent recovery, sleep, and nutrition required.',
+  },
+  fullbody: {
+    2: 'Full Body A + B. Every muscle group trained twice per week — efficient and effective.',
+    3: 'Full Body A, B, and C. Three complete sessions, each with different exercise selections. Maximum frequency.',
+    4: 'Full Body x4. Very high frequency — consider switching to Upper/Lower at this volume.',
+    5: 'Extremely high frequency. Recovery is the limiting factor here — prioritize sleep and nutrition.',
+  },
 };
+
+// Returns the day tip text for the current split + day count
+function getDayTip(days) {
+  const split = document.getElementById('ob-split-type')?.value || 'ul';
+  return (SPLIT_DAY_TIPS[split] || SPLIT_DAY_TIPS.ul)[days] || '';
+}
+
+// Split-aware descriptions for the training days settings modal
+function getSplitAwareDayExplanation(n) {
+  const split = state.splitType || 'ul';
+  const tables = {
+    ul: {
+      1: '1 day/week — Full body or your priority session. Best for maintenance or very busy schedules.',
+      2: '2 days/week — Upper A + Lower A. Covers all major muscle groups twice in 2 weeks.',
+      3: '3 days/week — Upper A, Lower A, Upper B. Good balance with plenty of recovery.',
+      4: '4 days/week — The full program. Optimal for hypertrophy with proper recovery built in.',
+      5: '5 days/week — Full program + one extra day. Use the extra for weak points or cardio focus.',
+      6: '6 days/week — High frequency. Make sure recovery, sleep, and nutrition are dialed in.',
+    },
+    ppl: {
+      1: '1 day/week — One PPL session. Not enough for full body coverage.',
+      2: '2 days/week — Push + Pull (or Push + Legs). Your legs miss a session each week.',
+      3: '3 days/week — Push, Pull, Legs. The complete PPL cycle. Optimal for this split.',
+      4: '4 days/week — PPL + one repeat day. One pattern gets double frequency.',
+      5: '5 days/week — Full PPL + two repeats. High frequency — excellent recovery required.',
+      6: '6 days/week — PPL x2. Every muscle group twice per week. Significant recovery demand.',
+    },
+    fullbody: {
+      1: '1 day/week — One full body session. Maintenance level training.',
+      2: '2 days/week — Full Body A + B. Every muscle trained twice per week.',
+      3: '3 days/week — Full Body A, B, C. Three complete sessions — excellent frequency.',
+      4: '4 days/week — Full Body x4. Very high frequency — recovery is critical.',
+      5: '5 days/week — Extremely high frequency. Prioritize sleep and nutrition.',
+      6: '6 days/week — Near-daily training. Elite level recovery needed.',
+    },
+  };
+  return tables[split]?.[n] || tables.ul[n] || '';
+}
+
+function selectSplitOnboard(type, btn) {
+  document.getElementById('ob-split-type').value = type;
+  btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  // Pre-load the program template so the Starting Weights step shows the right exercises
+  state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[type] || DEFAULT_PROGRAM));
+
+  const tips = {
+    ul: 'Upper/Lower is the gold standard for hypertrophy. Each muscle group gets targeted twice per week with full recovery built in between.',
+    ppl: 'Push/Pull/Legs gives you one focused session per movement pattern. Run it 3 days per week or 6 days for double frequency.',
+    fullbody: 'Full Body training maximizes frequency — every muscle gets stimulated in every session. Perfect for 2–3 days per week.',
+  };
+  const tip = document.getElementById('ob-split-tip');
+  tip.style.display = 'block';
+  tip.innerHTML = tips[type] || '';
+}
+
+function updateDayButtonsForSplit(type) {
+  const descriptions = {
+    ul: {
+      2: 'Upper A + Lower A. Full body coverage, maximum recovery time.',
+      3: 'Upper A, Lower A, Upper B. Good balance with plenty of recovery.',
+      4: 'The full program. Optimal for hypertrophy with structured recovery.',
+      5: 'Full program + one extra session for weak points or cardio focus.',
+    },
+    ppl: {
+      2: 'Push + Pull. Legs get limited work — consider adding them to one session.',
+      3: 'Push, Pull, and Legs. The complete PPL cycle. Optimal for this split.',
+      4: 'Full PPL + one repeat day for extra frequency in one pattern.',
+      5: 'Full PPL + two repeat days. High frequency — great if recovery is strong.',
+    },
+    fullbody: {
+      2: 'Full Body A + B. Every muscle trained twice per week.',
+      3: 'Full Body A, B, C. Three complete sessions. Optimal for this split.',
+      4: 'Full Body x4. Very high frequency — recovery becomes critical.',
+      5: 'Extremely high frequency. Prioritize sleep and nutrition.',
+    },
+  };
+  const desc = descriptions[type] || descriptions.ul;
+  [2, 3, 4, 5].forEach(d => {
+    const btn = document.getElementById('ob-day-btn-' + d);
+    if (!btn) return;
+    const subDiv = btn.querySelector('div[style*="var(--gray)"]');
+    if (subDiv && desc[d]) subDiv.textContent = desc[d];
+  });
+}
 
 // Goal → minimum days + recommended days
 const GOAL_CONFIG = {
@@ -9438,8 +9739,12 @@ function selectGoalOnboard(value, btn) {
 
 function renderDayRecommendations() {
   const goal = document.getElementById('ob-goal').value;
-  const cfg = GOAL_CONFIG[goal];
-  if (!cfg) return;
+  const splitType = document.getElementById('ob-split-type')?.value || 'ul';
+  const baseCfg = GOAL_CONFIG[goal];
+  if (!baseCfg) return;
+  // Override recommended day count based on split type
+  const splitRec = { ul: 4, ppl: 3, fullbody: 3 };
+  const cfg = { ...baseCfg, rec: splitRec[splitType] || baseCfg.rec };
 
   // Show the recommendation banner
   const rec = document.getElementById('ob-goal-rec');
@@ -9510,7 +9815,7 @@ function evaluateDaysWarning(days, cfg) {
 
 function selectTrainingDaysOnboard(days, btn) {
   document.getElementById('ob-training-days').value = days;
-  document.querySelectorAll('#onboard-step-3 .onboard-select-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#onboard-step-4 .onboard-select-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
 
   const goal = document.getElementById('ob-goal').value;
@@ -9528,30 +9833,42 @@ function selectTrainingDaysOnboard(days, btn) {
   } else {
     // Show tip, hide warning
     tip.style.display = 'block';
-    tip.innerHTML = DAY_TIPS[days] || '';
+    tip.innerHTML = getDayTip(days);
     warning.style.display = 'none';
   }
 }
 
 function buildExerciseList() {
   const exp = document.getElementById('ob-experience').value || 'beginner';
-  const goal = document.getElementById('ob-goal').value || 'both';
   const container = document.getElementById('ob-exercise-list');
 
-  // Group by day
-  const days = ['Upper A', 'Lower A', 'Upper B', 'Lower B'];
+  // Core compounds worth setting starting weights for (by exercise ID)
+  const ONBOARD_COMPOUND_IDS = new Set([
+    'bench', 'incline', 'legpress-a', 'rdl', 'hip-thrust-a',
+    'chest-row', 'pulldown', 'db-row', 'legpress-b'
+  ]);
+
+  const program = (state.program && state.program.length > 0) ? state.program : DEFAULT_PROGRAM;
+
   let html = '';
-  days.forEach(day => {
-    const exes = ONBOARD_EXERCISES.filter(e => e.day === day);
-    html += `<div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-top:8px; margin-bottom:6px;">${day}</div>`;
-    exes.forEach(ex => {
+  program.forEach(day => {
+    const compounds = day.exercises.filter(e => ONBOARD_COMPOUND_IDS.has(e.id));
+    if (!compounds.length) return;
+
+    html += `<div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-top:8px; margin-bottom:6px;">${day.badge}</div>`;
+    compounds.forEach(ex => {
+      const defaults = ALL_EXERCISE_DEFAULTS[ex.id] || { beginner: 0, intermediate: 0, advanced: 0 };
       const saved = state.startingWeights?.[ex.id];
-      const suggested = saved || ex.defaults[exp];
+      const suggested = saved || defaults[exp] || 0;
+      const hasAlts = ex.alts && ex.alts.length > 0;
       html += `
         <div class="ob-exercise-row">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="font-size:13px; color:var(--cream); flex:1; padding-right:10px;">${ex.name}</div>
-            <button onclick="openOnerm('${ex.id}')" style="background:none; border:1px solid var(--red); color:var(--red); padding:4px 10px; border-radius:8px; font-size:11px; cursor:pointer; white-space:nowrap; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">1RM CALC</button>
+            <div style="font-size:13px; color:var(--cream); flex:1; padding-right:10px;" id="ob-ex-name-${ex.id}">${ex.name}</div>
+            <div style="display:flex; gap:6px;">
+              ${hasAlts ? `<button onclick="openOnboardSwap('${ex.id}')" style="background:none; border:1px solid var(--gray); color:var(--gray); padding:4px 10px; border-radius:8px; font-size:11px; cursor:pointer; white-space:nowrap; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">ALT</button>` : ''}
+              <button onclick="openOnerm('${ex.id}')" style="background:none; border:1px solid var(--red); color:var(--red); padding:4px 10px; border-radius:8px; font-size:11px; cursor:pointer; white-space:nowrap; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">1RM CALC</button>
+            </div>
           </div>
           <div style="display:flex; align-items:center; gap:10px;">
             <div style="font-size:11px; color:var(--gray); letter-spacing:1px; white-space:nowrap;">START WEIGHT (LBS)</div>
@@ -9561,6 +9878,17 @@ function buildExerciseList() {
     });
   });
   container.innerHTML = html;
+}
+
+function openOnboardSwap(exId) {
+  let foundDay = null, foundEx = null;
+  for (const day of (state.program || DEFAULT_PROGRAM)) {
+    const ex = day.exercises.find(e => e.id === exId);
+    if (ex) { foundDay = day; foundEx = ex; break; }
+  }
+  if (!foundEx || !foundEx.alts?.length) { showToast('No alternatives available', 'error'); return; }
+  pendingSwap = { dayId: foundDay.id, exId, onboardMode: true };
+  openAltModal(foundEx);
 }
 
 function openOnerm(exerciseId) {
@@ -9599,33 +9927,40 @@ function applyOnermResult() {
 }
 
 function buildOnboardingSummary() {
-  // Save all weights
+  // Save all weights from any ob-weight-* inputs present
   if (!state.startingWeights) state.startingWeights = {};
-  ONBOARD_EXERCISES.forEach(ex => {
-    const input = document.getElementById('ob-weight-' + ex.id);
-    if (input) state.startingWeights[ex.id] = parseFloat(input.value) || 0;
+  document.querySelectorAll('[id^="ob-weight-"]').forEach(input => {
+    const id = input.id.replace('ob-weight-', '');
+    const val = parseFloat(input.value);
+    if (val) state.startingWeights[id] = val;
   });
 
   const name = document.getElementById('ob-name').value.trim();
   const goal = document.getElementById('ob-goal').value;
   const exp = document.getElementById('ob-experience').value;
+  const splitType = document.getElementById('ob-split-type')?.value || 'ul';
   const trainingDays = parseInt(document.getElementById('ob-training-days').value) || 4;
+  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body' };
 
   state.profile = { name, goal, experience: exp, bodyweight: parseFloat(document.getElementById('ob-bodyweight').value) || 0 };
   state.trainingDaysPerWeek = trainingDays;
+  state.splitType = splitType;
   state.testWeekComplete = false;
   state.testWeekStartDate = new Date().toISOString();
   saveState();
 
   const goalLabel = goal === 'size' ? 'Hypertrophy (Size)' : goal === 'strength' ? 'Strength' : 'Size & Strength';
+  // Count how many compound weight inputs were shown
+  const compoundCount = document.querySelectorAll('[id^="ob-weight-"]').length;
   document.getElementById('ob-greeting').textContent = `Welcome, ${name}. Your program is set up for ${goalLabel}. Week 1 is your test week — train with these weights, log your RPE on each set, and after the week the app will suggest your true working weights.`;
   document.getElementById('ob-summary').innerHTML = `
     <div>📋 <strong>Experience:</strong> ${exp.charAt(0).toUpperCase() + exp.slice(1)}</div>
     <div>🎯 <strong>Goal:</strong> ${goalLabel}</div>
+    <div>🗂 <strong>Split:</strong> ${splitLabels[splitType] || splitType}</div>
     <div>📅 <strong>Training Days:</strong> ${trainingDays} days / week</div>
     <div>⚖️ <strong>Bodyweight:</strong> ${state.profile.bodyweight} lbs</div>
-    <div>🏋 <strong>Compounds set up:</strong> ${ONBOARD_EXERCISES.length} key lifts — isolations auto-set</div>
-    <div style="margin-top:10px; font-size:12px; color:var(--gray);">Log your RPE (1–10) after each set during Week 1. After 4 sessions, check Settings → Review Test Week to get your adjusted weights.</div>
+    <div>🏋 <strong>Compounds set up:</strong> ${compoundCount || 'Key'} lifts — isolations auto-set</div>
+    <div style="margin-top:10px; font-size:12px; color:var(--gray);">Log your RPE (1–10) after each set during Week 1. After ${state.program?.length || trainingDays} sessions, check Settings → Review Test Week to get your adjusted weights.</div>
   `;
 }
 
@@ -9636,6 +9971,10 @@ function completeOnboarding() {
   localStorage.removeItem('ts-redo-mode');
   localStorage.removeItem('ts-redo-backup');
   document.getElementById('ob-exit-bar').style.display = 'none';
+  // Ensure state has the right program for the chosen split
+  const _splitType = state.splitType || document.getElementById('ob-split-type')?.value || 'ul';
+  state.splitType = _splitType;
+  state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[_splitType] || DEFAULT_PROGRAM));
   // Fill in all isolation defaults for any exercises not entered by user
   applyAllDefaults();
   state.onboardingComplete = true;
@@ -9772,10 +10111,19 @@ function resetOnboarding() {
       const goalIdx = { size: 0, strength: 1, both: 2 }[bk.profile.goal];
       if (goalIdx !== undefined && goalBtns[goalIdx]) goalBtns[goalIdx].classList.add('selected');
     }
+    if (bk.splitType) {
+      const splitInput = document.getElementById('ob-split-type');
+      if (splitInput) splitInput.value = bk.splitType;
+      const splitBtns = document.querySelectorAll('#onboard-step-3 .onboard-select-btn');
+      splitBtns.forEach(b => b.classList.remove('selected'));
+      const splitMap = { ul: 0, ppl: 1, fullbody: 2 };
+      const splitIdx = splitMap[bk.splitType];
+      if (splitIdx !== undefined && splitBtns[splitIdx]) splitBtns[splitIdx].classList.add('selected');
+    }
     if (bk.trainingDaysPerWeek) {
       const days = bk.trainingDaysPerWeek;
       document.getElementById('ob-training-days').value = days;
-      document.querySelectorAll('#onboard-step-3 .onboard-select-btn').forEach(b => b.classList.remove('selected'));
+      document.querySelectorAll('#onboard-step-4 .onboard-select-btn').forEach(b => b.classList.remove('selected'));
       const dayBtn = document.getElementById('ob-day-btn-' + days);
       if (dayBtn) dayBtn.classList.add('selected');
     }
@@ -9792,7 +10140,7 @@ function resetOnboarding() {
 function checkTestWeekReview() {
   if (!state.onboardingComplete || state.testWeekComplete) return;
   const sessions = (state.history || []).length;
-  if (sessions >= 4 && !state.testWeekReviewShown) {
+  if (sessions >= (state.program?.length || state.trainingDaysPerWeek || 4) && !state.testWeekReviewShown) {
     state.testWeekReviewShown = true;
     saveState();
     setTimeout(() => {
@@ -11207,6 +11555,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkImplementationIntention();
   checkTestWeekReview();
   updateTrainingDaysSub();
+  updateSplitTypeSub();
   updateProgressiveOverloadUI();
   updateIncrementUI();
   updateNotificationsUI();
