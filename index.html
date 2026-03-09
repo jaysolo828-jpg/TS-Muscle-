@@ -1162,7 +1162,7 @@
   .history-item:hover { border-color: var(--red); }
 
   .history-date {
-    font-size: 11px;
+    font-size: 12px;
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 600;
     letter-spacing: 1px;
@@ -1228,6 +1228,46 @@
     font-size: 13px;
     color: var(--gray-light);
     margin-top: 8px;
+  }
+
+  .history-chevron {
+    font-size: 12px;
+    color: var(--gray);
+    flex-shrink: 0;
+    margin-left: 6px;
+    line-height: 1;
+    user-select: none;
+  }
+
+  .history-deload-badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    font-family: 'Barlow Condensed', sans-serif;
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.12);
+    border: 1px solid rgba(96, 165, 250, 0.35);
+    border-radius: 20px;
+    padding: 1px 7px;
+  }
+
+  .history-ex-note {
+    font-size: 12px;
+    color: var(--gray);
+    margin-top: 6px;
+    padding-left: 10px;
+    border-left: 2px solid var(--dark4);
+  }
+
+  .history-ex-note-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-family: 'Barlow Condensed', sans-serif;
+    color: var(--gray);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
   }
 
   /* PROGRESS SCREEN */
@@ -7228,18 +7268,28 @@ function renderHistoryItem(entry, container, insertBefore) {
   const date = new Date(entry.date);
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   const totalSets = Object.values(entry.sets).reduce((sum, sets) => sum + sets.filter(s => s.done).length, 0);
+  const exCount = Object.values(entry.sets).filter(sets => sets.some(s => s.done)).length;
   const prCount = entry.prs ? entry.prs.length : 0;
   const prLabel = prCount === 1 ? '🏆 PR' : prCount > 1 ? `🏆 ${prCount} PRs` : '';
+  const deloadBadgeHtml = entry.isDeload
+    ? `<span class="history-deload-badge">DELOAD</span>`
+    : '';
 
   const el = document.createElement('div');
   el.className = 'history-item';
   el.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-      <div style="flex:1;">
-        <div class="history-date">${dateStr} · ${entry.duration || '?'} min</div>
-        <div class="history-day">${entry.dayName} — ${entry.dayFocus}</div>
+      <div style="flex:1; min-width:0;">
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+          <div class="history-date" style="margin-bottom:0;">${dateStr} · ${entry.duration || '?'} min</div>
+          ${deloadBadgeHtml}
+        </div>
+        <div style="display:flex; align-items:center;">
+          <div class="history-day">${entry.dayName} — ${entry.dayFocus}</div>
+          <span class="history-chevron" id="chevron-${entry.id}">▸</span>
+        </div>
         <div class="history-summary" style="display:flex;align-items:center;gap:8px;">
-          ${totalSets} sets completed
+          ${exCount} exercise${exCount !== 1 ? 's' : ''} · ${totalSets} sets
           ${prCount > 0 ? `<span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:2px 8px;border-radius:20px;">${prLabel}</span>` : ''}
         </div>
       </div>
@@ -7252,7 +7302,10 @@ function renderHistoryItem(entry, container, insertBefore) {
     </div>
   `;
   el.addEventListener('click', () => {
-    document.getElementById('detail-' + entry.id).classList.toggle('open');
+    const detail = document.getElementById('detail-' + entry.id);
+    const chevron = document.getElementById('chevron-' + entry.id);
+    detail.classList.toggle('open');
+    if (chevron) chevron.textContent = detail.classList.contains('open') ? '▾' : '▸';
   });
   if (insertBefore) container.insertBefore(el, insertBefore);
   else container.appendChild(el);
@@ -7329,9 +7382,9 @@ function renderHistoryDetail(entry) {
     html += `<div class="history-ex">
       <div class="history-ex-name" style="display:flex;align-items:center;gap:6px;">${displayName}${wasPR ? ' <span style="color:#f0a500;font-size:11px;">🏆 PR</span>' : ''}${supersetBadge}</div>
       <div class="history-sets">
-        ${doneSets.map((s, i) => `<div class="history-set-pill">${s.weight ? s.weight + 'lb' : '--'} × ${s.reps || '--'}${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`).join('')}
+        ${doneSets.map((s, i) => `<div class="history-set-pill"><span style="color:var(--gray);font-size:10px;margin-right:4px;">S${i + 1}</span>${s.weight ? s.weight + 'lb' : '--'} × ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`).join('')}
       </div>
-      ${exNote ? `<div style="font-size:12px;color:var(--gray-light);margin-top:6px;padding-left:10px;border-left:2px solid var(--dark4);">${exNote}</div>` : ''}
+      ${exNote ? `<div class="history-ex-note"><span class="history-ex-note-label">Note</span>${exNote}</div>` : ''}
     </div>`;
   });
 
