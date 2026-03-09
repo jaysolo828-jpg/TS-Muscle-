@@ -9876,12 +9876,17 @@ function buildObManualSlots() {
         <div style="font-size:11px; color:var(--red); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; margin-bottom:3px;">${slot.label}</div>
         <div style="font-size:11px; color:var(--gray); margin-bottom:10px;">${slot.desc}</div>
         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;" id="ob-slot-${safeId}-btns">${optBtns}</div>
-        <input type="text" class="set-input" id="ob-slot-${safeId}-custom"
-          placeholder="Or type your own exercise name…"
-          oninput="handleSlotCustomInput('${slot.id}',this)"
-          style="width:100%; padding:9px 12px; text-align:left; font-size:13px;"/>
-        <div id="ob-slot-${safeId}-yt" style="display:none; margin-top:7px; font-size:11px; color:var(--gray); line-height:1.6;">
-          Not sure how to do it? <a id="ob-slot-${safeId}-yt-link" href="" target="_blank" rel="noopener" style="color:var(--red); text-decoration:none;">Search YouTube for a tutorial →</a>
+        <div style="position:relative;">
+          <input type="text" class="set-input" id="ob-slot-${safeId}-custom"
+            placeholder="Or type your own exercise name…"
+            oninput="handleSlotCustomInput('${slot.id}',this)"
+            style="width:100%; padding:9px 38px 9px 12px; text-align:left; font-size:13px; box-sizing:border-box;"/>
+          <button id="ob-slot-${safeId}-clear" onclick="clearSlotCustom('${slot.id}')"
+            style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#777; font-size:18px; line-height:1; cursor:pointer; padding:2px 4px;" title="Clear">✕</button>
+        </div>
+        <div id="ob-slot-${safeId}-yt" style="display:none; margin-top:8px; background:rgba(255,255,255,0.04); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.7;">
+          <div style="color:var(--cream); margin-bottom:4px;">✓ Using: <strong id="ob-slot-${safeId}-name-lbl" style="color:var(--red);"></strong> &nbsp;<button onclick="clearSlotCustom('${slot.id}')" style="background:none; border:none; color:#666; font-size:11px; cursor:pointer; padding:0; text-decoration:underline;">remove ✕</button></div>
+          <a id="ob-slot-${safeId}-yt-link" href="" target="_blank" rel="noopener" style="color:var(--gray); text-decoration:none;">🔍 Search YouTube for a tutorial →</a>
         </div>
       </div>`;
     // Pre-select the first option in state
@@ -9895,6 +9900,10 @@ function selectSlotOption(slotId, apply, btn) {
   const safeId = slotId.replace('-', '_');
   const customInput = document.getElementById('ob-slot-' + safeId + '-custom');
   if (customInput) customInput.value = '';
+  const clearBtn = document.getElementById('ob-slot-' + safeId + '-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  const ytDiv = document.getElementById('ob-slot-' + safeId + '-yt');
+  if (ytDiv) ytDiv.style.display = 'none';
   const container = document.getElementById('ob-slot-' + safeId + '-btns');
   if (container) container.querySelectorAll('.ob-slot-opt').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
@@ -9903,28 +9912,37 @@ function selectSlotOption(slotId, apply, btn) {
 function handleSlotCustomInput(slotId, input) {
   const val = input.value.trim();
   const safeId = slotId.replace('-', '_');
-  const container = document.getElementById('ob-slot-' + safeId + '-btns');
-  const ytDiv  = document.getElementById('ob-slot-' + safeId + '-yt');
-  const ytAnchor = document.getElementById('ob-slot-' + safeId + '-yt-link');
+  const container  = document.getElementById('ob-slot-' + safeId + '-btns');
+  const clearBtn   = document.getElementById('ob-slot-' + safeId + '-clear');
+  const ytDiv      = document.getElementById('ob-slot-' + safeId + '-yt');
+  const ytAnchor   = document.getElementById('ob-slot-' + safeId + '-yt-link');
+  const nameLbl    = document.getElementById('ob-slot-' + safeId + '-name-lbl');
   if (val) {
     window._obSlots[slotId] = val;
     if (container) container.querySelectorAll('.ob-slot-opt').forEach(b => b.classList.remove('selected'));
-    if (ytDiv && ytAnchor) {
-      ytAnchor.href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(val + ' exercise how to');
-      ytDiv.style.display = 'block';
-    }
+    if (clearBtn) clearBtn.style.display = 'block';
+    if (ytDiv) ytDiv.style.display = 'block';
+    if (nameLbl) nameLbl.textContent = val;
+    if (ytAnchor) ytAnchor.href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(val + ' exercise how to');
   } else {
-    // Restore the first option as default when field is cleared
     const slot = OB_PRIMARY_SLOTS.find(s => s.id === slotId);
     if (slot) {
       window._obSlots[slotId] = slot.options[0].apply;
       if (container) {
+        container.querySelectorAll('.ob-slot-opt').forEach(b => b.classList.remove('selected'));
         const first = container.querySelector('.ob-slot-opt');
         if (first) first.classList.add('selected');
       }
     }
+    if (clearBtn) clearBtn.style.display = 'none';
     if (ytDiv) ytDiv.style.display = 'none';
   }
+}
+
+function clearSlotCustom(slotId) {
+  const safeId = slotId.replace('-', '_');
+  const input = document.getElementById('ob-slot-' + safeId + '-custom');
+  if (input) { input.value = ''; handleSlotCustomInput(slotId, input); }
 }
 
 function applyObExerciseSelections() {
