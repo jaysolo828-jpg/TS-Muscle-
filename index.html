@@ -779,12 +779,7 @@
   .set-input::placeholder { color: #888; }
 
   /* Previous session collapsible panel */
-  .prev-session-toggle {
-    display: flex;
-    justify-content: flex-end;
-    padding: 0 16px 4px;
-  }
-  .prev-session-btn {
+.prev-session-btn {
     background: none;
     border: none;
     color: var(--gray);
@@ -5366,10 +5361,10 @@ function renderSession() {
 
     // Build prev-session panel (only if history exists for this exercise)
     const _lastSets = sets.map((_, si) => getLastSetData(ex.id, si)).filter(Boolean);
-    const _prevToggleHTML = _lastSets.length ? `
-      <div class="prev-session-toggle">
-        <button class="prev-session-btn" onclick="togglePrevPanel('${ex.id}')">PREV <span id="prev-arrow-${ex.id}">▾</span></button>
-      </div>
+    const _prevBtnHTML = _lastSets.length
+      ? `<button class="prev-session-btn" onclick="togglePrevPanel('${ex.id}')">PREV <span id="prev-arrow-${ex.id}">▾</span></button>`
+      : '';
+    const _prevPanelHTML = _lastSets.length ? `
       <div class="prev-session-panel" id="prev-panel-${ex.id}" style="display:none;">
         ${_lastSets.map((d, i) => `
           <div class="prev-session-row">
@@ -5379,14 +5374,15 @@ function renderSession() {
           </div>`).join('')}
       </div>` : '';
 
-    let setsHTML = _prevToggleHTML + `
+    let setsHTML = `
       <div class="set-labels">
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
         <div class="set-label">Reps <span style="color:var(--red);font-size:11px;font-weight:700;">(${_goalReps})</span></div>
         <div class="set-label" title="Rate of Perceived Exertion: 6=easy, 8=hard, 9=very hard, 10=max" style="cursor:help;">RPE ⓘ</div>
-        <div class="set-label"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
       </div>
+      ${_prevPanelHTML}
     `;
 
     sets.forEach((set, si) => {
