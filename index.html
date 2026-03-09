@@ -745,7 +745,7 @@
   /* SET ROWS */
   .set-row {
     display: grid;
-    grid-template-columns: 30px 1fr 1fr 80px 36px;
+    grid-template-columns: 30px 1fr 1fr 80px 40px;
     gap: 8px;
     align-items: center;
     padding: 10px 16px;
@@ -975,6 +975,8 @@
     width: 100%;
     outline: none;
     cursor: pointer;
+    text-align: center;
+    text-align-last: center;
     transition: border-color 0.2s, color 0.2s;
   }
   .rpe-select[data-empty="true"] {
@@ -999,7 +1001,7 @@
 
   .set-labels {
     display: grid;
-    grid-template-columns: 30px 1fr 1fr 80px 36px;
+    grid-template-columns: 30px 1fr 1fr 80px 40px;
     gap: 8px;
     padding: 8px 16px 6px;
     border-bottom: 1px solid var(--dark3);
@@ -1055,6 +1057,7 @@
     font-family: 'Barlow', sans-serif;
     font-size: 16px;
     padding: 10px 14px;
+    box-sizing: border-box;
     width: 100%;
     resize: none;
     outline: none;
@@ -5272,7 +5275,7 @@ function renderSession() {
           <div style="position:relative;">
             <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
               placeholder="${repsPlaceholder || _goalReps.split('–')[0]}"
-              value="${set.reps}"
+              value="${set.reps}" style="padding-right:22px;"
               ${set.done ? 'disabled' : ''}
               onchange="updateSet('${ex.id}',${si},'reps',this.value); updateRepIndicator('${ex.id}',${si},'${_goalReps}')"
               oninput="updateRepIndicator('${ex.id}',${si},'${_goalReps}')"/>
