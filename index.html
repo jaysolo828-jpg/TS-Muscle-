@@ -1704,7 +1704,7 @@
   /* Gold shimmer on overload reason text */
   @keyframes goldShimmer {
     0%   { background-position: -250% center; }
-    100% { background-position: 250% center; }
+    100% { background-position: 50% center; }
   }
   .overload-reason {
     background: linear-gradient(90deg, #9a7020 0%, #d4a827 35%, #f0d060 50%, #d4a827 65%, #9a7020 100%);
@@ -1712,7 +1712,7 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: goldShimmer 5s ease-in-out infinite;
+    animation: goldShimmer 3s ease-out 1 forwards;
     font-weight: 600;
   }
 
@@ -5037,10 +5037,10 @@ function buildOverloadHint(exId) {
     : '';
 
   // Only motivational/consistency messages get the gold shimmer
-  const isMotivational = /consistency|maintain and build quality/i.test(info.reason);
-  const reasonHTML = isMotivational
-    ? `<span class="overload-reason">${info.reason}</span>`
-    : info.reason;
+  const reasonHTML = info.reason.replace(
+    /\b(building consistency|stay consistent|maintain and build quality)\b/gi,
+    '<span class="overload-reason">$1</span>'
+  );
 
   if (info.changed && info.newWeight > info.lastWeight) {
     return `<div style="background:rgba(46,204,113,0.08); border:1px solid rgba(46,204,113,0.25); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
