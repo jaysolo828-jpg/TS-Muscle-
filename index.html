@@ -800,17 +800,19 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 13px;
-    height: 13px;
+    width: 15px;
+    height: 15px;
     border-radius: 50%;
-    background: var(--gray);
-    color: var(--dark1);
-    font-size: 9px;
-    font-weight: 900;
+    background: transparent;
+    border: 1.5px solid var(--gray);
+    color: var(--gray);
+    font-size: 10px;
+    font-weight: 700;
     font-style: italic;
     line-height: 1;
   }
-  .rpe-info-btn:active .rpe-info-i { background: var(--cream); }
+  .rpe-info-btn:active { color: var(--cream); }
+  .rpe-info-btn:active .rpe-info-i { border-color: var(--cream); color: var(--cream); }
   .prev-session-btn {
     background: none;
     border: none;
