@@ -5432,6 +5432,7 @@ function selectRpeFromNudge(exId, setIndex, rpe) {
 }
 
 function toggleSetDone(exId, setIndex) {
+  if (!activeSession?.sets[exId]?.[setIndex]) return;
   // Clear any "up next" pulse on this card (user is now acting on it)
   document.getElementById('session-ex-' + exId)?.classList.remove('superset-up-next');
 
