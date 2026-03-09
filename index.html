@@ -1701,6 +1701,21 @@
     z-index: 0;
   }
 
+  /* Gold shimmer on overload reason text */
+  @keyframes goldShimmer {
+    0%   { background-position: -250% center; }
+    100% { background-position: 250% center; }
+  }
+  .overload-reason {
+    background: linear-gradient(90deg, #9a7020 0%, #d4a827 35%, #f0d060 50%, #d4a827 65%, #9a7020 100%);
+    background-size: 250% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: goldShimmer 5s ease-in-out infinite;
+    font-weight: 600;
+  }
+
 </style>
 </head>
 <body>
@@ -5021,6 +5036,12 @@ function buildOverloadHint(exId) {
       })()
     : '';
 
+  // Only motivational/consistency messages get the gold shimmer
+  const isMotivational = /consistency|maintain and build quality/i.test(info.reason);
+  const reasonHTML = isMotivational
+    ? `${reasonHTML}`
+    : info.reason;
+
   if (info.changed && info.newWeight > info.lastWeight) {
     return `<div style="background:rgba(46,204,113,0.08); border:1px solid rgba(46,204,113,0.25); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome ? '5px' : '0'};">
@@ -5029,7 +5050,7 @@ function buildOverloadHint(exId) {
           INCREASE &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
         </div>
       </div>
-      ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${info.reason} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${info.reason} ${modeBadge}</div>`}
+      ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
     </div>`;
   } else if (info.changed && info.newWeight < info.lastWeight) {
     return `<div style="background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.25); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
@@ -5039,7 +5060,7 @@ function buildOverloadHint(exId) {
           REDUCE &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
         </div>
       </div>
-      ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${info.reason} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${info.reason} ${modeBadge}</div>`}
+      ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
     </div>`;
   } else if (info.lastWeight) {
     return `<div style="background:rgba(255,255,255,0.03); border:1px solid #252525; border-radius:10px; padding:9px 12px; margin-bottom:8px;">
@@ -5049,7 +5070,7 @@ function buildOverloadHint(exId) {
           MAINTAIN &nbsp;<span style="font-weight:400;">${info.lastWeight} lbs</span>
         </div>
       </div>
-      ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${info.reason} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${info.reason} ${modeBadge}</div>`}
+      ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
     </div>`;
   }
   return '';
