@@ -796,23 +796,7 @@
     -webkit-tap-highlight-color: transparent;
   }
   .rpe-info-btn:active { color: var(--cream); }
-  .rpe-info-i {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: transparent;
-    border: 1.5px solid var(--gray);
-    color: var(--gray);
-    font-size: 10px;
-    font-weight: 700;
-    font-style: italic;
-    line-height: 1;
-  }
   .rpe-info-btn:active { color: var(--cream); }
-  .rpe-info-btn:active .rpe-info-i { border-color: var(--cream); color: var(--cream); }
   .prev-session-btn {
     background: none;
     border: none;
@@ -5428,7 +5412,7 @@ function renderSession() {
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
         <div class="set-label">Reps <span style="color:var(--red);font-size:11px;font-weight:700;">(${_goalReps})</span></div>
-        <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <span class="rpe-info-i">i</span></button></div>
+        <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
         <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
       </div>
       ${_prevPanelHTML}
