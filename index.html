@@ -3802,6 +3802,18 @@ function saveState() {
 }
 
 // ============================================================
+// UTILITIES
+// ============================================================
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ============================================================
 // NAVIGATION
 // ============================================================
 function showScreen(name, el) {
@@ -7448,7 +7460,7 @@ function togglePRBoard() {
 
 
 function editHistoryNote(entryId) {
-  const entry = state.history.find(e => e.id === entryId);
+  const entry = state.history.find(e => String(e.id) === String(entryId));
   if (!entry) return;
 
   const modal = document.createElement('div');
@@ -7458,7 +7470,7 @@ function editHistoryNote(entryId) {
       <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:16px;">SESSION NOTE</div>
       <textarea id="history-note-input" rows="4" placeholder="How did the session feel? Any notes for next time..."
         style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);border-radius:10px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-size:15px;outline:none;resize:none;box-sizing:border-box;line-height:1.5;margin-bottom:16px;"
-      >${entry.notes || ''}</textarea>
+      >${escapeHtml(entry.notes)}</textarea>
       <div style="display:flex;gap:10px;">
         <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
         <button onclick="saveHistoryNote('${entryId}')" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;">SAVE</button>
@@ -7471,7 +7483,7 @@ function editHistoryNote(entryId) {
 function saveHistoryNote(entryId) {
   const input = document.getElementById('history-note-input');
   const note = input?.value?.trim() || '';
-  const entry = state.history.find(e => e.id === entryId);
+  const entry = state.history.find(e => String(e.id) === String(entryId));
   if (!entry) return;
   entry.notes = note;
   saveState();
@@ -7718,7 +7730,7 @@ function renderHistoryDetail(entry) {
 
   html += `<div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--dark3);">`;
   if (entry.notes) {
-    html += `<div class="history-notes-box" id="history-note-display-${entry.id}" style="margin-bottom:6px;">📝 ${entry.notes}</div>`;
+    html += `<div class="history-notes-box" id="history-note-display-${entry.id}" style="margin-bottom:6px;">📝 ${escapeHtml(entry.notes)}</div>`;
   }
   html += `<button onclick="event.stopPropagation(); editHistoryNote('${entry.id}')"
     style="background:none; border:1px solid var(--dark4); color:var(--gray); border-radius:8px;
@@ -10717,8 +10729,8 @@ function renderBarrierHistory(showAll = false) {
             </button>
           </div>
         </div>
-        ${entry.response ? `<div style="font-size:13px; color:var(--cream); margin-bottom:8px;">→ ${entry.response}</div>` : ''}
-        <div style="font-size:12px; color:var(--gray); line-height:1.5; border-top:1px solid var(--dark3); padding-top:8px;">${entry.reframe}</div>
+        ${entry.response ? `<div style="font-size:13px; color:var(--cream); margin-bottom:8px;">→ ${escapeHtml(entry.response)}</div>` : ''}
+        <div style="font-size:12px; color:var(--gray); line-height:1.5; border-top:1px solid var(--dark3); padding-top:8px;">${escapeHtml(entry.reframe)}</div>
       </div>`;
   }).join('');
   if (!showAll && state.barrierLog.length > 1) {
@@ -10934,6 +10946,7 @@ function startCardioTimer() {
   document.getElementById('timer-pause-btn').style.display = 'inline-block';
   document.getElementById('timer-reset-btn').style.display = 'inline-block';
 
+  if (cardioTimerInterval) clearInterval(cardioTimerInterval);
   cardioTimerRunning = true;
   cardioTimerInterval = setInterval(() => {
     if (cardioTimerSeconds <= 0) {
