@@ -7560,17 +7560,40 @@ function renderHistory() {
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
   );
 
-  // Always show only the most recent session by default
+  // Show only the most recent session by default
+  const lastLabel = document.createElement('div');
+  lastLabel.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-bottom:6px;';
+  lastLabel.textContent = 'LAST SESSION';
+  container.appendChild(lastLabel);
   renderHistoryItem(sorted[0], container, null);
 
   if (sorted.length > 1) {
     const btn = document.createElement('button');
     btn.id = 'history-load-more';
-    btn.textContent = `View all ${sorted.length} sessions`;
     btn.style.cssText = 'width:100%;margin:12px 0;padding:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:14px;cursor:pointer;letter-spacing:0.5px;';
+
+    let expanded = false;
+    let olderDiv = null;
+
+    function updateBtn() {
+      btn.textContent = expanded
+        ? 'Hide older sessions ▴'
+        : `View all ${sorted.length} sessions ▾`;
+    }
+    updateBtn();
+
     btn.onclick = () => {
-      btn.remove();
-      sorted.slice(1).forEach(entry => renderHistoryItem(entry, container, null));
+      if (!expanded) {
+        olderDiv = document.createElement('div');
+        olderDiv.id = 'history-older';
+        sorted.slice(1).forEach(entry => renderHistoryItem(entry, olderDiv, null));
+        container.appendChild(olderDiv);
+        expanded = true;
+      } else {
+        if (olderDiv) { olderDiv.remove(); olderDiv = null; }
+        expanded = false;
+      }
+      updateBtn();
     };
     container.appendChild(btn);
   }
