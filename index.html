@@ -2447,13 +2447,23 @@
 
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;" id="ob-exercise-mode-btns">
         <button class="onboard-select-btn" onclick="selectExerciseMode('auto', this)">
-          <div style="font-weight:bold;">Pick For Me</div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Use the recommended exercises — you can always swap later</div>
-          <div style="font-size:11px; color:#666; margin-top:5px; letter-spacing:0.3px;">Bench · Overhead Press · Machine Row · Leg Press · Romanian Deadlift</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px; line-height:1;">⚡</span>
+            <div>
+              <div style="font-weight:bold;">Pick For Me</div>
+              <div style="font-size:12px; color:var(--gray); margin-top:2px;">Use the recommended exercises — swap anything later inside the app</div>
+            </div>
+          </div>
+          <div style="font-size:12px; color:var(--gray); margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07); letter-spacing:0.3px;">Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift</div>
         </button>
         <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)">
-          <div style="font-weight:bold;">I'll Choose</div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Pick an exercise for each major movement — type in your own if your gym has something different</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px; line-height:1;">✏️</span>
+            <div>
+              <div style="font-weight:bold;">I'll Choose</div>
+              <div style="font-size:12px; color:var(--gray); margin-top:2px;">Pick one exercise per movement — or type in your own if your gym has something different</div>
+            </div>
+          </div>
         </button>
       </div>
 
@@ -9859,19 +9869,19 @@ function selectExerciseMode(mode, btn) {
 
 function buildObManualSlots() {
   const panel = document.getElementById('ob-manual-select');
-  let html = '<div style="font-size:12px; color:var(--gray); margin-bottom:14px; line-height:1.6;">Pick one per movement — the ★ option is pre-selected. Tap ▶ on any exercise to watch a tutorial before deciding.</div>';
+  let html = '<div style="font-size:13px; color:var(--gray); margin-bottom:14px; line-height:1.6;">Pick one exercise per movement. The <span style="color:var(--cream);">★</span> option is pre-selected as a safe default. Tap the red <span style="color:var(--red); font-size:11px;">▶</span> on any pill to preview a tutorial first.</div>';
   OB_PRIMARY_SLOTS.forEach(slot => {
     const safeId = slot.id.replace('-', '_');
     let optBtns = slot.options.map((opt, i) => {
       const sel = i === 0 ? ' selected' : '';
       const label = i === 0 ? `★ ${opt.display}` : opt.display;
       const escaped = opt.apply.replace(/'/g, "\\'");
-      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${escaped}',this)">${label}<span onclick="event.stopPropagation();window.open('${opt.ytLink}','_blank')" style="margin-left:5px;color:var(--red);font-size:10px;opacity:0.8;" title="Watch tutorial">▶</span></button>`;
+      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${escaped}',this)">${label}<span onclick="event.stopPropagation();window.open('${opt.ytLink}','_blank')" style="margin-left:6px;color:var(--red);font-size:11px;" title="Watch tutorial">▶</span></button>`;
     }).join('');
     html += `
       <div style="background:var(--dark3); border-radius:12px; padding:14px; margin-bottom:12px;">
-        <div style="font-size:11px; color:var(--red); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; margin-bottom:3px;">${slot.label}</div>
-        <div style="font-size:11px; color:var(--gray); margin-bottom:10px;">${slot.desc}</div>
+        <div style="font-size:12px; color:var(--red); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:4px;">${slot.label}</div>
+        <div style="font-size:11px; color:#666; margin-bottom:10px;">${slot.desc}</div>
         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;" id="ob-slot-${safeId}-btns">${optBtns}</div>
         <div style="position:relative;">
           <input type="text" class="set-input" id="ob-slot-${safeId}-custom"
@@ -9881,9 +9891,12 @@ function buildObManualSlots() {
           <button id="ob-slot-${safeId}-clear" onclick="clearSlotCustom('${slot.id}')"
             style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#777; font-size:18px; line-height:1; cursor:pointer; padding:2px 4px;" title="Clear">✕</button>
         </div>
-        <div id="ob-slot-${safeId}-yt" style="display:none; margin-top:8px; background:rgba(255,255,255,0.04); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.7;">
-          <div style="color:var(--cream); margin-bottom:4px;">✓ Using: <strong id="ob-slot-${safeId}-name-lbl" style="color:var(--red);"></strong> &nbsp;<button onclick="clearSlotCustom('${slot.id}')" style="background:none; border:none; color:#666; font-size:11px; cursor:pointer; padding:0; text-decoration:underline;">remove ✕</button></div>
-          <a id="ob-slot-${safeId}-yt-link" href="" target="_blank" rel="noopener" style="color:var(--gray); text-decoration:none;">🔍 Search YouTube for a tutorial →</a>
+        <div id="ob-slot-${safeId}-yt" style="display:none; margin-top:8px; background:var(--dark2); border-left:3px solid var(--red); border-radius:0 8px 8px 0; padding:10px 12px; font-size:12px; line-height:1.8;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:5px;">
+            <div style="color:var(--cream);">✓ Using: <strong id="ob-slot-${safeId}-name-lbl" style="color:var(--red);"></strong></div>
+            <button onclick="clearSlotCustom('${slot.id}')" style="background:var(--dark3); border:1px solid #444; color:var(--gray); font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px; cursor:pointer; padding:3px 8px; border-radius:6px; line-height:1.4;">CLEAR ✕</button>
+          </div>
+          <a id="ob-slot-${safeId}-yt-link" href="" target="_blank" rel="noopener" style="color:var(--gray); text-decoration:none; font-size:11px;">🔍 Search YouTube for a tutorial →</a>
         </div>
       </div>`;
     // Pre-select the first option in state
