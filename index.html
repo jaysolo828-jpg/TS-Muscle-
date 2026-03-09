@@ -4261,7 +4261,7 @@ function checkForPR(exId, set) {
   if (!existing) {
     // No prior record — store as baseline only, not a PR
     if (!state.prs) state.prs = {};
-    state.prs[exId] = { weight: w, reps: r, date: new Date().toISOString() };
+    state.prs[exId] = { weight: w, reps: r, date: new Date().toISOString(), isBaseline: true };
     saveState();
     return;
   }
@@ -7363,7 +7363,7 @@ function renderPRBoard() {
   if (!board || !list) return;
 
   const prs = state.prs || {};
-  const prEntries = Object.entries(prs);
+  const prEntries = Object.entries(prs).filter(([, pr]) => !pr.isBaseline);
   if (prEntries.length === 0) { board.style.display = 'none'; return; }
 
   board.style.display = 'block';
@@ -7488,8 +7488,13 @@ function deleteHistoryEntry(entryId) {
 }
 
 function recalcPRsFromHistory() {
-  // Rebuild PR board from scratch based on remaining history
+  // Rebuild PR board from scratch based on remaining history.
+  // Only exercises that appear in at least one entry.prs array are real PRs;
+  // all others are stored as baselines for comparison only.
   state.prs = {};
+  const realPRExIds = new Set();
+  state.history.forEach(entry => (entry.prs || []).forEach(id => realPRExIds.add(id)));
+
   state.history.forEach(entry => {
     Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
       sets.filter(s => s.done && s.weight && s.reps).forEach(set => {
@@ -7498,7 +7503,7 @@ function recalcPRsFromHistory() {
         if (!w || !r) return;
         const existing = state.prs[exId];
         if (!existing || w > existing.weight || (w === existing.weight && r > existing.reps)) {
-          state.prs[exId] = { weight: w, reps: r, date: entry.date };
+          state.prs[exId] = { weight: w, reps: r, date: entry.date, isBaseline: !realPRExIds.has(exId) };
         }
       });
     });
