@@ -7553,31 +7553,59 @@ function renderProgressChart() {
   const prev = dataPoints[dataPoints.length - 2];
   let recHTML = '';
 
-  if (last.weight > prev.weight) {
-    const nextWeight = last.weight + 5;
-    recHTML = `<div class="overload-badge">
-      <div class="overload-icon">🔥</div>
-      <div class="overload-text">
-        <strong>READY TO PROGRESS</strong>
-        Try ${nextWeight} lbs next session. You've increased weight — keep pushing.
-      </div>
-    </div>`;
-  } else if (last.weight === prev.weight) {
-    recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#1a1200,#2a2000)">
-      <div class="overload-icon">⚡</div>
-      <div class="overload-text">
-        <strong>ADD REPS FIRST</strong>
-        Same weight 2+ sessions. Try to hit the top of your rep range before adding weight.
-      </div>
-    </div>`;
+  if (chartMode === 'weight') {
+    if (last.weight > prev.weight) {
+      const nextWeight = last.weight + 5;
+      recHTML = `<div class="overload-badge">
+        <div class="overload-icon">🔥</div>
+        <div class="overload-text">
+          <strong>READY TO PROGRESS</strong>
+          Try ${nextWeight} lbs next session. You've increased weight — keep pushing.
+        </div>
+      </div>`;
+    } else if (last.weight === prev.weight) {
+      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#1a1200,#2a2000)">
+        <div class="overload-icon">⚡</div>
+        <div class="overload-text">
+          <strong>ADD REPS FIRST</strong>
+          Same weight 2+ sessions. Try to hit the top of your rep range before adding weight.
+        </div>
+      </div>`;
+    } else {
+      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#001a0a,#002a10)">
+        <div class="overload-icon">🛡️</div>
+        <div class="overload-text">
+          <strong>MAINTAIN & REFOCUS</strong>
+          Weight dipped — focus on form and hitting your rep targets at this weight first.
+        </div>
+      </div>`;
+    }
   } else {
-    recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#001a0a,#002a10)">
-      <div class="overload-icon">🛡️</div>
-      <div class="overload-text">
-        <strong>MAINTAIN & REFOCUS</strong>
-        Weight dipped — focus on form and hitting your rep targets at this weight first.
-      </div>
-    </div>`;
+    if (last.weight > prev.weight) {
+      recHTML = `<div class="overload-badge">
+        <div class="overload-icon">🔥</div>
+        <div class="overload-text">
+          <strong>VOLUME INCREASING</strong>
+          Total volume is trending up — great work. Keep adding weight or reps to maintain this.
+        </div>
+      </div>`;
+    } else if (last.weight === prev.weight) {
+      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#1a1200,#2a2000)">
+        <div class="overload-icon">⚡</div>
+        <div class="overload-text">
+          <strong>VOLUME STABLE</strong>
+          Volume hasn't changed. Try adding a rep per set or a small weight increase to push it up.
+        </div>
+      </div>`;
+    } else {
+      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#001a0a,#002a10)">
+        <div class="overload-icon">🛡️</div>
+        <div class="overload-text">
+          <strong>VOLUME DROPPED</strong>
+          Total volume dipped. Complete all sets and hit rep targets before adding load.
+        </div>
+      </div>`;
+    }
   }
 
   document.getElementById('overload-recommendation').innerHTML = recHTML;
