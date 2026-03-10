@@ -1865,7 +1865,7 @@
 
   <!-- CARDIO TYPE SELECTOR -->
   <div style="margin-bottom:16px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:2px; margin-bottom:10px;">SELECT ACTIVITY</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px;">SELECT ACTIVITY</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
       <button id="btn-treadmill" onclick="selectCardioType('treadmill')" class="cardio-type-btn active-cardio-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="14" width="20" height="3" rx="1"/><path d="M5 14V9l3-4h4l2 4v5"/><line x1="9" y1="5" x2="9" y2="14"/><circle cx="17" cy="6" r="2"/><path d="M15 14l2-5 3 2"/></svg>TREADMILL</button>
       <button id="btn-outdoor" onclick="selectCardioType('outdoor')" class="cardio-type-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 20 8 10 13 15 17 8 21 20"/><line x1="3" y1="20" x2="21" y2="20"/></svg>OUTDOOR</button>
@@ -1877,26 +1877,26 @@
 
   <!-- TIMER -->
   <div class="card" style="text-align:center; margin-bottom:14px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:8px;">COUNTDOWN TIMER</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">COUNTDOWN TIMER</div>
     <!-- Quick presets -->
     <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
-      <button onclick="setTimerPreset(20)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:5px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">20 min</button>
-      <button onclick="setTimerPreset(30)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:5px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">30 min</button>
-      <button onclick="setTimerPreset(45)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:5px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">45 min</button>
-      <button onclick="setTimerPreset(60)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:5px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">60 min</button>
+      <button onclick="setTimerPreset(20)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:8px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">20 min</button>
+      <button onclick="setTimerPreset(30)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:8px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">30 min</button>
+      <button onclick="setTimerPreset(45)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:8px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">45 min</button>
+      <button onclick="setTimerPreset(60)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:8px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">60 min</button>
     </div>
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:12px;">
       <div style="text-align:center;">
         <input type="number" id="timer-mins" value="30" min="0" max="999" style="width:64px; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Bebas Neue',cursive; font-size:36px; text-align:center; border-radius:10px; padding:8px 4px;" inputmode="decimal"/>
-        <div style="font-size:11px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">MIN</div>
+        <div style="font-size:12px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">MIN</div>
       </div>
       <div style="font-family:'Bebas Neue',cursive; font-size:36px; color:var(--red); padding-top:8px;">:</div>
       <div style="text-align:center;">
         <input type="number" id="timer-secs" value="00" min="0" max="59" style="width:64px; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Bebas Neue',cursive; font-size:36px; text-align:center; border-radius:10px; padding:8px 4px;" inputmode="decimal"/>
-        <div style="font-size:11px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">SEC</div>
+        <div style="font-size:12px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">SEC</div>
       </div>
     </div>
-    <div id="timer-display" style="font-family:'Bebas Neue',cursive; font-size:56px; color:var(--cream); letter-spacing:4px; display:none;">30:00</div>
+    <div id="timer-display" style="font-family:'Bebas Neue',cursive; font-size:56px; color:var(--cream); letter-spacing:2px; display:none;">30:00</div>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:8px;">
       <button onclick="startCardioTimer()" id="timer-start-btn" style="background:var(--red); color:white; border:none; border-radius:10px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer;">START</button>
       <button onclick="pauseCardioTimer()" id="timer-pause-btn" style="display:none; background:var(--dark3); color:var(--cream); border:1px solid var(--dark4); border-radius:10px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer;">PAUSE</button>
@@ -1906,130 +1906,130 @@
 
   <!-- TREADMILL INPUTS -->
   <div id="cardio-inputs-treadmill" class="card" style="margin-bottom:14px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:12px;">TREADMILL DETAILS</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;">TREADMILL DETAILS</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">SPEED (MPH)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">SPEED (MPH)</div>
         <input type="number" id="tm-speed" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">INCLINE (%)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">INCLINE (%)</div>
         <input type="number" id="tm-incline" placeholder="0" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
         <input type="number" id="tm-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
         <input type="number" id="tm-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcTMCalories()" inputmode="decimal"/>
       </div>
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
         <input type="number" id="tm-calories" placeholder="—" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
       <textarea id="tm-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
 
   <!-- OUTDOOR INPUTS -->
   <div id="cardio-inputs-outdoor" class="card" style="margin-bottom:14px; display:none;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:12px;">OUTDOOR RUN DETAILS</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;">OUTDOOR RUN DETAILS</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
         <input type="number" id="od-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
         <input type="number" id="od-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcODCalories()" inputmode="decimal"/>
       </div>
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
         <input type="number" id="od-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div id="pace-display" style="margin-top:10px; background:var(--dark3); border-radius:10px; padding:10px 14px; display:none;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px;">AVG PACE</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px;">AVG PACE</div>
       <div id="pace-value" style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:2px;">--:-- /MI</div>
     </div>
     <div style="margin-top:10px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">ROUTE NOTES</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">ROUTE NOTES</div>
       <textarea id="od-notes" class="notes-input" placeholder="Route, conditions, how it felt..." style="min-height:60px;"></textarea>
     </div>
   </div>
 
   <!-- WALK INPUTS -->
   <div id="cardio-inputs-walk" class="card" style="margin-bottom:14px; display:none;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:12px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M7 14l2-3M17 14l-2-3"/></svg>WALK DETAILS</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M7 14l2-3M17 14l-2-3"/></svg>WALK DETAILS</div>
     <div style="background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:12px; color:var(--gray);">Leisurely pace — under 2.5 mph. Great for active recovery and low-impact cardio.</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
         <input type="number" id="wk-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
         <input type="number" id="wk-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('walk')" inputmode="decimal"/>
       </div>
       <div style="grid-column:1/-1;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
         <input type="number" id="wk-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
       <textarea id="wk-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
 
   <!-- BRISK WALK INPUTS -->
   <div id="cardio-inputs-briskwalk" class="card" style="margin-bottom:14px; display:none;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:12px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M6 14l3-3M18 14l-3-3"/></svg>BRISK WALK DETAILS</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M6 14l3-3M18 14l-3-3"/></svg>BRISK WALK DETAILS</div>
     <div style="background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:12px; color:var(--gray);">Purposeful pace — 2.5 to 3.5 mph. Elevates heart rate without joint stress.</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
         <input type="number" id="bw-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
         <input type="number" id="bw-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('briskwalk')" inputmode="decimal"/>
       </div>
       <div style="grid-column:1/-1;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
         <input type="number" id="bw-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
       <textarea id="bw-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
 
   <!-- JOG INPUTS -->
   <div id="cardio-inputs-jog" class="card" style="margin-bottom:14px; display:none;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:12px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M7 8l2 3h5l2-3M9 11l-2 5h2l1-2 2 2h2l-2-5"/></svg>JOG DETAILS</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M7 8l2 3h5l2-3M9 11l-2 5h2l1-2 2 2h2l-2-5"/></svg>JOG DETAILS</div>
     <div style="background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:12px; color:var(--gray);">Easy running pace — 3.5 to 5 mph. Builds aerobic base without maxing out effort.</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
         <input type="number" id="jg-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
         <input type="number" id="jg-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('jog')" inputmode="decimal"/>
       </div>
       <div style="grid-column:1/-1;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
         <input type="number" id="jg-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
       <textarea id="jg-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -2601,11 +2601,11 @@
         <div style="font-size:12px; color:var(--gray); margin-bottom:12px;">Enter a weight you can lift for a known number of reps and we'll estimate your 1RM.</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
           <div>
-            <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
+            <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
             <input type="number" id="onerm-weight" class="set-input" placeholder="e.g. 135" inputmode="decimal" style="width:100%; padding:10px 12px; text-align:left;"/>
           </div>
           <div>
-            <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">REPS COMPLETED</div>
+            <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">REPS COMPLETED</div>
             <input type="number" id="onerm-reps" class="set-input" placeholder="e.g. 8" inputmode="numeric" style="width:100%; padding:10px 12px; text-align:left;"/>
           </div>
         </div>
