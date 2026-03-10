@@ -3299,13 +3299,13 @@
       </button>
 
       <!-- This Cycle -->
-      <button onclick="confirmAddBonus('cycle')" style="width:100%;text-align:left;background:var(--dark3);border:1px solid var(--dark4);border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.15s,background 0.15s;" onmousedown="this.style.background='rgba(232,168,56,0.08)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(232,168,56,0.08)'" ontouchend="this.style.background=''">
+      <button onclick="confirmAddBonus('cycle')" style="width:100%;text-align:left;background:var(--dark3);border:1px solid var(--dark4);border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.15s,background 0.15s;" onmousedown="this.style.background='rgba(74,138,245,0.08)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(74,138,245,0.08)'" ontouchend="this.style.background=''">
         <div style="display:flex;align-items:flex-start;gap:14px;">
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(232,168,56,0.1);border:1px solid rgba(232,168,56,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="#e8a838" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <div style="width:42px;height:42px;border-radius:10px;background:rgba(74,138,245,0.1);border:1px solid rgba(74,138,245,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="#4a8af5" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           </div>
           <div style="flex:1;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:#e8a838;letter-spacing:0.5px;line-height:1.2;">THIS CYCLE</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:#4a8af5;letter-spacing:0.5px;line-height:1.2;">THIS CYCLE</div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:5px;line-height:1.5;">Added to this day for the rest of the current cycle, then drops off automatically.</div>
           </div>
         </div>
@@ -4151,7 +4151,7 @@ const SPLIT_COLORS = {
 const DAY_COLORS = {
   2: { hex: '#00b4d8', bg: 'rgba(0,180,216,0.12)',    border: 'rgba(0,180,216,0.45)'    },
   3: { hex: '#7c6fcd', bg: 'rgba(124,111,205,0.12)',  border: 'rgba(124,111,205,0.45)'  },
-  4: { hex: '#e8a838', bg: 'rgba(232,168,56,0.12)',   border: 'rgba(232,168,56,0.45)'   },
+  4: { hex: '#4a8af5', bg: 'rgba(74,138,245,0.12)',   border: 'rgba(74,138,245,0.45)'   },
   5: { hex: '#e05c3a', bg: 'rgba(224,92,58,0.12)',    border: 'rgba(224,92,58,0.45)'    },
 };
 
@@ -6532,7 +6532,7 @@ function renderBonusExercises() {
 
   const PERSIST_META = {
     today:     { label: 'TODAY ONLY', color: '#888888' },
-    cycle:     { label: 'THIS CYCLE', color: '#e8a838' },
+    cycle:     { label: 'THIS CYCLE', color: '#4a8af5' },
     permanent: { label: 'PERMANENT',  color: '#2ecc71' }
   };
 
@@ -7833,7 +7833,7 @@ function showSessionWrapUp() {
     const avgRPE = doneSets.filter(s => s.rpe).length
       ? (doneSets.filter(s => s.rpe).reduce((s, x) => s + parseFloat(x.rpe), 0) / doneSets.filter(s => s.rpe).length).toFixed(1)
       : null;
-    const PERSIST_META = { today: { label: 'TODAY ONLY', color: '#888' }, cycle: { label: 'THIS CYCLE', color: '#e8a838' }, permanent: { label: 'PERMANENT', color: '#2ecc71' } };
+    const PERSIST_META = { today: { label: 'TODAY ONLY', color: '#888' }, cycle: { label: 'THIS CYCLE', color: '#4a8af5' }, permanent: { label: 'PERMANENT', color: '#2ecc71' } };
     const pm = PERSIST_META[bonus.persistence] || PERSIST_META.today;
     bonusSummaryRows += `
       <div style="border-bottom:1px solid var(--dark3);padding:12px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
@@ -7854,16 +7854,16 @@ function showSessionWrapUp() {
       `<div data-bonus-upgrade="${b.id}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #1e1e1e;">
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);font-weight:700;">${b.name}</div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="_upgradeBonus('${b.id}','cycle')" style="background:rgba(232,168,56,0.12);border:1px solid rgba(232,168,56,0.4);color:#e8a838;padding:5px 10px;border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CYCLE</button>
+          <button onclick="_upgradeBonus('${b.id}','cycle')" style="background:rgba(74,138,245,0.12);border:1px solid rgba(74,138,245,0.4);color:#4a8af5;padding:5px 10px;border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CYCLE</button>
           <button onclick="_upgradeBonus('${b.id}','permanent')" style="background:rgba(46,204,113,0.12);border:1px solid rgba(46,204,113,0.4);color:#2ecc71;padding:5px 10px;border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">KEEP IT</button>
         </div>
       </div>`
     ).join('');
     upgradePromptHTML = `
-      <div style="background:rgba(232,168,56,0.06);border:1px solid rgba(232,168,56,0.25);border-radius:12px;padding:14px 16px;margin-bottom:16px;">
+      <div style="background:rgba(74,138,245,0.06);border:1px solid rgba(74,138,245,0.25);border-radius:12px;padding:14px 16px;margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="#e8a838" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="3"/></svg>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:#e8a838;letter-spacing:1px;">KEEP THESE BONUS EXERCISES?</div>
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="#4a8af5" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="3"/></svg>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:#4a8af5;letter-spacing:1px;">KEEP THESE BONUS EXERCISES?</div>
         </div>
         ${bonusList}
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);margin-top:10px;line-height:1.5;">Tap CYCLE to keep for this training cycle, or KEEP IT to add permanently.</div>
@@ -7970,7 +7970,7 @@ function _upgradeBonus(bonusId, persistence) {
   const row = modal.querySelector(`[data-bonus-upgrade="${bonusId}"]`);
   if (row) {
     const label = persistence === 'cycle' ? 'Added for cycle ✓' : 'Added permanently ✓';
-    const color = persistence === 'cycle' ? '#e8a838' : '#2ecc71';
+    const color = persistence === 'cycle' ? '#4a8af5' : '#2ecc71';
     row.innerHTML = `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:${color};letter-spacing:0.5px;padding:10px 0;">${label}</div>`;
   }
 }
@@ -9135,11 +9135,11 @@ const CARD_DAY_PALETTES = [
   { hi: '#cc2027', lo: '#8a1519', line: 'rgba(204,32,39,0.7)'  },  // 0 — red
   { hi: '#1060b8', lo: '#0b3878', line: 'rgba(16,96,184,0.7)'  },  // 1 — blue
   { hi: '#6a1fa0', lo: '#3d1260', line: 'rgba(106,31,160,0.7)' },  // 2 — purple
-  { hi: '#c07000', lo: '#7a4400', line: 'rgba(192,112,0,0.7)'  },  // 3 — amber
+  { hi: '#1a68e8', lo: '#0a2080', line: 'rgba(74,138,245,0.7)'  },  // 3 — cobalt
   { hi: '#1a7a5a', lo: '#0d4a34', line: 'rgba(26,122,90,0.7)'  },  // 4 — teal
   { hi: '#8b0a14', lo: '#50070c', line: 'rgba(139,10,20,0.7)'  },  // 5 — deep crimson
 ];
-const CARD_PR_THEME     = { hi: '#6b4400', lo: '#2a1800', line: 'rgba(220,160,0,0.75)' };
+const CARD_PR_THEME     = { hi: '#c07800', lo: '#7a4e00', line: 'rgba(210,160,0,0.75)' };
 const CARD_DELOAD_THEME = { hi: '#1a3050', lo: '#0a1826', line: 'rgba(80,140,220,0.7)' };
 const CARD_MILESTONE_SESSIONS = new Set([10, 25, 50, 100, 200, 365, 500, 1000]);
 
