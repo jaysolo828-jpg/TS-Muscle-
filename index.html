@@ -8545,7 +8545,7 @@ async function generateAndShareCard(type, data) {
     ctx.fillText('🏆', W / 2, emojiY);
 
     drawText('PERSONAL RECORD', W / 2, tagY,
-      barlow(700, 50), 'rgba(255,255,255,0.78)', MAX_TW);
+      barlow(700, 50), 'rgba(255,255,255,0.93)', MAX_TW);
     drawText((data.exercise || '').toUpperCase(), W / 2, exY,
       bebas(86), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.3)', blur: 14 });
     drawText(`${data.weight || '?'} LBS × ${data.reps || '?'}`, W / 2, wtY,
@@ -8567,7 +8567,7 @@ async function generateAndShareCard(type, data) {
     drawText((data.dayName || 'WORKOUT').toUpperCase(), W / 2, dayY,
       barlow(700, 54), 'rgba(255,255,255,0.9)', MAX_TW);
     drawText(data.weekLabel || `WEEK ${data.week || 1}`, W / 2, weekY,
-      barlow(500, 38), 'rgba(255,255,255,0.55)', MAX_TW);
+      barlow(500, 38), 'rgba(255,255,255,0.75)', MAX_TW);
 
   } else if (type === 'weekly') {
     const emojiY    = Math.round(SPLIT * 0.19);
@@ -8585,7 +8585,7 @@ async function generateAndShareCard(type, data) {
     drawText('COMPLETE', W / 2, completeY,
       barlow(700, 66), 'rgba(255,255,255,0.9)', MAX_TW);
     drawText('HYPERTROPHY PROGRAM', W / 2, subY,
-      barlow(500, 38), 'rgba(255,255,255,0.5)', MAX_TW);
+      barlow(500, 38), 'rgba(255,255,255,0.78)', MAX_TW);
   }
 
   // ── Bottom branding ───────────────────────────────────────
@@ -8656,19 +8656,19 @@ async function generateAndShareCard(type, data) {
   ctx.fillText('T&S MUSCLE', textX, nameLineY);
 
   ctx.font      = barlow(600, URL_SZ);
-  ctx.fillStyle = '#777777';
+  ctx.fillStyle = '#aaaaaa';
   ctx.fillText('therapyandsneakers.org', textX, urlLineY);
 
   // Display name
   if (displayName) {
     drawText(displayName, W / 2,
       SPLIT + Math.round(bottomH * 0.68),
-      barlow(600, 34), 'rgba(245,230,200,0.5)', MAX_TW);
+      barlow(600, 34), 'rgba(245,230,200,0.88)', MAX_TW);
   }
 
   // Tagline pinned to bottom
   drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - 54,
-    barlow(500, 27), 'rgba(120,120,120,0.65)', MAX_TW);
+    barlow(600, 30), 'rgba(160,160,160,0.9)', MAX_TW);
 
   // Share
   canvas.toBlob(async (blob) => {
