@@ -6595,6 +6595,7 @@ function _onDragHandlePointerDown(e) {
 
   document.addEventListener('pointermove', _onDragPointerMove, { passive: false });
   document.addEventListener('pointerup', _onDragPointerUp);
+  document.addEventListener('pointercancel', _onDragPointerUp);
   _dragScrollLoop();
 }
 
@@ -6640,6 +6641,7 @@ function _onDragPointerUp() {
   if (!_drag) return;
   document.removeEventListener('pointermove', _onDragPointerMove);
   document.removeEventListener('pointerup', _onDragPointerUp);
+  document.removeEventListener('pointercancel', _onDragPointerUp);
 
   document.querySelectorAll('#session-exercises .session-exercise').forEach(c => {
     c.classList.remove('drag-nudge-down', 'is-dragging');
