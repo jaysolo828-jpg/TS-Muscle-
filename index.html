@@ -4685,12 +4685,17 @@ function getDayStats(dayId) {
   const lastVol = calcVolume(last);
   const prevVol = prev ? calcVolume(prev) : null;
   const delta = (prevVol && prevVol > 0) ? Math.round(((lastVol - prevVol) / prevVol) * 100) : null;
+  const lastDate = new Date(last.date);
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const daysAgo  = Math.floor((Date.now() - lastDate) / 86400000);
+  const lastDoneLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : dayNames[lastDate.getDay()];
   return {
     lastId: last.id,
     volume: lastVol,
     delta,
     prCount: (last.prs || []).length,
     duration: last.duration || null,
+    lastDoneLabel,
     hasData: lastVol > 0
   };
 }
@@ -4891,10 +4896,9 @@ function renderHome() {
             ${doneThisWeek && _stats && _stats.hasData ? `
             <div style="margin-top:8px;display:flex;align-items:center;gap:8px;background:${_statsBg};border:1px solid ${_statsBorder};border-radius:8px;padding:6px 10px;">
               <div style="flex:1;display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap;">
-                <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:${_dayColor};letter-spacing:0.5px;white-space:nowrap;">${Math.round(_stats.volume).toLocaleString()} lbs</span>
-                ${_stats.delta !== null ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:${_stats.delta >= 0 ? '#2ecc71' : '#CC2027'};letter-spacing:0.3px;">${_stats.delta >= 0 ? '↑' : '↓'} ${Math.abs(_stats.delta)}%</span>` : ''}
                 ${_stats.prCount > 0 ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#f39c12;letter-spacing:0.3px;">🏆 ${_stats.prCount} PR${_stats.prCount > 1 ? 's' : ''}</span>` : ''}
-                ${_stats.duration ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.3px;">${_stats.duration} min</span>` : ''}
+                ${_stats.duration ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.3px;">${_stats.duration} min</span>` : ''}
+                <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.3px;">${_stats.lastDoneLabel}</span>
               </div>
               <button onclick="event.stopPropagation();shareHistoryEntry('${_stats.lastId}')" style="background:none;border:none;color:${_dayColor};opacity:0.55;cursor:pointer;padding:2px;display:flex;align-items:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;" title="Share last session">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -9492,7 +9496,8 @@ async function generateAndShareCard(type, data) {
 
   // Centre the brand block in the upper portion of the bottom zone
   const bottomH     = H - SPLIT;
-  const brandCY     = SPLIT + Math.round(bottomH * (displayName ? 0.32 : 0.40));
+  const hasStats    = (type === 'workout' || type === 'weekly') && data.stats;
+  const brandCY     = SPLIT + Math.round(bottomH * (hasStats ? 0.20 : displayName ? 0.32 : 0.40));
   const logoX       = blockX;
   const logoY       = brandCY - LOGO_SIZE / 2;
 
@@ -9537,48 +9542,45 @@ async function generateAndShareCard(type, data) {
   // Display name
   if (displayName) {
     drawText(displayName, W / 2,
-      SPLIT + Math.round(bottomH * 0.68),
+      SPLIT + Math.round(bottomH * (hasStats ? 0.80 : 0.68)),
       barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
   }
 
   // ── Session stats strip (workout + weekly cards) ─────────
-  if ((type === 'workout' || type === 'weekly') && data.stats) {
+  if (hasStats) {
     const st = data.stats;
     const items = [];
-    if (st.volume > 0)        items.push({ val: Math.round(st.volume).toLocaleString(), lbl: 'LBS VOLUME', col: '#F5E6C8' });
     if (st.delta !== null)    items.push({ val: (st.delta >= 0 ? '+' : '') + st.delta + '%', lbl: 'VS LAST TIME', col: st.delta >= 0 ? '#2ecc71' : '#ff6b6b' });
     if (st.prCount > 0)       items.push({ val: st.prCount + (st.prCount === 1 ? ' PR' : ' PRs'), lbl: 'NEW RECORDS', col: '#f5c842' });
     if (st.duration)          items.push({ val: st.duration + ' MIN', lbl: 'DURATION', col: '#F5E6C8' });
 
     if (items.length) {
-      const bottomH = H - SPLIT;
-      const statsY  = SPLIT + Math.round(bottomH * 0.58);
-      const lblY    = statsY + Math.round(50 * BS);
-      const colW    = MAX_TW / items.length;
+      const valY  = SPLIT + Math.round(bottomH * 0.52);
+      const lblY  = valY + Math.round(56 * BS);
+      const colW  = MAX_TW / items.length;
 
-      // Subtle hairline above stats
+      // Hairline above stats
       ctx.save();
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(PAD, statsY - Math.round(36 * BS));
-      ctx.lineTo(W - PAD, statsY - Math.round(36 * BS));
+      ctx.moveTo(PAD, valY - Math.round(40 * BS));
+      ctx.lineTo(W - PAD, valY - Math.round(40 * BS));
       ctx.stroke();
       ctx.restore();
 
       items.forEach((item, i) => {
         const cx = PAD + colW * i + colW / 2;
-        // Glow for colored values
         if (item.col !== '#F5E6C8') {
           ctx.save();
           ctx.shadowColor = item.col;
-          ctx.shadowBlur  = Math.round(22 * BS);
-          drawText(item.val, cx, statsY, bebas(54, BS), item.col, colW - 16);
+          ctx.shadowBlur  = Math.round(20 * BS);
+          drawText(item.val, cx, valY, bebas(58, BS), item.col, colW - 20);
           ctx.restore();
         } else {
-          drawText(item.val, cx, statsY, bebas(54, BS), item.col, colW - 16);
+          drawText(item.val, cx, valY, bebas(58, BS), item.col, colW - 20);
         }
-        drawText(item.lbl, cx, lblY, barlow(600, 22, BS), 'rgba(160,160,160,0.8)', colW - 16);
+        drawText(item.lbl, cx, lblY, barlow(600, 24, BS), 'rgba(160,160,160,0.8)', colW - 20);
       });
     }
   }
