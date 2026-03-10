@@ -4398,9 +4398,9 @@ function renderHome() {
   const maxDays = state.trainingDaysPerWeek || 4;
   const visibleDays = state.program.slice(0, maxDays);
 
-  // Which days were completed this training week (last totalSessions % 4 real sessions)?
+  // Which days were completed this training week (last N real sessions, N = trainingDaysPerWeek)?
   // Using the training week rather than calendar day so badges persist across days
-  // until the 4-session week resets.
+  // until the training week resets.
   const realSessionsOrdered = (state.history || [])
     .filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done)))
     .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -7177,10 +7177,11 @@ function finalizeEndSession(save) {
     showToast('Workout saved! ✓');
     setTimeout(() => checkBackupReminder(), 3000);
 
-    // Increment week every 4 sessions OR after 7 calendar days — whichever comes first.
+    // Increment week every N sessions (N = training days/week) OR after 7 calendar days — whichever comes first.
     // This prevents low-frequency users from waiting a month to reach the next week.
     if (!state.weekStartTimestamp) state.weekStartTimestamp = Date.now();
-    const _sessionBased = state.totalSessions % 4 === 0;
+    const _weekLen = state.trainingDaysPerWeek || state.program?.length || 4;
+    const _sessionBased = state.totalSessions % _weekLen === 0;
     const _daysSinceWeekStart = (Date.now() - state.weekStartTimestamp) / 86400000;
     const _calendarBased = _daysSinceWeekStart >= 7 && !_sessionBased;
     if (_sessionBased || _calendarBased) {
@@ -9039,15 +9040,6 @@ function getWeightIncrement(goal) {
 // ============================================================
 // TRAINING DAYS LOCK
 // ============================================================
-const DAYS_EXPLANATIONS = {
-  1: '1 day/week — Full body or your priority session. Best for maintenance or very busy schedules.',
-  2: '2 days/week — Upper A + Lower A. Covers all major muscle groups twice in 2 weeks.',
-  3: '3 days/week — Upper A, Lower A, Upper B. Good balance with plenty of recovery.',
-  4: '4 days/week — The full program. Optimal for hypertrophy with proper recovery built in.',
-  5: '5 days/week — Full program + one extra day. Use the extra for weak points or cardio focus.',
-  6: '6 days/week — High frequency. Make sure recovery, sleep, and nutrition are dialed in.',
-};
-
 let pendingDaysCount = null;
 
 function updateSettingsDayButtonDescriptions() {
@@ -9187,9 +9179,9 @@ function applySplitType() {
   if (!pendingSplitType) return;
   state.splitType = pendingSplitType;
   state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[pendingSplitType] || DEFAULT_PROGRAM));
-  // Reset training days to match the new split's default if current days > program length
+  // Reset training days to the new split's natural length when switching splits
   const programLen = state.program.length;
-  if (!state.trainingDaysPerWeek || state.trainingDaysPerWeek > programLen * 2) {
+  if (!state.trainingDaysPerWeek || state.trainingDaysPerWeek > programLen) {
     state.trainingDaysPerWeek = programLen;
   }
   saveState();
