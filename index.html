@@ -1801,7 +1801,7 @@
       <div class="stat-label">Current Week</div>
     </div>
     <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;">
-      <button onclick="event.stopPropagation();shareStreakCard()" title="Share streak" style="position:absolute;top:6px;right:6px;background:none;border:none;padding:4px;cursor:pointer;line-height:1;opacity:0.55;-webkit-tap-highlight-color:transparent;">
+      <button onclick="event.stopPropagation();shareStreakCard()" title="Share streak" style="position:absolute;top:5px;right:5px;background:rgba(204,32,39,0.15);border:1px solid rgba(204,32,39,0.45);border-radius:6px;padding:5px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
         <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--red)" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       </button>
       <div class="stat-num" id="stat-streak">0</div>
@@ -7869,7 +7869,7 @@ function renderPRBoard() {
       <div style="font-size:11px;color:#c47d00;letter-spacing:1px;margin-bottom:2px;">🏆 ${displayName.toUpperCase()}</div>
       <div style="font-size:15px;color:var(--cream);font-weight:700;">${pr.weight} lbs × ${pr.reps}</div>
       ${prDate ? `<div style="font-size:10px;color:#8a6a00;margin-top:3px;letter-spacing:0.5px;">${prDate}</div>` : ''}
-      <button onclick="generateAndShareCard('pr',{exercise:'${cleanName.replace(/'/g,"\\'")}',weight:${pr.weight},reps:${pr.reps}})" title="Share this PR" style="position:absolute;top:6px;right:6px;background:none;border:none;padding:3px;cursor:pointer;opacity:0.5;-webkit-tap-highlight-color:transparent;">
+      <button onclick="generateAndShareCard('pr',{exercise:'${cleanName.replace(/'/g,"\\'")}',weight:${pr.weight},reps:${pr.reps}})" title="Share this PR" style="position:absolute;top:6px;right:6px;background:rgba(196,125,0,0.18);border:1px solid rgba(196,125,0,0.5);border-radius:6px;padding:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="#c47d00" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       </button>`;
     list.appendChild(chip);
@@ -8029,7 +8029,7 @@ function renderHistoryItem(entry, container, insertBefore) {
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;padding-left:10px;">
-        <button onclick="event.stopPropagation(); shareHistoryEntry('${entry.id}')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:4px;opacity:0.55;-webkit-tap-highlight-color:transparent;" title="Share this workout">
+        <button onclick="event.stopPropagation(); shareHistoryEntry('${entry.id}')" style="background:rgba(204,32,39,0.15);border:1px solid rgba(204,32,39,0.45);border-radius:6px;color:var(--red);cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;" title="Share this workout">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
         <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:none;border:none;color:var(--gray);cursor:pointer;padding:4px;opacity:0.6;-webkit-tap-highlight-color:transparent;" title="Delete session">
@@ -8648,13 +8648,13 @@ async function generateAndShareCard(type, data) {
     const file = new File([blob], 'ts-muscle-share.png', { type: 'image/png' });
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: 'T&S Muscle', text: _getCardShareText(type, data) });
+        await navigator.share({ files: [file], title: 'T&S Muscle' });
       } catch(e) {
         if (e.name !== 'AbortError') _downloadShareCard(blob);
       }
     } else if (navigator.share) {
       try {
-        await navigator.share({ title: 'T&S Muscle', text: _getCardShareText(type, data), url: 'https://therapyandsneakers.org' });
+        await navigator.share({ title: 'T&S Muscle' });
       } catch(e) {
         if (e.name !== 'AbortError') _downloadShareCard(blob);
       }
