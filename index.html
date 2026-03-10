@@ -4450,13 +4450,15 @@ function updatePauseSettingsLabel() {
     const reasonLabels = { illness: 'Illness', injury: 'Injury', emergency: 'Emergency', travel: 'Travel' };
     label.textContent = 'Resume Program';
     label.style.color = 'var(--warning)';
-    sub.textContent = `Paused ${days} day${days !== 1 ? 's' : ''} ago · ${reasonLabels[state.pauseReason] || 'On pause'}`;
-    if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+    sub.textContent = `Paused ${days} day${days !== 1 ? 's' : ''} ago · ${reasonLabels[state.pauseReason] || 'On pause'} — tap to resume`;
+    sub.style.color = 'var(--warning)';
+    if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--warning)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
   } else {
     label.textContent = 'Pause Program';
     label.style.color = '';
     sub.textContent = 'For illness, injury, or emergencies — protects your streak';
-    if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+    sub.style.color = '';
+    if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
   }
 }
 
@@ -5516,12 +5518,12 @@ function applyDeloadWeek() {
 function applyRestWeek() {
   state.isRestWeek = true;
   state.isDeloadWeek = false;
+  state.weeksSinceDeload = 0;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
   saveState();
   document.getElementById('deload-modal').style.display = 'none';
-  showToast('Rest week — program paused. Come back strong 💤');
-  activateDeloadRest();
+  showToast('Rest week active — program paused. Come back strong 💤');
   renderHome();
 }
 
@@ -5581,11 +5583,6 @@ function endRecoveryWeek() {
   delete state.deloadStartDate;
   delete state.deloadSessionsCompleted;
   saveState();
-}
-
-function activateDeloadRest() {
-  const banner = document.getElementById('rest-week-banner');
-  if (banner) banner.style.display = 'block';
 }
 
 function resumeDeloadRest() {
@@ -10457,12 +10454,15 @@ function updateNotificationsUI() {
   const on = !!state.notificationsEnabled;
   const sub = document.getElementById('notifications-sub');
   const icon = document.getElementById('notifications-icon');
-  if (sub) sub.textContent = on
-    ? 'On — nudge if you miss a scheduled training day'
-    : 'Off — tap to enable nudges on training days';
+  if (sub) {
+    sub.textContent = on
+      ? 'On — nudge if you miss a scheduled training day'
+      : 'Off — tap to enable nudges on training days';
+    sub.style.color = on ? '#2ecc71' : 'var(--gray)';
+  }
   if (icon) icon.innerHTML = on
-    ? '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--red)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>'
-    : '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    ? '<svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="20" height="20" stroke="#555" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 }
 
 function toggleProgressiveOverload() {
