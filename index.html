@@ -5496,21 +5496,21 @@ function openDeloadModal() {
 }
 
 function applyDeloadWeek() {
-  // Reduce all starting weights by 40% for this week
+  // Reduce all starting weights by ~25% for this week (keep at 75% of normal)
   if (!state.startingWeights) state.startingWeights = {};
   if (!state.deloadBaseWeights) {
     // Save originals so we can restore after deload
     state.deloadBaseWeights = { ...state.startingWeights };
   }
   Object.keys(state.startingWeights).forEach(id => {
-    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * 0.6 / 2.5) * 2.5;
+    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * 0.75 / 2.5) * 2.5;
   });
   state.isDeloadWeek = true;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
   saveState();
   document.getElementById('deload-modal').style.display = 'none';
-  showToast('Deload week active — weights reduced 40% ⚡');
+  showToast('Deload week active — weights at 75% ⚡');
   renderHome();
 }
 
@@ -5533,7 +5533,7 @@ function activateDeloadWeek() {
     state.deloadBaseWeights = { ...state.startingWeights };
   }
   Object.keys(state.startingWeights).forEach(id => {
-    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * 0.6 / 2.5) * 2.5;
+    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * 0.75 / 2.5) * 2.5;
   });
   state.isDeloadWeek = true;
   state.weeksSinceDeload = 0;
@@ -5542,7 +5542,7 @@ function activateDeloadWeek() {
   saveState();
   const m = document.getElementById('deload-suggest-modal');
   if (m) m.remove();
-  showToast('Light week active — weights reduced 40% ⚡');
+  showToast('Light week active — weights at 75% ⚡');
   renderHome();
 }
 
@@ -5643,11 +5643,13 @@ function getProgressiveWeight(exId, dayId) {
     return '';
   }
 
-  // During deload week, bypass progression — use 60% of last session's weight
+  // During deload week, bypass progression — use 75% of base (pre-deload) weight
   if (state.isDeloadWeek) {
-    const lastSessionSets = (sameDaySessions[0].sets[exId] || []).filter(s => s.done);
+    const baseWeight = parseFloat(state.deloadBaseWeights?.[exId] || 0);
+    if (baseWeight) return String(Math.max(5, Math.round(baseWeight * 0.75 / 2.5) * 2.5));
+    const lastSessionSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done);
     const lastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
-    if (lastWeight) return String(Math.max(5, Math.round(lastWeight * 0.6 / 2.5) * 2.5));
+    if (lastWeight) return String(Math.max(5, Math.round(lastWeight * 0.75 / 2.5) * 2.5));
     return state.startingWeights?.[exId] ? String(state.startingWeights[exId]) : '';
   }
 
@@ -5710,8 +5712,10 @@ function getProgressiveWeight(exId, dayId) {
 
   // In trend mode: require consistency before increasing
   // Must hit rep target AND RPE is manageable across the window
+  // 2-of-3 gate: allow one hard session without blocking progress.
+  // highRPESessionCount <= 1 means at most one outlier session is OK.
   const trendReadyToIncrease = useTrend
-    ? (hitRepRangeTop && avgRPE !== null && avgRPE <= 8 && highRPESessionCount === 0)
+    ? (hitRepRangeTop && avgRPE !== null && avgRPE <= 8 && highRPESessionCount <= 1)
       || (hitRepRangeTop && avgRPE === null)
       || (exceededRange && (avgRPE === null || avgRPE <= 8))
     : true; // single session — use regular logic
@@ -5817,6 +5821,26 @@ function getProgressiveWeight(exId, dayId) {
   // Round to nearest 2.5 lbs, never below 5
   newWeight = Math.max(5, Math.round(newWeight / 2.5) * 2.5);
 
+  // Detect consecutive weight regressions across same-day sessions.
+  // Two drops in a row (w0 < w1 < w2) is a signal the body needs more than
+  // a small decrement — a proper deload is warranted.
+  let consecutiveReductions = 0;
+  if (sameDaySessions.length >= 3) {
+    const _w = [0, 1, 2].map(i => {
+      const s = (sameDaySessions[i].sets[exId] || []).filter(s => s.done);
+      return parseFloat(s[s.length - 1]?.weight) || 0;
+    });
+    if (_w[0] > 0 && _w[1] > 0 && _w[2] > 0 && _w[0] < _w[1] && _w[1] < _w[2]) {
+      consecutiveReductions = 2;
+    } else if (_w[0] > 0 && _w[1] > 0 && _w[0] < _w[1]) {
+      consecutiveReductions = 1;
+    }
+  } else if (sameDaySessions.length >= 2) {
+    const _w0 = (() => { const s = (sameDaySessions[0].sets[exId] || []).filter(s => s.done); return parseFloat(s[s.length - 1]?.weight) || 0; })();
+    const _w1 = (() => { const s = (sameDaySessions[1].sets[exId] || []).filter(s => s.done); return parseFloat(s[s.length - 1]?.weight) || 0; })();
+    if (_w0 > 0 && _w1 > 0 && _w0 < _w1) consecutiveReductions = 1;
+  }
+
   if (!activeSession.overloadReasons) activeSession.overloadReasons = {};
   activeSession.overloadReasons[exId] = {
     lastWeight, newWeight,
@@ -5824,7 +5848,8 @@ function getProgressiveWeight(exId, dayId) {
     reason, avgRPE,
     avgReps: Math.round(avgReps),
     useTrend,
-    sessionCount: sessions.length
+    sessionCount: sessions.length,
+    consecutiveReductions
   };
 
   return String(newWeight);
@@ -5872,6 +5897,9 @@ function buildOverloadHint(exId) {
       ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
     </div>`;
   } else if (info.changed && info.newWeight < info.lastWeight) {
+    const deloadNudge = info.consecutiveReductions >= 2
+      ? `<div style="margin-top:6px; padding-left:23px; font-size:11px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:11px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">consider a deload week</button></div>`
+      : '';
     return `<div style="background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.25); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome ? '5px' : '0'};">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
@@ -5880,6 +5908,7 @@ function buildOverloadHint(exId) {
         </div>
       </div>
       ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
+      ${deloadNudge}
     </div>`;
   } else if (info.lastWeight) {
     return `<div style="background:rgba(255,255,255,0.03); border:1px solid #252525; border-radius:10px; padding:9px 12px; margin-bottom:8px;">
