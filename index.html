@@ -30,6 +30,9 @@
     --gray-light: #aaaaaa;
     --success: #2ecc71;
     --warning: #f39c12;
+    --gold: #c47d00;
+    --gold-dim: rgba(196,125,0,0.18);
+    --blue: #5b8dee;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -1825,9 +1828,9 @@
   <div class="section-title">WORKOUT <span>HISTORY</span></div>
   <!-- PR BOARD -->
   <div id="pr-board" style="margin-bottom:16px; display:none;">
-    <div onclick="togglePRBoard()" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 14px; background:linear-gradient(135deg,#1a1200,#2a1c00); border:1px solid #c47d00; border-radius:12px; user-select:none;">
+    <div onclick="togglePRBoard()" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 14px; background:linear-gradient(135deg,#1a1200,#2a1c00); border:1px solid var(--gold); border-radius:12px; user-select:none;">
       <span style="font-size:16px; line-height:1;">🏆</span>
-      <span style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:#c47d00; letter-spacing:2px; font-weight:700;">PERSONAL RECORDS</span>
+      <span style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gold); letter-spacing:2px; font-weight:700;">PERSONAL RECORDS</span>
       <span id="pr-board-count" style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1px;"></span>
       <span id="pr-board-chevron" style="margin-left:auto; font-size:11px; color:var(--red); transition:transform 0.2s;">▶</span>
     </div>
@@ -1881,7 +1884,7 @@
   </div>
 
   <!-- TIMER -->
-  <div class="card" style="text-align:center; margin-bottom:14px;">
+  <div class="card" style="text-align:center; margin-bottom:16px;">
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">COUNTDOWN TIMER</div>
     <!-- Quick presets -->
     <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
@@ -1903,14 +1906,14 @@
     </div>
     <div id="timer-display" style="font-family:'Bebas Neue',cursive; font-size:56px; color:var(--cream); letter-spacing:2px; display:none;">30:00</div>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:8px;">
-      <button onclick="startCardioTimer()" id="timer-start-btn" style="background:var(--red); color:white; border:none; border-radius:10px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer;">START</button>
-      <button onclick="pauseCardioTimer()" id="timer-pause-btn" style="display:none; background:var(--dark3); color:var(--cream); border:1px solid var(--dark4); border-radius:10px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer;">PAUSE</button>
-      <button onclick="resetCardioTimer()" id="timer-reset-btn" style="display:none; background:var(--dark3); color:var(--gray-light); border:1px solid var(--dark4); border-radius:10px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer;">RESET</button>
+      <button onclick="startCardioTimer()" id="timer-start-btn" style="background:var(--red); color:white; border:none; border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer;">START</button>
+      <button onclick="pauseCardioTimer()" id="timer-pause-btn" style="display:none; background:var(--dark3); color:var(--cream); border:1px solid var(--dark4); border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer;">PAUSE</button>
+      <button onclick="resetCardioTimer()" id="timer-reset-btn" style="display:none; background:var(--dark3); color:var(--gray-light); border:1px solid var(--dark4); border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer;">RESET</button>
     </div>
   </div>
 
   <!-- TREADMILL INPUTS -->
-  <div id="cardio-inputs-treadmill" class="card" style="margin-bottom:14px;">
+  <div id="cardio-inputs-treadmill" class="card" style="margin-bottom:16px;">
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;">TREADMILL DETAILS</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
@@ -1931,7 +1934,7 @@
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="tm-calories" placeholder="—" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
+        <input type="number" id="tm-calories" placeholder="—" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark); opacity:0.7;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
@@ -1954,7 +1957,7 @@
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="od-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
+        <input type="number" id="od-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark); opacity:0.7;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div id="pace-display" style="margin-top:10px; background:var(--dark3); border-radius:10px; padding:10px 14px; display:none;">
@@ -1982,7 +1985,7 @@
       </div>
       <div style="grid-column:1/-1;">
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="wk-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
+        <input type="number" id="wk-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark); opacity:0.7;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
@@ -2006,7 +2009,7 @@
       </div>
       <div style="grid-column:1/-1;">
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="bw-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
+        <input type="number" id="bw-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark); opacity:0.7;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
@@ -2030,7 +2033,7 @@
       </div>
       <div style="grid-column:1/-1;">
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="jg-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:#111;" readonly inputmode="decimal"/>
+        <input type="number" id="jg-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark); opacity:0.7;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
@@ -2047,15 +2050,15 @@
     <div class="section-title">THIS <span>WEEK</span></div>
     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:4px;">
       <div class="stat-box">
-        <div class="stat-num" id="cardio-week-sessions" style="font-size:24px;">0</div>
+        <div class="stat-num" id="cardio-week-sessions">0</div>
         <div class="stat-label">Sessions</div>
       </div>
       <div class="stat-box">
-        <div class="stat-num" id="cardio-week-minutes" style="font-size:24px;">0</div>
+        <div class="stat-num" id="cardio-week-minutes">0</div>
         <div class="stat-label">Minutes</div>
       </div>
       <div class="stat-box">
-        <div class="stat-num" id="cardio-week-calories" style="font-size:24px;">0</div>
+        <div class="stat-num" id="cardio-week-calories">0</div>
         <div class="stat-label">Calories</div>
       </div>
     </div>
@@ -2076,18 +2079,18 @@
   <div id="values-card" class="card" style="margin-bottom:14px;"></div>
 
   <!-- Mood Check-In Card -->
-  <div id="mood-checkin-card" class="card" style="margin-bottom:14px;" data-timing="pre">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:8px;" id="mood-checkin-label">MOOD CHECK-IN</div>
+  <div id="mood-checkin-card" class="card" style="margin-bottom:16px;" data-timing="pre">
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;" id="mood-checkin-label">MOOD CHECK-IN</div>
     <div style="font-size:13px; color:var(--gray); margin-bottom:16px;">Log how you're feeling before and after a workout. Takes 10 seconds.</div>
 
-    <div style="font-size:12px; color:var(--gray-light); letter-spacing:1.5px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHEN IS THIS?</div>
+    <div style="font-size:12px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHEN IS THIS?</div>
     <div style="display:flex; gap:8px; margin-bottom:16px;">
       <button class="mood-timing-btn selected" onclick="selectMoodTiming('pre', this)">PRE-WORKOUT</button>
       <button class="mood-timing-btn" onclick="selectMoodTiming('post', this)">POST-WORKOUT</button>
     </div>
     <input type="hidden" id="mood-timing" value="pre"/>
 
-    <div style="font-size:12px; color:var(--gray-light); letter-spacing:1.5px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">HOW ARE YOU FEELING?</div>
+    <div style="font-size:12px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">HOW ARE YOU FEELING?</div>
     <div style="display:flex; justify-content:space-between; gap:6px; margin-bottom:16px;" id="mood-scale">
       <button class="mood-btn" onclick="selectMood(1, this)" data-value="1">
         <div style="font-size:32px;">😞</div>
@@ -2112,7 +2115,7 @@
     </div>
     <input type="hidden" id="mood-value" value=""/>
 
-    <button onclick="toggleMoodNote(this)" style="width:100%; background:var(--dark3); border:1px solid #444; color:var(--gray); font-size:13px; padding:10px 14px; border-radius:10px; cursor:pointer; margin-bottom:10px; display:flex; align-items:center; gap:8px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">
+    <button onclick="toggleMoodNote(this)" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray); font-size:13px; padding:12px 14px; border-radius:12px; cursor:pointer; margin-bottom:10px; display:flex; align-items:center; gap:8px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">
       <svg id="mood-note-chevron" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
       Add a note
     </button>
@@ -2121,32 +2124,32 @@
       <textarea id="mood-note" class="notes-input" placeholder="Anything on your mind?" style="min-height:50px;"></textarea>
     </div>
 
-    <button id="log-mood-btn" onclick="saveMoodEntry()" style="width:100%; background:#5b8dee; border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; transition:background 0.2s;">LOG MOOD</button>
+    <button id="log-mood-btn" onclick="saveMoodEntry()" style="width:100%; background:var(--blue); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; transition:background 0.2s;">LOG MOOD</button>
   </div>
 
   <!-- Mood Stats -->
   <div class="section-title">MOOD <span>INSIGHTS</span></div>
-  <div id="mood-insights-panel" style="margin-bottom:14px;">
+  <div id="mood-insights-panel" style="margin-bottom:16px;">
     <div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">Log a few moods to unlock your Workout Mood Lift score.</div></div>
   </div>
 
   <!-- Mood History -->
   <div class="section-title">MOOD <span>LOG</span></div>
-  <div id="mood-history-list" style="margin-bottom:14px;">
+  <div id="mood-history-list" style="margin-bottom:16px;">
     <div class="empty-state"><div class="empty-state-icon">💭</div><div class="empty-state-text">No mood entries yet — log one before or after your next session.</div></div>
   </div>
 
   <!-- Support Tools — combined card -->
   <div class="section-title">TOOLS FOR <span>HARD DAYS</span></div>
-  <div class="card" style="margin-bottom:14px; padding:16px;">
-    <button onclick="openCBTModal('manual')" style="width:100%; background:var(--dark3); border:1px solid #444; color:var(--cream); padding:14px 16px; border-radius:12px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:14px; margin-bottom:10px;">
+  <div class="card" style="margin-bottom:16px; padding:16px;">
+    <button onclick="openCBTModal('manual')" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:14px 16px; border-radius:12px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:14px; margin-bottom:10px;">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; opacity:0.7;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <div>
         <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px;">I missed a workout</div>
         <div style="font-size:12px; color:var(--gray-light); margin-top:2px;">Work through what got in the way</div>
       </div>
     </button>
-    <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark3); border:1px solid #444; color:var(--cream); padding:14px 16px; border-radius:12px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:14px;">
+    <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:14px 16px; border-radius:12px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:14px;">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; opacity:0.7;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       <div>
         <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px;">I need a moment</div>
@@ -2181,17 +2184,17 @@
     </div>
 
     <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
-      <button onclick="applyDeloadWeek()" style="background:linear-gradient(135deg,var(--dark3),#2a1f00); border:2px solid var(--warning); border-radius:14px; padding:18px; text-align:left; cursor:pointer; width:100%;">
+      <button onclick="applyDeloadWeek()" style="background:linear-gradient(135deg,var(--dark3),#2a1f00); border:2px solid var(--warning); border-radius:12px; padding:18px; text-align:left; cursor:pointer; width:100%;">
         <div style="font-family:'Bebas Neue',cursive; font-size:18px; color:var(--warning); letter-spacing:1px; margin-bottom:4px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> DELOAD WEEK</div>
         <div style="font-size:12px; color:var(--gray); line-height:1.5;">Same exercises, weights automatically reduced by 40%. You still train — joints recover, muscle memory stays sharp.</div>
       </button>
-      <button onclick="applyRestWeek()" style="background:var(--dark3); border:2px solid #444; border-radius:14px; padding:18px; text-align:left; cursor:pointer; width:100%;">
+      <button onclick="applyRestWeek()" style="background:var(--dark3); border:2px solid var(--dark4); border-radius:12px; padding:18px; text-align:left; cursor:pointer; width:100%;">
         <div style="font-family:'Bebas Neue',cursive; font-size:18px; color:var(--gray-light); letter-spacing:1px; margin-bottom:4px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg> REST WEEK</div>
         <div style="font-size:12px; color:var(--gray); line-height:1.5;">Take the full week off. The program pauses and resumes at Week 8 when you're ready. Best if you're feeling beat up or sick.</div>
       </button>
     </div>
 
-    <button onclick="document.getElementById('deload-modal').style.display='none'" style="width:100%; background:transparent; border:1px solid #333; color:var(--gray); padding:12px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer;">DECIDE LATER</button>
+    <button onclick="document.getElementById('deload-modal').style.display='none'" style="width:100%; background:transparent; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer;">DECIDE LATER</button>
   </div>
 </div>
 
@@ -2199,8 +2202,8 @@
      PR CELEBRATION MODAL
      ============================================================ -->
 <div id="pr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99995; align-items:center; justify-content:center; padding:24px; pointer-events:none;">
-  <div id="pr-modal-inner" style="background:linear-gradient(135deg,#1a1200,#2d2000); border:2px solid #f0a500; border-radius:20px; padding:24px; width:100%; max-width:340px; text-align:center; pointer-events:auto; box-shadow:0 0 40px rgba(196,125,0,0.4); position:relative;">
-    <button onclick="document.getElementById('pr-modal').style.display='none'" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#666;font-size:20px;cursor:pointer;line-height:1;padding:4px;">✕</button>
+  <div id="pr-modal-inner" style="background:linear-gradient(135deg,#1a1200,#2d2000); border:2px solid #f0a500; border-radius:20px; padding:24px; width:100%; max-width:420px; text-align:center; pointer-events:auto; box-shadow:0 0 40px rgba(196,125,0,0.4); position:relative;">
+    <button onclick="document.getElementById('pr-modal').style.display='none'" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--gray);font-size:20px;cursor:pointer;line-height:1;padding:4px;">✕</button>
     <div style="margin-bottom:12px;"><svg viewBox="0 0 24 24" width="56" height="56" stroke="#ffe066" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H2V5h4M18 9h4V5h-4M8 21h8M12 17v4"/><path d="M6 5h12v8a6 6 0 01-12 0V5z"/></svg></div>
     <div style="font-family:'Bebas Neue',cursive; font-size:30px; color:#ffe066; letter-spacing:3px; margin-bottom:4px;">PERSONAL RECORD</div>
     <div id="pr-modal-exercise" style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--gray-light); margin-bottom:12px;"></div>
@@ -2208,7 +2211,7 @@
     <div id="pr-modal-improvement" style="font-family:'Barlow Condensed',sans-serif; font-size:15px; color:#f0a500; font-weight:700; letter-spacing:1px; margin-bottom:6px; min-height:20px;"></div>
     <div id="pr-modal-1rm" style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:#888; letter-spacing:0.5px; margin-bottom:18px; min-height:16px;"></div>
     <div style="display:flex;gap:10px;justify-content:center;align-items:stretch;">
-      <button onclick="document.getElementById('pr-modal').style.display='none'" style="background:#f0a500;border:none;color:#000;padding:12px 32px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">LET'S GO! 💪</button>
+      <button onclick="document.getElementById('pr-modal').style.display='none'" style="background:#f0a500;border:none;color:#000;padding:12px 32px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">LET'S GO! 💪</button>
       <button onclick="shareCurrentPR()" title="Share this PR" style="background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.45);color:#f0a500;width:48px;height:48px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       </button>
@@ -8742,7 +8745,7 @@ function exportData() {
         <div style="font-size:13px;color:var(--gray);margin-bottom:14px;line-height:1.5;">
           Tap inside the box below, select all the text, and copy it. Then paste it into a Notes or email app and save it.
         </div>
-        <textarea id="export-copy-area" readonly style="width:100%;height:140px;background:#111;border:1px solid #444;border-radius:10px;color:var(--gray);font-size:11px;padding:10px;box-sizing:border-box;font-family:monospace;resize:none;">${data.replace(/</g,'&lt;')}</textarea>
+        <textarea id="export-copy-area" readonly style="width:100%;height:140px;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;color:var(--gray);font-size:11px;padding:10px;box-sizing:border-box;font-family:monospace;resize:none;">${data.replace(/</g,'&lt;')}</textarea>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">
           <button onclick="
             var ta=document.getElementById('export-copy-area');
@@ -11230,7 +11233,7 @@ function renderValuesCard() {
       <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WHY I TRAIN</div>
       <div style="font-size:13px; color:var(--gray); line-height:1.6; margin-bottom:14px;">Connecting training to your real reasons makes it harder to quit when it gets tough. What does showing up make possible for you?</div>
       <textarea id="values-input" class="notes-input" placeholder="e.g. To manage my anxiety. To have energy for my kids. To feel at home in my body..." style="min-height:70px; margin-bottom:12px;"></textarea>
-      <button onclick="saveTrainingValues()" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:12px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SAVE MY WHY</button>`;
+      <button onclick="saveTrainingValues()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:12px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SAVE MY WHY</button>`;
   }
 }
 
@@ -11251,7 +11254,7 @@ function editTrainingValues() {
   card.innerHTML = `
     <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WHY I TRAIN</div>
     <textarea id="values-input" class="notes-input" style="min-height:70px; margin-bottom:12px;">${current}</textarea>
-    <button onclick="saveTrainingValues()" style="width:100%; background:var(--dark3); border:1px solid #555; color:var(--cream); padding:12px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SAVE</button>`;
+    <button onclick="saveTrainingValues()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:12px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SAVE</button>`;
 }
 
 // ============================================================
