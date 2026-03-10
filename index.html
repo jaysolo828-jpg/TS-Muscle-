@@ -4835,17 +4835,19 @@ function renderHome() {
   const sessionsThisWeek = weekRemainder === 0 ? [] : realSessionsOrdered.slice(-weekRemainder);
   const completedThisWeekIds = new Set(sessionsThisWeek.map(e => e.dayId));
 
-  visibleDays.forEach(day => {
+  visibleDays.forEach((day, dayIdx) => {
     const doneThisWeek = completedThisWeekIds.has(day.id);
     const isResuming = pausedSession && pausedSession.dayId === day.id;
+    const _dc = typeof CARD_DAY_PALETTES !== 'undefined' ? CARD_DAY_PALETTES[dayIdx % CARD_DAY_PALETTES.length] : null;
+    const _dayColor = _dc ? _dc.hi : 'var(--red)';
     const card = document.createElement('div');
     card.className = 'day-card';
     card.innerHTML = `
       <div class="day-header" onclick="toggleDayCard('${day.id}')">
         <div class="day-info">
-          <div class="day-accent"></div>
+          <div class="day-accent" style="background:${_dayColor};"></div>
           <div class="day-text">
-            <div class="day-badge">${day.badge}</div>
+            <div class="day-badge" style="color:${_dayColor};">${day.badge}</div>
             <div class="day-name">
               ${day.day}
               <span onclick="event.stopPropagation(); openEditDay('${day.id}')" style="display:inline-flex;align-items:center;cursor:pointer;color:var(--gray);background:var(--dark3);border-radius:4px;padding:3px 6px;" title="Change day">
