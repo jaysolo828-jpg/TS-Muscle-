@@ -7608,7 +7608,7 @@ function showCycleCompleteModal() {
   const completedCycle = cycleNum - 1;
   const totalSessions = state.totalSessions;
   const prs = state.prs || {};
-  const prCount = Object.keys(prs).length;
+  const prCount = Object.entries(prs).filter(([, pr]) => !pr.isBaseline).length;
   const days = state.trainingDaysPerWeek || 4;
   const goal = state.profile?.goal || 'both';
   const goalLabels = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' };
@@ -8288,7 +8288,7 @@ function renderProgressChart() {
 
   if (chartMode === 'weight') {
     if (last.weight > prev.weight) {
-      const nextWeight = last.weight + 5;
+      const nextWeight = last.weight + getIncrement('small');
       recHTML = `<div class="overload-badge">
         <div class="overload-icon">🔥</div>
         <div class="overload-text">
@@ -10542,7 +10542,7 @@ function calculate1RM() {
   const oneRM = Math.round(w * (1 + r / 30));
   const goal = document.getElementById('ob-goal').value || 'both';
   const pct = goal === 'strength' ? 0.80 : goal === 'size' ? 0.68 : 0.74;
-  const working = Math.round(oneRM * pct / 5) * 5; // round to nearest 5
+  const working = Math.round(oneRM * pct / 2.5) * 2.5; // round to nearest 2.5
 
   document.getElementById('onerm-result-val').textContent = oneRM + ' lbs';
   document.getElementById('onerm-working-val').textContent = `Working weight (${Math.round(pct*100)}% of 1RM): ${working} lbs`;
