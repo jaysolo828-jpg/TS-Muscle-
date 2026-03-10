@@ -2075,14 +2075,14 @@
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:8px;" id="mood-checkin-label">MOOD CHECK-IN</div>
     <div style="font-size:13px; color:var(--gray); margin-bottom:16px;">Log how you're feeling before and after a workout. Takes 10 seconds.</div>
 
-    <div style="font-size:12px; color:var(--gray-light); letter-spacing:2px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHEN IS THIS?</div>
+    <div style="font-size:12px; color:var(--gray-light); letter-spacing:1.5px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHEN IS THIS?</div>
     <div style="display:flex; gap:8px; margin-bottom:16px;">
       <button class="mood-timing-btn selected" onclick="selectMoodTiming('pre', this)">PRE-WORKOUT</button>
       <button class="mood-timing-btn" onclick="selectMoodTiming('post', this)">POST-WORKOUT</button>
     </div>
     <input type="hidden" id="mood-timing" value="pre"/>
 
-    <div style="font-size:12px; color:var(--gray-light); letter-spacing:2px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">HOW ARE YOU FEELING?</div>
+    <div style="font-size:12px; color:var(--gray-light); letter-spacing:1.5px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">HOW ARE YOU FEELING?</div>
     <div style="display:flex; justify-content:space-between; gap:6px; margin-bottom:16px;" id="mood-scale">
       <button class="mood-btn" onclick="selectMood(1, this)" data-value="1">
         <div style="font-size:32px;">😞</div>
@@ -2107,7 +2107,7 @@
     </div>
     <input type="hidden" id="mood-value" value=""/>
 
-    <button onclick="toggleMoodNote(this)" style="width:100%; background:var(--dark3); border:1px solid #333; color:var(--gray); font-size:13px; padding:10px 14px; border-radius:10px; cursor:pointer; margin-bottom:10px; display:flex; align-items:center; gap:8px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">
+    <button onclick="toggleMoodNote(this)" style="width:100%; background:var(--dark3); border:1px solid #444; color:var(--gray); font-size:13px; padding:10px 14px; border-radius:10px; cursor:pointer; margin-bottom:10px; display:flex; align-items:center; gap:8px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">
       <svg id="mood-note-chevron" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
       Add a note
     </button>
@@ -2138,14 +2138,14 @@
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; opacity:0.7;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <div>
         <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px;">I missed a workout</div>
-        <div style="font-size:12px; color:#888; margin-top:2px;">Work through what got in the way</div>
+        <div style="font-size:12px; color:var(--gray-light); margin-top:2px;">Work through what got in the way</div>
       </div>
     </button>
     <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark3); border:1px solid #444; color:var(--cream); padding:14px 16px; border-radius:12px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:14px;">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; opacity:0.7;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       <div>
         <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px;">I need a moment</div>
-        <div style="font-size:12px; color:#888; margin-top:2px;">Self-compassion check-in</div>
+        <div style="font-size:12px; color:var(--gray-light); margin-top:2px;">Self-compassion check-in</div>
       </div>
     </button>
   </div>
@@ -2153,12 +2153,12 @@
   <!-- Combined history -->
   <div class="section-title">SESSION <span>HISTORY</span></div>
 
-  <div style="font-size:11px; color:#777; letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px; padding-left:10px; border-left:2px solid #444;">MISSED SESSION</div>
+  <div style="font-size:11px; color:var(--gray); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px; padding-left:10px; border-left:2px solid #444;">MISSED SESSION</div>
   <div id="barrier-history-list" style="margin-bottom:14px;">
     <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No reframes yet.</div></div>
   </div>
 
-  <div style="font-size:11px; color:#777; letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px; padding-left:10px; border-left:2px solid #444;">COMPASSION CHECK-IN</div>
+  <div style="font-size:11px; color:var(--gray); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px; padding-left:10px; border-left:2px solid #444;">COMPASSION CHECK-IN</div>
   <div id="self-compassion-history-list">
     <div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet.</div></div>
   </div>
@@ -11276,13 +11276,13 @@ function renderMoodInsights() {
       const PX_UNIT = HALF_H / 4;
       const bars = recent.map(s => {
         const l    = s.lift;
-        const col  = l > 0 ? '#4caf50' : l < 0 ? 'var(--red)' : '#555';
+        const col  = l > 0 ? '#4caf50' : l < 0 ? 'var(--red)' : '#777';
         const barH = Math.min(Math.abs(l) * PX_UNIT, HALF_H);
         const d    = new Date(s.day + 'T12:00:00');
         const lbl  = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         return `
           <div style="flex:1; display:flex; flex-direction:column; align-items:center; min-width:0;">
-            <div style="font-size:9px; color:${l > 0 ? col : 'transparent'}; margin-bottom:2px; font-family:'Barlow Condensed',sans-serif;">${l > 0 ? '+' + l : '·'}</div>
+            <div style="font-size:10px; color:${l > 0 ? col : 'transparent'}; margin-bottom:2px; font-family:'Barlow Condensed',sans-serif;">${l > 0 ? '+' + l : '·'}</div>
             <div style="width:100%; height:${HALF_H}px; display:flex; align-items:flex-end; justify-content:center;">
               ${l > 0 ? `<div style="width:55%; height:${barH}px; background:${col}; border-radius:3px 3px 0 0;"></div>` : ''}
             </div>
@@ -11290,8 +11290,8 @@ function renderMoodInsights() {
             <div style="width:100%; height:${HALF_H}px; display:flex; align-items:flex-start; justify-content:center;">
               ${l < 0 ? `<div style="width:55%; height:${barH}px; background:${col}; border-radius:0 0 3px 3px;"></div>` : ''}
             </div>
-            <div style="font-size:9px; color:${l < 0 ? col : 'transparent'}; margin-top:2px; font-family:'Barlow Condensed',sans-serif;">${l < 0 ? l : '·'}</div>
-            <div style="font-size:9px; color:var(--gray); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; text-align:center; font-family:'Barlow Condensed',sans-serif;">${lbl}</div>
+            <div style="font-size:10px; color:${l < 0 ? col : 'transparent'}; margin-top:2px; font-family:'Barlow Condensed',sans-serif;">${l < 0 ? l : '·'}</div>
+            <div style="font-size:10px; color:var(--gray); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; text-align:center; font-family:'Barlow Condensed',sans-serif;">${lbl}</div>
           </div>`;
       }).join('');
       barChartHtml = `
