@@ -3697,7 +3697,7 @@ const DEFAULT_PROGRAM = [
 const PPL_PROGRAM = [
   {
     id: 'push', day: 'Monday', badge: 'PUSH', name: 'Chest + Shoulders + Triceps',
-    exercises: DEFAULT_PROGRAM[0].exercises   // bench, incline, flye, pushdown, overhead-tri, lateral
+    exercises: DEFAULT_PROGRAM[0].exercises   // bench, incline, flye, pushdown, overhead-tri, ohp, lateral
   },
   {
     id: 'pull', day: 'Wednesday', badge: 'PULL', name: 'Back + Biceps + Rear Delts',
@@ -3860,7 +3860,7 @@ const GLUTE_PROGRAM = [
     id: 'glute-b', day: 'Friday', badge: 'GLUTES B', name: 'Squat + Abduction Focus',
     exercises: [
       DEFAULT_PROGRAM[3].exercises[0], // legpress-b (high foot)
-      DEFAULT_PROGRAM[1].exercises[2], // leg-ext-b (using Lower A's index 2 = leg-ext-a, same stimulus)
+      DEFAULT_PROGRAM[3].exercises[2], // leg-ext-b (from lowerB — correct separate ID for weight tracking)
       DEFAULT_PROGRAM[3].exercises[3], // ham-curl-b
       HIP_ABDUCTION_EXERCISE,
       DONKEY_KICK_EXERCISE,
@@ -8912,7 +8912,7 @@ function migrateSessionCount() {
   ).length;
   if (state.totalSessions !== realCount) {
     state.totalSessions = realCount;
-    state.weekCount = Math.max(1, Math.min(8, Math.floor(realCount / 4) + 1));
+    state.weekCount = Math.max(1, Math.min(8, Math.floor(realCount / (state.program?.length || 4)) + 1));
     saveState();
   }
   localStorage.setItem('ts-session-count-migrated', '1');
