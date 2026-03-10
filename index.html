@@ -2353,22 +2353,22 @@
 
     <!-- STEP 0: New or Returning? -->
     <div id="onboard-step-0" class="onboard-step" style="display:none;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">WELCOME BACK?</div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">FIRST TIME HERE?</div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:28px; line-height:1.6;">
-        If you tracked workouts on another device, you can restore all your history, weights, and progress from a backup file.
+        New user? Start fresh. Moving from another device? Restore your data from a backup file to pick up right where you left off.
       </div>
       <div style="display:flex; flex-direction:column; gap:12px;">
         <button class="onboard-select-btn" onclick="onboardStartFresh()" style="padding:18px 16px;">
           <div style="font-weight:bold;">Start Fresh</div>
-          <div style="font-size:12px; color:var(--gray);">New to T&amp;S Muscle — set up my program from scratch</div>
+          <div style="font-size:12px; color:var(--gray);">Set up a new program from scratch</div>
         </button>
         <button class="onboard-select-btn" onclick="onboardRestoreBackup()" style="padding:18px 16px;">
-          <div style="font-weight:bold;">Restore from Backup File</div>
-          <div style="font-size:12px; color:var(--gray);">Export from Settings on your old phone, send the file to yourself, then select it here</div>
+          <div style="font-weight:bold;">Restore from Backup</div>
+          <div style="font-size:12px; color:var(--gray);">Bring over your history, weights, and progress from another device</div>
         </button>
       </div>
       <div style="margin-top:20px; font-size:11px; color:var(--gray); text-align:center; line-height:1.5;">
-        Don't have a backup? Choose "Start Fresh" — you can always export from Settings later.
+        No backup? Choose Start Fresh — you can export a backup from Settings at any time.
       </div>
     </div>
 
@@ -2378,14 +2378,15 @@
     <!-- STEP 1: Profile -->
     <div id="onboard-step-1" class="onboard-step">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR PROFILE</div>
-      <div style="font-size:13px; color:var(--gray); margin-bottom:24px;">Tell us a little about yourself so we can personalize your program.</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:24px;">This personalizes your program and pre-fills your starting weights.</div>
 
       <div style="margin-bottom:16px;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">YOUR NAME</div>
         <input type="text" id="ob-name" class="set-input" placeholder="e.g. Marcus" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
       <div style="margin-bottom:16px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">BODYWEIGHT (LBS)</div>
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">BODYWEIGHT (LBS)</div>
+        <div style="font-size:11px; color:var(--gray); opacity:0.6; margin-bottom:6px;">Used to suggest starting weights for isolation exercises</div>
         <input type="number" id="ob-bodyweight" class="set-input" inputmode="decimal" placeholder="e.g. 185" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
       <div style="margin-bottom:24px;">
@@ -2393,15 +2394,15 @@
         <div style="display:flex; flex-direction:column; gap:8px;">
           <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'beginner', this)">
             <div style="font-weight:bold;">Beginner</div>
-            <div style="font-size:12px; color:var(--gray);">Less than 1 year of consistent training</div>
+            <div style="font-size:12px; color:var(--gray);">Under 1 year of consistent training</div>
           </button>
           <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'intermediate', this)">
             <div style="font-weight:bold;">Intermediate</div>
-            <div style="font-size:12px; color:var(--gray);">1–3 years, know the basics</div>
+            <div style="font-size:12px; color:var(--gray);">1–3 years — comfortable with the main lifts</div>
           </button>
           <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'advanced', this)">
             <div style="font-weight:bold;">Advanced</div>
-            <div style="font-size:12px; color:var(--gray);">3+ years, trained consistently</div>
+            <div style="font-size:12px; color:var(--gray);">3+ years of consistent, structured training</div>
           </button>
         </div>
         <input type="hidden" id="ob-experience" value=""/>
@@ -2411,22 +2412,22 @@
       </div>
     </div>
 
-    <!-- STEP 2: Training Days -->
+    <!-- STEP 2: Goal -->
     <div id="onboard-step-2" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR GOAL</div>
-      <div style="font-size:13px; color:var(--gray); margin-bottom:24px;">This shapes your rep targets — and helps us recommend the right number of training days.</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:24px;">This sets your rep targets for every exercise in the program.</div>
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:28px;">
         <button class="onboard-select-btn" onclick="selectGoalOnboard('size', this)">
-          <div style="font-weight:bold;">Build Size (Hypertrophy)</div>
-          <div style="font-size:12px; color:var(--gray);">8–15 reps, moderate weight, muscle growth focus</div>
+          <div style="font-weight:bold;">Build Size</div>
+          <div style="font-size:12px; color:var(--gray);">8–15 reps — grow muscle, improve conditioning</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('strength', this)">
           <div style="font-weight:bold;">Build Strength</div>
-          <div style="font-size:12px; color:var(--gray);">3–6 reps, heavier weight, CNS adaptation focus</div>
+          <div style="font-size:12px; color:var(--gray);">3–6 reps — move heavier weight, get stronger</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('both', this)">
           <div style="font-weight:bold;">Both — Size &amp; Strength</div>
-          <div style="font-size:12px; color:var(--gray);">6–10 reps, powerbuilding approach</div>
+          <div style="font-size:12px; color:var(--gray);">6–10 reps — a balanced mix of muscle and strength</div>
         </button>
       </div>
       <input type="hidden" id="ob-goal" value=""/>
@@ -2439,28 +2440,28 @@
     <!-- STEP 3: Split Type -->
     <div id="onboard-step-3" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR SPLIT</div>
-      <div style="font-size:13px; color:var(--gray); margin-bottom:24px; line-height:1.6;">How do you want to structure your training? This determines how your workout days are organized.</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:24px; line-height:1.6;">How do you want to organize your training days?</div>
 
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
         <button class="onboard-select-btn" onclick="selectSplitOnboard('ul', this)">
           <div style="font-weight:bold;">Upper / Lower</div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">2 upper days + 2 lower days. Each muscle group trained twice per week. Best for hypertrophy. 4 days optimal.</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Alternate upper and lower body days. Every muscle trained twice a week. Best for muscle growth. 4 days ideal.</div>
         </button>
         <button class="onboard-select-btn" onclick="selectSplitOnboard('ppl', this)">
           <div style="font-weight:bold;">Push / Pull / Legs</div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">One focused session per movement pattern. Push (chest/shoulder/tri), Pull (back/bi), Legs. 3 days optimal.</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Each day focuses on one movement pattern — push (chest/shoulders/triceps), pull (back/biceps), or legs. 3 days ideal.</div>
         </button>
         <button class="onboard-select-btn" onclick="selectSplitOnboard('fullbody', this)">
           <div style="font-weight:bold;">Full Body</div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Every major muscle group trained each session. Great for 2–3 days per week. Maximizes frequency.</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Hit every major muscle group each session. Great for 2–3 days per week with maximum recovery between sessions.</div>
         </button>
         <button class="onboard-select-btn" onclick="selectSplitOnboard('bro', this)">
           <div style="font-weight:bold;">Bro Split</div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">One muscle group per day — Chest, Back, Shoulders, Arms, Legs. High volume, 5 days optimal.</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">One muscle group per day — chest, back, shoulders, arms, legs. High volume per session. 5 days ideal.</div>
         </button>
         <button class="onboard-select-btn" onclick="selectSplitOnboard('glute', this)">
           <div style="font-weight:bold;">Glute Priority</div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Two glute-focused sessions per week + one upper day. Hip thrusts, RDLs, and isolation work. 3 days.</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Two dedicated glute days plus one upper body day per week. Hip thrusts, RDLs, and isolation work. 3 days.</div>
         </button>
       </div>
 
@@ -2526,28 +2527,28 @@
             <div style="font-weight:bold;">2 Days / Week</div>
             <div id="ob-day-badge-2" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Upper A + Lower A. Full body coverage, maximum recovery time.</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Full body coverage with maximum recovery time between sessions.</div>
         </button>
         <button class="onboard-select-btn" id="ob-day-btn-3" onclick="selectTrainingDaysOnboard(3, this)">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">3 Days / Week</div>
             <div id="ob-day-badge-3" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Upper A, Lower A, Upper B. Good balance with plenty of recovery.</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Good volume with plenty of recovery between sessions.</div>
         </button>
         <button class="onboard-select-btn" id="ob-day-btn-4" onclick="selectTrainingDaysOnboard(4, this)">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">4 Days / Week</div>
             <div id="ob-day-badge-4" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">The full program. Optimal for hypertrophy with structured recovery.</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">The complete program — best balance of training volume and recovery.</div>
         </button>
         <button class="onboard-select-btn" id="ob-day-btn-5" onclick="selectTrainingDaysOnboard(5, this)">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">5 Days / Week</div>
             <div id="ob-day-badge-5" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Full program + one extra session for weak points or cardio focus.</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Full program plus an extra session to target weak points.</div>
         </button>
       </div>
 
@@ -2567,26 +2568,19 @@
 
     <!-- STEP 6: Test Week -->
     <div id="onboard-step-6" class="onboard-step" style="display:none;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TEST WEEK</div>
-      <div style="font-size:13px; color:var(--gray); margin-bottom:20px;">Before we set your working weights, you need a baseline.</div>
-
-      <div style="background:var(--dark3); border-radius:14px; padding:18px; margin-bottom:20px; border-left:3px solid var(--red);">
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-bottom:10px;">WHAT IS TEST WEEK?</div>
-        <div style="font-size:14px; color:var(--cream); line-height:1.7;">
-          Week 1 is your <strong>calibration week</strong>. We suggest starting weights based on your experience level. You train normally, log how each set felt (RPE 1–10), and after the week, the app gives you adjusted working weights based on real performance — not guesswork.
-        </div>
-      </div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR FIRST WEEK</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:20px; line-height:1.6;">Week 1 is a calibration week. Weights start conservative — the goal is to find your real working weights, not to max out.</div>
 
       <div style="background:var(--dark3); border-radius:14px; padding:18px; margin-bottom:24px;">
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:2px; margin-bottom:10px;">WHAT IS RPE?</div>
-        <div style="font-size:13px; color:var(--cream); line-height:1.7; margin-bottom:10px;">Rate of Perceived Exertion — how hard a set felt on a 1–10 scale.</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;">
-          <div style="color:var(--gray);">RPE 6 — Could do 4+ more reps</div>
-          <div style="color:var(--gray);">RPE 7 — Could do 3 more</div>
-          <div style="color:var(--gray);">RPE 8 — Could do 2 more</div>
-          <div style="color:var(--gray);">RPE 9 — Could do 1 more</div>
-          <div style="color:var(--red);">RPE 10 — Max effort, no more reps</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-bottom:12px;">LOGGING RPE</div>
+        <div style="font-size:13px; color:var(--cream); line-height:1.7; margin-bottom:14px;">After each set, you'll log your <strong>RPE</strong> — how hard it felt on a scale of 1–10. This tells the app whether to increase your weight, hold it, or pull it back.</div>
+        <div style="display:flex; flex-direction:column; gap:6px; font-size:13px;">
+          <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray);">RPE 7</span><span style="color:var(--gray);">Could do 3 more reps</span></div>
+          <div style="display:flex; justify-content:space-between;"><span style="color:var(--cream);">RPE 8 ✓ target</span><span style="color:var(--gray);">Could do 2 more reps</span></div>
+          <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray);">RPE 9</span><span style="color:var(--gray);">Could do 1 more rep</span></div>
+          <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray);">RPE 10</span><span style="color:var(--gray);">Max effort — nothing left</span></div>
         </div>
+        <div style="margin-top:14px; font-size:12px; color:var(--gray); line-height:1.6;">After 4 sessions, the app runs a <strong style="color:var(--cream);">quick review</strong> where you confirm or adjust each weight before your real program begins.</div>
       </div>
 
       <div class="ob-button-row">
@@ -2598,15 +2592,10 @@
     <!-- STEP 7: Starting Weights -->
     <div id="onboard-step-7" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">STARTING WEIGHTS</div>
-      <div style="font-size:13px; color:var(--gray); margin-bottom:8px; line-height:1.6;">We only need your <strong style="color:var(--cream);">compound lifts</strong> — the big movements where starting weight matters most. Isolations like curls and laterals are auto-set based on your experience level.</div>
-      <div style="font-size:11px; color:var(--gray); background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:16px;">These are <strong style="color:var(--cream);">test week weights</strong> — conservative on purpose. The app will adjust after week 1.</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:8px; line-height:1.6;">Enter a weight you can handle comfortably for each lift. These are <strong style="color:var(--cream);">calibration weights</strong> — the app will fine-tune them after your first week.</div>
+      <div style="font-size:12px; color:var(--gray); background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:16px;">Isolations (curls, laterals, etc.) are auto-set from your experience level — no input needed.</div>
 
-      <!-- Skip option -->
-      <button onclick="skipWeightSetup()" style="width:100%; background:transparent; border:1px dashed #444; color:var(--gray); padding:11px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-bottom:16px;">
-        SKIP — USE SUGGESTED WEIGHTS FOR EVERYTHING
-      </button>
-
-      <div id="ob-exercise-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;"></div>
+      <div id="ob-exercise-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;"></div>
 
       <!-- 1RM Calculator (inline) -->
       <div id="onerm-calc" style="background:var(--dark3); border-radius:14px; padding:16px; margin-bottom:20px; display:none;">
@@ -2634,6 +2623,9 @@
       <div class="ob-button-row">
         <button onclick="onboardBack(6)" class="onboard-back-btn">← BACK</button>
         <button onclick="onboardNext(8)" class="onboard-next-btn" style="flex:1;">FINISH SETUP →</button>
+      </div>
+      <div style="text-align:center; margin-top:14px;">
+        <button onclick="skipWeightSetup()" style="background:none; border:none; color:var(--gray); font-size:12px; letter-spacing:0.5px; cursor:pointer; padding:4px 0; text-decoration:underline; text-underline-offset:3px;">Skip — use suggested weights for everything</button>
       </div>
     </div>
 
