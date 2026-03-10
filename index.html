@@ -7304,14 +7304,35 @@ function openAltModal(ex) {
 
   // Build dropdown
   const dropdown = document.getElementById('alt-dropdown');
-  dropdown.innerHTML = '<option value="">— Select an alternative —</option>';
+  dropdown.innerHTML = '<option value="">— Select an exercise —</option>';
   if (ex.alts && ex.alts.length > 0) {
+    const altGrp = document.createElement('optgroup');
+    altGrp.label = 'SUGGESTED';
     ex.alts.forEach((alt, i) => {
       const opt = document.createElement('option');
       opt.value = i;
       opt.textContent = alt.name;
-      dropdown.appendChild(opt);
+      altGrp.appendChild(opt);
     });
+    dropdown.appendChild(altGrp);
+  }
+  // Also show every exercise in the program so the user can swap to anything
+  const _seenNames = new Set([(ex.alts || []).map(a => a.name.toLowerCase()), ex.name.toLowerCase()].flat());
+  const _progExercises = [];
+  state.program.forEach(d => d.exercises.forEach(e => {
+    const lc = e.name.toLowerCase();
+    if (!_seenNames.has(lc)) { _seenNames.add(lc); _progExercises.push(e.name); }
+  }));
+  if (_progExercises.length > 0) {
+    const progGrp = document.createElement('optgroup');
+    progGrp.label = 'FROM YOUR PROGRAM';
+    _progExercises.sort().forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = 'prog:' + name;
+      opt.textContent = name;
+      progGrp.appendChild(opt);
+    });
+    dropdown.appendChild(progGrp);
   }
   dropdown.value = '';
 
@@ -7327,8 +7348,8 @@ function openAltModal(ex) {
   modal.classList.add('open');
 }
 
-const _UPPER_KW = ['curl','bench','press','pulldown','fly','flye','dip','pushup','push-up','row','pull-up','pullup','shrug','tricep','bicep','chest','lat ','delt','shoulder','overhead'];
-const _LOWER_KW = ['squat','lunge','leg press','deadlift',' rdl','hip thrust','calf','glute','hamstring','quad','step-up','kickback','leg extension','leg curl'];
+const _UPPER_KW = ['curl','bench','press','pulldown','fly','flye','dip','pushup','push-up','row','pull-up','pullup','shrug','tricep','bicep','chest','lat ','delt','shoulder','overhead','cable cross','pec deck','skull crusher'];
+const _LOWER_KW = ['squat','lunge','leg press','hack squat','front squat','goblet squat','deadlift','rdl','hip thrust','calf','glute','hamstring','quad','step-up','kickback','leg extension','leg curl','split squat','bulgarian','sumo','hip hinge','nordic','good morning','sled push','sled pull','abductor','adductor','inner thigh','outer thigh','seated leg'];
 const _MUSCLE_BUCKET = { CHEST:'upper', BACK:'upper', SHOULDERS:'upper', TRICEPS:'upper', BICEPS:'upper', QUADS:'lower', HAMSTRINGS:'lower', GLUTES:'lower', CALVES:'lower' };
 
 function checkCustomExerciseMuscle(val) {
@@ -7339,11 +7360,13 @@ function checkCustomExerciseMuscle(val) {
   const curBucket = _MUSCLE_BUCKET[muscle];
   if (!curBucket) { w.style.display = 'none'; return; }
   const lc = val.toLowerCase();
-  const oppBucket = curBucket === 'upper' ? 'lower' : 'upper';
-  const oppKw = oppBucket === 'upper' ? _UPPER_KW : _LOWER_KW;
-  const matched = oppKw.some(k => lc.includes(k));
-  if (matched) {
-    document.getElementById('custom-muscle-warning-type').textContent = oppBucket + ' body';
+  // Lower-body keywords take priority — checked first so "leg press" isn't
+  // falsely caught by "press" in the upper-body list
+  const isLower = _LOWER_KW.some(k => lc.includes(k));
+  const isUpper = !isLower && _UPPER_KW.some(k => lc.includes(k));
+  const detected = isLower ? 'lower' : isUpper ? 'upper' : null;
+  if (detected && detected !== curBucket) {
+    document.getElementById('custom-muscle-warning-type').textContent = detected + ' body';
     document.getElementById('custom-muscle-warning-cur').textContent = curBucket + ' body';
     w.style.display = 'block';
   } else {
@@ -7376,6 +7399,24 @@ function onAltDropdownChange() {
   const dropdown = document.getElementById('alt-dropdown');
   const idx = dropdown.value;
   if (idx === '') { document.getElementById('alt-detail-section').style.display = 'none'; return; }
+
+  // "FROM YOUR PROGRAM" selection — pre-fill the custom input and let user confirm
+  if (idx.startsWith('prog:')) {
+    const name = idx.slice(5);
+    document.getElementById('alt-detail-section').style.display = 'none';
+    const customInput = document.getElementById('custom-exercise-input');
+    customInput.value = name;
+    checkCustomExerciseMuscle(name);
+    if (pendingSwap.sessionMode) {
+      document.getElementById('custom-swap-btns').style.display = 'flex';
+      document.getElementById('custom-swap-btn-simple').style.display = 'none';
+    } else {
+      document.getElementById('custom-swap-btns').style.display = 'none';
+      document.getElementById('custom-swap-btn-simple').style.display = 'block';
+    }
+    customInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
 
   const { dayId, exId, sessionMode } = pendingSwap;
   const day = state.program.find(d => d.id === dayId);
