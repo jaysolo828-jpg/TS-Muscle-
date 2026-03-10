@@ -4090,7 +4090,8 @@ function loadState() {
                 const r = parseInt(set.reps);
                 if (!w || !r) return;
                 const best = runningBest[exId];
-                if (!best || w > best.weight || (w === best.weight && r > best.reps)) {
+                // Only mark as PR if there was a PRIOR best to beat (not the very first record)
+                if (best && (w > best.weight || (w === best.weight && r > best.reps))) {
                   if (!entry.prs.includes(exId)) entry.prs.push(exId);
                 }
               });
@@ -4651,6 +4652,16 @@ function checkForPR(exId, set) {
     if (!state.prs) state.prs = {};
     state.prs[exId] = { weight: w, reps: r, date: new Date().toISOString(), isBaseline: true };
     saveState();
+    return;
+  }
+
+  // If existing record is a baseline (set earlier in this same first session),
+  // just update the baseline silently — never award a PR until a real prior session exists
+  if (existing.isBaseline) {
+    if (w > existing.weight || (w === existing.weight && r > existing.reps)) {
+      state.prs[exId] = { weight: w, reps: r, date: new Date().toISOString(), isBaseline: true };
+      saveState();
+    }
     return;
   }
 
