@@ -2232,38 +2232,42 @@
 
     <!-- Day option buttons with badges -->
     <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
-      <button class="settings-day-btn" id="sdb-2" onclick="selectDaysPerWeek(2, this)">
+      <button class="settings-day-btn" id="sdb-2" onclick="selectDaysPerWeek(2, this)"
+        data-short="Upper A + Lower A. Full body coverage, maximum recovery time.">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">2 Days / Week</span>
           <span id="sdb-badge-2" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
         </div>
-        <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">Upper A + Lower A. Full body coverage, maximum recovery time.</div>
+        <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">Upper A + Lower A. Full body coverage, maximum recovery time.</div>
       </button>
-      <button class="settings-day-btn" id="sdb-3" onclick="selectDaysPerWeek(3, this)">
+      <button class="settings-day-btn" id="sdb-3" onclick="selectDaysPerWeek(3, this)"
+        data-short="Upper A, Lower A, Upper B. Good balance with plenty of recovery.">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">3 Days / Week</span>
           <span id="sdb-badge-3" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
         </div>
-        <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">Upper A, Lower A, Upper B. Good balance with plenty of recovery.</div>
+        <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">Upper A, Lower A, Upper B. Good balance with plenty of recovery.</div>
       </button>
-      <button class="settings-day-btn" id="sdb-4" onclick="selectDaysPerWeek(4, this)">
+      <button class="settings-day-btn" id="sdb-4" onclick="selectDaysPerWeek(4, this)"
+        data-short="The full program. Optimal for hypertrophy with structured recovery.">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">4 Days / Week</span>
           <span id="sdb-badge-4" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
         </div>
-        <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">The full program. Optimal for hypertrophy with structured recovery.</div>
+        <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">The full program. Optimal for hypertrophy with structured recovery.</div>
       </button>
-      <button class="settings-day-btn" id="sdb-5" onclick="selectDaysPerWeek(5, this)">
+      <button class="settings-day-btn" id="sdb-5" onclick="selectDaysPerWeek(5, this)"
+        data-short="Full program + one extra session for weak points or cardio focus.">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">5 Days / Week</span>
           <span id="sdb-badge-5" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
         </div>
-        <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">Full program + one extra session for weak points or cardio focus.</div>
+        <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">Full program + one extra session for weak points or cardio focus.</div>
       </button>
     </div>
 
     <!-- Descriptive tip -->
-    <div id="days-explanation" style="display:none; background:var(--dark3); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; margin-bottom:12px; font-size:13px; color:var(--gray); line-height:1.6;"></div>
+    <div id="days-explanation" style="display:none;"></div>
 
     <!-- Below-minimum warning -->
     <div id="settings-days-warning" style="display:none; background:rgba(243,156,18,0.1); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--warning); margin-bottom:14px; line-height:1.6;"></div>
@@ -2596,40 +2600,44 @@
       <div id="ob-goal-rec" style="display:none; background:rgba(204,32,39,0.1); border:1px solid rgba(204,32,39,0.35); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:var(--cream); line-height:1.5;"></div>
 
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;" id="ob-days-buttons">
-        <button class="onboard-select-btn" id="ob-day-btn-2" onclick="selectTrainingDaysOnboard(2, this)">
+        <button class="onboard-select-btn" id="ob-day-btn-2" onclick="selectTrainingDaysOnboard(2, this)"
+          data-short="Full body coverage with maximum recovery time between sessions.">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">2 Days / Week</div>
             <div id="ob-day-badge-2" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">Full body coverage with maximum recovery time between sessions.</div>
+          <div class="ob-days-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">Full body coverage with maximum recovery time between sessions.</div>
         </button>
-        <button class="onboard-select-btn" id="ob-day-btn-3" onclick="selectTrainingDaysOnboard(3, this)">
+        <button class="onboard-select-btn" id="ob-day-btn-3" onclick="selectTrainingDaysOnboard(3, this)"
+          data-short="Good volume with plenty of recovery between sessions.">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">3 Days / Week</div>
             <div id="ob-day-badge-3" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">Good volume with plenty of recovery between sessions.</div>
+          <div class="ob-days-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">Good volume with plenty of recovery between sessions.</div>
         </button>
-        <button class="onboard-select-btn" id="ob-day-btn-4" onclick="selectTrainingDaysOnboard(4, this)">
+        <button class="onboard-select-btn" id="ob-day-btn-4" onclick="selectTrainingDaysOnboard(4, this)"
+          data-short="The complete program — best balance of training volume and recovery.">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">4 Days / Week</div>
             <div id="ob-day-badge-4" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">The complete program — best balance of training volume and recovery.</div>
+          <div class="ob-days-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">The complete program — best balance of training volume and recovery.</div>
         </button>
-        <button class="onboard-select-btn" id="ob-day-btn-5" onclick="selectTrainingDaysOnboard(5, this)">
+        <button class="onboard-select-btn" id="ob-day-btn-5" onclick="selectTrainingDaysOnboard(5, this)"
+          data-short="Full program plus an extra session to target weak points.">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">5 Days / Week</div>
             <div id="ob-day-badge-5" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">Full program plus an extra session to target weak points.</div>
+          <div class="ob-days-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">Full program plus an extra session to target weak points.</div>
         </button>
       </div>
 
       <input type="hidden" id="ob-training-days" value=""/>
 
       <!-- Selection tip -->
-      <div id="ob-days-tip" style="display:none; background:var(--dark3); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--gray); margin-bottom:14px; line-height:1.6;"></div>
+      <div id="ob-days-tip" style="display:none;"></div>
 
       <!-- Below-minimum advisory (shows if they pick under the goal minimum) -->
       <div id="ob-days-warning" style="display:none; background:rgba(243,156,18,0.1); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--warning); margin-bottom:14px; line-height:1.6;"></div>
@@ -9813,10 +9821,17 @@ function selectDaysPerWeek(n, btn) {
 }
 
 function updateDaysExplanation(n) {
-  const el = document.getElementById('days-explanation');
-  if (!el) return;
-  const text = getSplitAwareDayExplanation(n);
-  if (text) { el.textContent = text; el.style.display = 'block'; } else { el.style.display = 'none'; }
+  // Expand the tip inline in the selected settings day button; reset all others
+  document.querySelectorAll('.settings-day-btn').forEach(b => {
+    const desc = b.querySelector('.ob-sdays-desc');
+    if (desc) { desc.textContent = b.dataset.short || ''; desc.style.color = 'var(--gray)'; }
+  });
+  const activeBtn = document.getElementById('sdb-' + n);
+  if (activeBtn) {
+    const desc = activeBtn.querySelector('.ob-sdays-desc');
+    const tipText = getSplitAwareDayExplanation(n);
+    if (desc && tipText) { desc.textContent = tipText; desc.style.color = 'var(--cream)'; }
+  }
 }
 
 function applyTrainingDays() {
@@ -10550,7 +10565,7 @@ function selectSplitOnboard(type, btn) {
   const selectedDesc = btn.querySelector('.ob-split-desc');
   if (selectedDesc && tips[type]) {
     selectedDesc.textContent = tips[type];
-    selectedDesc.style.color = c ? c.hex : 'var(--cream)';
+    selectedDesc.style.color = 'var(--cream)';
   }
 
   updateDayButtonsForSplit(type);
@@ -10969,25 +10984,31 @@ function evaluateDaysWarning(days, cfg) {
 
 function selectTrainingDaysOnboard(days, btn) {
   document.getElementById('ob-training-days').value = days;
-  document.querySelectorAll('#onboard-step-4 .onboard-select-btn').forEach(b => b.classList.remove('selected'));
+  // Fix: was incorrectly targeting #onboard-step-4 — must target step 5
+  document.querySelectorAll('#onboard-step-5 .onboard-select-btn').forEach(b => {
+    b.classList.remove('selected');
+    const desc = b.querySelector('.ob-days-desc');
+    if (desc) { desc.textContent = b.dataset.short || ''; desc.style.color = 'var(--gray)'; }
+  });
   btn.classList.add('selected');
+
+  // Expand full tip inline inside the selected button
+  const selectedDesc = btn.querySelector('.ob-days-desc');
+  const tipText = getDayTip(days);
+  if (selectedDesc && tipText) {
+    selectedDesc.textContent = tipText;
+    selectedDesc.style.color = 'var(--cream)';
+  }
 
   const goal = document.getElementById('ob-goal').value;
   const cfg = GOAL_CONFIG[goal];
   const isBelow = cfg && days < cfg.min;
-
-  const tip = document.getElementById('ob-days-tip');
   const warning = document.getElementById('ob-days-warning');
 
   if (isBelow) {
-    // Show warning, hide tip — one info box at a time
-    tip.style.display = 'none';
     warning.style.display = 'block';
     warning.innerHTML = '⚠️ ' + cfg.minWarn + ' You can still proceed — the choice is always yours.';
   } else {
-    // Show tip, hide warning
-    tip.style.display = 'block';
-    tip.innerHTML = getDayTip(days);
     warning.style.display = 'none';
   }
 }
