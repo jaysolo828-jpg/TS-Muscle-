@@ -7734,9 +7734,10 @@ function deleteHistoryEntry(entryId) {
   state.totalSessions = Math.max(0, state.totalSessions - 1);
 
   // Step back week if this session caused a week advance
-  // Week advances every 4 sessions — if total was a multiple of 4, this session triggered it
+  // Week advances every N sessions (N = trainingDaysPerWeek) — if total was a multiple of N, this session triggered it
   const sessionNumAtDelete = state.totalSessions + 1; // what session number this was
-  if (sessionNumAtDelete % 4 === 0 && state.weekCount > 1) {
+  const _weekLenDelete = state.trainingDaysPerWeek || state.program?.length || 4;
+  if (sessionNumAtDelete % _weekLenDelete === 0 && state.weekCount > 1) {
     state.weekCount = Math.max(1, state.weekCount - 1);
   }
 
@@ -10216,7 +10217,8 @@ function buildOnboardingSummary() {
   const goal = document.getElementById('ob-goal').value;
   const exp = document.getElementById('ob-experience').value;
   const splitType = document.getElementById('ob-split-type')?.value || 'ul';
-  const trainingDays = parseInt(document.getElementById('ob-training-days').value) || 4;
+  const splitDefaultDays = { ul: 4, ppl: 3, fullbody: 3 };
+  const trainingDays = parseInt(document.getElementById('ob-training-days').value) || splitDefaultDays[splitType] || 4;
   const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body' };
 
   state.profile = { name, goal, experience: exp, bodyweight: parseFloat(document.getElementById('ob-bodyweight').value) || 0 };
