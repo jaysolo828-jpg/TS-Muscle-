@@ -6675,7 +6675,8 @@ function openAltModal(ex) {
   document.getElementById('edit-yt-alt').style.display = 'none';
 
   // Show reset banner if this exercise has been renamed from default
-  const defaultEx = DEFAULT_PROGRAM.flatMap(d => d.exercises).find(e => e.id === ex.id);
+  const _allProgramExs = Object.values(SPLIT_PROGRAMS).flatMap(days => days.flatMap(d => d.exercises));
+  const defaultEx = _allProgramExs.find(e => e.id === ex.id);
   const resetBanner = document.getElementById('alt-reset-banner');
   if (defaultEx && defaultEx.name !== ex.name) {
     document.getElementById('alt-reset-label').textContent = `Restore to "${defaultEx.name}"`;
@@ -6748,7 +6749,8 @@ function resetExerciseToDefault() {
   const exId = btn.dataset.exid;
   if (!exId) return;
 
-  const defaultEx = DEFAULT_PROGRAM.flatMap(d => d.exercises).find(e => e.id === exId);
+  const _allExs = Object.values(SPLIT_PROGRAMS).flatMap(days => days.flatMap(d => d.exercises));
+  const defaultEx = _allExs.find(e => e.id === exId);
   if (!defaultEx) return;
 
   // Restore name in state.program
@@ -6929,7 +6931,8 @@ function openExInfo(exId) {
   document.getElementById('ex-info-meta').textContent = ex.sets + ' sets · ' + getGoalReps(exId, ex.reps) + ' reps · ' + ex.rest + ' rest';
 
   // Stale cues warning — show if exercise has been renamed
-  const defaultEx2 = DEFAULT_PROGRAM.flatMap(d => d.exercises).find(e => e.id === exId);
+  const _allExs2 = Object.values(SPLIT_PROGRAMS).flatMap(days => days.flatMap(d => d.exercises));
+  const defaultEx2 = _allExs2.find(e => e.id === exId);
   const displayedName = (activeSession?.swaps?.[exId]?.name) || ex.name;
   const staleWarning = document.getElementById('ex-info-stale-warning');
   const staleText = document.getElementById('ex-info-stale-text');
