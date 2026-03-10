@@ -1800,7 +1800,10 @@
       <div class="stat-num" id="stat-week">1</div>
       <div class="stat-label">Current Week</div>
     </div>
-    <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;">
+    <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;">
+      <button onclick="event.stopPropagation();shareStreakCard()" title="Share streak" style="position:absolute;top:6px;right:6px;background:none;border:none;padding:4px;cursor:pointer;line-height:1;opacity:0.55;-webkit-tap-highlight-color:transparent;">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--red)" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </button>
       <div class="stat-num" id="stat-streak">0</div>
       <div class="stat-label">Week Streak</div>
     </div>
@@ -2202,7 +2205,12 @@
     <div id="pr-modal-detail" style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); margin-bottom:6px;"></div>
     <div id="pr-modal-improvement" style="font-family:'Barlow Condensed',sans-serif; font-size:15px; color:#f0a500; font-weight:700; letter-spacing:1px; margin-bottom:6px; min-height:20px;"></div>
     <div id="pr-modal-1rm" style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:#888; letter-spacing:0.5px; margin-bottom:18px; min-height:16px;"></div>
-    <button onclick="document.getElementById('pr-modal').style.display='none'" style="background:#f0a500; border:none; color:#000; padding:12px 32px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">LET'S GO! 💪</button>
+    <div style="display:flex;gap:10px;justify-content:center;align-items:center;">
+      <button onclick="document.getElementById('pr-modal').style.display='none'" style="background:#f0a500; border:none; color:#000; padding:12px 32px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">LET'S GO! 💪</button>
+      <button onclick="shareCurrentPR()" title="Share this PR" style="background:rgba(240,165,0,0.12);border:1.5px solid rgba(240,165,0,0.4);color:#f0a500;width:48px;height:48px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -2949,6 +2957,17 @@
       <div class="settings-sub">Reset your profile, goal, and starting weights</div>
     </div>
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="section-title" style="margin-top:8px;">PROFILE</div>
+  <div style="padding:0 16px 16px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Display Name</div>
+    <input type="text" id="display-name-input" placeholder="Your name or handle" maxlength="24"
+      style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:15px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
+      oninput="setDisplayName(this.value)"
+    />
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Shown on your shareable cards</div>
   </div>
 
   <!-- DATA -->
@@ -4188,6 +4207,11 @@ function showScreen(name, el) {
 
   if (name === 'cardio') renderCardioHistory();
   if (name === 'mindset') { renderValuesCard(); renderBarrierHistory(); renderMoodHistory(); renderMoodInsights(); renderSelfCompassionLog(); }
+
+  if (name === 'settings') {
+    const nameInput = document.getElementById('display-name-input');
+    if (nameInput) nameInput.value = state.displayName || '';
+  }
 }
 
 // ============================================================
@@ -4805,6 +4829,7 @@ function launchConfetti() {
 }
 
 function showPRModal(exName, weight, reps, improvement) {
+  _currentPRShare = { exercise: exName, weight, reps };
   document.getElementById('pr-modal-exercise').textContent = exName;
   document.getElementById('pr-modal-detail').textContent = `${weight} lbs × ${reps} reps`;
   const impEl = document.getElementById('pr-modal-improvement');
@@ -7245,7 +7270,12 @@ function showSessionWrapUp() {
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;overflow-y:auto;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
         <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;">SESSION SUMMARY</div>
-        <div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;padding-top:6px;">${activeSession.dayName || ''}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;padding-top:2px;">${activeSession.dayName || ''}</div>
+          <button onclick="shareWrapupCard()" title="Share workout" style="background:rgba(204,32,39,0.1);border:1px solid rgba(204,32,39,0.3);color:var(--red);width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </button>
+        </div>
       </div>
       <!-- Rep outcome summary bar -->
       <div style="background:var(--dark3);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
@@ -7834,8 +7864,14 @@ function renderPRBoard() {
     const displayName = cleanName.length > 22 ? cleanName.slice(0, 20) + '…' : cleanName;
     const prDate = pr.date ? new Date(pr.date).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '';
     const chip = document.createElement('div');
-    chip.style.cssText = 'background:linear-gradient(135deg,#1a1200,#2a1c00);border:1px solid #c47d00;border-radius:10px;padding:8px 12px;font-family:"Barlow Condensed",sans-serif;';
-    chip.innerHTML = `<div style="font-size:11px;color:#c47d00;letter-spacing:1px;margin-bottom:2px;">🏆 ${displayName.toUpperCase()}</div><div style="font-size:15px;color:var(--cream);font-weight:700;">${pr.weight} lbs × ${pr.reps}</div>${prDate ? `<div style="font-size:10px;color:#8a6a00;margin-top:3px;letter-spacing:0.5px;">${prDate}</div>` : ''}`;
+    chip.style.cssText = 'background:linear-gradient(135deg,#1a1200,#2a1c00);border:1px solid #c47d00;border-radius:10px;padding:8px 12px;font-family:"Barlow Condensed",sans-serif;position:relative;';
+    chip.innerHTML = `
+      <div style="font-size:11px;color:#c47d00;letter-spacing:1px;margin-bottom:2px;">🏆 ${displayName.toUpperCase()}</div>
+      <div style="font-size:15px;color:var(--cream);font-weight:700;">${pr.weight} lbs × ${pr.reps}</div>
+      ${prDate ? `<div style="font-size:10px;color:#8a6a00;margin-top:3px;letter-spacing:0.5px;">${prDate}</div>` : ''}
+      <button onclick="generateAndShareCard('pr',{exercise:'${cleanName.replace(/'/g,"\\'")}',weight:${pr.weight},reps:${pr.reps}})" title="Share this PR" style="position:absolute;top:6px;right:6px;background:none;border:none;padding:3px;cursor:pointer;opacity:0.5;-webkit-tap-highlight-color:transparent;">
+        <svg viewBox="0 0 24 24" width="13" height="13" stroke="#c47d00" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </button>`;
     list.appendChild(chip);
   });
 }
@@ -7986,9 +8022,14 @@ function renderHistoryItem(entry, container, insertBefore) {
           ${prCount > 0 ? `<span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:20px;">${prLabel}</span>` : ''}
         </div>
       </div>
-      <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px 0 4px 12px; opacity:0.6; flex-shrink:0;" title="Delete session">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      </button>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;padding-left:10px;">
+        <button onclick="event.stopPropagation(); shareHistoryEntry('${entry.id}')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:4px;opacity:0.55;-webkit-tap-highlight-color:transparent;" title="Share this workout">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+        <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:none;border:none;color:var(--gray);cursor:pointer;padding:4px;opacity:0.6;-webkit-tap-highlight-color:transparent;" title="Delete session">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
     </div>
     <div class="history-detail" id="detail-${entry.id}">
       ${renderHistoryDetail(entry)}
@@ -8353,6 +8394,287 @@ function renderProgressChart() {
     </div>`;
   });
   document.getElementById('progress-history-table').innerHTML = tableHTML;
+}
+
+// ============================================================
+// ============================================================
+// DISPLAY NAME
+// ============================================================
+function setDisplayName(val) {
+  state.displayName = val.trim();
+  saveState();
+}
+
+// ============================================================
+// SHARE CARDS
+// ============================================================
+
+// Stores current PR data so the share button in the modal can access it
+let _currentPRShare = null;
+
+function shareStreakCard() {
+  const streak = state.streak || 0;
+  if (streak === 0) { showToast('Hit your first week streak to share!'); return; }
+  generateAndShareCard('streak', { value: streak });
+}
+
+function shareCurrentPR() {
+  if (!_currentPRShare) return;
+  generateAndShareCard('pr', _currentPRShare);
+}
+
+function shareWrapupCard() {
+  const dayName = activeSession?.dayName || 'Workout';
+  const week = state.weekCount || 1;
+  const weekLen = state.trainingDaysPerWeek || state.program?.length || 4;
+  const isEndOfWeek = (state.totalSessions + 1) % weekLen === 0;
+  if (isEndOfWeek) {
+    generateAndShareCard('weekly', { week, dayName });
+  } else {
+    generateAndShareCard('workout', { dayName, week });
+  }
+}
+
+function shareHistoryEntry(entryId) {
+  const entry = state.history.find(e => String(e.id) === String(entryId));
+  if (!entry) return;
+  const dateStr = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  generateAndShareCard('workout', {
+    dayName: entry.dayName + (entry.dayFocus ? ' · ' + entry.dayFocus : ''),
+    weekLabel: dateStr
+  });
+}
+
+async function generateAndShareCard(type, data) {
+  showToast('Creating your card…');
+  try {
+    await document.fonts.ready;
+  } catch(e) {}
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1080;
+  const SPLIT = Math.round(H * 0.52);
+
+  // Top: red gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, SPLIT);
+  grad.addColorStop(0, '#CC2027');
+  grad.addColorStop(1, '#8a1519');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, SPLIT);
+
+  // Subtle dark vignette at very top
+  const vignette = ctx.createLinearGradient(0, 0, 0, SPLIT * 0.3);
+  vignette.addColorStop(0, 'rgba(0,0,0,0.25)');
+  vignette.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, W, SPLIT);
+
+  // Bottom: deep black
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, SPLIT, W, H - SPLIT);
+
+  // Thin divider line
+  ctx.strokeStyle = 'rgba(204,32,39,0.6)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, SPLIT);
+  ctx.lineTo(W, SPLIT);
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+
+  const bebasFont = (size) => `${size}px 'Bebas Neue', 'Arial Narrow', Arial`;
+  const barlowFont = (weight, size) => `${weight} ${size}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+
+  if (type === 'streak') {
+    // Emoji
+    ctx.font = '130px serif';
+    ctx.fillText('🔥', W / 2, Math.round(SPLIT * 0.27));
+    // Big number
+    ctx.font = bebasFont(240);
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 20;
+    ctx.fillText(String(data.value), W / 2, Math.round(SPLIT * 0.67));
+    ctx.shadowBlur = 0;
+    // Label
+    ctx.font = barlowFont(700, 58);
+    ctx.fillStyle = 'rgba(255,255,255,0.88)';
+    ctx.fillText('WEEK STREAK', W / 2, Math.round(SPLIT * 0.84));
+
+  } else if (type === 'pr') {
+    ctx.font = '110px serif';
+    ctx.fillText('🏆', W / 2, Math.round(SPLIT * 0.24));
+    ctx.font = barlowFont(700, 52);
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.fillText('PERSONAL RECORD', W / 2, Math.round(SPLIT * 0.42));
+    const exLabel = (data.exercise || '').toUpperCase().slice(0, 22);
+    ctx.font = bebasFont(82);
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 16;
+    ctx.fillText(exLabel, W / 2, Math.round(SPLIT * 0.62));
+    ctx.shadowBlur = 0;
+    ctx.font = bebasFont(108);
+    ctx.fillStyle = '#ffe066';
+    ctx.shadowColor = 'rgba(255,224,102,0.4)';
+    ctx.shadowBlur = 24;
+    ctx.fillText(`${data.weight} LBS × ${data.reps}`, W / 2, Math.round(SPLIT * 0.84));
+    ctx.shadowBlur = 0;
+
+  } else if (type === 'workout') {
+    ctx.font = '110px serif';
+    ctx.fillText('✅', W / 2, Math.round(SPLIT * 0.26));
+    ctx.font = bebasFont(180);
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 20;
+    ctx.fillText('DONE', W / 2, Math.round(SPLIT * 0.65));
+    ctx.shadowBlur = 0;
+    const dayLabel = (data.dayName || 'WORKOUT').toUpperCase().slice(0, 24);
+    ctx.font = barlowFont(700, 56);
+    ctx.fillStyle = 'rgba(255,255,255,0.88)';
+    ctx.fillText(dayLabel, W / 2, Math.round(SPLIT * 0.81));
+    ctx.font = barlowFont(500, 40);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillText(data.weekLabel || `WEEK ${data.week || 1}`, W / 2, Math.round(SPLIT * 0.93));
+
+  } else if (type === 'weekly') {
+    ctx.font = '110px serif';
+    ctx.fillText('⭐', W / 2, Math.round(SPLIT * 0.26));
+    ctx.font = bebasFont(156);
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 20;
+    ctx.fillText(`WEEK ${data.week}`, W / 2, Math.round(SPLIT * 0.60));
+    ctx.shadowBlur = 0;
+    ctx.font = barlowFont(700, 64);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillText('COMPLETE', W / 2, Math.round(SPLIT * 0.77));
+    ctx.font = barlowFont(500, 38);
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillText('HYPERTROPHY PROGRAM', W / 2, Math.round(SPLIT * 0.90));
+  }
+
+  // --- BOTTOM BRANDING ---
+  const bMid = SPLIT + (H - SPLIT) / 2;
+  const logoSize = 112;
+  const brandGap = 18;
+  const brandTextLines = ['T&S MUSCLE', 'therapyandsneakers.org'];
+
+  // Measure text to center the whole brand block
+  ctx.font = bebasFont(70);
+  const nameW = ctx.measureText(brandTextLines[0]).width;
+  ctx.font = barlowFont(600, 32);
+  const urlW = ctx.measureText(brandTextLines[1]).width;
+  const textBlockW = Math.max(nameW, urlW);
+  const totalW = logoSize + brandGap + textBlockW;
+  const blockLeft = (W - totalW) / 2;
+
+  // Load and draw logo
+  const logo = new Image();
+  logo.crossOrigin = 'anonymous';
+  logo.src = './icon.png';
+  await new Promise(resolve => {
+    if (logo.complete && logo.naturalWidth > 0) { resolve(); return; }
+    logo.onload = resolve;
+    logo.onerror = resolve;
+    setTimeout(resolve, 1200);
+  });
+
+  const logoX = blockLeft;
+  const logoY = bMid - logoSize / 2 - 10;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  if (logo.naturalWidth > 0) {
+    ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+  } else {
+    // Fallback: red circle with "TS"
+    ctx.fillStyle = '#CC2027';
+    ctx.fillRect(logoX, logoY, logoSize, logoSize);
+    ctx.fillStyle = '#F5E6C8';
+    ctx.font = bebasFont(52);
+    ctx.textAlign = 'center';
+    ctx.fillText('TS', logoX + logoSize / 2, logoY + logoSize * 0.65);
+  }
+  ctx.restore();
+
+  // Brand name and URL
+  const textX = blockLeft + logoSize + brandGap;
+  ctx.textAlign = 'left';
+
+  ctx.font = bebasFont(70);
+  ctx.fillStyle = '#F5E6C8';
+  ctx.fillText('T&S MUSCLE', textX, logoY + logoSize * 0.52);
+
+  ctx.font = barlowFont(600, 32);
+  ctx.fillStyle = '#888888';
+  ctx.fillText('therapyandsneakers.org', textX, logoY + logoSize * 0.52 + 44);
+
+  // Display name
+  const displayName = (state.displayName || '').trim();
+  if (displayName) {
+    ctx.textAlign = 'center';
+    ctx.font = barlowFont(600, 36);
+    ctx.fillStyle = 'rgba(245,230,200,0.45)';
+    ctx.fillText(displayName, W / 2, SPLIT + (H - SPLIT) * 0.82);
+  }
+
+  // Bottom tagline
+  ctx.textAlign = 'center';
+  ctx.font = barlowFont(500, 28);
+  ctx.fillStyle = 'rgba(136,136,136,0.5)';
+  ctx.fillText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - 52);
+
+  // Share
+  canvas.toBlob(async (blob) => {
+    if (!blob) { showToast('Could not generate card.'); return; }
+    const file = new File([blob], 'ts-muscle-share.png', { type: 'image/png' });
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'T&S Muscle', text: _getCardShareText(type, data) });
+      } catch(e) {
+        if (e.name !== 'AbortError') _downloadShareCard(blob);
+      }
+    } else if (navigator.share) {
+      try {
+        await navigator.share({ title: 'T&S Muscle', text: _getCardShareText(type, data), url: 'https://therapyandsneakers.org' });
+      } catch(e) {
+        if (e.name !== 'AbortError') _downloadShareCard(blob);
+      }
+    } else {
+      _downloadShareCard(blob);
+    }
+  }, 'image/png');
+}
+
+function _downloadShareCard(blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ts-muscle-share.png';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function _getCardShareText(type, data) {
+  const name = (state.displayName || '').trim();
+  const prefix = name ? `${name} ` : '';
+  if (type === 'streak') return `${prefix}just hit a ${data.value}-week streak on T&S Muscle! 🔥 therapyandsneakers.org`;
+  if (type === 'pr') return `${prefix}just hit a new PR — ${data.exercise} ${data.weight} lbs × ${data.reps} 🏆 therapyandsneakers.org`;
+  if (type === 'workout') return `${prefix}just crushed ${data.dayName || 'a workout'} on T&S Muscle 💪 therapyandsneakers.org`;
+  if (type === 'weekly') return `${prefix}just completed Week ${data.week} on T&S Muscle ⭐ therapyandsneakers.org`;
+  return 'Training with T&S Muscle 💪 therapyandsneakers.org';
 }
 
 // ============================================================
