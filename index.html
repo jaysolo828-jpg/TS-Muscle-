@@ -6257,7 +6257,6 @@ function renderSession() {
               onchange="updateSet('${ex.id}',${si},'reps',this.value); updateRepIndicator('${ex.id}',${si},'${_goalReps}')"
               oninput="updateRepIndicator('${ex.id}',${si},'${_goalReps}')"/>
             <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:6px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
-            ${repsPlaceholder && !set.done ? `<div style="font-size:10px;color:#555;text-align:center;margin-top:2px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">prev ${repsPlaceholder}</div>` : ''}
           </div>
           <select class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'rpe',this.value);this.dataset.empty=this.value?'false':'true';">
             <option value="">RPE</option>
