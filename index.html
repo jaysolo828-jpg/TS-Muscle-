@@ -8524,7 +8524,7 @@ function confirmDeleteSession(entryId) {
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">DELETE SESSION?</div>
-      <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:8px;">${entry.dayName} — ${entry.dayFocus}<br><span style="color:var(--gray);">${dateStr}</span></div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:8px;">${entry.dayName || 'Workout'} — ${entry.dayFocus || ''}<br><span style="color:var(--gray);">${dateStr}</span></div>
       <div style="background:rgba(243,156,18,0.08);border:1px solid rgba(243,156,18,0.3);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--warning);line-height:1.6;margin-bottom:20px;">
         This will also reduce your session count by 1. If this session advanced your program week, the week counter will step back.
       </div>
@@ -8589,7 +8589,7 @@ function recalcPRsFromHistory() {
 function renderHistoryItem(entry, container, insertBefore) {
   const date = new Date(entry.date);
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-  const regularSetsArr = Object.values(entry.sets);
+  const regularSetsArr = Object.values(entry.sets || {});
   const bonusSetsArr = (entry.bonusExercises || []).map(b => b.sets);
   const allSetsArr = [...regularSetsArr, ...bonusSetsArr];
 
@@ -8621,7 +8621,7 @@ function renderHistoryItem(entry, container, insertBefore) {
           ${deloadBadgeHtml}
         </div>
         <div style="display:flex; align-items:center;">
-          <div class="history-day">${entry.dayName} — ${entry.dayFocus}</div>
+          <div class="history-day">${entry.dayName || 'Workout'} — ${entry.dayFocus || ''}</div>
           <span class="history-chevron" id="chevron-${entry.id}">▸</span>
         </div>
         <div class="history-summary" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px;">
@@ -8733,7 +8733,7 @@ function renderHistoryDetail(entry) {
 
   let html = '';
   day.exercises.forEach(ex => {
-    const sets = entry.sets[ex.id];
+    const sets = entry.sets?.[ex.id];
     if (!sets) return;
     const doneSets = sets.filter(s => s.done);
     if (doneSets.length === 0) return;
@@ -8850,7 +8850,7 @@ function renderProgressChart() {
   const dataPoints = [];
 
   state.history.forEach(entry => {
-    const sets = entry.sets[exId];
+    const sets = entry.sets?.[exId];
     if (!sets) return;
     const doneSets = sets.filter(s => s.done && s.weight);
     if (doneSets.length === 0) return;
@@ -8867,6 +8867,7 @@ function renderProgressChart() {
 
   // Draw chart on canvas
   const canvas = document.getElementById('progress-canvas');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   canvas.width = canvas.offsetWidth || 400;
   canvas.height = 140;
