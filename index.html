@@ -2351,6 +2351,72 @@
       <div class="onboard-dot" data-step="8"></div>
     </div>
 
+    <!-- STEP INTRO: App intro slides (shown to fresh installs before step 0) -->
+    <div id="onboard-step-intro" class="onboard-step" style="display:none;">
+      <!-- Slide 1 -->
+      <div class="intro-slide" id="intro-slide-1">
+        <div style="text-align:center; padding-top:10px; margin-bottom:32px;">
+          <div style="font-size:52px; margin-bottom:16px;">💪</div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:3px; margin-bottom:14px;">TRAIN SMARTER,<br>NOT HARDER</div>
+          <div style="font-size:14px; color:var(--gray); line-height:1.7; max-width:320px; margin:0 auto;">T&amp;S Muscle is an adaptive lifting program. It tracks how hard you work each set and adjusts your weights automatically — so you're always training at the right intensity.</div>
+        </div>
+        <div class="ob-button-row" style="flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:center; gap:8px;">
+            <div style="width:24px; height:4px; border-radius:2px; background:var(--red);"></div>
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
+          </div>
+          <button onclick="introSlideNext(2)" class="onboard-next-btn">NEXT →</button>
+        </div>
+      </div>
+      <!-- Slide 2 -->
+      <div class="intro-slide" id="intro-slide-2" style="display:none;">
+        <div style="text-align:center; padding-top:10px; margin-bottom:20px;">
+          <div style="font-size:52px; margin-bottom:16px;">📈</div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:3px; margin-bottom:14px;">EFFORT-BASED<br>PROGRESSION</div>
+          <div style="font-size:14px; color:var(--gray); line-height:1.7; max-width:320px; margin:0 auto;">After each set you'll log your <strong style="color:var(--cream);">RPE</strong> — how hard it felt on a scale of 1–10. The app uses that to decide whether to increase your weight, hold it, or dial it back. No guesswork.</div>
+        </div>
+        <div style="background:var(--dark3); border-radius:10px; padding:14px 16px; margin-bottom:20px;">
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray);">RPE 7</span><span style="color:var(--gray);">Could do 3+ more reps</span></div>
+            <div style="display:flex; justify-content:space-between; padding:6px 0; border-top:1px solid rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:var(--cream); font-weight:bold;">RPE 8 ✓ target</span><span style="color:var(--gray);">Could do 2 more reps</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray);">RPE 9</span><span style="color:var(--gray);">Could do 1 more rep</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray);">RPE 10</span><span style="color:var(--gray);">Max effort — nothing left</span></div>
+          </div>
+        </div>
+        <div class="ob-button-row" style="flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:center; gap:8px;">
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
+            <div style="width:24px; height:4px; border-radius:2px; background:var(--red);"></div>
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button onclick="introSlideNext(1)" class="onboard-back-btn">← BACK</button>
+            <button onclick="introSlideNext(3)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
+          </div>
+        </div>
+      </div>
+      <!-- Slide 3 -->
+      <div class="intro-slide" id="intro-slide-3" style="display:none;">
+        <div style="text-align:center; padding-top:10px; margin-bottom:32px;">
+          <div style="font-size:52px; margin-bottom:16px;">⚙️</div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:3px; margin-bottom:14px;">2-MINUTE SETUP</div>
+          <div style="font-size:14px; color:var(--gray); line-height:1.7; max-width:320px; margin:0 auto;">You'll pick your goal, your training split, and your starting exercises. Week 1 is a calibration week — the app will dial in your weights after your first few sessions.<br><br>You can change anything at any time inside the app.</div>
+        </div>
+        <div class="ob-button-row" style="flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:center; gap:8px;">
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
+            <div style="width:24px; height:4px; border-radius:2px; background:var(--red);"></div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button onclick="introSlideNext(2)" class="onboard-back-btn">← BACK</button>
+            <button onclick="introDone()" class="onboard-next-btn" style="flex:1;">LET'S SET UP →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- STEP 0: New or Returning? -->
     <div id="onboard-step-0" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">FIRST TIME HERE?</div>
@@ -2415,7 +2481,10 @@
     <!-- STEP 2: Goal -->
     <div id="onboard-step-2" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR GOAL</div>
-      <div style="font-size:13px; color:var(--gray); margin-bottom:24px;">This sets your rep targets for every exercise in the program.</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:16px;">This sets your rep targets for every exercise in the program.</div>
+      <div style="background:var(--dark3); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--gray); margin-bottom:20px; line-height:1.6;">
+        <strong style="color:var(--cream);">Not sure?</strong> Size (8–15 reps) feels like moderate weight for longer sets. Strength (3–6 reps) means heavy weight, short sets. Both (6–10 reps) is a popular middle ground — a good default if you're unsure.
+      </div>
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:28px;">
         <button class="onboard-select-btn" onclick="selectGoalOnboard('size', this)">
           <div style="font-weight:bold;">Build Size</div>
@@ -2569,7 +2638,10 @@
     <!-- STEP 6: Test Week -->
     <div id="onboard-step-6" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR FIRST WEEK</div>
-      <div style="font-size:13px; color:var(--gray); margin-bottom:20px; line-height:1.6;">Week 1 is a calibration week. Weights start conservative — the goal is to find your real working weights, not to max out.</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:16px; line-height:1.6;">Week 1 is a calibration week. Weights start conservative — the goal is to find your real working weights, not to max out.</div>
+      <div style="background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.3); border-radius:10px; padding:10px 14px; margin-bottom:18px; font-size:13px; color:var(--gray); line-height:1.6;">
+        This is why starting weights don't need to be perfect — the RPE data from Week 1 is what actually sets your program.
+      </div>
 
       <div style="background:var(--dark3); border-radius:14px; padding:18px; margin-bottom:24px;">
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-bottom:12px;">LOGGING RPE</div>
@@ -2593,6 +2665,9 @@
     <div id="onboard-step-7" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">STARTING WEIGHTS</div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:8px; line-height:1.6;">Enter a weight you can handle comfortably for each lift. These are <strong style="color:var(--cream);">calibration weights</strong> — the app will fine-tune them after your first week.</div>
+      <div style="background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.3); border-radius:10px; padding:12px 14px; margin-bottom:12px; font-size:13px; color:var(--gray); line-height:1.6;">
+        <strong style="color:var(--cream);">Don't overthink this.</strong> Your Week 1 RPE scores will tell the app exactly how to adjust each weight. Even a rough estimate works — the calibration process handles the rest.
+      </div>
       <div style="font-size:12px; color:var(--gray); background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:16px;">Isolations (curls, laterals, etc.) are auto-set from your experience level — no input needed.</div>
 
       <div id="ob-exercise-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;"></div>
@@ -10220,16 +10295,29 @@ function checkOnboarding() {
     if (hasData) {
       document.getElementById('ob-exit-bar').style.display = 'block';
     }
-    // Show "New or Returning?" choice screen for genuine fresh installs
+    // Show intro slides for genuine fresh installs, then "New or Returning?" after
     const isFreshInstall = !state.profile &&
       (!state.history || state.history.length === 0) &&
       !localStorage.getItem('ts-redo-mode');
     if (isFreshInstall) {
       document.getElementById('onboard-dots').style.display = 'none';
       document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
-      document.getElementById('onboard-step-0').style.display = 'block';
+      document.getElementById('onboard-step-intro').style.display = 'block';
+      document.getElementById('intro-slide-1').style.display = 'block';
     }
   }
+}
+
+function introSlideNext(slide) {
+  document.querySelectorAll('.intro-slide').forEach(s => s.style.display = 'none');
+  document.getElementById('intro-slide-' + slide).style.display = 'block';
+  document.getElementById('onboarding-modal').scrollTop = 0;
+}
+
+function introDone() {
+  document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
+  document.getElementById('onboard-step-0').style.display = 'block';
+  document.getElementById('onboarding-modal').scrollTop = 0;
 }
 
 function onboardStartFresh() {
