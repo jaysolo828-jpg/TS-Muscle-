@@ -691,6 +691,8 @@
     padding: 0 10px 0 0;
     cursor: grab;
     touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
     flex-shrink: 0;
   }
   .workout-session.reorder-mode .drag-handle { display: flex; }
@@ -1801,7 +1803,7 @@
       <div class="stat-label">Current Week</div>
     </div>
     <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;">
-      <button onclick="event.stopPropagation();shareStreakCard()" title="Share streak" style="position:absolute;top:6px;right:6px;background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.4);border-radius:8px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
+      <button onclick="event.stopPropagation();shareStreakCard()" title="Share streak" style="position:absolute;top:6px;right:6px;background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.4);border-radius:8px;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--red)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       </button>
       <div class="stat-num" id="stat-streak">0</div>
@@ -2207,7 +2209,7 @@
     <div id="pr-modal-1rm" style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:#888; letter-spacing:0.5px; margin-bottom:18px; min-height:16px;"></div>
     <div style="display:flex;gap:10px;justify-content:center;align-items:stretch;">
       <button onclick="document.getElementById('pr-modal').style.display='none'" style="background:#f0a500;border:none;color:#000;padding:12px 32px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">LET'S GO! 💪</button>
-      <button onclick="shareCurrentPR()" title="Share this PR" style="background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.45);color:#f0a500;width:48px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">
+      <button onclick="shareCurrentPR()" title="Share this PR" style="background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.45);color:#f0a500;width:48px;height:48px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       </button>
     </div>
@@ -2713,7 +2715,7 @@
 <!-- Based on Kristin Neff's 3-component model: Mindfulness, Common Humanity, Self-Kindness -->
 <div id="self-compassion-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9700; align-items:flex-start; justify-content:center; padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); overflow-y:auto;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid #333; margin:auto; position:relative;">
-    <button onclick="closeSelfCompassionModal()" style="position:absolute; top:14px; right:16px; background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:32px; height:32px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">✕</button>
+    <button onclick="closeSelfCompassionModal()" style="position:absolute; top:14px; right:16px; background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:44px; height:44px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">✕</button>
 
     <!-- Step 1: Acknowledge -->
     <div id="sc-step-1">
@@ -2837,7 +2839,7 @@
     </div>
 
     <!-- Close X -->
-    <button onclick="closeCBTModal()" style="position:absolute; top:14px; right:16px; background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:32px; height:32px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">✕</button>
+    <button onclick="closeCBTModal()" style="position:absolute; top:14px; right:16px; background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:44px; height:44px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">✕</button>
   </div>
 </div>
 
@@ -3101,7 +3103,7 @@
 
 <!-- ALTERNATE EXERCISE MODAL -->
 <div class="modal-overlay" id="alt-modal" onclick="if(event.target===this)closeAltModal()">
-  <div class="modal" style="max-height:85vh; overflow-y:auto;">
+  <div class="modal" style="max-height:85vh; max-height:85dvh; overflow-y:auto; -webkit-overflow-scrolling:touch;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
       <div class="modal-title" style="margin-bottom:0;">SWAP EXERCISE</div>
       <button onclick="closeAltModal()" style="background:none; border:none; color:var(--gray); font-size:22px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
@@ -3193,7 +3195,7 @@
     <div style="flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:10px 14px 0;">
       <div style="width:30px;"></div>
       <div style="width:36px; height:4px; background:var(--dark4); border-radius:2px;"></div>
-      <button onclick="closeExInfoModal()" aria-label="Close" style="width:30px; height:30px; border-radius:50%; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); font-size:15px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">✕</button>
+      <button onclick="closeExInfoModal()" aria-label="Close" style="width:44px; height:44px; border-radius:50%; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); font-size:15px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">✕</button>
     </div>
 
     <!-- Fixed top: header -->
@@ -4037,17 +4039,12 @@ function _lsRemove(key) { try { localStorage.removeItem(key); } catch(e) {} }
 let _scrollLockY = 0;
 function lockBodyScroll() {
   _scrollLockY = window.scrollY;
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${_scrollLockY}px`;
-  document.body.style.width = '100%';
   document.body.style.overflow = 'hidden';
+  document.body.style.touchAction = 'none';
 }
 function unlockBodyScroll() {
-  document.body.style.position = '';
-  document.body.style.top = '';
-  document.body.style.width = '';
   document.body.style.overflow = '';
-  window.scrollTo(0, _scrollLockY);
+  document.body.style.touchAction = '';
 }
 
 function _idbSet(key, value) {
@@ -6250,7 +6247,11 @@ function toggleSetDone(exId, setIndex) {
         // Small delay so user sees their own checkmark land first
         setTimeout(() => {
           partnerEl.classList.add('superset-up-next');
-          partnerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if ('scrollBehavior' in document.documentElement.style) {
+            partnerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else {
+            partnerEl.scrollIntoView(false);
+          }
           setTimeout(() => partnerEl.classList.remove('superset-up-next'), 4000);
         }, 300);
       }
@@ -7269,13 +7270,13 @@ function showSessionWrapUp() {
   modal.id = 'session-wrapup-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
   modal.innerHTML = `
-    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;overflow-y:auto;">
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
         <div>
           <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;line-height:1;">SESSION SUMMARY</div>
           ${activeSession.dayName ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;margin-top:3px;">${activeSession.dayName}</div>` : ''}
         </div>
-        <button onclick="shareWrapupCard()" title="Share workout" style="background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.4);color:var(--red);width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">
+        <button onclick="shareWrapupCard()" title="Share workout" style="background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.4);color:var(--red);width:44px;height:44px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
       </div>
@@ -7871,7 +7872,7 @@ function renderPRBoard() {
       <div style="font-size:11px;color:#c47d00;letter-spacing:1px;margin-bottom:3px;padding-right:34px;line-height:1.2;">🏆 ${displayName.toUpperCase()}</div>
       <div style="font-size:16px;color:var(--cream);font-weight:700;line-height:1.2;">${pr.weight} lbs × ${pr.reps}</div>
       ${prDate ? `<div style="font-size:10px;color:#8a6a00;margin-top:4px;letter-spacing:0.5px;">${prDate}</div>` : ''}
-      <button onclick="generateAndShareCard('pr',{exercise:'${cleanName.replace(/'/g,"\\'")}',weight:${pr.weight},reps:${pr.reps}})" title="Share this PR" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(196,125,0,0.18);border:1px solid rgba(196,125,0,0.5);border-radius:8px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;flex-shrink:0;">
+      <button onclick="generateAndShareCard('pr',{exercise:'${cleanName.replace(/'/g,"\\'")}',weight:${pr.weight},reps:${pr.reps}})" title="Share this PR" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(196,125,0,0.18);border:1px solid rgba(196,125,0,0.5);border-radius:8px;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;flex-shrink:0;">
         <svg viewBox="0 0 24 24" width="14" height="14" stroke="#c47d00" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       </button>`;
     list.appendChild(chip);
@@ -8031,10 +8032,10 @@ function renderHistoryItem(entry, container, insertBefore) {
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
-        <button onclick="event.stopPropagation(); shareHistoryEntry('${entry.id}')" style="background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.4);border-radius:8px;color:var(--red);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;box-sizing:border-box;" title="Share this workout">
+        <button onclick="event.stopPropagation(); shareHistoryEntry('${entry.id}')" style="background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.4);border-radius:8px;color:var(--red);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;box-sizing:border-box;" title="Share this workout">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
-        <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--gray);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;box-sizing:border-box;" title="Delete session">
+        <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--gray);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;box-sizing:border-box;" title="Delete session">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </button>
       </div>
@@ -9163,7 +9164,7 @@ function showChangelogModal() {
   modal.id = 'changelog-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10001;display:flex;align-items:flex-end;justify-content:center;';
   modal.innerHTML = `
-    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;overflow-y:auto;">
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;">WHAT'S NEW</div>
         <button onclick="document.getElementById('changelog-modal').remove();"
@@ -10895,7 +10896,11 @@ function openOnerm(exerciseId) {
   document.getElementById('onerm-result').style.display = 'none';
   document.getElementById('onerm-weight').value = '';
   document.getElementById('onerm-reps').value = '';
-  document.getElementById('onerm-calc').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if ('scrollBehavior' in document.documentElement.style) {
+    document.getElementById('onerm-calc').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    document.getElementById('onerm-calc').scrollIntoView(false);
+  }
 }
 
 function calculate1RM() {
@@ -12731,14 +12736,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- Rep Range bottom sheet -->
 <div id="rep-range-overlay" onclick="closeRepRangeSheet()" style="display:none;position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,0.65);"></div>
-<div id="rep-range-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99991;background:var(--dark2);border-radius:20px 20px 0 0;box-shadow:0 -4px 30px rgba(0,0,0,0.7);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1);max-height:82vh;overflow-y:auto;">
+<div id="rep-range-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99991;background:var(--dark2);border-radius:20px 20px 0 0;box-shadow:0 -4px 30px rgba(0,0,0,0.7);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1);max-height:82vh;max-height:82dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
   <div style="width:36px;height:4px;background:var(--dark4);border-radius:2px;margin:12px auto 0;flex-shrink:0;"></div>
   <div id="rep-range-sheet-body" style="padding:18px 20px calc(32px + env(safe-area-inset-bottom));"></div>
 </div>
 
 <!-- RPE info bottom sheet -->
 <div id="rpe-sheet-overlay" onclick="toggleRpeSheet()" style="display:none; position:fixed; inset:0; z-index:99990; background:rgba(0,0,0,0.5);"></div>
-<div id="rpe-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99991; background:var(--dark2); border-radius:20px 20px 0 0; padding:24px 20px 40px; box-shadow:0 -4px 30px rgba(0,0,0,0.6); transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1);">
+<div id="rpe-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99991; background:var(--dark2); border-radius:20px 20px 0 0; padding:24px 20px calc(40px + env(safe-area-inset-bottom)); box-shadow:0 -4px 30px rgba(0,0,0,0.6); transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1); overflow-y:auto; -webkit-overflow-scrolling:touch;">
   <div style="width:36px; height:4px; background:var(--dark4); border-radius:2px; margin:0 auto 20px;"></div>
   <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:var(--gray); letter-spacing:2px; margin-bottom:10px;">WHAT IS RPE?</div>
   <div style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:16px;">
