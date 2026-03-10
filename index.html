@@ -6015,7 +6015,7 @@ function renderSession() {
         <div style="display:flex; flex-direction:column; gap:5px; flex:1; min-width:0; margin:0 10px;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <div class="session-ex-name">${displayName}</div>
-            ${state.prs?.[ex.id] && !state.prs[ex.id].isBaseline ? `<span id="pr-badge-${ex.id}" style="font-size:11px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:2px 7px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
+            ${state.prs?.[ex.id] && !state.prs[ex.id].isBaseline ? `<span id="pr-badge-${ex.id}" style="font-size:12px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:3px 8px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
           </div>
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
@@ -7983,7 +7983,7 @@ function renderHistoryItem(entry, container, insertBefore) {
         </div>
         <div class="history-summary" style="display:flex;align-items:center;gap:8px;">
           ${exCount} exercise${exCount !== 1 ? 's' : ''} · ${totalSets} sets
-          ${prCount > 0 ? `<span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:2px 8px;border-radius:20px;">${prLabel}</span>` : ''}
+          ${prCount > 0 ? `<span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:20px;">${prLabel}</span>` : ''}
         </div>
       </div>
       <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px 0 4px 12px; opacity:0.6; flex-shrink:0;" title="Delete session">
@@ -8113,7 +8113,7 @@ function renderHistoryDetail(entry) {
     }
 
     html += `<div class="history-ex">
-      <div class="history-ex-name" style="display:flex;align-items:center;gap:6px;">${displayName}${wasPR ? ' <span style="color:#f0a500;font-size:11px;">🏆 PR</span>' : ''}${supersetBadge}</div>
+      <div class="history-ex-name" style="display:flex;align-items:center;gap:6px;">${displayName}${wasPR ? ' <span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:11px;font-weight:700;padding:2px 6px;border-radius:20px;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:0.5px;">🏆 PR</span>' : ''}${supersetBadge}</div>
       <div class="history-sets">
         ${doneSets.map((s, i) => `<div class="history-set-pill"><span style="color:var(--gray);font-size:10px;margin-right:4px;">S${i + 1}</span>${s.weight ? s.weight + 'lb' : '--'} × ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`).join('')}
       </div>
