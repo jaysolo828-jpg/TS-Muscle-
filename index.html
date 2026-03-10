@@ -8459,18 +8459,21 @@ async function generateAndShareCard(type, data) {
   showToast('Creating your card…');
   try { await document.fonts.ready; } catch(e) {}
 
-  const canvas = document.createElement('canvas');
-  canvas.width = 1080;
-  canvas.height = 1080;
-  const ctx = canvas.getContext('2d');
-  const W = 1080, H = 1080;
-  const SPLIT = 560;
+  const W = 1080, H = 1920;
+  const SPLIT = 1140;                  // red top section height
+  const S  = SPLIT / 560;             // top-section font scale (~2.04)
+  const BS = (H - SPLIT) / 520;       // bottom-section font scale (~1.5)
 
-  // ── Font helpers ─────────────────────────────────────────
+  const canvas = document.createElement('canvas');
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // ── Font helpers (sc defaults to top-section scale S) ────
   const PAD    = 64;
   const MAX_TW = W - PAD * 2;
-  const bebas  = (sz) => `${sz}px 'Bebas Neue', 'Arial Narrow', Arial`;
-  const barlow = (wt, sz) => `${wt} ${sz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+  const bebas  = (sz, sc = S)     => `${Math.round(sz * sc)}px 'Bebas Neue', 'Arial Narrow', Arial`;
+  const barlow = (wt, sz, sc = S) => `${wt} ${Math.round(sz * sc)}px 'Barlow Condensed', 'Arial Narrow', Arial`;
 
   // Draw centred text, auto-shrinking horizontally if it exceeds maxW
   function drawText(text, x, y, font, color, maxW, shadow) {
@@ -8523,7 +8526,7 @@ async function generateAndShareCard(type, data) {
     const numY   = Math.round(SPLIT * 0.53);
     const labelY = Math.round(SPLIT * 0.82);
 
-    ctx.font = '108px serif';
+    ctx.font = `${Math.round(108 * S)}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('🔥', W / 2, emojiY);
@@ -8539,7 +8542,7 @@ async function generateAndShareCard(type, data) {
     const exY    = Math.round(SPLIT * 0.55);
     const wtY    = Math.round(SPLIT * 0.78);
 
-    ctx.font = '90px serif';
+    ctx.font = `${Math.round(90 * S)}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('🏆', W / 2, emojiY);
@@ -8557,7 +8560,7 @@ async function generateAndShareCard(type, data) {
     const dayY   = Math.round(SPLIT * 0.74);
     const weekY  = Math.round(SPLIT * 0.89);
 
-    ctx.font = '90px serif';
+    ctx.font = `${Math.round(90 * S)}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('✅', W / 2, emojiY);
@@ -8575,7 +8578,7 @@ async function generateAndShareCard(type, data) {
     const completeY = Math.round(SPLIT * 0.70);
     const subY      = Math.round(SPLIT * 0.87);
 
-    ctx.font = '90px serif';
+    ctx.font = `${Math.round(90 * S)}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('⭐', W / 2, emojiY);
@@ -8600,16 +8603,16 @@ async function generateAndShareCard(type, data) {
   });
 
   const displayName  = (state.displayName || '').trim();
-  const LOGO_SIZE    = 96;
-  const LOGO_GAP     = 20;
+  const LOGO_SIZE    = Math.round(96  * BS);
+  const LOGO_GAP     = Math.round(20  * BS);
   const NAME_SZ      = 64;
   const URL_SZ       = 30;
-  const LINE_GAP     = 10;
+  const LINE_GAP     = Math.round(10  * BS);
 
-  // Measure so the whole logo+text block is truly centred
-  ctx.font = bebas(NAME_SZ);
+  // Measure so the whole logo+text block is truly centred (use BS for branding fonts)
+  ctx.font = bebas(NAME_SZ, BS);
   const nameW = ctx.measureText('T&S MUSCLE').width;
-  ctx.font = barlow(600, URL_SZ);
+  ctx.font = barlow(600, URL_SZ, BS);
   const urlW  = ctx.measureText('therapyandsneakers.org').width;
   const textBlockW  = Math.max(nameW, urlW);
   const brandBlockW = LOGO_SIZE + LOGO_GAP + textBlockW;
@@ -8632,7 +8635,7 @@ async function generateAndShareCard(type, data) {
   } else {
     ctx.fillStyle = '#CC2027';
     ctx.fillRect(logoX, logoY, LOGO_SIZE, LOGO_SIZE);
-    ctx.font = bebas(42);
+    ctx.font = bebas(42, BS);
     ctx.fillStyle = '#F5E6C8';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -8651,11 +8654,11 @@ async function generateAndShareCard(type, data) {
   ctx.textAlign    = 'left';
   ctx.textBaseline = 'middle';
 
-  ctx.font      = bebas(NAME_SZ);
+  ctx.font      = bebas(NAME_SZ, BS);
   ctx.fillStyle = '#F5E6C8';
   ctx.fillText('T&S MUSCLE', textX, nameLineY);
 
-  ctx.font      = barlow(600, URL_SZ);
+  ctx.font      = barlow(600, URL_SZ, BS);
   ctx.fillStyle = '#aaaaaa';
   ctx.fillText('therapyandsneakers.org', textX, urlLineY);
 
@@ -8663,12 +8666,12 @@ async function generateAndShareCard(type, data) {
   if (displayName) {
     drawText(displayName, W / 2,
       SPLIT + Math.round(bottomH * 0.68),
-      barlow(600, 34), 'rgba(245,230,200,0.88)', MAX_TW);
+      barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
   }
 
   // Tagline pinned to bottom
-  drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - 54,
-    barlow(600, 30), 'rgba(160,160,160,0.9)', MAX_TW);
+  drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - Math.round(54 * BS),
+    barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
 
   // Share
   canvas.toBlob(async (blob) => {
