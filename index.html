@@ -4232,8 +4232,7 @@ let state = {
 let activeSession = null;
 let pendingSwap = null;
 let pairingSourceId = null; // exercise ID currently waiting for a pair partner
-const HISTORY_PAGE_SIZE = 15;
-let historyPage = 1;
+const HISTORY_PAGE_SIZE = 10; // entries per page in the "older sessions" section
 
 // ============================================================
 // INDEXEDDB BACKUP
@@ -8525,7 +8524,7 @@ function confirmDeleteSession(entryId) {
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">DELETE SESSION?</div>
-      <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:8px;">${entry.dayName} — ${entry.dayFocus}<br><span style="color:var(--gray);">${dateStr}</span></div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:8px;">${entry.dayName || 'Workout'} — ${entry.dayFocus || ''}<br><span style="color:var(--gray);">${dateStr}</span></div>
       <div style="background:rgba(243,156,18,0.08);border:1px solid rgba(243,156,18,0.3);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--warning);line-height:1.6;margin-bottom:20px;">
         This will also reduce your session count by 1. If this session advanced your program week, the week counter will step back.
       </div>
@@ -8590,15 +8589,19 @@ function recalcPRsFromHistory() {
 function renderHistoryItem(entry, container, insertBefore) {
   const date = new Date(entry.date);
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-  const totalSets = Object.values(entry.sets).reduce((sum, sets) => sum + sets.filter(s => s.done).length, 0);
-  const exCount = Object.values(entry.sets).filter(sets => sets.some(s => s.done)).length;
+  const regularSetsArr = Object.values(entry.sets || {});
+  const bonusSetsArr = (entry.bonusExercises || []).map(b => b.sets);
+  const allSetsArr = [...regularSetsArr, ...bonusSetsArr];
+
+  const totalSets = allSetsArr.reduce((sum, sets) => sum + sets.filter(s => s.done).length, 0);
+  const exCount = allSetsArr.filter(sets => sets.some(s => s.done)).length;
   const prCount = entry.prs ? entry.prs.length : 0;
   const prLabel = prCount === 1 ? '🏆 PR' : prCount > 1 ? `🏆 ${prCount} PRs` : '';
   const deloadBadgeHtml = entry.isDeload
     ? `<span class="history-deload-badge">DELOAD</span>`
     : '';
 
-  const totalVolume = Object.values(entry.sets).reduce((sum, sets) =>
+  const totalVolume = allSetsArr.reduce((sum, sets) =>
     sum + sets.filter(s => s.done && s.weight && s.reps)
               .reduce((s2, s) => {
                 const w = parseFloat(s.weight);
@@ -8618,7 +8621,7 @@ function renderHistoryItem(entry, container, insertBefore) {
           ${deloadBadgeHtml}
         </div>
         <div style="display:flex; align-items:center;">
-          <div class="history-day">${entry.dayName} — ${entry.dayFocus}</div>
+          <div class="history-day">${entry.dayName || 'Workout'} — ${entry.dayFocus || ''}</div>
           <span class="history-chevron" id="chevron-${entry.id}">▸</span>
         </div>
         <div class="history-summary" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px;">
@@ -8652,7 +8655,6 @@ function renderHistoryItem(entry, container, insertBefore) {
 function renderHistory() {
   const container = document.getElementById('history-list');
   container.innerHTML = '';
-  historyPage = 1;
 
   renderPRBoard();
 
@@ -8690,19 +8692,18 @@ function renderHistory() {
     }
     updateBtn();
 
-    const PAGE = 10;
     let page = 0;
 
     const loadMoreBtn = document.createElement('button');
     loadMoreBtn.style.cssText = 'width:100%;margin:8px 0 0;padding:10px;background:transparent;border:1px solid var(--dark4);color:var(--gray);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;';
 
     function appendPage() {
-      const slice = older.slice(page * PAGE, (page + 1) * PAGE);
+      const slice = older.slice(page * HISTORY_PAGE_SIZE, (page + 1) * HISTORY_PAGE_SIZE);
       slice.forEach(entry => renderHistoryItem(entry, olderDiv, loadMoreBtn));
       page++;
-      const remaining = older.length - page * PAGE;
+      const remaining = older.length - page * HISTORY_PAGE_SIZE;
       if (remaining <= 0) loadMoreBtn.remove();
-      else loadMoreBtn.textContent = `LOAD ${Math.min(PAGE, remaining)} MORE  (${remaining} remaining)`;
+      else loadMoreBtn.textContent = `LOAD ${Math.min(HISTORY_PAGE_SIZE, remaining)} MORE  (${remaining} remaining)`;
     }
 
     btn.onclick = () => {
@@ -8732,7 +8733,7 @@ function renderHistoryDetail(entry) {
 
   let html = '';
   day.exercises.forEach(ex => {
-    const sets = entry.sets[ex.id];
+    const sets = entry.sets?.[ex.id];
     if (!sets) return;
     const doneSets = sets.filter(s => s.done);
     if (doneSets.length === 0) return;
@@ -8767,6 +8768,20 @@ function renderHistoryDetail(entry) {
       ${exNote ? `<div class="history-ex-note"><span class="history-ex-note-label">Note</span>${exNote}</div>` : ''}
     </div>`;
   });
+
+  // Render bonus exercises (stored separately from regular sets)
+  if (entry.bonusExercises && entry.bonusExercises.length > 0) {
+    entry.bonusExercises.forEach(bonus => {
+      const doneSets = bonus.sets.filter(s => s.done);
+      if (doneSets.length === 0) return;
+      html += `<div class="history-ex">
+        <div class="history-ex-name" style="display:flex;align-items:center;gap:6px;">${escapeHtml(bonus.name)}<span style="font-size:10px;font-weight:700;color:var(--gray);background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">BONUS</span></div>
+        <div class="history-sets">
+          ${doneSets.map((s, i) => `<div class="history-set-pill"><span style="color:var(--gray);font-size:10px;margin-right:4px;">S${i + 1}</span>${s.weight ? s.weight + 'lb' : '--'} × ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`).join('')}
+        </div>
+      </div>`;
+    });
+  }
 
   html += `<div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--dark3);">`;
   if (entry.notes) {
@@ -8835,7 +8850,7 @@ function renderProgressChart() {
   const dataPoints = [];
 
   state.history.forEach(entry => {
-    const sets = entry.sets[exId];
+    const sets = entry.sets?.[exId];
     if (!sets) return;
     const doneSets = sets.filter(s => s.done && s.weight);
     if (doneSets.length === 0) return;
@@ -8852,6 +8867,7 @@ function renderProgressChart() {
 
   // Draw chart on canvas
   const canvas = document.getElementById('progress-canvas');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   canvas.width = canvas.offsetWidth || 400;
   canvas.height = 140;
