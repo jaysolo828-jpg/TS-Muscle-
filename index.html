@@ -1837,9 +1837,9 @@
   <div style="margin-top:8px;">
     <div class="section-title" onclick="toggleProgressSection()" style="cursor:pointer; user-select:none;">
       EXERCISE <span>PROGRESS</span>
-      <span id="progress-chevron" style="margin-left:auto; font-size:10px; color:var(--red); transition:transform 0.2s;">▼</span>
+      <span id="progress-chevron" style="margin-left:auto; font-size:10px; color:var(--red); transition:transform 0.2s; transform:rotate(180deg);">▼</span>
     </div>
-    <div id="progress-section" style="display:none;">
+    <div id="progress-section">
       <select class="exercise-picker" id="exercise-picker" onchange="renderProgressChart()"></select>
 
       <!-- Chart mode toggle -->
@@ -4203,7 +4203,7 @@ function showScreen(name, el) {
     card.classList.add('bounce-in');
   });
 
-  if (name === 'history') { renderHistory(); renderProgress(); }
+  if (name === 'history') { renderHistory(); renderProgress(); renderProgressChart(); }
 
   if (name === 'cardio') renderCardioHistory();
   if (name === 'mindset') { renderValuesCard(); renderBarrierHistory(); renderMoodHistory(); renderMoodInsights(); renderSelfCompassionLog(); }
@@ -8004,21 +8004,27 @@ function renderHistoryItem(entry, container, insertBefore) {
     ? `<span class="history-deload-badge">DELOAD</span>`
     : '';
 
+  const totalVolume = Object.values(entry.sets).reduce((sum, sets) =>
+    sum + sets.filter(s => s.done && s.weight && s.reps)
+              .reduce((s2, s) => s2 + parseFloat(s.weight) * parseInt(s.reps), 0), 0);
+  const volumeStr = totalVolume > 0 ? ` · ${Math.round(totalVolume).toLocaleString()} lbs` : '';
+  const durationStr = entry.duration ? `${entry.duration} min` : null;
+
   const el = document.createElement('div');
   el.className = 'history-item';
   el.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
       <div style="flex:1; min-width:0;">
         <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-          <div class="history-date" style="margin-bottom:0;">${dateStr} · ${entry.duration || '?'} min</div>
+          <div class="history-date" style="margin-bottom:0;">${dateStr}${durationStr ? ' · ' + durationStr : ''}</div>
           ${deloadBadgeHtml}
         </div>
         <div style="display:flex; align-items:center;">
           <div class="history-day">${entry.dayName} — ${entry.dayFocus}</div>
           <span class="history-chevron" id="chevron-${entry.id}">▸</span>
         </div>
-        <div class="history-summary" style="display:flex;align-items:center;gap:8px;">
-          ${exCount} exercise${exCount !== 1 ? 's' : ''} · ${totalSets} sets
+        <div class="history-summary" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          ${exCount} exercise${exCount !== 1 ? 's' : ''} · ${totalSets} sets${volumeStr}
           ${prCount > 0 ? `<span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:20px;">${prLabel}</span>` : ''}
         </div>
       </div>
@@ -8061,52 +8067,54 @@ function renderHistory() {
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
   );
 
-  // Show only the most recent session by default
-  const lastLabel = document.createElement('div');
-  lastLabel.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-bottom:6px;';
-  lastLabel.textContent = 'LAST SESSION';
-  container.appendChild(lastLabel);
-  renderHistoryItem(sorted[0], container, null);
+  const RECENT_COUNT = 3;
+  const recent = sorted.slice(0, RECENT_COUNT);
+  const older = sorted.slice(RECENT_COUNT);
 
-  if (sorted.length > 1) {
+  const recentLabel = document.createElement('div');
+  recentLabel.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-bottom:6px;';
+  recentLabel.textContent = recent.length === 1 ? 'LAST SESSION' : 'RECENT SESSIONS';
+  container.appendChild(recentLabel);
+  recent.forEach(entry => renderHistoryItem(entry, container, null));
+
+  if (older.length > 0) {
     const btn = document.createElement('button');
     btn.id = 'history-load-more';
-    btn.style.cssText = 'width:100%;margin:12px 0;padding:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:14px;cursor:pointer;letter-spacing:0.5px;';
+    btn.style.cssText = 'width:100%;margin:12px 0;padding:12px;background:var(--dark2);border:1px solid var(--dark4);color:var(--cream);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;';
 
     let expanded = false;
     let olderDiv = null;
 
     function updateBtn() {
       btn.textContent = expanded
-        ? 'Hide older sessions ▴'
-        : `View all ${sorted.length} sessions ▾`;
+        ? '▴  HIDE OLDER SESSIONS'
+        : `▾  VIEW ${older.length} OLDER SESSION${older.length === 1 ? '' : 'S'}`;
     }
     updateBtn();
 
-    const older = sorted.slice(1);
     const PAGE = 10;
     let page = 0;
+
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.style.cssText = 'width:100%;margin:8px 0 0;padding:10px;background:transparent;border:1px solid var(--dark4);color:var(--gray);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;';
 
     function appendPage() {
       const slice = older.slice(page * PAGE, (page + 1) * PAGE);
       slice.forEach(entry => renderHistoryItem(entry, olderDiv, loadMoreBtn));
       page++;
-      if (page * PAGE >= older.length) loadMoreBtn.remove();
-      else loadMoreBtn.textContent = `Load ${Math.min(PAGE, older.length - page * PAGE)} more (${older.length - page * PAGE} remaining)`;
+      const remaining = older.length - page * PAGE;
+      if (remaining <= 0) loadMoreBtn.remove();
+      else loadMoreBtn.textContent = `LOAD ${Math.min(PAGE, remaining)} MORE  (${remaining} remaining)`;
     }
-
-    const loadMoreBtn = document.createElement('button');
-    loadMoreBtn.style.cssText = 'width:100%;margin:8px 0 0;padding:10px;background:transparent;border:1px solid var(--dark4);color:var(--gray);border-radius:8px;font-size:13px;cursor:pointer;letter-spacing:0.5px;';
 
     btn.onclick = () => {
       if (!expanded) {
         olderDiv = document.createElement('div');
         olderDiv.id = 'history-older';
-        page = 0;
-        loadMoreBtn.textContent = `Load ${Math.min(PAGE, older.length - PAGE)} more (${older.length - PAGE} remaining)`;
         olderDiv.appendChild(loadMoreBtn);
         loadMoreBtn.onclick = appendPage;
         container.appendChild(olderDiv);
+        page = 0;
         appendPage();
         expanded = true;
       } else {
