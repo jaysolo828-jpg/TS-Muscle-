@@ -703,19 +703,32 @@
     transition: transform 0.18s ease;
     user-select: none;
   }
-  .workout-session.reorder-mode .session-exercise.drag-nudge-down { transform: translateY(6px); }
+  .workout-session.reorder-mode .session-exercise.drag-nudge-down { transform: translateY(2px); }
   .session-exercise.is-dragging { opacity: 0; }
   .drag-ghost {
     position: fixed;
     pointer-events: none;
     z-index: 9999;
-    opacity: 0.93;
+    opacity: 0.82;
     border: 2px solid var(--red);
     border-radius: 14px;
     box-shadow: 0 8px 32px rgba(204,32,39,0.35);
-    transform: scale(1.02);
+    transform: scale(0.68);
+    transform-origin: top center;
     background: var(--dark2);
     overflow: hidden;
+    transition: transform 0.15s ease;
+  }
+  .drag-drop-line {
+    position: fixed;
+    left: 16px; right: 16px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--red);
+    box-shadow: 0 0 10px rgba(204,32,39,0.7);
+    pointer-events: none;
+    z-index: 9998;
+    transition: top 0.08s ease;
   }
   #session-reorder-btn {
     background: transparent;
@@ -7118,11 +7131,17 @@ function _onDragHandlePointerDown(e) {
   ghost.style.top = rect.top + 'px';
   document.body.appendChild(ghost);
 
+  const dropLine = document.createElement('div');
+  dropLine.className = 'drag-drop-line';
+  dropLine.style.display = 'none';
+  document.body.appendChild(dropLine);
+
   sourceCard.classList.add('is-dragging');
 
   _drag = {
     exId,
     ghost,
+    dropLine,
     sourceCard,
     offsetY: e.clientY - rect.top,
     newIndex: activeSession.exerciseOrder.indexOf(exId),
@@ -7139,13 +7158,23 @@ function _dragUpdateDropTarget(clientY) {
   if (!_drag) return;
   const cards = [...document.querySelectorAll('#session-exercises .session-exercise:not(.is-dragging)')];
   let newIndex = cards.length;
+  let lineY = null;
   for (let i = 0; i < cards.length; i++) {
     const r = cards[i].getBoundingClientRect();
-    if (clientY < r.top + r.height / 2) { newIndex = i; break; }
+    if (clientY < r.top + r.height / 2) {
+      newIndex = i;
+      lineY = r.top - 2;
+      break;
+    }
   }
-  cards.forEach((card, i) => {
-    card.classList.toggle('drag-nudge-down', i >= newIndex);
-  });
+  if (lineY === null && cards.length > 0) {
+    lineY = cards[cards.length - 1].getBoundingClientRect().bottom + 2;
+  }
+  cards.forEach((card, i) => card.classList.toggle('drag-nudge-down', i >= newIndex));
+  if (_drag.dropLine && lineY !== null) {
+    _drag.dropLine.style.display = 'block';
+    _drag.dropLine.style.top = lineY + 'px';
+  }
   _drag.newIndex = newIndex;
 }
 
@@ -7183,6 +7212,7 @@ function _onDragPointerUp() {
     c.classList.remove('drag-nudge-down', 'is-dragging');
   });
   _drag.ghost.remove();
+  _drag.dropLine.remove();
 
   const order = activeSession.exerciseOrder;
   const fromIndex = order.indexOf(_drag.exId);
