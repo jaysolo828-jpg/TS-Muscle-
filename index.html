@@ -9050,10 +9050,11 @@ function shareWrapupCard() {
   const week = state.weekCount || 1;
   const weekLen = state.trainingDaysPerWeek || state.program?.length || 4;
   const isEndOfWeek = (state.totalSessions + 1) % weekLen === 0;
+  const dayIndex = state.program ? Math.max(0, state.program.findIndex(d => d.id === activeSession?.dayId)) : 0;
   if (isEndOfWeek) {
-    generateAndShareCard('weekly', { week, dayName });
+    generateAndShareCard('weekly', { week, dayName, dayIndex });
   } else {
-    generateAndShareCard('workout', { dayName, week });
+    generateAndShareCard('workout', { dayName, week, dayIndex, isDeload: !!(activeSession?.isDeload) });
   }
 }
 
@@ -9061,10 +9062,48 @@ function shareHistoryEntry(entryId) {
   const entry = state.history.find(e => String(e.id) === String(entryId));
   if (!entry) { showToast('Session not found.'); return; }
   const dateStr = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const di = state.program ? state.program.findIndex(d => d.id === entry.dayId) : -1;
   generateAndShareCard('workout', {
     dayName: (entry.dayName || 'Workout') + (entry.dayFocus ? ' · ' + entry.dayFocus : ''),
-    weekLabel: dateStr
+    weekLabel: dateStr,
+    dayIndex: di < 0 ? 0 : di,
+    isDeload: !!(entry.isDeload)
   });
+}
+
+// ── Card theme palettes (one per training-day slot, cycles if > 6 days) ──────
+const CARD_DAY_PALETTES = [
+  { hi: '#cc2027', lo: '#8a1519', line: 'rgba(204,32,39,0.7)'  },  // 0 — red
+  { hi: '#1060b8', lo: '#0b3878', line: 'rgba(16,96,184,0.7)'  },  // 1 — blue
+  { hi: '#6a1fa0', lo: '#3d1260', line: 'rgba(106,31,160,0.7)' },  // 2 — purple
+  { hi: '#c07000', lo: '#7a4400', line: 'rgba(192,112,0,0.7)'  },  // 3 — amber
+  { hi: '#1a7a5a', lo: '#0d4a34', line: 'rgba(26,122,90,0.7)'  },  // 4 — teal
+  { hi: '#8b0a14', lo: '#50070c', line: 'rgba(139,10,20,0.7)'  },  // 5 — deep crimson
+];
+const CARD_PR_THEME     = { hi: '#6b4400', lo: '#2a1800', line: 'rgba(220,160,0,0.75)' };
+const CARD_DELOAD_THEME = { hi: '#1a3050', lo: '#0a1826', line: 'rgba(80,140,220,0.7)' };
+const CARD_MILESTONE_SESSIONS = new Set([10, 25, 50, 100, 200, 365, 500, 1000]);
+
+// Subtle film-grain overlay drawn onto an offscreen tile and tiled via pattern
+function _drawCardGrain(ctx, W, H) {
+  const T = 256;
+  const off = document.createElement('canvas');
+  off.width = off.height = T;
+  const octx = off.getContext('2d');
+  const img = octx.createImageData(T, T);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const n = (Math.random() * 255) | 0;
+    d[i] = d[i + 1] = d[i + 2] = n;
+    d[i + 3] = 12; // ~5% opacity — subtle
+  }
+  octx.putImageData(img, 0, 0);
+  const pat = ctx.createPattern(off, 'repeat');
+  ctx.save();
+  ctx.globalCompositeOperation = 'overlay';
+  ctx.fillStyle = pat;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
 }
 
 async function generateAndShareCard(type, data) {
@@ -9108,23 +9147,67 @@ async function generateAndShareCard(type, data) {
     ctx.restore();
   }
 
+  // ── Theme & layout ────────────────────────────────────────
+  const _isPR      = type === 'pr';
+  const _isDeload  = !!(data.isDeload);
+  const _isMilestone = CARD_MILESTONE_SESSIONS.has(state.totalSessions);
+  // 20% chance of flipping the layout (dark top, colored bottom) for regular cards
+  const _isFlipped = !_isPR && !_isDeload && Math.random() < 0.20;
+
+  let _theme;
+  if (_isPR)          _theme = CARD_PR_THEME;
+  else if (_isDeload) _theme = CARD_DELOAD_THEME;
+  else                _theme = CARD_DAY_PALETTES[(data.dayIndex ?? 0) % CARD_DAY_PALETTES.length];
+
   // ── Backgrounds ───────────────────────────────────────────
-  const grad = ctx.createLinearGradient(0, 0, 0, SPLIT);
-  grad.addColorStop(0, '#d42028');
-  grad.addColorStop(1, '#8a1519');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, SPLIT);
+  if (!_isFlipped) {
+    const grad = ctx.createLinearGradient(0, 0, 0, SPLIT);
+    grad.addColorStop(0, _theme.hi);
+    grad.addColorStop(1, _theme.lo);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, SPLIT);
+    const vig = ctx.createLinearGradient(0, 0, 0, SPLIT * 0.35);
+    vig.addColorStop(0, 'rgba(0,0,0,0.28)');
+    vig.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, W, SPLIT);
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, SPLIT, W, H - SPLIT);
+  } else {
+    // Flipped: dark top, colored bottom
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, W, SPLIT);
+    const grad = ctx.createLinearGradient(0, SPLIT, 0, H);
+    grad.addColorStop(0, _theme.lo);
+    grad.addColorStop(1, _theme.hi);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, SPLIT, W, H - SPLIT);
+    const vig = ctx.createLinearGradient(0, SPLIT, 0, SPLIT + (H - SPLIT) * 0.3);
+    vig.addColorStop(0, 'rgba(0,0,0,0.3)');
+    vig.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, SPLIT, W, H - SPLIT);
+  }
 
-  const vig = ctx.createLinearGradient(0, 0, 0, SPLIT * 0.35);
-  vig.addColorStop(0, 'rgba(0,0,0,0.28)');
-  vig.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, W, SPLIT);
+  // ── Grain ─────────────────────────────────────────────────
+  _drawCardGrain(ctx, W, H);
 
-  ctx.fillStyle = '#0a0a0a';
-  ctx.fillRect(0, SPLIT, W, H - SPLIT);
+  // ── Milestone border ──────────────────────────────────────
+  if (_isMilestone) {
+    const mGrad = ctx.createLinearGradient(0, 0, W, H);
+    mGrad.addColorStop(0,   'rgba(255,220,70,0.9)');
+    mGrad.addColorStop(0.5, 'rgba(255,255,200,0.95)');
+    mGrad.addColorStop(1,   'rgba(255,220,70,0.9)');
+    ctx.strokeStyle = mGrad;
+    ctx.lineWidth = 18;
+    ctx.strokeRect(9, 9, W - 18, H - 18);
+    ctx.strokeStyle = 'rgba(255,220,70,0.25)';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(24, 24, W - 48, H - 48);
+  }
 
-  ctx.strokeStyle = 'rgba(204,32,39,0.7)';
+  // ── Divider ───────────────────────────────────────────────
+  ctx.strokeStyle = _isFlipped ? 'rgba(255,255,255,0.22)' : _theme.line;
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(0, SPLIT);
@@ -9201,6 +9284,12 @@ async function generateAndShareCard(type, data) {
       barlow(700, 66), 'rgba(255,255,255,0.9)', MAX_TW);
     drawText('HYPERTROPHY PROGRAM', W / 2, subY,
       barlow(500, 38), 'rgba(255,255,255,0.78)', MAX_TW);
+  }
+
+  // ── Milestone session stamp ───────────────────────────────
+  if (_isMilestone) {
+    drawText(`✦ SESSION ${state.totalSessions} ✦`, W / 2, Math.round(SPLIT * 0.945),
+      barlow(700, 26), 'rgba(255,220,70,0.95)', MAX_TW);
   }
 
   // ── Bottom branding ───────────────────────────────────────
