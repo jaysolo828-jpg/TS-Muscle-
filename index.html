@@ -9494,12 +9494,13 @@ async function generateAndShareCard(type, data) {
   const brandBlockW = LOGO_SIZE + LOGO_GAP + textBlockW;
   const blockX      = Math.round((W - brandBlockW) / 2);
 
-  // Centre the brand block in the upper portion of the bottom zone
-  const bottomH     = H - SPLIT;
-  const hasStats    = (type === 'workout' || type === 'weekly') && data.stats;
-  const brandCY     = SPLIT + Math.round(bottomH * (hasStats ? 0.20 : displayName ? 0.32 : 0.40));
-  const logoX       = blockX;
-  const logoY       = brandCY - LOGO_SIZE / 2;
+  // ── Fixed-pixel Y positions for bottom zone (canvas is always 1920px tall, SPLIT=1140, bottom=780px)
+  const bottomH  = H - SPLIT;
+  const hasStats = (type === 'workout' || type === 'weekly') && data.stats;
+  // Brand block: sits near top of bottom zone, higher when stats need space below
+  const brandCY  = hasStats ? SPLIT + 148 : SPLIT + (displayName ? 234 : 298);
+  const logoX    = blockX;
+  const logoY    = brandCY - LOGO_SIZE / 2;
 
   // Circular logo clip
   ctx.save();
@@ -9539,24 +9540,18 @@ async function generateAndShareCard(type, data) {
   ctx.fillStyle = '#aaaaaa';
   ctx.fillText('therapyandsneakers.org', textX, urlLineY);
 
-  // Display name
-  if (displayName) {
-    drawText(displayName, W / 2,
-      SPLIT + Math.round(bottomH * (hasStats ? 0.80 : 0.68)),
-      barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
-  }
-
   // ── Session stats strip (workout + weekly cards) ─────────
   if (hasStats) {
     const st = data.stats;
     const items = [];
-    if (st.delta !== null)    items.push({ val: (st.delta >= 0 ? '+' : '') + st.delta + '%', lbl: 'VS LAST TIME', col: st.delta >= 0 ? '#2ecc71' : '#ff6b6b' });
-    if (st.prCount > 0)       items.push({ val: st.prCount + (st.prCount === 1 ? ' PR' : ' PRs'), lbl: 'NEW RECORDS', col: '#f5c842' });
-    if (st.duration)          items.push({ val: st.duration + ' MIN', lbl: 'DURATION', col: '#F5E6C8' });
+    if (st.volume > 0)      items.push({ val: Math.round(st.volume).toLocaleString(), lbl: 'LBS VOLUME', col: '#F5E6C8' });
+    if (st.delta !== null)  items.push({ val: (st.delta >= 0 ? '+' : '') + st.delta + '%', lbl: 'VS LAST TIME', col: st.delta >= 0 ? '#2ecc71' : '#ff6b6b' });
+    if (st.prCount > 0)     items.push({ val: st.prCount + (st.prCount === 1 ? ' PR' : ' PRs'), lbl: 'NEW RECORDS', col: '#f5c842' });
+    if (st.duration)        items.push({ val: st.duration + ' MIN', lbl: 'DURATION', col: '#F5E6C8' });
 
     if (items.length) {
-      const valY  = SPLIT + Math.round(bottomH * 0.52);
-      const lblY  = valY + Math.round(56 * BS);
+      const valY  = SPLIT + 360;   // fixed: 360px below divider
+      const lblY  = valY + 96;     // 96px below value
       const colW  = MAX_TW / items.length;
 
       // Hairline above stats
@@ -9564,8 +9559,8 @@ async function generateAndShareCard(type, data) {
       ctx.strokeStyle = 'rgba(255,255,255,0.12)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(PAD, valY - Math.round(40 * BS));
-      ctx.lineTo(W - PAD, valY - Math.round(40 * BS));
+      ctx.moveTo(PAD, valY - 56);
+      ctx.lineTo(W - PAD, valY - 56);
       ctx.stroke();
       ctx.restore();
 
@@ -9585,8 +9580,14 @@ async function generateAndShareCard(type, data) {
     }
   }
 
+  // Display name — fixed position, above tagline
+  if (displayName) {
+    drawText(displayName, W / 2, H - 148,
+      barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
+  }
+
   // Tagline pinned to bottom
-  drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - Math.round(54 * BS),
+  drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - 60,
     barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
 
   // Share
