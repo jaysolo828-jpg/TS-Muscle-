@@ -4888,7 +4888,7 @@ function renderHome() {
               </span>
             </div>
             <div class="day-sub">${day.name}</div>
-            ${_stats && _stats.hasData ? `
+            ${doneThisWeek && _stats && _stats.hasData ? `
             <div style="margin-top:8px;display:flex;align-items:center;gap:8px;background:${_statsBg};border:1px solid ${_statsBorder};border-radius:8px;padding:6px 10px;">
               <div style="flex:1;display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap;">
                 <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:${_dayColor};letter-spacing:0.5px;white-space:nowrap;">${Math.round(_stats.volume).toLocaleString()} lbs</span>
@@ -9192,16 +9192,38 @@ function shareCurrentPR() {
   generateAndShareCard('pr', _currentPRShare);
 }
 
+function _buildSessionStats(sets, prs, startTime, prevSets) {
+  let volume = 0;
+  Object.values(sets || {}).forEach(s => s.filter(x => x.done).forEach(x => {
+    volume += (parseFloat(x.weight) || 0) * (parseInt(x.reps) || 0);
+  }));
+  if (!volume) return null;
+  let delta = null;
+  if (prevSets) {
+    let prevVol = 0;
+    Object.values(prevSets).forEach(s => s.filter(x => x.done).forEach(x => {
+      prevVol += (parseFloat(x.weight) || 0) * (parseInt(x.reps) || 0);
+    }));
+    if (prevVol > 0) delta = Math.round(((volume - prevVol) / prevVol) * 100);
+  }
+  const duration = startTime ? Math.round((Date.now() - startTime) / 60000) : null;
+  return { volume, delta, prCount: (prs || []).length, duration };
+}
+
 function shareWrapupCard() {
   const dayName = activeSession?.dayName || 'Workout';
   const week = state.weekCount || 1;
   const weekLen = state.trainingDaysPerWeek || state.program?.length || 4;
   const isEndOfWeek = (state.totalSessions + 1) % weekLen === 0;
   const dayIndex = state.program ? Math.max(0, state.program.findIndex(d => d.id === activeSession?.dayId)) : 0;
+  const prevSession = (state.history || [])
+    .filter(e => e.dayId === activeSession?.dayId && Object.values(e.sets || {}).some(s => s.some(x => x.done && x.reps)))
+    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+  const stats = _buildSessionStats(activeSession?.sets, activeSession?.prs, activeSession?.startTime, prevSession?.sets);
   if (isEndOfWeek) {
-    generateAndShareCard('weekly', { week, dayName, dayIndex });
+    generateAndShareCard('weekly', { week, dayName, dayIndex, stats });
   } else {
-    generateAndShareCard('workout', { dayName, week, dayIndex, isDeload: !!(activeSession?.isDeload) });
+    generateAndShareCard('workout', { dayName, week, dayIndex, isDeload: !!(activeSession?.isDeload), stats });
   }
 }
 
@@ -9210,11 +9232,18 @@ function shareHistoryEntry(entryId) {
   if (!entry) { showToast('Session not found.'); return; }
   const dateStr = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const di = state.program ? state.program.findIndex(d => d.id === entry.dayId) : -1;
+  const prevSession = (state.history || [])
+    .filter(e => e.dayId === entry.dayId && e.id !== entry.id && Object.values(e.sets || {}).some(s => s.some(x => x.done && x.reps)))
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .find(e => new Date(e.date) < new Date(entry.date));
+  const stats = _buildSessionStats(entry.sets, entry.prs, null, prevSession?.sets);
+  if (stats) stats.duration = entry.duration || null;
   generateAndShareCard('workout', {
     dayName: (entry.dayName || 'Workout') + (entry.dayFocus ? ' · ' + entry.dayFocus : ''),
     weekLabel: dateStr,
     dayIndex: di < 0 ? 0 : di,
-    isDeload: !!(entry.isDeload)
+    isDeload: !!(entry.isDeload),
+    stats
   });
 }
 
@@ -9515,6 +9544,48 @@ async function generateAndShareCard(type, data) {
     drawText(displayName, W / 2,
       SPLIT + Math.round(bottomH * 0.68),
       barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
+  }
+
+  // ── Session stats strip (workout + weekly cards) ─────────
+  if ((type === 'workout' || type === 'weekly') && data.stats) {
+    const st = data.stats;
+    const items = [];
+    if (st.volume > 0)        items.push({ val: Math.round(st.volume).toLocaleString(), lbl: 'LBS VOLUME', col: '#F5E6C8' });
+    if (st.delta !== null)    items.push({ val: (st.delta >= 0 ? '+' : '') + st.delta + '%', lbl: 'VS LAST TIME', col: st.delta >= 0 ? '#2ecc71' : '#ff6b6b' });
+    if (st.prCount > 0)       items.push({ val: st.prCount + (st.prCount === 1 ? ' PR' : ' PRs'), lbl: 'NEW RECORDS', col: '#f5c842' });
+    if (st.duration)          items.push({ val: st.duration + ' MIN', lbl: 'DURATION', col: '#F5E6C8' });
+
+    if (items.length) {
+      const bottomH = H - SPLIT;
+      const statsY  = SPLIT + Math.round(bottomH * 0.58);
+      const lblY    = statsY + Math.round(50 * BS);
+      const colW    = MAX_TW / items.length;
+
+      // Subtle hairline above stats
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(PAD, statsY - Math.round(36 * BS));
+      ctx.lineTo(W - PAD, statsY - Math.round(36 * BS));
+      ctx.stroke();
+      ctx.restore();
+
+      items.forEach((item, i) => {
+        const cx = PAD + colW * i + colW / 2;
+        // Glow for colored values
+        if (item.col !== '#F5E6C8') {
+          ctx.save();
+          ctx.shadowColor = item.col;
+          ctx.shadowBlur  = Math.round(22 * BS);
+          drawText(item.val, cx, statsY, bebas(54, BS), item.col, colW - 16);
+          ctx.restore();
+        } else {
+          drawText(item.val, cx, statsY, bebas(54, BS), item.col, colW - 16);
+        }
+        drawText(item.lbl, cx, lblY, barlow(600, 22, BS), 'rgba(160,160,160,0.8)', colW - 16);
+      });
+    }
   }
 
   // Tagline pinned to bottom
