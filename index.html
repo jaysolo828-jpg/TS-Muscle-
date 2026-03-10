@@ -3183,6 +3183,18 @@
 
   <input type="file" id="import-file" accept="*/*" style="display:none" onchange="handleImport(event)"/>
 
+  <!-- DANGER ZONE -->
+  <div class="section-title" style="margin-top:8px;color:#CC2027;">DANGER ZONE</div>
+  <div onclick="confirmHardReset()" class="settings-item" style="border-color:rgba(204,32,39,0.3);cursor:pointer;">
+    <div>
+      <div class="settings-label" style="color:#CC2027;">Reset Everything</div>
+      <div class="settings-sub">Wipe all data and start completely fresh. This cannot be undone.</div>
+    </div>
+    <div class="settings-arrow">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="#CC2027" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+    </div>
+  </div>
+
   <!-- Contact -->
   <div style="margin-top:24px; padding:16px; background:var(--dark2); border:1px solid var(--dark3); border-radius:14px; text-align:center;">
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:2px; margin-bottom:6px;">QUESTIONS OR FEEDBACK?</div>
@@ -12122,6 +12134,33 @@ function closeOnboardingModal() {
   localStorage.removeItem('ts-redo-backup');
   document.getElementById('ob-exit-bar').style.display = 'none';
   document.getElementById('onboarding-modal').style.display = 'none';
+}
+
+function confirmHardReset() {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border:1px solid rgba(204,32,39,0.4);border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center;">
+      <div style="font-size:40px;margin-bottom:14px;">⚠️</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:#CC2027;letter-spacing:2px;margin-bottom:10px;">RESET EVERYTHING?</div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:24px;">
+        This will permanently delete all your workout history, PRs, mood logs, and settings.<br><br>
+        <span style="color:var(--cream);font-weight:600;">There is no undo.</span>
+      </div>
+      <button onclick="hardResetApp()" style="width:100%;background:#CC2027;border:none;color:#fff;padding:16px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;margin-bottom:10px;">
+        YES, DELETE EVERYTHING
+      </button>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">
+        CANCEL
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function hardResetApp() {
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.reload();
 }
 
 function resetOnboarding() {
