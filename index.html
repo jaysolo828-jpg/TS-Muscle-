@@ -8427,7 +8427,7 @@ function shareStreakCard() {
 }
 
 function shareCurrentPR() {
-  if (!_currentPRShare) return;
+  if (!_currentPRShare) { showToast('No PR data to share.'); return; }
   generateAndShareCard('pr', _currentPRShare);
 }
 
@@ -8445,10 +8445,10 @@ function shareWrapupCard() {
 
 function shareHistoryEntry(entryId) {
   const entry = state.history.find(e => String(e.id) === String(entryId));
-  if (!entry) return;
+  if (!entry) { showToast('Session not found.'); return; }
   const dateStr = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   generateAndShareCard('workout', {
-    dayName: entry.dayName + (entry.dayFocus ? ' · ' + entry.dayFocus : ''),
+    dayName: (entry.dayName || 'Workout') + (entry.dayFocus ? ' · ' + entry.dayFocus : ''),
     weekLabel: dateStr
   });
 }
@@ -8472,6 +8472,9 @@ async function generateAndShareCard(type, data) {
 
   // Draw centred text, auto-shrinking horizontally if it exceeds maxW
   function drawText(text, x, y, font, color, maxW, shadow) {
+    // Coerce to string so null/undefined never renders as literal text
+    text = (text == null) ? '' : String(text);
+    if (!text) return;
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -8543,7 +8546,7 @@ async function generateAndShareCard(type, data) {
       barlow(700, 50), 'rgba(255,255,255,0.78)', MAX_TW);
     drawText((data.exercise || '').toUpperCase(), W / 2, exY,
       bebas(86), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.3)', blur: 14 });
-    drawText(`${data.weight} LBS × ${data.reps}`, W / 2, wtY,
+    drawText(`${data.weight || '?'} LBS × ${data.reps || '?'}`, W / 2, wtY,
       bebas(104), '#ffe066', MAX_TW, { color: 'rgba(255,224,102,0.45)', blur: 28 });
 
   } else if (type === 'workout') {
@@ -8575,7 +8578,7 @@ async function generateAndShareCard(type, data) {
     ctx.textBaseline = 'middle';
     ctx.fillText('⭐', W / 2, emojiY);
 
-    drawText(`WEEK ${data.week}`, W / 2, weekNumY,
+    drawText(`WEEK ${data.week || 1}`, W / 2, weekNumY,
       bebas(170), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 22 });
     drawText('COMPLETE', W / 2, completeY,
       barlow(700, 66), 'rgba(255,255,255,0.9)', MAX_TW);
@@ -8669,7 +8672,10 @@ async function generateAndShareCard(type, data) {
   canvas.toBlob(async (blob) => {
     if (!blob) { showToast('Could not generate card.'); return; }
     const file = new File([blob], 'ts-muscle-share.png', { type: 'image/png' });
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    let canShareFiles = false;
+    try { canShareFiles = !!(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })); } catch(e) {}
+
+    if (canShareFiles) {
       try {
         await navigator.share({ files: [file], title: 'T&S Muscle' });
       } catch(e) {
