@@ -1177,6 +1177,7 @@
   }
   .ex-note-input:focus { border-color: var(--red); color: var(--cream); }
   .ex-note-input::placeholder { color: #bbbbbb; font-style: italic; }
+  textarea::placeholder { color: #999999; }
 
   /* FINISH BUTTON */
   .finish-btn {
@@ -8009,7 +8010,7 @@ function showSessionWrapUp() {
       ${bonusSummaryRows ? `
       <!-- Bonus exercise rows -->
       <div style="margin-bottom:20px;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--gray);letter-spacing:2px;padding:12px 0 4px;">BONUS EXERCISES</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--gray);letter-spacing:2px;padding:12px 0 4px;">BONUS EXERCISES</div>
         ${bonusSummaryRows}
       </div>` : ''}
       <!-- Legend -->
@@ -8039,7 +8040,7 @@ function showSessionWrapUp() {
         SAVE &amp; FINISH ✓
       </button>
       <button onclick="document.getElementById('session-wrapup-modal').remove(); document.getElementById('workout-session').scrollTop=document.getElementById('workout-session').scrollHeight;"
-        style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;margin-top:8px;">
+        style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;margin-top:8px;">
         BACK TO WORKOUT
       </button>
     </div>`;
@@ -8432,7 +8433,7 @@ function showCycleCompleteModal() {
 
       <!-- Current program summary -->
       <div style="padding:16px 20px;background:var(--dark3);border-bottom:1px solid #222;">
-        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;margin-bottom:6px;">YOUR CURRENT PROGRAM</div>
+        <div style="font-size:12px;color:var(--gray);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;margin-bottom:6px;">YOUR CURRENT PROGRAM</div>
         <div style="font-size:14px;color:var(--cream);">${goalLabel} &nbsp;·&nbsp; ${days} days/week</div>
         <div style="font-size:12px;color:var(--gray);margin-top:3px;">Your weights carry over — you keep all your progress.</div>
       </div>
