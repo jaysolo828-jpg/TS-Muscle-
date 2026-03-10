@@ -1532,7 +1532,7 @@
     color: var(--cream);
   }
 
-  .settings-sub { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .settings-sub { font-size: 13px; color: var(--gray); margin-top: 4px; line-height: 1.4; }
 
   .settings-arrow { color: var(--gray); font-size: 18px; }
 
@@ -2235,28 +2235,28 @@
       <button class="settings-day-btn" id="sdb-2" onclick="selectDaysPerWeek(2, this)">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">2 Days / Week</span>
-          <span id="sdb-badge-2" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
+          <span id="sdb-badge-2" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
         </div>
         <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">Upper A + Lower A. Full body coverage, maximum recovery time.</div>
       </button>
       <button class="settings-day-btn" id="sdb-3" onclick="selectDaysPerWeek(3, this)">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">3 Days / Week</span>
-          <span id="sdb-badge-3" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
+          <span id="sdb-badge-3" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
         </div>
         <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">Upper A, Lower A, Upper B. Good balance with plenty of recovery.</div>
       </button>
       <button class="settings-day-btn" id="sdb-4" onclick="selectDaysPerWeek(4, this)">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">4 Days / Week</span>
-          <span id="sdb-badge-4" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
+          <span id="sdb-badge-4" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
         </div>
         <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">The full program. Optimal for hypertrophy with structured recovery.</div>
       </button>
       <button class="settings-day-btn" id="sdb-5" onclick="selectDaysPerWeek(5, this)">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">5 Days / Week</span>
-          <span id="sdb-badge-5" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
+          <span id="sdb-badge-5" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
         </div>
         <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">Full program + one extra session for weak points or cardio focus.</div>
       </button>
@@ -2426,14 +2426,14 @@
       <div style="display:flex; flex-direction:column; gap:12px;">
         <button class="onboard-select-btn" onclick="onboardStartFresh()" style="padding:18px 16px;">
           <div style="font-weight:bold;">Start Fresh</div>
-          <div style="font-size:12px; color:var(--gray);">Set up a new program from scratch</div>
+          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">Set up a new program from scratch</div>
         </button>
         <button class="onboard-select-btn" onclick="onboardRestoreBackup()" style="padding:18px 16px;">
           <div style="font-weight:bold;">Restore from Backup</div>
-          <div style="font-size:12px; color:var(--gray);">Bring over your history, weights, and progress from another device</div>
+          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">Bring over your history, weights, and progress from another device</div>
         </button>
       </div>
-      <div style="margin-top:20px; font-size:11px; color:var(--gray); text-align:center; line-height:1.5;">
+      <div style="margin-top:20px; font-size:12px; color:var(--gray); text-align:center; line-height:1.5;">
         No backup? Choose Start Fresh — you can export a backup from Settings at any time.
       </div>
     </div>
@@ -2447,28 +2447,28 @@
       <div style="font-size:13px; color:var(--gray); margin-bottom:24px;">This personalizes your program and pre-fills your starting weights.</div>
 
       <div style="margin-bottom:16px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">YOUR NAME</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">YOUR NAME</div>
         <input type="text" id="ob-name" class="set-input" placeholder="e.g. Marcus" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
       <div style="margin-bottom:16px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">BODYWEIGHT (LBS)</div>
-        <div style="font-size:11px; color:var(--gray); opacity:0.6; margin-bottom:6px;">Used to suggest starting weights for isolation exercises</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">BODYWEIGHT (LBS)</div>
+        <div style="font-size:12px; color:var(--gray); opacity:0.85; margin-bottom:6px;">Used to suggest starting weights for isolation exercises</div>
         <input type="number" id="ob-bodyweight" class="set-input" inputmode="decimal" placeholder="e.g. 185" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
       <div style="margin-bottom:24px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">TRAINING EXPERIENCE</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">TRAINING EXPERIENCE</div>
         <div style="display:flex; flex-direction:column; gap:8px;">
           <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'beginner', this)">
             <div style="font-weight:bold;">Beginner</div>
-            <div style="font-size:12px; color:var(--gray);">Under 1 year of consistent training</div>
+            <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">Under 1 year of consistent training</div>
           </button>
           <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'intermediate', this)">
             <div style="font-weight:bold;">Intermediate</div>
-            <div style="font-size:12px; color:var(--gray);">1–3 years — comfortable with the main lifts</div>
+            <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">1–3 years — comfortable with the main lifts</div>
           </button>
           <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'advanced', this)">
             <div style="font-weight:bold;">Advanced</div>
-            <div style="font-size:12px; color:var(--gray);">3+ years of consistent, structured training</div>
+            <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">3+ years of consistent, structured training</div>
           </button>
         </div>
         <input type="hidden" id="ob-experience" value=""/>
@@ -2488,15 +2488,15 @@
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:28px;">
         <button class="onboard-select-btn" onclick="selectGoalOnboard('size', this)">
           <div style="font-weight:bold;">Build Size</div>
-          <div style="font-size:12px; color:var(--gray);">8–15 reps — grow muscle, improve conditioning</div>
+          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">8–15 reps — grow muscle, improve conditioning</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('strength', this)">
           <div style="font-weight:bold;">Build Strength</div>
-          <div style="font-size:12px; color:var(--gray);">3–6 reps — move heavier weight, get stronger</div>
+          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">3–6 reps — move heavier weight, get stronger</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('both', this)">
           <div style="font-weight:bold;">Both — Size &amp; Strength</div>
-          <div style="font-size:12px; color:var(--gray);">6–10 reps — a balanced mix of muscle and strength</div>
+          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">6–10 reps — a balanced mix of muscle and strength</div>
         </button>
       </div>
       <input type="hidden" id="ob-goal" value=""/>
@@ -2563,7 +2563,7 @@
               <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">Use the recommended exercises — swap anything later inside the app</div>
             </div>
           </div>
-          <div id="ob-pick-for-me-preview" style="font-size:12px; color:var(--gray); margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07); letter-spacing:0.3px;">Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift</div>
+          <div id="ob-pick-for-me-preview" style="font-size:13px; color:var(--gray); margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07); letter-spacing:0.3px;">Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift</div>
         </button>
         <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)">
           <div style="display:flex; align-items:center; gap:8px;">
@@ -2599,28 +2599,28 @@
         <button class="onboard-select-btn" id="ob-day-btn-2" onclick="selectTrainingDaysOnboard(2, this)">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">2 Days / Week</div>
-            <div id="ob-day-badge-2" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
+            <div id="ob-day-badge-2" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
           <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">Full body coverage with maximum recovery time between sessions.</div>
         </button>
         <button class="onboard-select-btn" id="ob-day-btn-3" onclick="selectTrainingDaysOnboard(3, this)">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">3 Days / Week</div>
-            <div id="ob-day-badge-3" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
+            <div id="ob-day-badge-3" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
           <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">Good volume with plenty of recovery between sessions.</div>
         </button>
         <button class="onboard-select-btn" id="ob-day-btn-4" onclick="selectTrainingDaysOnboard(4, this)">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">4 Days / Week</div>
-            <div id="ob-day-badge-4" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
+            <div id="ob-day-badge-4" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
           <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">The complete program — best balance of training volume and recovery.</div>
         </button>
         <button class="onboard-select-btn" id="ob-day-btn-5" onclick="selectTrainingDaysOnboard(5, this)">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:bold;">5 Days / Week</div>
-            <div id="ob-day-badge-5" style="display:none; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
+            <div id="ob-day-badge-5" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
           <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">Full program plus an extra session to target weak points.</div>
         </button>
@@ -2721,7 +2721,7 @@
       <div class="ob-button-row">
         <button onclick="completeOnboarding()" style="flex:1; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:22px; letter-spacing:3px; cursor:pointer;">LET'S TRAIN →</button>
       </div>
-      <div style="margin-top:16px; font-size:11px; color:var(--gray); line-height:1.6; text-align:center; padding:0 8px;">
+      <div style="margin-top:16px; font-size:12px; color:var(--gray); line-height:1.6; text-align:center; padding:0 8px;">
         Consult a qualified medical professional before beginning any new exercise program, especially if you have a pre-existing health condition or injury.
       </div>
     </div>
@@ -3340,7 +3340,7 @@
       </div>
       <div style="display:flex; justify-content:space-between; margin-top:6px;">
         <div id="tutorial-step-label" style="font-size:11px; color:var(--gray); letter-spacing:1px;"></div>
-        <div id="tutorial-step-counter" style="font-size:11px; color:var(--gray);"></div>
+        <div id="tutorial-step-counter" style="font-size:12px; color:var(--gray);"></div>
       </div>
     </div>
 
