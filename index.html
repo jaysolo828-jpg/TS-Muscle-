@@ -845,7 +845,6 @@
     -webkit-tap-highlight-color: transparent;
   }
   .rpe-info-btn:active { color: var(--cream); }
-  .rpe-info-btn:active { color: var(--cream); }
   .prev-session-btn {
     background: none;
     border: none;
@@ -7047,12 +7046,19 @@ function submitCustomRestInline(exId) {
   var btn   = document.getElementById('rest-cycle-' + exId);
   if (!input || input.style.display === 'none') return;
   var raw  = (input.value || '').trim();
-  var secs = raw.includes(':')
-    ? (parseInt(raw) || 0) * 60 + (parseInt(raw.split(':')[1]) || 0)
-    : parseInt(raw, 10) || 0;
+  var secs;
+  if (raw.includes(':')) {
+    const parts = raw.split(':');
+    const mm = parseInt(parts[0]) || 0;
+    const ss = parseInt(parts[1]) || 0;
+    if (ss >= 60) return;
+    secs = mm * 60 + ss;
+  } else {
+    secs = parseInt(raw, 10) || 0;
+  }
   if (secs < 5 || secs > 3600) return;
   btn.dataset.secs = secs;
-  btn.textContent  = Math.floor(secs / 60) + ':' + ('0' + (secs % 60)).slice(-2) + ' ↻';
+  btn.textContent  = formatTimeMMSS(secs) + ' ↻';
   input.style.display = 'none';
 }
 
@@ -7087,6 +7093,10 @@ function startRestTimer(exId, seconds) {
   restTimers[exId] = { interval: setInterval(tick, 1000), endTime, total: seconds };
 }
 
+function formatTimeMMSS(secs) {
+  return Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0');
+}
+
 function updateRestTimerUI(exId, remaining, running, finished) {
   const btn = document.getElementById('rest-btn-' + exId);
   const label = document.getElementById('rest-label-' + exId);
@@ -7097,11 +7107,9 @@ function updateRestTimerUI(exId, remaining, running, finished) {
     label.textContent = 'REST DONE ✓';
     showToast('Rest done — back to work! ⚡');
   } else if (running) {
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
     btn.classList.add('active');
     btn.classList.remove('finished');
-    label.textContent = `${m}:${String(s).padStart(2,'0')}`;
+    label.textContent = formatTimeMMSS(remaining);
   } else {
     btn.classList.remove('active', 'finished');
     label.textContent = 'START';
@@ -7131,9 +7139,7 @@ function updateStickyRestTimer(remaining, running, finished) {
     el.style.boxShadow = remaining <= 10
       ? '0 4px 24px rgba(46,204,113,0.35)'
       : '0 4px 24px rgba(204,32,39,0.35)';
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
-    label.textContent = `${m}:${String(s).padStart(2,'0')}`;
+    label.textContent = formatTimeMMSS(remaining);
     label.style.color = remaining <= 10 ? '#2ecc71' : 'var(--cream)';
   } else {
     el.classList.remove('visible');
@@ -7530,16 +7536,14 @@ function saveYtLink(type) {
 
   if (type === 'current') {
     customLinks[exId + '_main'] = url;
-    document.getElementById('current-yt-link').href = url;
-    document.getElementById('current-yt-link').style.opacity = '1';
-    document.getElementById('current-yt-link').style.pointerEvents = 'auto';
+    const link = document.getElementById('current-yt-link');
+    link.href = url; link.style.opacity = '1'; link.style.pointerEvents = 'auto';
     document.getElementById('edit-yt-current').style.display = 'none';
   } else {
     const idx = document.getElementById('alt-dropdown').value;
     customLinks[exId + '_alt_' + idx] = url;
-    document.getElementById('alt-yt-link').href = url;
-    document.getElementById('alt-yt-link').style.opacity = '1';
-    document.getElementById('alt-yt-link').style.pointerEvents = 'auto';
+    const link = document.getElementById('alt-yt-link');
+    link.href = url; link.style.opacity = '1'; link.style.pointerEvents = 'auto';
     document.getElementById('edit-yt-alt').style.display = 'none';
   }
 
@@ -7554,8 +7558,10 @@ function doSwapFromDropdown(permanent) {
   if (idx === '') { showToast('Select an exercise first', 'error'); return; }
   const { dayId, exId } = pendingSwap;
   const day = state.program.find(d => d.id === dayId);
-  const ex = day.exercises.find(e => e.id === exId);
-  doSwap(ex.alts[parseInt(idx)].name, permanent);
+  const ex = day?.exercises.find(e => e.id === exId);
+  const alt = ex?.alts?.[parseInt(idx)];
+  if (!alt) { showToast('Exercise not found', 'error'); return; }
+  doSwap(alt.name, permanent);
 }
 
 function doCustomSwap(permanent) {
@@ -9338,7 +9344,7 @@ async function generateAndShareCard(type, data) {
   // ── Theme & layout ────────────────────────────────────────
   const _isPR      = type === 'pr';
   const _isDeload  = !!(data.isDeload);
-  const _isMilestone = CARD_MILESTONE_SESSIONS.has(state.totalSessions);
+  const _isMilestone = CARD_MILESTONE_SESSIONS.has(state.totalSessions ?? -1);
   // 20% chance of flipping the layout (dark top, colored bottom) for regular cards
   const _isFlipped = !_isPR && !_isDeload && type !== 'mood' && Math.random() < 0.20;
 
