@@ -5294,6 +5294,7 @@ function applyDeloadWeek() {
 
 function applyRestWeek() {
   state.isRestWeek = true;
+  state.isDeloadWeek = false;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
   saveState();
@@ -6124,6 +6125,11 @@ function getLastSetData(exId, setIndex) {
 
 function updateSet(exId, setIndex, field, value) {
   if (!activeSession?.sets[exId]?.[setIndex]) return;
+  if (field === 'weight' || field === 'reps') {
+    const num = parseFloat(value);
+    if (value !== '' && (isNaN(num) || num < 0)) return;
+    value = value === '' ? '' : num;
+  }
   activeSession.sets[exId][setIndex][field] = value;
   updateSessionProgress();
 }
@@ -6304,6 +6310,37 @@ document.addEventListener('visibilitychange', () => {
     const sessionEl = document.getElementById('workout-session');
     if (sessionEl && sessionEl.classList.contains('active')) {
       startSessionTimer();
+      // Resume any rest timers that were running — recalculate remaining from real clock
+      Object.keys(restTimers).forEach(exId => {
+        const t = restTimers[exId];
+        clearInterval(t.interval);
+        const remaining = Math.max(0, Math.round((t.endTime - Date.now()) / 1000));
+        if (remaining > 0) {
+          const tick = () => {
+            const r = Math.max(0, Math.round((restTimers[exId]?.endTime - Date.now()) / 1000));
+            updateRestTimerUI(exId, r, true);
+            updateStickyRestTimer(r, true);
+            if (r <= 0) {
+              clearInterval(restTimers[exId]?.interval);
+              delete restTimers[exId];
+              if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+              updateRestTimerUI(exId, 0, false, true);
+              updateStickyRestTimer(0, false, true);
+              setTimeout(() => { updateRestTimerUI(exId, t.total, false, false); updateStickyRestTimer(0, false, false); }, 3000);
+            }
+          };
+          restTimers[exId] = { interval: setInterval(tick, 1000), endTime: t.endTime, total: t.total };
+          updateRestTimerUI(exId, remaining, true);
+          updateStickyRestTimer(remaining, true);
+        } else {
+          // Timer already expired while backgrounded
+          delete restTimers[exId];
+          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+          updateRestTimerUI(exId, 0, false, true);
+          updateStickyRestTimer(0, false, true);
+          setTimeout(() => { updateRestTimerUI(exId, t.total, false, false); updateStickyRestTimer(0, false, false); }, 3000);
+        }
+      });
     }
   }
 });
@@ -6321,7 +6358,7 @@ window.addEventListener('pagehide', () => {
 // ============================================================
 // REST TIMER
 // ============================================================
-let restTimers = {}; // { exId: { interval, seconds, total } }
+let restTimers = {}; // { exId: { interval, endTime, total } }
 
 
 
@@ -6455,19 +6492,18 @@ function startRestTimer(exId, seconds) {
 
   if (restTimers[exId]) clearRestTimer(exId);
 
-  let remaining = seconds;
-  updateRestTimerUI(exId, remaining, true);
-  updateStickyRestTimer(remaining, true);
+  const endTime = Date.now() + seconds * 1000;
+  updateRestTimerUI(exId, seconds, true);
+  updateStickyRestTimer(seconds, true);
 
-  restTimers[exId] = setInterval(() => {
-    remaining--;
+  const tick = () => {
+    const remaining = Math.max(0, Math.round((restTimers[exId]?.endTime - Date.now()) / 1000));
     updateRestTimerUI(exId, remaining, true);
     updateStickyRestTimer(remaining, true);
 
     if (remaining <= 0) {
-      clearInterval(restTimers[exId]);
+      clearInterval(restTimers[exId]?.interval);
       delete restTimers[exId];
-      // Vibrate
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
       updateRestTimerUI(exId, 0, false, true);
       updateStickyRestTimer(0, false, true);
@@ -6476,7 +6512,9 @@ function startRestTimer(exId, seconds) {
         updateStickyRestTimer(0, false, false);
       }, 3000);
     }
-  }, 1000);
+  };
+
+  restTimers[exId] = { interval: setInterval(tick, 1000), endTime, total: seconds };
 }
 
 function updateRestTimerUI(exId, remaining, running, finished) {
@@ -6540,7 +6578,7 @@ function cancelStickyRest() {
 
 function clearRestTimer(exId) {
   if (restTimers[exId]) {
-    clearInterval(restTimers[exId]);
+    clearInterval(restTimers[exId].interval);
     delete restTimers[exId];
   }
   updateRestTimerUI(exId, 0, false, false);
@@ -6553,7 +6591,7 @@ function clearRestTimer(exId) {
 
 function clearAllRestTimers() {
   Object.keys(restTimers).forEach(id => {
-    clearInterval(restTimers[id]);
+    clearInterval(restTimers[id].interval);
     updateRestTimerUI(id, 0, false, false);
   });
   restTimers = {};
@@ -8012,7 +8050,11 @@ function renderHistoryItem(entry, container, insertBefore) {
 
   const totalVolume = Object.values(entry.sets).reduce((sum, sets) =>
     sum + sets.filter(s => s.done && s.weight && s.reps)
-              .reduce((s2, s) => s2 + parseFloat(s.weight) * parseInt(s.reps), 0), 0);
+              .reduce((s2, s) => {
+                const w = parseFloat(s.weight);
+                const r = parseInt(s.reps);
+                return s2 + (isNaN(w) || isNaN(r) ? 0 : w * r);
+              }, 0), 0);
   const volumeStr = totalVolume > 0 ? ` · ${Math.round(totalVolume).toLocaleString()} lbs` : '';
   const durationStr = entry.duration ? `${entry.duration} min` : null;
 
