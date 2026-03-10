@@ -8455,135 +8455,135 @@ function shareHistoryEntry(entryId) {
 
 async function generateAndShareCard(type, data) {
   showToast('Creating your card…');
-  try {
-    await document.fonts.ready;
-  } catch(e) {}
+  try { await document.fonts.ready; } catch(e) {}
 
   const canvas = document.createElement('canvas');
   canvas.width = 1080;
   canvas.height = 1080;
   const ctx = canvas.getContext('2d');
   const W = 1080, H = 1080;
-  const SPLIT = Math.round(H * 0.52);
+  const SPLIT = 560;
 
-  // Top: red gradient
+  // ── Font helpers ─────────────────────────────────────────
+  const PAD    = 64;
+  const MAX_TW = W - PAD * 2;
+  const bebas  = (sz) => `${sz}px 'Bebas Neue', 'Arial Narrow', Arial`;
+  const barlow = (wt, sz) => `${wt} ${sz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+
+  // Draw centred text, auto-shrinking horizontally if it exceeds maxW
+  function drawText(text, x, y, font, color, maxW, shadow) {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = font;
+    ctx.fillStyle = color;
+    if (shadow) { ctx.shadowColor = shadow.color; ctx.shadowBlur = shadow.blur; }
+    const tw = ctx.measureText(text).width;
+    if (maxW && tw > maxW) {
+      ctx.scale(maxW / tw, 1);
+      ctx.fillText(text, x * (tw / maxW), y);
+    } else {
+      ctx.fillText(text, x, y);
+    }
+    ctx.restore();
+  }
+
+  // ── Backgrounds ───────────────────────────────────────────
   const grad = ctx.createLinearGradient(0, 0, 0, SPLIT);
-  grad.addColorStop(0, '#CC2027');
+  grad.addColorStop(0, '#d42028');
   grad.addColorStop(1, '#8a1519');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, SPLIT);
 
-  // Subtle dark vignette at very top
-  const vignette = ctx.createLinearGradient(0, 0, 0, SPLIT * 0.3);
-  vignette.addColorStop(0, 'rgba(0,0,0,0.25)');
-  vignette.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = vignette;
+  const vig = ctx.createLinearGradient(0, 0, 0, SPLIT * 0.35);
+  vig.addColorStop(0, 'rgba(0,0,0,0.28)');
+  vig.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = vig;
   ctx.fillRect(0, 0, W, SPLIT);
 
-  // Bottom: deep black
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, SPLIT, W, H - SPLIT);
 
-  // Thin divider line
-  ctx.strokeStyle = 'rgba(204,32,39,0.6)';
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(204,32,39,0.7)';
+  ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(0, SPLIT);
   ctx.lineTo(W, SPLIT);
   ctx.stroke();
 
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-
-  const bebasFont = (size) => `${size}px 'Bebas Neue', 'Arial Narrow', Arial`;
-  const barlowFont = (weight, size) => `${weight} ${size}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+  // ── Top content (textBaseline:'middle' throughout so Y = visual centre) ──
 
   if (type === 'streak') {
-    // Emoji
-    ctx.font = '130px serif';
-    ctx.fillText('🔥', W / 2, Math.round(SPLIT * 0.27));
-    // Big number
-    ctx.font = bebasFont(240);
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 20;
-    ctx.fillText(String(data.value), W / 2, Math.round(SPLIT * 0.67));
-    ctx.shadowBlur = 0;
-    // Label
-    ctx.font = barlowFont(700, 58);
-    ctx.fillStyle = 'rgba(255,255,255,0.88)';
-    ctx.fillText('WEEK STREAK', W / 2, Math.round(SPLIT * 0.84));
+    const emojiY = Math.round(SPLIT * 0.20);
+    const numY   = Math.round(SPLIT * 0.53);
+    const labelY = Math.round(SPLIT * 0.82);
+
+    ctx.font = '108px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🔥', W / 2, emojiY);
+
+    drawText(String(data.value), W / 2, numY,
+      bebas(220), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 24 });
+    drawText('WEEK STREAK', W / 2, labelY,
+      barlow(700, 56), 'rgba(255,255,255,0.9)', MAX_TW);
 
   } else if (type === 'pr') {
-    ctx.font = '110px serif';
-    ctx.fillText('🏆', W / 2, Math.round(SPLIT * 0.24));
-    ctx.font = barlowFont(700, 52);
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.fillText('PERSONAL RECORD', W / 2, Math.round(SPLIT * 0.42));
-    const exLabel = (data.exercise || '').toUpperCase().slice(0, 22);
-    ctx.font = bebasFont(82);
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 16;
-    ctx.fillText(exLabel, W / 2, Math.round(SPLIT * 0.62));
-    ctx.shadowBlur = 0;
-    ctx.font = bebasFont(108);
-    ctx.fillStyle = '#ffe066';
-    ctx.shadowColor = 'rgba(255,224,102,0.4)';
-    ctx.shadowBlur = 24;
-    ctx.fillText(`${data.weight} LBS × ${data.reps}`, W / 2, Math.round(SPLIT * 0.84));
-    ctx.shadowBlur = 0;
+    const emojiY = Math.round(SPLIT * 0.17);
+    const tagY   = Math.round(SPLIT * 0.35);
+    const exY    = Math.round(SPLIT * 0.55);
+    const wtY    = Math.round(SPLIT * 0.78);
+
+    ctx.font = '90px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🏆', W / 2, emojiY);
+
+    drawText('PERSONAL RECORD', W / 2, tagY,
+      barlow(700, 50), 'rgba(255,255,255,0.78)', MAX_TW);
+    drawText((data.exercise || '').toUpperCase(), W / 2, exY,
+      bebas(86), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.3)', blur: 14 });
+    drawText(`${data.weight} LBS × ${data.reps}`, W / 2, wtY,
+      bebas(104), '#ffe066', MAX_TW, { color: 'rgba(255,224,102,0.45)', blur: 28 });
 
   } else if (type === 'workout') {
-    ctx.font = '110px serif';
-    ctx.fillText('✅', W / 2, Math.round(SPLIT * 0.26));
-    ctx.font = bebasFont(180);
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 20;
-    ctx.fillText('DONE', W / 2, Math.round(SPLIT * 0.65));
-    ctx.shadowBlur = 0;
-    const dayLabel = (data.dayName || 'WORKOUT').toUpperCase().slice(0, 24);
-    ctx.font = barlowFont(700, 56);
-    ctx.fillStyle = 'rgba(255,255,255,0.88)';
-    ctx.fillText(dayLabel, W / 2, Math.round(SPLIT * 0.81));
-    ctx.font = barlowFont(500, 40);
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.fillText(data.weekLabel || `WEEK ${data.week || 1}`, W / 2, Math.round(SPLIT * 0.93));
+    const emojiY = Math.round(SPLIT * 0.19);
+    const doneY  = Math.round(SPLIT * 0.50);
+    const dayY   = Math.round(SPLIT * 0.74);
+    const weekY  = Math.round(SPLIT * 0.89);
+
+    ctx.font = '90px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✅', W / 2, emojiY);
+
+    drawText('DONE', W / 2, doneY,
+      bebas(200), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 22 });
+    drawText((data.dayName || 'WORKOUT').toUpperCase(), W / 2, dayY,
+      barlow(700, 54), 'rgba(255,255,255,0.9)', MAX_TW);
+    drawText(data.weekLabel || `WEEK ${data.week || 1}`, W / 2, weekY,
+      barlow(500, 38), 'rgba(255,255,255,0.55)', MAX_TW);
 
   } else if (type === 'weekly') {
-    ctx.font = '110px serif';
-    ctx.fillText('⭐', W / 2, Math.round(SPLIT * 0.26));
-    ctx.font = bebasFont(156);
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 20;
-    ctx.fillText(`WEEK ${data.week}`, W / 2, Math.round(SPLIT * 0.60));
-    ctx.shadowBlur = 0;
-    ctx.font = barlowFont(700, 64);
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.fillText('COMPLETE', W / 2, Math.round(SPLIT * 0.77));
-    ctx.font = barlowFont(500, 38);
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    ctx.fillText('HYPERTROPHY PROGRAM', W / 2, Math.round(SPLIT * 0.90));
+    const emojiY    = Math.round(SPLIT * 0.19);
+    const weekNumY  = Math.round(SPLIT * 0.48);
+    const completeY = Math.round(SPLIT * 0.70);
+    const subY      = Math.round(SPLIT * 0.87);
+
+    ctx.font = '90px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⭐', W / 2, emojiY);
+
+    drawText(`WEEK ${data.week}`, W / 2, weekNumY,
+      bebas(170), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 22 });
+    drawText('COMPLETE', W / 2, completeY,
+      barlow(700, 66), 'rgba(255,255,255,0.9)', MAX_TW);
+    drawText('HYPERTROPHY PROGRAM', W / 2, subY,
+      barlow(500, 38), 'rgba(255,255,255,0.5)', MAX_TW);
   }
 
-  // --- BOTTOM BRANDING ---
-  const bMid = SPLIT + (H - SPLIT) / 2;
-  const logoSize = 112;
-  const brandGap = 18;
-  const brandTextLines = ['T&S MUSCLE', 'therapyandsneakers.org'];
-
-  // Measure text to center the whole brand block
-  ctx.font = bebasFont(70);
-  const nameW = ctx.measureText(brandTextLines[0]).width;
-  ctx.font = barlowFont(600, 32);
-  const urlW = ctx.measureText(brandTextLines[1]).width;
-  const textBlockW = Math.max(nameW, urlW);
-  const totalW = logoSize + brandGap + textBlockW;
-  const blockLeft = (W - totalW) / 2;
-
-  // Load and draw logo
+  // ── Bottom branding ───────────────────────────────────────
   const logo = new Image();
   logo.crossOrigin = 'anonymous';
   logo.src = './icon.png';
@@ -8594,53 +8594,76 @@ async function generateAndShareCard(type, data) {
     setTimeout(resolve, 1200);
   });
 
-  const logoX = blockLeft;
-  const logoY = bMid - logoSize / 2 - 10;
+  const displayName  = (state.displayName || '').trim();
+  const LOGO_SIZE    = 96;
+  const LOGO_GAP     = 20;
+  const NAME_SZ      = 64;
+  const URL_SZ       = 30;
+  const LINE_GAP     = 10;
 
+  // Measure so the whole logo+text block is truly centred
+  ctx.font = bebas(NAME_SZ);
+  const nameW = ctx.measureText('T&S MUSCLE').width;
+  ctx.font = barlow(600, URL_SZ);
+  const urlW  = ctx.measureText('therapyandsneakers.org').width;
+  const textBlockW  = Math.max(nameW, urlW);
+  const brandBlockW = LOGO_SIZE + LOGO_GAP + textBlockW;
+  const blockX      = Math.round((W - brandBlockW) / 2);
+
+  // Centre the brand block in the upper portion of the bottom zone
+  const bottomH     = H - SPLIT;
+  const brandCY     = SPLIT + Math.round(bottomH * (displayName ? 0.32 : 0.40));
+  const logoX       = blockX;
+  const logoY       = brandCY - LOGO_SIZE / 2;
+
+  // Circular logo clip
   ctx.save();
   ctx.beginPath();
-  ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
+  ctx.arc(logoX + LOGO_SIZE / 2, logoY + LOGO_SIZE / 2, LOGO_SIZE / 2, 0, Math.PI * 2);
   ctx.closePath();
   ctx.clip();
   if (logo.naturalWidth > 0) {
-    ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+    ctx.drawImage(logo, logoX, logoY, LOGO_SIZE, LOGO_SIZE);
   } else {
-    // Fallback: red circle with "TS"
     ctx.fillStyle = '#CC2027';
-    ctx.fillRect(logoX, logoY, logoSize, logoSize);
+    ctx.fillRect(logoX, logoY, LOGO_SIZE, LOGO_SIZE);
+    ctx.font = bebas(42);
     ctx.fillStyle = '#F5E6C8';
-    ctx.font = bebasFont(52);
     ctx.textAlign = 'center';
-    ctx.fillText('TS', logoX + logoSize / 2, logoY + logoSize * 0.65);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('TS', logoX + LOGO_SIZE / 2, logoY + LOGO_SIZE / 2);
   }
   ctx.restore();
 
-  // Brand name and URL
-  const textX = blockLeft + logoSize + brandGap;
-  ctx.textAlign = 'left';
+  // Text block — vertically centred alongside logo
+  const approxNameH = NAME_SZ * 0.72;
+  const approxUrlH  = URL_SZ  * 0.72;
+  const totalTextH  = approxNameH + LINE_GAP + approxUrlH;
+  const textX       = blockX + LOGO_SIZE + LOGO_GAP;
+  const nameLineY   = brandCY - totalTextH / 2 + approxNameH / 2;
+  const urlLineY    = nameLineY + approxNameH + LINE_GAP;
 
-  ctx.font = bebasFont(70);
+  ctx.textAlign    = 'left';
+  ctx.textBaseline = 'middle';
+
+  ctx.font      = bebas(NAME_SZ);
   ctx.fillStyle = '#F5E6C8';
-  ctx.fillText('T&S MUSCLE', textX, logoY + logoSize * 0.52);
+  ctx.fillText('T&S MUSCLE', textX, nameLineY);
 
-  ctx.font = barlowFont(600, 32);
-  ctx.fillStyle = '#888888';
-  ctx.fillText('therapyandsneakers.org', textX, logoY + logoSize * 0.52 + 44);
+  ctx.font      = barlow(600, URL_SZ);
+  ctx.fillStyle = '#777777';
+  ctx.fillText('therapyandsneakers.org', textX, urlLineY);
 
   // Display name
-  const displayName = (state.displayName || '').trim();
   if (displayName) {
-    ctx.textAlign = 'center';
-    ctx.font = barlowFont(600, 36);
-    ctx.fillStyle = 'rgba(245,230,200,0.45)';
-    ctx.fillText(displayName, W / 2, SPLIT + (H - SPLIT) * 0.82);
+    drawText(displayName, W / 2,
+      SPLIT + Math.round(bottomH * 0.68),
+      barlow(600, 34), 'rgba(245,230,200,0.5)', MAX_TW);
   }
 
-  // Bottom tagline
-  ctx.textAlign = 'center';
-  ctx.font = barlowFont(500, 28);
-  ctx.fillStyle = 'rgba(136,136,136,0.5)';
-  ctx.fillText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - 52);
+  // Tagline pinned to bottom
+  drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - 54,
+    barlow(500, 27), 'rgba(120,120,120,0.65)', MAX_TW);
 
   // Share
   canvas.toBlob(async (blob) => {
