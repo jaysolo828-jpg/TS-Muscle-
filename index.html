@@ -2288,6 +2288,18 @@
         </div>
         <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">3 days. Every major muscle group trained each session. Best for 2–3 days/week.</div>
       </button>
+      <button class="settings-day-btn" id="stb-bro" onclick="selectSplitTypeSettings('bro', this)">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Bro Split</span>
+        </div>
+        <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">5 days. One muscle group per day — Chest, Back, Shoulders, Arms, Legs. High volume.</div>
+      </button>
+      <button class="settings-day-btn" id="stb-glute" onclick="selectSplitTypeSettings('glute', this)">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Glute Priority</span>
+        </div>
+        <div style="font-size:12px; color:var(--gray); margin-top:3px; text-align:left;">3 days. Two glute-focused sessions + one upper day. Hip thrusts, RDLs, and abduction.</div>
+      </button>
     </div>
 
     <div style="display:flex; gap:10px;">
@@ -2428,6 +2440,14 @@
           <div style="font-weight:bold;">Full Body</div>
           <div style="font-size:12px; color:var(--gray); margin-top:2px;">Every major muscle group trained each session. Great for 2–3 days per week. Maximizes frequency.</div>
         </button>
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('bro', this)">
+          <div style="font-weight:bold;">Bro Split</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">One muscle group per day — Chest, Back, Shoulders, Arms, Legs. High volume, 5 days optimal.</div>
+        </button>
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('glute', this)">
+          <div style="font-weight:bold;">Glute Priority</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px;">Two glute-focused sessions per week + one upper day. Hip thrusts, RDLs, and isolation work. 3 days.</div>
+        </button>
       </div>
 
       <input type="hidden" id="ob-split-type" value=""/>
@@ -2454,7 +2474,7 @@
               <div style="font-size:12px; color:var(--gray); margin-top:2px;">Use the recommended exercises — swap anything later inside the app</div>
             </div>
           </div>
-          <div style="font-size:12px; color:var(--gray); margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07); letter-spacing:0.3px;">Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift</div>
+          <div id="ob-pick-for-me-preview" style="font-size:12px; color:var(--gray); margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07); letter-spacing:0.3px;">Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift</div>
         </button>
         <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)">
           <div style="display:flex; align-items:center; gap:8px;">
@@ -3727,7 +3747,129 @@ const FULLBODY_PROGRAM = [
   }
 ];
 
-const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBODY_PROGRAM };
+// ── BRO SPLIT (5-day classic bodybuilding) ────────────────────
+// Chest/Triceps · Back/Biceps · Shoulders · Arms · Legs
+const BRO_PROGRAM = [
+  {
+    id: 'bro-chest', day: 'Monday', badge: 'CHEST', name: 'Chest + Triceps',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[0], // bench
+      DEFAULT_PROGRAM[0].exercises[1], // incline
+      DEFAULT_PROGRAM[0].exercises[2], // flye
+      DEFAULT_PROGRAM[0].exercises[3], // pushdown
+      DEFAULT_PROGRAM[0].exercises[4], // overhead-tri
+    ]
+  },
+  {
+    id: 'bro-back', day: 'Tuesday', badge: 'BACK', name: 'Back + Biceps',
+    exercises: [
+      DEFAULT_PROGRAM[2].exercises[0], // chest-row
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown
+      DEFAULT_PROGRAM[2].exercises[2], // db-row
+      DEFAULT_PROGRAM[2].exercises[3], // ez-curl
+      DEFAULT_PROGRAM[2].exercises[4], // preacher
+    ]
+  },
+  {
+    id: 'bro-shoulders', day: 'Wednesday', badge: 'SHOULDERS', name: 'Shoulders + Rear Delts',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[5], // ohp
+      DEFAULT_PROGRAM[0].exercises[6], // lateral
+      DEFAULT_PROGRAM[2].exercises[5], // rear-delt
+    ]
+  },
+  {
+    id: 'bro-arms', day: 'Thursday', badge: 'ARMS', name: 'Biceps + Triceps',
+    exercises: [
+      DEFAULT_PROGRAM[2].exercises[3], // ez-curl
+      DEFAULT_PROGRAM[2].exercises[4], // preacher
+      DEFAULT_PROGRAM[0].exercises[3], // pushdown
+      DEFAULT_PROGRAM[0].exercises[4], // overhead-tri
+    ]
+  },
+  {
+    id: 'bro-legs', day: 'Friday', badge: 'LEGS', name: 'Quads + Hamstrings + Glutes',
+    exercises: DEFAULT_PROGRAM[1].exercises   // full lower A block
+  }
+];
+
+// ── GLUTE PRIORITY PROGRAM (3-day) ───────────────────────────
+// Two dedicated glute sessions + one upper day for full-body balance.
+// Introduces three glute-specific exercises: bss, hip-abduction, donkey-kick.
+const BSS_EXERCISE = {
+  id: 'bss', name: 'Bulgarian Split Squat', sets: 3, reps: '10–12', rest: '90 sec',
+  note: 'Per leg — rear foot elevated on bench, DBs at sides or barbell on back',
+  ytLink: 'https://youtu.be/2C-uNgKwPLE',
+  alts: [
+    { name: 'Reverse Lunge (DB)',       note: 'Less balance required, great entry point',       ytLink: 'https://youtu.be/J9MpoAQCjos' },
+    { name: 'Forward Lunge (DB)',       note: 'Classic lunge pattern, quad + glute',            ytLink: 'https://youtu.be/D7KaRcUTQeE' },
+    { name: 'Step-Up (DB)',             note: 'Functional unilateral strength',                  ytLink: 'https://youtu.be/dQqApCGd5Ss' },
+    { name: 'Leg Press (Single Leg)',   note: 'Machine version — easier on balance',             ytLink: 'https://youtu.be/GvRgijoJ2xY' },
+    { name: 'Goblet Squat',            note: 'Bilateral, beginner-friendly',                    ytLink: 'https://youtu.be/MeIiIdhvXT4' },
+    { name: 'Pistol Squat (Assisted)', note: 'Advanced single-leg squat with support',          ytLink: 'https://youtu.be/bH3mRwnAN88' },
+  ]
+};
+const HIP_ABDUCTION_EXERCISE = {
+  id: 'hip-abduction', name: 'Hip Abduction Machine', sets: 3, reps: '15–20', rest: '60 sec',
+  note: 'Targets glute medius — responsible for outer glute shape and hip stability',
+  ytLink: 'https://youtu.be/OUgsJ8-Vi0E',
+  alts: [
+    { name: 'Cable Hip Abduction (Standing)', note: 'Constant tension, excellent glute medius isolation', ytLink: 'https://youtu.be/SqO-VUEak2M' },
+    { name: 'Banded Clamshell',              note: 'Floor variation, great for activation',             ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
+    { name: 'Side-Lying Hip Abduction',      note: 'No equipment needed, great for beginners',         ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
+    { name: 'Banded Lateral Walk',           note: 'Band around ankles, lateral steps',                ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
+    { name: 'Single Leg Hip Thrust',         note: 'Adds glute max + glute medius together',           ytLink: 'https://youtu.be/SEdqd1n0cvg' },
+  ]
+};
+const DONKEY_KICK_EXERCISE = {
+  id: 'donkey-kick', name: 'Cable Donkey Kick', sets: 3, reps: '15', rest: '60 sec',
+  note: 'Per leg — ankle attachment on cable, keep hips square throughout',
+  ytLink: 'https://youtu.be/SqO-VUEak2M',
+  alts: [
+    { name: 'Banded Kickback',          note: 'Band around ankle, standing or on all fours',     ytLink: 'https://youtu.be/SqO-VUEak2M' },
+    { name: 'Machine Glute Kickback',   note: 'Dedicated glute kickback machine if available',   ytLink: 'https://youtu.be/SqO-VUEak2M' },
+    { name: 'Hip Thrust (Barbell)',     note: 'Heavier loaded glute max option',                 ytLink: 'https://youtu.be/SEdqd1n0cvg' },
+    { name: 'Cable Pull-Through',       note: 'Hip hinge variation for glute max',               ytLink: 'https://youtu.be/pv8e6OSyETE' },
+    { name: 'Glute Bridge (Floor)',     note: 'Bodyweight or DB on hips',                        ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
+  ]
+};
+const GLUTE_PROGRAM = [
+  {
+    id: 'glute-a', day: 'Monday', badge: 'GLUTES A', name: 'Hip Hinge + Posterior Chain',
+    exercises: [
+      DEFAULT_PROGRAM[1].exercises[4], // hip-thrust-a
+      DEFAULT_PROGRAM[1].exercises[1], // rdl
+      DEFAULT_PROGRAM[3].exercises[4], // pull-through
+      DEFAULT_PROGRAM[1].exercises[3], // ham-curl-a
+      BSS_EXERCISE,
+      DEFAULT_PROGRAM[1].exercises[5], // calf-a
+    ]
+  },
+  {
+    id: 'glute-upper', day: 'Wednesday', badge: 'UPPER', name: 'Upper Body Balance',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[0], // bench
+      DEFAULT_PROGRAM[2].exercises[0], // chest-row
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown
+      DEFAULT_PROGRAM[0].exercises[5], // ohp
+      DEFAULT_PROGRAM[0].exercises[6], // lateral
+      DEFAULT_PROGRAM[2].exercises[5], // rear-delt
+    ]
+  },
+  {
+    id: 'glute-b', day: 'Friday', badge: 'GLUTES B', name: 'Squat + Abduction Focus',
+    exercises: [
+      DEFAULT_PROGRAM[3].exercises[0], // legpress-b (high foot)
+      DEFAULT_PROGRAM[1].exercises[2], // leg-ext-b (using Lower A's index 2 = leg-ext-a, same stimulus)
+      DEFAULT_PROGRAM[3].exercises[3], // ham-curl-b
+      HIP_ABDUCTION_EXERCISE,
+      DONKEY_KICK_EXERCISE,
+      DEFAULT_PROGRAM[3].exercises[5], // calf-b
+    ]
+  }
+];
+
+const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBODY_PROGRAM, bro: BRO_PROGRAM, glute: GLUTE_PROGRAM };
 
 const MUSCLE_MAP = {
   bench: 'CHEST', incline: 'CHEST', flye: 'CHEST',
@@ -3739,12 +3881,22 @@ const MUSCLE_MAP = {
   'legpress-b': 'QUADS', 'single-legpress': 'QUADS', 'leg-ext-b': 'QUADS',
   rdl: 'HAMSTRINGS', 'ham-curl-a': 'HAMSTRINGS', 'ham-curl-b': 'HAMSTRINGS',
   'hip-thrust-a': 'GLUTES', 'pull-through': 'GLUTES',
+  'bss': 'GLUTES', 'hip-abduction': 'GLUTES', 'donkey-kick': 'GLUTES',
   'calf-a': 'CALVES', 'calf-b': 'CALVES',
 };
 const MUSCLE_COLORS = {
   CHEST: '#5b9cf6', BACK: '#3bbfb8', QUADS: '#e07b54',
   HAMSTRINGS: '#e07070', GLUTES: '#c97dae', CALVES: '#78aa6a',
   TRICEPS: '#9d84d4', BICEPS: '#6b9fd4', SHOULDERS: '#6ab8e0',
+};
+
+// Per-split accent colors — used in modals, onboarding, and home badge
+const SPLIT_COLORS = {
+  ul:       { hex: '#5b8dee', bg: 'rgba(91,141,238,0.12)',  border: 'rgba(91,141,238,0.45)'  },
+  ppl:      { hex: '#CC2027', bg: 'rgba(204,32,39,0.12)',   border: 'rgba(204,32,39,0.4)'    },
+  fullbody: { hex: '#2d6a4f', bg: 'rgba(45,106,79,0.13)',   border: 'rgba(45,106,79,0.55)'   },
+  bro:      { hex: '#d4870f', bg: 'rgba(212,135,15,0.12)',  border: 'rgba(212,135,15,0.45)'  },
+  glute:    { hex: '#d63384', bg: 'rgba(214,51,132,0.12)',  border: 'rgba(214,51,132,0.45)'  },
 };
 
 const FORM_CUES = {
@@ -3772,6 +3924,9 @@ const FORM_CUES = {
   'ham-curl-b':     ["Nordic: anchor feet firmly, hips fully extended throughout", "Lower as slowly as humanly possible — this is the whole point", "Use your hands to catch yourself at the bottom if needed", "Goal over time: lower under full control with no hand catch"],
   'pull-through':   ["Stand facing away from cable, rope between your legs", "Hinge at the hips — push them back, keep spine neutral", "Drive hips forward to stand, squeezing glutes hard at the top", "Let the cable pull your arms back through your legs on the way down"],
   'calf-b':         ["Seated raises target the soleus — the deeper calf muscle", "Let heel drop to a full, complete stretch at the bottom", "Drive up and pause at the top for 2 seconds", "Use a plate under your toes for maximum range of motion"],
+  'bss':            ["Rear foot elevated on bench — toes or top of foot, whichever is comfortable", "Front foot far enough forward that your shin stays vertical at bottom", "Drive through your front heel to stand — feel the glute fire", "Keep your torso upright; leaning forward shifts load to quads"],
+  'hip-abduction':  ["Sit tall with back flat against pad, feet off the floor or lightly resting", "Push knees out against the pads using your outer glutes — not your hips", "Control the return — don't let the weight slam the pads closed", "Pause 1 second at full abduction to maximize glute medius activation"],
+  'donkey-kick':    ["Ankle strap on the cable, face the machine on all fours or standing", "Keep hips completely square — no rotation allowed", "Drive your heel toward the ceiling, squeeze the glute hard at the top", "Control the descent — resist the cable on the way down"],
 };
 
 // Goal-aligned rep ranges per exercise
@@ -3805,6 +3960,10 @@ const GOAL_REPS = {
   'ham-curl-b':      { strength: '6–8',   size: '10–12', both: '8–10'  },
   'pull-through':    { strength: '8–10',  size: '12–15', both: '10–12' },
   'calf-b':          { strength: '10–12', size: '15–20', both: '12–15' },
+  // ── GLUTE SPLIT specific ───────────────────────────────────
+  'bss':             { strength: '6–8',   size: '10–12', both: '8–10'  },
+  'hip-abduction':   { strength: '12–15', size: '15–20', both: '12–15' },
+  'donkey-kick':     { strength: '12–15', size: '15',    both: '12–15' },
 };
 
 // Returns the goal-adjusted rep range string for an exercise.
@@ -4257,8 +4416,15 @@ function renderHome() {
   // Update split type badge next to "YOUR PROGRAM"
   const splitBadge = document.getElementById('home-split-badge');
   if (splitBadge) {
-    const splitLabels = { ul: 'UPPER / LOWER', ppl: 'PUSH / PULL / LEGS', fullbody: 'FULL BODY' };
-    splitBadge.textContent = splitLabels[state.splitType || 'ul'] || 'UPPER / LOWER';
+    const splitLabels = { ul: 'UPPER / LOWER', ppl: 'PUSH / PULL / LEGS', fullbody: 'FULL BODY', bro: 'BRO SPLIT', glute: 'GLUTE PRIORITY' };
+    const sType = state.splitType || 'ul';
+    splitBadge.textContent = splitLabels[sType] || 'UPPER / LOWER';
+    const sc = SPLIT_COLORS[sType];
+    if (sc) {
+      splitBadge.style.background = sc.bg;
+      splitBadge.style.borderColor = sc.border;
+      splitBadge.style.color = sc.hex;
+    }
   }
 
   // Show paused state on week and streak cards
@@ -9058,6 +9224,14 @@ function updateSettingsDayButtonDescriptions() {
                  3: 'Full Body A, B, C. Three varied sessions per week.',
                  4: 'Full Body A–D. High frequency, good for skill development.',
                  5: 'Full Body A–E. Very high frequency — ensure sleep and nutrition are dialled.' },
+    bro:       { 2: 'Two muscle groups. Most muscles undertrained this week.',
+                 3: 'Chest, Back, and Legs. Shoulders and Arms work as secondaries.',
+                 4: 'Four dedicated days. One muscle group shares a session.',
+                 5: 'The full Bro Split — Chest, Back, Shoulders, Arms, Legs.' },
+    glute:     { 2: 'One glute session + one upper day per week.',
+                 3: 'Full program — two glute days + one balanced upper session.',
+                 4: 'Full program + one repeat. Extra frequency for glutes or upper.',
+                 5: 'Very high frequency — sleep and protein intake become essential.' },
   };
   [2, 3, 4, 5].forEach(n => {
     const btn = document.getElementById('sdb-' + n);
@@ -9158,11 +9332,31 @@ function applyTrainingDays() {
 // ── Split Type Modal (Settings) ──────────────────────────────
 let pendingSplitType = null;
 
+function applySplitButtonColor(btn, type, deselect) {
+  if (!btn) return;
+  const c = SPLIT_COLORS[type];
+  if (!c) return;
+  if (deselect) {
+    btn.style.borderColor = '';
+    btn.style.background = '';
+  } else {
+    btn.style.borderColor = c.hex;
+    btn.style.background = c.bg;
+  }
+}
+
 function openSplitTypeModal() {
   pendingSplitType = state.splitType || 'ul';
-  document.querySelectorAll('#split-type-modal .settings-day-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#split-type-modal .settings-day-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = '';
+    b.style.background = '';
+  });
   const activeBtn = document.getElementById('stb-' + pendingSplitType);
-  if (activeBtn) activeBtn.classList.add('selected');
+  if (activeBtn) {
+    activeBtn.classList.add('selected');
+    applySplitButtonColor(activeBtn, pendingSplitType, false);
+  }
   document.getElementById('split-type-modal').style.display = 'flex';
 }
 
@@ -9172,8 +9366,13 @@ function closeSplitTypeModal() {
 
 function selectSplitTypeSettings(type, btn) {
   pendingSplitType = type;
-  document.querySelectorAll('#split-type-modal .settings-day-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#split-type-modal .settings-day-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = '';
+    b.style.background = '';
+  });
   btn.classList.add('selected');
+  applySplitButtonColor(btn, type, false);
 }
 
 function applySplitType() {
@@ -9190,14 +9389,14 @@ function applySplitType() {
   updateSplitTypeSub();
   updateTrainingDaysSub();
   renderHome();
-  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body' };
-  showToast(`Split changed to ${splitLabels[pendingSplitType]} ✓`);
+  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority' };
+  showToast(`Split changed to ${splitLabels[pendingSplitType] || pendingSplitType} ✓`);
 }
 
 function updateSplitTypeSub() {
   const el = document.getElementById('split-type-sub');
   if (!el) return;
-  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body' };
+  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority' };
   el.textContent = 'Currently: ' + (splitLabels[state.splitType] || 'Upper / Lower');
 }
 
@@ -9544,6 +9743,9 @@ const ALL_EXERCISE_DEFAULTS = {
   'ham-curl-b':     { beginner: 40,  intermediate: 70,  advanced: 110 },
   'pull-through':   { beginner: 50,  intermediate: 80,  advanced: 120 },
   'calf-b':         { beginner: 45,  intermediate: 80,  advanced: 120 },
+  'bss':            { beginner: 20,  intermediate: 40,  advanced: 60  },
+  'hip-abduction':  { beginner: 50,  intermediate: 90,  advanced: 130 },
+  'donkey-kick':    { beginner: 20,  intermediate: 40,  advanced: 60  },
 };
 
 function applyAllDefaults() {
@@ -9719,6 +9921,18 @@ const SPLIT_DAY_TIPS = {
     4: 'Full Body x4. Very high frequency — consider switching to Upper/Lower at this volume.',
     5: 'Extremely high frequency. Recovery is the limiting factor here — prioritize sleep and nutrition.',
   },
+  bro: {
+    3: '3 days — you\'ll hit Chest, Back, and Legs. Shoulders and Arms won\'t have a dedicated day.',
+    4: '4 days — Chest, Back, Shoulders, and Legs. Arms get worked as secondaries.',
+    5: 'The classic Bro Split. Each muscle group gets one dedicated high-volume session per week.',
+    6: '6 days — run all 5 days with one repeat. Great if you\'re in the gym 6 days a week.',
+  },
+  glute: {
+    2: '2 days — one glute session + one upper day. Glutes and upper body both get weekly stimulus.',
+    3: 'The full Glute Priority program — two focused glute days plus one balanced upper session.',
+    4: '4 days — run the 3-day cycle with one repeat. Extra glute frequency for maximum results.',
+    5: '5 days — high frequency glute training. Recovery, nutrition, and sleep are non-negotiable.',
+  },
 };
 
 // Returns the day tip text for the current split + day count
@@ -9755,14 +9969,38 @@ function getSplitAwareDayExplanation(n) {
       5: '5 days/week — Extremely high frequency. Prioritize sleep and nutrition.',
       6: '6 days/week — Near-daily training. Elite level recovery needed.',
     },
+    bro: {
+      1: '1 day/week — One muscle group per session. Low overall frequency.',
+      2: '2 days/week — Two muscle groups per week. Most muscles undertrained.',
+      3: '3 days/week — Chest, Back, Legs or similar. Shoulders and Arms worked as secondaries.',
+      4: '4 days/week — Four muscle groups dedicated. One group shares a day.',
+      5: '5 days/week — The full Bro Split. Each muscle group gets one dedicated session.',
+      6: '6 days/week — Full Bro Split + one repeat. High weekly volume.',
+    },
+    glute: {
+      1: '1 day/week — One glute or upper session. Minimum effective dose.',
+      2: '2 days/week — Two of the three sessions per week.',
+      3: '3 days/week — The full Glute Priority program. Two glute days + one upper day.',
+      4: '4 days/week — Full program + one repeat. Extra frequency for lagging areas.',
+      5: '5 days/week — Very high frequency. Sleep and protein intake become essential.',
+      6: '6 days/week — Near-daily training. Advanced only — monitor recovery carefully.',
+    },
   };
   return tables[split]?.[n] || tables.ul[n] || '';
 }
 
 function selectSplitOnboard(type, btn) {
   document.getElementById('ob-split-type').value = type;
-  btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn').forEach(b => b.classList.remove('selected'));
+  const allBtns = btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn');
+  allBtns.forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = '';
+    b.style.background = '';
+  });
   btn.classList.add('selected');
+  // Apply split-specific color
+  const c = SPLIT_COLORS[type];
+  if (c) { btn.style.borderColor = c.hex; btn.style.background = c.bg; }
 
   // Pre-load the program template so the Starting Weights step shows the right exercises
   state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[type] || DEFAULT_PROGRAM));
@@ -9771,10 +10009,33 @@ function selectSplitOnboard(type, btn) {
     ul: 'Upper/Lower is the gold standard for hypertrophy. Each muscle group gets targeted twice per week with full recovery built in between.',
     ppl: 'Push/Pull/Legs gives you one focused session per movement pattern. Run it 3 days per week or 6 days for double frequency.',
     fullbody: 'Full Body training maximizes frequency — every muscle gets stimulated in every session. Perfect for 2–3 days per week.',
+    bro: 'Bro Split dedicates each day to one muscle group — Chest, Back, Shoulders, Arms, Legs. High volume per session, 5 days per week.',
+    glute: 'Glute Priority targets glutes twice per week with hip thrusts, RDLs, and isolation work, plus one balanced upper body day.',
   };
   const tip = document.getElementById('ob-split-tip');
   tip.style.display = 'block';
+  if (c) tip.style.borderLeftColor = c.hex;
   tip.innerHTML = tips[type] || '';
+
+  updateDayButtonsForSplit(type);
+
+  // Update "Pick For Me" preview to reflect this split's defaults
+  const pickPreview = document.getElementById('ob-pick-for-me-preview');
+  if (pickPreview) {
+    const previews = {
+      ul:       'Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift',
+      ppl:      'Bench &nbsp;·&nbsp; Lateral Raise &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift',
+      fullbody: 'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Hip Thrust',
+      bro:      'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; EZ Bar Curl &nbsp;·&nbsp; Leg Press',
+      glute:    'Hip Thrust &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Bulgarian Split Squat &nbsp;·&nbsp; Hip Abduction &nbsp;·&nbsp; Bench',
+    };
+    pickPreview.innerHTML = previews[type] || previews.ul;
+  }
+
+  // Reset manual slots panel so it rebuilds with correct split filter
+  const slotPanel = document.getElementById('ob-manual-select');
+  if (slotPanel) { slotPanel.innerHTML = ''; }
+  window._obSlots = {};
 }
 
 // ── EXERCISE SELECTION STEP ──────────────────────────────────────
@@ -9849,6 +10110,71 @@ const OB_PRIMARY_SLOTS = [
       { display: 'Stiff-Leg Deadlift',    apply: 'Stiff-Leg Deadlift',     ytLink: 'https://youtu.be/1uDiW5--rAE' },
     ]
   },
+  {
+    id: 'pushdown', label: 'TRICEP MOVEMENT',
+    desc: 'Tricep isolation — elbow extension focus',
+    splitFilter: ['bro'],
+    options: [
+      { display: 'Cable Pushdown',            apply: 'Tricep Pushdown (Cable)',        ytLink: 'https://youtu.be/2-LAMcpzODU' },
+      { display: 'Rope Pushdown',             apply: 'Rope Pushdown',                 ytLink: 'https://youtu.be/kiuVA0gs3EI' },
+      { display: 'Skull Crushers (EZ Bar)',   apply: 'Skull Crushers (EZ Bar)',       ytLink: 'https://youtu.be/ZLIKPa4Iunc' },
+      { display: 'Close Grip Bench Press',    apply: 'Close Grip Bench Press',        ytLink: 'https://youtu.be/4yKLxOsrGfg' },
+      { display: 'Overhead Extension',        apply: 'Overhead Tricep Extension',     ytLink: 'https://youtu.be/YbX7Wd8jQ-Q' },
+      { display: 'Machine Tricep Extension',  apply: 'Machine Tricep Extension',      ytLink: 'https://youtu.be/NNyuuN2sJb0' },
+    ]
+  },
+  {
+    id: 'ez-curl', label: 'BICEP MOVEMENT',
+    desc: 'Bicep isolation — elbow flexion focus',
+    splitFilter: ['bro'],
+    options: [
+      { display: 'EZ Bar Curl',       apply: 'EZ Bar Curl',            ytLink: 'https://youtu.be/kwG2ipFRgfo' },
+      { display: 'DB Curl',           apply: 'DB Curl',                ytLink: 'https://youtu.be/ykJmrZ5v0Oo' },
+      { display: 'Cable Curl',        apply: 'Cable Curl',             ytLink: 'https://youtu.be/NFzTWp2qpiE' },
+      { display: 'Hammer Curl',       apply: 'Hammer Curl',            ytLink: 'https://youtu.be/zC3nLlEvin4' },
+      { display: 'Preacher Curl',     apply: 'EZ Bar Preacher Curl',  ytLink: 'https://youtu.be/fIWP-FRFNU0' },
+      { display: 'Barbell Curl',      apply: 'Barbell Curl',           ytLink: 'https://youtu.be/kwG2ipFRgfo' },
+    ]
+  },
+  {
+    id: 'hip-thrust-a', label: 'HIP THRUST / GLUTE ANCHOR',
+    desc: 'Glute-dominant — barbell or machine loaded hip extension',
+    splitFilter: ['glute'],
+    options: [
+      { display: 'Barbell Hip Thrust',      apply: 'Barbell Hip Thrust',         ytLink: 'https://youtu.be/SEdqd1n0cvg' },
+      { display: 'Machine Hip Thrust',      apply: 'Machine Hip Thrust',         ytLink: 'https://youtu.be/SEdqd1n0cvg' },
+      { display: 'DB Hip Thrust',           apply: 'DB Hip Thrust',              ytLink: 'https://youtu.be/SEdqd1n0cvg' },
+      { display: 'Single Leg Hip Thrust',   apply: 'Single Leg Hip Thrust',      ytLink: 'https://youtu.be/SEdqd1n0cvg' },
+      { display: 'Glute Bridge (Barbell)',  apply: 'Glute Bridge (Barbell)',      ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
+      { display: 'Cable Pull-Through',      apply: 'Cable Pull-Through',          ytLink: 'https://youtu.be/pv8e6OSyETE' },
+    ]
+  },
+  {
+    id: 'bss', label: 'UNILATERAL LEG / GLUTE',
+    desc: 'Single-leg strength — glutes, quads, balance',
+    splitFilter: ['glute'],
+    options: [
+      { display: 'Bulgarian Split Squat',  apply: 'Bulgarian Split Squat',    ytLink: 'https://youtu.be/2C-uNgKwPLE' },
+      { display: 'Reverse Lunge (DB)',     apply: 'Reverse Lunge (DB)',        ytLink: 'https://youtu.be/J9MpoAQCjos' },
+      { display: 'Forward Lunge (DB)',     apply: 'Forward Lunge (DB)',        ytLink: 'https://youtu.be/D7KaRcUTQeE' },
+      { display: 'Step-Up (DB)',           apply: 'Step-Up (DB)',              ytLink: 'https://youtu.be/dQqApCGd5Ss' },
+      { display: 'Leg Press (Single Leg)', apply: 'Leg Press (Single Leg)',    ytLink: 'https://youtu.be/GvRgijoJ2xY' },
+      { display: 'Curtsy Lunge',           apply: 'Curtsy Lunge',             ytLink: 'https://youtu.be/bH3mRwnAN88' },
+    ]
+  },
+  {
+    id: 'hip-abduction', label: 'GLUTE ISOLATION',
+    desc: 'Outer glute / glute medius — abduction and kickback work',
+    splitFilter: ['glute'],
+    options: [
+      { display: 'Hip Abduction Machine',        apply: 'Hip Abduction Machine',         ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
+      { display: 'Cable Hip Abduction',          apply: 'Cable Hip Abduction (Standing)', ytLink: 'https://youtu.be/SqO-VUEak2M' },
+      { display: 'Cable Donkey Kick',            apply: 'Cable Donkey Kick',              ytLink: 'https://youtu.be/SqO-VUEak2M' },
+      { display: 'Banded Clamshell',             apply: 'Banded Clamshell',               ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
+      { display: 'Banded Lateral Walk',          apply: 'Banded Lateral Walk',            ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
+      { display: 'Machine Glute Kickback',       apply: 'Machine Glute Kickback',         ytLink: 'https://youtu.be/SqO-VUEak2M' },
+    ]
+  },
 ];
 
 window._obSlots = {};
@@ -9869,8 +10195,9 @@ function selectExerciseMode(mode, btn) {
 
 function buildObManualSlots() {
   const panel = document.getElementById('ob-manual-select');
+  const currentSplit = document.getElementById('ob-split-type')?.value || 'ul';
   let html = '<div style="font-size:13px; color:var(--gray); margin-bottom:14px; line-height:1.6;">Pick one exercise per movement. The <span style="color:var(--cream);">★</span> option is pre-selected as a safe default. Tap the red <span style="color:var(--red); font-size:11px;">▶</span> on any pill to preview a tutorial first.</div>';
-  OB_PRIMARY_SLOTS.forEach(slot => {
+  OB_PRIMARY_SLOTS.filter(slot => !slot.splitFilter || slot.splitFilter.includes(currentSplit)).forEach(slot => {
     const safeId = slot.id.replace('-', '_');
     let optBtns = slot.options.map((opt, i) => {
       const sel = i === 0 ? ' selected' : '';
@@ -9959,9 +10286,10 @@ function applyObExerciseSelections() {
   if (!window._obSlots || !state.program) return;
   Object.entries(window._obSlots).forEach(([exId, name]) => {
     if (!name) return;
+    // Update ALL days that contain this exercise ID (e.g. Bro Split shares pushdown/ez-curl across days)
     for (const day of state.program) {
       const ex = day.exercises.find(e => e.id === exId);
-      if (ex) { ex.name = name; break; }
+      if (ex) ex.name = name;
     }
   });
 }
@@ -9985,6 +10313,18 @@ function updateDayButtonsForSplit(type) {
       3: 'Full Body A, B, C. Three complete sessions. Optimal for this split.',
       4: 'Full Body x4. Very high frequency — recovery becomes critical.',
       5: 'Extremely high frequency. Prioritize sleep and nutrition.',
+    },
+    bro: {
+      2: 'Two muscle groups per week. Most muscles undertrained.',
+      3: 'Chest, Back, and Legs. Shoulders and Arms work as secondaries.',
+      4: 'Four dedicated days. One muscle group shares another session.',
+      5: 'The full Bro Split. Chest, Back, Shoulders, Arms, Legs — optimal.',
+    },
+    glute: {
+      2: 'One glute session + one upper day per week.',
+      3: 'Full Glute Priority program — two glute days + one upper day.',
+      4: 'Full program + one repeat. Extra frequency for priority muscles.',
+      5: 'Very high frequency glute work — recovery and nutrition are essential.',
     },
   };
   const desc = descriptions[type] || descriptions.ul;
@@ -10021,7 +10361,7 @@ function renderDayRecommendations() {
   const baseCfg = GOAL_CONFIG[goal];
   if (!baseCfg) return;
   // Override recommended day count based on split type
-  const splitRec = { ul: 4, ppl: 3, fullbody: 3 };
+  const splitRec = { ul: 4, ppl: 3, fullbody: 3, bro: 5, glute: 3 };
   const cfg = { ...baseCfg, rec: splitRec[splitType] || baseCfg.rec };
 
   // Show the recommendation banner
@@ -10123,7 +10463,8 @@ function buildExerciseList() {
   // Core compounds worth setting starting weights for (by exercise ID)
   const ONBOARD_COMPOUND_IDS = new Set([
     'bench', 'ohp', 'incline', 'legpress-a', 'rdl', 'hip-thrust-a',
-    'chest-row', 'pulldown', 'db-row', 'legpress-b'
+    'chest-row', 'pulldown', 'db-row', 'legpress-b',
+    'bss', 'hip-abduction'  // Glute Priority exercises
   ]);
 
   const program = (state.program && state.program.length > 0) ? state.program : DEFAULT_PROGRAM;
@@ -10217,7 +10558,7 @@ function buildOnboardingSummary() {
   const goal = document.getElementById('ob-goal').value;
   const exp = document.getElementById('ob-experience').value;
   const splitType = document.getElementById('ob-split-type')?.value || 'ul';
-  const splitDefaultDays = { ul: 4, ppl: 3, fullbody: 3 };
+  const splitDefaultDays = { ul: 4, ppl: 3, fullbody: 3, bro: 5, glute: 3 };
   const trainingDays = parseInt(document.getElementById('ob-training-days').value) || splitDefaultDays[splitType] || 4;
   const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body' };
 
