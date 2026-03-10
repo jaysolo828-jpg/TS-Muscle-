@@ -11276,9 +11276,11 @@ function resetOnboarding() {
       if (splitInput) splitInput.value = bk.splitType;
       const splitBtns = document.querySelectorAll('#onboard-step-3 .onboard-select-btn');
       splitBtns.forEach(b => b.classList.remove('selected'));
-      const splitMap = { ul: 0, ppl: 1, fullbody: 2 };
+      const splitMap = { ul: 0, ppl: 1, fullbody: 2, bro: 3, glute: 4 };
       const splitIdx = splitMap[bk.splitType];
-      if (splitIdx !== undefined && splitBtns[splitIdx]) splitBtns[splitIdx].classList.add('selected');
+      if (splitIdx !== undefined && splitBtns[splitIdx]) {
+        selectSplitOnboard(bk.splitType, splitBtns[splitIdx]);
+      }
     }
     if (bk.trainingDaysPerWeek) {
       const days = bk.trainingDaysPerWeek;
