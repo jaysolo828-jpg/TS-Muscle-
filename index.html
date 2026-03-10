@@ -7866,13 +7866,13 @@ function renderPRBoard() {
     const displayName = cleanName.length > 22 ? cleanName.slice(0, 20) + '…' : cleanName;
     const prDate = pr.date ? new Date(pr.date).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '';
     const chip = document.createElement('div');
-    chip.style.cssText = 'background:linear-gradient(135deg,#1a1200,#2a1c00);border:1px solid #c47d00;border-radius:10px;padding:8px 12px;font-family:"Barlow Condensed",sans-serif;position:relative;';
+    chip.style.cssText = 'background:linear-gradient(135deg,#1a1200,#2a1c00);border:1px solid #c47d00;border-radius:10px;padding:10px 12px 10px 12px;font-family:"Barlow Condensed",sans-serif;position:relative;display:flex;flex-direction:column;justify-content:center;';
     chip.innerHTML = `
-      <div style="font-size:11px;color:#c47d00;letter-spacing:1px;margin-bottom:2px;">🏆 ${displayName.toUpperCase()}</div>
-      <div style="font-size:15px;color:var(--cream);font-weight:700;">${pr.weight} lbs × ${pr.reps}</div>
-      ${prDate ? `<div style="font-size:10px;color:#8a6a00;margin-top:3px;letter-spacing:0.5px;">${prDate}</div>` : ''}
-      <button onclick="generateAndShareCard('pr',{exercise:'${cleanName.replace(/'/g,"\\'")}',weight:${pr.weight},reps:${pr.reps}})" title="Share this PR" style="position:absolute;top:6px;right:6px;background:rgba(196,125,0,0.15);border:1px solid rgba(196,125,0,0.45);border-radius:8px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
-        <svg viewBox="0 0 24 24" width="13" height="13" stroke="#c47d00" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <div style="font-size:11px;color:#c47d00;letter-spacing:1px;margin-bottom:3px;padding-right:34px;line-height:1.2;">🏆 ${displayName.toUpperCase()}</div>
+      <div style="font-size:16px;color:var(--cream);font-weight:700;line-height:1.2;">${pr.weight} lbs × ${pr.reps}</div>
+      ${prDate ? `<div style="font-size:10px;color:#8a6a00;margin-top:4px;letter-spacing:0.5px;">${prDate}</div>` : ''}
+      <button onclick="generateAndShareCard('pr',{exercise:'${cleanName.replace(/'/g,"\\'")}',weight:${pr.weight},reps:${pr.reps}})" title="Share this PR" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(196,125,0,0.18);border:1px solid rgba(196,125,0,0.5);border-radius:8px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;flex-shrink:0;">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="#c47d00" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       </button>`;
     list.appendChild(chip);
   });
@@ -8015,9 +8015,9 @@ function renderHistoryItem(entry, container, insertBefore) {
   const el = document.createElement('div');
   el.className = 'history-item';
   el.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
       <div style="flex:1; min-width:0;">
-        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;">
           <div class="history-date" style="margin-bottom:0;">${dateStr}${durationStr ? ' · ' + durationStr : ''}</div>
           ${deloadBadgeHtml}
         </div>
@@ -8025,16 +8025,16 @@ function renderHistoryItem(entry, container, insertBefore) {
           <div class="history-day">${entry.dayName} — ${entry.dayFocus}</div>
           <span class="history-chevron" id="chevron-${entry.id}">▸</span>
         </div>
-        <div class="history-summary" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div class="history-summary" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px;">
           ${exCount} exercise${exCount !== 1 ? 's' : ''} · ${totalSets} sets${volumeStr}
           ${prCount > 0 ? `<span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:20px;">${prLabel}</span>` : ''}
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;padding-left:10px;">
-        <button onclick="event.stopPropagation(); shareHistoryEntry('${entry.id}')" style="background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.4);border-radius:8px;color:var(--red);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;" title="Share this workout">
-          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
+        <button onclick="event.stopPropagation(); shareHistoryEntry('${entry.id}')" style="background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.4);border-radius:8px;color:var(--red);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;box-sizing:border-box;" title="Share this workout">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
-        <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--gray);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;" title="Delete session">
+        <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--gray);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;box-sizing:border-box;" title="Delete session">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </button>
       </div>
