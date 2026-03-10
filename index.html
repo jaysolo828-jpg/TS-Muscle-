@@ -4004,6 +4004,13 @@ const SPLIT_COLORS = {
   glute:    { hex: '#d63384', bg: 'rgba(214,51,132,0.12)',  border: 'rgba(214,51,132,0.45)'  },
 };
 
+const DAY_COLORS = {
+  2: { hex: '#00b4d8', bg: 'rgba(0,180,216,0.12)',    border: 'rgba(0,180,216,0.45)'    },
+  3: { hex: '#7c6fcd', bg: 'rgba(124,111,205,0.12)',  border: 'rgba(124,111,205,0.45)'  },
+  4: { hex: '#e8a838', bg: 'rgba(232,168,56,0.12)',   border: 'rgba(232,168,56,0.45)'   },
+  5: { hex: '#e05c3a', bg: 'rgba(224,92,58,0.12)',    border: 'rgba(224,92,58,0.45)'    },
+};
+
 const FORM_CUES = {
   'bench':          ["Retract shoulder blades firmly into the bench", "Bar touches lower chest, elbows at ~45° from torso", "Drive feet into the floor for full-body tension", "Full lockout at top, controlled 3-second descent"],
   'incline':        ["Set bench to 30–45° — any steeper hits shoulders, not chest", "Lower to upper chest, elbows at ~60° from torso", "Press up and slightly inward, squeeze chest at top", "Keep wrists stacked over elbows throughout"],
@@ -9753,10 +9760,18 @@ function openTrainingDaysModal() {
   pendingDaysCount = state.trainingDaysPerWeek || 4;
   updateSettingsDayButtonDescriptions();
 
-  // Reset all buttons
-  document.querySelectorAll('.settings-day-btn').forEach(b => b.classList.remove('selected'));
+  // Reset all buttons then apply color to the active one
+  document.querySelectorAll('.settings-day-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = '';
+    b.style.background = '';
+  });
   const activeBtn = document.getElementById('sdb-' + pendingDaysCount);
-  if (activeBtn) activeBtn.classList.add('selected');
+  if (activeBtn) {
+    activeBtn.classList.add('selected');
+    const dc = DAY_COLORS[pendingDaysCount];
+    if (dc) { activeBtn.style.borderColor = dc.border; activeBtn.style.background = dc.bg; }
+  }
 
   // Inject goal-aware badges
   const goal = state.profile?.goal || null;
@@ -9805,8 +9820,14 @@ function closeTrainingDaysModal() {
 
 function selectDaysPerWeek(n, btn) {
   pendingDaysCount = n;
-  document.querySelectorAll('.settings-day-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.settings-day-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = '';
+    b.style.background = '';
+  });
   btn.classList.add('selected');
+  const dc = DAY_COLORS[n];
+  if (dc) { btn.style.borderColor = dc.border; btn.style.background = dc.bg; }
   updateDaysExplanation(n);
   // Show warning if below goal minimum
   const goal = state.profile?.goal || null;
@@ -9830,7 +9851,8 @@ function updateDaysExplanation(n) {
   if (activeBtn) {
     const desc = activeBtn.querySelector('.ob-sdays-desc');
     const tipText = getSplitAwareDayExplanation(n);
-    if (desc && tipText) { desc.textContent = tipText; desc.style.color = 'var(--cream)'; }
+    const dc = DAY_COLORS[n];
+    if (desc && tipText) { desc.textContent = tipText; desc.style.color = dc ? dc.hex : 'var(--cream)'; }
   }
 }
 
@@ -10987,17 +11009,21 @@ function selectTrainingDaysOnboard(days, btn) {
   // Fix: was incorrectly targeting #onboard-step-4 — must target step 5
   document.querySelectorAll('#onboard-step-5 .onboard-select-btn').forEach(b => {
     b.classList.remove('selected');
+    b.style.borderColor = '';
+    b.style.background = '';
     const desc = b.querySelector('.ob-days-desc');
     if (desc) { desc.textContent = b.dataset.short || ''; desc.style.color = 'var(--gray)'; }
   });
   btn.classList.add('selected');
+  const dc = DAY_COLORS[days];
+  if (dc) { btn.style.borderColor = dc.border; btn.style.background = dc.bg; }
 
   // Expand full tip inline inside the selected button
   const selectedDesc = btn.querySelector('.ob-days-desc');
   const tipText = getDayTip(days);
   if (selectedDesc && tipText) {
     selectedDesc.textContent = tipText;
-    selectedDesc.style.color = 'var(--cream)';
+    selectedDesc.style.color = dc ? dc.hex : 'var(--cream)';
   }
 
   const goal = document.getElementById('ob-goal').value;
