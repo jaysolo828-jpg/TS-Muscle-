@@ -760,9 +760,9 @@
 
   .swap-btn {
     background: none;
-    border: 1px solid var(--dark4);
-    color: var(--gray);
-    font-size: 11px;
+    border: 1px solid #3a3a3a;
+    color: var(--gray-light);
+    font-size: 12px;
     padding: 5px 10px;
     border-radius: 6px;
     cursor: pointer;
@@ -807,15 +807,15 @@
     transition: border-color 0.2s;
   }
   .set-input:focus { border-color: var(--red); }
-  .set-input::placeholder { color: #888; }
+  .set-input::placeholder { color: #aaaaaa; }
 
   /* Previous session collapsible panel */
 .rpe-info-btn {
     background: none;
     border: none;
-    color: var(--gray);
+    color: var(--gray-light);
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -831,9 +831,9 @@
   .prev-session-btn {
     background: none;
     border: none;
-    color: var(--gray);
+    color: var(--gray-light);
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 1.5px;
     padding: 4px 0;
@@ -854,9 +854,9 @@
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 13px;
   }
-  .prev-s-label { color: var(--gray); font-size: 11px; letter-spacing: 0.5px; }
+  .prev-s-label { color: var(--gray-light); font-size: 12px; letter-spacing: 0.5px; }
   .prev-s-val   { color: var(--cream); font-weight: 600; }
-  .prev-s-rpe   { color: var(--gray); font-size: 11px; text-align: right; }
+  .prev-s-rpe   { color: var(--gray-light); font-size: 12px; text-align: right; }
 
 
   /* Larger touch target for set done button on mobile */
@@ -865,9 +865,9 @@
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    border: 2px solid var(--dark4);
+    border: 2px solid #3a3a3a;
     background: none;
-    color: var(--gray);
+    color: #aaaaaa;
     font-size: 18px;
     cursor: pointer;
     display: flex;
@@ -876,7 +876,7 @@
     transition: all 0.15s;
   }
   .set-done-btn.done { background: var(--success); border-color: var(--success); color: var(--white); box-shadow: 0 0 10px rgba(46,204,113,0.3); }
-  .set-row input:disabled, .set-row select:disabled { opacity: 0.45; pointer-events: none; }
+  .set-row input:disabled, .set-row select:disabled { opacity: 0.55; pointer-events: none; }
 
   /* RPE NUDGE — inline row shown after completing set without RPE */
   .rpe-nudge-row {
@@ -897,8 +897,8 @@
   }
   .rpe-nudge-label {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--gray); white-space: nowrap; margin-right: 4px; flex-shrink: 0;
+    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gray-light); white-space: nowrap; margin-right: 4px; flex-shrink: 0;
   }
   .rpe-nudge-pills {
     display: flex; gap: 5px; flex-wrap: nowrap; overflow-x: auto; flex: 1;
@@ -932,13 +932,13 @@
   }
   .rest-timer-label {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px; letter-spacing: 2px;
-    color: var(--gray); text-transform: uppercase;
+    font-size: 12px; letter-spacing: 2px;
+    color: var(--gray-light); text-transform: uppercase;
     width: 100%; margin-bottom: 6px;
   }
   .rest-timer-btn {
     display: flex; align-items: center; gap: 7px;
-    background: #1e1e1e; border: 1.5px solid #555;
+    background: #1e1e1e; border: 1.5px solid #666;
     color: white; border-radius: 10px;
     padding: 10px 16px; font-family: 'Barlow Condensed', sans-serif;
     font-size: 15px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
@@ -955,7 +955,7 @@
     background: rgba(46,204,113,0.1);
   }
   .rest-preset {
-    background: #1e1e1e; border: 1.5px solid #555;
+    background: #1e1e1e; border: 1.5px solid #666;
     color: white; border-radius: 10px;
     padding: 10px 14px; font-family: 'Barlow Condensed', sans-serif;
     font-size: 15px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
@@ -1040,12 +1040,12 @@
   }
 
   .set-label {
-    font-size: 11px;
+    font-size: 12px;
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--gray);
+    color: var(--gray-light);
     text-align: center;
   }
 
@@ -1072,12 +1072,12 @@
   }
 
   .notes-label {
-    font-size: 11px;
+    font-size: 12px;
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 600;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--gray);
+    color: var(--gray-light);
     margin-bottom: 8px;
   }
 
@@ -1097,7 +1097,7 @@
     transition: border-color 0.2s;
   }
   .notes-input:focus { border-color: var(--red); }
-  .notes-input::placeholder { color: var(--gray); }
+  .notes-input::placeholder { color: #aaaaaa; }
 
   /* PR BADGE - animates into view */
   @keyframes prPop {
@@ -1122,9 +1122,9 @@
 
   /* PLATE CALCULATOR */
   .plate-calc-toggle {
-    background: none; border: none; color: var(--gray);
+    background: none; border: none; color: var(--gray-light);
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 12px; letter-spacing: 1px; cursor: pointer;
+    font-size: 13px; letter-spacing: 1px; cursor: pointer;
     padding: 4px 0; text-decoration: underline; text-decoration-style: dotted;
   }
   .plate-calc-panel {
@@ -1159,7 +1159,7 @@
     transition: border-color 0.2s;
   }
   .ex-note-input:focus { border-color: var(--red); color: var(--cream); }
-  .ex-note-input::placeholder { color: #777; font-style: italic; }
+  .ex-note-input::placeholder { color: #aaaaaa; font-style: italic; }
 
   /* FINISH BUTTON */
   .finish-btn {
@@ -1668,7 +1668,7 @@
     font-weight: 600;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--gray);
+    color: var(--gray-light);
     margin-bottom: 8px;
   }
 
@@ -3057,14 +3057,14 @@
         </button>
         <div>
           <div class="session-title" id="session-title">UPPER <span>A</span></div>
-          <div style="font-size:12px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;" id="session-subtitle"></div>
+          <div style="font-size:12px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;" id="session-subtitle"></div>
         </div>
       </div>
       <button class="close-session" onclick="endSession(true)" style="background:rgba(46,204,113,0.15); border-color:#2ecc71; color:#2ecc71;">COMPLETE ✓</button>
     </div>
     <div class="session-progress-header">
       <span id="session-progress-text">0 / 0 exercises done</span>
-      <span id="session-timer-display" style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:1px;">0:00</span>
+      <span id="session-timer-display" style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray-light); letter-spacing:1px;">0:00</span>
       <span id="session-sets-text">0 sets logged</span>
       <button id="session-reorder-btn" onclick="toggleReorderMode()" title="Reorder exercises" >REORDER</button>
     </div>
@@ -3077,7 +3077,7 @@
   <div id="sticky-rest-timer">
     <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--red)" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     <span id="sticky-rest-label" style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;min-width:52px;text-align:center;">1:30</span>
-    <button onclick="cancelStickyRest()" style="background:none;border:1px solid #444;color:var(--gray);border-radius:20px;padding:5px 12px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
+    <button onclick="cancelStickyRest()" style="background:none;border:1px solid #666;color:var(--gray-light);border-radius:20px;padding:5px 12px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
   </div>
 
   <div id="session-exercises"></div>
@@ -3087,10 +3087,10 @@
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         <div class="notes-label" style="margin:0;">SESSION NOTES</div>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#777;letter-spacing:0.5px;margin-left:auto;">OPTIONAL</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#aaaaaa;letter-spacing:0.5px;margin-left:auto;">OPTIONAL</span>
       </div>
       <textarea class="notes-input" id="session-notes" placeholder="Form cues, how it felt, anything to remember for next time..." style="border-color:var(--dark4);"></textarea>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#777;letter-spacing:0.3px;margin-top:8px;">You can also add notes in the session summary before saving.</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#aaaaaa;letter-spacing:0.3px;margin-top:8px;">You can also add notes in the session summary before saving.</div>
     </div>
   </div>
 
@@ -6044,7 +6044,7 @@ function renderSession() {
           </div>
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
-            <span id="rep-goal-meta-${ex.id}" style="font-size:11px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${_goalReps}</span>
+            <span id="rep-goal-meta-${ex.id}" style="font-size:12px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${_goalReps}</span>
             ${isPaired ? `<span style="font-size:10px;font-weight:700;color:var(--red);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(220,38,38,0.1);padding:2px 6px;border-radius:4px;">SUPERSET ${supersetLabel}</span>` : ''}
             ${isSource ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:2px 6px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
@@ -6057,14 +6057,14 @@ function renderSession() {
             style="${isPaired ? 'border-color:var(--red);color:var(--red);' : isSource ? 'border-color:#f59e0b;color:#f59e0b;' : ''}">
             ${isPaired ? 'PAIRED ✕' : isSource ? 'CANCEL' : 'PAIR'}
           </button>
-          <button class="swap-btn" id="skip-btn-${ex.id}" onclick="toggleSkipExercise('${ex.id}')" style="background:transparent; border-color:var(--dark4); color:var(--gray);">SKIP</button>
+          <button class="swap-btn" id="skip-btn-${ex.id}" onclick="toggleSkipExercise('${ex.id}')" style="background:transparent; border-color:#3a3a3a; color:var(--gray-light);">SKIP</button>
         </div>
       </div>
       ${buildOverloadHint(ex.id)}
       ${buildPlateCalc(ex.id, sets[0]?.weight)}
       ${setsHTML}
       <div class="ex-note-row">
-        ${(() => { const ln = getLastExNote(ex.id, activeSession.dayId); return ln ? `<div style="font-size:12px; color:#888; letter-spacing:0.5px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif;">LAST: ${ln.replace(/"/g, '&quot;')}</div>` : ''; })()}
+        ${(() => { const ln = getLastExNote(ex.id, activeSession.dayId); return ln ? `<div style="font-size:12px; color:#aaaaaa; letter-spacing:0.5px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif;">LAST: ${ln.replace(/"/g, '&quot;')}</div>` : ''; })()}
         <input type="text" class="ex-note-input"
           placeholder="Note (form cue, how it felt…)"
           value="${(activeSession.exNotes?.[ex.id] || '').replace(/"/g, '&quot;')}"
