@@ -3014,9 +3014,9 @@
   <div class="settings-item" onclick="toggleProgressiveOverload()">
     <div>
       <div class="settings-label">Progressive Overload</div>
-      <div id="progressive-overload-sub" class="settings-sub">On — hybrid: last session early on, 3-session trend after 3+ workouts</div>
+      <div id="progressive-overload-sub" class="settings-sub" style="color:#2ecc71;">On — weights suggested automatically each session</div>
     </div>
-    <div class="settings-arrow" id="progressive-overload-icon"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+    <div class="settings-arrow" id="progressive-overload-icon"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
   </div>
 
   <!-- WEIGHT INCREMENT SETTING -->
@@ -10478,12 +10478,17 @@ function updateProgressiveOverloadUI() {
   const on = state.progressiveOverload !== false;
   const sub = document.getElementById('progressive-overload-sub');
   const icon = document.getElementById('progressive-overload-icon');
-  if (sub) sub.textContent = on
-    ? 'On — hybrid: last session early on, 3-session trend after 3+ workouts'
-    : 'Off — weights stay manual';
+  const item = icon?.closest('.settings-item');
+
+  if (sub) {
+    sub.textContent = on
+      ? 'On — weights suggested automatically each session'
+      : 'Off — enter weights manually each session';
+    sub.style.color = on ? '#2ecc71' : 'var(--gray)';
+  }
   if (icon) icon.innerHTML = on
-    ? '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>'
-    : '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
+    ? '<svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="20" height="20" stroke="#555" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
 }
 
 function updateTrainingDaysSub() {
