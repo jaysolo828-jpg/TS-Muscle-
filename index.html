@@ -9257,6 +9257,7 @@ const CARD_DAY_PALETTES = [
 ];
 const CARD_PR_THEME     = { hi: '#c07800', lo: '#7a4e00', line: 'rgba(210,160,0,0.75)' };
 const CARD_DELOAD_THEME = { hi: '#1a3050', lo: '#0a1826', line: 'rgba(80,140,220,0.7)' };
+const CARD_MOOD_THEME   = { hi: '#1a1f4e', lo: '#07091c', line: 'rgba(120,130,220,0.45)' };
 const CARD_MILESTONE_SESSIONS = new Set([10, 25, 50, 100, 200, 365, 500, 1000]);
 
 // Subtle film-grain overlay drawn onto an offscreen tile and tiled via pattern
@@ -9330,9 +9331,10 @@ async function generateAndShareCard(type, data) {
   const _isFlipped = !_isPR && !_isDeload && Math.random() < 0.20;
 
   let _theme;
-  if (_isPR)          _theme = CARD_PR_THEME;
-  else if (_isDeload) _theme = CARD_DELOAD_THEME;
-  else                _theme = CARD_DAY_PALETTES[(data.dayIndex ?? 0) % CARD_DAY_PALETTES.length];
+  if (_isPR)            _theme = CARD_PR_THEME;
+  else if (_isDeload)   _theme = CARD_DELOAD_THEME;
+  else if (type === 'mood') _theme = CARD_MOOD_THEME;
+  else                  _theme = CARD_DAY_PALETTES[(data.dayIndex ?? 0) % CARD_DAY_PALETTES.length];
 
   // ── Backgrounds ───────────────────────────────────────────
   if (!_isFlipped) {
@@ -9459,6 +9461,46 @@ async function generateAndShareCard(type, data) {
       barlow(700, 66), 'rgba(255,255,255,0.9)', MAX_TW);
     drawText('HYPERTROPHY PROGRAM', W / 2, subY,
       barlow(500, 38), 'rgba(255,255,255,0.78)', MAX_TW);
+
+  } else if (type === 'mood') {
+    // Subtle warm radial glow at center — represents the lift
+    const glow = ctx.createRadialGradient(W / 2, SPLIT * 0.55, 0, W / 2, SPLIT * 0.55, W * 0.55);
+    glow.addColorStop(0,   'rgba(180,160,255,0.18)');
+    glow.addColorStop(0.5, 'rgba(120,100,220,0.08)');
+    glow.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, SPLIT);
+
+    const tagY      = Math.round(SPLIT * 0.16);
+    const preEmojiY = Math.round(SPLIT * 0.42);
+    const arrowY    = Math.round(SPLIT * 0.44);
+    const postEmojiY= Math.round(SPLIT * 0.42);
+    const labelY    = Math.round(SPLIT * 0.64);
+    const headlineY = Math.round(SPLIT * 0.82);
+
+    // TAG
+    drawText('MOOD LIFT', W / 2, tagY,
+      barlow(700, 32), 'rgba(180,170,255,0.75)', MAX_TW);
+
+    // Pre → Post emojis side by side
+    const emojiSz = Math.round(110 * S);
+    ctx.font = `${emojiSz}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(data.preEmoji,  W / 2 - Math.round(190 * S), preEmojiY);
+    ctx.fillText(data.postEmoji, W / 2 + Math.round(190 * S), postEmojiY);
+
+    // Arrow between emojis
+    drawText('→', W / 2, arrowY,
+      bebas(72), 'rgba(255,255,255,0.3)', null);
+
+    // Mood labels
+    drawText(`${data.preLabel}  →  ${data.postLabel}`, W / 2, labelY,
+      barlow(600, 36), 'rgba(200,195,255,0.8)', MAX_TW);
+
+    // Headline
+    drawText('the workout did its job', W / 2, headlineY,
+      barlow(400, 30), 'rgba(255,255,255,0.55)', MAX_TW);
   }
 
   // ── Milestone session stamp ───────────────────────────────
@@ -12366,13 +12408,34 @@ function renderMoodCheckinLabel() {
   if (!el) return;
   const todayKey = new Date().toISOString().slice(0, 10);
   const todayEntries = (state.moodLog || []).filter(e => e.date.slice(0, 10) === todayKey);
-  if (todayEntries.length === 0) { el.textContent = 'MOOD CHECK-IN'; return; }
-  // Deduplicate — keep only the most recent entry per timing (moodLog is newest-first)
+  if (todayEntries.length === 0) { el.textContent = 'MOOD CHECK-IN'; el.style.color = ''; return; }
   const seen = {};
   const deduped = todayEntries.filter(e => { if (seen[e.timing]) return false; seen[e.timing] = true; return true; });
   const summary = deduped.map(e => `${e.emoji} ${e.timing === 'pre' ? 'Pre' : 'Post'}`).join(' · ');
-  el.textContent = `MOOD CHECK-IN · ✓ ${summary}`;
+  const pre  = deduped.find(e => e.timing === 'pre');
+  const post = deduped.find(e => e.timing === 'post');
+  const hasMoodLift = pre && post && post.value > pre.value;
   el.style.color = 'var(--success)';
+  el.innerHTML = `<span>MOOD CHECK-IN · ✓ ${summary}</span>${hasMoodLift ? `
+    <button onclick="shareMoodLift()" style="background:none;border:none;color:rgba(180,170,255,0.8);cursor:pointer;padding:0 0 0 10px;display:inline-flex;align-items:center;vertical-align:middle;-webkit-tap-highlight-color:transparent;" title="Share mood lift">
+      <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+    </button>` : ''}`;
+}
+
+function shareMoodLift() {
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayEntries = (state.moodLog || []).filter(e => e.date.slice(0, 10) === todayKey);
+  const seen = {};
+  const deduped = todayEntries.filter(e => { if (seen[e.timing]) return false; seen[e.timing] = true; return true; });
+  const pre  = deduped.find(e => e.timing === 'pre');
+  const post = deduped.find(e => e.timing === 'post');
+  if (!pre || !post || post.value <= pre.value) { showToast('No mood lift to share today.'); return; }
+  generateAndShareCard('mood', {
+    preEmoji:  pre.emoji,
+    postEmoji: post.emoji,
+    preLabel:  pre.label,
+    postLabel: post.label
+  });
 }
 
 function renderMoodHistory(showAll = false) {
