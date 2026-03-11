@@ -1877,7 +1877,7 @@
 
 <!-- SCREENS -->
 <div id="screen-home" class="screen active">
-  <div id="deload-banner" style="display:none; margin-bottom:14px;">
+  <div id="deload-banner" style="display:none; margin-bottom:12px;">
     <div class="deload-banner" onclick="openDeloadModal()" style="cursor:pointer;">
       <div class="deload-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
       <div class="deload-title">RECOVERY WEEK</div>
@@ -1886,7 +1886,7 @@
   </div>
 
   <!-- ROTATION BANNER (shown at Week 5+ when exercises are due for rotation) -->
-  <div id="rotation-banner" style="display:none; margin:0 16px 12px;">
+  <div id="rotation-banner" style="display:none; margin-bottom:12px;">
     <div class="rotation-banner" onclick="openRotationModal()" style="cursor:pointer;">
       <div style="flex-shrink:0; font-size:22px;">🔄</div>
       <div style="flex:1; min-width:0;">
@@ -1898,7 +1898,7 @@
   </div>
 
   <!-- REST WEEK BANNER (hidden by default — shown when user picks Rest Week from deload modal) -->
-  <div id="rest-week-banner" style="display:none; margin:0 16px 12px;">
+  <div id="rest-week-banner" style="display:none; margin-bottom:12px;">
     <div style="background:linear-gradient(135deg, #0a0e1a, #111828); border:1px solid rgba(100,149,237,0.4); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:14px;">
       <div style="flex-shrink:0;">
         <svg viewBox="0 0 24 24" width="28" height="28" stroke="#6495ED" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
@@ -5072,7 +5072,7 @@ function renderHome() {
     const urgency = pausedDays > 10;
     const reasonIcons = { illness: '🤒', injury: '🩹', emergency: '🏠', travel: '✈️' };
     const icon = reasonIcons[state.pauseReason] || '⏸';
-    pauseBanner.style.cssText = `margin:0 16px 12px; background:var(--dark2); border:1px solid ${urgency ? 'rgba(255,107,107,0.5)' : 'rgba(243,156,18,0.4)'}; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:14px; cursor:pointer;`;
+    pauseBanner.style.cssText = `margin-bottom:12px; background:var(--dark2); border:1px solid ${urgency ? 'rgba(255,107,107,0.5)' : 'rgba(243,156,18,0.4)'}; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:14px; cursor:pointer;`;
     pauseBanner.onclick = () => showResumeProgramModal();
     pauseBanner.innerHTML = `
       <div style="font-size:28px;">${icon}</div>
