@@ -1137,6 +1137,23 @@
     box-shadow: 0 2px 12px rgba(196,125,0,0.4);
   }
 
+  /* Live "ready to progress" signal — shown when all sets done & rep top hit */
+  .session-progress-signal {
+    display: flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, rgba(39,174,96,0.12), rgba(46,204,113,0.08));
+    border: 1px solid rgba(46,204,113,0.35);
+    border-radius: 10px;
+    padding: 9px 14px;
+    margin: 0 16px 10px;
+    animation: prPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    box-shadow: 0 2px 10px rgba(46,204,113,0.12);
+  }
+  .session-progress-signal span {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+    color: #2ecc71;
+  }
+
   /* PLATE CALCULATOR */
   .plate-calc-toggle {
     background: none; border: none; color: var(--gray-light);
@@ -1887,6 +1904,9 @@
   <div class="section-title">YOUR <span>PROGRAM</span><span id="home-split-badge" style="margin-left:auto; font-size:11px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); color:var(--red); padding:4px 10px; border-radius:20px; letter-spacing:1.5px; font-weight:700; font-family:'Barlow Condensed',sans-serif;"></span></div>
 
   <div id="day-cards"></div>
+
+  <!-- Weekly volume landmarks panel (rendered by renderVolumeLandmarks) -->
+  <div id="volume-landmarks" style="margin-bottom:8px;"></div>
 </div>
 
 <div id="screen-history" class="screen">
@@ -4153,6 +4173,51 @@ const MUSCLE_COLORS = {
   TRICEPS: '#9d84d4', BICEPS: '#6b9fd4', SHOULDERS: '#6ab8e0',
 };
 
+// Mike Israetel / RP Strength volume landmarks — weekly working sets per muscle group.
+// mev = minimum effective volume (below = too little stimulus for growth)
+// mav = maximum adaptive volume (the optimal sweet spot for hypertrophy)
+// mrv = maximum recoverable volume (above = over-training, recovery breaks down)
+const VOLUME_LANDMARKS = {
+  CHEST:      { mev: 8,  mav: 16, mrv: 22 },
+  BACK:       { mev: 10, mav: 18, mrv: 25 },
+  SHOULDERS:  { mev: 8,  mav: 16, mrv: 20 },
+  BICEPS:     { mev: 8,  mav: 14, mrv: 20 },
+  TRICEPS:    { mev: 6,  mav: 14, mrv: 18 },
+  QUADS:      { mev: 8,  mav: 16, mrv: 20 },
+  HAMSTRINGS: { mev: 6,  mav: 12, mrv: 16 },
+  GLUTES:     { mev: 4,  mav: 12, mrv: 16 },
+  CALVES:     { mev: 8,  mav: 14, mrv: 16 },
+};
+
+// Returns weekly set counts per muscle group based on sessions since the start of
+// the current training week (state.weekStartTimestamp) plus any active session.
+function getWeeklySetsByMuscle() {
+  const counts = {};
+  Object.keys(VOLUME_LANDMARKS).forEach(m => counts[m] = 0);
+
+  const weekStart = state.weekStartTimestamp || (Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const weekSessions = (state.history || []).filter(e => new Date(e.date).getTime() >= weekStart);
+
+  weekSessions.forEach(entry => {
+    Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
+      const muscle = MUSCLE_MAP[exId];
+      if (!muscle || !Object.prototype.hasOwnProperty.call(counts, muscle)) return;
+      counts[muscle] += sets.filter(s => s.done).length;
+    });
+  });
+
+  // Include any in-progress session so the panel updates live during a workout
+  if (activeSession?.sets) {
+    Object.entries(activeSession.sets).forEach(([exId, sets]) => {
+      const muscle = MUSCLE_MAP[exId];
+      if (!muscle || !Object.prototype.hasOwnProperty.call(counts, muscle)) return;
+      counts[muscle] += sets.filter(s => s.done).length;
+    });
+  }
+
+  return counts;
+}
+
 // Per-split accent colors — used in modals, onboarding, and home badge
 const SPLIT_COLORS = {
   ul:       { hex: '#5b8dee', bg: 'rgba(91,141,238,0.12)',  border: 'rgba(91,141,238,0.45)'  },
@@ -4834,6 +4899,112 @@ function getDayStats(dayId) {
   };
 }
 
+// Renders the weekly volume-landmarks panel on the home screen.
+// Shows sets/week per muscle group vs MEV/MAV/MRV thresholds (Israetel / RP Strength model).
+function renderVolumeLandmarks() {
+  const container = document.getElementById('volume-landmarks');
+  if (!container) return;
+
+  if (!state.history || state.history.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const counts = getWeeklySetsByMuscle();
+  const muscles = Object.keys(VOLUME_LANDMARKS);
+
+  if (typeof window._volumePanelOpen === 'undefined') window._volumePanelOpen = false;
+
+  const rows = muscles.map(muscle => {
+    const { mev, mav, mrv } = VOLUME_LANDMARKS[muscle];
+    const sets = counts[muscle] || 0;
+    const color = MUSCLE_COLORS[muscle] || 'var(--red)';
+
+    // Zone classification
+    let statusColor, statusIcon, statusLabel;
+    if (sets === 0) {
+      statusColor = 'var(--gray)';  statusIcon = '—'; statusLabel = `No sets — target ${mev}–${mav} sets`;
+    } else if (sets < mev) {
+      const need = mev - sets;
+      statusColor = '#f39c12'; statusIcon = '↑'; statusLabel = `Below MEV — need ${need} more set${need !== 1 ? 's' : ''} (target ${mev}–${mav})`;
+    } else if (sets > mrv) {
+      statusColor = '#CC2027'; statusIcon = '⚠'; statusLabel = `Above MRV — reduce volume`;
+    } else if (sets >= mav) {
+      statusColor = '#2ecc71'; statusIcon = '✓'; statusLabel = `Optimal zone (${sets}/${mav} sets)`;
+    } else {
+      const need = mav - sets;
+      statusColor = '#4a9eff'; statusIcon = '↑'; statusLabel = `Building — ${need} set${need !== 1 ? 's' : ''} to reach optimal (${mav})`;
+    }
+
+    // Progress bar: three segments — MEV marker, MAV zone fill, MRV cap
+    // Map sets onto 0–100% where 100% = MRV
+    const fillPct = Math.min(100, Math.round((sets / mrv) * 100));
+    const mavPct  = Math.round((mav / mrv) * 100);
+    const mevPct  = Math.round((mev / mrv) * 100);
+
+    let barColor;
+    if (sets === 0)     barColor = 'transparent';
+    else if (sets < mev) barColor = '#f39c12';
+    else if (sets > mrv) barColor = '#CC2027';
+    else if (sets >= mav) barColor = '#2ecc71';
+    else                  barColor = '#4a9eff';
+
+    return `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;color:${color};">${muscle}</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:${statusColor};letter-spacing:0.3px;">${statusIcon} ${statusLabel}</span>
+        </div>
+        <div style="position:relative;height:8px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:visible;">
+          <!-- filled bar -->
+          <div style="position:absolute;top:0;left:0;height:100%;width:${fillPct}%;background:${barColor};border-radius:4px;transition:width 0.4s ease;overflow:hidden;"></div>
+          <!-- MAV target marker (optimal zone line) -->
+          <div style="position:absolute;top:-3px;left:${mavPct}%;width:2px;height:14px;background:#2ecc71;border-radius:1px;opacity:0.9;" title="MAV — optimal target"></div>
+          <!-- MEV minimum marker -->
+          <div style="position:absolute;top:-2px;left:${mevPct}%;width:1px;height:12px;background:#f39c12;border-radius:1px;opacity:0.7;" title="MEV — minimum effective"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:3px;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);">MEV ${mev} sets</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:#2ecc71;">⬥ OPTIMAL ${mav} sets</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);">MRV ${mrv} sets</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Summary badge for header
+  const belowMev  = muscles.filter(m => { const s = counts[m] || 0; return s > 0 && s < VOLUME_LANDMARKS[m].mev; }).length;
+  const aboveMrv  = muscles.filter(m => (counts[m] || 0) > VOLUME_LANDMARKS[m].mrv).length;
+  const inOptimal = muscles.filter(m => { const s = counts[m] || 0; return s >= VOLUME_LANDMARKS[m].mav && s <= VOLUME_LANDMARKS[m].mrv; }).length;
+
+  let headerBadge = '';
+  if (aboveMrv > 0)
+    headerBadge = `<span style="background:rgba(204,32,39,0.15);border:1px solid rgba(204,32,39,0.4);color:#CC2027;font-size:10px;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;">${aboveMrv} OVER MRV</span>`;
+  else if (belowMev > 0)
+    headerBadge = `<span style="background:rgba(243,156,18,0.12);border:1px solid rgba(243,156,18,0.3);color:#f39c12;font-size:10px;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;">${belowMev} UNDER MEV</span>`;
+  else if (inOptimal > 0)
+    headerBadge = `<span style="background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);color:#2ecc71;font-size:10px;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;">${inOptimal} OPTIMAL</span>`;
+
+  const chevron = window._volumePanelOpen ? '▴' : '▾';
+
+  container.innerHTML = `
+    <div style="margin:0 16px 4px;">
+      <div onclick="window._volumePanelOpen=!window._volumePanelOpen;renderVolumeLandmarks();"
+           style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:11px 14px;background:var(--dark2);border:1px solid var(--dark3);border-radius:12px;user-select:none;-webkit-tap-highlight-color:transparent;">
+        <svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--gray-light);flex:1;">WEEKLY VOLUME</span>
+        ${headerBadge}
+        <span style="font-size:10px;color:var(--gray);margin-left:4px;">${chevron}</span>
+      </div>
+      ${window._volumePanelOpen ? `
+      <div style="background:var(--dark2);border:1px solid var(--dark3);border-top:none;border-radius:0 0 12px 12px;padding:14px 14px 10px;">
+        <div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;margin-bottom:14px;line-height:1.5;border-bottom:1px solid var(--dark3);padding-bottom:10px;">
+          RP Strength model (Israetel). <span style="color:#f39c12;">MEV</span> = minimum to grow. <span style="color:#2ecc71;">MAV ⬥</span> = optimal sweet spot. <span style="color:var(--gray);">MRV</span> = max before recovery breaks. Based on current training week.
+        </div>
+        ${rows}
+      </div>` : ''}
+    </div>`;
+}
+
 function renderHome() {
   const realSessions = state.history.filter(entry =>
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
@@ -4916,6 +5087,11 @@ function renderHome() {
 
   // Deload / recovery week banner
   const deloadBanner = document.getElementById('deload-banner');
+  const _plateau = typeof detectProgressionPlateau === 'function' ? detectProgressionPlateau() : { stalled: false };
+  const _weeksSinceDeload = state.weeksSinceDeload || state.weekCount || 0;
+  const _showPlateauBanner = _plateau.stalled && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7;
+  const _showLongRunBanner = !_showPlateauBanner && _weeksSinceDeload >= 5 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7;
+
   if (deloadBanner && state.isRestWeek) {
     deloadBanner.style.display = 'none';
   } else if (deloadBanner && state.isDeloadWeek) {
@@ -4929,6 +5105,18 @@ function renderHome() {
     deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK';
     deloadBanner.querySelector('.deload-text').innerHTML = 'You\'ve hit week 7. Tap to choose: <strong style="color:var(--warning);">Deload</strong> (reduced weights) or <strong style="color:var(--gray-light);">Rest Week</strong> (take the week off).';
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+    deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
+  } else if (deloadBanner && _showPlateauBanner) {
+    deloadBanner.style.display = 'block';
+    deloadBanner.querySelector('.deload-title').textContent = 'PROGRESSION PLATEAU';
+    deloadBanner.querySelector('.deload-text').innerHTML = `No weight increases across <strong>${_plateau.stalledCount} of ${_plateau.totalDays} training days</strong>. A deload can break through stalls. Tap to review options.`;
+    deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
+    deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
+  } else if (deloadBanner && _showLongRunBanner) {
+    deloadBanner.style.display = 'block';
+    deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY DUE SOON';
+    deloadBanner.querySelector('.deload-text').innerHTML = `${_weeksSinceDeload} weeks of consistent training without a deload. Consider a light week to keep progress moving. Tap to review.`;
+    deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner) {
     deloadBanner.style.display = 'none';
@@ -5067,6 +5255,8 @@ function renderHome() {
     `;
     container.appendChild(card);
   });
+
+  renderVolumeLandmarks();
 }
 
 function toggleDayCard(dayId) {
@@ -5202,6 +5392,39 @@ function recalcPRForExercise(exId) {
     const exEl = document.getElementById('session-ex-' + exId);
     if (exEl) exEl.querySelector('.pr-flash')?.remove();
   }
+}
+
+// Called when the last set of an exercise is checked off. If the user hit or
+// exceeded the top of the rep range on at least half their sets, show a live
+// "READY TO PROGRESS" badge so they know a weight increase is coming next session.
+function checkSessionProgressSignal(exId) {
+  if (state.progressiveOverload === false) return;
+  // Already have a badge? Don't double-show.
+  const exEl = document.getElementById('session-ex-' + exId);
+  if (!exEl || exEl.querySelector('.session-progress-signal')) return;
+
+  const day = state.program.find(d => d.id === activeSession?.dayId);
+  const ex = day?.exercises.find(e => e.id === exId);
+  if (!ex) return;
+
+  const doneSets = (activeSession.sets[exId] || []).filter(s => s.done && s.reps);
+  if (!doneSets.length) return;
+
+  const repStr = getGoalReps(exId, ex.reps);
+  const parts = repStr.split(/[–\-]/);
+  const maxReps = parseInt(parts[1]) || parseInt(parts[0]) || 0;
+  if (!maxReps) return;
+
+  const setsAtOrAboveTop = doneSets.filter(s => parseInt(s.reps) >= maxReps).length;
+  if (setsAtOrAboveTop < Math.ceil(doneSets.length / 2)) return;
+
+  const badge = document.createElement('div');
+  badge.className = 'session-progress-signal';
+  badge.innerHTML = `
+    <svg viewBox="0 0 24 24" width="15" height="15" stroke="#2ecc71" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    <span>READY TO PROGRESS — weight increase queued for next session</span>`;
+  const header = exEl.querySelector('.session-ex-header');
+  if (header) header.insertAdjacentElement('afterend', badge);
 }
 
 function launchConfetti() {
@@ -6919,6 +7142,18 @@ function toggleSetDone(exId, setIndex) {
   const exEl = document.getElementById('session-ex-' + exId);
   if (exEl) exEl.classList.toggle('completed', allDone);
 
+  // When unchecking, remove any progress-signal badge so it can re-evaluate
+  if (!set.done) {
+    exEl?.querySelector('.session-progress-signal')?.remove();
+  }
+
+  // Live "ready to progress" signal — check after all sets are done
+  if (set.done && allDone) {
+    checkSessionProgressSignal(exId);
+    // Also refresh volume landmarks panel so the set count updates in real-time
+    renderVolumeLandmarks();
+  }
+
   // Reveal rest timer row on set completion.
   // For supersets: only show after BOTH exercises in the pair have completed a set this round
   if (set.done) {
@@ -8396,13 +8631,51 @@ function finalizeEndSession(save) {
 // ============================================================
 // DELOAD SUGGESTION
 // ============================================================
+// Detects if weight progression has stalled across most training days.
+// Returns { stalled: bool, stalledCount: int, totalDays: int }
+function detectProgressionPlateau() {
+  if (!state.program || !state.history || state.history.length < 6) return { stalled: false };
+
+  const maxDays = state.trainingDaysPerWeek || state.program.length;
+  let stalledDays = 0;
+  let checkedDays = 0;
+
+  state.program.slice(0, maxDays).forEach(day => {
+    const daySessions = [...state.history]
+      .filter(h => h.dayId === day.id && !h.isDeload)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 4); // last 4 same-day sessions
+
+    if (daySessions.length < 3) return;
+    checkedDays++;
+
+    // For each exercise, check if peak weight used has not improved in last 3 sessions
+    let anyImprovement = false;
+    day.exercises.forEach(ex => {
+      const peakWeights = daySessions.map(sess => {
+        const sets = (sess.sets?.[ex.id] || []).filter(s => s.done && s.weight);
+        return sets.length ? Math.max(...sets.map(s => parseFloat(s.weight) || 0)) : 0;
+      }).filter(w => w > 0);
+
+      // Improvement = most recent session heavier than oldest in window
+      if (peakWeights.length >= 2 && peakWeights[0] > peakWeights[peakWeights.length - 1]) {
+        anyImprovement = true;
+      }
+    });
+
+    if (!anyImprovement) stalledDays++;
+  });
+
+  const stalled = checkedDays >= 2 && stalledDays >= Math.ceil(checkedDays * 0.6);
+  return { stalled, stalledCount: stalledDays, totalDays: checkedDays };
+}
+
 function checkDeloadSuggestion() {
   if (!state.history || state.history.length < 8) return;
 
-  // Check week count since last deload marker
   const weeksSinceDeload = state.weeksSinceDeload || state.weekCount || 0;
-  
-  // Check last 3 sessions avg RPE across all exercises
+
+  // Signal 1: high RPE trend — last 3 sessions averaged ≥ 8.5
   const recentSessions = [...state.history].reverse().slice(0, 3);
   let totalRPE = 0, rpeCount = 0;
   recentSessions.forEach(sess => {
@@ -8414,50 +8687,59 @@ function checkDeloadSuggestion() {
     });
   });
   const avgRecentRPE = rpeCount >= 6 ? totalRPE / rpeCount : null;
-
   const highRPETrend = avgRecentRPE !== null && avgRecentRPE >= 8.5;
+
+  // Signal 2: long run — 5+ weeks since last deload
   const longRun = weeksSinceDeload >= 5;
 
-  if (!highRPETrend && !longRun) return;
+  // Signal 3: progression plateau — no weight increases across most training days
+  const plateauResult = detectProgressionPlateau();
+  const progressionStall = plateauResult.stalled;
 
-  // Don't show if already shown recently
+  if (!highRPETrend && !longRun && !progressionStall) return;
+
+  // Rate-limit: don't show more than once per 14 days
   const lastDeloadPrompt = state.lastDeloadPrompt || 0;
-  const daysSince = (Date.now() - lastDeloadPrompt) / (1000 * 60 * 60 * 24);
-  if (daysSince < 14) return;
+  if ((Date.now() - lastDeloadPrompt) / (1000 * 60 * 60 * 24) < 14) return;
 
   state.lastDeloadPrompt = Date.now();
   saveState();
 
-  const reason = highRPETrend
-    ? `Your last 3 sessions averaged RPE ${avgRecentRPE.toFixed(1)} — your body may be accumulating fatigue.`
-    : `You've been training consistently for ${weeksSinceDeload}+ weeks without a deload.`;
+  // Build signal list for display
+  const signals = [];
+  if (highRPETrend)    signals.push(`<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#f39c12;flex-shrink:0;">⚡</span><span>Last 3 sessions averaged <strong>RPE ${avgRecentRPE.toFixed(1)}</strong> — elevated fatigue signal</span></div>`);
+  if (progressionStall) signals.push(`<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#f39c12;flex-shrink:0;">📉</span><span>No weight increases detected across <strong>${plateauResult.stalledCount} of ${plateauResult.totalDays} training days</strong> — progression has plateaued</span></div>`);
+  if (longRun)          signals.push(`<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#f39c12;flex-shrink:0;">📅</span><span>Training for <strong>${weeksSinceDeload}+ weeks</strong> without a planned recovery week</span></div>`);
 
   const modal = document.createElement('div');
   modal.id = 'deload-suggest-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;';
   modal.innerHTML = `
-    <div style="background:var(--dark2);border-radius:20px;padding:28px 24px;width:100%;max-width:380px;border:1px solid #333;animation:bounceIn 0.4s ease;">
+    <div style="background:var(--dark2);border-radius:20px;padding:28px 24px;width:100%;max-width:400px;border:1px solid #333;animation:bounceIn 0.4s ease;">
       <div style="text-align:center;margin-bottom:20px;">
         <div style="font-size:36px;margin-bottom:12px;">😮‍💨</div>
-        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">DELOAD WEEK?</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray);line-height:1.5;">${reason}</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">TIME FOR A DELOAD?</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">Your body is sending recovery signals</div>
+      </div>
+      <div style="background:rgba(243,156,18,0.06);border:1px solid rgba(243,156,18,0.2);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.5;">
+        ${signals.join('')}
       </div>
       <div style="background:var(--dark3);border-radius:12px;padding:14px;margin-bottom:20px;">
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">What is a deload?</div>
-        <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);line-height:1.55;">A planned week at reduced weight or volume — usually 40–60% of normal. It lets your body recover and come back stronger. Skipping it risks injury and stalled progress.</div>
+        <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);line-height:1.55;">A planned week at reduced intensity. Lets your nervous system recover and come back stronger. Skipping deloads stalls progress and raises injury risk.</div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <button onclick="activateDeloadWeek();"
-          style="flex:1;background:linear-gradient(135deg,var(--dark3),#2a1f00);border:2px solid var(--warning);color:var(--warning);padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;cursor:pointer;">
+        <button onclick="activateDeloadWeek();document.getElementById('deload-suggest-modal')?.remove();"
+          style="flex:1;background:linear-gradient(135deg,var(--dark3),#2a1f00);border:2px solid var(--warning);color:var(--warning);padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
           ⚡ LIGHT WEEK
         </button>
-        <button onclick="activateDeloadRest();"
-          style="flex:1;background:var(--dark3);border:2px solid #555;color:var(--gray-light);padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;cursor:pointer;">
+        <button onclick="activateDeloadRest();document.getElementById('deload-suggest-modal')?.remove();"
+          style="flex:1;background:var(--dark3);border:2px solid #555;color:var(--gray-light);padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
           💤 REST WEEK
         </button>
       </div>
       <button onclick="document.getElementById('deload-suggest-modal').remove();"
-        style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:11px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">
+        style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:11px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
         NOT NOW
       </button>
     </div>
