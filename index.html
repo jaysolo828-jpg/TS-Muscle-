@@ -4678,7 +4678,11 @@ function loadState() {
 
 function saveState() {
   // Keep history lean — last 100 workout sessions and 100 cardio sessions
-  if (state.history && state.history.length > 100) state.history = state.history.slice(-100);
+  if (state.history && state.history.length > 100) {
+    const dropped = state.history.length - 100;
+    state.history = state.history.slice(-100);
+    showToast(`${dropped} oldest session${dropped > 1 ? 's' : ''} removed to free up space`, 'error');
+  }
   if (state.cardioHistory && state.cardioHistory.length > 100) state.cardioHistory = state.cardioHistory.slice(-100);
   // Cap mindset logs — newest first (unshift order), keep most recent
   if (state.moodLog && state.moodLog.length > 200) state.moodLog = state.moodLog.slice(0, 200);
@@ -9723,6 +9727,16 @@ function showPostSessionInsight(volumeTrend, milestone) {
 }
 
 // ============================================================
+// SHARED HELPERS
+// ============================================================
+function buildNameMap() {
+  const map = {};
+  (DEFAULT_PROGRAM || []).forEach(d => (d.exercises || []).forEach(e => { map[e.id] = e.name; }));
+  (state.program || []).forEach(d => (d.exercises || []).forEach(e => { map[e.id] = e.name; }));
+  return map;
+}
+
+// ============================================================
 // HISTORY
 // ============================================================
 function renderPRBoard() {
@@ -9747,8 +9761,7 @@ function renderPRBoard() {
   if (chevron) chevron.textContent = isOpen ? '▼' : '▶';
 
   // Get exercise names
-  const nameMap = {};
-  DEFAULT_PROGRAM.forEach(day => day.exercises.forEach(ex => { nameMap[ex.id] = ex.name; }));
+  const nameMap = buildNameMap();
 
   prEntries.sort((a, b) => new Date(b[1].date) - new Date(a[1].date)).forEach(([exId, pr]) => {
     const name = nameMap[exId] || exId;
@@ -9808,6 +9821,7 @@ function saveHistoryNote(entryId) {
   entry.notes = note;
   saveState();
   document.querySelector('[style*="fixed"]')?.remove();
+  _statsRenderKey = null;
   renderHistory();
   showToast('Note saved ✓');
 }
@@ -9951,6 +9965,12 @@ function renderHistoryItem(entry, container, insertBefore) {
   else container.appendChild(el);
 }
 
+let _statsRenderKey = null;
+function _getStatsKey() {
+  const h = state.history || [];
+  return `${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}`;
+}
+
 function renderHistory() {
   // Rescue floating elements before clearing container
   const screenHistory = document.getElementById('screen-history');
@@ -9962,6 +9982,11 @@ function renderHistory() {
   });
 
   const container = document.getElementById('history-list');
+
+  // Skip full rebuild if nothing has changed since last render
+  const _currentKey = _getStatsKey();
+  if (_currentKey === _statsRenderKey && container.children.length > 0) return;
+
   container.innerHTML = '';
   const hist = state.history || [];
 
@@ -9986,9 +10011,7 @@ function renderHistory() {
   }
 
   // Build exercise name map
-  const nameMap = {};
-  (DEFAULT_PROGRAM || []).forEach(d => (d.exercises || []).forEach(e => { nameMap[e.id] = e.name; }));
-  (state.program || []).forEach(d => (d.exercises || []).forEach(e => { nameMap[e.id] = e.name; }));
+  const nameMap = buildNameMap();
 
   // ── 1. LIFETIME ──────────────────────────────────────────
   const totalVolume = hist.reduce((t, entry) =>
@@ -10410,6 +10433,9 @@ function renderHistory() {
     };
     container.appendChild(btn);
   }
+
+  // Cache the key so repeated tab visits skip full rebuild
+  _statsRenderKey = _getStatsKey();
 }
 
 // Updates the progression info card in the YOUR LIFTS section when picker changes
@@ -10420,9 +10446,7 @@ function _statsProgInfo() {
   if (!picker || !picker.value) return;
   const exId = picker.value;
   const hist = state.history || [];
-  const nameMap = {};
-  (DEFAULT_PROGRAM || []).forEach(d => (d.exercises || []).forEach(e => { nameMap[e.id] = e.name; }));
-  (state.program || []).forEach(d => (d.exercises || []).forEach(e => { nameMap[e.id] = e.name; }));
+  const nameMap = buildNameMap();
 
   const sorted = [...hist].sort((a, b) => new Date(a.date) - new Date(b.date));
   let firstW = null, curW = null, best1RM = 0;
