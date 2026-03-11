@@ -5194,6 +5194,10 @@ function renderHome() {
   const _plateau = typeof detectProgressionPlateau === 'function' ? detectProgressionPlateau() : { stalled: false };
   const _weeksSinceDeload = state.weeksSinceDeload || state.weekCount || 0;
   const _dismissedThisCycle = state.deloadDismissedAtCycle === (state.cycleCount || 1);
+  const _lastTrainedSession = state.history?.length ? state.history[state.history.length - 1] : null;
+  const _daysSinceTraining = _lastTrainedSession
+    ? (Date.now() - new Date(_lastTrainedSession.date).getTime()) / 86400000 : 0;
+  const _isReturningUser = _daysSinceTraining >= 14 && !state.programPaused;
   const _showPlateauBanner = _plateau.stalled && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
   const _showLongRunBanner = !_showPlateauBanner && _weeksSinceDeload >= 5 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
   const _skipBtn = `<div style="margin-top:12px;"><button onclick="event.stopPropagation();dismissDeloadSuggestion(true);" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;padding:7px 16px;border-radius:8px;-webkit-tap-highlight-color:transparent;">NOT NOW — SKIP THIS CYCLE</button></div>`;
@@ -5208,16 +5212,30 @@ function renderHome() {
     deloadBanner.querySelector('.deload-banner').onclick = null;
   } else if (deloadBanner && state.weekCount === 7 && !_dismissedThisCycle && !state.deloadPostponedToWeek) {
     deloadBanner.style.display = 'block';
-    deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK';
-    deloadBanner.querySelector('.deload-text').innerHTML = 'You\'ve hit week 7. Tap to choose: <strong style="color:var(--warning);">Deload</strong> (reduced weights) or <strong style="color:var(--gray-light);">Rest Week</strong> (take the week off).' + _skipBtn;
-    deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
-    deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
+    if (_isReturningUser) {
+      deloadBanner.querySelector('.deload-title').textContent = 'WELCOME BACK';
+      deloadBanner.querySelector('.deload-text').innerHTML = `You've been away ${Math.floor(_daysSinceTraining)} days — ease back in first. We'll reassess recovery after a few sessions.` + _skipBtn;
+      deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
+      deloadBanner.querySelector('.deload-banner').onclick = null;
+    } else {
+      deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK';
+      deloadBanner.querySelector('.deload-text').innerHTML = 'You\'ve hit week 7. Tap to choose: <strong style="color:var(--warning);">Deload</strong> (reduced weights) or <strong style="color:var(--gray-light);">Rest Week</strong> (take the week off).' + _skipBtn;
+      deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+      deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
+    }
   } else if (deloadBanner && state.deloadPostponedToWeek && state.weekCount === state.deloadPostponedToWeek && !_dismissedThisCycle) {
     deloadBanner.style.display = 'block';
-    deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK — NOW DUE';
-    deloadBanner.querySelector('.deload-text').innerHTML = 'You moved your recovery week here. Tap to choose how to handle it.' + _skipBtn;
-    deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
-    deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
+    if (_isReturningUser) {
+      deloadBanner.querySelector('.deload-title').textContent = 'WELCOME BACK';
+      deloadBanner.querySelector('.deload-text').innerHTML = `You've been away ${Math.floor(_daysSinceTraining)} days — ease back in first. We'll reassess recovery after a few sessions.` + _skipBtn;
+      deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
+      deloadBanner.querySelector('.deload-banner').onclick = null;
+    } else {
+      deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK — NOW DUE';
+      deloadBanner.querySelector('.deload-text').innerHTML = 'You moved your recovery week here. Tap to choose how to handle it.' + _skipBtn;
+      deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+      deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
+    }
   } else if (deloadBanner && _showPlateauBanner) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'PROGRESSION PLATEAU';
@@ -8720,9 +8738,12 @@ function finalizeEndSession(save) {
     const _weekLen = state.trainingDaysPerWeek || state.program?.length || 4;
     const _sessionBased = state.totalSessions % _weekLen === 0;
     const _daysSinceWeekStart = (Date.now() - state.weekStartTimestamp) / 86400000;
-    const _calendarBased = _daysSinceWeekStart >= 7 && !_sessionBased;
+    const _sessionsThisWeek = (state.history || [])
+      .filter(h => new Date(h.date).getTime() >= (state.weekStartTimestamp || 0)).length;
+    const _calendarBased = _daysSinceWeekStart >= 7 && !_sessionBased && _sessionsThisWeek >= 1;
     if (_sessionBased || _calendarBased) {
       state.weekStartTimestamp = Date.now();
+      state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
       const prevWeek = state.weekCount;
       state.weekCount = Math.min(state.weekCount + 1, 8);
       // Cycle complete — was on week 8, now would roll over
@@ -14596,15 +14617,24 @@ function checkInactivityPrompt() {
       // Custom modal instead of confirm() for iOS PWA compatibility
       const inactModal = document.createElement('div');
       inactModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-      inactModal.innerHTML = `
-        <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
-          <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">CHECKING IN</div>
-          <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">It's been ${daysSince} days since your last workout. Want to do a quick mindset check-in?</div>
-          <div style="display:flex;gap:10px;">
-            <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">NOT NOW</button>
-            <button onclick="this.closest('[style*=fixed]').remove();showScreen('mindset',document.querySelector('[onclick*=mindset]'));openCBTModal('auto');" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CHECK IN</button>
-          </div>
-        </div>`;
+      if (daysSince >= 7) {
+        inactModal.innerHTML = `
+          <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
+            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">BEEN A WHILE</div>
+            <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">It's been ${daysSince} days since your last session. Good to have you back — pick up where you left off.</div>
+            <button onclick="this.closest('[style*=fixed]').remove()" style="width:100%;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">LET'S TRAIN →</button>
+          </div>`;
+      } else {
+        inactModal.innerHTML = `
+          <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
+            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">CHECKING IN</div>
+            <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">It's been ${daysSince} days since your last workout. Want to do a quick mindset check-in?</div>
+            <div style="display:flex;gap:10px;">
+              <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">NOT NOW</button>
+              <button onclick="this.closest('[style*=fixed]').remove();showScreen('mindset',document.querySelector('[onclick*=mindset]'));openCBTModal('auto');" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CHECK IN</button>
+            </div>
+          </div>`;
+      }
       document.body.appendChild(inactModal);
     }, 1500);
   }
