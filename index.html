@@ -10159,13 +10159,13 @@ function renderHistory() {
       bigCard.innerHTML = `
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:10px;">${bigLabel} (EST. 1RM)</div>
         ${topLifts.map((l, i) => `
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;${i < topLifts.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : ''}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;${i < topLifts.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : ''}">
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);letter-spacing:0.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.name.toUpperCase()}</div>
-            <div style="flex-shrink:0;display:inline-flex;align-items:baseline;gap:3px;"><span style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--red-text);">${l.est1RM}</span><span style="font-size:12px;color:var(--gray);">lbs</span></div>
+            <div style="flex-shrink:0;white-space:nowrap;line-height:1;"><span style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--red-text);">${l.est1RM}</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);margin-left:3px;">lbs</span></div>
           </div>`).join('')}
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">COMBINED TOTAL</div>
-          <div style="flex-shrink:0;display:inline-flex;align-items:baseline;gap:3px;"><span style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--gold);">${combined.toLocaleString()}</span><span style="font-size:13px;color:var(--gray);">lbs</span></div>
+          <div style="flex-shrink:0;white-space:nowrap;line-height:1;"><span style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--gold);">${combined.toLocaleString()}</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-left:3px;">lbs</span></div>
         </div>`;
       bigCard.appendChild(mkShareBtn('SHARE BIG THREE', () =>
         generateAndShareCard('big_three', { lifts: topLifts, total: combined })
@@ -10468,12 +10468,12 @@ function _statsProgInfo() {
 
   info.innerHTML = `
     <div style="margin-bottom:12px;">
-      <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">${(nameMap[exId] || exId).toUpperCase()}</div>
-      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px;">
-        ${firstW !== null ? `<div><div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;">FIRST</div><div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--gray-light);">${firstW} lbs</div></div>` : ''}
-        ${firstW !== null && curW !== null ? `<div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--gray);padding-bottom:4px;">→</div>` : ''}
-        ${curW !== null ? `<div><div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;">NOW</div><div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);">${curW} lbs</div></div>` : ''}
-        ${gainPct !== 0 ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:${gainColor};padding-bottom:6px;">${gainPct > 0 ? '+' : ''}${gainPct}%</div>` : ''}
+      <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">${(nameMap[exId] || exId).toUpperCase()}</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+        ${firstW !== null ? `<div><div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-bottom:2px;">FIRST</div><div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--gray-light);line-height:1;">${firstW}<span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;margin-left:2px;">lbs</span></div></div>` : ''}
+        ${firstW !== null && curW !== null ? `<div style="color:var(--gray);font-size:16px;line-height:1;flex-shrink:0;">→</div>` : ''}
+        ${curW !== null ? `<div><div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-bottom:2px;">NOW</div><div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);line-height:1;">${curW}<span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;margin-left:2px;">lbs</span></div></div>` : ''}
+        ${gainPct !== 0 ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:${gainColor};background:${gainPct > 0 ? 'rgba(80,200,130,0.12)' : 'rgba(255,107,107,0.12)'};border:1px solid ${gainPct > 0 ? 'rgba(80,200,130,0.3)' : 'rgba(255,107,107,0.3)'};border-radius:20px;padding:3px 9px;white-space:nowrap;">${gainPct > 0 ? '+' : ''}${gainPct}%</div>` : ''}
       </div>
       ${best1RM > 0 ? `<div style="font-size:12px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">EST. 1RM: <span style="color:var(--cream);font-weight:700;">${best1RM} lbs</span></div>` : ''}
       ${bw > 0 && best1RM > 0 ? `<div style="font-size:12px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;margin-top:2px;">${(best1RM / bw).toFixed(1)}× bodyweight</div>` : ''}
