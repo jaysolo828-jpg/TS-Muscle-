@@ -5162,17 +5162,12 @@ function renderHome() {
   if (weekTrackerLabel) {
     const _cycle = state.cycleCount || 1;
     const _week = state.weekCount || 1;
-    if (_cycle > 1) {
-      weekTrackerLabel.innerHTML = `
-        <span style="color:var(--gray);font-size:11px;letter-spacing:1.5px;">CYCLE ${_cycle}</span>
-        <span style="color:rgba(255,255,255,0.12);margin:0 6px;">·</span>
-        <span style="color:var(--gray-light);font-size:11px;letter-spacing:1.5px;">WEEK ${_week} OF 8</span>`;
-      weekTrackerLabel.style.display = 'flex';
-      weekTrackerLabel.style.alignItems = 'center';
-    } else {
-      weekTrackerLabel.textContent = 'Program Weeks';
-      weekTrackerLabel.style.display = '';
-    }
+    weekTrackerLabel.innerHTML = `
+      <span style="color:var(--gray);font-size:11px;letter-spacing:1.5px;">CYCLE ${_cycle}</span>
+      <span style="color:rgba(255,255,255,0.12);margin:0 6px;">·</span>
+      <span style="color:var(--gray-light);font-size:11px;letter-spacing:1.5px;">WEEK ${_week} OF 8</span>`;
+    weekTrackerLabel.style.display = 'flex';
+    weekTrackerLabel.style.alignItems = 'center';
   }
 
   // Week dots
