@@ -1698,6 +1698,10 @@
     border-radius: 12px;
     padding: 12px 8px;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .stat-num {
@@ -2159,7 +2163,7 @@
   <!-- WEEKLY SUMMARY -->
   <div id="cardio-weekly-summary" style="display:none; margin-bottom:16px;">
     <div class="section-title">THIS <span>WEEK</span></div>
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:4px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:4px;">
       <div class="stat-box">
         <div class="stat-num" id="cardio-week-sessions">0</div>
         <div class="stat-label">Sessions</div>
@@ -10006,15 +10010,15 @@ function renderHistory() {
   const lifetimeCard = mkCard();
   lifetimeCard.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;">
-      <div style="background:var(--dark2);padding:12px 8px;text-align:center;">
+      <div style="background:var(--dark2);padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${volLabel}</div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">VOLUME</div>
       </div>
-      <div style="background:var(--dark2);padding:12px 8px;text-align:center;">
+      <div style="background:var(--dark2);padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${timeLabel}</div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">TIME</div>
       </div>
-      <div style="background:var(--dark2);padding:12px 8px;text-align:center;">
+      <div style="background:var(--dark2);padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${totalSessions}</div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
       </div>
@@ -10132,13 +10136,13 @@ function renderHistory() {
       bigCard.innerHTML = `
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:10px;">${bigLabel} (EST. 1RM)</div>
         ${topLifts.map((l, i) => `
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;${i < topLifts.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : ''}">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);letter-spacing:0.5px;">${l.name.toUpperCase()}</div>
-            <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--red-text);">${l.est1RM} <span style="font-size:12px;color:var(--gray);">lbs</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;${i < topLifts.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : ''}">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);letter-spacing:0.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.name.toUpperCase()}</div>
+            <div style="flex-shrink:0;display:inline-flex;align-items:baseline;gap:3px;"><span style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--red-text);">${l.est1RM}</span><span style="font-size:12px;color:var(--gray);">lbs</span></div>
           </div>`).join('')}
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">COMBINED TOTAL</div>
-          <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--gold);">${combined.toLocaleString()} <span style="font-size:13px;color:var(--gray);">lbs</span></div>
+          <div style="flex-shrink:0;display:inline-flex;align-items:baseline;gap:3px;"><span style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--gold);">${combined.toLocaleString()}</span><span style="font-size:13px;color:var(--gray);">lbs</span></div>
         </div>`;
       bigCard.appendChild(mkShareBtn('SHARE BIG THREE', () =>
         generateAndShareCard('big_three', { lifts: topLifts, total: combined })
@@ -10184,17 +10188,17 @@ function renderHistory() {
       wvwCard.innerHTML = `
         <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:var(--red-text);letter-spacing:2px;margin-bottom:10px;">WEEK ${curWeek}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:10px;">
-          <div style="background:var(--dark2);padding:8px 6px;text-align:center;">
+          <div style="background:var(--dark2);padding:8px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;margin-bottom:4px;">THIS CYCLE</div>
             <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);">${fmtVol(thisSt.volume)}</div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;">LBS</div>
           </div>
-          <div style="background:var(--dark2);padding:8px 6px;text-align:center;">
+          <div style="background:var(--dark2);padding:8px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;margin-bottom:4px;">LAST CYCLE</div>
             <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--gray-light);">${fmtVol(lastSt.volume)}</div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;">LBS</div>
           </div>
-          <div style="background:var(--dark2);padding:8px 6px;text-align:center;">
+          <div style="background:var(--dark2);padding:8px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;margin-bottom:4px;">CHANGE</div>
             <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:${deltaColor};">${volDelta !== null ? (volDelta >= 0 ? '+' : '') + volDelta + '%' : '—'}</div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;">VOL</div>
@@ -10241,19 +10245,19 @@ function renderHistory() {
     const yrCard = mkCard();
     yrCard.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:12px;">
-        <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+        <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
           <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);line-height:1;">${yrSessions}</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
         </div>
-        <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+        <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
           <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);line-height:1;">${yrVolLabel} lbs</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">VOLUME</div>
         </div>
-        <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+        <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
           <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);line-height:1;">${yrHrs}</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">HOURS</div>
         </div>
-        <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+        <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
           <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:#f0a500;line-height:1;">${yrPRs}</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">PRs</div>
         </div>
@@ -10294,15 +10298,15 @@ function renderHistory() {
         </div>
         ${dateRange ? `<div style="font-size:11px;color:var(--gray);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${dateRange}</div>` : ''}
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:10px;">
-          <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+          <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${cyc.sessions}</div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
           </div>
-          <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+          <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#f0a500;line-height:1;">${cyc.prs}</div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">PRs</div>
           </div>
-          <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+          <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:${consistencyColor};line-height:1;">${cyc.consistency}%</div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">CONSISTENCY</div>
           </div>
