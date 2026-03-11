@@ -1011,6 +1011,10 @@
     from { opacity:0; transform: translateX(-50%) translateY(12px); }
     to   { opacity:1; transform: translateX(-50%) translateY(0); }
   }
+  @keyframes sheetSlideUp {
+    from { opacity:0; transform: translateY(24px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
 
   .rpe-select {
     background: var(--dark3);
@@ -8578,14 +8582,15 @@ function finalizeEndSession(save) {
     // Deload suggestion — after 5+ consecutive weeks
     const weeksLogged = state.weekCount || 1;
     const _deloadDaysSince = (Date.now() - (state.lastDeloadPrompt || 0)) / (1000 * 60 * 60 * 24);
-    if (weeksLogged > 0 && weeksLogged % 5 === 0 && _deloadDaysSince >= 14) {
+    const _deloadDismissedThisCycle = state.deloadDismissedAtCycle === (state.cycleCount || 1);
+    if (weeksLogged > 0 && weeksLogged % 5 === 0 && _deloadDaysSince >= 14 && !_deloadDismissedThisCycle) {
       state.lastDeloadPrompt = Date.now();
       saveState();
       setTimeout(() => {
         const deloadModal = document.createElement('div');
         deloadModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9000;display:flex;align-items:flex-end;';
         deloadModal.innerHTML = `
-          <div style="background:#111;border-top:2px solid var(--red);border-radius:20px 20px 0 0;padding:28px 24px calc(36px + env(safe-area-inset-bottom));width:100%;box-sizing:border-box;animation:slideUpFade 0.35s ease;">
+          <div style="background:#111;border-top:2px solid var(--red);border-radius:20px 20px 0 0;padding:28px 24px calc(36px + env(safe-area-inset-bottom));width:100%;box-sizing:border-box;animation:sheetSlideUp 0.35s ease;">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
               <div style="font-size:32px;">🔋</div>
               <div>
@@ -9589,7 +9594,7 @@ function renderProgressChart() {
           Try ${nextWeight} lbs next session. Weight is moving — keep it up.
         </div>
       </div>`;
-    } else if (_lastSets < _chartTargetSets) {
+    } else if (last.setsCount != null && _lastSets < _chartTargetSets) {
       recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#1a1200,#2a2000)">
         <div class="overload-icon">⚡</div>
         <div class="overload-text">
