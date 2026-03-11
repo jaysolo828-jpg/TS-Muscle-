@@ -4915,74 +4915,68 @@ function renderVolumeLandmarks() {
 
   if (typeof window._volumePanelOpen === 'undefined') window._volumePanelOpen = false;
 
+  // Zone per muscle
   const rows = muscles.map(muscle => {
     const { mev, mav, mrv } = VOLUME_LANDMARKS[muscle];
     const sets = counts[muscle] || 0;
-    const color = MUSCLE_COLORS[muscle] || 'var(--red)';
 
-    // Zone classification
-    let statusColor, statusIcon, statusLabel;
+    let chipLabel, chipBg, chipBorder, chipColor, helpText, barColor;
     if (sets === 0) {
-      statusColor = 'var(--gray)';  statusIcon = '—'; statusLabel = `No sets — target ${mev}–${mav} sets`;
+      chipLabel = 'NOT STARTED'; chipBg = 'rgba(204,32,39,0.12)'; chipBorder = 'rgba(204,32,39,0.3)'; chipColor = '#CC2027';
+      helpText = `No sets logged — aim for ${mev}–${mav} sets this week`;
+      barColor = 'transparent';
     } else if (sets < mev) {
       const need = mev - sets;
-      statusColor = '#f39c12'; statusIcon = '↑'; statusLabel = `Below MEV — need ${need} more set${need !== 1 ? 's' : ''} (target ${mev}–${mav})`;
+      chipLabel = 'NEEDS MORE'; chipBg = 'rgba(204,32,39,0.12)'; chipBorder = 'rgba(204,32,39,0.3)'; chipColor = '#CC2027';
+      helpText = `${need} more set${need !== 1 ? 's' : ''} to hit your minimum — at ${mev} sets you'll start seeing growth`;
+      barColor = '#CC2027';
     } else if (sets > mrv) {
-      statusColor = '#CC2027'; statusIcon = '⚠'; statusLabel = `Above MRV — reduce volume`;
+      chipLabel = 'TOO HIGH'; chipBg = 'rgba(204,32,39,0.12)'; chipBorder = 'rgba(204,32,39,0.3)'; chipColor = '#CC2027';
+      helpText = `Over your max — cut back a few sets to avoid overtraining`;
+      barColor = '#CC2027';
     } else if (sets >= mav) {
-      statusColor = '#2ecc71'; statusIcon = '✓'; statusLabel = `Optimal zone (${sets}/${mav} sets)`;
+      chipLabel = '✓ ON TARGET'; chipBg = 'rgba(31,158,88,0.12)'; chipBorder = 'rgba(31,158,88,0.3)'; chipColor = '#1f9e58';
+      helpText = `You've hit your weekly target of ${mav} sets — keep it up`;
+      barColor = '#1f9e58';
     } else {
       const need = mav - sets;
-      statusColor = '#4a9eff'; statusIcon = '↑'; statusLabel = `Building — ${need} set${need !== 1 ? 's' : ''} to reach optimal (${mav})`;
+      chipLabel = 'BUILDING'; chipBg = 'rgba(31,158,88,0.08)'; chipBorder = 'rgba(31,158,88,0.25)'; chipColor = '#1f9e58';
+      helpText = `${need} more set${need !== 1 ? 's' : ''} to reach your target of ${mav} — you're on the right track`;
+      barColor = 'rgba(31,158,88,0.5)';
     }
 
-    // Progress bar: three segments — MEV marker, MAV zone fill, MRV cap
-    // Map sets onto 0–100% where 100% = MRV
-    const fillPct = Math.min(100, Math.round((sets / mrv) * 100));
+    const fillPct = sets === 0 ? 0 : Math.min(100, Math.round((sets / mrv) * 100));
     const mavPct  = Math.round((mav / mrv) * 100);
-    const mevPct  = Math.round((mev / mrv) * 100);
-
-    let barColor;
-    if (sets === 0)     barColor = 'transparent';
-    else if (sets < mev) barColor = '#f39c12';
-    else if (sets > mrv) barColor = '#CC2027';
-    else if (sets >= mav) barColor = '#2ecc71';
-    else                  barColor = '#4a9eff';
 
     return `
-      <div style="margin-bottom:12px;">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;color:${color};">${muscle}</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:${statusColor};letter-spacing:0.3px;">${statusIcon} ${statusLabel}</span>
+      <div style="padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:0.5px;color:var(--cream);">${muscle}</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray);">${sets} sets</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.8px;background:${chipBg};border:1px solid ${chipBorder};color:${chipColor};padding:3px 8px;border-radius:6px;white-space:nowrap;">${chipLabel}</span>
+          </div>
         </div>
-        <div style="position:relative;height:8px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:visible;">
-          <!-- filled bar -->
-          <div style="position:absolute;top:0;left:0;height:100%;width:${fillPct}%;background:${barColor};border-radius:4px;transition:width 0.4s ease;overflow:hidden;"></div>
-          <!-- MAV target marker (optimal zone line) -->
-          <div style="position:absolute;top:-3px;left:${mavPct}%;width:2px;height:14px;background:#2ecc71;border-radius:1px;opacity:0.9;" title="MAV — optimal target"></div>
-          <!-- MEV minimum marker -->
-          <div style="position:absolute;top:-2px;left:${mevPct}%;width:1px;height:12px;background:#f39c12;border-radius:1px;opacity:0.7;" title="MEV — minimum effective"></div>
+        <div style="position:relative;height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:visible;margin-bottom:8px;">
+          <div style="position:absolute;top:0;left:0;height:100%;width:${fillPct}%;background:${barColor};border-radius:3px;transition:width 0.4s ease;"></div>
+          <div style="position:absolute;top:-4px;left:${mavPct}%;width:2px;height:14px;background:#1f9e58;border-radius:1px;opacity:0.85;"></div>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-top:3px;">
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);">MEV ${mev} sets</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:#2ecc71;">⬥ OPTIMAL ${mav} sets</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);">MRV ${mrv} sets</span>
-        </div>
+        <span style="font-family:'Barlow',sans-serif;font-size:12px;color:var(--gray);line-height:1.5;">${helpText}</span>
       </div>`;
   }).join('');
 
-  // Summary badge for header
-  const belowMev  = muscles.filter(m => { const s = counts[m] || 0; return s > 0 && s < VOLUME_LANDMARKS[m].mev; }).length;
-  const aboveMrv  = muscles.filter(m => (counts[m] || 0) > VOLUME_LANDMARKS[m].mrv).length;
-  const inOptimal = muscles.filter(m => { const s = counts[m] || 0; return s >= VOLUME_LANDMARKS[m].mav && s <= VOLUME_LANDMARKS[m].mrv; }).length;
+  // Header summary counts
+  const onTrack   = muscles.filter(m => { const s = counts[m] || 0; return s >= VOLUME_LANDMARKS[m].mav && s <= VOLUME_LANDMARKS[m].mrv; }).length;
+  const needsWork = muscles.filter(m => { const s = counts[m] || 0; return s < VOLUME_LANDMARKS[m].mav; }).length;
+  const tooMuch   = muscles.filter(m => (counts[m] || 0) > VOLUME_LANDMARKS[m].mrv).length;
 
   let headerBadge = '';
-  if (aboveMrv > 0)
-    headerBadge = `<span style="background:rgba(204,32,39,0.15);border:1px solid rgba(204,32,39,0.4);color:#CC2027;font-size:10px;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;">${aboveMrv} OVER MRV</span>`;
-  else if (belowMev > 0)
-    headerBadge = `<span style="background:rgba(243,156,18,0.12);border:1px solid rgba(243,156,18,0.3);color:#f39c12;font-size:10px;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;">${belowMev} UNDER MEV</span>`;
-  else if (inOptimal > 0)
-    headerBadge = `<span style="background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);color:#2ecc71;font-size:10px;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;">${inOptimal} OPTIMAL</span>`;
+  if (tooMuch > 0)
+    headerBadge = `<span style="background:rgba(204,32,39,0.15);border:1px solid rgba(204,32,39,0.4);color:#CC2027;font-size:10px;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;">${tooMuch} TOO MUCH</span>`;
+  else if (needsWork > 0)
+    headerBadge = `<span style="background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.3);color:#CC2027;font-size:10px;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;">${needsWork} NEED MORE SETS</span>`;
+  else if (onTrack > 0)
+    headerBadge = `<span style="background:rgba(31,158,88,0.12);border:1px solid rgba(31,158,88,0.35);color:#1f9e58;font-size:10px;padding:2px 7px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;">${onTrack}/${muscles.length} ON TRACK</span>`;
 
   const chevron = window._volumePanelOpen ? '▴' : '▾';
 
@@ -4991,14 +4985,14 @@ function renderVolumeLandmarks() {
       <div onclick="window._volumePanelOpen=!window._volumePanelOpen;renderVolumeLandmarks();"
            style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:11px 14px;background:var(--dark2);border:1px solid var(--dark3);border-radius:12px;user-select:none;-webkit-tap-highlight-color:transparent;">
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--gray-light);flex:1;">WEEKLY VOLUME</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--gray-light);flex:1;">SETS THIS WEEK</span>
         ${headerBadge}
         <span style="font-size:10px;color:var(--gray);margin-left:4px;">${chevron}</span>
       </div>
       ${window._volumePanelOpen ? `
-      <div style="background:var(--dark2);border:1px solid var(--dark3);border-top:none;border-radius:0 0 12px 12px;padding:14px 14px 10px;">
-        <div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;margin-bottom:14px;line-height:1.5;border-bottom:1px solid var(--dark3);padding-bottom:10px;">
-          RP Strength model (Israetel). <span style="color:#f39c12;">MEV</span> = minimum to grow. <span style="color:#2ecc71;">MAV ⬥</span> = optimal sweet spot. <span style="color:var(--gray);">MRV</span> = max before recovery breaks. Based on current training week.
+      <div style="background:var(--dark2);border:1px solid var(--dark3);border-top:none;border-radius:0 0 12px 12px;padding:16px 14px 4px;">
+        <div style="font-family:'Barlow',sans-serif;font-size:12px;color:var(--gray);line-height:1.55;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          How many sets you've done for each muscle this week. The <span style="color:#1f9e58;font-weight:600;">green line</span> is your target. <span style="color:#CC2027;">Red = needs attention.</span> <span style="color:#1f9e58;">Green = on track.</span>
         </div>
         ${rows}
       </div>` : ''}
@@ -5089,8 +5083,10 @@ function renderHome() {
   const deloadBanner = document.getElementById('deload-banner');
   const _plateau = typeof detectProgressionPlateau === 'function' ? detectProgressionPlateau() : { stalled: false };
   const _weeksSinceDeload = state.weeksSinceDeload || state.weekCount || 0;
-  const _showPlateauBanner = _plateau.stalled && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7;
-  const _showLongRunBanner = !_showPlateauBanner && _weeksSinceDeload >= 5 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7;
+  const _dismissedThisCycle = state.deloadDismissedAtCycle === (state.cycleCount || 1);
+  const _showPlateauBanner = _plateau.stalled && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
+  const _showLongRunBanner = !_showPlateauBanner && _weeksSinceDeload >= 5 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
+  const _skipBtn = `<div style="margin-top:12px;"><button onclick="event.stopPropagation();dismissDeloadSuggestion(true);" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;padding:7px 16px;border-radius:8px;-webkit-tap-highlight-color:transparent;">NOT NOW — SKIP THIS CYCLE</button></div>`;
 
   if (deloadBanner && state.isRestWeek) {
     deloadBanner.style.display = 'none';
@@ -5100,22 +5096,22 @@ function renderHome() {
     deloadBanner.querySelector('.deload-text').innerHTML = 'Weights are reduced 40%. Train normally — weights restore automatically after this week.<br><button onclick="endRecoveryWeekEarly()" style="margin-top:12px; background:rgba(255,255,255,0.08); border:1px solid #555; color:var(--gray-light); padding:8px 18px; border-radius:8px; font-family:\'Barlow Condensed\',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer;">END EARLY →</button>';
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = null;
-  } else if (deloadBanner && state.weekCount === 7) {
+  } else if (deloadBanner && state.weekCount === 7 && !_dismissedThisCycle) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK';
-    deloadBanner.querySelector('.deload-text').innerHTML = 'You\'ve hit week 7. Tap to choose: <strong style="color:var(--warning);">Deload</strong> (reduced weights) or <strong style="color:var(--gray-light);">Rest Week</strong> (take the week off).';
+    deloadBanner.querySelector('.deload-text').innerHTML = 'You\'ve hit week 7. Tap to choose: <strong style="color:var(--warning);">Deload</strong> (reduced weights) or <strong style="color:var(--gray-light);">Rest Week</strong> (take the week off).' + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner && _showPlateauBanner) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'PROGRESSION PLATEAU';
-    deloadBanner.querySelector('.deload-text').innerHTML = `No weight increases across <strong>${_plateau.stalledCount} of ${_plateau.totalDays} training days</strong>. A deload can break through stalls. Tap to review options.`;
+    deloadBanner.querySelector('.deload-text').innerHTML = `No weight increases across <strong>${_plateau.stalledCount} of ${_plateau.totalDays} training days</strong>. A deload can break through stalls. Tap to review options.` + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner && _showLongRunBanner) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY DUE SOON';
-    deloadBanner.querySelector('.deload-text').innerHTML = `${_weeksSinceDeload} weeks of consistent training without a deload. Consider a light week to keep progress moving. Tap to review.`;
+    deloadBanner.querySelector('.deload-text').innerHTML = `${_weeksSinceDeload} weeks of consistent training without a deload. Consider a light week to keep progress moving. Tap to review.` + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner) {
@@ -5966,6 +5962,7 @@ function activateDeloadWeek() {
   state.weeksSinceDeload = 0;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
+  delete state.deloadDismissedAtCycle;
   saveState();
   const m = document.getElementById('deload-suggest-modal');
   if (m) m.remove();
@@ -5976,10 +5973,24 @@ function activateDeloadWeek() {
 function activateDeloadRest() {
   state.isRestWeek = true;
   state.weeksSinceDeload = 0;
+  delete state.deloadDismissedAtCycle;
   saveState();
   const m = document.getElementById('deload-suggest-modal');
   if (m) m.remove();
   showToast('Rest week active — program paused. Come back strong 💤');
+  renderHome();
+}
+
+function dismissDeloadSuggestion(fromBanner) {
+  state.deloadDismissedAtCycle = state.cycleCount || 1;
+  saveState();
+  // Close the signal-triggered modal
+  document.getElementById('deload-suggest-modal')?.remove();
+  // Close the week-5 slide-up sheet (appended to body, z-index 9000)
+  document.querySelectorAll('body > div').forEach(el => {
+    if (el.style && el.style.zIndex === '9000') el.remove();
+  });
+  showToast("Got it — we'll suggest again next cycle 👍");
   renderHome();
 }
 
@@ -8605,11 +8616,11 @@ function finalizeEndSession(save) {
                 font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;cursor:pointer;
               ">💤 REST WEEK</button>
             </div>
-            <button onclick="this.closest('[style*=position]').remove();" style="
+            <button onclick="dismissDeloadSuggestion();" style="
               width:100%;padding:11px;border-radius:12px;
               background:none;border:1px solid #333;color:var(--gray);
               font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;
-            ">NOT NOW</button>
+            ">SKIP THIS CYCLE</button>
           </div>`;
         document.body.appendChild(deloadModal);
       }, 1800);
@@ -8698,6 +8709,9 @@ function checkDeloadSuggestion() {
 
   if (!highRPETrend && !longRun && !progressionStall) return;
 
+  // Don't show if user already dismissed this cycle
+  if (state.deloadDismissedAtCycle === (state.cycleCount || 1)) return;
+
   // Rate-limit: don't show more than once per 14 days
   const lastDeloadPrompt = state.lastDeloadPrompt || 0;
   if ((Date.now() - lastDeloadPrompt) / (1000 * 60 * 60 * 24) < 14) return;
@@ -8738,9 +8752,9 @@ function checkDeloadSuggestion() {
           💤 REST WEEK
         </button>
       </div>
-      <button onclick="document.getElementById('deload-suggest-modal').remove();"
+      <button onclick="dismissDeloadSuggestion();"
         style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:11px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
-        NOT NOW
+        SKIP THIS CYCLE
       </button>
     </div>
   `;
@@ -9459,13 +9473,16 @@ function renderProgressChart() {
     const doneSets = sets.filter(s => s.done && s.weight);
     if (doneSets.length === 0) return;
 
+    const rpeVals = doneSets.filter(s => s.rpe).map(s => parseFloat(s.rpe));
+    const avgRPE = rpeVals.length ? (rpeVals.reduce((a, b) => a + b, 0) / rpeVals.length) : null;
+    const maxReps = Math.max(...doneSets.map(s => parseInt(s.reps) || 0));
+
     if (chartMode === 'volume') {
-      // Volume = sum of (weight × reps) for all done sets
       const volume = doneSets.reduce((sum, s) => sum + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0), 0);
-      if (volume > 0) dataPoints.push({ date: new Date(entry.date), weight: volume });
+      if (volume > 0) dataPoints.push({ date: new Date(entry.date), weight: volume, setsCount: doneSets.length, avgRPE, maxReps });
     } else {
       const maxWeight = Math.max(...doneSets.map(s => parseFloat(s.weight) || 0));
-      if (maxWeight > 0) dataPoints.push({ date: new Date(entry.date), weight: maxWeight });
+      if (maxWeight > 0) dataPoints.push({ date: new Date(entry.date), weight: maxWeight, setsCount: doneSets.length, avgRPE, maxReps });
     }
   });
 
@@ -9553,11 +9570,14 @@ function renderProgressChart() {
   const prev = dataPoints[dataPoints.length - 2];
   let recHTML = '';
 
-  // Compute goal-aware rep target for this specific exercise
+  // Goal-aware targets for this exercise
   const _chartGoal = state.profile?.goal || 'both';
   const _chartReps = GOAL_REPS[exId]?.[_chartGoal] || '8–12';
   const _chartRepParts = _chartReps.split(/[–\-]/);
   const _chartRepTop = parseInt(_chartRepParts[1] || _chartRepParts[0]) || 12;
+  const _chartTargetSets = typeof getGoalSets === 'function' ? getGoalSets(exId, 3) : 3;
+  const _lastSets = last.setsCount || 0;
+  const _lastRPE  = last.avgRPE ? ` · avg RPE ${last.avgRPE.toFixed(1)}` : '';
 
   if (chartMode === 'weight') {
     if (last.weight > prev.weight) {
@@ -9566,7 +9586,15 @@ function renderProgressChart() {
         <div class="overload-icon">🔥</div>
         <div class="overload-text">
           <strong>READY TO PROGRESS</strong>
-          Try ${nextWeight} lbs next session. You've increased weight — keep pushing.
+          Try ${nextWeight} lbs next session. Weight is moving — keep it up.
+        </div>
+      </div>`;
+    } else if (_lastSets < _chartTargetSets) {
+      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#1a1200,#2a2000)">
+        <div class="overload-icon">⚡</div>
+        <div class="overload-text">
+          <strong>COMPLETE YOUR SETS FIRST</strong>
+          You did ${_lastSets} of ${_chartTargetSets} sets last session. Finish all ${_chartTargetSets} sets before adding weight.
         </div>
       </div>`;
     } else if (last.weight === prev.weight) {
@@ -9574,7 +9602,7 @@ function renderProgressChart() {
         <div class="overload-icon">⚡</div>
         <div class="overload-text">
           <strong>ADD REPS FIRST</strong>
-          Weight held 2+ sessions. Build to ${_chartRepTop} reps (your ${_chartReps} target) — progressive overload adds weight automatically when you hit it.
+          Weight has held for 2+ sessions. Push to ${_chartRepTop} reps (your ${_chartReps} target) — once you hit it, increase the weight.
         </div>
       </div>`;
     } else {
@@ -9582,7 +9610,7 @@ function renderProgressChart() {
         <div class="overload-icon">🛡️</div>
         <div class="overload-text">
           <strong>MAINTAIN & REFOCUS</strong>
-          Weight dipped — work back to your ${_chartReps} rep target at this weight before pushing higher.
+          Weight dipped — rebuild to your ${_chartReps} rep target at this weight before pushing heavier.
         </div>
       </div>`;
     }
@@ -9592,7 +9620,7 @@ function renderProgressChart() {
         <div class="overload-icon">🔥</div>
         <div class="overload-text">
           <strong>VOLUME INCREASING</strong>
-          Total volume is trending up — great work. Keep adding weight or reps to maintain this.
+          Total volume is going up — great work. Keep adding reps or small weight increases.
         </div>
       </div>`;
     } else if (last.weight === prev.weight) {
@@ -9600,7 +9628,7 @@ function renderProgressChart() {
         <div class="overload-icon">⚡</div>
         <div class="overload-text">
           <strong>VOLUME STABLE</strong>
-          Volume hasn't changed. Try adding a rep per set or a small weight increase to push it up.
+          Volume hasn't changed. Try adding a rep per set or a small weight bump to push it up.
         </div>
       </div>`;
     } else {
@@ -9608,7 +9636,7 @@ function renderProgressChart() {
         <div class="overload-icon">🛡️</div>
         <div class="overload-text">
           <strong>VOLUME DROPPED</strong>
-          Total volume dipped. Complete all sets and hit rep targets before adding load.
+          Total volume dipped. Complete all ${_chartTargetSets} sets and hit your rep targets before adding load.
         </div>
       </div>`;
     }
@@ -9616,14 +9644,29 @@ function renderProgressChart() {
 
   document.getElementById('overload-recommendation').innerHTML = recHTML;
 
-  // Recent history table
-  let tableHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;">Recent Sessions</div>';
+  // Recent sessions table
+  let tableHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;padding:0 2px;">Recent Sessions</div>';
   [...dataPoints].reverse().slice(0, 5).forEach(pt => {
-    const val = chartMode === 'volume' ? `${Math.round(pt.weight).toLocaleString()} lbs vol` : `${pt.weight} lbs`;
-    tableHTML += `<div class="history-item" style="cursor:default;">
-      <div class="history-date">${pt.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-      <div class="history-day" style="font-size:20px;">${val}</div>
-    </div>`;
+    const val = chartMode === 'volume' ? `${Math.round(pt.weight).toLocaleString()} lbs` : `${pt.weight} lbs`;
+    const dateStr = pt.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const tags = [];
+    if (pt.setsCount) tags.push(`${pt.setsCount} sets`);
+    if (pt.avgRPE)    tags.push(`RPE ${pt.avgRPE.toFixed(1)}`);
+    const tagsHTML = tags.map(t =>
+      `<span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:6px;">${t}</span>`
+    ).join('');
+    tableHTML += `
+      <div class="history-item" style="cursor:default;padding:12px 14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;margin-bottom:3px;">${dateStr}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--cream);line-height:1;">${val}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            ${tagsHTML}
+          </div>
+        </div>
+      </div>`;
   });
   document.getElementById('progress-history-table').innerHTML = tableHTML;
 }
