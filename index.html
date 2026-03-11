@@ -2552,22 +2552,23 @@
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR GOAL</div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:16px;">This sets your rep targets for every exercise in the program.</div>
       <div style="background:var(--dark3); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--gray); margin-bottom:20px; line-height:1.6;">
-        <strong style="color:var(--cream);">Not sure?</strong> Size (8–15 reps) feels like moderate weight for longer sets. Strength (3–6 reps) means heavy weight, short sets. Both (6–10 reps) is a popular middle ground — a good default if you're unsure.
+        <strong style="color:var(--cream);">Not sure?</strong> Size means moderate weight for more reps — great for adding muscle. Strength means heavier weight for fewer reps — builds raw force. Both is the popular middle ground if you want a bit of each.
       </div>
-      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:28px;">
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
         <button class="onboard-select-btn" onclick="selectGoalOnboard('size', this)">
           <div style="font-weight:bold;">Build Size</div>
-          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">8–15 reps — grow muscle, improve conditioning</div>
+          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">8–12 reps main lifts · 10–20 isolation — muscle growth focus</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('strength', this)">
           <div style="font-weight:bold;">Build Strength</div>
-          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">3–6 reps — move heavier weight, get stronger</div>
+          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">3–8 reps main lifts · 6–12 isolation — max strength focus</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('both', this)">
           <div style="font-weight:bold;">Both — Size &amp; Strength</div>
-          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">6–10 reps — a balanced mix of muscle and strength</div>
+          <div style="font-size:13px; color:var(--gray); margin-top:4px; line-height:1.5;">5–10 reps main lifts · 8–15 isolation — powerbuilding balance</div>
         </button>
       </div>
+      <div id="ob-goal-rep-preview" style="display:none; margin-bottom:16px;"></div>
       <input type="hidden" id="ob-goal" value=""/>
       <div class="ob-button-row">
         <button onclick="onboardBack(1)" class="onboard-back-btn">← BACK</button>
@@ -4243,6 +4244,58 @@ function getGoalReps(exId, fallback) {
   return GOAL_REPS[exId]?.[goal] || fallback || '8–12';
 }
 
+// Computes real compound/isolation rep range summaries from GOAL_REPS for a given goal.
+// Used in goal picker UI so displayed ranges match the actual engine behaviour.
+function getGoalRepSummary(goal) {
+  const g = goal || 'both';
+  const parseRange = r => {
+    if (!r) return null;
+    const p = r.split(/[–\-]/);
+    return [parseInt(p[0]) || 0, parseInt(p[1]) || parseInt(p[0]) || 0];
+  };
+  // Representative compound lifts
+  const MAIN_IDS = ['bench', 'chest-row', 'legpress-a', 'rdl', 'pulldown', 'incline'];
+  // Representative accessory / isolation lifts
+  const ACC_IDS  = ['lateral', 'ez-curl', 'leg-ext-a', 'ham-curl-a', 'pushdown', 'flye'];
+
+  const mainRanges = MAIN_IDS.map(id => parseRange(GOAL_REPS[id]?.[g])).filter(Boolean);
+  const accRanges  = ACC_IDS.map(id => parseRange(GOAL_REPS[id]?.[g])).filter(Boolean);
+
+  const mainMin = Math.min(...mainRanges.map(r => r[0]));
+  const mainMax = Math.max(...mainRanges.map(r => r[1]));
+  const accMin  = Math.min(...accRanges.map(r => r[0]));
+  const accMax  = Math.max(...accRanges.map(r => r[1]));
+
+  return { main: `${mainMin}–${mainMax}`, acc: `${accMin}–${accMax}`, mainTop: mainMax, accTop: accMax };
+}
+
+// Builds the HTML for the "your rep targets" preview card shown inside goal pickers.
+function buildGoalRepPreviewHTML(goal) {
+  const s = getGoalRepSummary(goal);
+  const color = { size: '#a855f7', strength: '#3b82f6', both: '#f59e0b' }[goal] || '#f59e0b';
+  const goalName = { size: 'Hypertrophy', strength: 'Strength', both: 'Powerbuilding' }[goal] || 'Powerbuilding';
+  return `
+    <div style="background:${color}14;border:1px solid ${color}44;border-radius:12px;padding:14px 16px;margin-top:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></span>
+        <div style="font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:${color};">${goalName.toUpperCase()} — YOUR REP TARGETS</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:10px;padding:12px;">
+          <div style="font-size:9px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;margin-bottom:4px;">MAIN LIFTS</div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:1px;line-height:1;">${s.main}</div>
+          <div style="font-size:11px;color:${color};font-family:'Barlow Condensed',sans-serif;font-weight:700;margin-top:5px;">↑ weight at ${s.mainTop} reps</div>
+        </div>
+        <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:10px;padding:12px;">
+          <div style="font-size:9px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;margin-bottom:4px;">ACCESSORIES</div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:1px;line-height:1;">${s.acc}</div>
+          <div style="font-size:11px;color:${color};font-family:'Barlow Condensed',sans-serif;font-weight:700;margin-top:5px;">↑ weight at ${s.accTop} reps</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;line-height:1.5;border-top:1px solid ${color}22;padding-top:10px;">Hit the top rep consistently → app adds weight automatically next session.</div>
+    </div>`;
+}
+
 // ============================================================
 // STATE
 // ============================================================
@@ -5339,10 +5392,12 @@ function openRepRangeSheet(exId) {
     const missed = avgReps < minR, exceeded = avgReps > maxR;
     const statusColor = missed ? 'var(--red)' : '#4ade80';
     const statusNote = missed
-      ? `↓ ${avgReps} avg reps — below your ${currentRange} target. Consider reducing weight or trying a lower range.`
+      ? `↓ ${avgReps} avg reps — below your ${currentRange} target. Reduce weight until you can hit the full range.`
       : exceeded
-      ? `↑ ${avgReps} avg reps — above your ${currentRange} target. You may be ready to move up in weight.`
-      : `✓ ${avgReps} avg reps — right on target.`;
+      ? `↑ ${avgReps} avg reps — above ${currentRange}. Progressive overload will increase weight next session.`
+      : avgReps >= maxR
+      ? `✓ ${avgReps} avg reps — at the top of your range. Weight goes up next session.`
+      : `✓ ${avgReps} avg reps — on target. Build to ${maxR} reps to trigger a weight increase.`;
     recentHTML = `
       <div style="background:var(--dark3);border-radius:10px;padding:11px 14px;margin-bottom:18px;">
         <div style="font-size:11px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:5px;">LAST SESSION</div>
@@ -5424,7 +5479,11 @@ function applyRepRange(exId, range) {
 
   // Update column header label in-place
   const labelEl = document.getElementById('rep-goal-label-' + exId);
-  if (labelEl) labelEl.innerHTML = 'GOAL: ' + range;
+  if (labelEl) {
+    labelEl.innerHTML = 'GOAL: ' + range;
+    const newTop = parseInt((range.split(/[–\-]/)[1] || range.split(/[–\-]/)[0])) || 0;
+    if (newTop) labelEl.title = `Tap to change · hit ${newTop} reps to trigger weight increase`;
+  }
 
   // Update meta line in-place
   const metaEl = document.getElementById('rep-goal-meta-' + exId);
@@ -5890,8 +5949,8 @@ function getProgressiveWeight(exId, dayId) {
       reason = useTrend
         ? `${Math.round(avgReps)} reps avg over ${sessions.length} sessions — stay consistent`
         : missedRange
-          ? `${Math.round(avgReps)} reps — get to ${repRangeMin} reps first`
-          : 'build more reps before adding weight';
+          ? `${Math.round(avgReps)} reps — build to ${repRangeMin} reps first`
+          : `${Math.round(avgReps)} reps — build to ${repRangeTop} to trigger increase`;
     }
   }
 
@@ -6289,6 +6348,8 @@ function renderSession() {
     const _mColor = _muscle ? MUSCLE_COLORS[_muscle] : null;
 
     const _goalReps = getGoalReps(ex.id, ex.reps);
+    const _goalColor = { size: '#a855f7', strength: '#3b82f6', both: '#f59e0b' }[state.profile?.goal || 'both'] || '#f59e0b';
+    const _repTop = parseInt((_goalReps.split(/[–\-]/)[1] || _goalReps.split(/[–\-]/)[0])) || 0;
 
     // Build prev-session panel (only if history exists for this exercise)
     const _lastSets = sets.map((_, si) => getLastSetData(ex.id, si)).filter(Boolean);
@@ -6309,7 +6370,7 @@ function renderSession() {
       <div class="set-labels">
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
-        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:var(--red);font-size:11px;font-weight:700;cursor:pointer;border-bottom:1px dashed rgba(204,32,39,0.45);padding-bottom:1px;" title="Edit rep target">GOAL: ${_goalReps}</span></div>
+        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:${_goalColor};font-size:11px;font-weight:700;cursor:pointer;border-bottom:1px dashed ${_goalColor}70;padding-bottom:1px;" title="Tap to change · hit ${_repTop} reps to trigger weight increase">GOAL: ${_goalReps}</span></div>
         <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
         <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
       </div>
@@ -8483,29 +8544,35 @@ function cycleChoiceKeep() {
 
 function cycleChoiceChangeGoal() {
   closeCycleModal();
-  // Show inline goal picker
   const modal = document.createElement('div');
   modal.id = 'cycle-goal-picker';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9500;display:flex;align-items:flex-end;justify-content:center;';
   const goal = state.profile?.goal || 'both';
+
+  // Compute real ranges from GOAL_REPS so descriptions match the actual engine
+  const sSize = getGoalRepSummary('size');
+  const sStr  = getGoalRepSummary('strength');
+  const sBoth = getGoalRepSummary('both');
+
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:28px 24px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;">
       <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">CHOOSE YOUR GOAL</div>
-      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;">Pick your focus for the next cycle. Weights carry over.</div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;">Pick your focus. Weights carry over. Rep targets update immediately.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;">
         <button class="onboard-select-btn ${goal === 'size' ? 'selected' : ''}" onclick="applyCycleGoal('size',this)">
           <div style="font-weight:bold;">Build Size (Hypertrophy)</div>
-          <div style="font-size:12px;color:var(--gray);">8–15 reps, moderate weight, muscle growth focus</div>
+          <div style="font-size:12px;color:var(--gray);">${sSize.main} main lifts · ${sSize.acc} isolation — muscle growth focus</div>
         </button>
         <button class="onboard-select-btn ${goal === 'strength' ? 'selected' : ''}" onclick="applyCycleGoal('strength',this)">
           <div style="font-weight:bold;">Build Strength</div>
-          <div style="font-size:12px;color:var(--gray);">3–6 reps, heavier weight, CNS adaptation focus</div>
+          <div style="font-size:12px;color:var(--gray);">${sStr.main} main lifts · ${sStr.acc} isolation — max strength focus</div>
         </button>
         <button class="onboard-select-btn ${goal === 'both' ? 'selected' : ''}" onclick="applyCycleGoal('both',this)">
-          <div style="font-weight:bold;">Both — Size & Strength</div>
-          <div style="font-size:12px;color:var(--gray);">6–10 reps, powerbuilding approach</div>
+          <div style="font-weight:bold;">Both — Size &amp; Strength</div>
+          <div style="font-size:12px;color:var(--gray);">${sBoth.main} main lifts · ${sBoth.acc} isolation — powerbuilding balance</div>
         </button>
       </div>
+      <div id="cycle-goal-rep-preview" style="margin-bottom:16px;">${buildGoalRepPreviewHTML(goal)}</div>
       <button onclick="document.getElementById('cycle-goal-picker').remove()" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:12px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
     </div>`;
   document.body.appendChild(modal);
@@ -8514,20 +8581,28 @@ function cycleChoiceChangeGoal() {
 function applyCycleGoal(newGoal, btn) {
   btn.closest('[id="cycle-goal-picker"]').querySelectorAll('.onboard-select-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  // Refresh rep preview for the selected goal before closing
+  const previewEl = document.getElementById('cycle-goal-rep-preview');
+  if (previewEl) previewEl.innerHTML = buildGoalRepPreviewHTML(newGoal);
   if (state.profile) state.profile.goal = newGoal;
   saveState();
-  document.getElementById('cycle-goal-picker').remove();
-  const labels = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' };
-  showToast('Goal updated to ' + labels[newGoal] + ' 🎯');
-  updateGoalSettingsSub();
+  setTimeout(() => {
+    document.getElementById('cycle-goal-picker')?.remove();
+    const labels = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' };
+    showToast('Goal updated to ' + labels[newGoal] + ' — rep targets updated');
+    updateGoalSettingsSub();
+    renderHome(); // Refresh day cards so rep ranges reflect new goal immediately
+  }, 300);
 }
 
 function updateGoalSettingsSub() {
   const el = document.getElementById('goal-settings-sub');
   if (!el) return;
   const goal = state.profile?.goal;
-  const labels = { size: 'Build Size (Hypertrophy) — 8–12 reps', strength: 'Build Strength — 3–5 reps', both: 'Size & Strength — 5–10 reps' };
-  el.textContent = goal ? 'Currently: ' + (labels[goal] || goal) : 'Not set — tap to choose';
+  if (!goal) { el.textContent = 'Not set — tap to choose'; return; }
+  const s = getGoalRepSummary(goal);
+  const name = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' }[goal] || goal;
+  el.textContent = `Currently: ${name} — ${s.main} main lifts · ${s.acc} isolation`;
 }
 
 function openGoalPickerFromSettings() {
@@ -9119,6 +9194,12 @@ function renderProgressChart() {
   const prev = dataPoints[dataPoints.length - 2];
   let recHTML = '';
 
+  // Compute goal-aware rep target for this specific exercise
+  const _chartGoal = state.profile?.goal || 'both';
+  const _chartReps = GOAL_REPS[exId]?.[_chartGoal] || '8–12';
+  const _chartRepParts = _chartReps.split(/[–\-]/);
+  const _chartRepTop = parseInt(_chartRepParts[1] || _chartRepParts[0]) || 12;
+
   if (chartMode === 'weight') {
     if (last.weight > prev.weight) {
       const nextWeight = last.weight + getIncrement('small');
@@ -9134,7 +9215,7 @@ function renderProgressChart() {
         <div class="overload-icon">⚡</div>
         <div class="overload-text">
           <strong>ADD REPS FIRST</strong>
-          Same weight 2+ sessions. Try to hit the top of your rep range before adding weight.
+          Weight held 2+ sessions. Build to ${_chartRepTop} reps (your ${_chartReps} target) — progressive overload adds weight automatically when you hit it.
         </div>
       </div>`;
     } else {
@@ -9142,7 +9223,7 @@ function renderProgressChart() {
         <div class="overload-icon">🛡️</div>
         <div class="overload-text">
           <strong>MAINTAIN & REFOCUS</strong>
-          Weight dipped — focus on form and hitting your rep targets at this weight first.
+          Weight dipped — work back to your ${_chartReps} rep target at this weight before pushing higher.
         </div>
       </div>`;
     }
@@ -11808,6 +11889,12 @@ function selectGoalOnboard(value, btn) {
   document.getElementById('ob-goal').value = value;
   btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  // Show live rep range preview driven by GOAL_REPS
+  const previewEl = document.getElementById('ob-goal-rep-preview');
+  if (previewEl) {
+    previewEl.innerHTML = buildGoalRepPreviewHTML(value);
+    previewEl.style.display = 'block';
+  }
 }
 
 function renderDayRecommendations() {
