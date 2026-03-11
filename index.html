@@ -2302,11 +2302,11 @@
     <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
       <button onclick="applyDeloadWeek()" style="background:linear-gradient(135deg,var(--dark3),#2a1f00); border:2px solid var(--warning); border-radius:12px; padding:18px; text-align:left; cursor:pointer; width:100%;">
         <div style="font-family:'Bebas Neue',cursive; font-size:18px; color:var(--warning); letter-spacing:1px; margin-bottom:4px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> DELOAD WEEK</div>
-        <div style="font-size:12px; color:var(--gray); line-height:1.5;">Same exercises, weights automatically reduced by 40%. You still train — joints recover, muscle memory stays sharp.</div>
+        <div style="font-size:12px; color:var(--gray); line-height:1.5;">Same exercises, weights automatically reduced by 25%. You still train — joints recover, muscle memory stays sharp.</div>
       </button>
       <button onclick="applyRestWeek()" style="background:var(--dark3); border:2px solid var(--dark4); border-radius:12px; padding:18px; text-align:left; cursor:pointer; width:100%;">
         <div style="font-family:'Bebas Neue',cursive; font-size:18px; color:var(--gray-light); letter-spacing:1px; margin-bottom:4px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg> REST WEEK</div>
-        <div style="font-size:12px; color:var(--gray); line-height:1.5;">Take the full week off. The program pauses and resumes at Week 8 when you're ready. Best if you're feeling beat up or sick.</div>
+        <div style="font-size:12px; color:var(--gray); line-height:1.5;">Take the full week off. Your next session picks up at Week 8. Best if you're feeling beat up or sick.</div>
       </button>
     </div>
 
@@ -5207,7 +5207,7 @@ function renderHome() {
   } else if (deloadBanner && state.isDeloadWeek) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'DELOAD WEEK ACTIVE';
-    deloadBanner.querySelector('.deload-text').innerHTML = 'Weights are reduced 40%. Train normally — weights restore automatically after this week.<br><button onclick="endRecoveryWeekEarly()" style="margin-top:12px; background:rgba(255,255,255,0.08); border:1px solid #555; color:var(--gray-light); padding:8px 18px; border-radius:8px; font-family:\'Barlow Condensed\',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer;">END EARLY →</button>';
+    deloadBanner.querySelector('.deload-text').innerHTML = 'Weights are reduced 25%. Train normally — weights restore automatically after this week.<br><button onclick="endRecoveryWeekEarly()" style="margin-top:12px; background:rgba(255,255,255,0.08); border:1px solid #555; color:var(--gray-light); padding:8px 18px; border-radius:8px; font-family:\'Barlow Condensed\',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer;">END EARLY →</button>';
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = null;
   } else if (deloadBanner && state.weekCount === 7 && !_dismissedThisCycle && !state.deloadPostponedToWeek) {
