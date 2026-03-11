@@ -2306,6 +2306,10 @@
       </button>
     </div>
 
+    <div id="deload-postpone-btn">
+      <button onclick="postponeDeload()" style="width:100%; background:transparent; border:1px solid var(--dark3); color:var(--gray-light); padding:12px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-bottom:4px;">MOVE TO NEXT WEEK →</button>
+      <div id="deload-postpone-hint" style="font-size:11px; color:var(--gray); line-height:1.5; padding:0 4px; margin-bottom:10px;"></div>
+    </div>
     <button onclick="dismissDeloadSuggestion()" style="width:100%; background:transparent; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-bottom:8px;">SKIP — KEEP TRAINING THIS WEEK</button>
     <button onclick="document.getElementById('deload-modal').style.display='none'" style="width:100%; background:transparent; border:none; color:var(--gray); padding:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; cursor:pointer; opacity:0.5;">DECIDE LATER</button>
   </div>
@@ -5185,10 +5189,16 @@ function renderHome() {
     deloadBanner.querySelector('.deload-text').innerHTML = 'Weights are reduced 40%. Train normally — weights restore automatically after this week.<br><button onclick="endRecoveryWeekEarly()" style="margin-top:12px; background:rgba(255,255,255,0.08); border:1px solid #555; color:var(--gray-light); padding:8px 18px; border-radius:8px; font-family:\'Barlow Condensed\',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer;">END EARLY →</button>';
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = null;
-  } else if (deloadBanner && state.weekCount === 7 && !_dismissedThisCycle) {
+  } else if (deloadBanner && state.weekCount === 7 && !_dismissedThisCycle && !state.deloadPostponedToWeek) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK';
     deloadBanner.querySelector('.deload-text').innerHTML = 'You\'ve hit week 7. Tap to choose: <strong style="color:var(--warning);">Deload</strong> (reduced weights) or <strong style="color:var(--gray-light);">Rest Week</strong> (take the week off).' + _skipBtn;
+    deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+    deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
+  } else if (deloadBanner && state.deloadPostponedToWeek && state.weekCount === state.deloadPostponedToWeek && !_dismissedThisCycle) {
+    deloadBanner.style.display = 'block';
+    deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK — NOW DUE';
+    deloadBanner.querySelector('.deload-text').innerHTML = 'You moved your recovery week here. Tap to choose how to handle it.' + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner && _showPlateauBanner) {
@@ -6007,7 +6017,36 @@ function prevISOWeek(weekStr) {
 // ============================================================
 function openDeloadModal() {
   const modal = document.getElementById('deload-modal');
+  const week = state.weekCount || 1;
+  const postponeWrapper = document.getElementById('deload-postpone-btn');
+  if (postponeWrapper) {
+    if (week >= 8) {
+      postponeWrapper.style.display = 'none';
+    } else {
+      postponeWrapper.style.display = 'block';
+      const hint = document.getElementById('deload-postpone-hint');
+      if (hint) {
+        // Is moving optimal? Good if feeling strong/progressing; not ideal if run down
+        const _plateau = typeof detectProgressionPlateau === 'function' ? detectProgressionPlateau() : { stalled: false };
+        const isStalling = _plateau && _plateau.stalled;
+        if (isStalling) {
+          hint.innerHTML = '⚠️ <strong style="color:var(--warning);">Not ideal right now</strong> — your weights have stalled. A deload this week is more likely to break the plateau.';
+        } else {
+          hint.innerHTML = '✓ <strong style="color:#50c882;">Fine if you\'re feeling strong</strong> — one more full week, then recover at week 8 before the cycle resets.';
+        }
+      }
+    }
+  }
   modal.style.display = 'flex';
+}
+
+function postponeDeload() {
+  const nextWeek = Math.min((state.weekCount || 7) + 1, 8);
+  state.deloadPostponedToWeek = nextWeek;
+  saveState();
+  document.getElementById('deload-modal').style.display = 'none';
+  showToast(`Recovery week moved to week ${nextWeek}`);
+  renderHome();
 }
 
 function applyDeloadWeek() {
@@ -6023,6 +6062,7 @@ function applyDeloadWeek() {
   state.isDeloadWeek = true;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
+  delete state.deloadPostponedToWeek;
   saveState();
   document.getElementById('deload-modal').style.display = 'none';
   showToast('Deload week active — weights at 75% ⚡');
@@ -6035,6 +6075,7 @@ function applyRestWeek() {
   state.weeksSinceDeload = 0;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
+  delete state.deloadPostponedToWeek;
   saveState();
   document.getElementById('deload-modal').style.display = 'none';
   showToast('Rest week active — program paused. Come back strong 💤');
@@ -6075,6 +6116,7 @@ function activateDeloadRest() {
 
 function dismissDeloadSuggestion(fromBanner) {
   state.deloadDismissedAtCycle = state.cycleCount || 1;
+  delete state.deloadPostponedToWeek;
   saveState();
   // Close the signal-triggered modal
   document.getElementById('deload-suggest-modal')?.remove();
