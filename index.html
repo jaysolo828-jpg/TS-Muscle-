@@ -1892,6 +1892,36 @@
     font-weight: 600;
   }
 
+  /* TABLET / DESKTOP: center the app at phone width */
+  @media (min-width: 680px) {
+    .app-content {
+      left: 50%;
+      right: auto;
+      width: 640px;
+      transform: translateX(-50%);
+      box-shadow: 0 0 80px rgba(0,0,0,0.8);
+    }
+    .bottom-nav {
+      left: 50%;
+      right: auto;
+      width: 640px;
+      transform: translateX(-50%);
+    }
+    .workout-session {
+      left: 50%;
+      right: auto;
+      width: 640px;
+      transform: translateX(-50%);
+    }
+  }
+
+  /* SMALL PHONES (≤ 360px): scale down elements most likely to clip */
+  @media (max-width: 360px) {
+    .app-title { font-size: 22px; }
+    .stat-num  { font-size: 28px; }
+    .day-name  { font-size: 16px; }
+  }
+
 </style>
 </head>
 <body>
