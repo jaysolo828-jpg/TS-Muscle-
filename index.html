@@ -5267,17 +5267,17 @@ function renderHome() {
     const _isEarly   = _dWeekNum < 7;
     let _dTitle, _dSub;
     if (_dReason === 'mrv') {
-      _dTitle = _isEarly ? `EARLY DELOAD — WEEK ${_dWeekNum}` : 'DELOAD WEEK ACTIVE';
-      _dSub   = `<strong style="color:var(--cream);">${_dMuscles.length ? _dMuscles.join(', ') : 'A muscle group'}</strong> hit max recoverable volume. Weights at 75% — full load restores automatically after this week.`;
+      _dTitle = _isEarly ? `LIGHTER WEEK — WEEK ${_dWeekNum}` : 'LIGHTER WEEK ACTIVE';
+      _dSub   = `<strong style="color:var(--cream);">${_dMuscles.length ? _dMuscles.join(', ') : 'Some muscle groups'}</strong> have done as much as your body can handle this week. Weights are at 75% so everything gets absorbed properly — full load comes back automatically when this week ends.`;
     } else if (_dReason === 'plateau') {
-      _dTitle = _isEarly ? `PLATEAU DELOAD — WEEK ${_dWeekNum}` : 'PLATEAU RECOVERY ACTIVE';
-      _dSub   = 'Weights stalled across multiple days. A lighter week resets accumulated fatigue and gets progression moving again.';
+      _dTitle = _isEarly ? `LIGHTER WEEK — WEEK ${_dWeekNum}` : 'LIGHTER WEEK ACTIVE';
+      _dSub   = 'Your weights have been stuck across multiple days. A lighter week clears the fatigue that\'s been building up and gets things moving again.';
     } else if (_dReason === 'longrun') {
-      _dTitle = _isEarly ? `OVERDUE DELOAD — WEEK ${_dWeekNum}` : 'RECOVERY WEEK ACTIVE';
-      _dSub   = `${state.weeksSinceDeload || 5}+ weeks of hard training. Fatigue was stacking — this lighter week lets your CNS and joints catch up.`;
+      _dTitle = _isEarly ? `LIGHTER WEEK — WEEK ${_dWeekNum}` : 'LIGHTER WEEK ACTIVE';
+      _dSub   = `You've been pushing hard for ${state.weeksSinceDeload || 5}+ weeks straight. Your body needs time to absorb all that work — this lighter week is what turns training into actual gains.`;
     } else {
-      _dTitle = 'WEEK 7 RECOVERY ACTIVE';
-      _dSub   = 'Mesocycle almost complete. Train through this lighter week, then cycle 2 opens at a higher baseline.';
+      _dTitle = 'LIGHTER WEEK ACTIVE';
+      _dSub   = 'Almost through the block. Train through this lighter week and let everything settle — you\'ll come back next block feeling stronger.';
     }
     // ── Session progress pips ────────────────────────────────────────────
     const _pips = [1,2,3,4].map(i =>
@@ -5305,8 +5305,8 @@ function renderHome() {
       deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
       deloadBanner.querySelector('.deload-banner').onclick = null;
     } else {
-      deloadBanner.querySelector('.deload-title').textContent = 'SCHEDULED RECOVERY — WEEK 7';
-      deloadBanner.querySelector('.deload-text').innerHTML = 'You ran the full volume ramp without hitting MRV early — good discipline. Time for a lighter week before cycle 2 opens heavier. Tap to choose how.' + _skipBtn;
+      deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK — WEEK 7';
+      deloadBanner.querySelector('.deload-text').innerHTML = 'You trained hard through all 6 weeks without needing an early break — that\'s consistency. One lighter week now, then the next block starts heavier than this one opened. Tap to choose how.' + _skipBtn;
       deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
       deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
     }
@@ -5326,8 +5326,8 @@ function renderHome() {
   } else if (deloadBanner && _showMRVBanner) {
     deloadBanner.style.display = 'block';
     const _mrvMuscleNames = _mrvApproaching.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase()).join(', ');
-    deloadBanner.querySelector('.deload-title').textContent = 'APPROACHING MRV';
-    deloadBanner.querySelector('.deload-text').innerHTML = `<strong style="color:var(--cream);">${_mrvMuscleNames}</strong> ${_mrvApproaching.length === 1 ? 'is' : 'are'} near max recoverable volume this week. Back off now before recovery breaks down.` + _skipBtn;
+    deloadBanner.querySelector('.deload-title').textContent = 'TIME TO BACK OFF';
+    deloadBanner.querySelector('.deload-text').innerHTML = `<strong style="color:var(--cream);">${_mrvMuscleNames}</strong> ${_mrvApproaching.length === 1 ? 'has' : 'have'} done as much as your body can handle this week. Keep pushing and you\'ll start breaking down instead of building up. Tap to take a lighter week.` + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner && _showPlateauBanner) {
@@ -6199,9 +6199,9 @@ function openDeloadModal() {
     if (subEl)   subEl.innerHTML = `No progress across <strong style="color:var(--cream);">${_plateau.stalledCount} of ${_plateau.totalDays}</strong> training days. A recovery week resets accumulated fatigue and gets weights moving again.`;
   } else if (isMRV) {
     const _mrvNames = _mrvHits.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase()).join(', ');
-    if (titleEl) titleEl.textContent = 'APPROACHING MRV';
+    if (titleEl) titleEl.textContent = 'TIME TO BACK OFF';
     if (iconEl)  iconEl.innerHTML = _alertSvg;
-    if (subEl)   subEl.innerHTML = `<strong style="color:var(--cream);">${_mrvNames}</strong> ${_mrvHits.length === 1 ? 'is' : 'are'} at or near max recoverable volume. Any more sets this week and recovery breaks down — time to back off.`;
+    if (subEl)   subEl.innerHTML = `<strong style="color:var(--cream);">${_mrvNames}</strong> ${_mrvHits.length === 1 ? 'has' : 'have'} done as much as your body can take this week. More sets now means worse recovery — a lighter week here protects everything you've built.`;
   } else if (isPostponed) {
     if (titleEl) titleEl.textContent = 'RECOVERY WEEK';
     if (iconEl)  iconEl.innerHTML = _boltSvg;
@@ -6232,7 +6232,7 @@ function openDeloadModal() {
           hint.innerHTML = isPlateau
             ? '<strong style="color:var(--warning);">⚠ Not recommended</strong> — your weights are already stalling. Moving it delays the recovery your body needs now.'
             : isMRV
-            ? '<strong style="color:var(--warning);">⚠ Not recommended</strong> — you\'re already near MRV. Adding another full week pushes into overtraining territory.'
+            ? '<strong style="color:var(--warning);">⚠ Not recommended</strong> — your body is already at its limit for this week. Pushing another full week makes recovery harder, not easier.'
             : `<strong style="color:var(--warning);">⚠ Not recommended</strong> — you've already gone ${weeksSince} weeks without recovery. Pushing further increases injury risk.`;
         } else {
           hint.style.cssText = 'margin-top:6px;border-radius:8px;padding:8px 12px;font-size:11px;line-height:1.5;background:rgba(80,200,130,0.06);border:1px solid rgba(80,200,130,0.15);color:var(--gray-light);';
@@ -9671,7 +9671,7 @@ function checkDeloadSuggestion() {
   if (longRun)          signals.push(`<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#f39c12;flex-shrink:0;">📅</span><span>Training for <strong>${weeksSinceDeload}+ weeks</strong> without a planned recovery week</span></div>`);
   if (nearMRV) {
     const _mrvNames = mrvHits.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase()).join(', ');
-    signals.push(`<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#f39c12;flex-shrink:0;">🔴</span><span><strong>${_mrvNames}</strong> ${mrvHits.length === 1 ? 'is' : 'are'} at or near max recoverable volume — continuing at this volume delays recovery</span></div>`);
+    signals.push(`<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#f39c12;flex-shrink:0;">🔴</span><span><strong>${_mrvNames}</strong> ${mrvHits.length === 1 ? 'has' : 'have'} done as much as your body can handle this week — keep pushing and you\'ll start breaking down instead of building up</span></div>`);
   }
 
   const modal = document.createElement('div');
