@@ -8785,8 +8785,8 @@ function openRotationModal() {
       ? `<span style="font-size:10px;color:${mColor};border:1px solid ${mColor}55;background:${mColor}18;border-radius:6px;padding:2px 7px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;font-weight:700;">${muscle.toUpperCase()}</span>`
       : '';
 
-    const otherAltOptions = (ex.alts || []).slice(1).map(a =>
-      `<option value="${a.name.replace(/"/g,'&quot;')}" data-note="${(a.note||'').replace(/"/g,'&quot;')}">${a.name}</option>`
+    const altOptions = (ex.alts || []).map((a, i) =>
+      `<option value="${a.name.replace(/"/g,'&quot;')}" data-note="${(a.note||'').replace(/"/g,'&quot;')}"${i === 0 ? ' selected' : ''}>${a.name}${i === 0 ? ' ★' : ''}</option>`
     ).join('');
 
     const card = document.createElement('div');
@@ -8798,34 +8798,26 @@ function openRotationModal() {
         ${musclePill}
         <div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${dayName.toUpperCase()}</div>
       </div>
-      <div style="font-size:10px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;margin-bottom:4px;">YOUR STARTING EXERCISE</div>
+      <div style="font-size:10px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;margin-bottom:4px;">CURRENT EXERCISE</div>
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:1px;color:var(--cream);margin-bottom:14px;">${ex.name}</div>
-      <div id="rot-alt-block-${ex.id}" style="background:#0a1e12;border:1.5px solid rgba(80,200,130,0.35);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
-        <div id="rot-alt-label-${ex.id}" style="font-size:10px;color:#50c882;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;margin-bottom:4px;">POPULAR ALTERNATIVE</div>
-        <div id="rot-alt-name-${ex.id}" data-orig="${suggestedAlt.name.replace(/"/g,'&quot;')}" style="font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:1px;color:var(--cream);margin-bottom:4px;">${suggestedAlt.name}</div>
-        <div id="rot-note-${ex.id}" data-orig="${(suggestedAlt.note||'').replace(/"/g,'&quot;')}" style="font-size:12px;color:var(--gray);line-height:1.4;">${suggestedAlt.note || ''}</div>
+      <div style="font-size:10px;color:#50c882;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;margin-bottom:6px;">SWAP TO</div>
+      <select onchange="onRotationDropdownChange('${ex.id}',this)" style="width:100%;background:var(--dark3);border:1px solid rgba(80,200,130,0.3);color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-size:15px;padding:10px 14px;border-radius:10px;appearance:none;-webkit-appearance:none;margin-bottom:0;">
+        <option value="" data-note="">— Keep ${ex.name} —</option>
+        ${altOptions}
+        <option value="__custom__" data-note="">✍️ Write my own…</option>
+      </select>
+      <div id="rot-note-${ex.id}" style="font-size:12px;color:var(--gray);margin-top:8px;margin-bottom:10px;min-height:18px;padding:0 2px;line-height:1.4;">${suggestedAlt ? suggestedAlt.note : ''}</div>
+      <div id="rot-custom-${ex.id}" style="display:none;margin-bottom:10px;">
+        <input type="text" id="rot-custom-input-${ex.id}" placeholder="e.g. Hex Bar Deadlift, Smith Machine Row…" class="set-input" style="width:100%;text-align:left;padding:10px 14px;font-size:16px;" oninput="onRotationCustomInput('${ex.id}',this.value)"/>
+        <div style="font-size:11px;color:var(--gray);margin-top:5px;line-height:1.4;padding:0 2px;">Your weight history carries over — just adjust on your first session if needed.</div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <button class="swap-today-btn" id="rot-keep-btn-${ex.id}" style="flex:1;opacity:0.35;" onclick="selectRotationKeep('${ex.id}')" data-active-label="KEEPING DEFAULT ✓" data-inactive-label="KEEP DEFAULT">KEEP DEFAULT</button>
-        <button class="swap-perm-btn" id="rot-swap-btn-${ex.id}" style="flex:1;" onclick="selectRotationSwap('${ex.id}')" data-active-label="USE THIS INSTEAD ✓" data-inactive-label="USE THIS INSTEAD" data-swap-target="${suggestedAlt.name.replace(/"/g,'&quot;')}">USE THIS INSTEAD ✓</button>
+      <div id="rot-nohistory-${ex.id}" style="display:none;background:#0d1f13;border:1px solid rgba(80,200,130,0.3);border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+        <div style="font-size:11px;color:#50c882;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;margin-bottom:3px;">FIRST TIME WITH THIS ONE?</div>
+        <div style="font-size:12px;color:var(--gray);line-height:1.4;">No problem — just enter a weight you can handle on your first session. The app dials it in from there.</div>
       </div>
-      <div>
-        <button onclick="toggleRotationAltExpand('${ex.id}')" id="rot-expand-btn-${ex.id}" style="background:none;border:none;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:13px;cursor:pointer;padding:4px 0;width:100%;text-align:center;letter-spacing:0.3px;-webkit-tap-highlight-color:transparent;">Want something different? ↓</button>
-        <div id="rot-expand-${ex.id}" style="display:none;margin-top:8px;">
-          <select onchange="onRotationDropdownChange('${ex.id}',this)" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-size:15px;padding:10px 14px;border-radius:10px;appearance:none;-webkit-appearance:none;">
-            <option value="" data-note="">— Pick a different one —</option>
-            ${otherAltOptions}
-            <option value="__custom__" data-note="">✍️ Write my own…</option>
-          </select>
-          <div id="rot-custom-${ex.id}" style="display:none;margin-top:8px;">
-            <input type="text" id="rot-custom-input-${ex.id}" placeholder="e.g. Hex Bar Deadlift, Smith Machine Row…" class="set-input" style="width:100%;text-align:left;padding:10px 14px;font-size:16px;" oninput="onRotationCustomInput('${ex.id}',this.value)"/>
-            <div style="font-size:11px;color:var(--gray);margin-top:5px;line-height:1.4;padding:0 2px;">Your weight history carries over — just adjust on your first session if needed.</div>
-          </div>
-          <div id="rot-nohistory-${ex.id}" style="display:none;background:#0d1f13;border:1px solid rgba(80,200,130,0.3);border-radius:10px;padding:10px 12px;margin-top:8px;">
-            <div style="font-size:11px;color:#50c882;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;margin-bottom:3px;">FIRST TIME WITH THIS ONE?</div>
-            <div style="font-size:12px;color:var(--gray);line-height:1.4;">No problem — just enter a weight you can handle on your first session. The app dials it in from there.</div>
-          </div>
-        </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="swap-perm-btn" id="rot-swap-btn-${ex.id}" style="flex:1;" onclick="selectRotationSwap('${ex.id}')">SWAP IT</button>
+        <button class="swap-today-btn" id="rot-keep-btn-${ex.id}" style="flex:1;opacity:0.45;" onclick="selectRotationKeep('${ex.id}')">KEEP IT</button>
       </div>
     `;
     list.appendChild(card);
@@ -8840,44 +8832,8 @@ function onRotationDropdownChange(exId, select) {
   const customDiv = document.getElementById('rot-custom-' + exId);
   const noHistDiv = document.getElementById('rot-nohistory-' + exId);
   const noteDiv = document.getElementById('rot-note-' + exId);
-  const altNameDiv = document.getElementById('rot-alt-name-' + exId);
-  const altLabelDiv = document.getElementById('rot-alt-label-' + exId);
-  const swapBtn = document.getElementById('rot-swap-btn-' + exId);
 
-  // New Week 5 card design (has prominent popular-alt block)
-  if (altNameDiv) {
-    if (val && val !== '__custom__') {
-      const selectedOpt = select.options[select.selectedIndex];
-      altNameDiv.textContent = val;
-      if (altLabelDiv) altLabelDiv.textContent = 'YOUR PICK';
-      if (noteDiv) noteDiv.textContent = selectedOpt?.getAttribute('data-note') || '';
-      if (swapBtn) swapBtn.dataset.swapTarget = val;
-      if (customDiv) customDiv.style.display = 'none';
-      const hasHistory = state.history && state.history.some(h => h.sets && h.sets[exId] && h.sets[exId].length > 0);
-      if (noHistDiv) noHistDiv.style.display = hasHistory ? 'none' : 'block';
-      _rotationPendingSwaps[exId] = val;
-      selectRotationSwap(exId);
-    } else if (val === '__custom__') {
-      if (customDiv) customDiv.style.display = 'block';
-      if (noHistDiv) noHistDiv.style.display = 'block';
-      _rotationPendingSwaps[exId] = null; // wait for typed input
-    } else {
-      // Blank — revert to popular alternative
-      const origName = altNameDiv.dataset.orig || '';
-      const origNote = noteDiv?.dataset.orig || '';
-      altNameDiv.textContent = origName;
-      if (altLabelDiv) altLabelDiv.textContent = 'POPULAR ALTERNATIVE';
-      if (noteDiv) noteDiv.textContent = origNote;
-      if (swapBtn) swapBtn.dataset.swapTarget = origName;
-      if (customDiv) customDiv.style.display = 'none';
-      if (noHistDiv) noHistDiv.style.display = 'none';
-      _rotationPendingSwaps[exId] = origName;
-      selectRotationSwap(exId);
-    }
-    return;
-  }
-
-  // Old card design (onboarding / post-split)
+  // Update the note text for the selected option
   if (noteDiv) {
     const selectedOpt = select.options[select.selectedIndex];
     noteDiv.textContent = (val && val !== '__custom__') ? (selectedOpt?.getAttribute('data-note') || '') : '';
@@ -8904,31 +8860,13 @@ function onRotationCustomInput(exId, value) {
   _rotationPendingSwaps[exId] = value.trim() || null;
 }
 
-function toggleRotationAltExpand(exId) {
-  const expandDiv = document.getElementById('rot-expand-' + exId);
-  const btn = document.getElementById('rot-expand-btn-' + exId);
-  if (!expandDiv) return;
-  const isOpen = expandDiv.style.display !== 'none';
-  expandDiv.style.display = isOpen ? 'none' : 'block';
-  if (btn) btn.textContent = isOpen ? 'Want something different? ↓' : 'Want something different? ↑';
-}
-
 function selectRotationSwap(exId) {
   const card = document.getElementById('rot-card-' + exId);
   const swapBtn = document.getElementById('rot-swap-btn-' + exId);
   const keepBtn = document.getElementById('rot-keep-btn-' + exId);
   if (card) card.style.borderColor = 'rgba(80,200,130,0.6)';
-  if (swapBtn) {
-    const swapTarget = swapBtn.dataset.swapTarget;
-    if (swapTarget) _rotationPendingSwaps[exId] = swapTarget;
-    swapBtn.style.background = '#1a5c38';
-    swapBtn.style.opacity = '1';
-    swapBtn.textContent = swapBtn.dataset.activeLabel || 'SWAPPING ✓';
-  }
-  if (keepBtn) {
-    keepBtn.style.opacity = '0.35';
-    if (keepBtn.dataset.inactiveLabel) keepBtn.textContent = keepBtn.dataset.inactiveLabel;
-  }
+  if (swapBtn) { swapBtn.style.background = '#1a5c38'; swapBtn.textContent = 'SWAPPING ✓'; }
+  if (keepBtn) keepBtn.style.opacity = '0.35';
 }
 
 function selectRotationKeep(exId) {
@@ -8936,15 +8874,8 @@ function selectRotationKeep(exId) {
   const swapBtn = document.getElementById('rot-swap-btn-' + exId);
   const keepBtn = document.getElementById('rot-keep-btn-' + exId);
   if (card) card.style.borderColor = 'var(--dark3)';
-  if (swapBtn) {
-    swapBtn.style.background = '';
-    swapBtn.style.opacity = '0.35';
-    swapBtn.textContent = swapBtn.dataset.inactiveLabel || 'SWAP IT';
-  }
-  if (keepBtn) {
-    keepBtn.style.opacity = '1';
-    keepBtn.textContent = keepBtn.dataset.activeLabel || 'KEEPING ✓';
-  }
+  if (swapBtn) { swapBtn.style.background = ''; swapBtn.textContent = 'SWAP IT'; swapBtn.style.opacity = '0.35'; }
+  if (keepBtn) { keepBtn.style.opacity = '1'; keepBtn.textContent = 'KEEPING ✓'; }
   delete _rotationPendingSwaps[exId];
 }
 
