@@ -2328,7 +2328,7 @@
 
   <div style="font-size:11px; color:var(--gray); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px; padding-left:10px; border-left:2px solid #444;">MISSED SESSION</div>
   <div id="barrier-history-list" style="margin-bottom:14px;">
-    <div class="empty-state"><div class="empty-state-icon">💡</div><div class="empty-state-text">No reframes yet.</div></div>
+    <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No reframes yet.</div></div>
   </div>
 
   <div style="font-size:11px; color:var(--gray); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px; padding-left:10px; border-left:2px solid #444;">COMPASSION CHECK-IN</div>
@@ -15196,7 +15196,7 @@ function renderBarrierHistory(showAll = false) {
   const container = document.getElementById('barrier-history-list');
   if (!container) return;
   if (!state.barrierLog || state.barrierLog.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💡</div><div class="empty-state-text">No entries yet. When you log a skip, your reframes will show here.</div></div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No entries yet. When you log a skip, your reframes will show here.</div></div>';
     return;
   }
   const visible = showAll ? state.barrierLog : state.barrierLog.slice(0, 1);
