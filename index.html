@@ -2023,8 +2023,6 @@
     <div class="week-dots" id="week-dots"></div>
   </div>
 
-  <div id="home-volume-panel" style="margin-bottom:8px;"></div>
-
   <div class="section-title">YOUR <span>PROGRAM</span><span id="home-split-badge" style="margin-left:auto; font-size:11px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); color:var(--red-text); padding:4px 10px; border-radius:20px; letter-spacing:1.5px; font-weight:700; font-family:'Barlow Condensed',sans-serif;"></span></div>
 
   <div id="day-cards"></div>
@@ -5270,16 +5268,16 @@ function renderHome() {
     let _dTitle, _dSub;
     if (_dReason === 'mrv') {
       _dTitle = _isEarly ? `EARLY DELOAD — WEEK ${_dWeekNum}` : 'DELOAD WEEK ACTIVE';
-      _dSub   = `<strong style="color:var(--cream);">${_dMuscles.length ? _dMuscles.join(', ') : 'A muscle group'}</strong> hit max recoverable volume. Weights at 75% — full load restores automatically after this week.`;
+      _dSub   = `${_dMuscles.length ? `<strong style="color:var(--cream);">${_dMuscles.join(', ')}</strong> hit their limit this week.` : 'Your muscles hit their limit this week.'} Weights are at 75% — they restore automatically when this week ends.`;
     } else if (_dReason === 'plateau') {
-      _dTitle = _isEarly ? `PLATEAU DELOAD — WEEK ${_dWeekNum}` : 'PLATEAU RECOVERY ACTIVE';
-      _dSub   = 'Weights stalled across multiple days. A lighter week resets accumulated fatigue and gets progression moving again.';
+      _dTitle = _isEarly ? `EARLY DELOAD — WEEK ${_dWeekNum}` : 'DELOAD WEEK ACTIVE';
+      _dSub   = 'Your weights have been stalling. A lighter week clears the built-up fatigue and gets things moving again.';
     } else if (_dReason === 'longrun') {
-      _dTitle = _isEarly ? `OVERDUE DELOAD — WEEK ${_dWeekNum}` : 'RECOVERY WEEK ACTIVE';
-      _dSub   = `${state.weeksSinceDeload || 5}+ weeks of hard training. Fatigue was stacking — this lighter week lets your CNS and joints catch up.`;
+      _dTitle = _isEarly ? `EARLY DELOAD — WEEK ${_dWeekNum}` : 'DELOAD WEEK ACTIVE';
+      _dSub   = `You've been training hard for ${state.weeksSinceDeload || 5}+ weeks without a break. Time to let it absorb.`;
     } else {
-      _dTitle = 'WEEK 7 RECOVERY ACTIVE';
-      _dSub   = 'Mesocycle almost complete. Train through this lighter week, then cycle 2 opens at a higher baseline.';
+      _dTitle = 'DELOAD WEEK ACTIVE';
+      _dSub   = 'Planned lighter week. Weights are at 75% — they restore automatically when this week ends.';
     }
     // ── Session progress pips ────────────────────────────────────────────
     const _pips = [1,2,3,4].map(i =>
@@ -5307,8 +5305,8 @@ function renderHome() {
       deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
       deloadBanner.querySelector('.deload-banner').onclick = null;
     } else {
-      deloadBanner.querySelector('.deload-title').textContent = 'SCHEDULED RECOVERY — WEEK 7';
-      deloadBanner.querySelector('.deload-text').innerHTML = 'You ran the full volume ramp without hitting MRV early — good discipline. Time for a lighter week before cycle 2 opens heavier. Tap to choose how.' + _skipBtn;
+      deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK — WEEK 7';
+      deloadBanner.querySelector('.deload-text').innerHTML = 'Week 7 — your scheduled lighter week. Weights drop to 75% and restore automatically. Tap to choose how to handle it.' + _skipBtn;
       deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
       deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
     }
@@ -5328,8 +5326,8 @@ function renderHome() {
   } else if (deloadBanner && _showMRVBanner) {
     deloadBanner.style.display = 'block';
     const _mrvMuscleNames = _mrvApproaching.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase()).join(', ');
-    deloadBanner.querySelector('.deload-title').textContent = 'APPROACHING MRV';
-    deloadBanner.querySelector('.deload-text').innerHTML = `<strong style="color:var(--cream);">${_mrvMuscleNames}</strong> ${_mrvApproaching.length === 1 ? 'is' : 'are'} near max recoverable volume this week. Back off now before recovery breaks down.` + _skipBtn;
+    deloadBanner.querySelector('.deload-title').textContent = 'TIME TO BACK OFF';
+    deloadBanner.querySelector('.deload-text').innerHTML = `<strong style="color:var(--cream);">${_mrvMuscleNames}</strong> ${_mrvApproaching.length === 1 ? 'has' : 'have'} hit their limit for this week. A lighter week now means better results next block. Tap to take a recovery week.` + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner && _showPlateauBanner) {
@@ -5515,82 +5513,6 @@ function renderHome() {
     container.appendChild(card);
   });
 
-  renderVolumePanelInHome();
-}
-
-// ============================================================
-// WEEKLY VOLUME PROGRESSION PANEL
-// ============================================================
-// Renders into #home-volume-panel — shows each program muscle's
-// actual weekly sets vs the mesocycle week target (MEV→MAV ramp).
-function renderVolumePanelInHome() {
-  const volumePanel = document.getElementById('home-volume-panel');
-  if (!volumePanel) return;
-
-  const weekNum    = state.weekCount || 1;
-  const isDeload   = state.isDeloadWeek || state.isRestWeek;
-  const weeklySets = getWeeklySetsByMuscle();
-  const maxDays    = state.trainingDaysPerWeek || 4;
-
-  // Collect muscle groups that appear in the user's current program
-  const programMuscles = new Set();
-  (state.program || []).slice(0, maxDays).forEach(day => {
-    day.exercises.forEach(ex => {
-      const muscle = MUSCLE_MAP[ex.id];
-      if (muscle && VOLUME_LANDMARKS[muscle]) programMuscles.add(muscle);
-    });
-  });
-
-  if (programMuscles.size === 0) {
-    volumePanel.style.display = 'none';
-    return;
-  }
-  volumePanel.style.display = '';
-
-  const rows = [];
-  [...programMuscles].sort().forEach(muscle => {
-    const actual   = weeklySets[muscle] || 0;
-    const target   = getWeeklyVolumeTarget(muscle, weekNum);
-    const { mrv }  = VOLUME_LANDMARKS[muscle];
-    const color    = MUSCLE_COLORS[muscle] || '#888';
-
-    const nearMRV  = actual >= mrv * 0.9;
-    const atTarget = actual >= target;
-    const barColor = nearMRV ? '#ff6b6b' : atTarget ? '#50c882' : (actual > 0 ? color : 'var(--dark4)');
-    const barPct   = Math.min((actual / mrv) * 100, 100);
-    const tgtPct   = Math.min((target / mrv) * 100, 100);
-    const label    = muscle.charAt(0) + muscle.slice(1).toLowerCase();
-    const statusColor = nearMRV ? '#ff6b6b' : atTarget ? '#50c882' : 'var(--gray)';
-    const statusMark  = nearMRV ? ' ⚠' : atTarget ? ' ✓' : '';
-
-    rows.push(`
-      <div style="margin-bottom:9px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.3px;">${label}</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:${statusColor};">${actual}<span style="color:var(--gray);">/${target}</span>${statusMark}</span>
-        </div>
-        <div style="background:var(--dark3);border-radius:4px;height:5px;position:relative;overflow:visible;">
-          <div style="position:absolute;top:-1px;left:${tgtPct}%;width:2px;height:7px;background:rgba(255,255,255,0.25);border-radius:1px;transform:translateX(-1px);"></div>
-          <div style="height:100%;width:${barPct}%;background:${barColor};border-radius:4px;transition:width 0.4s ease;"></div>
-        </div>
-      </div>`);
-  });
-
-  const cycleLabel  = state.cycleCount > 1 ? ` · CYCLE ${state.cycleCount}` : '';
-  const weekLabel   = isDeload ? 'DELOAD' : `WK ${weekNum}`;
-  volumePanel.innerHTML = `
-    <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:12px;padding:14px 16px 10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <span style="font-family:'Bebas Neue',cursive;font-size:14px;color:var(--gray);letter-spacing:1.5px;">WEEKLY VOLUME</span>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;">${weekLabel} TARGET${cycleLabel}</span>
-      </div>
-      ${rows.join('')}
-      <div style="display:flex;gap:12px;margin-top:8px;padding-top:6px;border-top:1px solid var(--dark3);">
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(255,255,255,0.18);vertical-align:-1px;margin-right:3px;"></span>target marker</span>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:#50c882;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#50c882;vertical-align:-1px;margin-right:3px;"></span>at target</span>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:#ff6b6b;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#ff6b6b;vertical-align:-1px;margin-right:3px;"></span>near MRV</span>
-      </div>
-    </div>`;
 }
 
 function toggleDayCard(dayId) {
@@ -6277,9 +6199,9 @@ function openDeloadModal() {
     if (subEl)   subEl.innerHTML = `No progress across <strong style="color:var(--cream);">${_plateau.stalledCount} of ${_plateau.totalDays}</strong> training days. A recovery week resets accumulated fatigue and gets weights moving again.`;
   } else if (isMRV) {
     const _mrvNames = _mrvHits.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase()).join(', ');
-    if (titleEl) titleEl.textContent = 'APPROACHING MRV';
+    if (titleEl) titleEl.textContent = 'TIME TO BACK OFF';
     if (iconEl)  iconEl.innerHTML = _alertSvg;
-    if (subEl)   subEl.innerHTML = `<strong style="color:var(--cream);">${_mrvNames}</strong> ${_mrvHits.length === 1 ? 'is' : 'are'} at or near max recoverable volume. Any more sets this week and recovery breaks down — time to back off.`;
+    if (subEl)   subEl.innerHTML = `<strong style="color:var(--cream);">${_mrvNames}</strong> ${_mrvHits.length === 1 ? 'has' : 'have'} hit their limit for this week. A lighter week now means better results when the next block starts.`;
   } else if (isPostponed) {
     if (titleEl) titleEl.textContent = 'RECOVERY WEEK';
     if (iconEl)  iconEl.innerHTML = _boltSvg;
@@ -6310,7 +6232,7 @@ function openDeloadModal() {
           hint.innerHTML = isPlateau
             ? '<strong style="color:var(--warning);">⚠ Not recommended</strong> — your weights are already stalling. Moving it delays the recovery your body needs now.'
             : isMRV
-            ? '<strong style="color:var(--warning);">⚠ Not recommended</strong> — you\'re already near MRV. Adding another full week pushes into overtraining territory.'
+            ? '<strong style="color:var(--warning);">⚠ Not recommended</strong> — you\'re already at this week\'s limit. One more full week will make recovery harder.'
             : `<strong style="color:var(--warning);">⚠ Not recommended</strong> — you've already gone ${weeksSince} weeks without recovery. Pushing further increases injury risk.`;
         } else {
           hint.style.cssText = 'margin-top:6px;border-radius:8px;padding:8px 12px;font-size:11px;line-height:1.5;background:rgba(80,200,130,0.06);border:1px solid rgba(80,200,130,0.15);color:var(--gray-light);';
@@ -9749,7 +9671,7 @@ function checkDeloadSuggestion() {
   if (longRun)          signals.push(`<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#f39c12;flex-shrink:0;">📅</span><span>Training for <strong>${weeksSinceDeload}+ weeks</strong> without a planned recovery week</span></div>`);
   if (nearMRV) {
     const _mrvNames = mrvHits.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase()).join(', ');
-    signals.push(`<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#f39c12;flex-shrink:0;">🔴</span><span><strong>${_mrvNames}</strong> ${mrvHits.length === 1 ? 'is' : 'are'} at or near max recoverable volume — continuing at this volume delays recovery</span></div>`);
+    signals.push(`<div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:#f39c12;flex-shrink:0;">🔴</span><span><strong>${_mrvNames}</strong> ${mrvHits.length === 1 ? 'has' : 'have'} hit their limit for this week — a lighter week now protects your progress</span></div>`);
   }
 
   const modal = document.createElement('div');
