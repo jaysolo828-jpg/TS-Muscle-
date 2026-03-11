@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-03-11T20:30:24.864Z",
+  "totalBugs": 3,
+  "bugs": [
+    {
+      "category": "JS Error",
+      "description": "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "extra": "context: initial load"
+    },
+    {
+      "category": "JS Error",
+      "description": "Access to image at 'file:///home/user/TS-Muscle-/icon.png' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+      "extra": "context: share cards week9"
+    },
+    {
+      "category": "JS Error",
+      "description": "Failed to load resource: net::ERR_FAILED",
+      "extra": "context: share cards week9"
+    }
+  ],
+  "screenshots": [
+    "000_00_app_loaded.png",
+    "000_CRASH.png",
+    "001_CRASH.png",
+    "001_after_onboarding.png",
+    "002_CRASH.png",
+    "002_after_test_week_review.png",
+    "003_CRASH.png",
+    "003_live_session_week1.png",
+    "004_history_week1.png",
+    "005_cardio_week1.png",
+    "006_mindset_week1.png",
+    "007_settings_week1.png",
+    "008_after_week6.png",
+    "009_week7_deload_banner.png",
+    "010_after_deload_modal.png",
+    "011_after_deload_week.png",
+    "012_history_week7.png",
+    "013_cycle_rollover.png",
+    "014_live_session_week9_cycle2.png",
+    "015_after_week9.png",
+    "016_history_week9.png",
+    "017_cardio_week9.png",
+    "018_mindset_week9.png",
+    "019_settings_week9.png",
+    "020_FINAL_home.png",
+    "021_history_FINAL.png",
+    "022_FINAL_history.png"
+  ]
+}

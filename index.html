@@ -10925,6 +10925,7 @@ function _drawCardGrain(ctx, W, H) {
 }
 
 async function generateAndShareCard(type, data) {
+  data = data || {};
   showToast('Creating your card…');
   try { await document.fonts.ready; } catch(e) {}
 
@@ -12104,6 +12105,9 @@ function migrateSessionCount() {
 // ============================================================
 // INIT
 // ============================================================
+// Declared here (before init) to avoid TDZ error: _initObScroll is called from
+// checkOnboarding() inside the init block, before the original `let` at line ~13134.
+let _obScrollListenerReady = false;
 try {
   loadState();
   migrateSessionCount();
@@ -13131,7 +13135,6 @@ function handleImportOnboarding(e) {
   reader.readAsText(file);
 }
 
-let _obScrollListenerReady = false;
 function _checkObScroll() {
   const modal = document.getElementById('onboarding-modal');
   const fade  = document.getElementById('ob-scroll-fade');
@@ -14003,14 +14006,18 @@ function completeOnboarding() {
       document.body.appendChild(modal);
     }, 400);
   } else {
-    // Redo path — preference already set; just launch tutorial if needed
+    // Either redo (settings-initiated reset) or first-time skip of weight setup.
+    // Show a contextual toast: welcoming for brand-new users, confirmatory for redos.
+    const name = state.profile?.name || 'there';
+    const isFirstTime = !state.history || state.history.length === 0;
     if (!state.tutorialAutoLaunched) {
       state.tutorialAutoLaunched = true;
       saveState();
       setTimeout(() => openTutorial(), 800);
     }
-    const name = state.profile?.name || 'there';
-    showToast(`Setup updated, ${name}! Your program is ready.`);
+    showToast(isFirstTime
+      ? `You're all set, ${name}! Week 1 starts now. 💪`
+      : `Setup updated, ${name}! Your program is ready.`);
   }
 }
 
