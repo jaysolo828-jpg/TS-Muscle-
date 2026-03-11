@@ -1481,7 +1481,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.85);
-    z-index: 500;
+    z-index: 10000;
     align-items: flex-end;
     justify-content: center;
   }
@@ -9031,10 +9031,11 @@ function openOnboardingRotationReview() {
   const subtitle = document.querySelector('#rotation-modal .modal-sub');
   if (subtitle) {
     subtitle.innerHTML = `
-      <strong style="color:var(--cream);">These are the exercises in your program.</strong> We picked proven, beginner-friendly options for every movement.<br><br>
-      Below each exercise you'll see a popular alternative — same muscle group, slightly different feel. If one fits your gym better, swap it. Otherwise, keep the default.<br><br>
-      <span style="color:#50c882;">🔄 How this connects to "Mix It Up":</span> After your first full cycle (about 8 weeks), the app will remind you to swap one or two exercises. Muscles adapt to the same movements — swapping keeps growth coming. The exercises you choose here are what you'll start with, and what the app will later suggest rotating away from.<br><br>
-      <span style="color:var(--gray);">Nothing changes automatically. You always decide.</span>`;
+      <div style="margin-bottom:14px;">These are the exercises in your program. We picked proven options for every movement — keep the defaults or swap any that don't suit your gym.</div>
+      <div style="background:linear-gradient(135deg,#081a10,#0a1e12);border:1.5px solid rgba(80,200,130,0.3);border-radius:12px;padding:12px 14px;margin-bottom:4px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:13px;letter-spacing:1px;color:#50c882;margin-bottom:6px;">🔄 HOW THIS CONNECTS TO MIX IT UP</div>
+        <div style="font-size:13px;color:var(--gray-light);line-height:1.6;">After your first full cycle (~8 weeks), the app will suggest swapping one or two of these exercises. Same muscle — just a different angle. That's what keeps growth coming once your body adapts.<br><br><strong style="color:var(--cream);">Nothing changes automatically. You always choose.</strong></div>
+      </div>`;
     subtitle.style.display = 'block';
   }
 
@@ -13069,6 +13070,9 @@ function buildOnboardingSummary() {
   state.splitType = splitType;
   state.testWeekComplete = false;
   state.testWeekStartDate = new Date().toISOString();
+  // Build the correct program now so the "REVIEW & CUSTOMIZE" modal shows the right exercises
+  state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[splitType] || DEFAULT_PROGRAM));
+  applyObExerciseSelections();
   saveState();
 
   const goalLabel = goal === 'size' ? 'Hypertrophy (Size)' : goal === 'strength' ? 'Strength' : 'Size & Strength';
