@@ -2290,9 +2290,9 @@
 <div id="deload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid var(--dark3);">
     <div style="text-align:center; margin-bottom:16px;">
-      <div style="margin-bottom:12px;"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px;">RECOVERY WEEK</div>
-      <div style="font-size:13px; color:var(--gray); margin-top:6px; line-height:1.6;">Week 7 — time to recover. Choose what works for you, or skip it if you're feeling strong.</div>
+      <div id="deload-modal-icon" style="margin-bottom:12px;"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+      <div id="deload-modal-title" style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px;">RECOVERY WEEK</div>
+      <div id="deload-modal-sub" style="font-size:13px; color:var(--gray); margin-top:6px; line-height:1.6;"></div>
     </div>
 
     <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
@@ -6025,6 +6025,40 @@ function prevISOWeek(weekStr) {
 function openDeloadModal() {
   const modal = document.getElementById('deload-modal');
   const week = state.weekCount || 1;
+  const weeksSince = state.weeksSinceDeload || week;
+  const _plateau = typeof detectProgressionPlateau === 'function' ? detectProgressionPlateau() : { stalled: false };
+  const isPlateau = _plateau && _plateau.stalled;
+  const isPostponed = !!(state.deloadPostponedToWeek && week === state.deloadPostponedToWeek);
+  const isLongRun = !isPlateau && weeksSince >= 5 && week !== 7;
+
+  const _boltSvg = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+  const _trendSvg = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
+  const _clockSvg = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+
+  const titleEl = document.getElementById('deload-modal-title');
+  const subEl   = document.getElementById('deload-modal-sub');
+  const iconEl  = document.getElementById('deload-modal-icon');
+
+  if (isPlateau) {
+    if (titleEl) titleEl.textContent = 'BREAK THE PLATEAU';
+    if (iconEl)  iconEl.innerHTML = _trendSvg;
+    if (subEl)   subEl.innerHTML = `No progress across <strong style="color:var(--cream);">${_plateau.stalledCount} of ${_plateau.totalDays}</strong> training days. A recovery week resets accumulated fatigue and gets weights moving again.`;
+  } else if (isPostponed) {
+    if (titleEl) titleEl.textContent = 'RECOVERY WEEK';
+    if (iconEl)  iconEl.innerHTML = _boltSvg;
+    if (subEl)   subEl.textContent = 'You pushed this from week 7 — last chance this cycle. Choose how to handle it.';
+  } else if (isLongRun) {
+    if (titleEl) titleEl.textContent = 'RECOVERY DUE';
+    if (iconEl)  iconEl.innerHTML = _clockSvg;
+    if (subEl)   subEl.innerHTML = `<strong style="color:var(--cream);">${weeksSince} weeks</strong> of hard training without a deload. Fatigue builds quietly — a light week now keeps long-term progress coming.`;
+  } else {
+    // Default: scheduled week 7
+    if (titleEl) titleEl.textContent = 'RECOVERY WEEK';
+    if (iconEl)  iconEl.innerHTML = _boltSvg;
+    if (subEl)   subEl.textContent = 'Week 7 — your scheduled recovery. Choose what works for you, or skip it if you\'re feeling strong.';
+  }
+
+  // Postpone button: hide at week 8, set hint based on whether moving is wise
   const postponeWrapper = document.getElementById('deload-postpone-btn');
   if (postponeWrapper) {
     if (week >= 8) {
@@ -6033,19 +6067,20 @@ function openDeloadModal() {
       postponeWrapper.style.display = 'block';
       const hint = document.getElementById('deload-postpone-hint');
       if (hint) {
-        // Is moving optimal? Good if feeling strong/progressing; not ideal if run down
-        const _plateau = typeof detectProgressionPlateau === 'function' ? detectProgressionPlateau() : { stalled: false };
-        const isStalling = _plateau && _plateau.stalled;
-        if (isStalling) {
+        const shouldWarn = isPlateau || isLongRun;
+        if (shouldWarn) {
           hint.style.cssText = 'margin-top:6px;border-radius:8px;padding:8px 12px;font-size:11px;line-height:1.5;background:rgba(243,156,18,0.08);border:1px solid rgba(243,156,18,0.2);color:var(--gray-light);';
-          hint.innerHTML = '<strong style="color:var(--warning);">⚠ Not ideal right now</strong> — your weights have been stalling. A deload this week is more likely to break through the plateau.';
+          hint.innerHTML = isPlateau
+            ? '<strong style="color:var(--warning);">⚠ Not recommended</strong> — your weights are already stalling. Moving it delays the recovery your body needs now.'
+            : `<strong style="color:var(--warning);">⚠ Not recommended</strong> — you've already gone ${weeksSince} weeks without recovery. Pushing further increases injury risk.`;
         } else {
           hint.style.cssText = 'margin-top:6px;border-radius:8px;padding:8px 12px;font-size:11px;line-height:1.5;background:rgba(80,200,130,0.06);border:1px solid rgba(80,200,130,0.15);color:var(--gray-light);';
-          hint.innerHTML = '<strong style="color:#50c882;">✓ Fine if you\'re feeling strong</strong> — one more full week at full intensity, then recover at week 8 right before the cycle resets.';
+          hint.innerHTML = '<strong style="color:#50c882;">✓ Fine if you\'re feeling strong</strong> — one more full week, then recover at week 8 right before the cycle resets.';
         }
       }
     }
   }
+
   modal.style.display = 'flex';
 }
 
