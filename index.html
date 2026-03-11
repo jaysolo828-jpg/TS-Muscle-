@@ -2687,7 +2687,7 @@
     <!-- STEP 4: Exercise Selection -->
     <div id="onboard-step-4" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR EXERCISES</div>
-      <div style="font-size:13px; color:var(--gray-light); margin-bottom:6px; line-height:1.6;">We start you with proven exercises for every movement. What you pick here is also your <strong style="color:var(--cream);">rotation baseline</strong> — after your first full cycle, the app will suggest swapping one or two for a fresh angle on the same muscle. That's what keeps growth coming once your body adapts.</div>
+      <div style="font-size:13px; color:var(--gray-light); margin-bottom:6px; line-height:1.6;">We start you with proven exercises for every movement. What you pick here is also your <strong style="color:var(--cream);">rotation baseline</strong> — when your first cycle ends, the app will suggest swapping one or two for a fresh angle on the same muscle. You'll also see a reminder at Week 5 of Cycle 2. That's what keeps growth coming once your body adapts.</div>
       <div style="font-size:12px; color:var(--gray); margin-bottom:20px; line-height:1.5;">Pick what works for your gym now. You're always in control — nothing swaps automatically.</div>
 
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;" id="ob-exercise-mode-btns">
@@ -2706,7 +2706,7 @@
             <span style="font-size:18px; line-height:1;">✏️</span>
             <div>
               <div style="font-weight:bold;">I'll Choose</div>
-              <div style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Pick one exercise per movement — what you choose now is your cycle 1 lineup and your rotation starting point.</div>
+              <div style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Pick one exercise per movement — what you choose is your Cycle 1 lineup. When Cycle 1 ends, you'll be prompted to swap any that aren't working.</div>
             </div>
           </div>
         </button>
@@ -9031,10 +9031,10 @@ function openOnboardingRotationReview() {
   const subtitle = document.querySelector('#rotation-modal .modal-sub');
   if (subtitle) {
     subtitle.innerHTML = `
-      <div style="margin-bottom:14px;">These are the exercises in your program. We picked proven options for every movement — keep the defaults or swap any that don't suit your gym.</div>
+      <div style="margin-bottom:14px;">These are the exercises in your program. Keep the defaults or swap any that don't suit your gym.</div>
       <div style="background:linear-gradient(135deg,#081a10,#0a1e12);border:1.5px solid rgba(80,200,130,0.3);border-radius:12px;padding:12px 14px;margin-bottom:4px;">
         <div style="font-family:'Bebas Neue',cursive;font-size:13px;letter-spacing:1px;color:#50c882;margin-bottom:6px;">🔄 HOW THIS CONNECTS TO MIX IT UP</div>
-        <div style="font-size:13px;color:var(--gray-light);line-height:1.6;">After your first full cycle (~8 weeks), the app will suggest swapping one or two of these exercises. Same muscle — just a different angle. That's what keeps growth coming once your body adapts.<br><br><strong style="color:var(--cream);">Nothing changes automatically. You always choose.</strong></div>
+        <div style="font-size:13px;color:var(--gray-light);line-height:1.6;">When your first cycle ends (~8 weeks), the app will prompt you to swap one or two. You'll also see a reminder banner at <strong style="color:var(--cream);">Week 5 of Cycle 2</strong>. Same muscle — just a different angle to keep growth coming.<br><br><strong style="color:var(--cream);">Nothing changes automatically. You always choose.</strong></div>
       </div>`;
     subtitle.style.display = 'block';
   }
@@ -12671,7 +12671,7 @@ function selectExerciseMode(mode, btn) {
 function buildObManualSlots() {
   const panel = document.getElementById('ob-manual-select');
   const currentSplit = document.getElementById('ob-split-type')?.value || 'ul';
-  let html = '<div style="background:linear-gradient(135deg,#081a10,#0a1e12);border:1.5px solid rgba(80,200,130,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--gray-light);line-height:1.6;">These are your <strong style="color:var(--cream);">cycle 1 exercises</strong> and your <strong style="color:#50c882;">rotation starting point</strong>. After your first full cycle, the app will suggest swapping one or two — same muscle, different angle. Pick what works best for your gym.<br><br><span style="color:var(--gray);">The <span style="color:var(--cream);">★</span> option is pre-selected as a proven default. Tap <span style="color:var(--red);font-size:11px;">▶</span> to watch a tutorial before picking.</span></div>';
+  let html = '<div style="background:linear-gradient(135deg,#081a10,#0a1e12);border:1.5px solid rgba(80,200,130,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--gray-light);line-height:1.6;">These are your <strong style="color:var(--cream);">Cycle 1 exercises</strong>. When Cycle 1 ends (~8 weeks), the app will prompt you to swap one or two — same muscle, different angle. You\'ll also see a reminder at <strong style="color:var(--cream);">Week 5 of Cycle 2</strong>. Pick what works best for your gym now.<br><br><span style="color:var(--gray);">The <span style="color:var(--cream);">★</span> option is pre-selected as a proven default. Tap <span style="color:var(--red);font-size:11px;">▶</span> to watch a tutorial before picking.</span></div>';
   OB_PRIMARY_SLOTS.filter(slot => !slot.splitFilter || slot.splitFilter.includes(currentSplit)).forEach(slot => {
     const safeId = slot.id.replace('-', '_');
     let optBtns = slot.options.map((opt, i) => {
