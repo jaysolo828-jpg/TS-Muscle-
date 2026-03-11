@@ -2292,7 +2292,7 @@
     <div style="text-align:center; margin-bottom:16px;">
       <div style="margin-bottom:12px;"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px;">RECOVERY WEEK</div>
-      <div style="font-size:13px; color:var(--gray); margin-top:6px; line-height:1.6;">Week 7 — your body needs a break. Choose how you want to handle it.</div>
+      <div style="font-size:13px; color:var(--gray); margin-top:6px; line-height:1.6;">Week 7 — time to recover. Choose what works for you, or skip it if you're feeling strong.</div>
     </div>
 
     <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
@@ -2306,7 +2306,8 @@
       </button>
     </div>
 
-    <button onclick="document.getElementById('deload-modal').style.display='none'" style="width:100%; background:transparent; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer;">DECIDE LATER</button>
+    <button onclick="dismissDeloadSuggestion()" style="width:100%; background:transparent; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-bottom:8px;">SKIP — KEEP TRAINING THIS WEEK</button>
+    <button onclick="document.getElementById('deload-modal').style.display='none'" style="width:100%; background:transparent; border:none; color:var(--gray); padding:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; cursor:pointer; opacity:0.5;">DECIDE LATER</button>
   </div>
 </div>
 
@@ -2873,7 +2874,7 @@
           <div style="font-size:20px; flex-shrink:0;">⚡</div>
           <div>
             <div style="font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; color:var(--warning); margin-bottom:4px;">RECOVERY WEEKS</div>
-            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Week 7 of each cycle is a recovery week — reduced weights or a full rest. Built in, not optional. Your body needs it.</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Week 7 of each cycle is a recommended recovery week — reduced weights or a full rest. Most people feel better for it, but you can skip it if you're feeling strong.</div>
           </div>
         </div>
       </div>
