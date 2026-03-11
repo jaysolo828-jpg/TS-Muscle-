@@ -478,7 +478,7 @@
 
   /* WORKOUT DAY CARDS */
   .day-card {
-    background: var(--dark2);
+    background: linear-gradient(to right, rgba(204,32,39,0.09) 0%, #1a1a1a 36%);
     border: 1px solid var(--dark3);
     border-radius: 16px;
     margin-bottom: 12px;
@@ -1729,6 +1729,7 @@
   .stat-box {
     background: linear-gradient(180deg, #1e1e1e 0%, #191919 100%);
     border: 1px solid var(--dark3);
+    border-top: 2px solid var(--red);
     border-bottom: 2px solid #222;
     border-radius: 14px;
     padding: 16px 8px 12px;
@@ -1964,6 +1965,8 @@
       <button onclick="resumeDeloadRest()" style="flex-shrink:0; background:rgba(100,149,237,0.15); border:1px solid rgba(100,149,237,0.4); color:#6495ED; padding:8px 14px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; cursor:pointer; white-space:nowrap;">RESUME</button>
     </div>
   </div>
+
+  <div id="home-greeting" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; color:var(--gray-light); margin-bottom:14px; text-transform:uppercase;"></div>
 
   <div class="stat-grid">
     <div class="stat-box" onclick="showStatInfo('sessions')" style="cursor:pointer;">
@@ -5089,6 +5092,22 @@ function renderHome() {
   ).length;
   document.getElementById('stat-sessions').textContent = realSessions;
 
+  // Time-based greeting
+  const greetingEl = document.getElementById('home-greeting');
+  if (greetingEl) {
+    const name = state.profile?.name;
+    if (name) {
+      const h = new Date().getHours();
+      const salutation = h >= 5 && h < 12 ? 'GOOD MORNING'
+                       : h >= 12 && h < 17 ? 'GOOD AFTERNOON'
+                       : h >= 17 && h < 21 ? 'GOOD EVENING'
+                       : 'GRINDING LATE';
+      greetingEl.textContent = `${salutation}, ${name.toUpperCase()}`;
+    } else {
+      greetingEl.textContent = '';
+    }
+  }
+
   // Update split type badge next to "YOUR PROGRAM"
   const splitBadge = document.getElementById('home-split-badge');
   if (splitBadge) {
@@ -5260,12 +5279,12 @@ function renderHome() {
       dot.textContent = '8';
       dot.classList.add('final');
       if (isDone) dot.classList.add('done');
-      else if (isCurrent) dot.style.borderColor = 'var(--red)';
+      else if (isCurrent) { dot.style.borderColor = 'var(--red)'; dot.style.boxShadow = '0 0 8px rgba(204,32,39,0.55)'; }
       dot.title = 'Cycle complete week';
     } else {
       dot.textContent = w;
       if (isDone) dot.classList.add('done');
-      else if (isCurrent) dot.style.borderColor = 'var(--red)';
+      else if (isCurrent) { dot.style.borderColor = 'var(--red)'; dot.style.boxShadow = '0 0 8px rgba(204,32,39,0.55)'; }
     }
 
     // Paused state — amber ring on current week
