@@ -5260,9 +5260,44 @@ function renderHome() {
     deloadBanner.style.display = 'none';
   } else if (deloadBanner && state.isDeloadWeek) {
     deloadBanner.style.display = 'block';
-    deloadBanner.querySelector('.deload-title').textContent = 'DELOAD WEEK ACTIVE';
-    deloadBanner.querySelector('.deload-text').innerHTML = 'Weights are reduced 25%. Train normally — weights restore automatically after this week.<br><button onclick="endRecoveryWeekEarly()" style="margin-top:12px; background:rgba(255,255,255,0.08); border:1px solid #555; color:var(--gray-light); padding:8px 18px; border-radius:8px; font-family:\'Barlow Condensed\',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer;">END EARLY →</button>';
-    deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+    // ── Reason-aware title and sub-copy ─────────────────────────────────
+    const _dReason   = state.deloadReason || 'scheduled';
+    const _dWeekNum  = state.deloadWeekNum || 7;
+    const _dMuscles  = (state.deloadMRVMuscles || []).map(m => m.charAt(0) + m.slice(1).toLowerCase());
+    const _dSessions = state.deloadSessionsCompleted || 0;
+    const _dLeft     = Math.max(0, 4 - _dSessions);
+    const _isEarly   = _dWeekNum < 7;
+    let _dTitle, _dSub;
+    if (_dReason === 'mrv') {
+      _dTitle = _isEarly ? `EARLY DELOAD — WEEK ${_dWeekNum}` : 'DELOAD WEEK ACTIVE';
+      _dSub   = `<strong style="color:var(--cream);">${_dMuscles.length ? _dMuscles.join(', ') : 'A muscle group'}</strong> hit max recoverable volume. Weights at 75% — full load restores automatically after this week.`;
+    } else if (_dReason === 'plateau') {
+      _dTitle = _isEarly ? `PLATEAU DELOAD — WEEK ${_dWeekNum}` : 'PLATEAU RECOVERY ACTIVE';
+      _dSub   = 'Weights stalled across multiple days. A lighter week resets accumulated fatigue and gets progression moving again.';
+    } else if (_dReason === 'longrun') {
+      _dTitle = _isEarly ? `OVERDUE DELOAD — WEEK ${_dWeekNum}` : 'RECOVERY WEEK ACTIVE';
+      _dSub   = `${state.weeksSinceDeload || 5}+ weeks of hard training. Fatigue was stacking — this lighter week lets your CNS and joints catch up.`;
+    } else {
+      _dTitle = 'WEEK 7 RECOVERY ACTIVE';
+      _dSub   = 'Mesocycle almost complete. Train through this lighter week, then cycle 2 opens at a higher baseline.';
+    }
+    // ── Session progress pips ────────────────────────────────────────────
+    const _pips = [1,2,3,4].map(i =>
+      `<div style="flex:1;height:4px;border-radius:2px;background:${i <= _dSessions ? '#50c882' : 'rgba(255,255,255,0.1)'};transition:background 0.3s;"></div>`
+    ).join('');
+    const _pipLabel = _dLeft > 0
+      ? `${_dLeft} session${_dLeft > 1 ? 's' : ''} remaining`
+      : 'Ready to end — tap END EARLY when you\'re done';
+    deloadBanner.querySelector('.deload-title').textContent = _dTitle;
+    deloadBanner.querySelector('.deload-text').innerHTML = `${_dSub}
+      <div style="margin-top:12px;">
+        <div style="display:flex;gap:4px;margin-bottom:5px;">${_pips}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;">${_pipLabel}</div>
+      </div>
+      <button onclick="endRecoveryWeekEarly()" style="margin-top:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:var(--gray-light);padding:8px 18px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">END EARLY →</button>`;
+    deloadBanner.querySelector('.deload-icon').innerHTML = _isEarly
+      ? '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+      : '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = null;
   } else if (deloadBanner && state.weekCount === 7 && !_dismissedThisCycle && !state.deloadPostponedToWeek) {
     deloadBanner.style.display = 'block';
@@ -5272,8 +5307,8 @@ function renderHome() {
       deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
       deloadBanner.querySelector('.deload-banner').onclick = null;
     } else {
-      deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK';
-      deloadBanner.querySelector('.deload-text').innerHTML = 'You\'ve hit week 7. Tap to choose: <strong style="color:var(--warning);">Deload</strong> (reduced weights) or <strong style="color:var(--gray-light);">Rest Week</strong> (take the week off).' + _skipBtn;
+      deloadBanner.querySelector('.deload-title').textContent = 'SCHEDULED RECOVERY — WEEK 7';
+      deloadBanner.querySelector('.deload-text').innerHTML = 'You ran the full volume ramp without hitting MRV early — good discipline. Time for a lighter week before cycle 2 opens heavier. Tap to choose how.' + _skipBtn;
       deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
       deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
     }
@@ -5328,34 +5363,55 @@ function renderHome() {
   const dotsEl = document.getElementById('week-dots');
   if (!dotsEl) return;
   dotsEl.innerHTML = '';
+
+  // Determine where the "D" marker lives this cycle.
+  // If a deload has been activated (deloadWeekNum is set), use that week.
+  // Otherwise fall back to week 7 as the planned recovery slot.
+  const _deloadSlot = (state.deloadWeekNum && state.deloadWeekNum >= 1 && state.deloadWeekNum <= 8)
+    ? state.deloadWeekNum
+    : 7;
+  const _earlyDeload = _deloadSlot < 7;
+
   for (let w = 1; w <= 8; w++) {
     const dot = document.createElement('div');
     dot.className = 'week-dot';
     const isCurrent = w === state.weekCount;
-    const isDone = w < state.weekCount;
+    const isDone    = w < state.weekCount;
+    const isDeloadDot = w === _deloadSlot;
+    const isWeek7NoLongerDeload = w === 7 && _earlyDeload; // week 7 is just a normal week now
 
-    if (w === 7) {
+    if (isDeloadDot) {
       dot.textContent = 'D';
-      if (isDone) {
-        dot.classList.add('done'); // completed deload — red like all done weeks
-      } else if (isCurrent) {
-        dot.classList.add('current-deload'); // on deload week — amber border
+      // Active deload: user is on this exact week AND deload is running
+      const isActiveDeload = isCurrent && (state.isDeloadWeek || state.isRestWeek);
+      if (isActiveDeload) {
+        dot.classList.add('current-deload'); // amber border, pulsing
+      } else if (isDone || (!isCurrent && state.deloadWeekNum)) {
+        // Deload week has been passed — mark it done
+        dot.classList.add('done');
       } else {
-        dot.classList.add('deload'); // future deload — amber filled preview
+        dot.classList.add('deload'); // future planned slot — amber fill preview
       }
+      if (_earlyDeload) dot.title = `Early deload — week ${_deloadSlot}`;
+    } else if (isWeek7NoLongerDeload) {
+      // The scheduled slot was bypassed — week 7 is now a normal training week
+      dot.textContent = '7';
+      if (isDone)        dot.classList.add('done');
+      else if (isCurrent){ dot.style.borderColor = 'var(--red)'; dot.style.boxShadow = '0 0 8px rgba(204,32,39,0.55)'; }
+      dot.title = 'Week 7 — deload happened earlier this cycle';
     } else if (w === 8) {
       dot.textContent = '8';
       dot.classList.add('final');
-      if (isDone) dot.classList.add('done');
-      else if (isCurrent) { dot.style.borderColor = 'var(--red)'; dot.style.boxShadow = '0 0 8px rgba(204,32,39,0.55)'; }
+      if (isDone)        dot.classList.add('done');
+      else if (isCurrent){ dot.style.borderColor = 'var(--red)'; dot.style.boxShadow = '0 0 8px rgba(204,32,39,0.55)'; }
       dot.title = 'Cycle complete week';
     } else {
       dot.textContent = w;
-      if (isDone) dot.classList.add('done');
-      else if (isCurrent) { dot.style.borderColor = 'var(--red)'; dot.style.boxShadow = '0 0 8px rgba(204,32,39,0.55)'; }
+      if (isDone)        dot.classList.add('done');
+      else if (isCurrent){ dot.style.borderColor = 'var(--red)'; dot.style.boxShadow = '0 0 8px rgba(204,32,39,0.55)'; }
     }
 
-    // Paused state — amber ring on current week
+    // Paused state — amber dashed ring on current week
     if (isCurrent && state.programPaused) {
       dot.style.borderColor = 'var(--warning)';
       dot.style.borderStyle = 'dashed';
@@ -5364,15 +5420,17 @@ function renderHome() {
     dotsEl.appendChild(dot);
   }
 
-  // Legend for deload week marker — reuse existing element to avoid duplicates
+  // Legend — reuse element, update text to match where the deload actually landed
   let dotsLegend = document.getElementById('week-dots-legend');
   if (!dotsLegend) {
     dotsLegend = document.createElement('div');
     dotsLegend.id = 'week-dots-legend';
     dotsLegend.style.cssText = 'font-size:12px;color:#888;text-align:center;margin-top:5px;letter-spacing:0.5px;font-family:"Barlow Condensed",sans-serif;';
-    dotsLegend.textContent = 'D = DELOAD WEEK';
     dotsEl.parentNode.insertBefore(dotsLegend, dotsEl.nextSibling);
   }
+  dotsLegend.textContent = _earlyDeload
+    ? `D = EARLY DELOAD (WEEK ${_deloadSlot})`
+    : 'D = WEEK 7 RECOVERY';
 
   // Day cards — respect training days limit
   const container = document.getElementById('day-cards');
@@ -6274,16 +6332,42 @@ function postponeDeload() {
   renderHome();
 }
 
+// Determines why a deload is being triggered right now and returns a reason tag.
+// Called at the moment of activation so signals are evaluated against live state.
+function _detectDeloadReason() {
+  const week = state.weekCount || 1;
+  const mrvHits = getMRVApproachingMuscles();
+  const plateau = (typeof detectProgressionPlateau === 'function') ? detectProgressionPlateau() : { stalled: false };
+  const isScheduled = week === 7 || (state.deloadPostponedToWeek && week === state.deloadPostponedToWeek);
+  if (isScheduled)             return 'scheduled';
+  if (mrvHits.length > 0)      return 'mrv';
+  if (plateau.stalled)         return 'plateau';
+  if ((state.weeksSinceDeload || 0) >= 5) return 'longrun';
+  return 'manual';
+}
+
+// Stamps deload reason + week number onto state so the banner can read them later.
+function _stampDeloadContext() {
+  const reason = _detectDeloadReason();
+  state.deloadReason  = reason;
+  state.deloadWeekNum = state.weekCount || 1;
+  if (reason === 'mrv') {
+    state.deloadMRVMuscles = getMRVApproachingMuscles().map(m => m.muscle);
+  } else {
+    delete state.deloadMRVMuscles;
+  }
+}
+
 function applyDeloadWeek() {
   // Reduce all starting weights by ~25% for this week (keep at 75% of normal)
   if (!state.startingWeights) state.startingWeights = {};
   if (!state.deloadBaseWeights) {
-    // Save originals so we can restore after deload
     state.deloadBaseWeights = { ...state.startingWeights };
   }
   Object.keys(state.startingWeights).forEach(id => {
     state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * 0.75 / 2.5) * 2.5;
   });
+  _stampDeloadContext();
   state.isDeloadWeek = true;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
@@ -6295,8 +6379,10 @@ function applyDeloadWeek() {
 }
 
 function applyRestWeek() {
-  state.isRestWeek = true;
-  state.isDeloadWeek = false;
+  _stampDeloadContext();
+  state.deloadReason  = 'rest';
+  state.isRestWeek    = true;
+  state.isDeloadWeek  = false;
   state.weeksSinceDeload = 0;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
@@ -6316,6 +6402,7 @@ function activateDeloadWeek() {
   Object.keys(state.startingWeights).forEach(id => {
     state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * 0.75 / 2.5) * 2.5;
   });
+  _stampDeloadContext();
   state.isDeloadWeek = true;
   state.weeksSinceDeload = 0;
   state.deloadStartDate = Date.now();
@@ -6329,7 +6416,10 @@ function activateDeloadWeek() {
 }
 
 function activateDeloadRest() {
-  state.isRestWeek = true;
+  _stampDeloadContext();
+  state.deloadReason  = 'rest';
+  state.deloadWeekNum = state.weekCount || 1;
+  state.isRestWeek    = true;
   state.weeksSinceDeload = 0;
   delete state.deloadDismissedAtCycle;
   saveState();
@@ -8986,6 +9076,9 @@ function finalizeEndSession(save) {
           if (state.deloadBaseWeights) delete state.deloadBaseWeights;
           state.isDeloadWeek = false;
           state.weeksSinceDeload = 0;
+          delete state.deloadReason;
+          delete state.deloadWeekNum;
+          delete state.deloadMRVMuscles;
         }
         // ────────────────────────────────────────────────────────────────
         state.cycleCount = (state.cycleCount || 1) + 1;

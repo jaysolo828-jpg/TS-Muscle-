@@ -459,6 +459,9 @@ async function simulateSession(page, sessionNum, forceDeload = false) {
             }
             if (state.deloadBaseWeights) delete state.deloadBaseWeights;
             state.isDeloadWeek = false;
+            delete state.deloadReason;
+            delete state.deloadWeekNum;
+            delete state.deloadMRVMuscles;
           }
           // ─────────────────────────────────────────────────────────────────
 
