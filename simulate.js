@@ -422,6 +422,46 @@ async function simulateSession(page, sessionNum, forceDeload = false) {
         if (prevWeek === 8) {
           state.weekCount = 1;
           cycleRolledOver = true;
+
+          // ── Cycle baseline progression (mirrors finalizeEndSession logic) ──
+          // Bump startingWeights by one small increment so cycle 2+ opens at a
+          // higher floor than cycle 1 started.
+          {
+            const completingCycle = state.cycleCount || 1;
+            const cycleEntries = (state.history || []).filter(e => e.cycleNum === completingCycle);
+            const refWeights = (state.deloadBaseWeights && Object.keys(state.deloadBaseWeights).length > 0)
+              ? state.deloadBaseWeights
+              : state.startingWeights || {};
+            // Small increment: prefer getIncrement('small') if available, else 5 lbs
+            const bump = (typeof getIncrement === 'function') ? getIncrement('small') : 5;
+            const lastUsed = {};
+            for (let ci = cycleEntries.length - 1; ci >= 0; ci--) {
+              const ce = cycleEntries[ci];
+              if (ce.isDeload) continue;
+              Object.entries(ce.sets || {}).forEach(([exId, sets]) => {
+                if (lastUsed[exId] !== undefined) return;
+                const done = sets.filter(s => s.done && s.weight);
+                if (done.length) {
+                  const w = Math.max(...done.map(s => parseFloat(s.weight) || 0));
+                  if (w > 0) lastUsed[exId] = w;
+                }
+              });
+            }
+            Object.entries(refWeights).forEach(([exId, rw]) => {
+              if (lastUsed[exId] === undefined && rw > 0) lastUsed[exId] = rw;
+            });
+            const newBase = {};
+            Object.entries(lastUsed).forEach(([exId, w]) => {
+              if (w > 0) newBase[exId] = Math.round((w + bump) / 2.5) * 2.5;
+            });
+            if (Object.keys(newBase).length > 0) {
+              state.startingWeights = Object.assign({}, state.startingWeights || {}, newBase);
+            }
+            if (state.deloadBaseWeights) delete state.deloadBaseWeights;
+            state.isDeloadWeek = false;
+          }
+          // ─────────────────────────────────────────────────────────────────
+
           state.cycleCount = (state.cycleCount || 1) + 1;
           state.weeksSinceDeload = 0;
           delete state.deloadPostponedToWeek;
