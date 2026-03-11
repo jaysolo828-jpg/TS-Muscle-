@@ -6320,6 +6320,11 @@ function renderSession() {
     .map(id => day.exercises.find(e => e.id === id))
     .filter(Boolean);
 
+  // Use the same accent color as the day card so the GOAL label matches
+  const _sessionDayIdx = state.program.indexOf(day);
+  const _sessionDc = CARD_DAY_PALETTES[_sessionDayIdx % CARD_DAY_PALETTES.length];
+  const _sessionDayColor = _sessionDc ? (_sessionDc.ui || _sessionDc.hi) : 'var(--red)';
+
   orderedExercises.forEach(ex => {
     const sets = activeSession.sets[ex.id];
     const doneSets = sets.filter(s => s.done).length;
@@ -6352,7 +6357,7 @@ function renderSession() {
     const _mColor = _muscle ? MUSCLE_COLORS[_muscle] : null;
 
     const _goalReps = getGoalReps(ex.id, ex.reps);
-    const _goalColor = { size: '#a855f7', strength: '#3b82f6', both: '#f59e0b' }[state.profile?.goal || 'both'] || '#f59e0b';
+    const _goalColor = _sessionDayColor;
     const _repTop = parseInt((_goalReps.split(/[–\-]/)[1] || _goalReps.split(/[–\-]/)[0])) || 0;
 
     // Build prev-session panel (only if history exists for this exercise)
