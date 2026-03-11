@@ -10055,7 +10055,7 @@ function renderHistory() {
   const completedCycles = Math.max(0, (state.cycleCount || 1) - 1);
   const totalWeeks = completedCycles * 8 + (state.weekCount || 1) - 1;
   const ageLabel = completedCycles === 0
-    ? `WEEK ${state.weekCount || 1} IN`
+    ? `${state.weekCount || 1} WEEK${(state.weekCount || 1) === 1 ? '' : 'S'} IN`
     : completedCycles === 1 ? '1-CYCLE VETERAN'
     : `${completedCycles}-CYCLE VETERAN`;
   const ageSub = totalWeeks > 0 ? `${totalWeeks} week${totalWeeks === 1 ? '' : 's'} of training` : 'Just getting started';
@@ -11197,21 +11197,26 @@ async function generateAndShareCard(type, data) {
       bebas(90), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.3)', blur: 14 });
 
     // First → Now
-    const leftX = W / 2 - Math.round(200 * S);
-    const rightX = W / 2 + Math.round(200 * S);
+    const midGap = Math.round(70 * S);
     if (data.firstWeight) {
-      drawText(`${data.firstWeight} lbs`, leftX, arrowY - Math.round(20 * S),
-        bebas(68), 'rgba(255,255,255,0.55)', Math.round(360 * S));
-      drawText('FIRST', leftX, arrowY + Math.round(40 * S),
-        barlow(600, 26), 'rgba(255,255,255,0.5)', Math.round(360 * S));
+      ctx.save();
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.font = bebas(68); ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.fillText(`${data.firstWeight} lbs`, W / 2 - midGap, arrowY - Math.round(20 * S));
+      ctx.font = barlow(600, 26); ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText('FIRST', W / 2 - midGap, arrowY + Math.round(40 * S));
+      ctx.restore();
     }
     drawText('→', W / 2, arrowY,
       bebas(80), 'rgba(255,255,255,0.35)', null);
     if (data.currentWeight) {
-      drawText(`${data.currentWeight} lbs`, rightX, arrowY - Math.round(20 * S),
-        bebas(68), '#ffffff', Math.round(360 * S));
-      drawText('NOW', rightX, arrowY + Math.round(40 * S),
-        barlow(600, 26), 'rgba(255,255,255,0.7)', Math.round(360 * S));
+      ctx.save();
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.font = bebas(68); ctx.fillStyle = '#ffffff';
+      ctx.fillText(`${data.currentWeight} lbs`, W / 2 + midGap, arrowY - Math.round(20 * S));
+      ctx.font = barlow(600, 26); ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText('NOW', W / 2 + midGap, arrowY + Math.round(40 * S));
+      ctx.restore();
     }
 
     if (data.gainPct && data.gainPct !== 0) {
@@ -11252,7 +11257,8 @@ async function generateAndShareCard(type, data) {
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.font = barlow(700, 38);
       ctx.fillStyle = 'rgba(255,255,255,0.88)';
-      ctx.fillText(lift.name.toUpperCase(), nameX, rowY + rowH / 2);
+      const nameMaxW = valX - nameX - Math.round(80 * S);
+      ctx.fillText(lift.name.toUpperCase(), nameX, rowY + rowH / 2, nameMaxW);
 
       ctx.textAlign = 'right';
       ctx.font = bebas(54);
