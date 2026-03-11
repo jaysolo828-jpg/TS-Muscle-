@@ -4753,7 +4753,11 @@ function getDayStats(dayId) {
   const delta = (prevVol && prevVol > 0) ? Math.round(((lastVol - prevVol) / prevVol) * 100) : null;
   const lastDate = new Date(last.date);
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const daysAgo  = Math.floor((Date.now() - lastDate) / 86400000);
+  // Compare calendar dates (midnight-to-midnight) so a workout done at 9 PM
+  // shows as "Yesterday" the next morning, not "Today".
+  const _nowMid  = new Date(); _nowMid.setHours(0, 0, 0, 0);
+  const _lastMid = new Date(lastDate); _lastMid.setHours(0, 0, 0, 0);
+  const daysAgo  = Math.round((_nowMid - _lastMid) / 86400000);
   const lastDoneLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : dayNames[lastDate.getDay()];
   return {
     lastId: last.id,
