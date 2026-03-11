@@ -236,12 +236,13 @@
   .review-weight-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); }
 
   .mood-btn {
-    flex: 1; background: var(--dark3); border: 2px solid transparent;
-    border-radius: 12px; padding: 14px 8px; cursor: pointer;
+    flex: 1; min-width: 0; background: var(--dark3); border: 2px solid transparent;
+    border-radius: 12px; padding: 12px 4px; cursor: pointer;
     text-align: center; transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    overflow: hidden;
   }
   .mood-btn.selected { border-color: var(--warning); background: rgba(243,156,18,0.12); transform: scale(1.08); }
-  .mood-btn.selected div:first-child { font-size: 36px; }
+  .mood-btn.selected div:first-child { font-size: 32px; }
   .mood-timing-btn {
     flex: 1; background: var(--dark3); border: 1px solid #333;
     color: var(--gray); padding: 10px; border-radius: 10px;
@@ -2208,24 +2209,24 @@
     <div style="font-size:12px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">HOW ARE YOU FEELING?</div>
     <div style="display:flex; justify-content:space-between; gap:6px; margin-bottom:16px;" id="mood-scale">
       <button class="mood-btn" onclick="selectMood(1, this)" data-value="1">
-        <div style="font-size:32px;">😞</div>
-        <div style="font-size:12px; color:var(--gray-light); margin-top:4px;">Distressed</div>
+        <div style="font-size:28px;">😞</div>
+        <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Distressed</div>
       </button>
       <button class="mood-btn" onclick="selectMood(2, this)" data-value="2">
-        <div style="font-size:32px;">😔</div>
-        <div style="font-size:12px; color:var(--gray-light); margin-top:4px;">Low</div>
+        <div style="font-size:28px;">😔</div>
+        <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Low</div>
       </button>
       <button class="mood-btn" onclick="selectMood(3, this)" data-value="3">
-        <div style="font-size:32px;">😐</div>
-        <div style="font-size:12px; color:var(--gray-light); margin-top:4px;">Neutral</div>
+        <div style="font-size:28px;">😐</div>
+        <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Neutral</div>
       </button>
       <button class="mood-btn" onclick="selectMood(4, this)" data-value="4">
-        <div style="font-size:32px;">🙂</div>
-        <div style="font-size:12px; color:var(--gray-light); margin-top:4px;">Good</div>
+        <div style="font-size:28px;">🙂</div>
+        <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Good</div>
       </button>
       <button class="mood-btn" onclick="selectMood(5, this)" data-value="5">
-        <div style="font-size:32px;">🔥</div>
-        <div style="font-size:12px; color:var(--gray-light); margin-top:4px;">Energized</div>
+        <div style="font-size:28px;">🔥</div>
+        <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Energized</div>
       </button>
     </div>
     <input type="hidden" id="mood-value" value=""/>
