@@ -4403,29 +4403,32 @@ function getGoalRepSummary(goal) {
 function buildGoalRepPreviewHTML(goal) {
   const s = getGoalRepSummary(goal);
   const ss = getGoalSetSummary(goal);
-  const color = { size: '#a855f7', strength: '#3b82f6', both: '#f59e0b' }[goal] || '#f59e0b';
-  const goalName = { size: 'Hypertrophy', strength: 'Strength', both: 'Powerbuilding' }[goal] || 'Powerbuilding';
+  // accent = border/background/dot (can be dimmer)
+  // textColor = label text (must be bright enough to read at 11–12px on dark)
+  const accent    = { size: '#a855f7', strength: '#3b82f6', both: '#f59e0b' }[goal] || '#f59e0b';
+  const textColor = { size: '#c084fc', strength: '#93c5fd', both: '#fcd34d' }[goal] || '#fcd34d';
+  const goalName  = { size: 'Hypertrophy', strength: 'Strength', both: 'Powerbuilding' }[goal] || 'Powerbuilding';
   return `
-    <div style="background:${color}14;border:1px solid ${color}44;border-radius:12px;padding:14px 16px;margin-top:12px;">
+    <div style="background:${accent}12;border:1px solid ${accent}40;border-radius:12px;padding:14px 16px;margin-top:12px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></span>
-        <div style="font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:${color};">${goalName.toUpperCase()} — YOUR TARGETS</div>
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${accent};flex-shrink:0;"></span>
+        <div style="font-size:11px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:${textColor};">${goalName.toUpperCase()} — YOUR TARGETS</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
         <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:10px;padding:12px;">
-          <div style="font-size:9px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;margin-bottom:4px;">MAIN LIFTS</div>
+          <div style="font-size:10px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;margin-bottom:4px;">MAIN LIFTS</div>
           <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:1px;line-height:1;">${s.main}</div>
-          <div style="font-size:11px;color:${color};font-family:'Barlow Condensed',sans-serif;font-weight:700;margin-top:5px;">↑ weight at ${s.mainTop} reps</div>
-          <div style="font-size:10px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;margin-top:3px;">${ss.main} sets</div>
+          <div style="font-size:12px;color:${textColor};font-family:'Barlow Condensed',sans-serif;font-weight:700;margin-top:6px;">↑ weight at ${s.mainTop} reps</div>
+          <div style="font-size:11px;color:var(--gray-light);font-family:'Barlow Condensed',sans-serif;margin-top:3px;">${ss.main} sets</div>
         </div>
         <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:10px;padding:12px;">
-          <div style="font-size:9px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;margin-bottom:4px;">ACCESSORIES</div>
+          <div style="font-size:10px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;margin-bottom:4px;">ACCESSORIES</div>
           <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:1px;line-height:1;">${s.acc}</div>
-          <div style="font-size:11px;color:${color};font-family:'Barlow Condensed',sans-serif;font-weight:700;margin-top:5px;">↑ weight at ${s.accTop} reps</div>
-          <div style="font-size:10px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;margin-top:3px;">${ss.acc} sets</div>
+          <div style="font-size:12px;color:${textColor};font-family:'Barlow Condensed',sans-serif;font-weight:700;margin-top:6px;">↑ weight at ${s.accTop} reps</div>
+          <div style="font-size:11px;color:var(--gray-light);font-family:'Barlow Condensed',sans-serif;margin-top:3px;">${ss.acc} sets</div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;line-height:1.5;border-top:1px solid ${color}22;padding-top:10px;">Hit the top rep consistently → app adds weight automatically next session.</div>
+      <div style="font-size:12px;color:var(--gray-light);font-family:'Barlow',sans-serif;line-height:1.5;border-top:1px solid ${accent}20;padding-top:10px;">Hit the top rep consistently → app adds weight automatically next session.</div>
     </div>`;
 }
 
