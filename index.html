@@ -1942,8 +1942,32 @@
 </div>
 
 <div id="screen-history" class="screen">
-  <div class="section-title">WORKOUT <span>HISTORY</span></div>
-  <!-- PR BOARD -->
+  <div class="section-title">YOUR <span>STATS</span></div>
+  <!-- Main stats content — rebuilt by renderHistory() on every visit -->
+  <div id="history-list"></div>
+
+  <!-- Progress chart block — moved into lifts section by renderHistory() -->
+  <div id="progress-section" style="display:none; margin-top:8px;">
+    <select class="exercise-picker" id="exercise-picker" onchange="renderProgressChart(); _statsProgInfo()"></select>
+    <!-- Chart mode toggle -->
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <button id="chart-mode-weight" onclick="setChartMode('weight')"
+        style="flex:1; padding:8px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; cursor:pointer; border:1px solid var(--red); background:rgba(204,32,39,0.15); color:var(--cream);">
+        MAX WEIGHT
+      </button>
+      <button id="chart-mode-volume" onclick="setChartMode('volume')"
+        style="flex:1; padding:8px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; cursor:pointer; border:1px solid var(--dark4); background:transparent; color:var(--gray);">
+        VOLUME
+      </button>
+    </div>
+    <div class="progress-chart">
+      <canvas id="progress-canvas" style="width:100%; display:block;"></canvas>
+    </div>
+    <div id="overload-recommendation" style="margin-top:12px;"></div>
+    <div id="progress-history-table" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- PR board — moved into flow by renderHistory() -->
   <div id="pr-board" style="margin-bottom:16px; display:none;">
     <div onclick="togglePRBoard()" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 14px; background:linear-gradient(135deg,#1a1200,#2a1c00); border:1px solid var(--gold); border-radius:12px; user-select:none;">
       <span style="font-size:16px; line-height:1;">🏆</span>
@@ -1952,36 +1976,6 @@
       <span id="pr-board-chevron" style="margin-left:auto; font-size:11px; color:var(--red-text); transition:transform 0.2s;">▶</span>
     </div>
     <div id="pr-board-list" style="display:none; flex-wrap:wrap; gap:8px; margin-top:10px;"></div>
-  </div>
-  <div id="history-list"></div>
-
-  <!-- EXERCISE PROGRESS CHART -->
-  <div style="margin-top:8px;">
-    <div class="section-title" onclick="toggleProgressSection()" style="cursor:pointer; user-select:none;">
-      EXERCISE <span>PROGRESS</span>
-      <span id="progress-chevron" style="margin-left:auto; font-size:10px; color:var(--red-text); transition:transform 0.2s; transform:rotate(180deg);">▼</span>
-    </div>
-    <div id="progress-section">
-      <select class="exercise-picker" id="exercise-picker" onchange="renderProgressChart()"></select>
-
-      <!-- Chart mode toggle -->
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button id="chart-mode-weight" onclick="setChartMode('weight')"
-          style="flex:1; padding:8px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; cursor:pointer; border:1px solid var(--red); background:rgba(204,32,39,0.15); color:var(--cream);">
-          MAX WEIGHT
-        </button>
-        <button id="chart-mode-volume" onclick="setChartMode('volume')"
-          style="flex:1; padding:8px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; cursor:pointer; border:1px solid var(--dark4); background:transparent; color:var(--gray);">
-          VOLUME
-        </button>
-      </div>
-
-      <div class="progress-chart">
-        <canvas id="progress-canvas" style="width:100%; display:block;"></canvas>
-      </div>
-      <div id="overload-recommendation" style="margin-top:12px;"></div>
-      <div id="progress-history-table" style="margin-top:12px;"></div>
-    </div>
   </div>
 </div>
 
@@ -3692,7 +3686,7 @@
         <line x1="9" y1="16" x2="13" y2="16"/>
       </svg>
     </span>
-    <span class="nav-label">History</span>
+    <span class="nav-label">Stats</span>
   </button>
   <button class="nav-item" onclick="showScreen('cardio', this)" aria-label="Cardio">
     <span class="nav-icon">
@@ -9954,14 +9948,330 @@ function renderHistoryItem(entry, container, insertBefore) {
 }
 
 function renderHistory() {
+  // Rescue floating elements before clearing container
+  const screenHistory = document.getElementById('screen-history');
+  ['progress-section', 'pr-board'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.parentNode && el.parentNode !== screenHistory) {
+      screenHistory.appendChild(el);
+    }
+  });
+
   const container = document.getElementById('history-list');
   container.innerHTML = '';
+  const hist = state.history || [];
 
-  renderPRBoard();
+  // ── Helpers ──────────────────────────────────────────────
+  function mkLabel(text) {
+    const el = document.createElement('div');
+    el.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:8px;margin-top:4px;';
+    el.textContent = text;
+    return el;
+  }
+  function mkCard(mb) {
+    const el = document.createElement('div');
+    el.style.cssText = `background:var(--dark3);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;margin-bottom:${mb !== undefined ? mb : 16}px;`;
+    return el;
+  }
+  function mkShareBtn(label, fn) {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'margin-top:12px;width:100%;padding:10px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--gray-light);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> ${label}`;
+    btn.onclick = fn;
+    return btn;
+  }
 
-  // ── Cycle Recap section ──────────────────────────────────────────────
+  // Build exercise name map
+  const nameMap = {};
+  (DEFAULT_PROGRAM || []).forEach(d => (d.exercises || []).forEach(e => { nameMap[e.id] = e.name; }));
+  (state.program || []).forEach(d => (d.exercises || []).forEach(e => { nameMap[e.id] = e.name; }));
+
+  // ── 1. LIFETIME ──────────────────────────────────────────
+  const totalVolume = hist.reduce((t, entry) =>
+    t + Object.values(entry.sets || {}).reduce((s, sets) =>
+      s + sets.filter(s2 => s2.done).reduce((s3, s2) => s3 + (parseFloat(s2.weight) || 0) * (parseInt(s2.reps) || 0), 0)
+    , 0), 0);
+  const totalMins = hist.reduce((s, e) => s + (e.duration || 0), 0);
+  const totalHrs = Math.floor(totalMins / 60);
+  const remMins = totalMins % 60;
+  const timeLabel = totalMins < 300 ? `${totalHrs}h ${remMins}m` : `${totalHrs} hrs`;
+  const totalSessions = hist.filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done))).length;
+  const volLabel = totalVolume >= 1000000
+    ? `${(totalVolume / 1000000).toFixed(1)}M lbs`
+    : totalVolume >= 1000
+    ? `${Math.round(totalVolume).toLocaleString()} lbs`
+    : `${Math.round(totalVolume)} lbs`;
+
+  container.appendChild(mkLabel('LIFETIME'));
+  const lifetimeCard = mkCard();
+  lifetimeCard.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;">
+      <div style="background:var(--dark2);padding:12px 8px;text-align:center;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${volLabel}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">VOLUME</div>
+      </div>
+      <div style="background:var(--dark2);padding:12px 8px;text-align:center;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${timeLabel}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">TIME</div>
+      </div>
+      <div style="background:var(--dark2);padding:12px 8px;text-align:center;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${totalSessions}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
+      </div>
+    </div>`;
+  lifetimeCard.appendChild(mkShareBtn('SHARE LIFETIME STATS', () =>
+    generateAndShareCard('lifetime_volume', { volume: volLabel, sessions: totalSessions, hours: timeLabel })
+  ));
+  container.appendChild(lifetimeCard);
+
+  // ── 2. TRAINING AGE ──────────────────────────────────────
+  const completedCycles = Math.max(0, (state.cycleCount || 1) - 1);
+  const totalWeeks = completedCycles * 8 + (state.weekCount || 1) - 1;
+  const ageLabel = completedCycles === 0
+    ? `WEEK ${state.weekCount || 1} IN`
+    : completedCycles === 1 ? '1-CYCLE VETERAN'
+    : `${completedCycles}-CYCLE VETERAN`;
+  const ageSub = totalWeeks > 0 ? `${totalWeeks} week${totalWeeks === 1 ? '' : 's'} of training` : 'Just getting started';
+
+  const ageCard = mkCard();
+  ageCard.innerHTML = `
+    <div style="text-align:center;padding:4px 0 2px;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red-text);letter-spacing:2px;">${ageLabel}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:1px;margin-top:4px;">${ageSub}</div>
+    </div>`;
+  ageCard.appendChild(mkShareBtn('SHARE TRAINING AGE', () =>
+    generateAndShareCard('training_age', { cycles: completedCycles, weeks: totalWeeks, label: ageLabel })
+  ));
+  container.appendChild(ageCard);
+
+  // ── 3. YOUR LIFTS ─────────────────────────────────────────
+  // Collect exercise IDs that have actual history
+  const exIdsWithHistory = new Set();
+  hist.forEach(entry => {
+    Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
+      if (sets.some(s => s.done)) exIdsWithHistory.add(exId);
+    });
+  });
+
+  container.appendChild(mkLabel('YOUR LIFTS'));
+
+  if (exIdsWithHistory.size === 0) {
+    const emptyCard = mkCard();
+    emptyCard.innerHTML = `<div style="text-align:center;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;padding:16px 0;">No workout history yet — complete a session to see your lift stats.</div>`;
+    container.appendChild(emptyCard);
+  } else {
+    // Lifts card: picker + progression stats + chart + share
+    const liftsCard = mkCard();
+
+    // Populate the existing exercise-picker with exercises that have history
+    const progSection = document.getElementById('progress-section');
+    const picker = document.getElementById('exercise-picker');
+    if (picker) {
+      const exIds = Array.from(exIdsWithHistory);
+      const currentVal = picker.value;
+      picker.innerHTML = exIds.map(id => `<option value="${id}"${id === currentVal ? ' selected' : ''}>${nameMap[id] || id}</option>`).join('');
+    }
+
+    // Progression info div (updated by _statsProgInfo)
+    const progInfoDiv = document.createElement('div');
+    progInfoDiv.id = 'stats-prog-info';
+    liftsCard.appendChild(progInfoDiv);
+
+    // Move the chart block into lifts card
+    if (progSection) {
+      progSection.style.display = 'block';
+      liftsCard.appendChild(progSection);
+    }
+
+    // Share button for current progression
+    liftsCard.appendChild(mkShareBtn('SHARE PROGRESSION', () => {
+      const exId = document.getElementById('exercise-picker')?.value;
+      if (!exId) return;
+      const exName = nameMap[exId] || exId;
+      let firstW = null, curW = null, best1RM = 0;
+      const sorted = [...hist].sort((a, b) => new Date(a.date) - new Date(b.date));
+      for (const entry of sorted) {
+        const sets = (entry.sets || {})[exId]?.filter(s => s.done) || [];
+        if (!sets.length) continue;
+        const maxW = Math.max(...sets.map(s => parseFloat(s.weight) || 0));
+        if (firstW === null) firstW = maxW;
+        curW = maxW;
+        sets.forEach(s => {
+          const w = parseFloat(s.weight) || 0, r = parseInt(s.reps) || 0;
+          if (w > 0 && r > 0) best1RM = Math.max(best1RM, w * (1 + r / 30));
+        });
+      }
+      const gainPct = (firstW && curW && curW !== firstW) ? Math.round((curW - firstW) / firstW * 100) : 0;
+      generateAndShareCard('progression', { exercise: exName, firstWeight: firstW, currentWeight: curW, gainPct, est1RM: Math.round(best1RM) });
+    }));
+
+    container.appendChild(liftsCard);
+
+    // Populate initial progression stats and chart
+    setTimeout(() => { _statsProgInfo(); renderProgressChart(); }, 0);
+
+    // ── Big Three (adaptive) ─────────────────────────────
+    const liftRanks = [];
+    exIdsWithHistory.forEach(exId => {
+      let best1RM = 0;
+      hist.forEach(entry => {
+        (entry.sets || {})[exId]?.filter(s => s.done).forEach(s => {
+          const w = parseFloat(s.weight) || 0, r = parseInt(s.reps) || 0;
+          if (w > 0 && r > 0) best1RM = Math.max(best1RM, w * (1 + r / 30));
+        });
+      });
+      if (best1RM > 0) liftRanks.push({ name: nameMap[exId] || exId, est1RM: Math.round(best1RM) });
+    });
+    liftRanks.sort((a, b) => b.est1RM - a.est1RM);
+    const topLifts = liftRanks.slice(0, 3);
+
+    if (topLifts.length >= 2) {
+      const bigLabel = topLifts.length === 2 ? 'YOUR BIG TWO' : 'YOUR BIG THREE';
+      const combined = topLifts.reduce((s, l) => s + l.est1RM, 0);
+      const bigCard = mkCard();
+      bigCard.innerHTML = `
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:10px;">${bigLabel} (EST. 1RM)</div>
+        ${topLifts.map((l, i) => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;${i < topLifts.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : ''}">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);letter-spacing:0.5px;">${l.name.toUpperCase()}</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--red-text);">${l.est1RM} <span style="font-size:12px;color:var(--gray);">lbs</span></div>
+          </div>`).join('')}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">COMBINED TOTAL</div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--gold);">${combined.toLocaleString()} <span style="font-size:13px;color:var(--gray);">lbs</span></div>
+        </div>`;
+      bigCard.appendChild(mkShareBtn('SHARE BIG THREE', () =>
+        generateAndShareCard('big_three', { lifts: topLifts, total: combined })
+      ));
+      container.appendChild(bigCard);
+    }
+  }
+
+  // ── 4. THIS WEEK VS LAST CYCLE ────────────────────────────
+  const curCycle = state.cycleCount || 1;
+  const curWeek = state.weekCount || 1;
+  if (curCycle >= 2) {
+    const thisGroup = hist.filter(e => e.cycleNum === curCycle);
+    const lastGroup = hist.filter(e => e.cycleNum === curCycle - 1);
+    const daysPerWeek = state.trainingDaysPerWeek || 4;
+
+    function weekEntries(group, wk) {
+      const s = [...group].sort((a, b) => new Date(a.date) - new Date(b.date));
+      return s.slice((wk - 1) * daysPerWeek, wk * daysPerWeek);
+    }
+    function groupStats(entries) {
+      const sessions = entries.length;
+      const volume = Math.round(entries.reduce((t, entry) =>
+        t + Object.values(entry.sets || {}).reduce((s, sets) =>
+          s + sets.filter(s2 => s2.done).reduce((s3, s2) => s3 + (parseFloat(s2.weight) || 0) * (parseInt(s2.reps) || 0), 0)
+        , 0), 0));
+      const prs = entries.reduce((n, e) => n + (e.prs?.length || 0), 0);
+      return { sessions, volume, prs };
+    }
+
+    const thisWk = weekEntries(thisGroup, curWeek);
+    const lastWk = weekEntries(lastGroup, curWeek);
+
+    if (thisWk.length > 0 || lastWk.length > 0) {
+      const thisSt = groupStats(thisWk);
+      const lastSt = groupStats(lastWk);
+      const volDelta = lastSt.volume > 0 ? Math.round((thisSt.volume - lastSt.volume) / lastSt.volume * 100) : null;
+      const deltaColor = volDelta !== null ? (volDelta >= 0 ? '#50c882' : '#ff6b6b') : 'var(--gray)';
+      const fmtVol = v => v >= 1000 ? `${Math.round(v / 1000)}k` : v > 0 ? String(v) : '—';
+
+      container.appendChild(mkLabel('THIS WEEK VS LAST CYCLE'));
+      const wvwCard = mkCard();
+      wvwCard.innerHTML = `
+        <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:var(--red-text);letter-spacing:2px;margin-bottom:10px;">WEEK ${curWeek}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:10px;">
+          <div style="background:var(--dark2);padding:8px 6px;text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;margin-bottom:4px;">THIS CYCLE</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);">${fmtVol(thisSt.volume)}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;">LBS</div>
+          </div>
+          <div style="background:var(--dark2);padding:8px 6px;text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;margin-bottom:4px;">LAST CYCLE</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--gray-light);">${fmtVol(lastSt.volume)}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;">LBS</div>
+          </div>
+          <div style="background:var(--dark2);padding:8px 6px;text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;margin-bottom:4px;">CHANGE</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:${deltaColor};">${volDelta !== null ? (volDelta >= 0 ? '+' : '') + volDelta + '%' : '—'}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;">VOL</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">
+          <span>THIS: ${thisSt.sessions} sessions · ${thisSt.prs} PRs</span>
+          <span>LAST: ${lastSt.sessions} sessions · ${lastSt.prs} PRs</span>
+        </div>`;
+      wvwCard.appendChild(mkShareBtn('SHARE WEEK COMPARISON', () =>
+        generateAndShareCard('week_vs_week', { week: curWeek, thisVolume: thisSt.volume, lastVolume: lastSt.volume, thisSessions: thisSt.sessions, lastSessions: lastSt.sessions })
+      ));
+      container.appendChild(wvwCard);
+    }
+  }
+
+  // ── 5. YEAR IN REVIEW ─────────────────────────────────────
+  const yr = new Date().getFullYear();
+  const yrEntries = hist.filter(e => new Date(e.date).getFullYear() === yr);
+  if (yrEntries.length >= 10) {
+    const yrSessions = yrEntries.filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done))).length;
+    const yrVolume = yrEntries.reduce((t, entry) =>
+      t + Object.values(entry.sets || {}).reduce((s, sets) =>
+        s + sets.filter(s2 => s2.done).reduce((s3, s2) => s3 + (parseFloat(s2.weight) || 0) * (parseInt(s2.reps) || 0), 0)
+      , 0), 0);
+    const yrHrs = Math.floor(yrEntries.reduce((s, e) => s + (e.duration || 0), 0) / 60);
+    const yrPRs = yrEntries.reduce((n, e) => n + (e.prs?.length || 0), 0);
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    yrEntries.forEach(e => { dayCounts[new Date(e.date).getDay()]++; });
+    const topDayIdx = dayCounts.indexOf(Math.max(...dayCounts));
+    const topDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][topDayIdx];
+    let bestLift = 0, bestLiftName = '';
+    yrEntries.forEach(entry => {
+      Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
+        sets.filter(s => s.done).forEach(s => {
+          const w = parseFloat(s.weight) || 0;
+          if (w > bestLift) { bestLift = w; bestLiftName = nameMap[exId] || exId; }
+        });
+      });
+    });
+    const yrVolLabel = yrVolume >= 1000000 ? `${(yrVolume / 1000000).toFixed(1)}M` : yrVolume >= 1000 ? `${Math.round(yrVolume / 1000)}k` : `${Math.round(yrVolume)}`;
+
+    container.appendChild(mkLabel(`${yr} IN REVIEW`));
+    const yrCard = mkCard();
+    yrCard.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:12px;">
+        <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);line-height:1;">${yrSessions}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
+        </div>
+        <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);line-height:1;">${yrVolLabel} lbs</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">VOLUME</div>
+        </div>
+        <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);line-height:1;">${yrHrs}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">HOURS</div>
+        </div>
+        <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:#f0a500;line-height:1;">${yrPRs}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">PRs</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.5px;">
+        ${topDay ? `<div>📅 Most trained day: <span style="color:var(--cream);font-weight:700;">${topDay}</span></div>` : ''}
+        ${bestLift > 0 ? `<div>💪 Heaviest lift: <span style="color:var(--cream);font-weight:700;">${bestLift} lbs</span>${bestLiftName ? ` (${bestLiftName})` : ''}</div>` : ''}
+      </div>`;
+    yrCard.appendChild(mkShareBtn('SHARE YEAR IN REVIEW', () =>
+      generateAndShareCard('year_review', { year: yr, sessions: yrSessions, volume: yrVolLabel, hours: yrHrs, prs: yrPRs, topDay, bestLift: bestLift > 0 ? `${bestLift} lbs (${bestLiftName})` : null })
+    ));
+    container.appendChild(yrCard);
+  }
+
+  // ── 6. CYCLE RECAP ────────────────────────────────────────
   const cycleHistory = state.cycleHistory || [];
   if (cycleHistory.length > 0) {
+    container.appendChild(mkLabel('CYCLE RECAP'));
     const goalLabels = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' };
     const sorted_ch = [...cycleHistory].sort((a, b) => b.cycleNum - a.cycleNum);
     const lastCycle = sorted_ch[0];
@@ -9971,12 +10281,9 @@ function renderHistory() {
       if (!iso) return '';
       return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
-
     function buildCycleCard(cyc, isLast) {
       const consistencyColor = cyc.consistency >= 85 ? '#50c882' : cyc.consistency >= 60 ? '#f0a500' : 'var(--gray-light)';
-      const dateRange = (cyc.startDate && cyc.endDate)
-        ? `${formatCycleDate(cyc.startDate)} – ${formatCycleDate(cyc.endDate)}`
-        : '';
+      const dateRange = (cyc.startDate && cyc.endDate) ? `${formatCycleDate(cyc.startDate)} – ${formatCycleDate(cyc.endDate)}` : '';
       const goalLabel = goalLabels[cyc.goal] || 'Build Size & Strength';
       const card = document.createElement('div');
       card.style.cssText = `background:var(--dark3);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;margin-bottom:${isLast ? '0' : '8px'};`;
@@ -10008,23 +10315,14 @@ function renderHistory() {
     }
 
     const cycleSection = document.createElement('div');
-    cycleSection.style.cssText = 'margin-bottom:20px;';
-
-    const sectionLabel = document.createElement('div');
-    sectionLabel.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;';
-    sectionLabel.textContent = 'LAST CYCLE RECAP';
-    cycleSection.appendChild(sectionLabel);
+    cycleSection.style.cssText = 'margin-bottom:16px;';
     cycleSection.appendChild(buildCycleCard(lastCycle, olderCycles.length === 0));
-
     if (olderCycles.length > 0) {
       const olderBtn = document.createElement('button');
       olderBtn.style.cssText = 'width:100%;margin-top:8px;padding:11px;background:transparent;border:1px solid var(--dark4);color:var(--gray);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;';
-      let olderExpanded = false;
-      let olderDiv = null;
+      let olderExpanded = false, olderDiv = null;
       function refreshOlderBtn() {
-        olderBtn.textContent = olderExpanded
-          ? '▴  HIDE OLDER CYCLES'
-          : `▾  VIEW OLDER CYCLES  (${olderCycles.length})`;
+        olderBtn.textContent = olderExpanded ? '▴  HIDE OLDER CYCLES' : `▾  VIEW OLDER CYCLES  (${olderCycles.length})`;
       }
       refreshOlderBtn();
       olderBtn.onclick = () => {
@@ -10042,50 +10340,44 @@ function renderHistory() {
       };
       cycleSection.appendChild(olderBtn);
     }
-
     container.appendChild(cycleSection);
   }
-  // ────────────────────────────────────────────────────────────────────
 
-  if (state.history.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏋️</div><div class="empty-state-text">No sessions yet — tap START on any workout to begin.</div></div>`;
+  // ── 7. PERSONAL RECORDS ───────────────────────────────────
+  renderPRBoard();
+  const prBoard = document.getElementById('pr-board');
+  if (prBoard) container.appendChild(prBoard);
+
+  // ── 8. SESSION LOG ────────────────────────────────────────
+  if (hist.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = '<div class="empty-state-icon">🏋️</div><div class="empty-state-text">No sessions yet — tap START on any workout to begin.</div>';
+    container.appendChild(empty);
     return;
   }
 
-  const sorted = [...state.history].reverse().filter(entry =>
+  const sorted = [...hist].reverse().filter(entry =>
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
   );
+  if (sorted.length === 0) return;
 
+  container.appendChild(mkLabel(sorted.length === 1 ? 'LAST SESSION' : 'SESSION LOG'));
   const RECENT_COUNT = 3;
   const recent = sorted.slice(0, RECENT_COUNT);
   const older = sorted.slice(RECENT_COUNT);
-
-  const recentLabel = document.createElement('div');
-  recentLabel.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-bottom:6px;';
-  recentLabel.textContent = recent.length === 1 ? 'LAST SESSION' : 'RECENT SESSIONS';
-  container.appendChild(recentLabel);
   recent.forEach(entry => renderHistoryItem(entry, container, null));
 
   if (older.length > 0) {
     const btn = document.createElement('button');
     btn.id = 'history-load-more';
     btn.style.cssText = 'width:100%;margin:12px 0;padding:12px;background:var(--dark2);border:1px solid var(--dark4);color:var(--cream);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;';
-
-    let expanded = false;
-    let olderDiv = null;
-
-    function updateBtn() {
-      btn.textContent = expanded
-        ? '▴  HIDE OLDER SESSIONS'
-        : `▾  VIEW ${older.length} OLDER SESSION${older.length === 1 ? '' : 'S'}`;
-    }
-    updateBtn();
-
-    let page = 0;
-
+    let expanded = false, olderDiv = null, page = 0;
     const loadMoreBtn = document.createElement('button');
     loadMoreBtn.style.cssText = 'width:100%;margin:8px 0 0;padding:10px;background:transparent;border:1px solid var(--dark4);color:var(--gray);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;';
-
+    function updateBtn() {
+      btn.textContent = expanded ? '▴  HIDE OLDER SESSIONS' : `▾  VIEW ${older.length} OLDER SESSION${older.length === 1 ? '' : 'S'}`;
+    }
     function appendPage() {
       const slice = older.slice(page * HISTORY_PAGE_SIZE, (page + 1) * HISTORY_PAGE_SIZE);
       slice.forEach(entry => renderHistoryItem(entry, olderDiv, loadMoreBtn));
@@ -10094,7 +10386,7 @@ function renderHistory() {
       if (remaining <= 0) loadMoreBtn.remove();
       else loadMoreBtn.textContent = `LOAD ${Math.min(HISTORY_PAGE_SIZE, remaining)} MORE  (${remaining} remaining)`;
     }
-
+    updateBtn();
     btn.onclick = () => {
       if (!expanded) {
         olderDiv = document.createElement('div');
@@ -10114,6 +10406,50 @@ function renderHistory() {
     };
     container.appendChild(btn);
   }
+}
+
+// Updates the progression info card in the YOUR LIFTS section when picker changes
+function _statsProgInfo() {
+  const info = document.getElementById('stats-prog-info');
+  if (!info) return;
+  const picker = document.getElementById('exercise-picker');
+  if (!picker || !picker.value) return;
+  const exId = picker.value;
+  const hist = state.history || [];
+  const nameMap = {};
+  (DEFAULT_PROGRAM || []).forEach(d => (d.exercises || []).forEach(e => { nameMap[e.id] = e.name; }));
+  (state.program || []).forEach(d => (d.exercises || []).forEach(e => { nameMap[e.id] = e.name; }));
+
+  const sorted = [...hist].sort((a, b) => new Date(a.date) - new Date(b.date));
+  let firstW = null, curW = null, best1RM = 0;
+  for (const entry of sorted) {
+    const sets = ((entry.sets || {})[exId] || []).filter(s => s.done);
+    if (!sets.length) continue;
+    const maxW = Math.max(...sets.map(s => parseFloat(s.weight) || 0));
+    if (firstW === null) firstW = maxW;
+    curW = maxW;
+    sets.forEach(s => {
+      const w = parseFloat(s.weight) || 0, r = parseInt(s.reps) || 0;
+      if (w > 0 && r > 0) best1RM = Math.max(best1RM, w * (1 + r / 30));
+    });
+  }
+  best1RM = Math.round(best1RM);
+  const gainPct = (firstW && curW && curW !== firstW) ? Math.round((curW - firstW) / firstW * 100) : 0;
+  const gainColor = gainPct > 0 ? '#50c882' : gainPct < 0 ? '#ff6b6b' : 'var(--gray)';
+  const bw = parseFloat((state.profile || {}).bodyweight) || 0;
+
+  info.innerHTML = `
+    <div style="margin-bottom:12px;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">${(nameMap[exId] || exId).toUpperCase()}</div>
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px;">
+        ${firstW !== null ? `<div><div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;">FIRST</div><div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--gray-light);">${firstW} lbs</div></div>` : ''}
+        ${firstW !== null && curW !== null ? `<div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--gray);padding-bottom:4px;">→</div>` : ''}
+        ${curW !== null ? `<div><div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;">NOW</div><div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);">${curW} lbs</div></div>` : ''}
+        ${gainPct !== 0 ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:${gainColor};padding-bottom:6px;">${gainPct > 0 ? '+' : ''}${gainPct}%</div>` : ''}
+      </div>
+      ${best1RM > 0 ? `<div style="font-size:12px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">EST. 1RM: <span style="color:var(--cream);font-weight:700;">${best1RM} lbs</span></div>` : ''}
+      ${bw > 0 && best1RM > 0 ? `<div style="font-size:12px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;margin-top:2px;">${(best1RM / bw).toFixed(1)}× bodyweight</div>` : ''}
+    </div>`;
 }
 
 function renderHistoryDetail(entry) {
@@ -10779,6 +11115,194 @@ async function generateAndShareCard(type, data) {
     // Headline
     drawText('the workout did its job', W / 2, headlineY,
       barlow(400, 30), 'rgba(255,255,255,0.55)', MAX_TW);
+
+  } else if (type === 'lifetime_volume') {
+    // Big number: volume lifted
+    const tagY    = Math.round(SPLIT * 0.15);
+    const volY    = Math.round(SPLIT * 0.42);
+    const sessY   = Math.round(SPLIT * 0.63);
+    const timeY   = Math.round(SPLIT * 0.80);
+
+    drawText('LIFETIME TRAINING', W / 2, tagY,
+      barlow(700, 38), 'rgba(255,255,255,0.85)', MAX_TW);
+    drawText(data.volume || '0 lbs', W / 2, volY,
+      bebas(130), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 22 });
+    drawText('TOTAL VOLUME LIFTED', W / 2, sessY,
+      barlow(600, 40), 'rgba(255,255,255,0.75)', MAX_TW);
+
+    // Sessions + time in two cols at bottom of top section
+    const col1X = W / 2 - Math.round(180 * S);
+    const col2X = W / 2 + Math.round(180 * S);
+    drawText(String(data.sessions || 0), col1X, timeY,
+      bebas(80), '#ffe066', Math.round(300 * S), { color: 'rgba(255,224,102,0.4)', blur: 18 });
+    drawText('SESSIONS', col1X, timeY + Math.round(52 * S),
+      barlow(600, 26), 'rgba(255,255,255,0.6)', Math.round(300 * S));
+    drawText(data.hours || '0 hrs', col2X, timeY,
+      bebas(80), '#ffe066', Math.round(300 * S), { color: 'rgba(255,224,102,0.4)', blur: 18 });
+    drawText('TIME TRAINED', col2X, timeY + Math.round(52 * S),
+      barlow(600, 26), 'rgba(255,255,255,0.6)', Math.round(300 * S));
+
+  } else if (type === 'training_age') {
+    const tagY   = Math.round(SPLIT * 0.18);
+    const lblY   = Math.round(SPLIT * 0.50);
+    const subY   = Math.round(SPLIT * 0.73);
+
+    ctx.font = `${Math.round(90 * S)}px serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🏅', W / 2, tagY);
+
+    drawText((data.label || 'WEEK 1 IN').toUpperCase(), W / 2, lblY,
+      bebas(110), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 20 });
+    drawText(data.weeks > 0 ? `${data.weeks} WEEKS OF TRAINING` : 'JUST GETTING STARTED', W / 2, subY,
+      barlow(600, 44), 'rgba(255,255,255,0.8)', MAX_TW);
+
+  } else if (type === 'progression') {
+    const tagY   = Math.round(SPLIT * 0.12);
+    const exY    = Math.round(SPLIT * 0.30);
+    const arrowY = Math.round(SPLIT * 0.52);
+    const gainY  = Math.round(SPLIT * 0.73);
+    const rmY    = Math.round(SPLIT * 0.88);
+
+    drawText('PROGRESSION', W / 2, tagY,
+      barlow(700, 42), 'rgba(255,255,255,0.85)', MAX_TW);
+    drawText((data.exercise || '').toUpperCase(), W / 2, exY,
+      bebas(90), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.3)', blur: 14 });
+
+    // First → Now
+    const leftX = W / 2 - Math.round(200 * S);
+    const rightX = W / 2 + Math.round(200 * S);
+    if (data.firstWeight) {
+      drawText(`${data.firstWeight} lbs`, leftX, arrowY - Math.round(20 * S),
+        bebas(68), 'rgba(255,255,255,0.55)', Math.round(360 * S));
+      drawText('FIRST', leftX, arrowY + Math.round(40 * S),
+        barlow(600, 26), 'rgba(255,255,255,0.5)', Math.round(360 * S));
+    }
+    drawText('→', W / 2, arrowY,
+      bebas(80), 'rgba(255,255,255,0.35)', null);
+    if (data.currentWeight) {
+      drawText(`${data.currentWeight} lbs`, rightX, arrowY - Math.round(20 * S),
+        bebas(68), '#ffffff', Math.round(360 * S));
+      drawText('NOW', rightX, arrowY + Math.round(40 * S),
+        barlow(600, 26), 'rgba(255,255,255,0.7)', Math.round(360 * S));
+    }
+
+    if (data.gainPct && data.gainPct !== 0) {
+      const gainColor = data.gainPct > 0 ? '#50ff90' : '#ff6b6b';
+      drawText(`${data.gainPct > 0 ? '+' : ''}${data.gainPct}%`, W / 2, gainY,
+        bebas(100), gainColor, MAX_TW, { color: gainColor + '55', blur: 22 });
+    }
+    if (data.est1RM) {
+      drawText(`EST. 1RM: ${data.est1RM} LBS`, W / 2, rmY,
+        barlow(600, 36), 'rgba(255,255,255,0.7)', MAX_TW);
+    }
+
+  } else if (type === 'big_three') {
+    const tagY = Math.round(SPLIT * 0.12);
+    const lifts = data.lifts || [];
+
+    drawText('YOUR BIG THREE', W / 2, tagY,
+      barlow(700, 46), 'rgba(255,255,255,0.9)', MAX_TW);
+
+    const rowH = Math.round(SPLIT * 0.20);
+    const startY = Math.round(SPLIT * 0.28);
+    lifts.slice(0, 3).forEach((lift, i) => {
+      const rowY = startY + i * rowH;
+      const nameX = PAD + Math.round(20 * S);
+      const valX  = W - PAD - Math.round(20 * S);
+
+      ctx.save();
+      if (i < lifts.length - 1) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(PAD, rowY + rowH - 10);
+        ctx.lineTo(W - PAD, rowY + rowH - 10);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.font = barlow(700, 38);
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.fillText(lift.name.toUpperCase(), nameX, rowY + rowH / 2);
+
+      ctx.textAlign = 'right';
+      ctx.font = bebas(54);
+      ctx.fillStyle = '#ffe066';
+      ctx.fillText(`${lift.est1RM} lbs`, valX, rowY + rowH / 2);
+    });
+
+    // Combined total
+    const totalY = Math.round(SPLIT * 0.88);
+    drawText('COMBINED', W / 2, totalY - Math.round(32 * S),
+      barlow(600, 30), 'rgba(255,255,255,0.55)', MAX_TW);
+    drawText(`${(data.total || 0).toLocaleString()} LBS`, W / 2, totalY + Math.round(28 * S),
+      bebas(90), '#ffe066', MAX_TW, { color: 'rgba(255,224,102,0.4)', blur: 20 });
+
+  } else if (type === 'week_vs_week') {
+    const tagY  = Math.round(SPLIT * 0.13);
+    const wkY   = Math.round(SPLIT * 0.30);
+    const colY  = Math.round(SPLIT * 0.56);
+    const lblY  = Math.round(SPLIT * 0.72);
+    const subY  = Math.round(SPLIT * 0.87);
+
+    drawText(`WEEK ${data.week || 1} COMPARISON`, W / 2, tagY,
+      barlow(700, 40), 'rgba(255,255,255,0.85)', MAX_TW);
+
+    const fmtV = v => v >= 1000 ? `${Math.round(v / 1000)}K` : String(v || 0);
+    const col1X = W / 2 - Math.round(220 * S);
+    const col2X = W / 2 + Math.round(220 * S);
+    const volDelta = data.lastVolume > 0 ? Math.round((data.thisVolume - data.lastVolume) / data.lastVolume * 100) : null;
+    const deltaColor = volDelta !== null ? (volDelta >= 0 ? '#50ff90' : '#ff6b6b') : 'rgba(255,255,255,0.6)';
+
+    drawText('THIS CYCLE', col1X, wkY, barlow(600, 30), 'rgba(255,255,255,0.6)', Math.round(360 * S));
+    drawText(`${fmtV(data.thisVolume)} lbs`, col1X, colY,
+      bebas(80), '#ffffff', Math.round(380 * S), { color: 'rgba(0,0,0,0.35)', blur: 14 });
+    drawText(`${data.thisSessions || 0} sessions`, col1X, lblY,
+      barlow(600, 28), 'rgba(255,255,255,0.65)', Math.round(360 * S));
+
+    drawText('LAST CYCLE', col2X, wkY, barlow(600, 30), 'rgba(255,255,255,0.6)', Math.round(360 * S));
+    drawText(`${fmtV(data.lastVolume)} lbs`, col2X, colY,
+      bebas(80), 'rgba(255,255,255,0.55)', Math.round(380 * S));
+    drawText(`${data.lastSessions || 0} sessions`, col2X, lblY,
+      barlow(600, 28), 'rgba(255,255,255,0.5)', Math.round(360 * S));
+
+    if (volDelta !== null) {
+      drawText(`${volDelta >= 0 ? '+' : ''}${volDelta}% VOLUME`, W / 2, subY,
+        bebas(72), deltaColor, MAX_TW, { color: deltaColor + '55', blur: 18 });
+    }
+
+  } else if (type === 'year_review') {
+    const tagY  = Math.round(SPLIT * 0.11);
+    const yrY   = Math.round(SPLIT * 0.28);
+    const grid1Y = Math.round(SPLIT * 0.50);
+    const grid2Y = Math.round(SPLIT * 0.70);
+    const subY  = Math.round(SPLIT * 0.87);
+
+    drawText(`${data.year || new Date().getFullYear()} IN REVIEW`, W / 2, tagY,
+      barlow(700, 42), 'rgba(255,255,255,0.88)', MAX_TW);
+
+    // 4 stats in 2×2 grid
+    const col1X = W / 2 - Math.round(220 * S);
+    const col2X = W / 2 + Math.round(220 * S);
+    const colW  = Math.round(400 * S);
+
+    drawText(String(data.sessions || 0), col1X, grid1Y, bebas(86), '#ffffff', colW, { color: 'rgba(0,0,0,0.3)', blur: 14 });
+    drawText('SESSIONS', col1X, grid1Y + Math.round(52 * S), barlow(600, 26), 'rgba(255,255,255,0.6)', colW);
+
+    drawText(`${data.volume || '0'} lbs`, col2X, grid1Y, bebas(86), '#ffffff', colW, { color: 'rgba(0,0,0,0.3)', blur: 14 });
+    drawText('VOLUME', col2X, grid1Y + Math.round(52 * S), barlow(600, 26), 'rgba(255,255,255,0.6)', colW);
+
+    drawText(String(data.hours || 0), col1X, grid2Y, bebas(86), '#ffffff', colW);
+    drawText('HOURS', col1X, grid2Y + Math.round(52 * S), barlow(600, 26), 'rgba(255,255,255,0.6)', colW);
+
+    drawText(String(data.prs || 0), col2X, grid2Y, bebas(86), '#ffe066', colW, { color: 'rgba(255,224,102,0.4)', blur: 18 });
+    drawText('PERSONAL RECORDS', col2X, grid2Y + Math.round(52 * S), barlow(600, 26), 'rgba(255,255,255,0.6)', colW);
+
+    if (data.topDay) {
+      drawText(`MOST TRAINED: ${data.topDay.toUpperCase()}`, W / 2, subY,
+        barlow(600, 32), 'rgba(255,255,255,0.7)', MAX_TW);
+    }
   }
 
   // ── Milestone session stamp ───────────────────────────────
