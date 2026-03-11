@@ -16,6 +16,7 @@
 <style>
   :root {
     --red: #CC2027;
+    --red-text: #e8404a;
     --red-dark: #9e181d;
     --red-glow: rgba(204,32,39,0.35);
     --cream: #F5E6C8;
@@ -108,7 +109,7 @@
     line-height: 1;
   }
 
-  .app-title span { color: var(--red); }
+  .app-title span { color: var(--red-text); }
 
   .app-sub {
     font-family: 'Barlow Condensed', sans-serif;
@@ -138,7 +139,7 @@
     font-size: 18px;
     transition: all 0.2s;
   }
-  .icon-btn:hover { border-color: var(--red); color: var(--red); }
+  .icon-btn:hover { border-color: var(--red-text); color: var(--red-text); }
 
   /* BOTTOM NAV */
   .bottom-nav {
@@ -165,15 +166,15 @@
     color: var(--gray);
   }
 
-  .nav-item.active { color: var(--red); }
-  .nav-item.active .nav-icon { color: var(--red); }
+  .nav-item.active { color: var(--red-text); }
+  .nav-item.active .nav-icon { color: var(--red-text); }
 
   .onboard-dot {
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--dark3); border: 1px solid #444;
     transition: background 0.3s;
   }
-  .onboard-dot.active { background: var(--red); border-color: var(--red); }
+  .onboard-dot.active { background: var(--red); border-color: var(--red-text); }
   @keyframes ob-chevron-bounce {
     0%, 100% { transform: translateY(0);   opacity: 0.4; }
     50%       { transform: translateY(5px); opacity: 0.7; }
@@ -185,7 +186,7 @@
     font-size: 14px;
   }
   .onboard-select-btn:hover { border-color: #555; }
-  .onboard-select-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); }
+  .onboard-select-btn.selected { border-color: var(--red-text); background: rgba(204,32,39,0.12); }
   .rep-range-option {
     width: 100%; background: var(--dark3); border: 1px solid var(--dark4);
     color: var(--cream); padding: 12px 14px; border-radius: 12px;
@@ -194,7 +195,7 @@
     margin-bottom: 8px;
   }
   .rep-range-option:hover { border-color: #555; }
-  .rep-range-option.selected { border-color: var(--red); background: rgba(204,32,39,0.10); }
+  .rep-range-option.selected { border-color: var(--red-text); background: rgba(204,32,39,0.10); }
   .onboard-next-btn {
     width: 100%; background: var(--red); border: none; color: white;
     padding: 14px; border-radius: 12px; font-family: 'Bebas Neue', cursive;
@@ -212,7 +213,7 @@
     transition: border-color 0.2s, background 0.2s, color 0.2s;
   }
   .ob-slot-opt.selected {
-    border-color: var(--red); background: rgba(204,32,39,0.15); color: var(--cream);
+    border-color: var(--red-text); background: rgba(204,32,39,0.15); color: var(--cream);
   }
   .ob-button-row {
     display: flex; gap: 10px;
@@ -233,7 +234,7 @@
     transition: border-color 0.2s, background 0.2s; line-height: 1.4;
     min-width: 80px;
   }
-  .review-weight-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); }
+  .review-weight-btn.selected { border-color: var(--red-text); background: rgba(204,32,39,0.12); }
 
   .mood-btn {
     flex: 1; min-width: 0; background: var(--dark3); border: 2px solid transparent;
@@ -308,7 +309,7 @@
     color: var(--cream); border-radius: 12px; font-family: 'Bebas Neue', cursive;
     font-size: 20px; cursor: pointer; transition: all 0.2s;
   }
-  .days-btn.selected { border-color: var(--red); background: var(--red); color: white; }
+  .days-btn.selected { border-color: var(--red-text); background: var(--red); color: white; }
   .pause-reason-btn {
     width: 100%;
     background: var(--dark3);
@@ -323,7 +324,7 @@
     transition: border-color 0.2s;
   }
   .pause-reason-btn.selected {
-    border-color: var(--red);
+    border-color: var(--red-text);
     background: rgba(204,32,39,0.08);
   }
 
@@ -333,7 +334,7 @@
     text-align: left; cursor: pointer; transition: border-color 0.2s, background 0.2s;
   }
   .settings-day-btn:hover { border-color: #555; }
-  .settings-day-btn.selected { border-color: var(--red); background: rgba(204,32,39,0.12); }
+  .settings-day-btn.selected { border-color: var(--red-text); background: rgba(204,32,39,0.12); }
 
 
   .cbt-barrier-btn {
@@ -349,7 +350,7 @@
     transition: border-color 0.2s, background 0.2s;
   }
   .cbt-barrier-btn:hover, .cbt-barrier-btn.selected {
-    border-color: var(--red);
+    border-color: var(--red-text);
     background: rgba(204,32,39,0.12);
   }
   .cbt-suggestion-chip {
@@ -363,7 +364,7 @@
     transition: border-color 0.2s;
   }
   .cbt-suggestion-chip:hover {
-    border-color: var(--red);
+    border-color: var(--red-text);
   }
 
   .nav-icon { font-size: 22px; display: flex; align-items: center; justify-content: center; }
@@ -515,7 +516,7 @@
     font-size: 12px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: var(--red);
+    color: var(--red-text);
     margin-bottom: 2px;
   }
 
@@ -650,7 +651,7 @@
   }
 
   .session-title span { 
-    color: var(--red); 
+    color: var(--red-text); 
     font-family: 'Bebas Neue', cursive;
     font-size: 22px;
     letter-spacing: 2px;
@@ -738,7 +739,7 @@
   #session-reorder-btn {
     background: transparent;
     border: 1px solid var(--red);
-    color: var(--red);
+    color: var(--red-text);
     padding: 3px 8px;
     border-radius: 6px;
     cursor: pointer;
@@ -811,7 +812,7 @@
   .set-num {
     font-family: 'Bebas Neue', cursive;
     font-size: 16px;
-    color: var(--red);
+    color: var(--red-text);
     text-align: center;
   }
 
@@ -829,7 +830,7 @@
     outline: none;
     transition: border-color 0.2s;
   }
-  .set-input:focus { border-color: var(--red); }
+  .set-input:focus { border-color: var(--red-text); }
   .set-input::placeholder { color: #bbbbbb; }
 
   /* Previous session collapsible panel */
@@ -863,7 +864,7 @@
     -webkit-tap-highlight-color: transparent;
   }
   .prev-session-btn:active { color: var(--cream); }
-  .prev-session-btn span { color: var(--red); }
+  .prev-session-btn span { color: var(--red-text); }
   .prev-session-panel {
     padding: 4px 16px 10px;
     border-bottom: 1px solid var(--dark3);
@@ -935,7 +936,7 @@
     white-space: nowrap; flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  .rpe-nudge-btn:active { background: var(--red); border-color: var(--red); transform: scale(0.92); }
+  .rpe-nudge-btn:active { background: var(--red); border-color: var(--red-text); transform: scale(0.92); }
   .rpe-nudge-dismiss {
     flex-shrink: 0; background: none; border: none;
     color: var(--gray); font-size: 15px; cursor: pointer; padding: 4px 4px 4px 8px;
@@ -968,7 +969,7 @@
     flex-shrink: 0;
   }
   .rest-timer-btn.active { 
-    border-color: var(--red); color: white; 
+    border-color: var(--red-text); color: white; 
     background: var(--red);
     box-shadow: 0 0 12px rgba(204,32,39,0.4);
   }
@@ -1122,7 +1123,7 @@
     min-height: 70px;
     transition: border-color 0.2s;
   }
-  .notes-input:focus { border-color: var(--red); }
+  .notes-input:focus { border-color: var(--red-text); }
   .notes-input::placeholder { color: #bbbbbb; }
 
   /* PR BADGE - animates into view */
@@ -1201,7 +1202,7 @@
     padding: 4px 2px; outline: none;
     transition: border-color 0.2s;
   }
-  .ex-note-input:focus { border-color: var(--red); color: var(--cream); }
+  .ex-note-input:focus { border-color: var(--red-text); color: var(--cream); }
   .ex-note-input::placeholder { color: #bbbbbb; font-style: italic; }
   textarea::placeholder { color: #999999; }
 
@@ -1286,8 +1287,8 @@
     transition: border-color 0.2s;
     -webkit-tap-highlight-color: transparent;
   }
-  .history-item:active { border-color: var(--red); }
-  .history-item:hover { border-color: var(--red); }
+  .history-item:active { border-color: var(--red-text); }
+  .history-item:hover { border-color: var(--red-text); }
 
   .history-date {
     font-size: 12px;
@@ -1295,7 +1296,7 @@
     font-weight: 600;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--red);
+    color: var(--red-text);
     margin-bottom: 4px;
   }
 
@@ -1360,7 +1361,7 @@
 
   .history-chevron {
     font-size: 12px;
-    color: var(--red);
+    color: var(--red-text);
     flex-shrink: 0;
     margin-left: 6px;
     line-height: 1;
@@ -1545,7 +1546,7 @@
     cursor: pointer;
     transition: all 0.2s;
   }
-  .alt-option:hover { border-color: var(--red); }
+  .alt-option:hover { border-color: var(--red-text); }
 
   .alt-option-name {
     font-family: 'Barlow Condensed', sans-serif;
@@ -1624,8 +1625,8 @@
     min-height: 64px;
     -webkit-tap-highlight-color: transparent;
   }
-  .settings-item:active { border-color: var(--red); background: rgba(204,32,39,0.05); }
-  .settings-item:hover { border-color: var(--red); }
+  .settings-item:active { border-color: var(--red-text); background: rgba(204,32,39,0.05); }
+  .settings-item:hover { border-color: var(--red-text); }
 
   .settings-label {
     font-family: 'Barlow Condensed', sans-serif;
@@ -1679,10 +1680,10 @@
   }
 
   .week-dot.deload { background: var(--warning); border-color: var(--warning); color: var(--black); }
-  .week-dot.done { background: var(--red); border-color: var(--red); color: var(--white); }
+  .week-dot.done { background: var(--red); border-color: var(--red-text); color: var(--white); }
   .week-dot.current-deload { border: 2px solid var(--warning); color: var(--warning); }
   .week-dot.final { border: 2px solid #777; color: var(--gray-light); font-size: 12px; }
-  .week-dot.final.done { background: var(--red); border-color: var(--red); color: var(--white); font-size: 14px; }
+  .week-dot.final.done { background: var(--red); border-color: var(--red-text); color: var(--white); font-size: 14px; }
 
   .stat-grid {
     display: grid;
@@ -1760,7 +1761,7 @@
     color: var(--gray-light);
   }
 
-  .pill.red { background: var(--red-glow); color: var(--red); }
+  .pill.red { background: var(--red-glow); color: var(--red-text); }
   .pill.green { background: rgba(46,204,113,0.15); color: var(--success); }
 
   hr.divider { border: none; border-top: 1px solid var(--dark3); margin: 14px 0; }
@@ -1933,7 +1934,7 @@
     <div class="week-dots" id="week-dots"></div>
   </div>
 
-  <div class="section-title">YOUR <span>PROGRAM</span><span id="home-split-badge" style="margin-left:auto; font-size:11px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); color:var(--red); padding:4px 10px; border-radius:20px; letter-spacing:1.5px; font-weight:700; font-family:'Barlow Condensed',sans-serif;"></span></div>
+  <div class="section-title">YOUR <span>PROGRAM</span><span id="home-split-badge" style="margin-left:auto; font-size:11px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); color:var(--red-text); padding:4px 10px; border-radius:20px; letter-spacing:1.5px; font-weight:700; font-family:'Barlow Condensed',sans-serif;"></span></div>
 
   <div id="day-cards"></div>
 
@@ -1948,7 +1949,7 @@
       <span style="font-size:16px; line-height:1;">🏆</span>
       <span style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gold); letter-spacing:2px; font-weight:700;">PERSONAL RECORDS</span>
       <span id="pr-board-count" style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1px;"></span>
-      <span id="pr-board-chevron" style="margin-left:auto; font-size:11px; color:var(--red); transition:transform 0.2s;">▶</span>
+      <span id="pr-board-chevron" style="margin-left:auto; font-size:11px; color:var(--red-text); transition:transform 0.2s;">▶</span>
     </div>
     <div id="pr-board-list" style="display:none; flex-wrap:wrap; gap:8px; margin-top:10px;"></div>
   </div>
@@ -1958,7 +1959,7 @@
   <div style="margin-top:8px;">
     <div class="section-title" onclick="toggleProgressSection()" style="cursor:pointer; user-select:none;">
       EXERCISE <span>PROGRESS</span>
-      <span id="progress-chevron" style="margin-left:auto; font-size:10px; color:var(--red); transition:transform 0.2s; transform:rotate(180deg);">▼</span>
+      <span id="progress-chevron" style="margin-left:auto; font-size:10px; color:var(--red-text); transition:transform 0.2s; transform:rotate(180deg);">▼</span>
     </div>
     <div id="progress-section">
       <select class="exercise-picker" id="exercise-picker" onchange="renderProgressChart()"></select>
@@ -2014,7 +2015,7 @@
         <input type="number" id="timer-mins" value="30" min="0" max="999" style="width:64px; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Bebas Neue',cursive; font-size:36px; text-align:center; border-radius:10px; padding:8px 4px;" inputmode="decimal"/>
         <div style="font-size:12px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">MIN</div>
       </div>
-      <div style="font-family:'Bebas Neue',cursive; font-size:36px; color:var(--red); padding-top:8px;">:</div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:36px; color:var(--red-text); padding-top:8px;">:</div>
       <div style="text-align:center;">
         <input type="number" id="timer-secs" value="00" min="0" max="59" style="width:64px; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Bebas Neue',cursive; font-size:36px; text-align:center; border-radius:10px; padding:8px 4px;" inputmode="decimal"/>
         <div style="font-size:12px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">SEC</div>
@@ -2479,7 +2480,7 @@
 <div id="onboarding-modal" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:9900; overflow-y:auto;">
   <!-- Exit bar: visible only when entering via Settings → Redo Initial Setup -->
   <div id="ob-exit-bar" style="display:none; position:sticky; top:0; z-index:1; background:#0a0a0a; padding:14px 20px 0; text-align:right;">
-    <button onclick="closeOnboardingModal()" style="background:none; border:none; color:var(--red); font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; padding:4px 0;">← BACK TO SETTINGS</button>
+    <button onclick="closeOnboardingModal()" style="background:none; border:none; color:var(--red-text); font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; padding:4px 0;">← BACK TO SETTINGS</button>
   </div>
   <div style="max-width:480px; margin:0 auto; padding:calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 40px);">
 
@@ -2805,7 +2806,7 @@
       </div>
 
       <div style="background:var(--dark3); border-radius:14px; padding:18px; margin-bottom:24px;">
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-bottom:12px;">LOGGING RPE</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:2px; margin-bottom:12px;">LOGGING RPE</div>
         <div style="font-size:13px; color:var(--cream); line-height:1.7; margin-bottom:14px;">After each set, you'll log your <strong>RPE</strong> — how hard it felt on a scale of 1–10. This tells the app whether to increase your weight, hold it, or pull it back.</div>
         <div style="display:flex; flex-direction:column; gap:6px; font-size:13px;">
           <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 7</span><span style="color:var(--gray-light);">Could do 3 more reps</span></div>
@@ -2835,7 +2836,7 @@
 
       <!-- 1RM Calculator (inline) -->
       <div id="onerm-calc" style="background:var(--dark3); border-radius:14px; padding:16px; margin-bottom:20px; display:none;">
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-bottom:12px;">1RM CALCULATOR</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:2px; margin-bottom:12px;">1RM CALCULATOR</div>
         <div style="font-size:12px; color:var(--gray-light); margin-bottom:12px;">Enter a weight you can lift for a known number of reps and we'll estimate your 1RM.</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
           <div>
@@ -2852,7 +2853,7 @@
           <div style="font-size:12px; color:var(--gray); margin-bottom:4px;">ESTIMATED 1RM</div>
           <div id="onerm-result-val" style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream);"></div>
           <div id="onerm-working-val" style="font-size:12px; color:var(--gray); margin-bottom:12px;"></div>
-          <button id="onerm-apply-btn" onclick="applyOnermResult()" style="background:var(--dark2); border:1px solid var(--red); color:var(--red); padding:10px 20px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer;">APPLY TO EXERCISE</button>
+          <button id="onerm-apply-btn" onclick="applyOnermResult()" style="background:var(--dark2); border:1px solid var(--red); color:var(--red-text); padding:10px 20px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer;">APPLY TO EXERCISE</button>
         </div>
       </div>
 
@@ -2871,7 +2872,7 @@
       <div style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:3px; margin-bottom:8px;">YOU'RE SET UP</div>
       <div id="ob-greeting" style="font-size:15px; color:var(--gray-light); margin-bottom:24px; line-height:1.6;"></div>
       <div style="background:var(--dark3); border-radius:14px; padding:18px; margin-bottom:16px; text-align:left;">
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-bottom:10px;">YOUR WEEK 1 PLAN</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:2px; margin-bottom:10px;">YOUR WEEK 1 PLAN</div>
         <div id="ob-summary" style="font-size:13px; color:var(--cream); line-height:1.8;"></div>
       </div>
 
@@ -3600,7 +3601,7 @@
 
     <!-- Top bar -->
     <div style="display:flex; justify-content:space-between; align-items:center; padding:calc(env(safe-area-inset-top) + 16px) 20px 8px;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:20px; color:var(--gray); letter-spacing:2px;">T&S MUSCLE <span style="color:var(--red);">GUIDE</span></div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:20px; color:var(--gray); letter-spacing:2px;">T&S MUSCLE <span style="color:var(--red-text);">GUIDE</span></div>
       <button onclick="closeTutorial()" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); padding:7px 14px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13px; letter-spacing:1px; cursor:pointer; display:flex; align-items:center; gap:6px;">
         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         EXIT GUIDE
@@ -5735,7 +5736,7 @@ function openRepRangeSheet(exId) {
     const isGoal = opt.key === goal;
     const isCurrent = opt.range === currentRange;
     const badgeHTML = isGoal
-      ? `<span style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--red);background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.3);border-radius:4px;padding:3px 8px;flex-shrink:0;">RECOMMENDED</span>`
+      ? `<span style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--red-text);background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.3);border-radius:4px;padding:3px 8px;flex-shrink:0;">RECOMMENDED</span>`
       : `<span style="font-size:9px;font-weight:700;letter-spacing:1px;color:${opt.color};background:${opt.color}18;border:1px solid ${opt.color}44;border-radius:4px;padding:3px 8px;flex-shrink:0;">${opt.label.toUpperCase()}</span>`;
     const tradeoffHTML = (!isGoal && opt.tradeoff)
       ? `<div style="font-size:11px;color:#f59e0b;font-family:'Barlow Condensed',sans-serif;margin-top:5px;">⚠ ${opt.tradeoff}</div>`
@@ -6623,7 +6624,7 @@ function completePair(targetExId) {
   modal.innerHTML = `
     <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:20px 20px 0 0;padding:28px 24px calc(env(safe-area-inset-bottom) + 24px);width:100%;animation:slideUp 0.3s ease;">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);margin-bottom:4px;">SUPERSET PAIRING</div>
-      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.5;">${srcName} <span style="color:var(--red);">+</span> ${tgtName}</div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.5;">${srcName} <span style="color:var(--red-text);">+</span> ${tgtName}</div>
       <button id="_pair-session-btn" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:1.5px;cursor:pointer;margin-bottom:10px;text-align:left;display:flex;flex-direction:column;gap:3px;">
         <span>THIS SESSION ONLY</span>
         <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);font-weight:400;letter-spacing:0;">Paired just for today — resets next workout</span>
@@ -6784,7 +6785,7 @@ function renderSession() {
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
         <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:${_goalColor};font-size:11px;font-weight:700;cursor:pointer;border-bottom:1px dashed ${_goalColor}70;padding-bottom:1px;" title="Tap to change · hit ${_repTop} reps to trigger weight increase">GOAL: ${_goalReps}</span></div>
-        <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
+        <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red-text);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
         <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
       </div>
       ${_prevPanelHTML}
@@ -6845,7 +6846,7 @@ function renderSession() {
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
             <span id="rep-goal-meta-${ex.id}" style="font-size:12px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${_goalReps}</span>
-            ${isPaired ? `<span style="font-size:10px;font-weight:700;color:var(--red);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(220,38,38,0.1);padding:3px 8px;border-radius:4px;">SUPERSET ${supersetLabel}</span>` : ''}
+            ${isPaired ? `<span style="font-size:10px;font-weight:700;color:var(--red-text);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(220,38,38,0.1);padding:3px 8px;border-radius:4px;">SUPERSET ${supersetLabel}</span>` : ''}
             ${isSource ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:3px 8px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
         </div>
@@ -6854,7 +6855,7 @@ function renderSession() {
           ${ex.alts && ex.alts.length ? `<button class="swap-btn" onclick="openSessionSwap('${ex.id}')">SWAP ⇔</button>` : ''}
           <button class="swap-btn" id="pair-btn-${ex.id}"
             onclick="${isSource ? 'pairingSourceId=null;renderSession();' : `startPairSelection('${ex.id}')`}"
-            style="${isPaired ? 'border-color:var(--red);color:var(--red);' : isSource ? 'border-color:#f59e0b;color:#f59e0b;' : ''}">
+            style="${isPaired ? 'border-color:var(--red-text);color:var(--red-text);' : isSource ? 'border-color:#f59e0b;color:#f59e0b;' : ''}">
             ${isPaired ? 'PAIRED ✕' : isSource ? 'CANCEL' : 'PAIR'}
           </button>
           <button class="swap-btn" id="skip-btn-${ex.id}" onclick="toggleSkipExercise('${ex.id}')" style="background:transparent; border-color:#3a3a3a; color:var(--gray-light);">SKIP</button>
@@ -6990,13 +6991,13 @@ function renderBonusExerciseList(q) {
     const customLabel = q.trim();
     if (customLabel && !matches.some(m => m.toLowerCase() === customLabel.toLowerCase())) {
       html += `<button class="bonus-ex-btn" style="border-color:rgba(204,32,39,0.35);color:var(--gray-light);" onclick="showBonusPersistStep('${customLabel.replace(/'/g, "\\'")}')">
-        <span style="color:var(--red);margin-right:6px;">+</span> Add "<strong style="color:var(--cream);">${customLabel}</strong>"
+        <span style="color:var(--red-text);margin-right:6px;">+</span> Add "<strong style="color:var(--cream);">${customLabel}</strong>"
       </button>`;
     }
     if (!html) {
       html = `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray);text-align:center;padding:20px;">No matches — tap below to add as custom</div>`;
       html += `<button class="bonus-ex-btn" style="border-color:rgba(204,32,39,0.35);color:var(--gray-light);" onclick="showBonusPersistStep('${customLabel.replace(/'/g, "\\'")}')">
-        <span style="color:var(--red);margin-right:6px;">+</span> Add "<strong style="color:var(--cream);">${customLabel}</strong>"
+        <span style="color:var(--red-text);margin-right:6px;">+</span> Add "<strong style="color:var(--cream);">${customLabel}</strong>"
       </button>`;
     }
   } else {
@@ -8155,7 +8156,7 @@ function openExInfo(exId) {
   if (cues.length) {
     cuesEl.innerHTML = cues.map((c, i) => `
       <div style="display:flex; align-items:flex-start; gap:12px;">
-        <div style="flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--dark3); border:1px solid var(--dark4); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',cursive; font-size:13px; color:var(--red);">${i + 1}</div>
+        <div style="flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--dark3); border:1px solid var(--dark4); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',cursive; font-size:13px; color:var(--red-text);">${i + 1}</div>
         <div style="font-size:14px; color:var(--gray-light); line-height:1.5; font-family:'Barlow',sans-serif;">${c}</div>
       </div>
     `).join('');
@@ -9431,7 +9432,7 @@ function showCycleCompleteModal() {
       <!-- Hero banner -->
       <div style="background:linear-gradient(135deg,#1a0000,#2d0507);padding:28px 24px 24px;text-align:center;border-bottom:1px solid rgba(204,32,39,0.3);">
         <div style="font-size:48px;margin-bottom:10px;">🏆</div>
-        <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red);letter-spacing:3px;margin-bottom:6px;">CYCLE ${completedCycle} COMPLETE</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red-text);letter-spacing:3px;margin-bottom:6px;">CYCLE ${completedCycle} COMPLETE</div>
         <div style="font-size:13px;color:var(--cream);line-height:1.5;">You finished 8 weeks, ${name}. That's real work.</div>
       </div>
 
@@ -9446,7 +9447,7 @@ function showCycleCompleteModal() {
           <div style="font-size:12px;color:var(--gray-light);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">ALL-TIME PRs</div>
         </div>
         <div style="background:var(--dark2);padding:16px;text-align:center;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red);margin-bottom:4px;">${completedCycle}</div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red-text);margin-bottom:4px;">${completedCycle}</div>
           <div style="font-size:12px;color:var(--gray-light);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">CYCLES DONE</div>
         </div>
       </div>
@@ -9859,7 +9860,7 @@ function renderHistoryItem(entry, container, insertBefore) {
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
-        <button onclick="event.stopPropagation(); shareHistoryEntry('${entry.id}')" style="background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.4);border-radius:8px;color:var(--red);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;box-sizing:border-box;" title="Share this workout">
+        <button onclick="event.stopPropagation(); shareHistoryEntry('${entry.id}')" style="background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.4);border-radius:8px;color:var(--red-text);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;box-sizing:border-box;" title="Share this workout">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
         <button onclick="event.stopPropagation(); confirmDeleteSession('${entry.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--gray);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;box-sizing:border-box;" title="Delete session">
@@ -9981,7 +9982,7 @@ function renderHistoryDetail(entry) {
         if (!seen.has(key)) {
           seen.add(key);
           if (sid === ex.id || entry.supersets[sid] === ex.id) {
-            supersetBadge = `<span style="font-size:10px;font-weight:700;color:var(--red);background:rgba(220,38,38,0.1);padding:1px 6px;border-radius:4px;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">SS ${String.fromCharCode(letter)}</span>`;
+            supersetBadge = `<span style="font-size:10px;font-weight:700;color:var(--red-text);background:rgba(220,38,38,0.1);padding:1px 6px;border-radius:4px;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">SS ${String.fromCharCode(letter)}</span>`;
             break;
           }
           letter++;
@@ -12012,9 +12013,9 @@ const TUTORIAL_SLIDES = [
     section: 'WELCOME',
     icon: '💪',
     title: 'Welcome to T&S Muscle',
-    body: `This guide walks you through the app's key features. Go at your own pace — tap <strong style="color:var(--cream);">EXIT GUIDE</strong> to close it anytime, and reopen it from <strong style="color:var(--red);">Settings → App Tutorial</strong> whenever you need it.<br><br>
+    body: `This guide walks you through the app's key features. Go at your own pace — tap <strong style="color:var(--cream);">EXIT GUIDE</strong> to close it anytime, and reopen it from <strong style="color:var(--red-text);">Settings → App Tutorial</strong> whenever you need it.<br><br>
     <div style="background:rgba(204,32,39,0.08);border:1px solid rgba(204,32,39,0.25);border-radius:10px;padding:12px 14px;">
-      <strong style="color:var(--red);">Medical Disclaimer</strong><br>
+      <strong style="color:var(--red-text);">Medical Disclaimer</strong><br>
       <span style="color:var(--gray);font-size:13px;line-height:1.6;">Consult a qualified healthcare provider before starting any new exercise program, particularly if you have existing medical conditions, injuries, or have been inactive. This app offers general fitness guidance and is not a substitute for professional medical advice. Train smart — listen to your body.</span>
     </div>`,
   },
@@ -12023,11 +12024,11 @@ const TUTORIAL_SLIDES = [
     icon: '📲',
     title: 'Add to Your Home Screen',
     body: `T&S Muscle is a <strong style="color:var(--cream);">Progressive Web App</strong> — install it to your home screen for a full-screen, native-app experience with offline support.<br><br>
-    <strong style="color:var(--red);">iPhone (Safari only):</strong><br>
+    <strong style="color:var(--red-text);">iPhone (Safari only):</strong><br>
     1. Tap the <strong style="color:var(--cream);">Share</strong> icon at the bottom of Safari<br>
     2. Scroll down and tap <strong style="color:var(--cream);">Add to Home Screen</strong><br>
     3. Tap <strong style="color:var(--cream);">Add</strong><br><br>
-    <strong style="color:var(--red);">Android (Chrome):</strong><br>
+    <strong style="color:var(--red-text);">Android (Chrome):</strong><br>
     1. Tap the menu <strong style="color:var(--cream);">⋮</strong> in Chrome<br>
     2. Tap <strong style="color:var(--cream);">Install app</strong> (or <strong style="color:var(--cream);">Add to Home Screen</strong>)<br>
     3. Tap <strong style="color:var(--cream);">Install</strong> to confirm<br><br>
@@ -12042,23 +12043,23 @@ const TUTORIAL_SLIDES = [
     <strong style="color:var(--cream);">→ Training goal</strong> (size, strength, or both)<br>
     <strong style="color:var(--cream);">→ Your split &amp; training days per week</strong><br>
     <strong style="color:var(--cream);">→ Starting weights for your compound lifts</strong><br><br>
-    Not sure about a starting weight? Tap <strong style="color:var(--red);">1RM CALC</strong> next to any lift — enter a weight you've used for any number of reps, and the app estimates your ideal working weight automatically.<br><br>
-    You can redo this setup anytime from <strong style="color:var(--red);">Settings → Redo Initial Setup</strong>.`,
+    Not sure about a starting weight? Tap <strong style="color:var(--red-text);">1RM CALC</strong> next to any lift — enter a weight you've used for any number of reps, and the app estimates your ideal working weight automatically.<br><br>
+    You can redo this setup anytime from <strong style="color:var(--red-text);">Settings → Redo Initial Setup</strong>.`,
   },
   {
     section: 'TEST WEEK',
     icon: '📋',
     title: 'Week 1: Calibration',
     body: `Your first week is a <strong style="color:var(--cream);">calibration week</strong>. Weights start conservative on purpose — the goal is to find your real working weights, not max out.<br><br>
-    On every set, log your <strong style="color:var(--red);">RPE</strong> (Rate of Perceived Exertion) — a simple 1–10 scale for how hard the set felt. <strong style="color:var(--cream);">RPE 7–8</strong> is the target sweet spot for building muscle.<br><br>
+    On every set, log your <strong style="color:var(--red-text);">RPE</strong> (Rate of Perceived Exertion) — a simple 1–10 scale for how hard the set felt. <strong style="color:var(--cream);">RPE 7–8</strong> is the target sweet spot for building muscle.<br><br>
     After completing <strong style="color:var(--cream);">4 sessions</strong>, the app walks you through a <strong style="color:var(--cream);">Test Week Review</strong> — you choose lighter, same, or heavier for each lift. Your calibrated program starts immediately after.`,
   },
   {
     section: 'LOGGING WORKOUTS',
     icon: '🗓️',
     title: 'Logging a Workout',
-    body: `From <strong style="color:var(--cream);">Home</strong>, tap a day card to expand it, then tap <strong style="color:var(--red);">START</strong>.<br><br>
-    For each set, enter your <strong style="color:var(--red);">weight, reps, and RPE</strong>. As you type reps, the input gives you live feedback:<br>
+    body: `From <strong style="color:var(--cream);">Home</strong>, tap a day card to expand it, then tap <strong style="color:var(--red-text);">START</strong>.<br><br>
+    For each set, enter your <strong style="color:var(--red-text);">weight, reps, and RPE</strong>. As you type reps, the input gives you live feedback:<br>
     <strong style="color:#4caf50;">✓ Hit target &nbsp; ▲ Exceeded target</strong><br>
     <strong style="color:#e57373;">▼ Fell short</strong><br><br>
     Tap the <strong style="color:var(--cream);">checkmark</strong> to lock in the set. A badge appears on the row confirming the outcome.<br><br>
@@ -12066,27 +12067,27 @@ const TUTORIAL_SLIDES = [
     <strong style="color:var(--cream);">⏱ Rest timer</strong> — vibrates when time's up<br>
     <strong style="color:var(--cream);">🍽 Plate calculator</strong> — shows exact plate loading<br>
     <strong style="color:var(--cream);">📝 Notes field</strong> — for cues or reminders<br><br>
-    When you're done, tap <strong style="color:var(--red);">COMPLETE ✓</strong> to see your session summary — set outcomes and next-session weights — before anything saves. Need to stop early? Tap <strong style="color:var(--cream);">EXIT</strong> to save progress and resume later.`,
+    When you're done, tap <strong style="color:var(--red-text);">COMPLETE ✓</strong> to see your session summary — set outcomes and next-session weights — before anything saves. Need to stop early? Tap <strong style="color:var(--cream);">EXIT</strong> to save progress and resume later.`,
   },
   {
     section: 'SUPERSETS',
     icon: '🔗',
     title: 'Superset Pairing',
     body: `A superset alternates two exercises back-to-back — rest after completing both. It's the most efficient way to cut session time without sacrificing volume.<br><br>
-    <strong style="color:var(--red);">To pair exercises:</strong><br>
+    <strong style="color:var(--red-text);">To pair exercises:</strong><br>
     1. Tap <strong style="color:var(--cream);">PAIR</strong> on any exercise<br>
     2. Tap the other exercise card to link them<br>
     3. Choose: <strong style="color:var(--cream);">This session only</strong> or <strong style="color:var(--cream);">Save for full cycle</strong><br><br>
-    Once paired, a <strong style="color:var(--red);">connector strip</strong> appears between the two cards showing your round count — <em>Round 2 of 4</em>. After you check off a set, the partner card <strong style="color:var(--cream);">pulses amber</strong> and scrolls into view — your cue to switch.<br><br>
+    Once paired, a <strong style="color:var(--red-text);">connector strip</strong> appears between the two cards showing your round count — <em>Round 2 of 4</em>. After you check off a set, the partner card <strong style="color:var(--cream);">pulses amber</strong> and scrolls into view — your cue to switch.<br><br>
     To unpair, tap <strong style="color:var(--cream);">PAIRED ✕</strong> on either exercise.`,
   },
   {
     section: 'EXERCISE SWAPS',
     icon: '🔄',
     title: 'Swapping Exercises',
-    body: `Every exercise has a <strong style="color:var(--red);">SWAP</strong> button. Tap it to see curated alternatives with notes on why each one works — for example, <em>"easier on shoulders"</em> or <em>"constant tension version."</em><br><br>
+    body: `Every exercise has a <strong style="color:var(--red-text);">SWAP</strong> button. Tap it to see curated alternatives with notes on why each one works — for example, <em>"easier on shoulders"</em> or <em>"constant tension version."</em><br><br>
     <strong style="color:var(--cream);">Today only</strong> — the swap applies to this session. Your program keeps the original for next time.<br><br>
-    <strong style="color:var(--cream);">Permanently</strong> — replaces the exercise going forward. Undo anytime from <strong style="color:var(--red);">Settings → Restore Default Exercises</strong>.<br><br>
+    <strong style="color:var(--cream);">Permanently</strong> — replaces the exercise going forward. Undo anytime from <strong style="color:var(--red-text);">Settings → Restore Default Exercises</strong>.<br><br>
     Each exercise also has a <strong style="color:var(--cream);">form video link</strong> — set a custom YouTube link to your preferred coaching cue.`,
   },
   {
@@ -12107,9 +12108,9 @@ const TUTORIAL_SLIDES = [
     icon: '📈',
     title: 'Smart Weight Progression',
     body: `The app adjusts your weights automatically — and gets smarter the more sessions you log.<br><br>
-    <strong style="color:var(--red);">Sessions 1–2:</strong> Progression is based on your most recent session — reps hit and RPE logged.<br><br>
-    <strong style="color:var(--red);">Session 3 onwards:</strong> The app switches to <strong style="color:var(--cream);">trend logic</strong> — it averages your RPE and reps across your last 3 sessions before deciding to increase, hold, or reduce. One great day won't spike your weight. One hard day won't tank it.<br><br>
-    After each session, a <strong style="color:var(--cream);">progression banner</strong> on each exercise shows the next weight, the reason for the change, and whether it came from a single session or a trend. Toggle this in <strong style="color:var(--red);">Settings → Progressive Overload</strong>.`,
+    <strong style="color:var(--red-text);">Sessions 1–2:</strong> Progression is based on your most recent session — reps hit and RPE logged.<br><br>
+    <strong style="color:var(--red-text);">Session 3 onwards:</strong> The app switches to <strong style="color:var(--cream);">trend logic</strong> — it averages your RPE and reps across your last 3 sessions before deciding to increase, hold, or reduce. One great day won't spike your weight. One hard day won't tank it.<br><br>
+    After each session, a <strong style="color:var(--cream);">progression banner</strong> on each exercise shows the next weight, the reason for the change, and whether it came from a single session or a trend. Toggle this in <strong style="color:var(--red-text);">Settings → Progressive Overload</strong>.`,
   },
   {
     section: 'DELOAD & REST',
@@ -12125,7 +12126,7 @@ const TUTORIAL_SLIDES = [
     icon: '⏸',
     title: 'Pause When Life Happens',
     body: `Illness, injury, travel — the <strong style="color:var(--cream);">Pause Program</strong> feature keeps your progress safe when you can't train.<br><br>
-    Go to <strong style="color:var(--red);">Settings → Pause Program</strong> and choose a reason:<br><br>
+    Go to <strong style="color:var(--red-text);">Settings → Pause Program</strong> and choose a reason:<br><br>
     🤒 Illness &nbsp;&nbsp; 🩹 Injury &nbsp;&nbsp; 🏠 Emergency &nbsp;&nbsp; ✈️ Travel<br><br>
     While paused, your <strong style="color:var(--cream);">week counter and streak are frozen</strong> — nothing resets. A banner on the home screen shows how long you've been paused, with a one-tap resume button.<br><br>
     <strong style="color:var(--gray);font-size:13px;">One pause per cycle maximum. Pauses auto-expire after 14 days.</strong>`,
@@ -12135,7 +12136,7 @@ const TUTORIAL_SLIDES = [
     icon: '🏆',
     title: 'History, PRs & Milestones',
     body: `The <strong style="color:var(--cream);">History tab</strong> shows every completed session with full set-by-set detail.<br><br>
-    After each workout, a <strong style="color:var(--red);">Volume Trend</strong> card shows how your total volume compares to your last session on the same day — honest feedback, no judgement.<br><br>
+    After each workout, a <strong style="color:var(--red-text);">Volume Trend</strong> card shows how your total volume compares to your last session on the same day — honest feedback, no judgement.<br><br>
     When you set a new <strong style="color:var(--cream);">Personal Record</strong> on any exercise, the app celebrates it with a PR card. Your all-time bests live in the PR board at the top of History.<br><br>
     <strong style="color:var(--cream);">Consistency Milestones</strong> unlock automatically at 1, 5, 10, 25, 50, and 100 sessions — and at 2, 4, 8, and 12-week training streaks.`,
   },
@@ -12145,7 +12146,7 @@ const TUTORIAL_SLIDES = [
     title: 'Cardio Tracking',
     body: `The <strong style="color:var(--cream);">Cardio tab</strong> tracks five activity types:<br><br>
     🏃 Outdoor Run &nbsp; 🚶 Walk &nbsp; 🚶 Brisk Walk &nbsp; 🏃 Jog &nbsp; 🏋️ Treadmill<br><br>
-    Each session logs <strong style="color:var(--cream);">distance, duration, pace,</strong> and <strong style="color:var(--red);">calories burned</strong> — calculated using MET values, the same standard used in exercise science research.<br><br>
+    Each session logs <strong style="color:var(--cream);">distance, duration, pace,</strong> and <strong style="color:var(--red-text);">calories burned</strong> — calculated using MET values, the same standard used in exercise science research.<br><br>
     Use the built-in <strong style="color:var(--cream);">timer</strong> with quick presets (20, 30, 45, 60 min) for structured sessions. Your <strong style="color:var(--cream);">weekly summary</strong> shows total sessions, minutes, and calories at a glance.`,
   },
   {
@@ -12153,7 +12154,7 @@ const TUTORIAL_SLIDES = [
     icon: '🧠',
     title: 'Mindset Tools',
     body: `The <strong style="color:var(--cream);">Mindset tab</strong> has three tools built around the psychology of consistency:<br><br>
-    <strong style="color:var(--red);">Mood Check-In</strong> — Rate how you feel before and after training. Over time, the app tracks your average mood lift — most people feel measurably better after a session than before.<br><br>
+    <strong style="color:var(--red-text);">Mood Check-In</strong> — Rate how you feel before and after training. Over time, the app tracks your average mood lift — most people feel measurably better after a session than before.<br><br>
     <strong style="color:var(--cream);">Self-Compassion Exercise</strong> — A 3-step guided exercise for when you're being hard on yourself. Research shows that self-criticism after missing a session actually increases the chance of quitting.<br><br>
     <strong style="color:var(--cream);">Cognitive Reframe</strong> — Log what got in the way of a workout and work through a CBT-based reframe. Patterns build up over time so you can spot your real blockers.`,
   },
@@ -12167,7 +12168,7 @@ const TUTORIAL_SLIDES = [
     <strong style="color:var(--cream);">❤️ Cardio</strong> — Cardio sessions and weekly summary<br>
     <strong style="color:var(--cream);">🧠 Mindset</strong> — Mood tracker, reframes, self-compassion<br>
     <strong style="color:var(--cream);">⚙️ Settings</strong> — Setup, training days, music, backup<br><br>
-    Come back to this guide anytime from <strong style="color:var(--red);">Settings → App Tutorial</strong>.<br><br>
+    Come back to this guide anytime from <strong style="color:var(--red-text);">Settings → App Tutorial</strong>.<br><br>
     <strong style="color:var(--cream);">Now go train.</strong>`,
   },
 ];
@@ -12191,7 +12192,7 @@ function buildTutorialSlides() {
     <div style="min-width:100%; height:100%; overflow-y:auto; padding:8px 20px 20px; box-sizing:border-box;">
       <div style="text-align:center; padding:20px 0 16px;">
         <div style="font-size:56px; margin-bottom:12px;">${slide.icon}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--red); letter-spacing:3px; margin-bottom:8px;">${slide.section}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--red-text); letter-spacing:3px; margin-bottom:8px;">${slide.section}</div>
         <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:26px; color:var(--cream); letter-spacing:1px; line-height:1.2;">${slide.title}</div>
       </div>
       <div style="background:var(--dark2); border:1px solid var(--dark3); border-radius:16px; padding:20px; font-size:15px; color:#cccccc; line-height:1.8;">
@@ -12794,18 +12795,18 @@ function selectExerciseMode(mode, btn) {
 function buildObManualSlots() {
   const panel = document.getElementById('ob-manual-select');
   const currentSplit = document.getElementById('ob-split-type')?.value || 'ul';
-  let html = '<div style="background:linear-gradient(135deg,#081a10,#0a1e12);border:1.5px solid rgba(80,200,130,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--gray-light);line-height:1.6;">These are your <strong style="color:var(--cream);">Cycle 1 exercises</strong>. When Cycle 1 ends (~8 weeks), the app will prompt you to swap one or two — same muscle, different angle. You\'ll also see a reminder at <strong style="color:var(--cream);">Week 5 of Cycle 2</strong>. Pick what works best for your gym now.<br><br><span style="color:var(--gray);">The <span style="color:var(--cream);">★</span> option is pre-selected as a proven default. Tap <span style="color:var(--red);font-size:11px;">▶</span> to watch a tutorial before picking.</span></div>';
+  let html = '<div style="background:linear-gradient(135deg,#081a10,#0a1e12);border:1.5px solid rgba(80,200,130,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--gray-light);line-height:1.6;">These are your <strong style="color:var(--cream);">Cycle 1 exercises</strong>. When Cycle 1 ends (~8 weeks), the app will prompt you to swap one or two — same muscle, different angle. You\'ll also see a reminder at <strong style="color:var(--cream);">Week 5 of Cycle 2</strong>. Pick what works best for your gym now.<br><br><span style="color:var(--gray);">The <span style="color:var(--cream);">★</span> option is pre-selected as a proven default. Tap <span style="color:var(--red-text);font-size:11px;">▶</span> to watch a tutorial before picking.</span></div>';
   OB_PRIMARY_SLOTS.filter(slot => !slot.splitFilter || slot.splitFilter.includes(currentSplit)).forEach(slot => {
     const safeId = slot.id.replace('-', '_');
     let optBtns = slot.options.map((opt, i) => {
       const sel = i === 0 ? ' selected' : '';
       const label = i === 0 ? `★ ${opt.display}` : opt.display;
       const escaped = opt.apply.replace(/'/g, "\\'");
-      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${escaped}',this)">${label}<span onclick="event.stopPropagation();window.open('${opt.ytLink}','_blank')" style="margin-left:6px;color:var(--red);font-size:11px;" title="Watch tutorial">▶</span></button>`;
+      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${escaped}',this)">${label}<span onclick="event.stopPropagation();window.open('${opt.ytLink}','_blank')" style="margin-left:6px;color:var(--red-text);font-size:11px;" title="Watch tutorial">▶</span></button>`;
     }).join('');
     html += `
       <div style="background:var(--dark3); border-radius:12px; padding:14px; margin-bottom:12px;">
-        <div style="font-size:12px; color:var(--red); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:4px;">${slot.label}</div>
+        <div style="font-size:12px; color:var(--red-text); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:4px;">${slot.label}</div>
         <div style="font-size:13px; color:var(--gray-light); margin-bottom:10px;">${slot.desc}</div>
         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;" id="ob-slot-${safeId}-btns">${optBtns}</div>
         <div style="position:relative;">
@@ -12818,7 +12819,7 @@ function buildObManualSlots() {
         </div>
         <div id="ob-slot-${safeId}-yt" style="display:none; margin-top:8px; background:var(--dark2); border-left:3px solid var(--red); border-radius:0 8px 8px 0; padding:10px 12px; font-size:12px; line-height:1.8;">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:5px;">
-            <div style="color:var(--cream);">✓ Using: <strong id="ob-slot-${safeId}-name-lbl" style="color:var(--red);"></strong></div>
+            <div style="color:var(--cream);">✓ Using: <strong id="ob-slot-${safeId}-name-lbl" style="color:var(--red-text);"></strong></div>
             <button onclick="clearSlotCustom('${slot.id}')" style="background:var(--dark3); border:1px solid #444; color:var(--gray); font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px; cursor:pointer; padding:3px 8px; border-radius:6px; line-height:1.4;">CLEAR ✕</button>
           </div>
           <a id="ob-slot-${safeId}-yt-link" href="" target="_blank" rel="noopener" style="color:var(--gray); text-decoration:none; font-size:11px;">🔍 Search YouTube for a tutorial →</a>
@@ -13096,7 +13097,7 @@ function buildExerciseList() {
     const compounds = day.exercises.filter(e => ONBOARD_COMPOUND_IDS.has(e.id));
     if (!compounds.length) return;
 
-    html += `<div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:2px; margin-top:8px; margin-bottom:6px;">${day.badge}</div>`;
+    html += `<div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:2px; margin-top:8px; margin-bottom:6px;">${day.badge}</div>`;
     compounds.forEach(ex => {
       const defaults = ALL_EXERCISE_DEFAULTS[ex.id] || { beginner: 0, intermediate: 0, advanced: 0 };
       const saved = state.startingWeights?.[ex.id];
@@ -13108,7 +13109,7 @@ function buildExerciseList() {
             <div style="font-size:13px; color:var(--cream); flex:1; padding-right:10px;" id="ob-ex-name-${ex.id}">${ex.name}</div>
             <div style="display:flex; gap:6px;">
               ${hasAlts ? `<button onclick="openOnboardSwap('${ex.id}')" style="background:none; border:1px solid var(--gray); color:var(--gray); padding:4px 10px; border-radius:8px; font-size:11px; cursor:pointer; white-space:nowrap; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">ALT</button>` : ''}
-              <button onclick="openOnerm('${ex.id}')" style="background:none; border:1px solid var(--red); color:var(--red); padding:4px 10px; border-radius:8px; font-size:11px; cursor:pointer; white-space:nowrap; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">1RM CALC</button>
+              <button onclick="openOnerm('${ex.id}')" style="background:none; border:1px solid var(--red); color:var(--red-text); padding:4px 10px; border-radius:8px; font-size:11px; cursor:pointer; white-space:nowrap; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">1RM CALC</button>
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:10px;">
@@ -14395,7 +14396,7 @@ function renderBarrierHistory(showAll = false) {
     return `
       <div class="card" style="margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red); letter-spacing:1px; text-transform:uppercase;">${entry.barrier}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:1px; text-transform:uppercase;">${entry.barrier}</div>
           <div style="display:flex; align-items:center; gap:10px;">
             <div style="font-size:11px; color:var(--gray);">${dateStr}</div>
             <button onclick="deleteBarrierEntry(${idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.65; font-size:16px; line-height:1;" title="Delete entry">
@@ -15057,12 +15058,12 @@ document.addEventListener('DOMContentLoaded', () => {
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid #553333;">
     <div style="text-align:center; margin-bottom:20px;">
       <div style="font-size:32px; margin-bottom:12px;">⚠️</div>
-      <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--red); letter-spacing:2px; margin-bottom:10px;">RESTORE DEFAULTS?</div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--red-text); letter-spacing:2px; margin-bottom:10px;">RESTORE DEFAULTS?</div>
       <div style="font-size:14px; color:var(--gray-light); line-height:1.6;">This will undo all permanent exercise swaps and restore the original program. This cannot be undone.</div>
     </div>
     <div style="display:flex; gap:10px;">
       <button onclick="cancelRestoreDefaults()" style="flex:1; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:14px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
-      <button onclick="confirmRestoreDefaults()" style="flex:1; background:rgba(204,32,39,0.2); border:1px solid var(--red); color:var(--red); padding:14px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer;">RESTORE</button>
+      <button onclick="confirmRestoreDefaults()" style="flex:1; background:rgba(204,32,39,0.2); border:1px solid var(--red); color:var(--red-text); padding:14px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer;">RESTORE</button>
     </div>
   </div>
 </div>
@@ -15087,7 +15088,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div style="color:var(--gray);">RPE 7 — 3 reps left</div>
     <div style="color:var(--gray);">RPE 8 — 2 reps left</div>
     <div style="color:var(--gray);">RPE 9 — 1 rep left</div>
-    <div style="color:var(--red); grid-column:1/-1;">RPE 10 — absolute max, nothing left</div>
+    <div style="color:var(--red-text); grid-column:1/-1;">RPE 10 — absolute max, nothing left</div>
   </div>
   <button onclick="toggleRpeSheet()" style="width:100%; background:var(--dark3); border:none; border-radius:12px; padding:14px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1px; cursor:pointer;">GOT IT</button>
 </div>
