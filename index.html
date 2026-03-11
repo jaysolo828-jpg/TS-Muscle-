@@ -11254,16 +11254,21 @@ async function generateAndShareCard(type, data) {
       }
       ctx.restore();
 
+      // Measure weight width first so name never overlaps it
+      ctx.font = bebas(54);
+      const weightText = `${lift.est1RM} lbs`;
+      const weightW = ctx.measureText(weightText).width;
+      const nameMaxW = valX - weightW - nameX - Math.round(30 * S);
+
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.font = barlow(700, 38);
       ctx.fillStyle = 'rgba(255,255,255,0.88)';
-      const nameMaxW = valX - nameX - Math.round(80 * S);
       ctx.fillText(lift.name.toUpperCase(), nameX, rowY + rowH / 2, nameMaxW);
 
       ctx.textAlign = 'right';
       ctx.font = bebas(54);
       ctx.fillStyle = '#ffe066';
-      ctx.fillText(`${lift.est1RM} lbs`, valX, rowY + rowH / 2);
+      ctx.fillText(weightText, valX, rowY + rowH / 2);
     });
 
     // Combined total
