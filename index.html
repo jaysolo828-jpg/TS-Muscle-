@@ -227,6 +227,7 @@
     background: var(--dark2); border: 1px solid var(--dark3);
     border-radius: 12px; padding: 14px;
   }
+  .ob-exercise-row button { min-height: 44px; }
   .review-weight-btn {
     flex: 1; background: var(--dark3); border: 1px solid #333;
     color: var(--cream); padding: 10px 8px; border-radius: 10px;
@@ -240,15 +241,16 @@
     flex: 1; min-width: 0; background: var(--dark3); border: 2px solid transparent;
     border-radius: 12px; padding: 12px 4px; cursor: pointer;
     text-align: center; transition: border-color 0.2s, background 0.2s, transform 0.15s;
-    overflow: hidden;
+    overflow: hidden; color: var(--gray-light);
   }
   .mood-btn.selected { border-color: var(--warning); background: rgba(243,156,18,0.12); transform: scale(1.08); }
   .mood-btn.selected div:first-child { font-size: 32px; }
   .mood-timing-btn {
-    flex: 1; background: var(--dark3); border: 1px solid #333;
-    color: var(--gray); padding: 10px; border-radius: 10px;
+    flex: 1; background: var(--dark3); border: 1px solid #3a3a3a;
+    color: var(--gray-light); padding: 11px 10px; border-radius: 10px;
     font-family: 'Barlow Condensed', sans-serif; font-size: 13px;
     letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+    min-height: 44px;
   }
   .mood-timing-btn.selected { border-color: var(--warning); color: var(--warning); background: rgba(243,156,18,0.12); }
 
@@ -313,15 +315,17 @@
   .pause-reason-btn {
     width: 100%;
     background: var(--dark3);
-    border: 1px solid #333;
+    border: 1px solid #3a3a3a;
     border-radius: 12px;
-    padding: 12px 14px;
+    padding: 13px 14px;
     display: flex;
     align-items: center;
     gap: 14px;
     cursor: pointer;
     text-align: left;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.15s, transform 0.1s;
+    color: var(--cream);
+    min-height: 60px;
   }
   .pause-reason-btn.selected {
     border-color: var(--red-text);
@@ -378,9 +382,9 @@
 
   /* CARDS */
   .card {
-    background: linear-gradient(180deg, #1e1e1e 0%, #1a1a1a 100%);
-    border: 1px solid var(--dark3);
-    border-radius: 12px;
+    background: linear-gradient(180deg, #1f1f1f 0%, #1a1a1a 100%);
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
     padding: 16px;
     margin-bottom: 12px;
   }
@@ -412,10 +416,11 @@
     content: '';
     display: inline-block;
     width: 3px;
-    height: 14px;
+    height: 16px;
     background: var(--red);
     border-radius: 2px;
     flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(204,32,39,0.5);
   }
 
   .section-title span { color: var(--cream); }
@@ -671,6 +676,18 @@
     transition: all 0.2s;
   }
   .close-session:hover { border-color: var(--gray-light); color: var(--cream); }
+  .close-session:active { transform: scale(0.94); }
+
+  /* Universal stronger tap feedback */
+  .onboard-select-btn:active { transform: scale(0.97); }
+  .onboard-next-btn:active { transform: scale(0.97); filter: brightness(0.88); }
+  .onboard-back-btn:active { transform: scale(0.96); }
+  .pause-reason-btn:active { transform: scale(0.98); }
+  .swap-btn:active { border-color: var(--red-text); color: var(--cream); transform: scale(0.94); }
+  .alt-btn:active { transform: scale(0.94); }
+  .add-bonus-btn:hover { border-color: rgba(204,32,39,0.5); color: var(--cream); background: rgba(204,32,39,0.06); }
+  .start-btn:active { background: var(--red-dark); transform: scale(0.95); box-shadow: none; }
+  .finish-btn:active { filter: brightness(0.85); transform: scale(0.98); }
 
   .session-exercise {
     background: var(--dark2);
@@ -756,18 +773,21 @@
   }
 
   .session-ex-header {
-    padding: 14px 16px;
+    padding: 14px 16px 12px;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    border-bottom: 1px solid var(--dark3);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: linear-gradient(180deg, rgba(255,255,255,0.025) 0%, transparent 100%);
   }
 
   .session-ex-name {
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 700;
-    font-size: 17px;
+    font-size: 18px;
     color: var(--cream);
+    line-height: 1.2;
+    letter-spacing: 0.2px;
   }
 
   .muscle-pill {
@@ -949,8 +969,8 @@
   .rest-timer-row {
     display: flex; align-items: center; gap: 8px;
     padding: 10px 16px 12px;
-    border-top: 1px solid var(--dark3);
-    background: rgba(255,255,255,0.02);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.03);
     flex-wrap: wrap;
   }
   .rest-timer-label {
@@ -1078,18 +1098,20 @@
 
   /* PROGRESS INDICATOR */
   .progress-bar-wrap {
-    background: var(--dark3);
-    border-radius: 4px;
-    height: 6px;
+    background: #1d1d1d;
+    border-radius: 6px;
+    height: 8px;
     margin: 0 16px 14px;
     overflow: hidden;
+    border: 1px solid #2a2a2a;
   }
 
   .progress-bar-fill {
     height: 100%;
-    background: var(--red);
-    border-radius: 4px;
-    transition: width 0.4s ease;
+    background: linear-gradient(90deg, var(--red-dark) 0%, var(--red) 60%, #ff4d5e 100%);
+    border-radius: 6px;
+    transition: width 0.45s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 10px rgba(204,32,39,0.55);
   }
 
   /* NOTES */
@@ -1228,8 +1250,8 @@
   .add-bonus-btn {
     width: 100%;
     background: rgba(255,255,255,0.04);
-    border: 2px dashed rgba(255,255,255,0.18);
-    color: var(--gray-light, #aaaaaa);
+    border: 2px dashed rgba(255,255,255,0.28);
+    color: var(--cream);
     padding: 16px;
     border-radius: 14px;
     font-family: 'Barlow Condensed', sans-serif;
@@ -1237,12 +1259,13 @@
     font-weight: 700;
     letter-spacing: 2px;
     cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    transition: border-color 0.2s, color 0.2s, background 0.2s, transform 0.1s;
     -webkit-tap-highlight-color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    min-height: 52px;
   }
   .add-bonus-btn:active {
     border-color: rgba(204,32,39,0.6);
@@ -1458,17 +1481,28 @@
 
   /* DELOAD */
   .deload-banner {
-    background: linear-gradient(135deg, #1a0a00, #2a1200);
-    border: 2px solid var(--warning);
-    border-radius: 14px;
-    padding: 18px;
+    background: linear-gradient(135deg, #1f0e00 0%, #2e1800 50%, #1a0a00 100%);
+    border: 2px solid rgba(243,156,18,0.7);
+    border-radius: 16px;
+    padding: 22px 20px 18px;
     margin-bottom: 16px;
     text-align: center;
+    box-shadow: 0 4px 28px rgba(243,156,18,0.18), inset 0 1px 0 rgba(243,156,18,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  .deload-banner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--warning), transparent);
+    border-radius: 2px 2px 0 0;
   }
 
-  .deload-icon { font-size: 36px; margin-bottom: 8px; }
-  .deload-title { font-family: 'Bebas Neue', cursive; font-size: 24px; letter-spacing: 2px; color: var(--warning); margin-bottom: 6px; }
-  .deload-text { font-size: 14px; color: var(--gray-light); line-height: 1.5; }
+  .deload-icon { font-size: 36px; margin-bottom: 10px; }
+  .deload-title { font-family: 'Bebas Neue', cursive; font-size: 28px; letter-spacing: 3px; color: var(--warning); margin-bottom: 8px; text-shadow: 0 0 20px rgba(243,156,18,0.35); }
+  .deload-text { font-size: 14px; color: var(--gray-light); line-height: 1.6; }
 
   /* ROTATION */
   .rotation-banner {
@@ -1693,10 +1727,11 @@
   }
 
   .stat-box {
-    background: var(--dark2);
+    background: linear-gradient(180deg, #1e1e1e 0%, #191919 100%);
     border: 1px solid var(--dark3);
-    border-radius: 12px;
-    padding: 12px 8px;
+    border-bottom: 2px solid #222;
+    border-radius: 14px;
+    padding: 16px 8px 12px;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -1706,19 +1741,20 @@
 
   .stat-num {
     font-family: 'Bebas Neue', cursive;
-    font-size: 28px;
+    font-size: 36px;
     color: var(--cream);
     line-height: 1;
+    letter-spacing: 1px;
   }
 
   .stat-label {
-    font-size: 11px;
+    font-size: 10px;
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 600;
-    letter-spacing: 1px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: var(--gray-light);
-    margin-top: 4px;
+    color: var(--gray);
+    margin-top: 6px;
   }
 
   /* TOAST */
@@ -1747,11 +1783,25 @@
 
   .empty-state {
     text-align: center;
-    padding: 40px 20px;
+    padding: 52px 24px 44px;
     color: var(--gray);
   }
-  .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
-  .empty-state-text { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; letter-spacing: 0.5px; }
+  .empty-state-icon {
+    font-size: 52px;
+    margin-bottom: 18px;
+    display: block;
+    line-height: 1;
+    opacity: 0.7;
+  }
+  .empty-state-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    letter-spacing: 0.3px;
+    color: var(--gray-light);
+    line-height: 1.55;
+    max-width: 260px;
+    margin: 0 auto;
+  }
 
   .pill {
     display: inline-block;
@@ -1881,7 +1931,7 @@
 
 <!-- SCREENS -->
 <div id="screen-home" class="screen active">
-  <div id="deload-banner" style="display:none; margin-bottom:12px;">
+  <div id="deload-banner" style="display:none; margin:0 -16px 12px; padding:0 16px;">
     <div class="deload-banner" onclick="openDeloadModal()" style="cursor:pointer;">
       <div class="deload-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
       <div class="deload-title">RECOVERY WEEK</div>
@@ -2003,10 +2053,10 @@
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">COUNTDOWN TIMER</div>
     <!-- Quick presets -->
     <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
-      <button onclick="setTimerPreset(20)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:8px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">20 min</button>
-      <button onclick="setTimerPreset(30)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:8px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">30 min</button>
-      <button onclick="setTimerPreset(45)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:8px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">45 min</button>
-      <button onclick="setTimerPreset(60)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:8px 12px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">60 min</button>
+      <button onclick="setTimerPreset(20)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px;">20 min</button>
+      <button onclick="setTimerPreset(30)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px;">30 min</button>
+      <button onclick="setTimerPreset(45)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px;">45 min</button>
+      <button onclick="setTimerPreset(60)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px;">60 min</button>
     </div>
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:12px;">
       <div style="text-align:center;">
@@ -2291,7 +2341,9 @@
      DELOAD / REST WEEK MODAL
      ============================================================ -->
 <div id="deload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid var(--dark3);">
+  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(243,156,18,0.4); overflow:hidden; box-shadow:0 8px 40px rgba(243,156,18,0.12);">
+    <div style="height:4px; background:linear-gradient(90deg,transparent,var(--warning),transparent);"></div>
+    <div style="padding:24px;">
     <div style="text-align:center; margin-bottom:16px;">
       <div id="deload-modal-icon" style="margin-bottom:12px;"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
       <div id="deload-modal-title" style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px;">RECOVERY WEEK</div>
@@ -2303,8 +2355,8 @@
         <div style="font-family:'Bebas Neue',cursive; font-size:18px; color:var(--warning); letter-spacing:1px; margin-bottom:4px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> DELOAD WEEK</div>
         <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Same exercises, weights automatically reduced by 25%. You still train — joints recover, muscle memory stays sharp.</div>
       </button>
-      <button onclick="applyRestWeek()" style="background:var(--dark3); border:2px solid var(--dark4); border-radius:12px; padding:18px; text-align:left; cursor:pointer; width:100%;">
-        <div style="font-family:'Bebas Neue',cursive; font-size:18px; color:var(--gray-light); letter-spacing:1px; margin-bottom:4px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg> REST WEEK</div>
+      <button onclick="applyRestWeek()" style="background:var(--dark3); border:2px solid #4a4a4a; border-radius:12px; padding:18px; text-align:left; cursor:pointer; width:100%;">
+        <div style="font-family:'Bebas Neue',cursive; font-size:18px; color:var(--cream); letter-spacing:1px; margin-bottom:4px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg> REST WEEK</div>
         <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Take the full week off. Your next session picks up at Week 8. Best if you're feeling beat up or sick.</div>
       </button>
     </div>
@@ -2317,11 +2369,12 @@
         <span style="flex:1; text-align:left;">MOVE TO NEXT WEEK</span>
         <span style="opacity:0.5;">→</span>
       </button>
-      <div id="deload-postpone-hint" style="margin-top:6px; border-radius:8px; padding:8px 12px; font-size:11px; line-height:1.5;"></div>
+      <div id="deload-postpone-hint" style="margin-top:6px; border-radius:8px; padding:8px 12px; font-size:12px; line-height:1.5; color:var(--gray-light);"></div>
     </div>
 
     <button onclick="dismissDeloadSuggestion()" style="width:100%; background:transparent; border:1px solid var(--dark3); color:var(--gray); padding:12px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; margin-bottom:8px; -webkit-tap-highlight-color:transparent;">SKIP — KEEP TRAINING</button>
     <button onclick="document.getElementById('deload-modal').style.display='none'" style="width:100%; background:transparent; border:none; color:var(--gray); padding:6px; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; cursor:pointer; opacity:0.45;">DECIDE LATER</button>
+    </div>
   </div>
 </div>
 
@@ -2797,22 +2850,32 @@
 
     <!-- STEP 6: Test Week -->
     <div id="onboard-step-6" class="onboard-step" style="display:none;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR FIRST WEEK</div>
-      <div style="font-size:13px; color:var(--gray-light); margin-bottom:16px; line-height:1.6;">Week 1 is a calibration week. Weights start conservative — the goal is to find your real working weights, not to max out.</div>
-      <div style="background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.3); border-radius:10px; padding:10px 14px; margin-bottom:18px; font-size:13px; color:var(--gray-light); line-height:1.6;">
-        This is why starting weights don't need to be perfect — the RPE data from Week 1 is what actually sets your program.
-      </div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">YOUR FIRST WEEK</div>
+      <div style="font-size:14px; color:var(--gray-light); margin-bottom:20px; line-height:1.6;">Week 1 is a <strong style="color:var(--cream);">calibration week</strong>. It figures out your real working weights — not to max out.</div>
 
-      <div style="background:var(--dark3); border-radius:14px; padding:18px; margin-bottom:24px;">
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:2px; margin-bottom:12px;">LOGGING RPE</div>
-        <div style="font-size:13px; color:var(--cream); line-height:1.7; margin-bottom:14px;">After each set, you'll log your <strong>RPE</strong> — how hard it felt on a scale of 1–10. This tells the app whether to increase your weight, hold it, or pull it back.</div>
-        <div style="display:flex; flex-direction:column; gap:6px; font-size:13px;">
-          <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 7</span><span style="color:var(--gray-light);">Could do 3 more reps</span></div>
-          <div style="display:flex; justify-content:space-between;"><span style="color:var(--cream);">RPE 8 ✓ target</span><span style="color:var(--gray-light);">Could do 2 more reps</span></div>
-          <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 9</span><span style="color:var(--gray-light);">Could do 1 more rep</span></div>
-          <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 10</span><span style="color:var(--gray-light);">Max effort — nothing left</span></div>
+      <!-- Icon cards -->
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:22px;">
+        <div style="background:var(--dark3); border:1px solid #333; border-radius:14px; padding:16px 16px; display:flex; align-items:flex-start; gap:14px;">
+          <div style="font-size:26px; flex-shrink:0; margin-top:1px;">🎯</div>
+          <div>
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream); letter-spacing:0.5px; margin-bottom:3px;">START CONSERVATIVE</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Use weights you can handle comfortably. The app fine-tunes them after your first 4 sessions.</div>
+          </div>
         </div>
-        <div style="margin-top:14px; font-size:13px; color:var(--gray-light); line-height:1.6;">After 4 sessions, the app runs a <strong style="color:var(--cream);">quick review</strong> where you confirm or adjust each weight before your real program begins.</div>
+        <div style="background:var(--dark3); border:1px solid rgba(204,32,39,0.35); border-radius:14px; padding:16px 16px; display:flex; align-items:flex-start; gap:14px;">
+          <div style="font-size:26px; flex-shrink:0; margin-top:1px;">📊</div>
+          <div>
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream); letter-spacing:0.5px; margin-bottom:3px;">LOG RPE AFTER EACH SET</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Rate effort 1–10. <strong style="color:var(--cream);">RPE 8</strong> = 2 reps left. This tells the app exactly how to adjust your weights.</div>
+          </div>
+        </div>
+        <div style="background:var(--dark3); border:1px solid #333; border-radius:14px; padding:16px 16px; display:flex; align-items:flex-start; gap:14px;">
+          <div style="font-size:26px; flex-shrink:0; margin-top:1px;">⚡</div>
+          <div>
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream); letter-spacing:0.5px; margin-bottom:3px;">REVIEW AFTER SESSION 4</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">You'll confirm or adjust each weight before your real program begins.</div>
+          </div>
+        </div>
       </div>
 
       <div class="ob-button-row">
@@ -2823,12 +2886,20 @@
 
     <!-- STEP 7: Starting Weights -->
     <div id="onboard-step-7" class="onboard-step" style="display:none;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">STARTING WEIGHTS</div>
-      <div style="font-size:13px; color:var(--gray-light); margin-bottom:8px; line-height:1.6;">Enter a weight you can handle comfortably for each lift. These are <strong style="color:var(--cream);">calibration weights</strong> — the app will fine-tune them after your first week.</div>
-      <div style="background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.3); border-radius:10px; padding:12px 14px; margin-bottom:12px; font-size:13px; color:var(--gray-light); line-height:1.6;">
-        <strong style="color:var(--cream);">Don't overthink this.</strong> Your Week 1 RPE scores will tell the app exactly how to adjust each weight. Even a rough estimate works — the calibration process handles the rest.
+      <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">STARTING WEIGHTS</div>
+      <div style="font-size:14px; color:var(--gray-light); margin-bottom:14px; line-height:1.6;">Enter a comfortable working weight for each compound lift.</div>
+
+      <!-- Hint cards -->
+      <div style="display:flex; gap:10px; margin-bottom:16px;">
+        <div style="flex:1; background:rgba(204,32,39,0.07); border:1px solid rgba(204,32,39,0.28); border-radius:12px; padding:12px 13px;">
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; color:var(--red-text); letter-spacing:1px; margin-bottom:4px;">DON'T OVERTHINK</div>
+          <div style="font-size:12px; color:var(--gray-light); line-height:1.5;">Week 1 RPE scores auto-adjust everything.</div>
+        </div>
+        <div style="flex:1; background:var(--dark3); border:1px solid #333; border-radius:12px; padding:12px 13px;">
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; color:var(--gray-light); letter-spacing:1px; margin-bottom:4px;">ISOLATIONS</div>
+          <div style="font-size:12px; color:var(--gray-light); line-height:1.5;">Auto-set from your experience level. No input needed.</div>
+        </div>
       </div>
-      <div style="font-size:13px; color:var(--gray-light); background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:16px;">Isolations (curls, laterals, etc.) are auto-set from your experience level — no input needed.</div>
 
       <div id="ob-exercise-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;"></div>
 
@@ -2860,7 +2931,7 @@
         <button onclick="onboardNext(8)" class="onboard-next-btn" style="flex:1;">FINISH SETUP →</button>
       </div>
       <div style="text-align:center; margin-top:14px;">
-        <button onclick="skipWeightSetup()" style="background:none; border:none; color:var(--gray); font-size:12px; letter-spacing:0.5px; cursor:pointer; padding:4px 0; text-decoration:underline; text-underline-offset:3px;">Skip — use suggested weights for everything</button>
+        <button onclick="skipWeightSetup()" style="background:var(--dark3); border:1px solid #333; color:var(--gray-light); font-size:13px; letter-spacing:0.5px; cursor:pointer; padding:12px 16px; border-radius:10px; width:100%; transition:all 0.2s;">Skip — use suggested weights for everything</button>
       </div>
     </div>
 
@@ -2913,7 +2984,8 @@
 
 <!-- PAUSE PROGRAM MODAL -->
 <div id="pause-program-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid var(--dark3); overflow:hidden;">
+  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(204,32,39,0.3); overflow:hidden; box-shadow:0 8px 40px rgba(204,32,39,0.1);">
+    <div style="height:4px; background:linear-gradient(90deg,transparent,var(--red),transparent);"></div>
 
     <!-- Header -->
     <div style="padding:24px 24px 0;">
@@ -2962,7 +3034,7 @@
     <!-- Footer buttons -->
     <div style="padding:0 24px 24px; display:flex; gap:10px; margin-top:4px;">
       <button onclick="document.getElementById('pause-program-modal').style.display='none'" style="flex:1; background:var(--dark3); border:1px solid #444; color:var(--gray); padding:13px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
-      <button id="pause-confirm-btn" onclick="confirmPauseProgram()" disabled style="flex:2; background:#333; border:none; color:#777; padding:13px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:not-allowed;">PAUSE PROGRAM</button>
+      <button id="pause-confirm-btn" onclick="confirmPauseProgram()" disabled style="flex:2; background:#2e2e2e; border:1px solid #3a3a3a; color:#999; padding:13px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:not-allowed;">PAUSE PROGRAM</button>
     </div>
   </div>
 </div>
@@ -3307,7 +3379,7 @@
   <div style="margin-top:24px; padding:16px; background:var(--dark2); border:1px solid var(--dark3); border-radius:14px; text-align:center;">
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:2px; margin-bottom:10px;">QUESTIONS OR FEEDBACK?</div>
     <button onclick="sendFeedback()" style="width:100%; background:var(--red); border:none; color:white; padding:13px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:17px; letter-spacing:1.5px; cursor:pointer; margin-bottom:10px;">SEND FEEDBACK ✉</button>
-    <a id="contact-email-link" style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:0; text-decoration:none; cursor:pointer;"></a>
+    <a id="contact-email-link" style="font-family:'Barlow Condensed',sans-serif; font-size:14px; color:var(--gray-light); letter-spacing:0; text-decoration:none; cursor:pointer; display:inline-block; padding:8px 0; min-height:44px; display:flex; align-items:center;"></a>
     <script>(function(){ var u='Jay@'+'therapyandsneakers'+'.org'; var a=document.getElementById('contact-email-link'); if(a){a.textContent=u;a.href='mailto:'+u;} })();</script>
   </div>
   <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#777; letter-spacing:2px;">T&S MUSCLE v1.3.2 · THERAPY & SNEAKERS</div>
@@ -3331,7 +3403,7 @@
           <div style="font-size:12px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;" id="session-subtitle"></div>
         </div>
       </div>
-      <button class="close-session" onclick="endSession(true)" style="background:rgba(46,204,113,0.15); border-color:#2ecc71; color:#2ecc71;">COMPLETE ✓</button>
+      <button class="close-session" onclick="endSession(true)" style="background:#2ecc71; border-color:#2ecc71; color:#0a0a0a; font-weight:700;">COMPLETE ✓</button>
     </div>
     <div class="session-progress-header">
       <span id="session-progress-text">0 / 0 exercises done</span>
@@ -3703,11 +3775,20 @@
   <button class="nav-item" onclick="showScreen('mindset', this)" aria-label="Mindset">
     <span class="nav-icon">
       <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 2a6 6 0 016 6c0 2.5-1.5 4.5-3 5.5V16H9v-2.5C7.5 12.5 6 10.5 6 8a6 6 0 016-6z"/>
-        <line x1="9" y1="19" x2="15" y2="19"/>
-        <line x1="10" y1="22" x2="14" y2="22"/>
-        <line x1="12" y1="8" x2="12" y2="11"/>
-        <line x1="10.5" y1="9.5" x2="13.5" y2="9.5"/>
+        <!-- Brain: left hemisphere -->
+        <path d="M12 6C12 6 9 5 7.5 7C6.3 8.6 7 10.5 8 11.5C6.5 12 5.5 13.5 5.5 15C5.5 17 7 18.5 9 18.5H12"/>
+        <!-- Brain: right hemisphere -->
+        <path d="M12 6C12 6 15 5 16.5 7C17.7 8.6 17 10.5 16 11.5C17.5 12 18.5 13.5 18.5 15C18.5 17 17 18.5 15 18.5H12"/>
+        <!-- Centre split -->
+        <line x1="12" y1="6" x2="12" y2="18.5"/>
+        <!-- Left folds -->
+        <path d="M9.5 9C9 10 9.5 11 10.5 11.5"/>
+        <path d="M8.5 14.5C9 15.5 10 15.5 10.5 15"/>
+        <!-- Right folds -->
+        <path d="M14.5 9C15 10 14.5 11 13.5 11.5"/>
+        <path d="M15.5 14.5C15 15.5 14 15.5 13.5 15"/>
+        <!-- Stem -->
+        <line x1="10.5" y1="18.5" x2="13.5" y2="18.5"/>
       </svg>
     </span>
     <span class="nav-label">Mindset</span>
