@@ -635,7 +635,7 @@
   .session-header {
     background: var(--dark);
     border-bottom: 2px solid var(--red);
-    padding: calc(env(safe-area-inset-top) + 14px) 20px 14px;
+    padding: calc(env(safe-area-inset-top) + 14px) 16px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1061,7 +1061,7 @@
   .set-labels {
     display: grid;
     grid-template-columns: 30px 1fr 1fr 80px 40px;
-    gap: 10px;
+    gap: 8px;
     padding: 10px 16px 8px;
     border-bottom: 1px solid var(--dark3);
   }
@@ -1199,7 +1199,7 @@
     width: 100%; background: transparent; border: none;
     border-bottom: 1px solid var(--dark4); color: var(--gray-light);
     font-family: 'Barlow', sans-serif; font-size: 16px;
-    padding: 4px 2px; outline: none;
+    padding: 6px 4px; outline: none;
     transition: border-color 0.2s;
   }
   .ex-note-input:focus { border-color: var(--red-text); color: var(--cream); }
@@ -1217,8 +1217,8 @@
     font-size: 20px;
     letter-spacing: 3px;
     cursor: pointer;
-    width: calc(100% - 32px);
-    margin: 16px;
+    width: 100%;
+    margin: 0;
     transition: all 0.2s;
     box-shadow: 0 4px 20px var(--red-glow);
   }
