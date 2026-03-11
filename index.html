@@ -4821,7 +4821,7 @@ function showScreen(name, el) {
 
   if (name === 'settings') {
     const nameInput = document.getElementById('display-name-input');
-    if (nameInput) nameInput.value = state.displayName || '';
+    if (nameInput) nameInput.value = state.displayName || state.profile?.name || '';
   }
 }
 
@@ -5095,7 +5095,7 @@ function renderHome() {
   // Time-based greeting
   const greetingEl = document.getElementById('home-greeting');
   if (greetingEl) {
-    const name = state.profile?.name;
+    const name = (state.displayName || state.profile?.name || '').trim();
     if (name) {
       const h = new Date().getHours();
       const salutation = h >= 5 && h < 12 ? 'GOOD MORNING'
@@ -10902,6 +10902,8 @@ function renderProgressChart() {
 function setDisplayName(val) {
   state.displayName = val.trim();
   saveState();
+  const greetingEl = document.getElementById('home-greeting');
+  if (greetingEl) renderHome();
 }
 
 // ============================================================
