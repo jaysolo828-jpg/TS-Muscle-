@@ -4236,6 +4236,53 @@ const GOAL_REPS = {
   'donkey-kick':     { strength: '12–15', size: '15',    both: '12–15' },
 };
 
+// Goal-aligned set counts per exercise
+// Strength: more sets on compounds for volume at heavy loads (5x3–5 style)
+// Size: more sets on accessories for hypertrophy volume
+// Both: balanced approach
+const GOAL_SETS = {
+  // ── UPPER A ────────────────────────────────────────────────
+  'bench':           { strength: 5, size: 4, both: 4 },
+  'incline':         { strength: 4, size: 3, both: 4 },
+  'flye':            { strength: 3, size: 4, both: 3 },
+  'pushdown':        { strength: 3, size: 4, both: 3 },
+  'overhead-tri':    { strength: 3, size: 3, both: 3 },
+  'ohp':             { strength: 4, size: 3, both: 4 },
+  'lateral':         { strength: 3, size: 4, both: 3 },
+  // ── LOWER A ────────────────────────────────────────────────
+  'legpress-a':      { strength: 5, size: 4, both: 4 },
+  'rdl':             { strength: 4, size: 4, both: 4 },
+  'leg-ext-a':       { strength: 3, size: 4, both: 3 },
+  'ham-curl-a':      { strength: 3, size: 4, both: 3 },
+  'hip-thrust-a':    { strength: 4, size: 4, both: 4 },
+  'calf-a':          { strength: 3, size: 4, both: 3 },
+  // ── UPPER B ────────────────────────────────────────────────
+  'chest-row':       { strength: 5, size: 4, both: 4 },
+  'pulldown':        { strength: 4, size: 3, both: 4 },
+  'db-row':          { strength: 4, size: 3, both: 4 },
+  'ez-curl':         { strength: 3, size: 4, both: 3 },
+  'preacher':        { strength: 3, size: 4, both: 3 },
+  'rear-delt':       { strength: 3, size: 4, both: 3 },
+  // ── LOWER B ────────────────────────────────────────────────
+  'legpress-b':      { strength: 5, size: 4, both: 4 },
+  'single-legpress': { strength: 4, size: 3, both: 4 },
+  'leg-ext-b':       { strength: 3, size: 4, both: 3 },
+  'ham-curl-b':      { strength: 3, size: 4, both: 3 },
+  'pull-through':    { strength: 3, size: 3, both: 3 },
+  'calf-b':          { strength: 3, size: 4, both: 3 },
+  // ── GLUTE SPLIT ───────────────────────────────────────────
+  'bss':             { strength: 4, size: 3, both: 4 },
+  'hip-abduction':   { strength: 3, size: 4, both: 3 },
+  'donkey-kick':     { strength: 3, size: 4, both: 3 },
+};
+
+// Returns the goal-adjusted set count for an exercise.
+// Falls back to the stored ex.sets if no mapping exists (e.g. custom exercises).
+function getGoalSets(exId, fallback) {
+  const goal = state.profile?.goal || 'both';
+  return GOAL_SETS[exId]?.[goal] || fallback || 3;
+}
+
 // Returns the goal-adjusted rep range string for an exercise.
 // Falls back to the stored ex.reps if no mapping exists (e.g. custom exercises).
 function getGoalReps(exId, fallback) {
@@ -4994,7 +5041,7 @@ function renderHome() {
           <div class="exercise-item">
             <div>
               <div class="exercise-name">${ex.name}</div>
-              <div class="exercise-meta">${ex.sets} sets × ${getGoalReps(ex.id, ex.reps)}${ex.rest ? ' · ⏱ rest' : ''}${ex.note ? ' · <span style="color:var(--gray-light);">' + ex.note + '</span>' : ''}</div>
+              <div class="exercise-meta">${getGoalSets(ex.id, ex.sets)} sets × ${getGoalReps(ex.id, ex.reps)}${ex.rest ? ' · ⏱ rest' : ''}${ex.note ? ' · <span style="color:var(--gray-light);">' + ex.note + '</span>' : ''}</div>
             </div>
             ${ex.alts && ex.alts.length ? `<button class="alt-btn" onclick="showAltsPreview('${day.id}','${ex.id}')">ALT</button>` : ''}
           </div>
@@ -5844,7 +5891,7 @@ function getProgressiveWeight(exId, dayId) {
     });
   }
 
-  const allSetsCompleted = lastSessionSets.length >= (ex?.sets || 3);
+  const allSetsCompleted = lastSessionSets.length >= getGoalSets(ex?.id, ex?.sets);
   const exceededRange  = avgReps > repRangeTop;
   const hitRepRangeTop = avgReps >= repRangeTop;
   const hitRepRange    = avgReps >= repRangeMin && avgReps <= repRangeTop;
@@ -6126,7 +6173,7 @@ function startSession(dayId) {
   };
   day.exercises.forEach(ex => {
     const suggested = getProgressiveWeight(ex.id, day.id);
-    activeSession.sets[ex.id] = Array.from({length: ex.sets}, () => ({ weight: suggested, reps: '', rpe: '', done: false }));
+    activeSession.sets[ex.id] = Array.from({length: getGoalSets(ex.id, ex.sets)}, () => ({ weight: suggested, reps: '', rpe: '', done: false }));
   });
 
   renderSession();
@@ -7719,7 +7766,7 @@ function openExInfo(exId) {
     musclePill.style.display = 'none';
   }
   document.getElementById('ex-info-name').textContent = (activeSession?.swaps?.[exId]?.name) || ex.name;
-  document.getElementById('ex-info-meta').textContent = ex.sets + ' sets · ' + getGoalReps(exId, ex.reps) + ' reps · ' + ex.rest + ' rest';
+  document.getElementById('ex-info-meta').textContent = getGoalSets(exId, ex.sets) + ' sets · ' + getGoalReps(exId, ex.reps) + ' reps · ' + ex.rest + ' rest';
 
   // Stale cues warning — show if exercise has been renamed
   const _allExs2 = Object.values(SPLIT_PROGRAMS).flatMap(days => days.flatMap(d => d.exercises));
