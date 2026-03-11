@@ -14618,15 +14618,11 @@ function checkInactivityPrompt() {
       const inactModal = document.createElement('div');
       inactModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
       if (daysSince >= 7) {
-        // Offer pause — the only thing that actually freezes week count
         inactModal.innerHTML = `
           <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
             <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">BEEN A WHILE</div>
-            <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">It's been ${daysSince} days since your last session. Pausing the program freezes your week count until you're ready to train again.</div>
-            <div style="display:flex;gap:10px;">
-              <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">I'M BACK</button>
-              <button onclick="this.closest('[style*=fixed]').remove();showPauseProgramModal();" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">PAUSE PROGRAM</button>
-            </div>
+            <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">It's been ${daysSince} days since your last session. Good to have you back — pick up where you left off.</div>
+            <button onclick="this.closest('[style*=fixed]').remove()" style="width:100%;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">LET'S TRAIN →</button>
           </div>`;
       } else {
         inactModal.innerHTML = `
