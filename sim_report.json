@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-03-11T20:06:16.914Z",
-  "totalBugs": 4,
+  "timestamp": "2026-03-11T20:30:24.864Z",
+  "totalBugs": 3,
   "bugs": [
     {
       "category": "JS Error",
@@ -9,17 +9,12 @@
     },
     {
       "category": "JS Error",
-      "description": "T&S Muscle init error: ReferenceError: Cannot access '_obScrollListenerReady' before initialization\n    at _initObScroll (file:///home/user/TS-Muscle-/index.html:13146:17)\n    at checkOnboarding (file:///home/user/TS-Muscle-/index.html:13048:5)\n    at file:///home/user/TS-Muscle-/index.html:12113:3",
-      "extra": "context: initial load"
-    },
-    {
-      "category": "Onboarding",
-      "description": "No program set after completing onboarding",
-      "extra": ""
+      "description": "Access to image at 'file:///home/user/TS-Muscle-/icon.png' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-untrusted, data, http, https.",
+      "extra": "context: share cards week9"
     },
     {
       "category": "JS Error",
-      "description": "PAGE ERROR: Cannot read properties of undefined (reading 'isDeload')",
+      "description": "Failed to load resource: net::ERR_FAILED",
       "extra": "context: share cards week9"
     }
   ],
@@ -28,6 +23,7 @@
     "000_CRASH.png",
     "001_CRASH.png",
     "001_after_onboarding.png",
+    "002_CRASH.png",
     "002_after_test_week_review.png",
     "003_CRASH.png",
     "003_live_session_week1.png",

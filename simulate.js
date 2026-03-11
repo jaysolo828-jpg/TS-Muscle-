@@ -97,22 +97,40 @@ async function getState(page) {
 // DISMISS TUTORIAL MODAL if visible
 // ─────────────────────────────────────────────────────────────────────────────
 async function dismissTutorialIfVisible(page) {
-  const dismissed = await page.evaluate(() => {
-    const modal = document.getElementById('tutorial-modal');
-    if (!modal) return false;
-    const visible = getComputedStyle(modal).display !== 'none';
-    if (visible) {
+  const results = await page.evaluate(() => {
+    const dismissed = [];
+
+    // 1. Tutorial modal
+    const tutorial = document.getElementById('tutorial-modal');
+    if (tutorial && getComputedStyle(tutorial).display !== 'none') {
       if (typeof exitTutorial === 'function') exitTutorial();
-      else modal.style.display = 'none';
-      return true;
+      else tutorial.style.display = 'none';
+      dismissed.push('tutorial-modal');
     }
-    return false;
+
+    // 2. PWA install-welcome overlay
+    const installWelcome = document.getElementById('install-welcome');
+    if (installWelcome && getComputedStyle(installWelcome).display !== 'none') {
+      installWelcome.style.display = 'none';
+      dismissed.push('install-welcome');
+    }
+
+    // 3. Any other fixed full-screen overlays with very high z-index
+    document.querySelectorAll('[style*="position:fixed"],[style*="position: fixed"]').forEach(el => {
+      const z = parseInt(getComputedStyle(el).zIndex, 10);
+      if (z >= 99999 && getComputedStyle(el).display !== 'none') {
+        el.style.display = 'none';
+        dismissed.push(el.id || el.className || 'unknown-overlay');
+      }
+    });
+
+    return dismissed;
   });
-  if (dismissed) {
-    console.log('  Dismissed tutorial/guide modal');
+  if (results && results.length > 0) {
+    console.log(`  Dismissed overlays: ${results.join(', ')}`);
     await page.waitForTimeout(300);
   }
-  return dismissed;
+  return results && results.length > 0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,13 +157,14 @@ async function completeOnboarding(page) {
     await page.waitForTimeout(500);
   }
 
-  // Step 1: Profile — fill name, bodyweight, experience
+  // Step 1: Profile — fill name, bodyweight, experience via JS (scroll position may hide inputs)
   await waitForSelector(page, '#onboard-step-1', 5000);
   console.log('  Step 1: Filling profile (name, bodyweight, experience)');
-  await page.fill('#ob-name', 'TestUser');
-  await page.fill('#ob-bodyweight', '180');
-  // Select "Intermediate" experience
   await page.evaluate(() => {
+    const nameEl = document.getElementById('ob-name');
+    const bwEl   = document.getElementById('ob-bodyweight');
+    if (nameEl) { nameEl.value = 'TestUser'; nameEl.dispatchEvent(new Event('input')); }
+    if (bwEl)   { bwEl.value  = '180';       bwEl.dispatchEvent(new Event('input')); }
     selectOption('ob-experience', 'intermediate',
       document.querySelector('#onboard-step-1 button[onclick*="intermediate"]'));
   });
@@ -467,13 +486,17 @@ async function handleTestWeekReview(page) {
     return;
   }
 
+  // Dismiss any overlays that may block clicks
+  await dismissTutorialIfVisible(page);
+
   // Click "same weight" for all exercises (default) and apply
   const applyBtn = await page.$('#test-week-review-modal button[onclick*="applyTestWeekWeights"]');
   if (!applyBtn) {
     logBug('Test Week Review', 'Apply button not found in Test Week Review modal');
     return;
   }
-  await applyBtn.click();
+  // Use JS click to bypass pointer-event interception
+  await page.evaluate(btn => btn.click(), applyBtn);
   await page.waitForTimeout(500);
 
   const modalGone = await page.$('#test-week-review-modal');
@@ -505,29 +528,24 @@ async function handleDeloadModal(page) {
     return;
   }
 
-  // Choose "Deload" option
-  const deloadBtn = await page.$('#deload-modal button[onclick*="startDeloadWeek"], #deload-modal button[onclick*="chooseDeload"]');
-  if (!deloadBtn) {
-    // Try to find by text content
-    const allBtns = await page.$$('#deload-modal button');
-    let clicked = false;
-    for (const btn of allBtns) {
-      const txt = await btn.innerText();
-      if (txt.includes('DELOAD') || txt.includes('Deload') || txt.includes('REDUCED')) {
-        await btn.click();
-        clicked = true;
-        break;
-      }
-    }
-    if (!clicked) {
-      logBug('Deload Modal', 'Could not find Deload Week button in modal');
-      // Close it and continue
-      await page.evaluate(() => {
-        document.getElementById('deload-modal').style.display = 'none';
-      });
-    }
-  } else {
-    await deloadBtn.click();
+  // Dismiss any overlays that may block clicks
+  await dismissTutorialIfVisible(page);
+
+  // Choose "Deload" option via JS click
+  const clicked = await page.evaluate(() => {
+    const btn = document.querySelector('#deload-modal button[onclick*="startDeloadWeek"], #deload-modal button[onclick*="chooseDeload"]');
+    if (btn) { btn.click(); return true; }
+    // Fallback: find by text
+    const allBtns = Array.from(document.querySelectorAll('#deload-modal button'));
+    const deloadBtn = allBtns.find(b => /DELOAD|Deload|REDUCED/i.test(b.textContent));
+    if (deloadBtn) { deloadBtn.click(); return true; }
+    return false;
+  });
+  if (!clicked) {
+    logBug('Deload Modal', 'Could not find Deload Week button in modal');
+    await page.evaluate(() => {
+      document.getElementById('deload-modal').style.display = 'none';
+    });
   }
   await page.waitForTimeout(500);
   console.log('  Deload week chosen');
@@ -1131,10 +1149,10 @@ async function main() {
     if (!postOnboardState?.onboardingComplete) {
       logBug('Onboarding', 'onboardingComplete is false/missing after completing onboarding');
     }
-    if (!postOnboardState?.program || postOnboardState.program.length === 0) {
+    if (!postOnboardState?.programLength || postOnboardState.programLength === 0) {
       logBug('Onboarding', 'No program set after completing onboarding');
     }
-    console.log(`Post-onboard: program days=${postOnboardState?.program?.length}, trainingDaysPerWeek=${postOnboardState?.trainingDaysPerWeek}`);
+    console.log(`Post-onboard: program days=${postOnboardState?.programLength}, trainingDaysPerWeek=${postOnboardState?.trainingDaysPerWeek}`);
 
     // ── WEEK 1: Sessions 1–4 (Calibration) ───────────────────────────────────
     console.log('\n=== WEEK 1 (Sessions 1–4): Calibration ===');
@@ -1369,9 +1387,9 @@ async function main() {
     console.log(`  Total sessions logged: ${finalState?.totalSessions}`);
     console.log(`  Current week: ${finalState?.weekCount}`);
     console.log(`  Current cycle: ${finalState?.cycleCount || 1}`);
-    console.log(`  History entries: ${finalState?.history?.length}`);
-    console.log(`  Cardio sessions: ${finalState?.cardioHistory?.length || 0}`);
-    console.log(`  Mood entries: ${finalState?.moodHistory?.length || 0}`);
+    console.log(`  History entries: ${finalState?.historyLength}`);
+    console.log(`  Cardio sessions: ${finalState?.cardioHistoryLength || 0}`);
+    console.log(`  Mood entries: ${finalState?.moodHistoryLength || 0}`);
 
     // Final screenshot of home
     await page.evaluate(() => { try { showScreen('home', document.querySelector('.nav-item[onclick*="home"]')); renderHome(); } catch(e) {} });
