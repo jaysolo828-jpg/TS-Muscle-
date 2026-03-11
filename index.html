@@ -2557,15 +2557,15 @@
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
         <button class="onboard-select-btn" onclick="selectGoalOnboard('size', this)">
           <div style="font-weight:bold;">Build Size</div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">8–12 reps main lifts · 10–20 isolation — muscle growth focus</div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">8–12 reps · 4 sets (main) · 10–20 reps · 4 sets (accessories) — muscle growth focus</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('strength', this)">
           <div style="font-weight:bold;">Build Strength</div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">3–8 reps main lifts · 6–12 isolation — max strength focus</div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">3–8 reps · 5 sets (main) · 6–12 reps · 3 sets (accessories) — max strength focus</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('both', this)">
           <div style="font-weight:bold;">Both — Size &amp; Strength</div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">5–10 reps main lifts · 8–15 isolation — powerbuilding balance</div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">5–10 reps · 4 sets (main) · 8–15 reps · 3 sets (accessories) — powerbuilding balance</div>
         </button>
       </div>
       <div id="ob-goal-rep-preview" style="display:none; margin-bottom:16px;"></div>
@@ -4291,6 +4291,20 @@ function getGoalReps(exId, fallback) {
   return GOAL_REPS[exId]?.[goal] || fallback || '8–12';
 }
 
+// Computes representative set counts for main lifts and accessories for a given goal.
+// Used in goal picker UI so displayed counts match the actual engine behaviour.
+function getGoalSetSummary(goal) {
+  const g = goal || 'both';
+  const MAIN_IDS = ['bench', 'chest-row', 'legpress-a', 'rdl', 'pulldown', 'incline'];
+  const ACC_IDS  = ['lateral', 'ez-curl', 'leg-ext-a', 'ham-curl-a', 'pushdown', 'flye'];
+  const avg = ids => {
+    const vals = ids.map(id => GOAL_SETS[id]?.[g]).filter(Number.isFinite);
+    if (!vals.length) return 3;
+    return Math.round(vals.reduce((s, v) => s + v, 0) / vals.length);
+  };
+  return { main: avg(MAIN_IDS), acc: avg(ACC_IDS) };
+}
+
 // Computes real compound/isolation rep range summaries from GOAL_REPS for a given goal.
 // Used in goal picker UI so displayed ranges match the actual engine behaviour.
 function getGoalRepSummary(goal) {
@@ -4319,24 +4333,27 @@ function getGoalRepSummary(goal) {
 // Builds the HTML for the "your rep targets" preview card shown inside goal pickers.
 function buildGoalRepPreviewHTML(goal) {
   const s = getGoalRepSummary(goal);
+  const ss = getGoalSetSummary(goal);
   const color = { size: '#a855f7', strength: '#3b82f6', both: '#f59e0b' }[goal] || '#f59e0b';
   const goalName = { size: 'Hypertrophy', strength: 'Strength', both: 'Powerbuilding' }[goal] || 'Powerbuilding';
   return `
     <div style="background:${color}14;border:1px solid ${color}44;border-radius:12px;padding:14px 16px;margin-top:12px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></span>
-        <div style="font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:${color};">${goalName.toUpperCase()} — YOUR REP TARGETS</div>
+        <div style="font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:${color};">${goalName.toUpperCase()} — YOUR TARGETS</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
         <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:10px;padding:12px;">
           <div style="font-size:9px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;margin-bottom:4px;">MAIN LIFTS</div>
           <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:1px;line-height:1;">${s.main}</div>
           <div style="font-size:11px;color:${color};font-family:'Barlow Condensed',sans-serif;font-weight:700;margin-top:5px;">↑ weight at ${s.mainTop} reps</div>
+          <div style="font-size:10px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;margin-top:3px;">${ss.main} sets</div>
         </div>
         <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:10px;padding:12px;">
           <div style="font-size:9px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;margin-bottom:4px;">ACCESSORIES</div>
           <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:1px;line-height:1;">${s.acc}</div>
           <div style="font-size:11px;color:${color};font-family:'Barlow Condensed',sans-serif;font-weight:700;margin-top:5px;">↑ weight at ${s.accTop} reps</div>
+          <div style="font-size:10px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;margin-top:3px;">${ss.acc} sets</div>
         </div>
       </div>
       <div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;line-height:1.5;border-top:1px solid ${color}22;padding-top:10px;">Hit the top rep consistently → app adds weight automatically next session.</div>
@@ -8605,27 +8622,30 @@ function cycleChoiceChangeGoal() {
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9500;display:flex;align-items:flex-end;justify-content:center;';
   const goal = state.profile?.goal || 'both';
 
-  // Compute real ranges from GOAL_REPS so descriptions match the actual engine
+  // Compute real ranges and set counts so descriptions match the actual engine
   const sSize = getGoalRepSummary('size');
   const sStr  = getGoalRepSummary('strength');
   const sBoth = getGoalRepSummary('both');
+  const ssSize = getGoalSetSummary('size');
+  const ssStr  = getGoalSetSummary('strength');
+  const ssBoth = getGoalSetSummary('both');
 
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:28px 24px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;">
       <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">CHOOSE YOUR GOAL</div>
-      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;">Pick your focus. Weights carry over. Rep targets update immediately.</div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;">Pick your focus. Weights carry over. Rep targets and set counts update immediately.</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;">
         <button class="onboard-select-btn ${goal === 'size' ? 'selected' : ''}" onclick="applyCycleGoal('size',this)">
           <div style="font-weight:bold;">Build Size (Hypertrophy)</div>
-          <div style="font-size:12px;color:var(--gray);">${sSize.main} main lifts · ${sSize.acc} isolation — muscle growth focus</div>
+          <div style="font-size:12px;color:var(--gray);">${sSize.main} reps · ${ssSize.main} sets (main) · ${sSize.acc} reps · ${ssSize.acc} sets (accessories)</div>
         </button>
         <button class="onboard-select-btn ${goal === 'strength' ? 'selected' : ''}" onclick="applyCycleGoal('strength',this)">
           <div style="font-weight:bold;">Build Strength</div>
-          <div style="font-size:12px;color:var(--gray);">${sStr.main} main lifts · ${sStr.acc} isolation — max strength focus</div>
+          <div style="font-size:12px;color:var(--gray);">${sStr.main} reps · ${ssStr.main} sets (main) · ${sStr.acc} reps · ${ssStr.acc} sets (accessories)</div>
         </button>
         <button class="onboard-select-btn ${goal === 'both' ? 'selected' : ''}" onclick="applyCycleGoal('both',this)">
           <div style="font-weight:bold;">Both — Size &amp; Strength</div>
-          <div style="font-size:12px;color:var(--gray);">${sBoth.main} main lifts · ${sBoth.acc} isolation — powerbuilding balance</div>
+          <div style="font-size:12px;color:var(--gray);">${sBoth.main} reps · ${ssBoth.main} sets (main) · ${sBoth.acc} reps · ${ssBoth.acc} sets (accessories)</div>
         </button>
       </div>
       <div id="cycle-goal-rep-preview" style="margin-bottom:16px;">${buildGoalRepPreviewHTML(goal)}</div>
@@ -8657,8 +8677,9 @@ function updateGoalSettingsSub() {
   const goal = state.profile?.goal;
   if (!goal) { el.textContent = 'Not set — tap to choose'; return; }
   const s = getGoalRepSummary(goal);
+  const ss = getGoalSetSummary(goal);
   const name = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' }[goal] || goal;
-  el.textContent = `Currently: ${name} — ${s.main} main lifts · ${s.acc} isolation`;
+  el.textContent = `Currently: ${name} — ${s.main} reps · ${ss.main} sets (main) · ${s.acc} reps · ${ss.acc} sets (accessories)`;
 }
 
 function openGoalPickerFromSettings() {
