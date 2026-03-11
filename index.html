@@ -53,6 +53,8 @@
     overflow: hidden;
     overscroll-behavior: none;
     width: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Scrollable app shell — prevents Android Chrome URL bar from appearing */
@@ -3327,7 +3329,7 @@
   <div style="padding:0 16px 16px;">
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Display Name</div>
     <input type="text" id="display-name-input" placeholder="Your name or handle" maxlength="24"
-      style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:15px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
+      style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
       oninput="setDisplayName(this.value)"
     />
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Shown on your shareable cards</div>
@@ -9001,7 +9003,7 @@ function openRotationModal() {
       <div>
         <button onclick="toggleRotationAltExpand('${ex.id}')" id="rot-expand-btn-${ex.id}" style="background:none;border:none;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:13px;cursor:pointer;padding:4px 0;width:100%;text-align:center;letter-spacing:0.3px;-webkit-tap-highlight-color:transparent;">Want something different? ↓</button>
         <div id="rot-expand-${ex.id}" style="display:none;margin-top:10px;">
-          <select onchange="onRotationDropdownChange('${ex.id}',this)" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-size:15px;padding:10px 14px;border-radius:10px;appearance:none;-webkit-appearance:none;">
+          <select onchange="onRotationDropdownChange('${ex.id}',this)" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-size:16px;padding:10px 14px;border-radius:10px;appearance:none;-webkit-appearance:none;">
             <option value="" data-note="">— Pick a different one —</option>
             ${otherAltOptions5}
             <option value="__custom__" data-note="">✍️ Write my own…</option>
@@ -9279,7 +9281,7 @@ function openOnboardingRotationReview() {
         <div>
           <button onclick="toggleRotationAltExpand('${ex.id}')" id="rot-expand-btn-${ex.id}" style="background:none;border:none;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:13px;cursor:pointer;padding:4px 0;width:100%;text-align:center;letter-spacing:0.3px;-webkit-tap-highlight-color:transparent;">Want something different? ↓</button>
           <div id="rot-expand-${ex.id}" style="display:none;margin-top:10px;">
-            <select onchange="onRotationDropdownChange('${ex.id}',this)" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-size:15px;padding:10px 14px;border-radius:10px;appearance:none;-webkit-appearance:none;">
+            <select onchange="onRotationDropdownChange('${ex.id}',this)" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-size:16px;padding:10px 14px;border-radius:10px;appearance:none;-webkit-appearance:none;">
               <option value="" data-note="">— Pick a different one —</option>
               ${otherAltOptionsOb}
               <option value="__custom__" data-note="">✍️ Write my own…</option>
