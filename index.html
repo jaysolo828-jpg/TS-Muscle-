@@ -8603,6 +8603,7 @@ function finalizeEndSession(save) {
       duration: Math.round((activeSession.endTime - activeSession.startTime) / 60000),
       isDeload: activeSession.isDeload || false,
       prs: activeSession.prs || [],
+      cycleNum: state.cycleCount || 1,
       supersets: activeSession.supersets || {},
       bonusExercises: (activeSession.bonusExercises || [])
         .filter(b => b.sets.some(s => s.done))
@@ -8648,6 +8649,49 @@ function finalizeEndSession(save) {
       // Cycle complete — was on week 8, now would roll over
       if (prevWeek === 8) {
         state.weekCount = 1;
+        // ── Snapshot this cycle's stats before incrementing cycleCount ──
+        const _completingCycle = state.cycleCount || 1;
+        const _cycleEntries = (state.history || []).filter(e => e.cycleNum === _completingCycle);
+        const _cycleSessions = _cycleEntries.length;
+        const _cyclePRs = _cycleEntries.reduce((n, e) => n + (e.prs?.length || 0), 0);
+        const _targetSessions = (state.trainingDaysPerWeek || 4) * 8;
+        const _consistency = Math.min(100, Math.round((_cycleSessions / _targetSessions) * 100));
+        // Biggest single-exercise weight gain this cycle
+        const _exWeights = {};
+        for (const _e of _cycleEntries) {
+          for (const [_exId, _sets] of Object.entries(_e.sets || {})) {
+            const _maxW = Math.max(0, ...(_sets.filter(s => s.done && s.weight).map(s => parseFloat(s.weight) || 0)));
+            if (_maxW <= 0) continue;
+            if (!_exWeights[_exId]) _exWeights[_exId] = { first: _maxW, last: _maxW };
+            else _exWeights[_exId].last = _maxW;
+          }
+        }
+        let _biggestGain = null;
+        for (const [_exId, { first: _f, last: _l }] of Object.entries(_exWeights)) {
+          const _gain = _l - _f;
+          if (_gain > 0 && (!_biggestGain || _gain > _biggestGain.gainLbs)) {
+            let _exName = _exId;
+            for (const _day of state.program) {
+              const _found = _day.exercises.find(ex => ex.id === _exId);
+              if (_found) { _exName = _found.name; break; }
+            }
+            _biggestGain = { name: _exName, gainLbs: _gain };
+          }
+        }
+        if (!state.cycleHistory) state.cycleHistory = [];
+        state.cycleHistory.push({
+          cycleNum: _completingCycle,
+          sessions: _cycleSessions,
+          prs: _cyclePRs,
+          consistency: _consistency,
+          goal: state.profile?.goal || 'both',
+          trainingDays: state.trainingDaysPerWeek || 4,
+          biggestGain: _biggestGain,
+          startDate: _cycleEntries[0]?.date || null,
+          endDate: _cycleEntries[_cycleEntries.length - 1]?.date || null,
+        });
+        if (state.cycleHistory.length > 20) state.cycleHistory = state.cycleHistory.slice(-20);
+        // ────────────────────────────────────────────────────────────────
         state.cycleCount = (state.cycleCount || 1) + 1;
         // Drop "this cycle" bonus exercises that have expired
         state.program.forEach(day => {
@@ -9415,98 +9459,118 @@ function showCycleCompleteModal() {
   const name = state.profile?.name || 'Champ';
   const cycleNum = state.cycleCount || 2;
   const completedCycle = cycleNum - 1;
-  const totalSessions = state.totalSessions;
-  const prs = state.prs || {};
-  const prCount = Object.entries(prs).filter(([, pr]) => !pr.isBaseline).length;
   const days = state.trainingDaysPerWeek || 4;
   const goal = state.profile?.goal || 'both';
   const goalLabels = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' };
   const goalLabel = goalLabels[goal] || 'Build Size & Strength';
 
+  // Pull this-cycle stats from cycleHistory snapshot (most recent entry)
+  const cycleSnap = (state.cycleHistory || []).find(c => c.cycleNum === completedCycle);
+  const cycleSessions = cycleSnap?.sessions ?? 0;
+  const cyclePRs = cycleSnap?.prs ?? 0;
+  const cycleConsistency = cycleSnap?.consistency ?? 0;
+  const biggestGain = cycleSnap?.biggestGain || null;
+  const allTimePRs = Object.entries(state.prs || {}).filter(([, pr]) => !pr.isBaseline).length;
+
+  const consistencyColor = cycleConsistency >= 85 ? '#50c882' : cycleConsistency >= 60 ? '#f0a500' : 'var(--cream)';
+
   const modal = document.createElement('div');
   modal.id = 'cycle-complete-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9500;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:9500;display:flex;align-items:flex-end;justify-content:center;padding:0;overflow-y:auto;';
   modal.innerHTML = `
-    <div style="background:var(--dark2);border-radius:20px;width:100%;max-width:420px;border:1px solid var(--dark3);overflow:hidden;animation:bounceIn 0.4s ease;">
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;width:100%;max-width:480px;border:1px solid rgba(255,255,255,0.08);border-bottom:none;overflow:hidden;animation:slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);padding-bottom:env(safe-area-inset-bottom,0px);">
+
+      <!-- Drag handle -->
+      <div style="display:flex;justify-content:center;padding:12px 0 4px;">
+        <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;"></div>
+      </div>
 
       <!-- Hero banner -->
-      <div style="background:linear-gradient(135deg,#1a0000,#2d0507);padding:28px 24px 24px;text-align:center;border-bottom:1px solid rgba(204,32,39,0.3);">
-        <div style="font-size:48px;margin-bottom:10px;">🏆</div>
-        <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red-text);letter-spacing:3px;margin-bottom:6px;">CYCLE ${completedCycle} COMPLETE</div>
-        <div style="font-size:13px;color:var(--cream);line-height:1.5;">You finished 8 weeks, ${name}. That's real work.</div>
+      <div style="background:linear-gradient(160deg,#1c0002,#2e060a,#1a0000);padding:24px 24px 22px;text-align:center;border-bottom:1px solid rgba(204,32,39,0.25);">
+        <div style="font-size:44px;margin-bottom:8px;line-height:1;">🏆</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:30px;color:var(--red-text);letter-spacing:3px;margin-bottom:6px;line-height:1;">CYCLE ${completedCycle} COMPLETE</div>
+        <div style="font-size:13px;color:rgba(255,245,220,0.75);line-height:1.55;">You finished 8 weeks, ${name}. That's real work.</div>
       </div>
 
-      <!-- Stats row -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:#1a1a1a;border-bottom:1px solid #1a1a1a;">
-        <div style="background:var(--dark2);padding:16px;text-align:center;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--cream);margin-bottom:4px;">${totalSessions}</div>
-          <div style="font-size:12px;color:var(--gray-light);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">SESSIONS</div>
+      <!-- THIS CYCLE stats -->
+      <div style="padding:18px 20px 0;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:10px;">THIS CYCLE</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:${biggestGain ? '12px' : '16px'};">
+          <div style="background:var(--dark3);border-radius:12px;padding:14px 8px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
+            <div style="font-family:'Bebas Neue',cursive;font-size:30px;color:var(--cream);line-height:1;margin-bottom:4px;">${cycleSessions}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray-light);letter-spacing:1px;">SESSIONS</div>
+          </div>
+          <div style="background:var(--dark3);border-radius:12px;padding:14px 8px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
+            <div style="font-family:'Bebas Neue',cursive;font-size:30px;color:#f0a500;line-height:1;margin-bottom:4px;">${cyclePRs}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray-light);letter-spacing:1px;">PRs THIS CYCLE</div>
+          </div>
+          <div style="background:var(--dark3);border-radius:12px;padding:14px 8px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
+            <div style="font-family:'Bebas Neue',cursive;font-size:30px;color:${consistencyColor};line-height:1;margin-bottom:4px;">${cycleConsistency}%</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray-light);letter-spacing:1px;">CONSISTENCY</div>
+          </div>
         </div>
-        <div style="background:var(--dark2);padding:16px;text-align:center;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:#f0a500;margin-bottom:4px;">${prCount}</div>
-          <div style="font-size:12px;color:var(--gray-light);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">ALL-TIME PRs</div>
-        </div>
-        <div style="background:var(--dark2);padding:16px;text-align:center;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red-text);margin-bottom:4px;">${completedCycle}</div>
-          <div style="font-size:12px;color:var(--gray-light);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">CYCLES DONE</div>
-        </div>
+        ${biggestGain ? `
+        <div style="background:linear-gradient(135deg,rgba(255,165,0,0.06),rgba(240,165,0,0.1));border:1px solid rgba(240,165,0,0.2);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="font-size:20px;flex-shrink:0;">📈</div>
+          <div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px;color:#c47d00;margin-bottom:2px;">BIGGEST GAIN</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:var(--cream);letter-spacing:1px;line-height:1.2;">${biggestGain.name}</div>
+            <div style="font-size:12px;color:#f0a500;margin-top:1px;">+${biggestGain.gainLbs} lbs over 8 weeks</div>
+          </div>
+        </div>` : ''}
+        <div style="font-size:11px;color:var(--gray);padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.06);">All-time PRs: <span style="color:var(--cream);">${allTimePRs}</span> &nbsp;·&nbsp; Cycles done: <span style="color:var(--cream);">${completedCycle}</span></div>
       </div>
 
-      <!-- Current program summary -->
-      <div style="padding:16px 20px;background:var(--dark3);border-bottom:1px solid #222;">
-        <div style="font-size:12px;color:var(--gray);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;margin-bottom:6px;">YOUR CURRENT PROGRAM</div>
-        <div style="font-size:14px;color:var(--cream);">${goalLabel} &nbsp;·&nbsp; ${days} days/week</div>
-        <div style="font-size:12px;color:var(--gray);margin-top:3px;">Your weights carry over — you keep all your progress.</div>
-      </div>
-
-      <!-- Rotation suggestion -->
+      <!-- Rotation suggestion (optional) -->
       ${(() => {
         const due = getExercisesDueForRotation();
         if (!due.length) return '';
         const preview = due.slice(0, 3).map(({ ex }) => {
           const alt = ex.alts && ex.alts[0];
-          return alt ? `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;margin-bottom:1px;">${ex.name}</div>
-              <div style="font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;color:#50c882;">→ ${alt.name}</div>
-              <div style="font-size:13px;color:var(--gray-light);margin-top:1px;">${alt.note}</div>
-            </div>
+          return alt ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <div style="font-size:13px;color:var(--gray-light);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
+            <div style="color:var(--gray);font-size:12px;flex-shrink:0;">→</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:0.5px;color:#50c882;flex:1;min-width:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${alt.name}</div>
           </div>` : '';
         }).join('');
         return `
-        <div style="padding:16px 20px;background:linear-gradient(135deg,#081a10,#0a1e12);border-bottom:1px solid rgba(80,200,130,0.15);">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-            <span style="font-size:16px;">🔄</span>
-            <div style="font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;color:#50c882;">MIX IT UP THIS CYCLE?</div>
+        <div style="margin:0 20px 0;padding:14px 16px;background:linear-gradient(135deg,rgba(8,26,16,0.8),rgba(10,30,18,0.9));border:1px solid rgba(80,200,130,0.18);border-radius:12px;margin-bottom:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span style="font-size:15px;">🔄</span>
+              <div style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;color:#50c882;">MIX IT UP THIS CYCLE?</div>
+            </div>
+            <div style="font-size:11px;color:rgba(80,200,130,0.5);font-family:'Barlow Condensed',sans-serif;">OPTIONAL</div>
           </div>
-          <div style="font-size:12px;color:var(--gray);line-height:1.5;margin-bottom:12px;">These exercises have run for a full cycle. A swap keeps the stimulus fresh.</div>
+          <div style="font-size:11px;color:var(--gray);line-height:1.5;margin-bottom:10px;">${due.length} exercise${due.length === 1 ? '' : 's'} eligible for a fresh swap.</div>
           ${preview}
-          <button onclick="closeCycleModal();setTimeout(openRotationModal,300);" style="width:100%;margin-top:12px;background:rgba(80,200,130,0.12);border:1.5px solid rgba(80,200,130,0.4);color:#50c882;padding:12px 16px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">REVIEW EXERCISE SWAPS →</button>
+          <button onclick="closeCycleModal();setTimeout(openRotationModal,300);" style="width:100%;margin-top:10px;background:rgba(80,200,130,0.1);border:1px solid rgba(80,200,130,0.35);color:#50c882;padding:11px 16px;border-radius:9px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">REVIEW EXERCISE SWAPS →</button>
         </div>`;
       })()}
 
-      <!-- Choices -->
+      <!-- What's next -->
       <div style="padding:20px;">
-        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;margin-bottom:12px;">WHAT'S NEXT?</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:12px;">WHAT'S NEXT FOR CYCLE ${cycleNum}?</div>
 
         <!-- Keep same -->
-        <button onclick="cycleChoiceKeep()" style="width:100%;background:var(--red);border:none;color:white;padding:16px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;cursor:pointer;margin-bottom:10px;text-align:left;display:flex;justify-content:space-between;align-items:center;">
+        <button onclick="cycleChoiceKeep()" style="width:100%;background:var(--red);border:none;color:white;padding:16px 18px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;cursor:pointer;margin-bottom:6px;text-align:left;display:flex;justify-content:space-between;align-items:center;-webkit-tap-highlight-color:transparent;">
           <span>KEEP SAME PROGRAM</span>
-          <span style="font-size:13px;opacity:0.8;">→</span>
+          <span style="font-size:14px;opacity:0.75;">→</span>
         </button>
-        <div style="font-size:12px;color:var(--gray);margin-top:-6px;margin-bottom:14px;padding:0 4px;">Same goal, same days. Weights keep progressing automatically.</div>
+        <div style="font-size:12px;color:var(--gray);margin-bottom:14px;padding:0 4px;">${goalLabel} &nbsp;·&nbsp; ${days} days/week &nbsp;·&nbsp; weights carry over</div>
 
-        <!-- Change goal -->
-        <button onclick="cycleChoiceChangeGoal()" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--cream);padding:14px 16px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;margin-bottom:10px;text-align:left;display:flex;justify-content:space-between;align-items:center;">
-          <span>CHANGE GOAL</span>
-          <span style="font-size:12px;color:var(--gray);">→</span>
-        </button>
-
-        <!-- Change days -->
-        <button onclick="cycleChoiceChangeDays()" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--cream);padding:14px 16px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">
-          <span>CHANGE TRAINING DAYS</span>
-          <span style="font-size:12px;color:var(--gray);">→</span>
-        </button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <!-- Change goal -->
+          <button onclick="cycleChoiceChangeGoal()" style="background:var(--dark3);border:1px solid rgba(255,255,255,0.1);color:var(--cream);padding:14px 12px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;-webkit-tap-highlight-color:transparent;">
+            <span>CHANGE GOAL</span>
+            <span style="font-size:11px;color:var(--gray);">→</span>
+          </button>
+          <!-- Change days -->
+          <button onclick="cycleChoiceChangeDays()" style="background:var(--dark3);border:1px solid rgba(255,255,255,0.1);color:var(--cream);padding:14px 12px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;-webkit-tap-highlight-color:transparent;">
+            <span>CHANGE DAYS</span>
+            <span style="font-size:11px;color:var(--gray);">→</span>
+          </button>
+        </div>
       </div>
     </div>`;
 
@@ -9887,6 +9951,94 @@ function renderHistory() {
   container.innerHTML = '';
 
   renderPRBoard();
+
+  // ── Cycle Recap section ──────────────────────────────────────────────
+  const cycleHistory = state.cycleHistory || [];
+  if (cycleHistory.length > 0) {
+    const goalLabels = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' };
+    const sorted_ch = [...cycleHistory].sort((a, b) => b.cycleNum - a.cycleNum);
+    const lastCycle = sorted_ch[0];
+    const olderCycles = sorted_ch.slice(1);
+
+    function formatCycleDate(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function buildCycleCard(cyc, isLast) {
+      const consistencyColor = cyc.consistency >= 85 ? '#50c882' : cyc.consistency >= 60 ? '#f0a500' : 'var(--gray-light)';
+      const dateRange = (cyc.startDate && cyc.endDate)
+        ? `${formatCycleDate(cyc.startDate)} – ${formatCycleDate(cyc.endDate)}`
+        : '';
+      const goalLabel = goalLabels[cyc.goal] || 'Build Size & Strength';
+      const card = document.createElement('div');
+      card.style.cssText = `background:var(--dark3);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;margin-bottom:${isLast ? '0' : '8px'};`;
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;color:var(--red-text);">CYCLE ${cyc.cycleNum}</div>
+          ${cyc.prs > 0 ? `<span style="background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.35);color:#f0a500;font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;">🏆 ${cyc.prs} PR${cyc.prs === 1 ? '' : 'S'}</span>` : ''}
+        </div>
+        ${dateRange ? `<div style="font-size:11px;color:var(--gray);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${dateRange}</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:10px;">
+          <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${cyc.sessions}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
+          </div>
+          <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#f0a500;line-height:1;">${cyc.prs}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">PRs</div>
+          </div>
+          <div style="background:var(--dark2);padding:10px 8px;text-align:center;">
+            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:${consistencyColor};line-height:1;">${cyc.consistency}%</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">CONSISTENCY</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+          <div style="font-size:12px;color:var(--gray);">${goalLabel} &nbsp;·&nbsp; ${cyc.trainingDays} days/week</div>
+          ${cyc.biggestGain ? `<div style="font-size:12px;color:#f0a500;">📈 ${cyc.biggestGain.name} +${cyc.biggestGain.gainLbs}lbs</div>` : ''}
+        </div>`;
+      return card;
+    }
+
+    const cycleSection = document.createElement('div');
+    cycleSection.style.cssText = 'margin-bottom:20px;';
+
+    const sectionLabel = document.createElement('div');
+    sectionLabel.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;';
+    sectionLabel.textContent = 'LAST CYCLE RECAP';
+    cycleSection.appendChild(sectionLabel);
+    cycleSection.appendChild(buildCycleCard(lastCycle, olderCycles.length === 0));
+
+    if (olderCycles.length > 0) {
+      const olderBtn = document.createElement('button');
+      olderBtn.style.cssText = 'width:100%;margin-top:8px;padding:11px;background:transparent;border:1px solid var(--dark4);color:var(--gray);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;';
+      let olderExpanded = false;
+      let olderDiv = null;
+      function refreshOlderBtn() {
+        olderBtn.textContent = olderExpanded
+          ? '▴  HIDE OLDER CYCLES'
+          : `▾  VIEW OLDER CYCLES  (${olderCycles.length})`;
+      }
+      refreshOlderBtn();
+      olderBtn.onclick = () => {
+        if (!olderExpanded) {
+          olderDiv = document.createElement('div');
+          olderDiv.style.cssText = 'margin-top:8px;';
+          olderCycles.forEach((cyc, i) => olderDiv.appendChild(buildCycleCard(cyc, i === olderCycles.length - 1)));
+          cycleSection.insertBefore(olderDiv, olderBtn);
+          olderExpanded = true;
+        } else {
+          if (olderDiv) { olderDiv.remove(); olderDiv = null; }
+          olderExpanded = false;
+        }
+        refreshOlderBtn();
+      };
+      cycleSection.appendChild(olderBtn);
+    }
+
+    container.appendChild(cycleSection);
+  }
+  // ────────────────────────────────────────────────────────────────────
 
   if (state.history.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏋️</div><div class="empty-state-text">No sessions yet — tap START on any workout to begin.</div></div>`;
