@@ -174,6 +174,10 @@
     transition: background 0.3s;
   }
   .onboard-dot.active { background: var(--red); border-color: var(--red); }
+  @keyframes ob-chevron-bounce {
+    0%, 100% { transform: translateY(0);   opacity: 0.4; }
+    50%       { transform: translateY(5px); opacity: 0.7; }
+  }
   .onboard-select-btn {
     width: 100%; background: var(--dark3); border: 1px solid #333;
     color: var(--cream); padding: 14px 16px; border-radius: 12px;
@@ -2901,6 +2905,12 @@
   </div>
 </div>
 
+<!-- Onboarding scroll-fade indicator -->
+<div id="ob-scroll-fade" style="display:none; position:fixed; bottom:0; left:0; right:0; height:72px; background:linear-gradient(to bottom, transparent, #0a0a0a); pointer-events:none; z-index:9902; align-items:flex-end; justify-content:center; padding-bottom:10px;">
+  <svg style="animation:ob-chevron-bounce 1.4s ease-in-out infinite;" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+</div>
 
 <!-- PAUSE PROGRAM MODAL -->
 <div id="pause-program-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
@@ -12393,6 +12403,7 @@ let onermTargetId = null;
 function checkOnboarding() {
   if (!state.onboardingComplete) {
     document.getElementById('onboarding-modal').style.display = 'block';
+    _initObScroll();
     // Restore redo-mode context if the page was reloaded mid-setup
     if (localStorage.getItem('ts-redo-mode') && !window._onboardBackup) {
       const raw = localStorage.getItem('ts-redo-backup');
@@ -12478,6 +12489,25 @@ function handleImportOnboarding(e) {
   reader.readAsText(file);
 }
 
+let _obScrollListenerReady = false;
+function _checkObScroll() {
+  const modal = document.getElementById('onboarding-modal');
+  const fade  = document.getElementById('ob-scroll-fade');
+  if (!modal || !fade) return;
+  if (modal.style.display === 'none') { fade.style.display = 'none'; return; }
+  const scrollable = modal.scrollHeight > modal.clientHeight + 10;
+  const atBottom   = modal.scrollTop + modal.clientHeight >= modal.scrollHeight - 20;
+  fade.style.display = (scrollable && !atBottom) ? 'flex' : 'none';
+}
+function _initObScroll() {
+  const modal = document.getElementById('onboarding-modal');
+  if (modal && !_obScrollListenerReady) {
+    modal.addEventListener('scroll', _checkObScroll, { passive: true });
+    _obScrollListenerReady = true;
+  }
+  setTimeout(_checkObScroll, 60);
+}
+
 function onboardNext(step) {
   // Validate current step
   if (step === 2) {
@@ -12523,6 +12553,7 @@ function onboardNext(step) {
   document.querySelectorAll('.onboard-dot').forEach(d => d.classList.remove('active'));
   document.querySelector(`.onboard-dot[data-step="${step}"]`)?.classList.add('active');
   document.getElementById('onboarding-modal').scrollTop = 0;
+  setTimeout(_checkObScroll, 50);
 }
 
 function onboardBack(step) {
@@ -12531,6 +12562,7 @@ function onboardBack(step) {
   document.querySelectorAll('.onboard-dot').forEach(d => d.classList.remove('active'));
   document.querySelector(`.onboard-dot[data-step="${step}"]`)?.classList.add('active');
   document.getElementById('onboarding-modal').scrollTop = 0;
+  setTimeout(_checkObScroll, 50);
 }
 
 function selectOption(fieldId, value, btn) {
@@ -13286,6 +13318,8 @@ function completeOnboarding() {
   state.onboardingComplete = true;
   saveState();
   document.getElementById('onboarding-modal').style.display = 'none';
+  const _obFade = document.getElementById('ob-scroll-fade');
+  if (_obFade) _obFade.style.display = 'none';
   renderHome();
 
   // Always navigate to home screen (handles redo-from-settings where settings was active)
@@ -13373,6 +13407,8 @@ function closeOnboardingModal() {
   localStorage.removeItem('ts-redo-backup');
   document.getElementById('ob-exit-bar').style.display = 'none';
   document.getElementById('onboarding-modal').style.display = 'none';
+  const _obFade2 = document.getElementById('ob-scroll-fade');
+  if (_obFade2) _obFade2.style.display = 'none';
 }
 
 function confirmHardReset() {
@@ -13470,6 +13506,7 @@ function resetOnboarding() {
   document.querySelectorAll('.onboard-dot').forEach(d => d.classList.remove('active'));
   document.querySelector('.onboard-dot[data-step="1"]')?.classList.add('active');
   document.getElementById('onboarding-modal').style.display = 'block';
+  _initObScroll();
 }
 
 function checkTestWeekReview() {
