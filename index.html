@@ -2687,7 +2687,8 @@
     <!-- STEP 4: Exercise Selection -->
     <div id="onboard-step-4" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR EXERCISES</div>
-      <div style="font-size:13px; color:var(--gray-light); margin-bottom:20px; line-height:1.6;">We've picked proven exercises for every slot. You can use ours or choose your own — and you can swap anything later inside the app.</div>
+      <div style="font-size:13px; color:var(--gray-light); margin-bottom:6px; line-height:1.6;">We start you with proven exercises for every movement. What you pick here is also your <strong style="color:var(--cream);">rotation baseline</strong> — after your first full cycle, the app will suggest swapping one or two for a fresh angle on the same muscle. That's what keeps growth coming once your body adapts.</div>
+      <div style="font-size:12px; color:var(--gray); margin-bottom:20px; line-height:1.5;">Pick what works for your gym now. You're always in control — nothing swaps automatically.</div>
 
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;" id="ob-exercise-mode-btns">
         <button class="onboard-select-btn" onclick="selectExerciseMode('auto', this)">
@@ -2695,7 +2696,7 @@
             <span style="font-size:18px; line-height:1;">⚡</span>
             <div>
               <div style="font-weight:bold;">Pick For Me</div>
-              <div style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Use the recommended exercises — swap anything later inside the app</div>
+              <div style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Use our recommended exercises. You can review and swap them on the next screen before you start.</div>
             </div>
           </div>
           <div id="ob-pick-for-me-preview" style="font-size:13px; color:var(--gray-light); margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07); letter-spacing:0.3px;">Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift</div>
@@ -2705,7 +2706,7 @@
             <span style="font-size:18px; line-height:1;">✏️</span>
             <div>
               <div style="font-weight:bold;">I'll Choose</div>
-              <div style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Pick one exercise per movement — or type in your own if your gym has something different</div>
+              <div style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Pick one exercise per movement — what you choose now is your cycle 1 lineup and your rotation starting point.</div>
             </div>
           </div>
         </button>
@@ -9012,7 +9013,7 @@ function openOnboardingRotationReview() {
   if (title) title.textContent = 'YOUR EXERCISES';
   const subtitle = document.querySelector('#rotation-modal .modal-sub');
   if (subtitle) {
-    subtitle.textContent = 'We\'ve picked proven exercises for every slot. Keep the defaults or swap any of them — you can always change them later.';
+    subtitle.innerHTML = 'These are your <strong style="color:var(--cream);">cycle 1 exercises</strong> — and your <strong style="color:#50c882;">rotation starting point</strong>.<br><br>After your first full cycle, the app will suggest swapping one or two of these for a fresh angle on the same muscle. That\'s what keeps growth coming once your body adapts to a movement.<br><br>Keep the defaults or swap any now. Nothing changes automatically — you\'re always in control.';
     subtitle.style.display = 'block';
   }
 
@@ -12634,7 +12635,7 @@ function selectExerciseMode(mode, btn) {
 function buildObManualSlots() {
   const panel = document.getElementById('ob-manual-select');
   const currentSplit = document.getElementById('ob-split-type')?.value || 'ul';
-  let html = '<div style="font-size:13px; color:var(--gray); margin-bottom:14px; line-height:1.6;">Pick one exercise per movement. The <span style="color:var(--cream);">★</span> option is pre-selected as a safe default. Tap the red <span style="color:var(--red); font-size:11px;">▶</span> on any pill to preview a tutorial first.</div>';
+  let html = '<div style="background:linear-gradient(135deg,#081a10,#0a1e12);border:1.5px solid rgba(80,200,130,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--gray-light);line-height:1.6;">These are your <strong style="color:var(--cream);">cycle 1 exercises</strong> and your <strong style="color:#50c882;">rotation starting point</strong>. After your first full cycle, the app will suggest swapping one or two — same muscle, different angle. Pick what works best for your gym.<br><br><span style="color:var(--gray);">The <span style="color:var(--cream);">★</span> option is pre-selected as a proven default. Tap <span style="color:var(--red);font-size:11px;">▶</span> to watch a tutorial before picking.</span></div>';
   OB_PRIMARY_SLOTS.filter(slot => !slot.splitFilter || slot.splitFilter.includes(currentSplit)).forEach(slot => {
     const safeId = slot.id.replace('-', '_');
     let optBtns = slot.options.map((opt, i) => {
