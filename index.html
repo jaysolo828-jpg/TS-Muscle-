@@ -12578,9 +12578,17 @@ function saveMoodEntry() {
   renderMoodCheckinLabel();
 }
 
+// Returns YYYY-MM-DD in the user's local timezone so day-boundaries
+// match the device clock, not UTC (avoids the summary disappearing at
+// e.g. 7 pm EST when UTC rolls over to the next day).
+function _localDateKey(d) {
+  const dt = d ? new Date(d) : new Date();
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
 function _getTodayMoods() {
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const todayEntries = (state.moodLog || []).filter(e => e.date.slice(0, 10) === todayKey);
+  const todayKey = _localDateKey();
+  const todayEntries = (state.moodLog || []).filter(e => _localDateKey(e.date) === todayKey);
   const seen = {};
   const deduped = todayEntries.filter(e => { if (seen[e.timing]) return false; seen[e.timing] = true; return true; });
   return { deduped, pre: deduped.find(e => e.timing === 'pre'), post: deduped.find(e => e.timing === 'post') };
@@ -12621,11 +12629,11 @@ function renderMoodHistory(showAll = false) {
   // Group entries by calendar day — first-seen wins (log is newest-first via unshift)
   const byDay = {};
   state.moodLog.forEach((entry, idx) => {
-    const day = entry.date.slice(0, 10);
+    const day = _localDateKey(entry.date);
     if (!byDay[day]) byDay[day] = { pre: null, post: null };
     if (!byDay[day][entry.timing]) byDay[day][entry.timing] = { entry, idx };
   });
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = _localDateKey();
   const sortedDays = Object.keys(byDay).sort().reverse();
   const visibleDays = showAll ? sortedDays : sortedDays.slice(0, 1);
   const trashIcon = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
@@ -12750,7 +12758,7 @@ function renderMoodInsights() {
   // Build byDay — first-seen wins per timing per day (log is newest-first via unshift)
   const byDay = {};
   log.forEach(e => {
-    const day = e.date.slice(0, 10);
+    const day = _localDateKey(e.date);
     if (!byDay[day]) byDay[day] = {};
     if (!byDay[day][e.timing]) byDay[day][e.timing] = e;
   });
@@ -12781,14 +12789,14 @@ function renderMoodInsights() {
   const showedUpAnyway = lifts.filter(l => l.preEntry.value <= 2).length;
 
   // Check-in streak
-  const logDays = new Set(log.map(e => e.date.slice(0, 10)));
+  const logDays = new Set(log.map(e => _localDateKey(e.date)));
   const today = new Date();
-  const todayKey = today.toISOString().slice(0, 10);
+  const todayKey = _localDateKey(today);
   let mindsetStreak = 0;
   const startFrom = logDays.has(todayKey) ? 0 : 1;
   for (let i = startFrom; i < 365; i++) {
     const d = new Date(today); d.setDate(d.getDate() - i);
-    if (logDays.has(d.toISOString().slice(0, 10))) mindsetStreak++;
+    if (logDays.has(_localDateKey(d))) mindsetStreak++;
     else break;
   }
 
@@ -12813,8 +12821,8 @@ function renderMoodInsights() {
   }
 
   // Mood on workout days (deduped)
-  const workoutDates = new Set((state.history || []).map(h => h.date?.slice(0, 10)));
-  const moodOnWorkoutDays = allDeduped.filter(e => workoutDates.has(e.date.slice(0, 10)));
+  const workoutDates = new Set((state.history || []).map(h => h.date ? _localDateKey(h.date) : null).filter(Boolean));
+  const moodOnWorkoutDays = allDeduped.filter(e => workoutDates.has(_localDateKey(e.date)));
   const avgMoodWorkoutDay = moodOnWorkoutDays.length
     ? (moodOnWorkoutDays.reduce((s, e) => s + e.value, 0) / moodOnWorkoutDays.length).toFixed(1)
     : null;
