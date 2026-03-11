@@ -9481,13 +9481,16 @@ function renderProgressChart() {
     const doneSets = sets.filter(s => s.done && s.weight);
     if (doneSets.length === 0) return;
 
+    const rpeVals = doneSets.filter(s => s.rpe).map(s => parseFloat(s.rpe));
+    const avgRPE = rpeVals.length ? (rpeVals.reduce((a, b) => a + b, 0) / rpeVals.length) : null;
+    const maxReps = Math.max(...doneSets.map(s => parseInt(s.reps) || 0));
+
     if (chartMode === 'volume') {
-      // Volume = sum of (weight × reps) for all done sets
       const volume = doneSets.reduce((sum, s) => sum + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0), 0);
-      if (volume > 0) dataPoints.push({ date: new Date(entry.date), weight: volume });
+      if (volume > 0) dataPoints.push({ date: new Date(entry.date), weight: volume, setsCount: doneSets.length, avgRPE, maxReps });
     } else {
       const maxWeight = Math.max(...doneSets.map(s => parseFloat(s.weight) || 0));
-      if (maxWeight > 0) dataPoints.push({ date: new Date(entry.date), weight: maxWeight });
+      if (maxWeight > 0) dataPoints.push({ date: new Date(entry.date), weight: maxWeight, setsCount: doneSets.length, avgRPE, maxReps });
     }
   });
 
@@ -9575,11 +9578,14 @@ function renderProgressChart() {
   const prev = dataPoints[dataPoints.length - 2];
   let recHTML = '';
 
-  // Compute goal-aware rep target for this specific exercise
+  // Goal-aware targets for this exercise
   const _chartGoal = state.profile?.goal || 'both';
   const _chartReps = GOAL_REPS[exId]?.[_chartGoal] || '8–12';
   const _chartRepParts = _chartReps.split(/[–\-]/);
   const _chartRepTop = parseInt(_chartRepParts[1] || _chartRepParts[0]) || 12;
+  const _chartTargetSets = typeof getGoalSets === 'function' ? getGoalSets(exId, 3) : 3;
+  const _lastSets = last.setsCount || 0;
+  const _lastRPE  = last.avgRPE ? ` · avg RPE ${last.avgRPE.toFixed(1)}` : '';
 
   if (chartMode === 'weight') {
     if (last.weight > prev.weight) {
@@ -9588,7 +9594,15 @@ function renderProgressChart() {
         <div class="overload-icon">🔥</div>
         <div class="overload-text">
           <strong>READY TO PROGRESS</strong>
-          Try ${nextWeight} lbs next session. You've increased weight — keep pushing.
+          Try ${nextWeight} lbs next session. Weight is moving — keep it up.
+        </div>
+      </div>`;
+    } else if (_lastSets < _chartTargetSets) {
+      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#1a1200,#2a2000)">
+        <div class="overload-icon">⚡</div>
+        <div class="overload-text">
+          <strong>COMPLETE YOUR SETS FIRST</strong>
+          You did ${_lastSets} of ${_chartTargetSets} sets last session. Finish all ${_chartTargetSets} sets before adding weight.
         </div>
       </div>`;
     } else if (last.weight === prev.weight) {
@@ -9596,7 +9610,7 @@ function renderProgressChart() {
         <div class="overload-icon">⚡</div>
         <div class="overload-text">
           <strong>ADD REPS FIRST</strong>
-          Weight held 2+ sessions. Build to ${_chartRepTop} reps (your ${_chartReps} target) — progressive overload adds weight automatically when you hit it.
+          Weight has held for 2+ sessions. Push to ${_chartRepTop} reps (your ${_chartReps} target) — once you hit it, increase the weight.
         </div>
       </div>`;
     } else {
@@ -9604,7 +9618,7 @@ function renderProgressChart() {
         <div class="overload-icon">🛡️</div>
         <div class="overload-text">
           <strong>MAINTAIN & REFOCUS</strong>
-          Weight dipped — work back to your ${_chartReps} rep target at this weight before pushing higher.
+          Weight dipped — rebuild to your ${_chartReps} rep target at this weight before pushing heavier.
         </div>
       </div>`;
     }
@@ -9614,7 +9628,7 @@ function renderProgressChart() {
         <div class="overload-icon">🔥</div>
         <div class="overload-text">
           <strong>VOLUME INCREASING</strong>
-          Total volume is trending up — great work. Keep adding weight or reps to maintain this.
+          Total volume is going up — great work. Keep adding reps or small weight increases.
         </div>
       </div>`;
     } else if (last.weight === prev.weight) {
@@ -9622,7 +9636,7 @@ function renderProgressChart() {
         <div class="overload-icon">⚡</div>
         <div class="overload-text">
           <strong>VOLUME STABLE</strong>
-          Volume hasn't changed. Try adding a rep per set or a small weight increase to push it up.
+          Volume hasn't changed. Try adding a rep per set or a small weight bump to push it up.
         </div>
       </div>`;
     } else {
@@ -9630,7 +9644,7 @@ function renderProgressChart() {
         <div class="overload-icon">🛡️</div>
         <div class="overload-text">
           <strong>VOLUME DROPPED</strong>
-          Total volume dipped. Complete all sets and hit rep targets before adding load.
+          Total volume dipped. Complete all ${_chartTargetSets} sets and hit your rep targets before adding load.
         </div>
       </div>`;
     }
@@ -9638,13 +9652,20 @@ function renderProgressChart() {
 
   document.getElementById('overload-recommendation').innerHTML = recHTML;
 
-  // Recent history table
-  let tableHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;">Recent Sessions</div>';
+  // Recent sessions table
+  let tableHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:10px;">Recent Sessions</div>';
   [...dataPoints].reverse().slice(0, 5).forEach(pt => {
-    const val = chartMode === 'volume' ? `${Math.round(pt.weight).toLocaleString()} lbs vol` : `${pt.weight} lbs`;
+    const val   = chartMode === 'volume' ? `${Math.round(pt.weight).toLocaleString()} lbs` : `${pt.weight} lbs`;
+    const rpeTag = pt.avgRPE ? `<span style="font-size:10px;color:var(--gray);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:1px 6px;border-radius:5px;margin-left:4px;">RPE ${pt.avgRPE.toFixed(1)}</span>` : '';
+    const setsTag = pt.setsCount ? `<span style="font-size:10px;color:var(--gray);margin-left:4px;">${pt.setsCount} sets</span>` : '';
     tableHTML += `<div class="history-item" style="cursor:default;">
-      <div class="history-date">${pt.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-      <div class="history-day" style="font-size:20px;">${val}</div>
+      <div>
+        <div class="history-date">${pt.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+        <div style="display:flex;align-items:center;margin-top:2px;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--cream);">${val}</span>
+          ${setsTag}${rpeTag}
+        </div>
+      </div>
     </div>`;
   });
   document.getElementById('progress-history-table').innerHTML = tableHTML;
