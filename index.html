@@ -6944,41 +6944,21 @@ function buildOverloadHint(exId) {
     </div>`;
   }
 
-  // Rep outcome label + trend/single mode badge
-  const modeBadge = info.useTrend
-    ? `<span style="background:rgba(255,255,255,0.07);color:var(--gray);font-size:10px;padding:2px 7px;border-radius:4px;letter-spacing:0.5px;font-family:'Barlow Condensed',sans-serif;">3-SESSION TREND</span>`
-    : `<span style="background:rgba(255,255,255,0.04);color:var(--gray);font-size:10px;padding:2px 7px;border-radius:4px;letter-spacing:0.5px;font-family:'Barlow Condensed',sans-serif;">LAST SESSION</span>`;
-
-  const repOutcome = info.avgReps
-    ? (() => {
-        const day = state.program.find(d => d.id === activeSession?.dayId);
-        const ex = day?.exercises.find(e => e.id === exId);
-        if (!ex) return '';
-        const repStr = getGoalReps(ex.id, ex.reps);
-        const parts = repStr.split(/[–-]/);
-        const minR = parseInt(parts[0])||0;
-        const maxR = parseInt(parts[1])||minR;
-        if (info.avgReps > maxR)      return `<span style="color:#2ecc71;">▲ ${info.avgReps} reps avg</span>`;
-        else if (info.avgReps >= minR) return `<span style="color:#2ecc71;">✓ ${info.avgReps} reps avg</span>`;
-        else                           return `<span style="color:#CC2027;">▼ ${info.avgReps} reps avg</span>`;
-      })()
-    : '';
-
-  // Plain reason without the shimmer phrase (used inside card body)
-  const _shimmerRx = /\b(building consistency|stay consistent|maintain and build quality)\b/i;
-  const _shimmerPhrase = info.reason.match(_shimmerRx)?.[0] || null;
-  const _plainReason = _shimmerPhrase
-    ? info.reason.replace(_shimmerRx, '').replace(/\s*[—–]\s*$/, '').replace(/^\s*[—–]\s*/, '').trim()
-    : info.reason;
-  const _cardBody = (() => {
-    const parts = [repOutcome, _plainReason].filter(Boolean);
-    const inner = parts.length ? `${parts.join(' · ')} ${modeBadge}` : modeBadge;
-    return `<div style="font-size:12px; color:var(--gray); padding-left:23px; line-height:1.6;">${inner}</div>`;
-  })();
+  // Build plain-language second line from structured data — no badges
+  const _day = state.program.find(d => d.id === activeSession?.dayId);
+  const _prEx = _day?.exercises.find(e => e.id === exId);
+  let _minR = 0, _maxR = 0;
+  if (_prEx) {
+    const _rStr = getGoalReps(_prEx.id, _prEx.reps);
+    const _rParts = _rStr.split(/[–-]/);
+    _minR = parseInt(_rParts[0]) || 0;
+    _maxR = parseInt(_rParts[1]) || _minR;
+  }
+  const _cardBody = `<div style="font-size:12px; color:var(--gray); padding-left:23px; line-height:1.6;">${_buildReasonSentence(info, _minR, _maxR)}</div>`;
 
   if (info.changed && info.newWeight > info.lastWeight) {
     return `<div style="background:rgba(46,204,113,0.12); border:1px solid rgba(46,204,113,0.35); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome || _plainReason ? '5px' : '0'};">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="#2ecc71" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#2ecc71;">
           INCREASE &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
@@ -7003,7 +6983,7 @@ function buildOverloadHint(exId) {
     </div>`;
   } else if (info.lastWeight) {
     return `<div style="background:rgba(255,255,255,0.03); border:1px solid #252525; border-radius:10px; padding:9px 12px; margin-bottom:8px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome || _plainReason ? '5px' : '0'};">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cream)" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:var(--cream);">
           MAINTAIN &nbsp;<span style="font-weight:400;">${info.lastWeight} lbs</span>
@@ -7023,6 +7003,64 @@ function buildOverloadShimmer(exId) {
   const m = info.reason.match(/\b(building consistency|stay consistent|maintain and build quality)\b/i);
   if (!m) return '';
   return `<div style="text-align:center; padding:3px 16px 9px; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;"><span class="overload-reason">${m[0]}</span></div>`;
+}
+
+// Builds a plain-language, readable explanation for the progression card body.
+// No "last session" tag — context is folded naturally into the subject.
+function _buildReasonSentence(info, minR, maxR) {
+  const { avgReps, avgRPE, useTrend, sessionCount, changed, newWeight, lastWeight } = info;
+  const multi = useTrend && sessionCount > 1;
+  // Subject phrases — "You hit 12 reps" (single) vs "Averaging 12 reps" (trend)
+  const repsStr = avgReps ? (multi ? `Averaging ${avgReps} reps` : `You hit ${avgReps} reps`) : null;
+  const rpeStr  = avgRPE !== null ? `RPE ${avgRPE.toFixed(1)}` : null;
+  const inc = changed && newWeight > lastWeight;
+  const dec = changed && newWeight < lastWeight;
+
+  if (dec) {
+    if (rpeStr && avgRPE >= 9) {
+      return multi
+        ? `${rpeStr} on average across ${sessionCount} sessions — this weight is too heavy. Reducing to protect your progress.`
+        : `${rpeStr} — this weight is too heavy right now. Reducing.`;
+    }
+    if (repsStr && minR > 0 && avgReps < minR) {
+      return `${repsStr} — not sustainable at this weight. Dropping down to build back up.`;
+    }
+    return `This weight is harder than it should be right now. Reducing to reset and rebuild.`;
+  }
+
+  if (inc) {
+    if (rpeStr) {
+      if (avgRPE <= 7) {
+        return repsStr && maxR > 0 && avgReps > maxR
+          ? `${repsStr} at ${rpeStr} — above target and feeling easy. Time to go heavier.`
+          : `${rpeStr} — weight is feeling comfortable. Ready to push heavier.`;
+      }
+      return repsStr
+        ? `${repsStr} at ${rpeStr}. Hitting your target — ready to increase.`
+        : `Hitting your rep target at ${rpeStr}. Ready to go heavier.`;
+    }
+    return repsStr && maxR > 0 && avgReps > maxR
+      ? `${repsStr} — above your target range. Time to add weight.`
+      : `Consistently hitting the top of your rep range. Time to go heavier.`;
+  }
+
+  // Maintain
+  if (rpeStr && avgRPE >= 9) {
+    return repsStr
+      ? `${repsStr} at ${rpeStr} — hit your targets before adding weight.`
+      : `${rpeStr} — hit your rep targets before adding weight.`;
+  }
+  if (avgReps !== null && avgReps > 0) {
+    if (minR > 0 && avgReps < minR) {
+      return `${repsStr}. Get to ${minR}\u2013${maxR} before adding weight.`;
+    }
+    if (maxR > 0 && avgReps < maxR) {
+      return `${repsStr}. Push to ${maxR} reps to trigger the next increase.`;
+    }
+  }
+  return multi
+    ? `Building consistency across ${sessionCount} sessions. Keep quality high before going heavier.`
+    : `Maintaining quality at this weight. Build to the top of your rep range before going heavier.`;
 }
 
 function _autoregAccept(exId, newWeight) {
