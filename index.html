@@ -1968,7 +1968,7 @@
     <div class="deload-banner" onclick="openDeloadModal()" style="cursor:pointer;">
       <div class="deload-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
       <div class="deload-title">RECOVERY WEEK</div>
-      <div class="deload-text">You've hit week 7. Tap to choose: <strong style="color:var(--warning);">Deload</strong> (reduced weights) or <strong style="color:var(--gray-light);">Rest Week</strong> (take the week off).</div>
+      <div class="deload-text">Time for a lighter week. Tap to choose how to handle it.</div>
     </div>
   </div>
 
@@ -2994,7 +2994,7 @@
           <div style="font-size:20px; flex-shrink:0;">⚡</div>
           <div>
             <div style="font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; color:var(--warning); margin-bottom:4px;">RECOVERY WEEKS</div>
-            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Week 7 of each cycle is a recommended recovery week — reduced weights or a full rest. Most people feel better for it, but you can skip it if you're feeling strong.</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">The app schedules a lighter week roughly every 8 weeks — or earlier if your training load gets high. You can take a light training week at 75% weight, or a full rest. Most people feel better for it.</div>
           </div>
         </div>
       </div>
@@ -5384,13 +5384,13 @@ function renderHome() {
   } else if (deloadBanner && _showPlateauBanner) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'PROGRESSION PLATEAU';
-    deloadBanner.querySelector('.deload-text').innerHTML = `No weight increases across <strong>${_plateau.stalledCount} of ${_plateau.totalDays} training days</strong>. A deload can break through stalls. Tap to review options.` + _skipBtn;
+    deloadBanner.querySelector('.deload-text').innerHTML = `No weight increases across <strong>${_plateau.stalledCount} of ${_plateau.totalDays} training days</strong>. A lighter week clears the accumulated fatigue and gets things moving again. Tap to review.` + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner && _showLongRunBanner) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY DUE SOON';
-    deloadBanner.querySelector('.deload-text').innerHTML = `${_weeksSinceDeload} weeks of consistent training without a deload. Consider a light week to keep progress moving. Tap to review.` + _skipBtn;
+    deloadBanner.querySelector('.deload-text').innerHTML = `${_weeksSinceDeload} weeks of solid training without a break. A lighter week now keeps the momentum going. Tap to review.` + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner) {
@@ -6260,7 +6260,7 @@ function openDeloadModal() {
   } else if (isLongRun) {
     if (titleEl) titleEl.textContent = 'RECOVERY DUE';
     if (iconEl)  iconEl.innerHTML = _clockSvg;
-    if (subEl)   subEl.innerHTML = `<strong style="color:var(--cream);">${weeksSince} weeks</strong> of hard training without a deload. Fatigue builds quietly — a light week now keeps long-term progress coming.`;
+    if (subEl)   subEl.innerHTML = `<strong style="color:var(--cream);">${weeksSince} weeks</strong> of hard training without a break. Fatigue builds quietly — a lighter week now keeps the progress coming.`;
   } else {
     // Default: scheduled week 7
     if (titleEl) titleEl.textContent = 'RECOVERY WEEK';
@@ -6797,7 +6797,7 @@ function buildOverloadHint(exId) {
     </div>`;
   } else if (info.changed && info.newWeight < info.lastWeight) {
     const deloadNudge = info.consecutiveReductions >= 2
-      ? `<div style="margin-top:6px; padding-left:23px; font-size:11px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:11px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">consider a deload week</button></div>`
+      ? `<div style="margin-top:6px; padding-left:23px; font-size:11px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:11px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
       : '';
     return `<div style="background:rgba(243,156,18,0.14); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
@@ -9166,15 +9166,15 @@ function finalizeEndSession(save) {
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
               <div style="font-size:32px;">🔋</div>
               <div>
-                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;color:var(--cream);letter-spacing:1px;text-transform:uppercase;">Time for a Deload?</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;color:var(--cream);letter-spacing:1px;text-transform:uppercase;">Time for a Lighter Week?</div>
                 <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:2px;">Week ${weeksLogged} complete</div>
               </div>
             </div>
             <div style="font-family:'Barlow',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:20px;">
-              You've been consistent for ${weeksLogged} weeks. Most programs benefit from a lighter week every 4–6 weeks to let your joints, tendons, and nervous system recover. A deload isn't weakness — it's how you keep progressing long term.
+              You've been consistent for ${weeksLogged} weeks. Taking a lighter week every 4–6 weeks lets your body absorb the training and come back stronger. It's part of the process, not a step back.
             </div>
             <div style="background:rgba(255,255,255,0.04);border:1px solid #222;border-radius:12px;padding:14px 16px;margin-bottom:20px;">
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Deload Week — Reduce To</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">What a light week looks like</div>
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);line-height:1.8;">
                 🏋️ <strong style="color:white;">60–70% of your normal weight</strong><br>
                 🔁 <strong style="color:white;">Same exercises, fewer sets</strong><br>
@@ -9793,15 +9793,15 @@ function checkDeloadSuggestion() {
     <div style="background:var(--dark2);border-radius:20px;padding:28px 24px;width:100%;max-width:400px;border:1px solid #333;animation:bounceIn 0.4s ease;">
       <div style="text-align:center;margin-bottom:20px;">
         <div style="font-size:36px;margin-bottom:12px;">😮‍💨</div>
-        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">TIME FOR A DELOAD?</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">TIME FOR A LIGHTER WEEK?</div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">Your body is sending recovery signals</div>
       </div>
       <div style="background:rgba(243,156,18,0.06);border:1px solid rgba(243,156,18,0.2);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.5;">
         ${signals.join('')}
       </div>
       <div style="background:var(--dark3);border-radius:12px;padding:14px;margin-bottom:20px;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">What is a deload?</div>
-        <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);line-height:1.55;">A planned week at reduced intensity. Lets your nervous system recover and come back stronger. Skipping deloads stalls progress and raises injury risk.</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">What's a lighter week?</div>
+        <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);line-height:1.55;">One week at reduced weight and effort. Your body absorbs the work you've put in, and you come back stronger. Skipping these regularly makes it harder to keep progressing.</div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
         <button onclick="activateDeloadWeek();document.getElementById('deload-suggest-modal')?.remove();"
@@ -13395,10 +13395,10 @@ const TUTORIAL_SLIDES = [
     section: 'DELOAD & REST',
     icon: '⚡',
     title: 'Deload & Rest Weeks',
-    body: `At <strong style="color:var(--cream);">Week 7</strong>, the app prompts you to choose a recovery option:<br><br>
-    <strong style="color:var(--cream);">Deload Week</strong> — You continue training, but weights drop 40% automatically. Full weights restore the following week.<br><br>
-    <strong style="color:var(--cream);">Rest Week</strong> — The program pauses completely. Best if you're feeling run down, overtrained, or sick.<br><br>
-    Both are backed by evidence. The app handles all weight adjustments for you — no manual changes needed.`,
+    body: `The app prompts you to take a lighter week at Week 7 of each block — or earlier if you're training hard and your muscles are approaching their limit for the week.<br><br>
+    <strong style="color:var(--cream);">Light Week</strong> — Same exercises, weights drop to 75% automatically. You keep training; your joints and tendons get a break. Full weights restore the following week.<br><br>
+    <strong style="color:var(--cream);">Rest Week</strong> — The program pauses completely. Best if you're feeling run down or need time off.<br><br>
+    Both are backed by evidence. The app handles all weight adjustments — no manual changes needed.`,
   },
   {
     section: 'PAUSE PROGRAM',
