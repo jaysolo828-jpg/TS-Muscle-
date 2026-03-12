@@ -6910,12 +6910,12 @@ function buildOverloadHint(exId) {
     const _repLine = _repGoal
       ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; margin-top:3px;">Rep target stays at <strong style="color:var(--cream);">${_repGoal} reps</strong> — only the weight changes.</div>`
       : '';
-    return `<div style="background:rgba(243,156,18,0.12); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:2px;">
+    return `<div style="background:rgba(243,156,18,0.12); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:10px 12px; margin-bottom:8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">TOO HEAVY?</div>
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">TOO HEAVY?</div>
       </div>
-      <div style="font-size:12px; color:var(--gray-light); padding-left:24px; margin-bottom:4px; line-height:1.5;">${_label}. Drop to <strong style="color:var(--cream);">${ar.suggestedWeight} lbs</strong> this session?</div>
+      <div style="font-size:12px; color:var(--gray-light); padding-left:23px; margin-bottom:4px; line-height:1.5;">${_label}. Drop to <strong style="color:var(--cream);">${ar.suggestedWeight} lbs</strong> this session?</div>
       ${_repLine}
       <div style="display:flex; gap:8px; padding-left:23px; flex-wrap:wrap; margin-top:8px;">
         <button onclick="_autoregAccept('${exId}', ${ar.suggestedWeight})" style="background:rgba(243,156,18,0.18); border:1px solid rgba(243,156,18,0.4); border-radius:8px; color:var(--warning); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; padding:10px 14px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">REDUCE TO ${ar.suggestedWeight} LBS</button>
@@ -6935,12 +6935,12 @@ function buildOverloadHint(exId) {
     const _adjIcon = direction === 'up'
       ? `<polyline points="18 15 12 9 6 15"/>`
       : `<polyline points="18 9 12 15 6 9"/>`;
-    return `<div style="background:rgba(100,149,237,0.1); border:1px solid rgba(100,149,237,0.35); border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:2px;">
+    return `<div style="background:rgba(100,149,237,0.1); border:1px solid rgba(100,149,237,0.35); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="cornflowerblue" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${_adjIcon}</svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:cornflowerblue;">ADJUSTMENT PERIOD</div>
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="cornflowerblue" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${_adjIcon}</svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:cornflowerblue;">ADJUSTMENT PERIOD</div>
       </div>
-      <div style="font-size:12px; color:var(--gray-light); padding-left:24px; line-height:1.6;">${_adjLabel}</div>
+      <div style="font-size:11px; color:var(--gray-light); padding-left:23px; line-height:1.6;">${_adjLabel}</div>
     </div>`;
   }
 
@@ -6964,47 +6964,58 @@ function buildOverloadHint(exId) {
       })()
     : '';
 
-  // Only motivational/consistency messages get the gold shimmer
-  const reasonHTML = info.reason.replace(
-    /\b(building consistency|stay consistent|maintain and build quality)\b/gi,
-    '<span class="overload-reason">$1</span>'
-  );
+  // Extract shimmer phrase to show as a standalone accent below the card
+  const _shimmerRx = /\b(building consistency|stay consistent|maintain and build quality)\b/i;
+  const _shimmerM = info.reason.match(_shimmerRx);
+  const _shimmerPhrase = _shimmerM ? _shimmerM[0] : null;
+  const _plainReason = _shimmerPhrase
+    ? info.reason.replace(_shimmerRx, '').replace(/\s*[—–]\s*$/, '').replace(/^\s*[—–]\s*/, '').trim()
+    : info.reason;
+  // Floating gold accent — no background, no panel, just the animated text
+  const _shimmerBlock = _shimmerPhrase
+    ? `<div style="text-align:center; padding:1px 0 7px; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;"><span class="overload-reason">${_shimmerPhrase}</span></div>`
+    : '';
+  const _cardBody = (() => {
+    const parts = [repOutcome, _plainReason].filter(Boolean);
+    const inner = parts.length ? `${parts.join(' · ')} ${modeBadge}` : modeBadge;
+    return `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${inner}</div>`;
+  })();
 
   if (info.changed && info.newWeight > info.lastWeight) {
-    return `<div style="background:rgba(46,204,113,0.1); border:1px solid rgba(46,204,113,0.3); border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:2px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome ? '6px' : '0'};">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="#2ecc71" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#2ecc71;">
+    return `<div style="background:rgba(46,204,113,0.12); border:1px solid rgba(46,204,113,0.35); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome || _plainReason ? '5px' : '0'};">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="#2ecc71" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#2ecc71;">
           INCREASE &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
         </div>
       </div>
-      ${repOutcome ? `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
-    </div>`;
+      ${_cardBody}
+    </div>${_shimmerBlock}`;
   } else if (info.changed && info.newWeight < info.lastWeight) {
     const deloadNudge = info.consecutiveReductions >= 2
-      ? `<div style="margin-top:6px; padding-left:24px; font-size:11px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:11px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
+      ? `<div style="margin-top:6px; padding-left:23px; font-size:11px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:11px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
       : '';
-    return `<div style="background:rgba(243,156,18,0.12); border:1px solid rgba(243,156,18,0.4); border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:2px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">
+    return `<div style="background:rgba(243,156,18,0.14); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">
           LOWER WEIGHT &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
         </div>
       </div>
-      <div style="font-size:12px; color:rgba(243,156,18,0.75); padding-left:24px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.3px;">Weight pre-filled lower — this is intentional.</div>
-      ${repOutcome ? `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
+      <div style="font-size:11px; color:rgba(243,156,18,0.8); padding-left:23px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.3px;">This is intentional — the weight input below is pre-filled lower.</div>
+      ${_cardBody}
       ${deloadNudge}
-    </div>`;
+    </div>${_shimmerBlock}`;
   } else if (info.lastWeight) {
-    return `<div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:2px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome ? '6px' : '0'};">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--cream)" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:var(--cream);">
+    return `<div style="background:rgba(255,255,255,0.03); border:1px solid #252525; border-radius:10px; padding:9px 12px; margin-bottom:8px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome || _plainReason ? '5px' : '0'};">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cream)" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:var(--cream);">
           MAINTAIN &nbsp;<span style="font-weight:400;">${info.lastWeight} lbs</span>
         </div>
       </div>
-      ${repOutcome ? `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
-    </div>`;
+      ${_cardBody}
+    </div>${_shimmerBlock}`;
   }
   return '';
 }
@@ -7428,9 +7439,9 @@ function renderSession() {
           <button class="swap-btn" id="skip-btn-${ex.id}" onclick="toggleSkipExercise('${ex.id}')" style="background:transparent; border-color:#3a3a3a; color:var(--gray-light);">SKIP</button>
         </div>
       </div>
+      ${buildOverloadHint(ex.id)}
       ${buildPlateCalc(ex.id, sets[0]?.weight)}
       ${setsHTML}
-      ${buildOverloadHint(ex.id)}
       <div class="ex-note-row">
         ${(() => { const ln = getLastExNote(ex.id, activeSession.dayId); return ln ? `<div style="font-size:12px; color:#aaaaaa; letter-spacing:0.5px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif;">LAST: ${ln.replace(/"/g, '&quot;')}</div>` : ''; })()}
         <input type="text" class="ex-note-input"
