@@ -12605,7 +12605,7 @@ function renderStrengthScoreCard() {
     : null;
   const deltaColor = delta30 > 0 ? '#2ecc71' : delta30 < 0 ? 'var(--red-text)' : 'var(--gray)';
 
-  const infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:none;padding:0 4px;cursor:pointer;color:var(--gray);font-size:13px;line-height:1;" aria-label="About this score">ℹ</button>`;
+  const infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:none;padding:0 4px;cursor:pointer;color:var(--red-text);font-size:18px;line-height:1;opacity:0.75;" aria-label="About this score">ℹ</button>`;
   const infoText = `<div id="ts-score-info-box" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;">Your T&amp;S Strength Score measures how your strength compares to others at your experience level and bodyweight. It grows as you get stronger, train consistently, and work at the right intensity.</div>`;
 
   if (score === null || !hasBW) {
