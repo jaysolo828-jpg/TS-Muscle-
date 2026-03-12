@@ -10528,12 +10528,15 @@ function renderHistory() {
     const _dotHTML = Array.from({length: 8}, (_, i) => {
       const w = i + 1;
       const _done = w < _wn, _cur = w === _wn, _dlot = w === _ds;
+      const _earlyDl = _ds < 7;
+      const _dotColor = _earlyDl ? 'var(--red-text)' : 'var(--warning)';
+      const _dotColorRgb = _earlyDl ? '204,32,39' : '243,156,18';
       if (_dlot && _cur) {
-        return `<div style="width:28px;height:28px;border-radius:50%;background:${_isDL ? 'rgba(243,156,18,0.2)' : 'rgba(243,156,18,0.1)'};border:2px solid var(--warning);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:var(--warning);flex-shrink:0;">D</div>`;
+        return `<div style="width:28px;height:28px;border-radius:50%;background:${_isDL ? `rgba(${_dotColorRgb},0.2)` : `rgba(${_dotColorRgb},0.1)`};border:2px solid ${_dotColor};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:${_dotColor};flex-shrink:0;">R</div>`;
       } else if (_dlot && _done) {
-        return `<div style="width:28px;height:28px;border-radius:50%;background:rgba(243,156,18,0.08);border:1px solid rgba(243,156,18,0.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:rgba(243,156,18,0.45);flex-shrink:0;">D</div>`;
+        return `<div style="width:28px;height:28px;border-radius:50%;background:rgba(${_dotColorRgb},0.08);border:1px solid rgba(${_dotColorRgb},0.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:rgba(${_dotColorRgb},0.45);flex-shrink:0;">R</div>`;
       } else if (_dlot) {
-        return `<div style="width:28px;height:28px;border-radius:50%;background:rgba(243,156,18,0.05);border:1px dashed rgba(243,156,18,0.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:rgba(243,156,18,0.35);flex-shrink:0;">D</div>`;
+        return `<div style="width:28px;height:28px;border-radius:50%;background:rgba(${_dotColorRgb},0.05);border:1px dashed rgba(${_dotColorRgb},0.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:rgba(${_dotColorRgb},0.35);flex-shrink:0;">R</div>`;
       } else if (_cur) {
         return `<div style="width:28px;height:28px;border-radius:50%;background:var(--red);border:2px solid var(--red-text);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${w}</div>`;
       } else if (_done) {
