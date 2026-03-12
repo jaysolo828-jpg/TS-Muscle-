@@ -5486,9 +5486,19 @@ function renderHome() {
     dotsLegend.style.cssText = 'font-size:12px;color:#888;text-align:center;margin-top:5px;letter-spacing:0.5px;font-family:"Barlow Condensed",sans-serif;';
     dotsEl.parentNode.insertBefore(dotsLegend, dotsEl.nextSibling);
   }
-  dotsLegend.textContent = _earlyDeload
-    ? `R = RECOVERY WEEK ${_deloadSlot} · MUSCLE LOAD`
-    : 'R = WEEK 7 · PLANNED RECOVERY';
+  if (_earlyDeload) {
+    // MRV-triggered early recovery — name the muscle(s) if available
+    const _legendMuscles = _mrvApproaching.length
+      ? _mrvApproaching.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase())
+      : (state.deloadReason === 'mrv' && state.deloadMuscles && state.deloadMuscles.length
+          ? state.deloadMuscles.map(m => m.charAt(0) + m.slice(1).toLowerCase())
+          : []);
+    dotsLegend.textContent = _legendMuscles.length
+      ? `R = EARLY RECOVERY · ${_legendMuscles.join(' & ').toUpperCase()}`
+      : `R = EARLY RECOVERY · WEEK ${_deloadSlot}`;
+  } else {
+    dotsLegend.textContent = 'R = WEEK 7 · PLANNED RECOVERY';
+  }
 
   // Day cards — respect training days limit
   const container = document.getElementById('day-cards');
@@ -10534,14 +10544,14 @@ function renderHistory() {
     }).join('');
 
     const _trendText = _isDL
-      ? 'Recovery week — volume reduced so your body can absorb the work from this block.'
-      : _wn >= 6
-      ? 'Peak volume week — you\'re at or near the highest set count of this block.'
-      : _wn >= 4
-      ? 'Volume is ramping — each week adds a bit more until you peak at week 6.'
-      : _wn >= 2
+      ? 'Recovery week — let your body adapt and rebuild.'
+      : _wn <= 2
+      ? 'Building your base — volume increases each week.'
+      : _wn <= 4
       ? 'Volume is building week over week toward its peak.'
-      : 'Block start — volume builds from here, peaking at week 6.';
+      : _wn <= 6
+      ? 'Approaching peak volume — recovery week is coming.'
+      : 'Recovery week — let your body adapt and rebuild.';
 
     const _cycleCard = mkCard();
     _cycleCard.innerHTML = `
