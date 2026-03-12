@@ -12997,14 +12997,14 @@ async function shareStrengthScoreCard() {
 
   canvas.toBlob(async blob => {
     const file = new File([blob], 'ts-strength-score.png', { type: 'image/png' });
-    if (navigator.canShare?.({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: `T&S Strength Score: ${score}` }); return; } catch(e) {}
+    let canShareFiles = false;
+    try { canShareFiles = !!(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })); } catch(e) {}
+    if (canShareFiles) {
+      try { await navigator.share({ files: [file], title: `T&S Strength Score: ${score}` }); return; }
+      catch(e) { if (e.name !== 'AbortError') _downloadShareCard(blob); }
+    } else {
+      _downloadShareCard(blob);
     }
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'ts-strength-score.png';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }, 'image/png');
 }
 
