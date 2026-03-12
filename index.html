@@ -6964,60 +6964,65 @@ function buildOverloadHint(exId) {
       })()
     : '';
 
-  // Extract shimmer phrase to show as a standalone accent below the card
+  // Plain reason without the shimmer phrase (used inside card body)
   const _shimmerRx = /\b(building consistency|stay consistent|maintain and build quality)\b/i;
-  const _shimmerM = info.reason.match(_shimmerRx);
-  const _shimmerPhrase = _shimmerM ? _shimmerM[0] : null;
+  const _shimmerPhrase = info.reason.match(_shimmerRx)?.[0] || null;
   const _plainReason = _shimmerPhrase
     ? info.reason.replace(_shimmerRx, '').replace(/\s*[—–]\s*$/, '').replace(/^\s*[—–]\s*/, '').trim()
     : info.reason;
-  // Floating gold accent — no background, no panel, just the animated text
-  const _shimmerBlock = _shimmerPhrase
-    ? `<div style="text-align:center; padding:1px 0 7px; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;"><span class="overload-reason">${_shimmerPhrase}</span></div>`
-    : '';
   const _cardBody = (() => {
     const parts = [repOutcome, _plainReason].filter(Boolean);
     const inner = parts.length ? `${parts.join(' · ')} ${modeBadge}` : modeBadge;
-    return `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${inner}</div>`;
+    return `<div style="font-size:12px; color:var(--gray); padding-left:23px; line-height:1.6;">${inner}</div>`;
   })();
 
   if (info.changed && info.newWeight > info.lastWeight) {
     return `<div style="background:rgba(46,204,113,0.12); border:1px solid rgba(46,204,113,0.35); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome || _plainReason ? '5px' : '0'};">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="#2ecc71" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#2ecc71;">
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#2ecc71;">
           INCREASE &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
         </div>
       </div>
       ${_cardBody}
-    </div>${_shimmerBlock}`;
+    </div>`;
   } else if (info.changed && info.newWeight < info.lastWeight) {
     const deloadNudge = info.consecutiveReductions >= 2
-      ? `<div style="margin-top:6px; padding-left:23px; font-size:11px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:11px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
+      ? `<div style="margin-top:6px; padding-left:23px; font-size:12px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:12px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
       : '';
     return `<div style="background:rgba(243,156,18,0.14); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">
           LOWER WEIGHT &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
         </div>
       </div>
-      <div style="font-size:11px; color:rgba(243,156,18,0.8); padding-left:23px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.3px;">This is intentional — the weight input below is pre-filled lower.</div>
+      <div style="font-size:12px; color:rgba(243,156,18,0.85); padding-left:23px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.3px;">This is intentional — the weight input below is pre-filled lower.</div>
       ${_cardBody}
       ${deloadNudge}
-    </div>${_shimmerBlock}`;
+    </div>`;
   } else if (info.lastWeight) {
     return `<div style="background:rgba(255,255,255,0.03); border:1px solid #252525; border-radius:10px; padding:9px 12px; margin-bottom:8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome || _plainReason ? '5px' : '0'};">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cream)" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:var(--cream);">
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:var(--cream);">
           MAINTAIN &nbsp;<span style="font-weight:400;">${info.lastWeight} lbs</span>
         </div>
       </div>
       ${_cardBody}
-    </div>${_shimmerBlock}`;
+    </div>`;
   }
   return '';
+}
+
+// Returns the gold shimmer accent for an exercise — rendered OUTSIDE the exercise card
+function buildOverloadShimmer(exId) {
+  if (state.progressiveOverload === false) return '';
+  const info = activeSession?.overloadReasons?.[exId];
+  if (!info?.reason) return '';
+  const m = info.reason.match(/\b(building consistency|stay consistent|maintain and build quality)\b/i);
+  if (!m) return '';
+  return `<div style="text-align:center; padding:3px 16px 9px; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;"><span class="overload-reason">${m[0]}</span></div>`;
 }
 
 function _autoregAccept(exId, newWeight) {
@@ -7452,6 +7457,13 @@ function renderSession() {
     `;
 
     container.appendChild(exEl);
+    // Gold shimmer accent — lives outside the overflow:hidden exercise card so it truly floats
+    const _shimmerHTML = buildOverloadShimmer(ex.id);
+    if (_shimmerHTML) {
+      const _sDiv = document.createElement('div');
+      _sDiv.innerHTML = _shimmerHTML;
+      container.appendChild(_sDiv.firstElementChild);
+    }
 
     // Connector strip between adjacent paired exercises
     const nextEx = orderedExercises[orderedExercises.indexOf(ex) + 1];
