@@ -7093,8 +7093,10 @@ function startSession(dayId) {
   activeSession.suggestedWeights = {};
   day.exercises.forEach(ex => {
     const suggested = getProgressiveWeight(ex.id, day.id);
-    // Store the raw suggested value (numeric or empty) so toggleSetDone() can detect manual changes
-    activeSession.suggestedWeights[ex.id] = parseFloat(suggested) || 0;
+    // Store the raw string as-is (preserving '' for "no suggestion") so
+    // _updatePendingManualAdj can tell the difference between a zero-weight
+    // suggestion and no suggestion at all.
+    activeSession.suggestedWeights[ex.id] = suggested;
     activeSession.sets[ex.id] = Array.from({length: getGoalSets(ex.id, ex.sets)}, () => ({ weight: suggested, reps: '', rpe: '', done: false }));
   });
 
@@ -8945,10 +8947,82 @@ function proceedEndSession() {
   }
 }
 
+// Returns an array of exercise display names that have at least one done set
+// missing either weight or reps.  Used by the incomplete-data warning modal.
+function _getExercisesWithIncompleteDoneSets() {
+  if (!activeSession) return [];
+  const names = [];
+  const skipped = activeSession.skipped || {};
+  Object.entries(activeSession.sets).forEach(([exId, sets]) => {
+    if (skipped[exId]) return;
+    const hasIncomplete = sets.some(s =>
+      s.done &&
+      (s.weight === '' || parseFloat(s.weight) <= 0 ||
+       s.reps === '' || parseInt(s.reps) <= 0)
+    );
+    if (!hasIncomplete) return;
+    // Resolve display name: check swap override, then program, then exId
+    let name = exId;
+    const swapName = activeSession.swaps?.[exId]?.name;
+    if (swapName) {
+      name = swapName;
+    } else {
+      for (const d of state.program) {
+        const ex = d.exercises.find(e => e.id === exId);
+        if (ex) { name = ex.name; break; }
+      }
+    }
+    names.push(name);
+  });
+  return names;
+}
+
+function showIncompleteDoneModal(exerciseNames, onSaveAnyway) {
+  const overlay = document.createElement('div');
+  overlay.id = 'incomplete-done-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:flex-end;justify-content:center;padding:0;';
+  const listHTML = exerciseNames
+    .map(n => `<div style="padding:6px 0;border-bottom:1px solid var(--dark3);font-size:13px;color:var(--cream);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">${n}</div>`)
+    .join('');
+  overlay.innerHTML = `
+    <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:20px 20px 0 0;padding:28px 24px calc(env(safe-area-inset-bottom) + 24px);width:100%;max-width:480px;animation:slideUp 0.3s ease;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">INCOMPLETE SETS</div>
+      <div style="font-size:14px;color:var(--gray-light);line-height:1.6;margin-bottom:14px;">A few sets look incomplete. Want to go back and finish them, or save the session as is?</div>
+      <div style="margin-bottom:18px;">${listHTML}</div>
+      <button id="incomplete-done-save-btn"
+        style="width:100%;background:var(--red);border:none;color:white;padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;margin-bottom:10px;min-height:52px;">
+        SAVE ANYWAY
+      </button>
+      <button onclick="document.getElementById('incomplete-done-modal').remove();"
+        style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray-light);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;min-height:48px;">
+        GO BACK
+      </button>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('incomplete-done-save-btn').onclick = () => {
+    overlay.remove();
+    onSaveAnyway();
+  };
+}
+
 function endSession(save) {
   clearAllRestTimers();
   stopSessionTimer();
   clearRepIndicators();
+
+  if (save && activeSession) {
+    // Warn if any done set is missing weight or reps
+    const _incomplete = _getExercisesWithIncompleteDoneSets();
+    if (_incomplete.length > 0) {
+      showIncompleteDoneModal(_incomplete, () => _continueEndSession(save));
+      return;
+    }
+  }
+  _continueEndSession(save);
+}
+
+// Continues the end-session flow after the incomplete-data check passes (or is overridden).
+function _continueEndSession(save) {
   // Warn if any non-skipped exercise has unchecked sets
   if (save && activeSession) {
     const skipped = activeSession.skipped || {};
