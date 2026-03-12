@@ -8961,15 +8961,20 @@ function _getExercisesWithIncompleteDoneSets() {
        s.reps === '' || parseInt(s.reps) <= 0)
     );
     if (!hasIncomplete) return;
-    // Resolve display name: check swap override, then program, then exId
+    // Resolve display name: swap override → program → bonus exercises → exId
     let name = exId;
     const swapName = activeSession.swaps?.[exId]?.name;
     if (swapName) {
       name = swapName;
     } else {
+      let found = false;
       for (const d of state.program) {
         const ex = d.exercises.find(e => e.id === exId);
-        if (ex) { name = ex.name; break; }
+        if (ex) { name = ex.name; found = true; break; }
+      }
+      if (!found) {
+        const bonus = (activeSession.bonusExercises || []).find(b => b.id === exId);
+        if (bonus) name = bonus.name;
       }
     }
     names.push(name);
@@ -8999,7 +9004,10 @@ function showIncompleteDoneModal(exerciseNames, onSaveAnyway) {
       </button>
     </div>`;
   document.body.appendChild(overlay);
+  let _saveCalledOnce = false;
   document.getElementById('incomplete-done-save-btn').onclick = () => {
+    if (_saveCalledOnce) return;
+    _saveCalledOnce = true;
     overlay.remove();
     onSaveAnyway();
   };
