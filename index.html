@@ -1985,16 +1985,17 @@
   </div>
 
   <!-- REST WEEK BANNER (hidden by default — shown when user picks Rest Week from deload modal) -->
-  <div id="rest-week-banner" style="display:none; margin-bottom:12px;">
-    <div style="background:linear-gradient(135deg, #0a0e1a, #111828); border:1px solid rgba(100,149,237,0.4); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:14px;">
+  <div id="rest-week-banner" style="display:none; margin:0 -16px 12px; padding:0 16px;">
+    <div style="background:linear-gradient(135deg, #1a1818 0%, #1e1c1c 100%); border:1px solid rgba(245,230,200,0.14); border-radius:16px; padding:14px 16px; display:flex; align-items:center; gap:14px; position:relative; overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(245,230,200,0.25),transparent);border-radius:2px 2px 0 0;"></div>
       <div style="flex-shrink:0;">
-        <svg viewBox="0 0 24 24" width="28" height="28" stroke="#6495ED" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg viewBox="0 0 24 24" width="26" height="26" stroke="var(--gray-light)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
       </div>
       <div style="flex:1; min-width:0;">
-        <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:#6495ED;letter-spacing:1px;">REST WEEK ACTIVE</div>
-        <div style="font-size:13px;color:var(--gray-light);margin-top:2px;line-height:1.4;">Program paused — rest up and recover. Resume when you're ready.</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:var(--cream);letter-spacing:1.5px;">REST WEEK ACTIVE</div>
+        <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);margin-top:2px;line-height:1.4;">Program paused — rest up and recover. Resume when you're ready.</div>
       </div>
-      <button onclick="resumeDeloadRest()" style="flex-shrink:0; background:rgba(100,149,237,0.15); border:1px solid rgba(100,149,237,0.4); color:#6495ED; padding:8px 14px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; cursor:pointer; white-space:nowrap;">RESUME</button>
+      <button onclick="resumeDeloadRest()" style="flex-shrink:0; background:rgba(245,230,200,0.08); border:1px solid rgba(245,230,200,0.2); color:var(--cream); padding:10px 14px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; cursor:pointer; white-space:nowrap; min-height:44px; -webkit-tap-highlight-color:transparent;">RESUME</button>
     </div>
   </div>
 
@@ -6753,8 +6754,8 @@ function buildOverloadHint(exId) {
       <div style="font-size:12px; color:var(--gray-light); padding-left:23px; margin-bottom:4px; line-height:1.5;">${_label}. Drop to <strong style="color:var(--cream);">${ar.suggestedWeight} lbs</strong> this session?</div>
       ${_repLine}
       <div style="display:flex; gap:8px; padding-left:23px; flex-wrap:wrap; margin-top:8px;">
-        <button onclick="_autoregAccept('${exId}', ${ar.suggestedWeight})" style="background:rgba(243,156,18,0.18); border:1px solid rgba(243,156,18,0.4); border-radius:6px; color:#f39c12; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.5px; padding:5px 12px; cursor:pointer;">REDUCE TO ${ar.suggestedWeight} LBS</button>
-        <button onclick="_autoregDismiss('${exId}')" style="background:transparent; border:1px solid #3a3a3a; border-radius:6px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:0.5px; padding:5px 12px; cursor:pointer;">KEEP CURRENT</button>
+        <button onclick="_autoregAccept('${exId}', ${ar.suggestedWeight})" style="background:rgba(243,156,18,0.18); border:1px solid rgba(243,156,18,0.4); border-radius:8px; color:var(--warning); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; padding:10px 14px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">REDUCE TO ${ar.suggestedWeight} LBS</button>
+        <button onclick="_autoregDismiss('${exId}')" style="background:transparent; border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.5px; padding:10px 14px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">KEEP CURRENT</button>
       </div>
     </div>`;
   }
@@ -10792,7 +10793,7 @@ function renderHistory() {
           </div>`;
       } else {
         const _avg  = parseFloat(_avgLift.toFixed(1));
-        const _col  = _avg > 0 ? '#4caf50' : _avg < 0 ? 'var(--red)' : 'var(--gray)';
+        const _col  = _avg > 0 ? '#50c882' : _avg < 0 ? 'var(--red-text)' : 'var(--gray)';
         const _arr  = _avg > 0 ? '↑' : _avg < 0 ? '↓' : '→';
         const _disp = _avg > 0 ? `+${_avg.toFixed(1)}` : `${_avg.toFixed(1)}`;
         const _sub  = _avg > 0 ? 'avg mood boost per session'
@@ -10805,7 +10806,7 @@ function renderHistory() {
         const _PX      = _HALF / 4;
         const _bars = _recent.map(s => {
           const l    = s.lift;
-          const col  = l > 0 ? '#4caf50' : l < 0 ? 'var(--red)' : '#777';
+          const col  = l > 0 ? '#50c882' : l < 0 ? 'var(--red-text)' : 'var(--gray)';
           const barH = Math.min(Math.abs(l) * _PX, _HALF);
           const lbl  = new Date(s.day + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           return `
@@ -10814,7 +10815,7 @@ function renderHistory() {
               <div style="width:100%;height:${_HALF}px;display:flex;align-items:flex-end;justify-content:center;">
                 ${l > 0 ? `<div style="width:55%;height:${barH}px;background:${col};border-radius:3px 3px 0 0;"></div>` : ''}
               </div>
-              <div style="width:100%;height:1px;background:#444;"></div>
+              <div style="width:100%;height:1px;background:rgba(255,255,255,0.08);"></div>
               <div style="width:100%;height:${_HALF}px;display:flex;align-items:flex-start;justify-content:center;">
                 ${l < 0 ? `<div style="width:55%;height:${barH}px;background:${col};border-radius:0 0 3px 3px;"></div>` : ''}
               </div>
@@ -10834,7 +10835,7 @@ function renderHistory() {
             <div style="text-align:right;flex-shrink:0;margin-left:12px;">
               <div style="font-size:10px;color:var(--gray);letter-spacing:1px;margin-bottom:5px;">LAST SESSION</div>
               <div style="font-size:24px;line-height:1;">${_last.pre.emoji} → ${_last.post.emoji}</div>
-              <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:${_last.lift > 0 ? '#4caf50' : _last.lift < 0 ? 'var(--red)' : 'var(--gray)'};margin-top:2px;">${_last.lift > 0 ? '+' : ''}${_last.lift}</div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:${_last.lift > 0 ? '#50c882' : _last.lift < 0 ? 'var(--red-text)' : 'var(--gray)'};margin-top:2px;">${_last.lift > 0 ? '+' : ''}${_last.lift}</div>
             </div>
           </div>
           <div style="font-size:10px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">SESSION LIFTS</div>
@@ -10915,7 +10916,7 @@ function renderHistory() {
       return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
     function buildCycleCard(cyc, isLast) {
-      const consistencyColor = cyc.consistency >= 85 ? '#50c882' : cyc.consistency >= 60 ? '#f0a500' : 'var(--gray-light)';
+      const consistencyColor = cyc.consistency >= 85 ? '#50c882' : cyc.consistency >= 60 ? 'var(--warning)' : 'var(--gray-light)';
       const dateRange = (cyc.startDate && cyc.endDate) ? `${formatCycleDate(cyc.startDate)} – ${formatCycleDate(cyc.endDate)}` : '';
       const goalLabel = goalLabels[cyc.goal] || 'Build Size & Strength';
       const card = document.createElement('div');
@@ -10923,7 +10924,7 @@ function renderHistory() {
       card.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;color:var(--red-text);">CYCLE ${cyc.cycleNum}</div>
-          ${cyc.prs > 0 ? `<span style="background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.35);color:#f0a500;font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;">🏆 ${cyc.prs} PR${cyc.prs === 1 ? '' : 'S'}</span>` : ''}
+          ${cyc.prs > 0 ? `<span style="background:rgba(243,156,18,0.12);border:1px solid rgba(243,156,18,0.35);color:var(--warning);font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;">🏆 ${cyc.prs} PR${cyc.prs === 1 ? '' : 'S'}</span>` : ''}
         </div>
         ${dateRange ? `<div style="font-size:11px;color:var(--gray);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${dateRange}</div>` : ''}
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:10px;">
@@ -10932,7 +10933,7 @@ function renderHistory() {
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
           </div>
           <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#f0a500;line-height:1;">${cyc.prs}</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--warning);line-height:1;">${cyc.prs}</div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">PRs</div>
           </div>
           <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
@@ -10942,7 +10943,7 @@ function renderHistory() {
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
           <div style="font-size:12px;color:var(--gray);">${goalLabel} &nbsp;·&nbsp; ${cyc.trainingDays} days/week</div>
-          ${cyc.biggestGain ? `<div style="font-size:12px;color:#f0a500;">📈 ${cyc.biggestGain.name} +${cyc.biggestGain.gainLbs}lbs</div>` : ''}
+          ${cyc.biggestGain ? `<div style="font-size:12px;color:var(--warning);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">📈 ${cyc.biggestGain.name} +${cyc.biggestGain.gainLbs}lbs</div>` : ''}
         </div>`;
       return card;
     }
