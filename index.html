@@ -10475,7 +10475,10 @@ function renderHistory() {
 
   container.appendChild(mkLabel('LIFETIME'));
   const lifetimeCard = mkCard();
-  lifetimeCard.innerHTML = `
+  if (totalSessions === 0) {
+    lifetimeCard.innerHTML = `<div style="text-align:center;padding:22px 16px 20px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);letter-spacing:0.3px;line-height:1.6;">Complete your first session and this card will start tracking your lifetime volume, time under the bar, and total sessions.</div></div>`;
+  } else {
+    lifetimeCard.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;">
       <div style="background:var(--dark2);padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${volLabel}</div>
@@ -10490,9 +10493,10 @@ function renderHistory() {
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
       </div>
     </div>`;
-  lifetimeCard.appendChild(mkShareBtn('SHARE LIFETIME STATS', () =>
-    generateAndShareCard('lifetime_volume', { volume: volLabel, sessions: totalSessions, hours: timeLabel })
-  ));
+    lifetimeCard.appendChild(mkShareBtn('SHARE LIFETIME STATS', () =>
+      generateAndShareCard('lifetime_volume', { volume: volLabel, sessions: totalSessions, hours: timeLabel })
+    ));
+  }
   container.appendChild(lifetimeCard);
 
   // ── 2. TRAINING AGE ──────────────────────────────────────
@@ -10632,8 +10636,11 @@ function renderHistory() {
       const _ringR = 34;
       const _ringCirc = +(2 * Math.PI * _ringR).toFixed(2);
       const _ringOffset = +(_ringCirc * (1 - _overallPct)).toFixed(2);
-      const _ringColor = _overallPct >= 1 ? '#50c882' : _overallPct >= 0.8 ? '#f39c12' : '#e8404a';
-      const _ringMsg = _overallPct >= 1
+      const _noData = !_anyActual;
+      const _ringColor = _noData ? 'rgba(255,255,255,0.18)' : _overallPct >= 1 ? '#50c882' : _overallPct >= 0.8 ? '#f39c12' : '#e8404a';
+      const _ringMsg = _noData
+        ? "Complete your first session to see your weekly progress."
+        : _overallPct >= 1
         ? "Weekly volume target hit — excellent work!"
         : _overallPct >= 0.8
         ? `You're ${_overallPctInt}% through this week's volume target — almost there.`
@@ -10651,7 +10658,7 @@ function renderHistory() {
                 stroke-linecap="round" style="transition:stroke-dashoffset 0.4s ease,stroke 0.4s ease;"/>
             </svg>
             <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
-              <div style="font-family:'Bebas Neue',cursive;font-size:23px;color:${_ringColor};line-height:1;letter-spacing:1px;">${_overallPctInt}%</div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:23px;color:${_noData ? 'var(--gray)' : _ringColor};line-height:1;letter-spacing:1px;">${_noData ? '—' : _overallPctInt + '%'}</div>
             </div>
           </div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:0.3px;margin-top:10px;text-align:center;line-height:1.4;">${_ringMsg}</div>
@@ -10768,7 +10775,12 @@ function renderHistory() {
   // ── 4. THIS WEEK VS LAST CYCLE ────────────────────────────
   const curCycle = state.cycleCount || 1;
   const curWeek = state.weekCount || 1;
-  if (curCycle >= 2) {
+  container.appendChild(mkLabel('THIS WEEK VS LAST CYCLE'));
+  if (curCycle < 2) {
+    const wvwLockedCard = mkCard();
+    wvwLockedCard.innerHTML = `<div style="text-align:center;padding:22px 16px 20px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);letter-spacing:0.3px;line-height:1.6;">Once you complete your first full cycle, this card will compare your week-by-week volume and PRs across cycles so you can see yourself getting stronger.</div></div>`;
+    container.appendChild(wvwLockedCard);
+  } else {
     const thisGroup = hist.filter(e => e.cycleNum === curCycle);
     const lastGroup = hist.filter(e => e.cycleNum === curCycle - 1);
     const daysPerWeek = state.trainingDaysPerWeek || 4;
@@ -10797,7 +10809,6 @@ function renderHistory() {
       const deltaColor = volDelta !== null ? (volDelta >= 0 ? '#50c882' : '#ff6b6b') : 'var(--gray)';
       const fmtVol = v => v >= 1000 ? `${Math.round(v / 1000)}k` : v > 0 ? String(v) : '—';
 
-      container.appendChild(mkLabel('THIS WEEK VS LAST CYCLE'));
       const wvwCard = mkCard();
       wvwCard.innerHTML = `
         <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:var(--red-text);letter-spacing:2px;margin-bottom:10px;">WEEK ${curWeek}</div>
@@ -10826,41 +10837,52 @@ function renderHistory() {
         generateAndShareCard('week_vs_week', { week: curWeek, thisVolume: thisSt.volume, lastVolume: lastSt.volume, thisSessions: thisSt.sessions, lastSessions: lastSt.sessions })
       ));
       container.appendChild(wvwCard);
+    } else {
+      const wvwEmptyCard = mkCard();
+      wvwEmptyCard.innerHTML = `<div style="text-align:center;padding:22px 16px 20px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);letter-spacing:0.3px;line-height:1.6;">Log a session this week and your cycle-over-cycle comparison will show up here — volume, sessions, and PRs side by side.</div></div>`;
+      container.appendChild(wvwEmptyCard);
     }
   }
 
   // ── 5. MOOD LIFT ──────────────────────────────────────────
   {
     const _moodLog = state.moodLog || [];
-    if (_moodLog.length > 0) {
-      // Build byDay — newest-first log, first entry per timing per day wins
-      const _byDay = {};
-      _moodLog.forEach(e => {
-        const day = _localDateKey(e.date);
-        if (!_byDay[day]) _byDay[day] = {};
-        if (!_byDay[day][e.timing]) _byDay[day][e.timing] = e;
-      });
-      // Days with both pre + post, sorted oldest → newest
-      const _lifts = Object.entries(_byDay)
-        .filter(([, d]) => d.pre && d.post)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([day, d]) => ({ day, lift: d.post.value - d.pre.value, pre: d.pre, post: d.post }));
-      const _avgLift = _lifts.length
-        ? _lifts.reduce((s, l) => s + l.lift, 0) / _lifts.length
-        : null;
+    // Build byDay — newest-first log, first entry per timing per day wins
+    const _byDay = {};
+    _moodLog.forEach(e => {
+      const day = _localDateKey(e.date);
+      if (!_byDay[day]) _byDay[day] = {};
+      if (!_byDay[day][e.timing]) _byDay[day][e.timing] = e;
+    });
+    // Days with both pre + post, sorted oldest → newest
+    const _lifts = Object.entries(_byDay)
+      .filter(([, d]) => d.pre && d.post)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([day, d]) => ({ day, lift: d.post.value - d.pre.value, pre: d.pre, post: d.post }));
+    const _avgLift = _lifts.length
+      ? _lifts.reduce((s, l) => s + l.lift, 0) / _lifts.length
+      : null;
 
-      container.appendChild(mkLabel('MOOD LIFT'));
-      const _moodCard = mkCard();
+    container.appendChild(mkLabel('MOOD LIFT'));
+    const _moodCard = mkCard();
 
-      if (_lifts.length < 2) {
-        _moodCard.innerHTML = `
-          <div style="display:flex;align-items:flex-start;gap:12px;">
-            <div style="font-size:26px;flex-shrink:0;">🧠</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.55;">
-              Log your mood before <em>and</em> after a couple of sessions to see how much training is shifting it.
-              ${_lifts.length === 1 ? `<br><br>You have 1 session so far — one more to go.` : ''}
-            </div>
-          </div>`;
+    if (_moodLog.length === 0) {
+      _moodCard.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="font-size:26px;flex-shrink:0;">🧠</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.55;">
+            Rate your mood before and after a session to see how training lifts you. Your average mood boost will appear here once you have a couple of check-ins.
+          </div>
+        </div>`;
+    } else if (_lifts.length < 2) {
+      _moodCard.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="font-size:26px;flex-shrink:0;">🧠</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.55;">
+            Log your mood before <em>and</em> after a couple of sessions to see how much training is shifting it.
+            ${_lifts.length === 1 ? `<br><br>You have 1 session so far — one more to go.` : ''}
+          </div>
+        </div>`;
       } else {
         const _avg  = parseFloat(_avgLift.toFixed(1));
         const _col  = _avg > 0 ? '#50c882' : _avg < 0 ? 'var(--red-text)' : 'var(--gray)';
@@ -10917,14 +10939,20 @@ function renderHistory() {
           })
         ));
       }
-      container.appendChild(_moodCard);
-    }
+    container.appendChild(_moodCard);
   }
 
   // ── 6. YEAR IN REVIEW ─────────────────────────────────────
   const yr = new Date().getFullYear();
   const yrEntries = hist.filter(e => new Date(e.date).getFullYear() === yr);
-  if (yrEntries.length >= 10) {
+  container.appendChild(mkLabel(`${yr} IN REVIEW`));
+  if (yrEntries.length < 10) {
+    const yrCard = mkCard();
+    const _yrDone = yrEntries.length;
+    const _yrLeft = 10 - _yrDone;
+    yrCard.innerHTML = `<div style="text-align:center;padding:22px 16px 20px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);letter-spacing:0.3px;line-height:1.6;">${_yrDone === 0 ? `Your ${yr} Year in Review will unlock after 10 sessions — every rep counts toward it.` : `${_yrDone} session${_yrDone === 1 ? '' : 's'} down, ${_yrLeft} to go — your ${yr} Year in Review unlocks at 10.`}</div></div>`;
+    container.appendChild(yrCard);
+  } else {
     const yrSessions = yrEntries.filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done))).length;
     const yrVolume = yrEntries.reduce((t, entry) =>
       t + Object.values(entry.sets || {}).reduce((s, sets) =>
@@ -10947,7 +10975,6 @@ function renderHistory() {
     });
     const yrVolLabel = yrVolume >= 1000000 ? `${(yrVolume / 1000000).toFixed(1)}M` : yrVolume >= 1000 ? `${Math.round(yrVolume / 1000)}k` : `${Math.round(yrVolume)}`;
 
-    container.appendChild(mkLabel(`${yr} IN REVIEW`));
     const yrCard = mkCard();
     yrCard.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:12px;">
@@ -10980,8 +11007,12 @@ function renderHistory() {
 
   // ── 7. CYCLE RECAP ────────────────────────────────────────
   const cycleHistory = state.cycleHistory || [];
-  if (cycleHistory.length > 0) {
-    container.appendChild(mkLabel('CYCLE RECAP'));
+  container.appendChild(mkLabel('CYCLE RECAP'));
+  if (cycleHistory.length === 0) {
+    const cycleEmptyCard = mkCard();
+    cycleEmptyCard.innerHTML = `<div style="text-align:center;padding:22px 16px 20px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);letter-spacing:0.3px;line-height:1.6;">Finish your first 8-week cycle and your Cycle Recap will appear here — sessions completed, PRs hit, consistency score, and your biggest strength gain.</div></div>`;
+    container.appendChild(cycleEmptyCard);
+  } else {
     const goalLabels = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' };
     const sorted_ch = [...cycleHistory].sort((a, b) => b.cycleNum - a.cycleNum);
     const lastCycle = sorted_ch[0];
@@ -11051,7 +11082,7 @@ function renderHistory() {
       cycleSection.appendChild(olderBtn);
     }
     container.appendChild(cycleSection);
-  }
+  } // end else (cycleHistory populated)
 
   // ── 8. PERSONAL RECORDS ───────────────────────────────────
   renderPRBoard();
