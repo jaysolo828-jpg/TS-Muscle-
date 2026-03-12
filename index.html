@@ -2057,6 +2057,9 @@
     </div>
   </div>
 
+  <!-- Profile completeness prompt (one-time, for existing users) -->
+  <div id="home-prompt-area"></div>
+
   <!-- ROTATION BANNER (shown at Week 5+ when exercises are due for rotation) -->
   <div id="rotation-banner" style="display:none; margin-bottom:12px;">
     <div class="rotation-banner" onclick="openRotationModal()" style="cursor:pointer;">
@@ -5258,9 +5261,12 @@ function _maybeShowProfilePrompt() {
         <button onclick="document.getElementById('profile-prompt-card').remove();showScreen('settings',document.querySelector('[onclick*=settings]'));" style="background:var(--red);border:none;color:white;padding:10px 16px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;">GO TO PROFILE →</button>
       </div>
     </div>`;
-  const homeScreen = document.getElementById('screen-home');
-  const firstDayCard = homeScreen?.querySelector('.day-card');
-  if (firstDayCard) firstDayCard.parentNode.insertBefore(prompt, firstDayCard);
+  // Insert into the static prompt container — always exists, no timing issue
+  const area = document.getElementById('home-prompt-area');
+  if (area) {
+    area.innerHTML = '';
+    area.appendChild(prompt);
+  }
 }
 
 // ============================================================
@@ -12590,10 +12596,16 @@ function renderStrengthScoreCard() {
   const cutoff30 = Date.now() - 30 * 86400000;
   const old30 = [...(state.strengthScoreHistory || [])].reverse().find(s => new Date(s.date).getTime() < cutoff30);
   const delta30 = (score !== null && old30) ? score - old30.score : null;
-  const deltaStr = delta30 !== null ? (delta30 > 0 ? `▲ +${delta30} pts` : delta30 < 0 ? `▼ ${delta30} pts` : '— no change') : null;
+  const deltaStr = delta30 !== null
+    ? delta30 > 0
+      ? `<span style="font-size:17px;color:#2ecc71;line-height:1;">▲</span> +${delta30} pts`
+      : delta30 < 0
+        ? `<span style="font-size:17px;color:var(--red-text);line-height:1;">▼</span> ${delta30} pts`
+        : '— no change'
+    : null;
   const deltaColor = delta30 > 0 ? '#2ecc71' : delta30 < 0 ? 'var(--red-text)' : 'var(--gray)';
 
-  const infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:none;padding:0 4px;cursor:pointer;color:var(--gray);font-size:13px;line-height:1;" aria-label="About this score">ℹ</button>`;
+  const infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:none;padding:0 4px;cursor:pointer;color:var(--red-text);font-size:18px;line-height:1;opacity:0.75;" aria-label="About this score">ℹ</button>`;
   const infoText = `<div id="ts-score-info-box" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;">Your T&amp;S Strength Score measures how your strength compares to others at your experience level and bodyweight. It grows as you get stronger, train consistently, and work at the right intensity.</div>`;
 
   if (score === null || !hasBW) {
@@ -12619,23 +12631,42 @@ function renderStrengthScoreCard() {
   }
 
   const barPct = Math.min(100, (score / 1000) * 100);
+
+  // Compute where within the current tier the user sits for contextual description
+  const _TIER_BOUNDS = [[0,200,'Beginner','Developing'],[200,400,'Developing','Intermediate'],[400,600,'Intermediate','Advanced'],[600,800,'Advanced','Elite'],[800,1000,'Elite',null]];
+  const _tier = _TIER_BOUNDS.find(t => score >= t[0] && score < t[1]) || _TIER_BOUNDS[4];
+  const _tierMin = _tier[0], _tierMax = _tier[1], _tierLabel = _tier[2], _nextTier = _tier[3];
+  const _tierPct = (score - _tierMin) / (_tierMax - _tierMin);
+  const _tierPos = _tierPct < 0.33 ? 'lower range' : _tierPct < 0.67 ? 'mid range' : 'upper range';
+  const _ptsToNext = _nextTier ? _tierMax - score : 0;
+  let _contextDesc;
+  if (!_nextTier) {
+    _contextDesc = `You are in the ${_tierPos} of ${_tierLabel}. You've reached the top tier — keep pushing.`;
+  } else {
+    const _cycleEst = _ptsToNext <= 40 ? '1 cycle' : _ptsToNext <= 80 ? '1–2 cycles' : _ptsToNext <= 140 ? '2 cycles' : '2–3 cycles';
+    _contextDesc = `You are in the ${_tierPos} of ${_tierLabel}. Train consistently for ${_cycleEst} and you could reach ${_nextTier}.`;
+  }
+
   card.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
       <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">T&amp;S STRENGTH SCORE</div>${infoBtn}
     </div>${infoText}
     <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;">
       <div>
-        <div class="ts-score-number">${score}</div>
+        <div class="ts-score-number">${score}<span style="font-size:26px;color:var(--gray);letter-spacing:1px;"> / 1000</span></div>
         <div class="ts-score-level" style="background:${level.bg};color:${level.color};">${level.label}</div>
         ${deltaStr ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:${deltaColor};letter-spacing:1px;margin-top:6px;">${deltaStr} <span style="color:var(--gray);">LAST 30 DAYS</span></div>` : ''}
       </div>
       ${_buildScoreSparkline(snaps) ? `<div style="flex-shrink:0;">${_buildScoreSparkline(snaps)}</div>` : ''}
     </div>
-    <div class="ts-score-bar-track"><div class="ts-score-bar-fill" style="width:${barPct}%;background:${level.color};"></div></div>
-    <div style="display:flex;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-bottom:14px;">
+    <div class="ts-score-bar-track" style="position:relative;overflow:visible;margin-top:14px;">
+      <div class="ts-score-bar-fill" style="width:${barPct}%;background:${level.color};"></div>
+      <div style="position:absolute;top:50%;left:${barPct}%;transform:translate(-50%,-50%);width:3px;height:13px;background:var(--cream);border-radius:2px;box-shadow:0 0 5px rgba(255,255,255,0.55);pointer-events:none;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-bottom:14px;margin-top:8px;">
       <span>BEGINNER</span><span>DEVELOPING</span><span>INTERMEDIATE</span><span>ADVANCED</span><span>ELITE</span>
     </div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:14px;">${level.desc}</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:14px;">${_contextDesc}</div>
     <button onclick="shareStrengthScoreCard()" style="width:100%;padding:11px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--gray-light);border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
       <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       SHARE YOUR SCORE
