@@ -6553,7 +6553,7 @@ function getProgressiveWeight(exId, dayId) {
   const rpeSets = allSets.filter(s => s.rpe);
   const avgRPE = rpeSets.length > 0
     ? rpeSets.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / rpeSets.length
-    : null;
+    : 8; // Default to RPE 8 (moderate-hard) when not logged — doesn't block progress
 
   // Avg reps across window — only count sets where reps were actually logged
   // (sets marked done without entering reps default to "" which would falsely drag the average to 0)
@@ -7204,6 +7204,7 @@ function renderSession() {
         </div>
       `;
     });
+    setsHTML += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.3px;padding:2px 0 8px;text-align:right;opacity:0.7;">Logging effort (RPE) helps fine-tune your weights each session.</div>`;
 
     // Rest timer row — always visible
     setsHTML += `
@@ -8896,6 +8897,8 @@ function showSessionWrapUp() {
       </div>
       <!-- Upgrade prompt for today-only bonuses -->
       ${upgradePromptHTML}
+      <!-- No-RPE nudge -->
+      ${(()=>{const _anyRpe=Object.values(activeSession.sets||{}).some(sets=>sets.some(s=>s.done&&s.rpe!=null&&s.rpe!==''));return _anyRpe?'':`<div style="background:var(--dark3);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;"><div style="font-size:16px;flex-shrink:0;">💡</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.5;letter-spacing:0.3px;">Try logging effort (RPE) next time — it helps the app fine-tune your weights each session.</div></div>`;})()}
       <!-- Notes field in wrapup — impossible to miss -->
       <div style="margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
