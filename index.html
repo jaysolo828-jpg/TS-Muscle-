@@ -1958,26 +1958,26 @@
   }
   .ts-score-number {
     font-family: 'Bebas Neue', cursive;
-    font-size: 72px;
+    font-size: 78px;
     color: var(--cream);
     line-height: 1;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
   }
   .ts-score-level {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
-    padding: 3px 10px;
+    padding: 4px 12px;
     border-radius: 20px;
     display: inline-block;
-    margin-top: 4px;
+    margin-top: 6px;
   }
   .ts-score-bar-track {
-    background: rgba(255,255,255,0.08);
-    border-radius: 4px;
-    height: 5px;
+    background: rgba(255,255,255,0.10);
+    border-radius: 6px;
+    height: 7px;
     margin: 14px 0 6px;
     overflow: hidden;
   }
@@ -12666,12 +12666,11 @@ function renderStrengthScoreCard() {
     : null;
   const _deltaClr = _delta30 > 0 ? '#2ecc71' : _delta30 < 0 ? 'var(--red-text)' : 'var(--gray)';
 
-  // Estimate badge when data is thin
-  const _estimateBadge = quality.isEstimate
-    ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--gray);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:middle;">ESTIMATE</span>`
+  const _estimatePill = quality.isEstimate
+    ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--red-text);border:1.5px solid var(--red-text);border-radius:20px;padding:3px 11px;display:inline-block;margin-left:6px;">ESTIMATE</span>`
     : '';
   const _estimateNote = quality.isEstimate
-    ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;margin-top:8px;margin-bottom:2px;">${quality.sessionsNeeded} more session${quality.sessionsNeeded !== 1 ? 's' : ''} with your main lifts will make this score fully accurate.</div>`
+    ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:0.3px;margin-top:10px;line-height:1.5;">${quality.sessionsNeeded} more session${quality.sessionsNeeded !== 1 ? 's' : ''} with your main lifts for a fully accurate score.</div>`
     : '';
 
   const _barPct = Math.min(100, (score / 1000) * 100);
@@ -12682,24 +12681,27 @@ function renderStrengthScoreCard() {
     </div>${_infoText}
     <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;">
       <div>
-        <div class="ts-score-number">${score}<span style="font-size:26px;color:var(--gray);letter-spacing:1px;"> / 1000</span>${_estimateBadge}</div>
-        <div class="ts-score-level" style="background:${level.bg};color:${level.color};">${level.label}</div>
-        ${_deltaStr ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:${_deltaClr};letter-spacing:1px;margin-top:6px;">${_deltaStr} <span style="color:var(--gray);">LAST 30 DAYS</span></div>` : ''}
+        <div class="ts-score-number">${score}<span style="font-size:28px;color:var(--gray);letter-spacing:1px;"> / 1000</span></div>
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:6px;">
+          <div class="ts-score-level" style="background:${level.bg};color:${level.color};margin-top:0;">${level.label}</div>
+          ${_estimatePill}
+        </div>
+        ${_deltaStr ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:${_deltaClr};letter-spacing:1px;margin-top:8px;">${_deltaStr} <span style="color:var(--gray);">LAST 30 DAYS</span></div>` : ''}
       </div>
       ${_buildScoreSparkline(snaps) ? `<div style="flex-shrink:0;">${_buildScoreSparkline(snaps)}</div>` : ''}
     </div>
-    <div class="ts-score-bar-track" style="position:relative;overflow:visible;margin-top:14px;">
-      <div class="ts-score-bar-fill" style="width:${_barPct}%;background:${level.color};"></div>
-      <div style="position:absolute;top:50%;left:${_barPct}%;transform:translate(-50%,-50%);width:3px;height:13px;background:var(--cream);border-radius:2px;box-shadow:0 0 5px rgba(255,255,255,0.55);pointer-events:none;"></div>
+    <div class="ts-score-bar-track" style="position:relative;overflow:visible;margin-top:16px;">
+      <div class="ts-score-bar-fill" style="width:${_barPct}%;background:${level.color};border-radius:6px;"></div>
+      <div style="position:absolute;top:50%;left:${_barPct}%;transform:translate(-50%,-50%);width:3px;height:14px;background:var(--cream);border-radius:2px;box-shadow:0 0 6px rgba(255,255,255,0.6);pointer-events:none;"></div>
     </div>
-    <div style="display:flex;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-bottom:10px;margin-top:8px;">
-      <span>BEGINNER</span><span>DEVELOPING</span><span>INTERMEDIATE</span><span>ADVANCED</span><span>ELITE</span>
+    <div style="display:flex;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.8px;margin-bottom:14px;margin-top:9px;">
+      <span>BGN</span><span>DEV</span><span>INT</span><span>ADV</span><span>ELITE</span>
     </div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:4px;">${_desc}</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(220,215,205,0.9);line-height:1.65;margin-bottom:4px;">${_desc}</div>
     ${_estimateNote}
-    <div style="margin-top:14px;">
-      <button onclick="shareStrengthScoreCard()" style="width:100%;padding:11px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--gray-light);border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+    <div style="margin-top:16px;">
+      <button onclick="shareStrengthScoreCard()" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.13);color:rgba(220,215,205,0.75);border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         SHARE YOUR SCORE
       </button>
     </div>`;
@@ -12808,99 +12810,153 @@ async function shareStrengthScoreCard() {
   if (score === null) { showToast('Complete a few sessions first to generate your score.'); return; }
   const level = getStrengthLevel(score);
 
+  // Build the same dynamic description used on the in-app card
+  const _TIERS = [[0,200,'Beginner','Developing'],[200,400,'Developing','Intermediate'],[400,600,'Intermediate','Advanced'],[600,800,'Advanced','Elite'],[800,1000,'Elite',null]];
+  const _tier = _TIERS.find(t => score >= t[0] && score < t[1]) || _TIERS[4];
+  const _tierPct = (score - _tier[0]) / (_tier[1] - _tier[0]);
+  const _ptsToNext = _tier[3] ? _tier[1] - score : 0;
+  const _posKey = (_tier[3] && _ptsToNext <= 25) ? 'near' : _tierPct < 0.33 ? 'low' : _tierPct < 0.67 ? 'mid' : 'high';
+  const _CARD_DESC = {
+    Beginner:     { low:'Every session builds the score — keep showing up.', mid:'Building momentum through the Beginner range.', high:'Upper Beginner — close to crossing into Developing.', near:'One strong block away from Developing.' },
+    Developing:   { low:'Foundation is there. Stack sessions, add weight.', mid:'Solid progress — ahead of most casual gym-goers.', high:'Upper Developing, closing in on Intermediate.', near:'Almost at Intermediate.' },
+    Intermediate: { low:'Above average strength for your bodyweight.', mid:'Well into Intermediate. Each point takes more work.', high:'Upper Intermediate — closer to Advanced than average.', near:'On the edge of Advanced.' },
+    Advanced:     { low:'Well above what most people achieve.', mid:'Firmly Advanced. Very few people reach this level.', high:'Upper Advanced — Elite is within reach.', near:'Right on the edge of Elite.' },
+    Elite:        { low:'Elite-level strength. You\'re in rare company.', mid:'Deep into Elite. Exceptional by any standard.', high:'Top end of Elite — as strong as it gets.', near:null },
+  };
+  const _cardDesc = _CARD_DESC[_tier[2]]?.[_posKey] || `${_tier[2]} level — keep training.`;
+
   showToast('Creating your score card…');
   try { await document.fonts.ready; } catch(e) {}
 
-  const W = 1080, H = 1080;
+  // ── Canvas setup — same 1080×1920 as all other share cards ──────────────
+  const W = 1080, H = 1920;
+  const SPLIT = 1140;   // top section height matches generateAndShareCard
+  const PAD   = 72;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Deep purple gradient background
-  const bg = ctx.createRadialGradient(W * 0.5, H * 0.35, 0, W * 0.5, H * 0.5, W * 0.85);
-  bg.addColorStop(0, '#2d1b69');
-  bg.addColorStop(0.5, '#1a0f3d');
-  bg.addColorStop(1, '#060408');
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  // Top section — dark charcoal with red tint (distinct from workout cards)
+  const topGrad = ctx.createLinearGradient(0, 0, 0, SPLIT);
+  topGrad.addColorStop(0, '#1c1416');
+  topGrad.addColorStop(1, '#0d080a');
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, 0, W, SPLIT);
 
-  // Vignette
-  const vig = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.75);
-  vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.55)');
-  ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+  // Subtle red radial glow behind score number
+  const glow = ctx.createRadialGradient(W / 2, SPLIT * 0.40, 0, W / 2, SPLIT * 0.40, 520);
+  glow.addColorStop(0, 'rgba(204,32,39,0.22)');
+  glow.addColorStop(1, 'rgba(204,32,39,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, SPLIT);
+
+  // Bottom section — near-black
+  ctx.fillStyle = '#080507';
+  ctx.fillRect(0, SPLIT, W, H - SPLIT);
 
   _drawCardGrain(ctx, W, H);
 
-  // Red top accent
-  ctx.fillStyle = '#CC2027'; ctx.fillRect(64, 72, W - 128, 4);
+  // Red top accent bar
+  ctx.fillStyle = '#CC2027';
+  ctx.fillRect(PAD, 62, W - PAD * 2, 5);
 
-  // Brand label
-  ctx.font = `700 28px 'Barlow Condensed', Arial`;
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  // Red divider between sections (matches other card divider style)
+  ctx.fillStyle = '#CC2027';
+  ctx.fillRect(0, SPLIT, W, 4);
+
+  // Brand label (top-left) + date (top-right)
+  ctx.font = `700 30px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.52)';
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ctx.fillText('T&S STRENGTH SCORE', 64, 120);
+  ctx.fillText('T&S STRENGTH SCORE', PAD, 114);
 
-  // Date
-  ctx.font = `400 22px 'Barlow Condensed', Arial`;
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = `400 24px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
   ctx.textAlign = 'right';
-  ctx.fillText(new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase(), W - 64, 120);
+  ctx.fillText(new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase(), W - PAD, 114);
 
   // Large score number
-  ctx.font = `220px 'Bebas Neue', Arial`;
+  ctx.font = `240px 'Bebas Neue', Arial`;
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.shadowColor = 'rgba(204,32,39,0.6)'; ctx.shadowBlur = 60;
-  ctx.fillText(String(score), W / 2, H * 0.44);
+  ctx.shadowColor = 'rgba(204,32,39,0.55)'; ctx.shadowBlur = 72;
+  ctx.fillText(String(score), W / 2, Math.round(SPLIT * 0.38));
   ctx.shadowBlur = 0;
 
-  // Level badge
-  ctx.font = `700 48px 'Barlow Condensed', Arial`;
+  // "/ 1000" sub-label
+  ctx.font = `400 46px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const levelW = ctx.measureText(level.label).width + 60;
-  const levelX = W/2 - levelW/2, levelY = H * 0.61;
-  ctx.fillStyle = level.color + '33';
-  _roundRect(ctx, levelX, levelY, levelW, 58, 29); ctx.fill();
-  ctx.strokeStyle = level.color; ctx.lineWidth = 2;
-  _roundRect(ctx, levelX, levelY, levelW, 58, 29); ctx.stroke();
+  ctx.fillText('/ 1000', W / 2, Math.round(SPLIT * 0.38) + 152);
+
+  // Level badge pill (same style as other cards)
+  ctx.font = `700 54px 'Barlow Condensed', Arial`;
+  ctx.textBaseline = 'middle';
+  const lvW = ctx.measureText(level.label).width + 72;
+  const lvH = 68, lvX = W / 2 - lvW / 2, lvY = Math.round(SPLIT * 0.66);
+  ctx.fillStyle = level.color + '28';
+  _roundRect(ctx, lvX, lvY, lvW, lvH, lvH / 2); ctx.fill();
+  ctx.strokeStyle = level.color; ctx.lineWidth = 2.5;
+  _roundRect(ctx, lvX, lvY, lvW, lvH, lvH / 2); ctx.stroke();
   ctx.fillStyle = level.color;
-  ctx.fillText(level.label, W / 2, levelY + 29);
+  ctx.textAlign = 'center';
+  ctx.fillText(level.label, W / 2, lvY + lvH / 2);
 
   // Progress bar
-  const barX = 120, barY = H * 0.73, barW = W - 240, barH = 10;
-  ctx.fillStyle = 'rgba(255,255,255,0.1)';
-  _roundRect(ctx, barX, barY, barW, barH, 5); ctx.fill();
+  const barX = PAD + 32, barY = Math.round(SPLIT * 0.83), barW = W - (PAD + 32) * 2, barH = 13;
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  _roundRect(ctx, barX, barY, barW, barH, 7); ctx.fill();
   ctx.fillStyle = level.color;
-  _roundRect(ctx, barX, barY, (score / 1000) * barW, barH, 5); ctx.fill();
+  _roundRect(ctx, barX, barY, (score / 1000) * barW, barH, 7); ctx.fill();
 
-  // Tier labels
-  const tierLabels = ['BEGINNER','DEVELOPING','INTERMEDIATE','ADVANCED','ELITE'];
-  ctx.font = `600 18px 'Barlow Condensed', Arial`;
-  ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.textBaseline = 'top';
+  // Tier labels under bar
+  const tierLabels = ['BEG', 'DEV', 'INT', 'ADV', 'ELITE'];
+  ctx.font = `600 24px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.textBaseline = 'top';
   tierLabels.forEach((t, i) => {
     ctx.textAlign = i === 0 ? 'left' : i === 4 ? 'right' : 'center';
     const x = i === 0 ? barX : i === 4 ? barX + barW : barX + (i / 4) * barW;
-    ctx.fillText(t, x, barY + barH + 12);
+    ctx.fillText(t, x, barY + barH + 16);
   });
 
-  // Description
-  ctx.font = `400 26px 'Barlow Condensed', Arial`;
-  ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const desc = level.desc.length > 70 ? level.desc.slice(0, 70) + '…' : level.desc;
-  ctx.fillText(desc, W / 2, H * 0.86);
+  // ── Bottom section ─────────────────────────────────────────────────────
+  const botTop = SPLIT + 4; // account for divider
+  const botH   = H - botTop;
+
+  // Dynamic description — word-wrap up to 3 lines
+  ctx.font = `400 42px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(220,215,205,0.78)';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const _words = _cardDesc.split(' ');
+  const _maxLW = W - PAD * 2.2;
+  const _lines = [];
+  let _cur = '';
+  for (const w of _words) {
+    const test = _cur ? _cur + ' ' + w : w;
+    if (ctx.measureText(test).width > _maxLW && _cur) { _lines.push(_cur); _cur = w; }
+    else _cur = test;
+  }
+  if (_cur) _lines.push(_cur);
+  const _descCenterY = botTop + botH * 0.28;
+  _lines.slice(0, 3).forEach((ln, i) => ctx.fillText(ln, W / 2, _descCenterY + i * 60));
 
   // Display name
   const name = (state.displayName || state.profile?.name || '').trim().toUpperCase();
   if (name) {
-    ctx.font = `700 32px 'Barlow Condensed', Arial`;
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.fillText(name, W / 2, H * 0.92);
+    ctx.font = `700 38px 'Barlow Condensed', Arial`;
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(name, W / 2, botTop + botH * 0.60);
   }
 
-  // Bottom accent + brand
-  ctx.fillStyle = '#CC2027'; ctx.fillRect(64, H - 76, W - 128, 3);
-  ctx.font = `700 22px 'Barlow Condensed', Arial`;
-  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.textBaseline = 'middle';
-  ctx.fillText('THERAPY & SNEAKERS · TSMUSCLE.APP', W / 2, H - 44);
+  // Bottom red accent + brand
+  ctx.fillStyle = '#CC2027';
+  ctx.fillRect(PAD, H - 88, W - PAD * 2, 4);
+  ctx.font = `700 26px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.26)';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('THERAPY & SNEAKERS · TSMUSCLE.APP', W / 2, H - 50);
 
   canvas.toBlob(async blob => {
     const file = new File([blob], 'ts-strength-score.png', { type: 'image/png' });
