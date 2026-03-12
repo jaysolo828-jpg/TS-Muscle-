@@ -16492,12 +16492,20 @@ document.addEventListener('DOMContentLoaded', () => {
   <div style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:16px;">
     Rate of Perceived Exertion — how hard a set felt on a <strong>1–10 scale</strong>. Log it after every set so the app can track your effort over time.
   </div>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:0.3px; margin-bottom:20px;">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:0.3px; margin-bottom:16px;">
     <div style="color:var(--gray);">RPE 6 — 4+ reps left</div>
     <div style="color:var(--gray);">RPE 7 — 3 reps left</div>
     <div style="color:var(--gray);">RPE 8 — 2 reps left</div>
     <div style="color:var(--gray);">RPE 9 — 1 rep left</div>
     <div style="color:var(--red-text); grid-column:1/-1;">RPE 10 — absolute max, nothing left</div>
+  </div>
+  <div style="background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.25); border-radius:10px; padding:12px 14px; margin-bottom:20px;">
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:10px; color:var(--red-text); letter-spacing:2px; margin-bottom:6px;">HOW IT AFFECTS YOUR WEIGHTS</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray-light); line-height:1.55; letter-spacing:0.3px;">
+      Logging <strong style="color:var(--cream);">RPE 9–10</strong> consistently tells the app you're near your limit — it slows down weight increases to keep you safe.<br><br>
+      Logging <strong style="color:var(--cream);">RPE 6–7</strong> signals you have room to grow — the app pushes weight up faster.<br><br>
+      No RPE logged? The app defaults to <strong style="color:var(--cream);">RPE 8</strong> for calculations — close, but your data is always more accurate.
+    </div>
   </div>
   <button onclick="toggleRpeSheet()" style="width:100%; background:var(--dark3); border:none; border-radius:12px; padding:14px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1px; cursor:pointer;">GOT IT</button>
 </div>
