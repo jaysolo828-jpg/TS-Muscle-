@@ -1928,6 +1928,87 @@
     .day-name  { font-size: 16px; }
   }
 
+  /* ── Profile notification dot on Settings nav ────────────────── */
+  .profile-notify-dot {
+    position: absolute;
+    top: 4px; right: calc(50% - 14px);
+    width: 8px; height: 8px;
+    background: var(--red);
+    border-radius: 50%;
+    border: 2px solid var(--black);
+    pointer-events: none;
+    z-index: 1;
+  }
+  /* ── T&S Strength Score card ─────────────────────────────────── */
+  .ts-score-card {
+    background: var(--dark3);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 20px 18px 16px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ts-score-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(204,32,39,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .ts-score-number {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 72px;
+    color: var(--cream);
+    line-height: 1;
+    letter-spacing: 2px;
+  }
+  .ts-score-level {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .ts-score-bar-track {
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    height: 5px;
+    margin: 14px 0 6px;
+    overflow: hidden;
+  }
+  .ts-score-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--red);
+    transition: width 0.4s ease;
+  }
+  /* Sex selector buttons in settings */
+  .profile-sex-btn {
+    flex: 1;
+    padding: 12px 8px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    background: #1a1a1a;
+    color: var(--gray-light);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .profile-sex-btn.selected {
+    background: rgba(204,32,39,0.15);
+    border-color: var(--red-text);
+    color: var(--cream);
+  }
+
 </style>
 </head>
 <body>
@@ -2715,6 +2796,29 @@
         </div>
         <input type="hidden" id="ob-experience" value=""/>
       </div>
+
+      <!-- Optional: age + sex to personalize T&S Strength Score -->
+      <div style="border-top:1px solid rgba(255,255,255,0.07); padding-top:20px; margin-bottom:24px;">
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:var(--red-text); letter-spacing:2px; font-weight:700; margin-bottom:8px;">OPTIONAL — IMPROVES YOUR SCORE</div>
+        <div style="font-size:13px; color:var(--gray-light); margin-bottom:16px; line-height:1.6;">Your age and biological sex help make your T&amp;S Strength Score more accurate by comparing you to the right benchmarks. You can always add these later in Settings.</div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">AGE (YEARS)</div>
+          <input type="number" id="ob-age" class="set-input" inputmode="numeric" placeholder="e.g. 28" min="13" max="100" style="width:100%; padding:12px 14px; text-align:left;"/>
+        </div>
+        <div>
+          <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">BIOLOGICAL SEX</div>
+          <div style="display:flex; gap:10px;">
+            <button class="onboard-select-btn" id="ob-sex-male-btn" onclick="selectObSex('male')" style="flex:1; padding:14px 8px; text-align:center;">
+              <div style="font-weight:bold;">Male</div>
+            </button>
+            <button class="onboard-select-btn" id="ob-sex-female-btn" onclick="selectObSex('female')" style="flex:1; padding:14px 8px; text-align:center;">
+              <div style="font-weight:bold;">Female</div>
+            </button>
+          </div>
+          <input type="hidden" id="ob-sex" value=""/>
+        </div>
+      </div>
+
       <div class="ob-button-row">
         <button onclick="onboardNext(2)" class="onboard-next-btn">NEXT →</button>
       </div>
@@ -3289,13 +3393,7 @@
     </button>
   </div>
 
-  <div class="settings-item" onclick="openBodyweightModal()">
-    <div>
-      <div class="settings-label">Update Bodyweight</div>
-      <div class="settings-sub" id="bw-settings-sub">Used for cardio calorie calculations</div>
-    </div>
-    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
-  </div>
+  <!-- Bodyweight moved to PROFILE section below -->
 
   <div class="settings-item" onclick="openPauseProgramModal()">
     <div>
@@ -3331,13 +3429,40 @@
 
   <!-- PROFILE -->
   <div class="section-title" style="margin-top:8px;">PROFILE</div>
-  <div style="padding:0 16px 16px;">
+  <!-- Display Name -->
+  <div style="padding:0 16px 12px;">
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Display Name</div>
     <input type="text" id="display-name-input" placeholder="Your name or handle" maxlength="24"
       style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
       oninput="setDisplayName(this.value)"
     />
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Shown on your shareable cards</div>
+  </div>
+  <!-- Age -->
+  <div style="padding:0 16px 12px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Age</div>
+    <input type="number" id="profile-age-input" inputmode="numeric" placeholder="e.g. 28" min="13" max="100"
+      style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
+      oninput="setProfileAge(this.value)"
+    />
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Used to personalize your T&amp;S Strength Score</div>
+  </div>
+  <!-- Biological Sex -->
+  <div style="padding:0 16px 12px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Biological Sex</div>
+    <div style="display:flex;gap:10px;">
+      <button id="profile-sex-male" class="profile-sex-btn" onclick="setProfileSex('male')">Male</button>
+      <button id="profile-sex-female" class="profile-sex-btn" onclick="setProfileSex('female')">Female</button>
+    </div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:8px;letter-spacing:0.5px;">Used to personalize your T&amp;S Strength Score</div>
+  </div>
+  <!-- Bodyweight -->
+  <div class="settings-item" onclick="openBodyweightModal()">
+    <div>
+      <div class="settings-label">Update Bodyweight</div>
+      <div class="settings-sub" id="bw-settings-sub">Used for strength benchmarks and cardio calories</div>
+    </div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
   </div>
 
   <!-- DATA -->
@@ -3832,7 +3957,8 @@
     </span>
     <span class="nav-label">Mindset</span>
   </button>
-  <button class="nav-item" onclick="showScreen('settings', this)" aria-label="Settings">
+  <button class="nav-item" onclick="showScreen('settings', this)" aria-label="Settings" style="position:relative;">
+    <span id="profile-notify-dot" class="profile-notify-dot" style="display:none;" aria-hidden="true"></span>
     <span class="nav-icon">
       <svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <line x1="4" y1="6" x2="20" y2="6"/>
@@ -4971,6 +5097,16 @@ function loadState() {
         recalcPRsFromHistory();
         state.prsSyncedFromHistory = true;
       }
+
+      // Migration: ensure profile has age and sex fields (added in this update)
+      if (state.profile && state.profile.age === undefined) state.profile.age = null;
+      if (state.profile && state.profile.sex === undefined) state.profile.sex = null;
+
+      // Migration: show one-time profile-complete prompt for existing users.
+      // New users go through onboarding which already collects these fields.
+      if (state.onboardingComplete && state.shownProfilePrompt === undefined) {
+        state.shownProfilePrompt = false; // will trigger prompt on next renderHome
+      }
     } catch(e) {}
   }
 }
@@ -5048,7 +5184,83 @@ function showScreen(name, el) {
   if (name === 'settings') {
     const nameInput = document.getElementById('display-name-input');
     if (nameInput) nameInput.value = state.displayName || state.profile?.name || '';
+    const ageInput = document.getElementById('profile-age-input');
+    if (ageInput) ageInput.value = state.profile?.age || '';
+    _updateSexButtons(state.profile?.sex || null);
+    const bwSub = document.getElementById('bw-settings-sub');
+    if (bwSub && state.profile?.bodyweight) bwSub.textContent = `${state.profile.bodyweight} lbs`;
+    updateProfileNotifyDot();
   }
+}
+
+// ============================================================
+// PROFILE FIELDS — AGE & BIOLOGICAL SEX
+// ============================================================
+function setProfileAge(val) {
+  const n = parseInt(val);
+  if (!state.profile) state.profile = {};
+  state.profile.age = (!isNaN(n) && n >= 13 && n <= 100) ? n : null;
+  saveState();
+  updateProfileNotifyDot();
+}
+
+function setProfileSex(val) {
+  if (!state.profile) state.profile = {};
+  state.profile.sex = (val === 'male' || val === 'female') ? val : null;
+  saveState();
+  _updateSexButtons(state.profile.sex);
+  updateProfileNotifyDot();
+}
+
+function _updateSexButtons(sex) {
+  const mBtn = document.getElementById('profile-sex-male');
+  const fBtn = document.getElementById('profile-sex-female');
+  if (mBtn) mBtn.classList.toggle('selected', sex === 'male');
+  if (fBtn) fBtn.classList.toggle('selected', sex === 'female');
+}
+
+// Separate handler for onboarding sex buttons — uses dedicated IDs
+// to avoid conflicting with the generic selectOption (which clears all
+// .onboard-select-btn within the step, which would clear experience choice)
+function selectObSex(val) {
+  document.getElementById('ob-sex').value = val;
+  document.getElementById('ob-sex-male-btn')?.classList.toggle('selected', val === 'male');
+  document.getElementById('ob-sex-female-btn')?.classList.toggle('selected', val === 'female');
+}
+
+// Show/hide the red dot on the Settings nav icon.
+function updateProfileNotifyDot() {
+  const hasBoth = !!(state.profile?.age && state.profile?.sex);
+  const dot = document.getElementById('profile-notify-dot');
+  if (dot) dot.style.display = hasBoth ? 'none' : 'block';
+}
+
+// One-time non-blocking prompt for existing users without age/sex.
+function _maybeShowProfilePrompt() {
+  if (state.shownProfilePrompt !== false) return;
+  if (state.profile?.age && state.profile?.sex) {
+    state.shownProfilePrompt = true; saveState(); return;
+  }
+  state.shownProfilePrompt = true;
+  saveState();
+
+  document.getElementById('profile-prompt-card')?.remove();
+  const prompt = document.createElement('div');
+  prompt.id = 'profile-prompt-card';
+  prompt.style.cssText = 'margin:0 0 16px;background:linear-gradient(135deg,rgba(204,32,39,0.08),rgba(204,32,39,0.04));border:1px solid rgba(204,32,39,0.3);border-radius:14px;padding:16px 16px 14px;position:relative;';
+  prompt.innerHTML = `
+    <button onclick="this.parentElement.remove()" aria-label="Dismiss" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--gray);font-size:18px;cursor:pointer;line-height:1;padding:4px;">✕</button>
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="font-size:22px;flex-shrink:0;line-height:1;margin-top:2px;">🏆</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:var(--cream);letter-spacing:1.5px;margin-bottom:5px;">PERSONALIZE YOUR STRENGTH SCORE</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:12px;">Add your age and biological sex in Settings → Profile to get a more accurate T&amp;S Strength Score — one that compares you against the right benchmarks for who you are.</div>
+        <button onclick="document.getElementById('profile-prompt-card').remove();showScreen('settings',document.querySelector('[onclick*=settings]'));" style="background:var(--red);border:none;color:white;padding:10px 16px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;">GO TO PROFILE →</button>
+      </div>
+    </div>`;
+  const homeScreen = document.getElementById('screen-home');
+  const firstDayCard = homeScreen?.querySelector('.day-card');
+  if (firstDayCard) firstDayCard.parentNode.insertBefore(prompt, firstDayCard);
 }
 
 // ============================================================
@@ -5085,19 +5297,22 @@ function updatePauseSettingsLabel() {
 function openBodyweightModal() {
   const current = state.profile?.bodyweight || '';
   const modal = document.createElement('div');
+  modal.id = 'bw-update-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">UPDATE BODYWEIGHT</div>
-      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.6;">Used for cardio calorie calculations. Current: <strong style="color:var(--cream);">${current ? current + ' lbs' : 'not set'}</strong></div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.6;">Used for strength benchmarks and cardio calorie calculations. Current: <strong style="color:var(--cream);">${current ? current + ' lbs' : 'not set'}</strong></div>
       <input type="number" inputmode="decimal" id="bw-modal-input" placeholder="e.g. 185" value="${current}"
         style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);border-radius:10px;padding:12px 14px;font-size:16px;font-family:'Barlow Condensed',sans-serif;outline:none;box-sizing:border-box;margin-bottom:20px;"/>
       <div style="display:flex;gap:10px;">
-        <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
+        <button onclick="document.getElementById('bw-update-modal').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
         <button onclick="saveBodyweight()" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">SAVE</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  setTimeout(() => document.getElementById('bw-modal-input')?.focus(), 80);
 }
 
 function saveBodyweight() {
@@ -5109,8 +5324,9 @@ function saveBodyweight() {
   saveState();
   // Update settings sub label
   const sub = document.getElementById('bw-settings-sub');
-  if (sub) sub.textContent = `Current: ${val} lbs`;
-  document.querySelector('[style*="fixed"]')?.remove();
+  if (sub) sub.textContent = `${val} lbs`;
+  // Dismiss the modal by its stable ID
+  document.getElementById('bw-update-modal')?.remove();
   showToast(`Bodyweight updated to ${val} lbs ✓`);
 }
 
@@ -5317,6 +5533,10 @@ function renderHome() {
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
   ).length;
   document.getElementById('stat-sessions').textContent = realSessions;
+
+  // Profile completeness: notification dot + one-time prompt
+  updateProfileNotifyDot();
+  _maybeShowProfilePrompt();
 
   // Time-based greeting
   const greetingEl = document.getElementById('home-greeting');
@@ -9722,6 +9942,9 @@ function finalizeEndSession(save) {
     // Consistency milestones
     const milestone = checkConsistencyMilestone(state.totalSessions, state.streak);
 
+    // Update T&S Strength Score after every completed session
+    _updateAndSaveStrengthScore();
+
     saveState();
     renderHome();
 
@@ -10524,6 +10747,27 @@ function showCycleCompleteModal() {
           </div>
         </div>` : ''}
         <div style="font-size:11px;color:var(--gray);padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.06);">All-time PRs: <span style="color:var(--cream);">${allTimePRs}</span> &nbsp;·&nbsp; Cycles done: <span style="color:var(--cream);">${completedCycle}</span></div>
+
+        ${(() => {
+          const curScore = state.strengthScore ?? null;
+          if (curScore === null) return '';
+          const cycleStartMs = Date.now() - 56 * 86400000;
+          const prevSnap = [...(state.strengthScoreHistory || [])].reverse().find(s => new Date(s.date).getTime() < cycleStartMs);
+          const startScore = prevSnap?.score ?? null;
+          const gained = startScore !== null ? curScore - startScore : null;
+          const gainedColor = gained > 0 ? '#2ecc71' : gained < 0 ? 'var(--red-text)' : 'var(--gray)';
+          const lv = getStrengthLevel(curScore);
+          return `<div style="margin-top:12px;padding:14px 16px;background:linear-gradient(135deg,rgba(45,27,105,0.3),rgba(25,12,65,0.4));border:1px solid rgba(147,112,219,0.25);border-radius:12px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(180,150,240,0.7);margin-bottom:10px;">T&amp;S STRENGTH SCORE</div>
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px;">
+              <div>
+                <div style="font-family:'Bebas Neue',cursive;font-size:42px;color:var(--cream);line-height:1;">${curScore}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:${lv.color};margin-top:2px;">${lv.label}</div>
+              </div>
+              ${startScore !== null ? `<div style="text-align:right;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:2px;">CYCLE START</div><div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--gray-light);">${startScore}</div>${gained !== null ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:${gainedColor};font-weight:700;margin-top:2px;">${gained > 0 ? '+' : ''}${gained} PTS</div>` : ''}</div>` : ''}
+            </div>
+          </div>`;
+        })()}
       </div>
 
       <!-- Rotation suggestion (optional) -->
@@ -10793,6 +11037,7 @@ function editHistoryNote(entryId) {
   if (!entry) return;
 
   const modal = document.createElement('div');
+  modal.id = 'history-note-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:flex-end;padding:0;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 24px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;margin:0 auto;border:1px solid var(--dark3);">
@@ -10801,11 +11046,12 @@ function editHistoryNote(entryId) {
         style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);border-radius:10px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-size:15px;outline:none;resize:none;box-sizing:border-box;line-height:1.5;margin-bottom:16px;"
       >${escapeHtml(entry.notes)}</textarea>
       <div style="display:flex;gap:10px;">
-        <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
+        <button onclick="document.getElementById('history-note-modal').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
         <button onclick="saveHistoryNote('${entryId}')" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;">SAVE</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
   setTimeout(() => document.getElementById('history-note-input')?.focus(), 100);
 }
 
@@ -10816,7 +11062,7 @@ function saveHistoryNote(entryId) {
   if (!entry) return;
   entry.notes = note;
   saveState();
-  document.querySelector('[style*="fixed"]')?.remove();
+  document.getElementById('history-note-modal')?.remove();
   _statsRenderKey = null;
   renderHistory();
   showToast('Note saved ✓');
@@ -10964,7 +11210,7 @@ function renderHistoryItem(entry, container, insertBefore) {
 let _statsRenderKey = null;
 function _getStatsKey() {
   const h = state.history || [];
-  return `${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}`;
+  return `${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}|${state.strengthScore ?? ''}`;
 }
 
 function renderHistory() {
@@ -10985,6 +11231,9 @@ function renderHistory() {
 
   container.innerHTML = '';
   const hist = state.history || [];
+
+  // ── 0. T&S STRENGTH SCORE — most prominent card ───────────
+  container.appendChild(renderStrengthScoreCard());
 
   // ── Helpers ──────────────────────────────────────────────
   function mkLabel(text) {
@@ -12168,6 +12417,241 @@ function setDisplayName(val) {
 }
 
 // ============================================================
+// T&S STRENGTH SCORE ENGINE
+// ============================================================
+// Bodyweight-multiplier standards (e1RM ÷ BW). Five values = top of each tier.
+// Male/Female based on ExRx.net + Symmetric Strength norms for these specific exercises.
+const TS_STRENGTH_STANDARDS = {
+  bench:        { male: [0.50, 0.75, 1.00, 1.50, 2.00], female: [0.25, 0.45, 0.65, 1.00, 1.40] },
+  incline:      { male: [0.35, 0.55, 0.75, 1.10, 1.50], female: [0.20, 0.35, 0.50, 0.80, 1.10] },
+  'chest-row':  { male: [0.45, 0.65, 0.90, 1.30, 1.70], female: [0.28, 0.46, 0.65, 0.95, 1.30] },
+  pulldown:     { male: [0.45, 0.65, 0.85, 1.20, 1.60], female: [0.28, 0.46, 0.62, 0.90, 1.22] },
+  rdl:          { male: [0.50, 0.75, 1.00, 1.50, 2.00], female: [0.35, 0.55, 0.75, 1.10, 1.50] },
+  'legpress-a': { male: [1.00, 1.50, 2.00, 3.00, 4.00], female: [0.70, 1.10, 1.50, 2.20, 3.00] },
+  'legpress-b': { male: [1.00, 1.50, 2.00, 3.00, 4.00], female: [0.70, 1.10, 1.50, 2.20, 3.00] },
+};
+// Compute neutral (average of male/female) once
+(function() {
+  Object.values(TS_STRENGTH_STANDARDS).forEach(s => {
+    s.neutral = s.male.map((v, i) => Math.round(((v + s.female[i]) / 2) * 1000) / 1000);
+  });
+})();
+
+// Movement groups — first available lift in each group is used
+const TS_LIFT_PRIORITY = [
+  ['bench'], ['incline'], ['chest-row'], ['pulldown'], ['rdl'], ['legpress-a','legpress-b'],
+];
+
+// Older athletes get slightly lower thresholds (age-adjusted standards)
+function _tsAgeCoeff(age) {
+  if (!age || age < 30) return 1.00;
+  if (age < 40) return 1.00 - (age - 30) * 0.003;
+  if (age < 50) return 0.97  - (age - 40) * 0.004;
+  if (age < 60) return 0.93  - (age - 50) * 0.006;
+  return Math.max(0.78, 0.87 - (age - 60) * 0.009);
+}
+
+// Interpolate a 0-1000 score for one lift given ratio + age-adjusted standards array
+function _tsNormalizeLift(ratio, stds) {
+  if (!ratio || ratio <= 0) return 0;
+  const tierMax = [200, 400, 600, 800, 1000];
+  let prev = 0, prevScore = 0;
+  for (let i = 0; i < stds.length; i++) {
+    if (ratio < stds[i]) {
+      const t = (stds[i] - prev) > 0 ? (ratio - prev) / (stds[i] - prev) : 0;
+      return Math.round(prevScore + t * (tierMax[i] - prevScore));
+    }
+    prev = stds[i]; prevScore = tierMax[i];
+  }
+  return 1000;
+}
+
+// Best estimated 1RM for an exercise over the last N days (Epley: w*(1+r/30))
+function getBestE1RM(exId, days) {
+  const cutoff = Date.now() - days * 86400000;
+  let best = 0;
+  (state.history || []).forEach(entry => {
+    if (new Date(entry.date).getTime() < cutoff) return;
+    (entry.sets?.[exId] || []).filter(s => s.done && s.weight && s.reps).forEach(s => {
+      const w = parseFloat(s.weight), r = parseInt(s.reps);
+      if (!w || !r || r < 1) return;
+      const e1rm = r === 1 ? w : Math.round(w * (1 + r / 30));
+      if (e1rm > best) best = e1rm;
+    });
+  });
+  return best > 0 ? best : null;
+}
+
+function _tsConsistencyFactor() {
+  const cutoff = Date.now() - 28 * 86400000;
+  const recent = (state.history || []).filter(e => new Date(e.date).getTime() >= cutoff &&
+    Object.values(e.sets || {}).some(sets => sets.some(s => s.done)));
+  const expected = Math.max(8, (state.trainingDaysPerWeek || 3) * 4);
+  return 0.75 + Math.min(0.25, 0.25 * (recent.length / expected));
+}
+
+function _tsRpeFactor() {
+  const cutoff = Date.now() - 60 * 86400000;
+  const rpeVals = [];
+  (state.history || []).filter(e => new Date(e.date).getTime() >= cutoff).forEach(entry => {
+    Object.values(entry.sets || {}).forEach(sets => {
+      sets.filter(s => s.done && s.rpe).forEach(s => {
+        const r = parseFloat(s.rpe);
+        if (r >= 6 && r <= 10) rpeVals.push(r);
+      });
+    });
+  });
+  if (rpeVals.length < 5) return 1.00;
+  const avg = rpeVals.reduce((a, b) => a + b, 0) / rpeVals.length;
+  if (avg < 6) return 0.97;
+  if (avg < 7) return 0.99;
+  if (avg <= 8) return 1.02;
+  if (avg <= 9) return 1.00;
+  return 0.98;
+}
+
+// Main score calc. Returns integer 0-1000, or null if not enough data.
+function calcStrengthScore() {
+  if (!state.history || state.history.length < 1) return null;
+  const bw = parseFloat(state.profile?.bodyweight) || 0;
+  if (!bw || bw <= 0) return null;
+  const sex = state.profile?.sex || 'neutral';
+  const age = parseInt(state.profile?.age) || null;
+  const ageCoeff = _tsAgeCoeff(age);
+  const liftScores = [];
+  for (const group of TS_LIFT_PRIORITY) {
+    let groupScore = null;
+    for (const exId of group) {
+      const e1rm = getBestE1RM(exId, 90);
+      if (!e1rm) continue;
+      const ratio = e1rm / bw;
+      const baseStds = TS_STRENGTH_STANDARDS[exId]?.[sex] || TS_STRENGTH_STANDARDS[exId]?.neutral;
+      if (!baseStds) continue;
+      groupScore = _tsNormalizeLift(ratio, baseStds.map(v => v * ageCoeff));
+      break;
+    }
+    if (groupScore !== null) liftScores.push(groupScore);
+  }
+  if (liftScores.length < 2) return null;
+  const avg = liftScores.reduce((a, b) => a + b, 0) / liftScores.length;
+  return Math.min(1000, Math.max(0, Math.round(avg * _tsConsistencyFactor() * _tsRpeFactor())));
+}
+
+// Returns level info for a given score
+function getStrengthLevel(score) {
+  if (score === null || score === undefined) return null;
+  if (score >= 800) return { label:'ELITE',        color:'#f0a500', bg:'rgba(240,165,0,0.15)',   desc:'Top-tier strength. You\'re training at an elite level relative to your bodyweight.' };
+  if (score >= 600) return { label:'ADVANCED',     color:'#2ecc71', bg:'rgba(46,204,113,0.12)',  desc:'Well above average. Your numbers put you in the top tier for your bodyweight.' };
+  if (score >= 400) return { label:'INTERMEDIATE', color:'#4a8af5', bg:'rgba(74,138,245,0.12)',  desc:'Solid strength across the board. You\'re progressing through the intermediate range.' };
+  if (score >= 200) return { label:'DEVELOPING',   color:'#e88520', bg:'rgba(232,133,32,0.12)',  desc:'Building a strong foundation. Consistent training will push this number up quickly.' };
+  return               { label:'BEGINNER',     color:'#cc8888', bg:'rgba(204,136,136,0.10)', desc:'Everyone starts here. Keep logging sessions and this score will move fast.' };
+}
+
+// Compute and persist score; called after every completed session.
+function _updateAndSaveStrengthScore() {
+  const score = calcStrengthScore();
+  if (score === null) return;
+  state.strengthScore = score;
+  if (!state.strengthScoreHistory) state.strengthScoreHistory = [];
+  const last = state.strengthScoreHistory[state.strengthScoreHistory.length - 1];
+  if (!last || last.score !== score) {
+    state.strengthScoreHistory.push({ score, date: new Date().toISOString() });
+  }
+  if (state.strengthScoreHistory.length > 50) state.strengthScoreHistory = state.strengthScoreHistory.slice(-50);
+}
+
+// Build SVG sparkline from score snapshot array
+function _buildScoreSparkline(snaps) {
+  if (!snaps || snaps.length < 2) return '';
+  const W = 80, H = 36, PAD = 4;
+  const scores = snaps.map(s => s.score);
+  const lo = Math.min(...scores), hi = Math.max(...scores), rng = hi - lo || 1;
+  const pts = scores.map((s, i) => {
+    const x = PAD + (i / (scores.length - 1)) * (W - PAD * 2);
+    const y = H - PAD - ((s - lo) / rng) * (H - PAD * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const lastPt = pts.split(' ').pop().split(',');
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible;"><polyline points="${pts}" fill="none" stroke="var(--red-text)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/><circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="3" fill="var(--red-text)"/></svg>`;
+}
+
+// Strength Score stats card DOM builder (inserted at top of renderHistory)
+function renderStrengthScoreCard() {
+  const card = document.createElement('div');
+  card.className = 'ts-score-card';
+
+  const score = state.strengthScore ?? calcStrengthScore();
+  const level = score !== null ? getStrengthLevel(score) : null;
+  const hasBW = !!(parseFloat(state.profile?.bodyweight) > 0);
+  const hist  = (state.history || []).filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done)));
+  const snaps = (state.strengthScoreHistory || []).slice(-8);
+
+  // Recent delta (last 30 days)
+  const cutoff30 = Date.now() - 30 * 86400000;
+  const old30 = [...(state.strengthScoreHistory || [])].reverse().find(s => new Date(s.date).getTime() < cutoff30);
+  const delta30 = (score !== null && old30) ? score - old30.score : null;
+  const deltaStr = delta30 !== null ? (delta30 > 0 ? `▲ +${delta30} pts` : delta30 < 0 ? `▼ ${delta30} pts` : '— no change') : null;
+  const deltaColor = delta30 > 0 ? '#2ecc71' : delta30 < 0 ? 'var(--red-text)' : 'var(--gray)';
+
+  const infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:none;padding:0 4px;cursor:pointer;color:var(--gray);font-size:13px;line-height:1;" aria-label="About this score">ℹ</button>`;
+  const infoText = `<div id="ts-score-info-box" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;">Your T&amp;S Strength Score measures how your strength compares to others at your experience level and bodyweight. It grows as you get stronger, train consistently, and work at the right intensity.</div>`;
+
+  if (score === null || !hasBW) {
+    let msg = '';
+    if (!hasBW) {
+      msg = 'Add your bodyweight in Settings → Profile to unlock your T&S Strength Score.';
+    } else if (hist.length < 2) {
+      msg = 'Complete a few sessions to unlock your T&S Strength Score.';
+      if (!state.profile?.age || !state.profile?.sex) msg += ' For the most accurate score, add your age and biological sex in Settings under Profile.';
+    } else {
+      msg = 'Log your main lifts (Bench, Row, RDL, Leg Press, Incline) to calculate your score.';
+    }
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">T&amp;S STRENGTH SCORE</div>${infoBtn}
+      </div>${infoText}
+      <div style="text-align:center;padding:20px 0 16px;">
+        <div style="font-size:32px;margin-bottom:10px;">🏋️</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;max-width:260px;margin:0 auto 16px;">${msg}</div>
+        <button onclick="showScreen('settings',document.querySelector('[onclick*=settings]'))" style="background:rgba(204,32,39,0.15);border:1px solid rgba(204,32,39,0.4);color:var(--red-text);padding:10px 18px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;">GO TO PROFILE →</button>
+      </div>`;
+    return card;
+  }
+
+  const barPct = Math.min(100, (score / 1000) * 100);
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">T&amp;S STRENGTH SCORE</div>${infoBtn}
+    </div>${infoText}
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;">
+      <div>
+        <div class="ts-score-number">${score}</div>
+        <div class="ts-score-level" style="background:${level.bg};color:${level.color};">${level.label}</div>
+        ${deltaStr ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:${deltaColor};letter-spacing:1px;margin-top:6px;">${deltaStr} <span style="color:var(--gray);">LAST 30 DAYS</span></div>` : ''}
+      </div>
+      ${_buildScoreSparkline(snaps) ? `<div style="flex-shrink:0;">${_buildScoreSparkline(snaps)}</div>` : ''}
+    </div>
+    <div class="ts-score-bar-track"><div class="ts-score-bar-fill" style="width:${barPct}%;background:${level.color};"></div></div>
+    <div style="display:flex;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-bottom:14px;">
+      <span>BEGINNER</span><span>DEVELOPING</span><span>INTERMEDIATE</span><span>ADVANCED</span><span>ELITE</span>
+    </div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:14px;">${level.desc}</div>
+    <button onclick="shareStrengthScoreCard()" style="width:100%;padding:11px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--gray-light);border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      SHARE YOUR SCORE
+    </button>`;
+  return card;
+}
+
+function _toggleScoreInfo(btn) {
+  const info = btn.parentElement.nextElementSibling;
+  if (!info || !info.id?.startsWith('ts-score-info')) return;
+  const visible = info.style.display !== 'none';
+  info.style.display = visible ? 'none' : 'block';
+  btn.style.color = visible ? 'var(--gray)' : 'var(--cream)';
+}
+
+// ============================================================
 // SHARE CARDS
 // ============================================================
 
@@ -12238,6 +12722,134 @@ function shareHistoryEntry(entryId) {
     isDeload: !!(entry.isDeload),
     stats
   });
+}
+
+// ── Helper: draw rounded rect path (no fill/stroke — caller does that) ───────
+function _roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ── T&S Strength Score shareable card (deep purple, premium) ─────────────────
+async function shareStrengthScoreCard() {
+  const score = state.strengthScore ?? calcStrengthScore();
+  if (score === null) { showToast('Complete a few sessions first to generate your score.'); return; }
+  const level = getStrengthLevel(score);
+
+  showToast('Creating your score card…');
+  try { await document.fonts.ready; } catch(e) {}
+
+  const W = 1080, H = 1080;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Deep purple gradient background
+  const bg = ctx.createRadialGradient(W * 0.5, H * 0.35, 0, W * 0.5, H * 0.5, W * 0.85);
+  bg.addColorStop(0, '#2d1b69');
+  bg.addColorStop(0.5, '#1a0f3d');
+  bg.addColorStop(1, '#060408');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  // Vignette
+  const vig = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.75);
+  vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.55)');
+  ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+
+  _drawCardGrain(ctx, W, H);
+
+  // Red top accent
+  ctx.fillStyle = '#CC2027'; ctx.fillRect(64, 72, W - 128, 4);
+
+  // Brand label
+  ctx.font = `700 28px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('T&S STRENGTH SCORE', 64, 120);
+
+  // Date
+  ctx.font = `400 22px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.textAlign = 'right';
+  ctx.fillText(new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase(), W - 64, 120);
+
+  // Large score number
+  ctx.font = `220px 'Bebas Neue', Arial`;
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(204,32,39,0.6)'; ctx.shadowBlur = 60;
+  ctx.fillText(String(score), W / 2, H * 0.44);
+  ctx.shadowBlur = 0;
+
+  // Level badge
+  ctx.font = `700 48px 'Barlow Condensed', Arial`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const levelW = ctx.measureText(level.label).width + 60;
+  const levelX = W/2 - levelW/2, levelY = H * 0.61;
+  ctx.fillStyle = level.color + '33';
+  _roundRect(ctx, levelX, levelY, levelW, 58, 29); ctx.fill();
+  ctx.strokeStyle = level.color; ctx.lineWidth = 2;
+  _roundRect(ctx, levelX, levelY, levelW, 58, 29); ctx.stroke();
+  ctx.fillStyle = level.color;
+  ctx.fillText(level.label, W / 2, levelY + 29);
+
+  // Progress bar
+  const barX = 120, barY = H * 0.73, barW = W - 240, barH = 10;
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  _roundRect(ctx, barX, barY, barW, barH, 5); ctx.fill();
+  ctx.fillStyle = level.color;
+  _roundRect(ctx, barX, barY, (score / 1000) * barW, barH, 5); ctx.fill();
+
+  // Tier labels
+  const tierLabels = ['BEGINNER','DEVELOPING','INTERMEDIATE','ADVANCED','ELITE'];
+  ctx.font = `600 18px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.textBaseline = 'top';
+  tierLabels.forEach((t, i) => {
+    ctx.textAlign = i === 0 ? 'left' : i === 4 ? 'right' : 'center';
+    const x = i === 0 ? barX : i === 4 ? barX + barW : barX + (i / 4) * barW;
+    ctx.fillText(t, x, barY + barH + 12);
+  });
+
+  // Description
+  ctx.font = `400 26px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const desc = level.desc.length > 70 ? level.desc.slice(0, 70) + '…' : level.desc;
+  ctx.fillText(desc, W / 2, H * 0.86);
+
+  // Display name
+  const name = (state.displayName || state.profile?.name || '').trim().toUpperCase();
+  if (name) {
+    ctx.font = `700 32px 'Barlow Condensed', Arial`;
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.fillText(name, W / 2, H * 0.92);
+  }
+
+  // Bottom accent + brand
+  ctx.fillStyle = '#CC2027'; ctx.fillRect(64, H - 76, W - 128, 3);
+  ctx.font = `700 22px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.textBaseline = 'middle';
+  ctx.fillText('THERAPY & SNEAKERS · TSMUSCLE.APP', W / 2, H - 44);
+
+  canvas.toBlob(async blob => {
+    const file = new File([blob], 'ts-strength-score.png', { type: 'image/png' });
+    if (navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: `T&S Strength Score: ${score}` }); return; } catch(e) {}
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ts-strength-score.png';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }, 'image/png');
 }
 
 // ── Card theme palettes (one per training-day slot, cycles if > 6 days) ──────
@@ -12888,6 +13500,26 @@ async function generateAndShareCard(type, data) {
         drawText(item.lbl, cx, lblY, barlow(600, 24, BS), 'rgba(160,160,160,0.8)', colW - 20);
       });
     }
+  }
+
+  // ── T&S Strength Score badge (workout / weekly / cycle review cards) ─────
+  if ((type === 'workout' || type === 'weekly' || type === 'cycle_review') && state.strengthScore != null) {
+    const _cs = state.strengthScore;
+    const _cl = getStrengthLevel(_cs);
+    const _sy = H - 296;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(PAD, _sy - 30); ctx.lineTo(W - PAD, _sy - 30); ctx.stroke();
+    ctx.restore();
+    drawText('T&S STRENGTH SCORE', W / 2, _sy,
+      barlow(700, 22, BS), 'rgba(255,255,255,0.4)', MAX_TW);
+    ctx.save();
+    ctx.shadowColor = _cl.color + '55'; ctx.shadowBlur = Math.round(16 * BS);
+    drawText(String(_cs), W / 2, _sy + Math.round(54 * BS),
+      bebas(72, BS), _cl.color, MAX_TW);
+    ctx.restore();
+    drawText(_cl.label, W / 2, _sy + Math.round(110 * BS),
+      barlow(700, 26, BS), _cl.color + 'cc', MAX_TW);
   }
 
   // Display name — fixed position, above tagline
@@ -15456,6 +16088,20 @@ function completeOnboarding() {
   });
   state.rotationMigrated = true;
   state.onboardingComplete = true;
+  state.shownProfilePrompt = true; // new users use onboarding, no post-launch prompt needed
+
+  // Save optional age + sex collected in onboarding step 1
+  const _obAge = parseInt(document.getElementById('ob-age')?.value);
+  const _obSex = document.getElementById('ob-sex')?.value;
+  if (!isNaN(_obAge) && _obAge >= 13 && _obAge <= 100) {
+    if (!state.profile) state.profile = {};
+    state.profile.age = _obAge;
+  }
+  if (_obSex === 'male' || _obSex === 'female') {
+    if (!state.profile) state.profile = {};
+    state.profile.sex = _obSex;
+  }
+
   saveState();
   document.getElementById('onboarding-modal').style.display = 'none';
   const _obFade = document.getElementById('ob-scroll-fade');
