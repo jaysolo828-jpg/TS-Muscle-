@@ -4454,7 +4454,13 @@ function getWeeklySetsByMuscle() {
   const counts = {};
   Object.keys(VOLUME_LANDMARKS).forEach(m => counts[m] = 0);
 
-  const weekStart = state.weekStartTimestamp || (Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // If weekStartTimestamp is missing or older than 8 days, the week boundary is
+  // unknown — return zero counts rather than scanning stale history. This prevents
+  // false MRV positives for existing users on first load after the periodization
+  // update. The timestamp is properly set by finalizeEndSession() on the next session.
+  const weekStart = state.weekStartTimestamp;
+  if (!weekStart || (Date.now() - weekStart) > 8 * 24 * 60 * 60 * 1000) return counts;
+
   const weekSessions = (state.history || []).filter(e => new Date(e.date).getTime() >= weekStart);
 
   weekSessions.forEach(entry => {
@@ -5284,7 +5290,10 @@ function renderHome() {
   // Deload / recovery week banner
   const deloadBanner = document.getElementById('deload-banner');
   const _plateau = typeof detectProgressionPlateau === 'function' ? detectProgressionPlateau() : { stalled: false };
-  const _weeksSinceDeload = state.weeksSinceDeload || state.weekCount || 0;
+  // Use nullish coalescing: if weeksSinceDeload was never tracked (existing user
+  // before the periodization update) treat as 0 rather than falling back to
+  // weekCount, which would fire a false long-run banner mid-cycle.
+  const _weeksSinceDeload = state.weeksSinceDeload ?? 0;
   const _dismissedThisCycle = state.deloadDismissedAtCycle === (state.cycleCount || 1);
   const _lastTrainedSession = state.history?.length ? state.history[state.history.length - 1] : null;
   const _daysSinceTraining = _lastTrainedSession
@@ -9719,7 +9728,7 @@ function detectProgressionPlateau() {
 function checkDeloadSuggestion() {
   if (!state.history || state.history.length < 8) return;
 
-  const weeksSinceDeload = state.weeksSinceDeload || state.weekCount || 0;
+  const weeksSinceDeload = state.weeksSinceDeload ?? 0;
 
   // Signal 1: high RPE trend — last 3 sessions averaged ≥ 8.5
   const recentSessions = [...state.history].reverse().slice(0, 3);
@@ -12508,6 +12517,36 @@ function migrateSessionCount() {
   localStorage.setItem('ts-session-count-migrated', '1');
 }
 
+// One-time migration: seed periodization state fields for users who were already
+// using the app before the periodization update. Prevents false deload banners
+// on first load. Gates itself so it only runs once.
+function migratePeriodizationState() {
+  if (localStorage.getItem('ts-periodization-migrated')) return;
+  let dirty = false;
+
+  // weeksSinceDeload: start at 0 so long-run banner doesn't fire based on
+  // weekCount alone. It will accumulate correctly from the next session onward.
+  if (state.weeksSinceDeload == null) {
+    state.weeksSinceDeload = 0;
+    dirty = true;
+  }
+
+  // weekStartTimestamp: if missing or stale (>8 days), reset to now so
+  // getWeeklySetsByMuscle() doesn't sweep up old sessions as "this week".
+  if (!state.weekStartTimestamp || (Date.now() - state.weekStartTimestamp) > 8 * 24 * 60 * 60 * 1000) {
+    if (state.history?.length) {
+      // For users with history, start the week clock from now. Their current-week
+      // sessions (if any) are within the 8-day window and will be counted once
+      // finalizeEndSession() writes the proper boundary after the next session.
+      state.weekStartTimestamp = Date.now();
+      dirty = true;
+    }
+  }
+
+  if (dirty) saveState();
+  localStorage.setItem('ts-periodization-migrated', '1');
+}
+
 // ============================================================
 // INIT
 // ============================================================
@@ -12517,6 +12556,7 @@ let _obScrollListenerReady = false;
 try {
   loadState();
   migrateSessionCount();
+  migratePeriodizationState();
   checkPauseAutoExpiry();
   updateStreak();
   renderHome();
