@@ -10880,6 +10880,12 @@ function renderHistory() {
           </div>
           <div style="font-size:10px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">SESSION LIFTS</div>
           <div style="display:flex;gap:4px;">${_bars}</div>`;
+        _moodCard.appendChild(mkShareBtn('SHARE MOOD LIFT', () =>
+          generateAndShareCard('mood_lift_stats', {
+            avg: _avg, disp: _disp, sessions: _lifts.length,
+            lastPre: _last.pre.emoji, lastPost: _last.post.emoji, lastLift: _last.lift
+          })
+        ));
       }
       container.appendChild(_moodCard);
     }
@@ -11625,7 +11631,7 @@ async function generateAndShareCard(type, data) {
   let _theme;
   if (_isPR)            _theme = CARD_PR_THEME;
   else if (_isDeload)   _theme = CARD_DELOAD_THEME;
-  else if (type === 'mood') _theme = CARD_MOOD_THEME;
+  else if (type === 'mood' || type === 'mood_lift_stats') _theme = CARD_MOOD_THEME;
   else                  _theme = CARD_DAY_PALETTES[(data.dayIndex ?? 0) % CARD_DAY_PALETTES.length];
 
   // ── Backgrounds ───────────────────────────────────────────
@@ -11793,6 +11799,53 @@ async function generateAndShareCard(type, data) {
     // Headline
     drawText('the workout did its job', W / 2, headlineY,
       barlow(400, 30), 'rgba(255,255,255,0.55)', MAX_TW);
+
+  } else if (type === 'mood_lift_stats') {
+    // Purple radial glow
+    const glow = ctx.createRadialGradient(W / 2, SPLIT * 0.5, 0, W / 2, SPLIT * 0.5, W * 0.6);
+    glow.addColorStop(0,   'rgba(160,140,255,0.20)');
+    glow.addColorStop(0.5, 'rgba(100,80,200,0.08)');
+    glow.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, SPLIT);
+
+    const tagY     = Math.round(SPLIT * 0.14);
+    const numY     = Math.round(SPLIT * 0.40);
+    const subY     = Math.round(SPLIT * 0.58);
+    const sessY    = Math.round(SPLIT * 0.70);
+    const emojiY   = Math.round(SPLIT * 0.85);
+
+    // Tag
+    drawText('MOOD LIFT', W / 2, tagY,
+      barlow(700, 32), 'rgba(180,170,255,0.75)', MAX_TW);
+
+    // Big avg number
+    const isPos = data.avg > 0, isNeg = data.avg < 0;
+    const numCol = isPos ? '#50c882' : isNeg ? '#e05555' : 'rgba(255,255,255,0.6)';
+    ctx.save();
+    ctx.shadowColor = numCol;
+    ctx.shadowBlur  = Math.round(40 * S);
+    drawText(data.disp || '0', W / 2, numY, bebas(130), numCol, MAX_TW);
+    ctx.restore();
+
+    // Subtitle
+    drawText(isPos ? 'AVG MOOD BOOST PER SESSION' : isNeg ? 'AVG MOOD DROP PER SESSION' : 'NO AVERAGE CHANGE',
+      W / 2, subY, barlow(600, 30), 'rgba(200,195,255,0.8)', MAX_TW);
+
+    // Session count
+    drawText(`ACROSS ${data.sessions} SESSION${data.sessions !== 1 ? 'S' : ''} WITH PRE + POST LOGS`,
+      W / 2, sessY, barlow(400, 24), 'rgba(255,255,255,0.45)', MAX_TW);
+
+    // Last session emojis
+    if (data.lastPre && data.lastPost) {
+      const emojiSz = Math.round(80 * S);
+      ctx.font = `${emojiSz}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(data.lastPre,  W / 2 - Math.round(160 * S), emojiY);
+      ctx.fillText(data.lastPost, W / 2 + Math.round(160 * S), emojiY);
+      drawText('→', W / 2, emojiY, bebas(56), 'rgba(255,255,255,0.25)', null);
+    }
 
   } else if (type === 'lifetime_volume') {
     // Big number: volume lifted
@@ -12162,6 +12215,7 @@ function _downloadShareCard(blob) {
 function _getCardShareText(type, data) {
   const name = (state.displayName || '').trim();
   const prefix = name ? `${name} ` : '';
+  if (type === 'mood_lift_stats') return `${prefix}${data.avg > 0 ? `averages a ${data.disp} mood boost after every session` : `tracking mood before and after every session`} on T&S Muscle 🧠 therapyandsneakers.org`;
   if (type === 'streak') return `${prefix}just hit a ${data.value}-week streak on T&S Muscle! 🔥 therapyandsneakers.org`;
   if (type === 'pr') return `${prefix}just hit a new PR — ${data.exercise} ${data.weight} lbs × ${data.reps} 🏆 therapyandsneakers.org`;
   if (type === 'workout') return `${prefix}just crushed ${data.dayName || 'a workout'} on T&S Muscle 💪 therapyandsneakers.org`;
