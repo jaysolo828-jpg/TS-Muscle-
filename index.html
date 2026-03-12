@@ -2614,7 +2614,7 @@
         <div style="text-align:center; padding-top:10px; margin-bottom:20px;">
           <div style="font-size:52px; margin-bottom:16px;">📈</div>
           <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:3px; margin-bottom:14px;">EFFORT-BASED<br>PROGRESSION</div>
-          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">After each set you'll log your <strong style="color:var(--cream);">RPE</strong> — how hard it felt on a scale of 1–10. The app uses that to decide whether to increase your weight, hold it, or dial it back. No guesswork.</div>
+          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">After each set you'll log your <strong style="color:var(--cream);">RPE</strong> — how hard it felt on a scale of 1–10. That one number is what makes the app smart. It drives your weight adjustments, your weekly volume targets, and when the app decides you need a recovery week. The more consistently you log it, the more precisely the app works for you.</div>
         </div>
         <div style="background:var(--dark3); border-radius:10px; padding:14px 16px; margin-bottom:20px;">
           <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
@@ -2904,7 +2904,7 @@
           <div style="font-size:26px; flex-shrink:0; margin-top:1px;">📊</div>
           <div>
             <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream); letter-spacing:0.5px; margin-bottom:3px;">LOG RPE AFTER EACH SET</div>
-            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Rate effort 1–10. <strong style="color:var(--cream);">RPE 8</strong> = 2 reps left. This tells the app exactly how to adjust your weights.</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Rate effort 1–10. <strong style="color:var(--cream);">RPE 8</strong> = 2 reps left. This is what gives the app its intelligence — it's how it knows when to push your weights up, when to hold, and when to suggest you back off.</div>
           </div>
         </div>
         <div style="background:var(--dark3); border:1px solid #333; border-radius:14px; padding:16px 16px; display:flex; align-items:flex-start; gap:14px;">
@@ -13519,13 +13519,48 @@ const TUTORIAL_SLIDES = [
     After each session, a <strong style="color:var(--cream);">progression banner</strong> on each exercise shows the next weight, the reason for the change, and whether it came from a single session or a trend. Toggle this in <strong style="color:var(--red-text);">Settings → Progressive Overload</strong>.`,
   },
   {
+    section: 'TRAINING LOAD',
+    icon: '📊',
+    title: "This Week's Volume",
+    body: `On the home screen, scroll past your workout cards to find the <strong style="color:var(--cream);">This Week's Sets</strong> panel. It shows how many sets you've done for each muscle group this week versus your target range.<br><br>
+    <strong style="color:#2ecc71;">Green</strong> — on track, keep going<br>
+    <strong style="color:#f39c12;">Yellow</strong> — approaching your ceiling for the week<br>
+    <strong style="color:#CC2027;">Red</strong> — at or over your weekly max for that muscle<br><br>
+    The panel updates live as you log sessions. It's not there to stress you out — it's there so you can see how your workload is actually distributed across the week and make smart decisions about what to prioritize. If a muscle is already in the red, the app factors that into its recovery suggestions.`,
+  },
+  {
+    section: 'RECOVERY',
+    icon: '🔄',
+    title: 'Recovery Weeks That Make Sense',
+    body: `A recovery week drops your weights to 75% so your joints, tendons, and nervous system can catch up with the work you've been putting in. You keep training — just at a reduced load. Your weights restore automatically the following week.<br><br>
+    The app schedules one at <strong style="color:var(--cream);">Week 7</strong> of each 8-week cycle. But it can also suggest one <strong style="color:var(--cream);">earlier</strong> — if your RPE data shows you're consistently working near your limit, or if one or more muscle groups are approaching their weekly volume ceiling.<br><br>
+    When an early recovery is suggested, you'll see an <strong style="color:var(--red-text);">R dot</strong> on the home screen. The banner tells you exactly which muscles triggered it and why. You can start it or keep going — but the app will keep the flag up until you do.<br><br>
+    <span style="color:var(--gray);font-size:13px;">Prefer full rest? Choose Rest Week instead — the program pauses completely and nothing resets.</span>`,
+  },
+  {
+    section: 'PROGRESSIVE OVERLOAD',
+    icon: '⚖️',
+    title: 'When the App Says Ease Off',
+    body: `Progress isn't always a straight line up. When you've logged <strong style="color:var(--cream);">RPE 9–10 two or three sessions in a row</strong> on the same exercise, the app reads that as a sign the weight has gotten too heavy to keep driving adaptation.<br><br>
+    Instead of silently stacking more weight on top, it shows a <strong style="color:var(--red-text);">Too Heavy?</strong> card above that exercise when you start your next session. It suggests a slightly lighter weight and explains exactly why.<br><br>
+    You can accept the drop or keep your current weight — it's always your call. But if your RPE keeps hitting max and you keep overriding it, the prompt will keep coming back. That's not the app being annoying — it's telling you that adding more weight right now isn't the answer.`,
+  },
+  {
+    section: 'LONG-TERM PROGRESS',
+    icon: '🔁',
+    title: 'Cycle to Cycle',
+    body: `Each 8-week cycle ends with a recovery week, then a fresh start. But <strong style="color:var(--cream);">you're not resetting</strong> — everything carries forward.<br><br>
+    Your weights at the end of one cycle become the starting point for the next. Before your new cycle begins, the app adds a small increment on top of your final logged weights — so Week 1 of Cycle 2 starts heavier than Week 1 of Cycle 1 did.<br><br>
+    Over time, this is what real progress looks like. Not a straight line, but a staircase — each cycle a step above the last. Your <strong style="color:var(--cream);">PR board</strong> in the History tab shows this at a glance: the heaviest weight you've hit on every exercise, across every session you've ever logged.`,
+  },
+  {
     section: 'RECOVERY & REST',
     icon: '⚡',
-    title: 'Recovery & Rest Weeks',
-    body: `The app suggests a Recovery Week at Week 7 of each block — or earlier if a muscle group is getting close to its weekly limit.<br><br>
-    <strong style="color:var(--cream);">Deload</strong> — Same exercises, weights drop to 75% automatically. You keep training; your joints and tendons get a break. Full weights restore the following week.<br><br>
-    <strong style="color:var(--cream);">Rest Week</strong> — The program pauses completely. Best if you're feeling run down or need time off.<br><br>
-    Both are backed by evidence. The app handles all weight adjustments — no manual changes needed.`,
+    title: 'Deload vs Rest Week',
+    body: `When it's time to recover, you have two options:<br><br>
+    <strong style="color:var(--cream);">Deload</strong> — Same exercises, weights drop to 75% automatically. You keep training; your joints, tendons, and nervous system get a break without losing momentum. Full weights restore the week after.<br><br>
+    <strong style="color:var(--cream);">Rest Week</strong> — The program pauses completely. Best if you're genuinely run down, dealing with an ache, or just need time off. Nothing resets — your weights and progress are exactly where you left them when you come back.<br><br>
+    Both are backed by evidence. The app handles all weight adjustments automatically — no manual changes needed either way.`,
   },
   {
     section: 'PAUSE PROGRAM',
