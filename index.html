@@ -11179,6 +11179,7 @@ function _statsProgInfo() {
   const gainPct = (firstW && curW && curW !== firstW) ? Math.round((curW - firstW) / firstW * 100) : 0;
   const gainColor = gainPct > 0 ? '#50c882' : gainPct < 0 ? '#ff6b6b' : 'var(--gray)';
   const bw = parseFloat((state.profile || {}).bodyweight) || 0;
+  const repRange = typeof getGoalReps === 'function' ? getGoalReps(exId, '8–12') : '8–12';
 
   info.innerHTML = `
     <div style="margin-bottom:12px;">
@@ -11191,6 +11192,7 @@ function _statsProgInfo() {
       </div>
       ${best1RM > 0 ? `<div style="font-size:12px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">EST. 1RM: <span style="color:var(--cream);font-weight:700;">${best1RM} lbs</span></div>` : ''}
       ${bw > 0 && best1RM > 0 ? `<div style="font-size:12px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;margin-top:2px;">${(best1RM / bw).toFixed(1)}× bodyweight</div>` : ''}
+      <div style="font-size:12px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;margin-top:2px;">REP TARGET: <span style="color:var(--cream);font-weight:700;">${repRange} reps</span></div>
     </div>`;
 }
 
@@ -11356,8 +11358,14 @@ function renderProgressChart() {
   }
 
   const weights = dataPoints.map(d => d.weight);
-  const minW = Math.min(...weights) * 0.9;
-  const maxW = Math.max(...weights) * 1.1;
+  const _minW = Math.min(...weights);
+  const _maxW = Math.max(...weights);
+  const _dataRange = _maxW - _minW;
+  // Use range-relative padding so small increases still read as visible progress.
+  // Flat data falls back to 5% of the minimum value (minimum 10 units).
+  const _yPad = _dataRange > 0 ? Math.max(_dataRange * 0.5, 5) : Math.max(_minW * 0.05, 10);
+  const minW = Math.max(0, _minW - _yPad);
+  const maxW = _maxW + _yPad * 0.5;
   const pad = { left: 40, right: 16, top: 16, bottom: 30 };
   const w = canvas.width - pad.left - pad.right;
   const h = canvas.height - pad.top - pad.bottom;
@@ -11447,11 +11455,19 @@ function renderProgressChart() {
         </div>
       </div>`;
     } else if (last.weight === prev.weight) {
+      const _lastReps = last.maxReps || 0;
+      const _repsLeft = _chartRepTop - _lastReps;
+      const _repsNote = _lastReps > 0
+        ? (_repsLeft > 0
+            ? `Last session: ${_lastReps} rep${_lastReps !== 1 ? 's' : ''} — ${_repsLeft} more to hit target`
+            : `Last session: ${_lastReps} rep${_lastReps !== 1 ? 's' : ''} — target reached, bump the weight!`)
+        : '';
       recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#1a1200,#2a2000)">
         <div class="overload-icon">⚡</div>
         <div class="overload-text">
           <strong>ADD REPS FIRST</strong>
           Weight has held for 2+ sessions. Push to ${_chartRepTop} reps (your ${_chartReps} target) — once you hit it, increase the weight.
+          ${_repsNote ? `<br><span style="color:var(--gray-light);font-size:11px;opacity:0.85;">${_repsNote}</span>` : ''}
         </div>
       </div>`;
     } else {
