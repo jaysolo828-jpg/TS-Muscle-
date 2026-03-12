@@ -12637,9 +12637,10 @@ function renderStrengthScoreCard() {
   };
 
   // Build the ℹ info text — includes what the score uses and sessions needed
-  const _infoText = `<div id="ts-score-info-box" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.7;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;">
-    Your T&amp;S Strength Score is calculated from your best estimated 1-rep max across your main lifts (Bench, Row, RDL, Leg Press, Overhead Press), normalized against your bodyweight, biological sex, and age. Consistency of training over 28 days and average RPE over 60 days also factor in.<br><br>
-    The score requires at least <strong style="color:var(--cream);">3 sessions</strong> with any of those lifts logged. It becomes fully accurate after <strong style="color:var(--cream);">8 sessions</strong>. For best results, add your bodyweight, age, and biological sex in Settings → Profile.
+  const _infoText = `<div id="ts-score-info-box" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(210,205,198,0.92);line-height:1.75;margin-bottom:14px;padding:12px 14px;background:rgba(255,255,255,0.05);border-radius:8px;">
+    Your T&amp;S Strength Score is calculated from your best estimated 1-rep max across your main lifts — Bench, Row, RDL, Leg Press, and Incline — normalized against your bodyweight, biological sex, and age.<br><br>
+    Consistency of training over the past 28 days and average RPE over 60 days also factor in.<br><br>
+    Requires at least <strong style="color:var(--cream);">3 sessions</strong> with those lifts logged. Fully accurate after <strong style="color:var(--cream);">8 sessions</strong>. Add your bodyweight, age, and biological sex in Settings → Profile for the best result.
   </div>`;
   const _infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:2px solid var(--red-text);padding:0;cursor:pointer;color:var(--red-text);font-size:14px;line-height:1;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.82;" aria-label="About this score">ℹ</button>`;
 
@@ -12695,7 +12696,7 @@ function renderStrengthScoreCard() {
     ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--red-text);border:1.5px solid var(--red-text);border-radius:20px;padding:3px 11px;display:inline-block;margin-left:6px;">ESTIMATE</span>`
     : '';
   const _estimateNote = quality.isEstimate
-    ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:0.3px;margin-top:10px;line-height:1.5;">${quality.sessionsNeeded} more session${quality.sessionsNeeded !== 1 ? 's' : ''} with your main lifts for a fully accurate score.</div>`
+    ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(195,190,182,0.9);letter-spacing:0.2px;margin-top:12px;line-height:1.6;">${quality.sessionsNeeded} more session${quality.sessionsNeeded !== 1 ? 's' : ''} with your main lifts will make this score fully accurate.</div>`
     : '';
 
   const _barPct = Math.min(100, (score / 1000) * 100);
