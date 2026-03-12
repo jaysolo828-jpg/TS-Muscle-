@@ -12958,15 +12958,18 @@ async function shareStrengthScoreCard() {
   });
 
   // ── Bottom section ─────────────────────────────────────────────────────
-  const botTop = SPLIT + 4; // account for divider
+  const botTop = SPLIT + 4;
   const botH   = H - botTop;
+  const BS     = botH / 520; // same scale factor as generateAndShareCard
 
-  // Dynamic description — word-wrap up to 3 lines
-  ctx.font = `400 42px 'Barlow Condensed', Arial`;
-  ctx.fillStyle = 'rgba(220,215,205,0.78)';
+  // Dynamic description — word-wrap, scaled to canvas
+  const _descFontSz = Math.round(34 * BS);
+  const _descLineH  = Math.round(52 * BS);
+  ctx.font = `400 ${_descFontSz}px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(220,215,205,0.93)';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const _maxLW = W - PAD * 2.4;
   const _words = _cardDesc.split(' ');
-  const _maxLW = W - PAD * 2.2;
   const _lines = [];
   let _cur = '';
   for (const w of _words) {
@@ -12975,25 +12978,35 @@ async function shareStrengthScoreCard() {
     else _cur = test;
   }
   if (_cur) _lines.push(_cur);
-  const _descCenterY = botTop + botH * 0.28;
-  _lines.slice(0, 3).forEach((ln, i) => ctx.fillText(ln, W / 2, _descCenterY + i * 60));
+  const _descLines  = _lines.slice(0, 3);
+  const _descBlockH = _descLines.length * _descLineH;
+  const _descStartY = botTop + Math.round(botH * 0.18) + _descLineH / 2;
+  _descLines.forEach((ln, i) => ctx.fillText(ln, W / 2, _descStartY + i * _descLineH));
 
-  // Display name
+  // Hairline divider below description
+  const _hairY = _descStartY + _descBlockH + Math.round(botH * 0.10);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(PAD, _hairY); ctx.lineTo(W - PAD, _hairY); ctx.stroke();
+  ctx.restore();
+
+  // Display name — matches generateAndShareCard colour exactly
   const name = (state.displayName || state.profile?.name || '').trim().toUpperCase();
   if (name) {
-    ctx.font = `700 38px 'Barlow Condensed', Arial`;
-    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.font = `700 ${Math.round(34 * BS)}px 'Barlow Condensed', Arial`;
+    ctx.fillStyle = 'rgba(245,230,200,0.88)';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(name, W / 2, botTop + botH * 0.60);
+    ctx.fillText(name, W / 2, H - Math.round(148 * (botH / 780)));
   }
 
-  // Bottom red accent + brand
+  // Bottom red accent + brand — same opacity as other share cards
   ctx.fillStyle = '#CC2027';
   ctx.fillRect(PAD, H - 88, W - PAD * 2, 4);
-  ctx.font = `700 26px 'Barlow Condensed', Arial`;
-  ctx.fillStyle = 'rgba(255,255,255,0.26)';
+  ctx.font = `600 ${Math.round(26 * BS)}px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(160,160,160,0.90)';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('THERAPY & SNEAKERS · TSMUSCLE.APP', W / 2, H - 50);
+  ctx.fillText('THERAPY & SNEAKERS · TSMUSCLE.APP', W / 2, H - 46);
 
   canvas.toBlob(async blob => {
     const file = new File([blob], 'ts-strength-score.png', { type: 'image/png' });
