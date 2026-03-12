@@ -10598,15 +10598,15 @@ function renderHistory() {
         const nameColor = notDone ? 'var(--gray)' : nearMRV ? 'var(--warning)' : atTarget ? '#50c882' : 'var(--gray-light)';
         const label     = muscle.charAt(0) + muscle.slice(1).toLowerCase();
         const rightSide = notDone
-          ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.5px;font-style:italic;">not trained yet</span>`
-          : `<span style="color:${nameColor};">${actual}</span><span style="color:rgba(255,255,255,0.45);"> / ${target} sets</span>`;
-        return `<div style="margin-bottom:9px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:${nameColor};letter-spacing:0.4px;">${label}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;">${rightSide}</div>
+          ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(255,255,255,0.45);letter-spacing:0.5px;font-style:italic;">not trained yet</span>`
+          : `<span style="color:${nameColor};font-weight:600;">${actual}</span><span style="color:rgba(255,255,255,0.55);"> / ${target} sets</span>`;
+        return `<div style="margin-bottom:11px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;color:${nameColor};letter-spacing:0.5px;">${label}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;">${rightSide}</div>
           </div>
-          <div style="background:rgba(255,255,255,0.07);border-radius:3px;height:5px;overflow:hidden;">
-            <div style="height:100%;border-radius:3px;background:${barColor};width:${Math.round(pct * 100)}%;"></div>
+          <div style="background:rgba(255,255,255,0.10);border-radius:4px;height:7px;overflow:hidden;">
+            <div style="height:100%;border-radius:4px;background:${barColor};width:${Math.round(pct * 100)}%;transition:width 0.3s ease;"></div>
           </div>
         </div>`;
       }).join('');
@@ -10620,13 +10620,43 @@ function renderHistory() {
         : 'Approaching peak volume — recovery week is coming.';
 
       const _footNote = (!_hasWeekBoundary || !_anyActual)
-        ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.3px;margin-top:8px;">Complete a session this week to see your sets tracked here.</div>`
+        ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.3px;margin-top:10px;">Complete a session this week to see your sets tracked here.</div>`
         : '';
+
+      // ── Readiness ring ────────────────────────────────────────
+      const _ringMuscles = _muscleOrder.filter(m => _progMuscles.has(m));
+      const _totalActual = _ringMuscles.reduce((s, m) => s + (_wsets[m] || 0), 0);
+      const _totalTarget = _ringMuscles.reduce((s, m) => s + (getWeeklyVolumeTarget(m, _wn) || 1), 0);
+      const _overallPct  = _totalTarget > 0 ? Math.min(_totalActual / _totalTarget, 1) : 0;
+      const _overallPctInt = Math.round(_overallPct * 100);
+      const _ringR = 34;
+      const _ringCirc = +(2 * Math.PI * _ringR).toFixed(2);
+      const _ringOffset = +(_ringCirc * (1 - _overallPct)).toFixed(2);
+      const _ringColor = _overallPct >= 1 ? '#50c882' : _overallPct >= 0.8 ? '#f39c12' : '#e8404a';
+      const _ringMsg = _overallPct >= 1
+        ? "Weekly volume target hit — excellent work!"
+        : _overallPct >= 0.8
+        ? `You're ${_overallPctInt}% through this week's volume target — almost there.`
+        : `You're ${_overallPctInt}% through this week's volume target.`;
 
       const _volCard = mkCard();
       _volCard.innerHTML = `
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:8px;">THIS WEEK'S SETS</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.55;letter-spacing:0.3px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06);">${_weekMsg}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:14px;">THIS WEEK'S SETS</div>
+        <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:14px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08);">
+          <div style="position:relative;width:90px;height:90px;">
+            <svg width="90" height="90" viewBox="0 0 80 80" style="display:block;transform:rotate(-90deg);">
+              <circle cx="40" cy="40" r="${_ringR}" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="7"/>
+              <circle cx="40" cy="40" r="${_ringR}" fill="none" stroke="${_ringColor}" stroke-width="7"
+                stroke-dasharray="${_ringCirc}" stroke-dashoffset="${_ringOffset}"
+                stroke-linecap="round" style="transition:stroke-dashoffset 0.4s ease,stroke 0.4s ease;"/>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+              <div style="font-family:'Bebas Neue',cursive;font-size:23px;color:${_ringColor};line-height:1;letter-spacing:1px;">${_overallPctInt}%</div>
+            </div>
+          </div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:0.3px;margin-top:10px;text-align:center;line-height:1.4;">${_ringMsg}</div>
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(170,170,170,0.75);line-height:1.5;letter-spacing:0.3px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06);">${_weekMsg}</div>
         ${_rows}${_footNote}`;
       container.appendChild(_volCard);
     }
