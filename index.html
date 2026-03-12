@@ -10493,6 +10493,104 @@ function renderHistory() {
   ));
   container.appendChild(ageCard);
 
+  // ── 2b. THIS CYCLE ────────────────────────────────────────
+  {
+    const _wn = state.weekCount || 1;
+    const _cn = state.cycleCount || 1;
+    const _ds = (state.deloadWeekNum >= 1 && state.deloadWeekNum <= 8) ? state.deloadWeekNum : 7;
+    const _isDL = !!(state.isDeloadWeek || state.isRestWeek);
+
+    container.appendChild(mkLabel('THIS CYCLE'));
+
+    // ── Week dot row ──────────────────────────────────────
+    const _dotHTML = Array.from({length: 8}, (_, i) => {
+      const w = i + 1;
+      const _done = w < _wn, _cur = w === _wn, _dlot = w === _ds;
+      if (_dlot && _cur) {
+        return `<div style="width:28px;height:28px;border-radius:50%;background:${_isDL ? 'rgba(243,156,18,0.2)' : 'rgba(243,156,18,0.1)'};border:2px solid var(--warning);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:var(--warning);flex-shrink:0;">D</div>`;
+      } else if (_dlot && _done) {
+        return `<div style="width:28px;height:28px;border-radius:50%;background:rgba(243,156,18,0.08);border:1px solid rgba(243,156,18,0.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:rgba(243,156,18,0.45);flex-shrink:0;">D</div>`;
+      } else if (_dlot) {
+        return `<div style="width:28px;height:28px;border-radius:50%;background:rgba(243,156,18,0.05);border:1px dashed rgba(243,156,18,0.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:rgba(243,156,18,0.35);flex-shrink:0;">D</div>`;
+      } else if (_cur) {
+        return `<div style="width:28px;height:28px;border-radius:50%;background:var(--red);border:2px solid var(--red-text);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${w}</div>`;
+      } else if (_done) {
+        return `<div style="width:28px;height:28px;border-radius:50%;background:rgba(204,32,39,0.3);border:1px solid rgba(204,32,39,0.45);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="width:8px;height:8px;border-radius:50%;background:var(--red-text);opacity:0.8;"></div></div>`;
+      } else {
+        return `<div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.15);"></div></div>`;
+      }
+    }).join('');
+
+    const _trendText = _isDL
+      ? 'Recovery week — volume reduced so your body can absorb the work from this block.'
+      : _wn >= 6
+      ? 'Peak volume week — you\'re at or near the highest set count of this block.'
+      : _wn >= 4
+      ? 'Volume is ramping — each week adds a bit more until you peak at week 6.'
+      : _wn >= 2
+      ? 'Volume is building week over week toward its peak.'
+      : 'Block start — volume builds from here, peaking at week 6.';
+
+    const _cycleCard = mkCard();
+    _cycleCard.innerHTML = `
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--red-text);letter-spacing:2px;line-height:1;">WEEK ${_wn} OF 8</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">CYCLE ${_cn}</div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;justify-content:space-between;margin-bottom:12px;">${_dotHTML}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.5;letter-spacing:0.3px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">${_trendText}</div>`;
+    container.appendChild(_cycleCard);
+
+    // ── Weekly volume bars ────────────────────────────────
+    const _progMuscles = new Set();
+    (state.program || []).forEach(day => {
+      (day.exercises || []).forEach(ex => {
+        const m = MUSCLE_MAP[ex.id];
+        if (m && VOLUME_LANDMARKS[m]) _progMuscles.add(m);
+      });
+    });
+
+    if (_progMuscles.size > 0) {
+      const _wsets = getWeeklySetsByMuscle();
+      const _hasWeekBoundary = !!(state.weekStartTimestamp &&
+        (Date.now() - state.weekStartTimestamp) <= 8 * 24 * 60 * 60 * 1000);
+      const _anyActual = Object.values(_wsets).some(v => v > 0);
+
+      const _muscleOrder = ['CHEST','BACK','SHOULDERS','BICEPS','TRICEPS','QUADS','HAMSTRINGS','GLUTES','CALVES'];
+      const _rows = _muscleOrder.filter(m => _progMuscles.has(m)).map(muscle => {
+        const actual  = _wsets[muscle] || 0;
+        const target  = getWeeklyVolumeTarget(muscle, _wn) || 1;
+        const { mrv } = VOLUME_LANDMARKS[muscle];
+        const mcolor  = MUSCLE_COLORS[muscle] || 'var(--red-text)';
+        const pct     = Math.min(actual / target, 1);
+        const nearMRV = actual >= Math.round(mrv * 0.9);
+        const atTarget = actual >= target;
+        const barColor = nearMRV ? 'var(--warning)' : atTarget ? '#50c882' : mcolor;
+        const numColor = nearMRV ? 'var(--warning)' : atTarget ? '#50c882' : 'var(--gray-light)';
+        const label    = muscle.charAt(0) + muscle.slice(1).toLowerCase();
+        return `<div style="margin-bottom:9px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:${numColor};letter-spacing:0.4px;">${label}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;"><span style="color:${numColor};">${actual}</span><span style="color:rgba(255,255,255,0.25);"> / ${target} sets</span></div>
+          </div>
+          <div style="background:rgba(255,255,255,0.07);border-radius:3px;height:5px;overflow:hidden;">
+            <div style="height:100%;border-radius:3px;background:${barColor};width:${Math.round(pct * 100)}%;"></div>
+          </div>
+        </div>`;
+      }).join('');
+
+      const _footNote = (!_hasWeekBoundary || !_anyActual)
+        ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.3px;margin-top:6px;">Complete a session this week to see your sets tracked here.</div>`
+        : '';
+
+      const _volCard = mkCard();
+      _volCard.innerHTML = `
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:12px;">THIS WEEK'S SETS</div>
+        ${_rows}${_footNote}`;
+      container.appendChild(_volCard);
+    }
+  }
+
   // ── 3. YOUR LIFTS ─────────────────────────────────────────
   // Collect exercise IDs that have actual history
   const exIdsWithHistory = new Set();
