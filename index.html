@@ -3692,6 +3692,16 @@
         <input type="url" id="ex-info-link-input" placeholder="Paste a YouTube link…" class="set-input" style="width:100%; text-align:left; padding:10px 12px; font-size:16px; border-radius:10px; margin-bottom:8px;"/>
         <button onclick="saveExInfoLink()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:11px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; cursor:pointer;">SAVE LINK</button>
       </div>
+
+      <!-- Per-exercise weight adjustment — only shown when progressive overload is on -->
+      <div id="ex-info-weight-section" style="display:none; margin-top:12px; border-top:1px solid var(--dark3); padding-top:12px;">
+        <div style="font-size:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2px; color:var(--gray); margin-bottom:8px;">ADJUST STARTING WEIGHT</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="number" id="ex-info-weight-input" inputmode="decimal" placeholder="lbs" class="set-input" style="flex:1; text-align:left; padding:10px 12px;"/>
+          <button onclick="saveExInfoWeight()" style="background:var(--dark3); border:1px solid #555; color:var(--cream); border-radius:10px; padding:10px 16px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; cursor:pointer; white-space:nowrap; min-height:44px;">SET WEIGHT</button>
+        </div>
+        <div style="font-size:11px; color:var(--gray); margin-top:6px; line-height:1.5;">Sets the weight used for this exercise next session. The app will hold suggestions for 2 sessions while you adapt.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -4413,7 +4423,11 @@ function getMRVApproachingMuscles() {
 // Rule A: avg session RPE ≥ 9.5 (effectively RPE 10) for 2 consecutive same-day sessions.
 // Rule B: avg session RPE ≥ 9   for 3 consecutive same-day sessions.
 // Returns { rule, sessionCount, lastWeight, suggestedWeight } or null.
-function checkAutoregulation(exId, dayId) {
+//
+// raiseThreshold: when true (user manually increased weight), both rules are tightened to
+// require RPE ≥ 9.5 across 3 consecutive sessions.  This prevents a natural adaptation
+// phase after a manual increase from being misread as a pattern of struggle.
+function checkAutoregulation(exId, dayId, raiseThreshold) {
   const sessions = [...(state.history || [])]
     .reverse()
     .filter(h => h.dayId === dayId && h.sets?.[exId] && !h.isDeload);
@@ -4435,6 +4449,18 @@ function checkAutoregulation(exId, dayId) {
 
   const suggestedWeight = Math.max(5, Math.round((lastWeight - getIncrement('small')) / 2.5) * 2.5);
 
+  if (raiseThreshold) {
+    // Raised threshold during manual-increase adjustment period:
+    // require RPE ≥ 9.5 in all 3 of the most recent same-day sessions.
+    if (sessions.length >= 3) {
+      const rpe2 = sessAvgRpe(sessions[2]);
+      if (rpe2 !== null && rpe0 >= 9.5 && rpe1 >= 9.5 && rpe2 >= 9.5) {
+        return { rule: '3x10-adj', sessionCount: 3, lastWeight, suggestedWeight };
+      }
+    }
+    return null;
+  }
+
   // Rule A: RPE ~10 for 2 consecutive sessions
   if (rpe0 >= 9.5 && rpe1 >= 9.5) {
     return { rule: '2x10', sessionCount: 2, lastWeight, suggestedWeight };
@@ -4450,6 +4476,95 @@ function checkAutoregulation(exId, dayId) {
 
   return null;
 }
+
+// ── MANUAL WEIGHT ADJUSTMENT PERIOD ─────────────────────────────────────────
+// When a user completes a set at a weight different from what the app suggested,
+// the exercise enters a 2-session adjustment period (keyed to that day) during
+// which the algorithm holds its suggestions so it doesn't misread a normal
+// adaptation phase as either a struggle pattern or an easy-gains opportunity.
+//
+//  direction = 'up'  → suppress increase suggestions; raise autoregulation RPE threshold
+//  direction = 'down' → suppress both increase and decrease suggestions; skip autoregulation
+
+function _manualAdjKey(exId, dayId) { return `${exId}::${dayId}`; }
+
+function _getManualAdj(exId, dayId) {
+  return (state.manualWeightAdjustments || {})[_manualAdjKey(exId, dayId)] || null;
+}
+
+function _setManualAdj(exId, dayId, direction) {
+  if (!state.manualWeightAdjustments) state.manualWeightAdjustments = {};
+  state.manualWeightAdjustments[_manualAdjKey(exId, dayId)] = { direction, sessionsLeft: 2 };
+}
+
+// Decrements sessionsLeft for each exercise that was worked in a completed session.
+// Called at session end BEFORE committing new adjustments from the current session.
+function _tickManualAdjPeriods(dayId, exerciseIds) {
+  if (!state.manualWeightAdjustments) return;
+  exerciseIds.forEach(exId => {
+    const key = _manualAdjKey(exId, dayId);
+    if (!state.manualWeightAdjustments[key]) return;
+    state.manualWeightAdjustments[key].sessionsLeft--;
+    if (state.manualWeightAdjustments[key].sessionsLeft <= 0) {
+      delete state.manualWeightAdjustments[key];
+    }
+  });
+}
+
+// Returns the most-recently-logged weight for exId on dayId (from history).
+// Used as a fallback reference when getProgressiveWeight returned '' (no suggestion).
+function _getLastLoggedWeight(exId, dayId) {
+  const sessions = (state.history || []).slice().reverse()
+    .filter(h => h.dayId === dayId && h.sets?.[exId]);
+  if (!sessions.length) return 0;
+  const sets = (sessions[0].sets[exId] || []).filter(s => s.done && s.weight);
+  return sets.length ? (parseFloat(sets[sets.length - 1].weight) || 0) : 0;
+}
+
+// Recomputes the pending manual-adjustment direction from all currently-done sets
+// for exId in the active session.  Called on set-done AND set-undone so that
+// unchecking and re-checking always uses only the final confirmed values.
+//
+// A set counts as "fully complete" only when BOTH weight AND reps are logged.
+// If either field is missing the set is ignored for manual-adjustment purposes.
+function _updatePendingManualAdj(exId) {
+  if (!activeSession) return;
+  const dayId = activeSession.dayId;
+
+  // Only consider sets where both weight AND reps are logged
+  const fullySets = (activeSession.sets[exId] || []).filter(s =>
+    s.done &&
+    s.weight !== '' && parseFloat(s.weight) > 0 &&
+    s.reps !== '' && parseInt(s.reps) > 0
+  );
+
+  if (!activeSession.pendingManualAdj) activeSession.pendingManualAdj = {};
+
+  if (!fullySets.length) {
+    delete activeSession.pendingManualAdj[exId];
+    return;
+  }
+
+  // Reference: suggested weight from app, or fall back to most-recent logged weight
+  const suggestedRaw = activeSession.suggestedWeights?.[exId];
+  let refWeight = (suggestedRaw !== undefined && suggestedRaw !== '') ? (parseFloat(suggestedRaw) || 0) : 0;
+  if (!refWeight) refWeight = _getLastLoggedWeight(exId, dayId);
+  if (!refWeight) return;
+
+  // Use the LAST fully-complete set's weight as the representative weight
+  const usedWeight = parseFloat(fullySets[fullySets.length - 1].weight) || 0;
+  if (!usedWeight) return;
+
+  if (usedWeight === refWeight) {
+    delete activeSession.pendingManualAdj[exId];
+  } else {
+    activeSession.pendingManualAdj[exId] = {
+      direction: usedWeight > refWeight ? 'up' : 'down',
+      dayId
+    };
+  }
+}
+// ── END MANUAL WEIGHT ADJUSTMENT PERIOD ──────────────────────────────────────
 
 // Returns weekly set counts per muscle group based on sessions since the start of
 // the current training week (state.weekStartTimestamp) plus any active session.
@@ -6721,6 +6836,29 @@ function getProgressiveWeight(exId, dayId) {
     if (_w0 > 0 && _w1 > 0 && _w0 < _w1) consecutiveReductions = 1;
   }
 
+  // ── Manual adjustment period ─────────────────────────────────────────────
+  // If the user completed a set at a manually-chosen weight in a recent session,
+  // hold the algorithm's suggestions for the next 2 same-day sessions so the
+  // adaptation phase isn't misread as either a progress signal or a struggle.
+  const _manualAdj = _getManualAdj(exId, dayId);
+  if (_manualAdj) {
+    if (_manualAdj.direction === 'up') {
+      // Suppress increase suggestions only; downward autoregulation still applies
+      // (at a raised threshold — see checkAutoregulation call below).
+      if (newWeight > lastWeight) {
+        newWeight = lastWeight;
+        reason = `Adj period (${_manualAdj.sessionsLeft} session${_manualAdj.sessionsLeft !== 1 ? 's' : ''} left) — holding after manual increase`;
+      }
+    } else {
+      // 'down': suppress BOTH increases and further decreases.
+      if (newWeight !== lastWeight) {
+        newWeight = lastWeight;
+        reason = `Adj period (${_manualAdj.sessionsLeft} session${_manualAdj.sessionsLeft !== 1 ? 's' : ''} left) — holding after manual decrease`;
+      }
+    }
+  }
+  // ── End manual adjustment period ─────────────────────────────────────────
+
   if (!activeSession.overloadReasons) activeSession.overloadReasons = {};
   activeSession.overloadReasons[exId] = {
     lastWeight, newWeight,
@@ -6729,12 +6867,19 @@ function getProgressiveWeight(exId, dayId) {
     avgReps: Math.round(avgReps),
     useTrend,
     sessionCount: sessions.length,
-    consecutiveReductions
+    consecutiveReductions,
+    inAdjustmentPeriod: _manualAdj
+      ? { direction: _manualAdj.direction, sessionsLeft: _manualAdj.sessionsLeft }
+      : null
   };
 
   // Autoregulation check — if consecutive high-RPE sessions detected, hold the weight
   // and let the user confirm the reduction rather than auto-filling it.
-  const _ar = checkAutoregulation(exId, dayId);
+  // Skip autoregulation entirely during a 'down' adjustment period (user already reduced).
+  // During a 'up' adjustment period, use a raised RPE threshold.
+  const _skipAutoreg = _manualAdj?.direction === 'down';
+  const _raiseAutoregThreshold = _manualAdj?.direction === 'up';
+  const _ar = _skipAutoreg ? null : checkAutoregulation(exId, dayId, _raiseAutoregThreshold);
   if (_ar && !activeSession.autoregActed?.[exId]) {
     activeSession.overloadReasons[exId].autoregSuggestion = _ar;
     activeSession.overloadReasons[exId].changed = false;
@@ -6776,6 +6921,26 @@ function buildOverloadHint(exId) {
         <button onclick="_autoregAccept('${exId}', ${ar.suggestedWeight})" style="background:rgba(243,156,18,0.18); border:1px solid rgba(243,156,18,0.4); border-radius:8px; color:var(--warning); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; padding:10px 14px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">REDUCE TO ${ar.suggestedWeight} LBS</button>
         <button onclick="_autoregDismiss('${exId}')" style="background:transparent; border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.5px; padding:10px 14px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">KEEP CURRENT</button>
       </div>
+    </div>`;
+  }
+
+  // Adjustment period notice — shown when the algorithm is holding suggestions after
+  // a manual weight change.  Replaces the normal hint card with a distinct notice so
+  // the user knows the pause is intentional and not a data gap.
+  if (info.inAdjustmentPeriod && !info.changed) {
+    const { direction, sessionsLeft } = info.inAdjustmentPeriod;
+    const _adjLabel = direction === 'up'
+      ? `You increased weight manually last session. Holding increase suggestions for ${sessionsLeft} more session${sessionsLeft !== 1 ? 's' : ''} while you adapt.`
+      : `You decreased weight manually last session. Holding all suggestions for ${sessionsLeft} more session${sessionsLeft !== 1 ? 's' : ''} — no further push up or down.`;
+    const _adjIcon = direction === 'up'
+      ? `<polyline points="18 15 12 9 6 15"/>`
+      : `<polyline points="18 9 12 15 6 9"/>`;
+    return `<div style="background:rgba(100,149,237,0.1); border:1px solid rgba(100,149,237,0.35); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="cornflowerblue" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${_adjIcon}</svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:cornflowerblue;">ADJUSTMENT PERIOD</div>
+      </div>
+      <div style="font-size:11px; color:var(--gray-light); padding-left:23px; line-height:1.6;">${_adjLabel}</div>
     </div>`;
   }
 
@@ -6925,8 +7090,11 @@ function startSession(dayId) {
     exerciseOrder: day.exercises.map(e => e.id),
     bonusExercises: []
   };
+  activeSession.suggestedWeights = {};
   day.exercises.forEach(ex => {
     const suggested = getProgressiveWeight(ex.id, day.id);
+    // Store the raw suggested value (numeric or empty) so toggleSetDone() can detect manual changes
+    activeSession.suggestedWeights[ex.id] = parseFloat(suggested) || 0;
     activeSession.sets[ex.id] = Array.from({length: getGoalSets(ex.id, ex.sets)}, () => ({ weight: suggested, reps: '', rpe: '', done: false }));
   });
 
@@ -7636,6 +7804,10 @@ function toggleSetDone(exId, setIndex) {
       if (rInput && rInput.value !== '') set.reps = rInput.value;
     }
     checkForPR(exId, set);
+    // Detect manual weight change: a set is fully complete only when both weight
+    // and reps are logged.  _updatePendingManualAdj recomputes from ALL done sets
+    // so unchecking+reweighting always uses the latest confirmed values.
+    _updatePendingManualAdj(exId);
 
     // RPE nudge — show inline row if RPE not selected
     if (!set.rpe) {
@@ -7649,6 +7821,8 @@ function toggleSetDone(exId, setIndex) {
     if (badge) badge.remove();
     _removeRpeNudge(exId, setIndex);
     recalcPRForExercise(exId);
+    // Recompute pending adjustment — the unchecked set may have been the representative one
+    _updatePendingManualAdj(exId);
   }
 
   const day = state.program.find(d => d.id === activeSession.dayId);
@@ -8581,8 +8755,54 @@ function openExInfo(exId) {
   document.getElementById('ex-info-link-edit').style.display = 'none';
   document.getElementById('ex-info-link-input').value = ytUrl;
 
+  // Weight adjustment section — only shown when progressive overload is enabled
+  const _weightSection = document.getElementById('ex-info-weight-section');
+  if (_weightSection) {
+    if (state.progressiveOverload !== false) {
+      _weightSection.style.display = '';
+      // Pre-fill with current starting weight or most-recent logged weight
+      const _curW = state.startingWeights?.[exId] || 0;
+      const _weightInput = document.getElementById('ex-info-weight-input');
+      if (_weightInput) _weightInput.value = _curW > 0 ? _curW : '';
+    } else {
+      _weightSection.style.display = 'none';
+    }
+  }
+
   lockBodyScroll();
   document.getElementById('ex-info-modal').classList.add('open');
+}
+
+function saveExInfoWeight() {
+  const exId = _exInfoCurrentId;
+  if (!exId) return;
+  const input = document.getElementById('ex-info-weight-input');
+  const newW = parseFloat(input?.value);
+  if (!newW || newW <= 0) { showToast('Enter a valid weight', 'error'); return; }
+  const rounded = Math.max(5, Math.round(newW / 2.5) * 2.5);
+
+  // Determine which dayId(s) this exercise appears on so the adjustment period is
+  // recorded against the right day key (same logic getProgressiveWeight uses).
+  const dayIds = (state.program || [])
+    .filter(d => d.exercises.some(e => e.id === exId))
+    .map(d => d.id);
+
+  // Record old weight for direction comparison
+  const oldW = state.startingWeights?.[exId] || 0;
+  const direction = oldW > 0 ? (rounded > oldW ? 'up' : rounded < oldW ? 'down' : null) : null;
+
+  // Update starting weight
+  if (!state.startingWeights) state.startingWeights = {};
+  state.startingWeights[exId] = rounded;
+
+  // Flag adjustment period on all days where this exercise appears
+  if (direction) {
+    dayIds.forEach(dId => _setManualAdj(exId, dId, direction));
+  }
+
+  saveState();
+  closeExInfoModal();
+  showToast(`Weight set to ${rounded} lbs ✓`);
 }
 
 function closeExInfoModal() {
@@ -9012,6 +9232,20 @@ function finalizeEndSession(save) {
     state.history.push(entry);
     state.totalSessions++;
     state.inactivityPromptShown = false;
+
+    // ── Manual weight adjustment period bookkeeping ───────────────────────
+    // 1. Tick down any adjustment periods already in progress for this day's
+    //    exercises (this session counts against the 2-session window).
+    const _adjExIds = Object.keys(activeSession.sets || {});
+    _tickManualAdjPeriods(activeSession.dayId, _adjExIds);
+    // 2. Commit any new manual-adjustment signals detected during this session.
+    //    These take effect from the NEXT same-day session onward.
+    if (activeSession.pendingManualAdj) {
+      Object.entries(activeSession.pendingManualAdj).forEach(([exId, { direction, dayId }]) => {
+        _setManualAdj(exId, dayId, direction);
+      });
+    }
+    // ── End manual weight adjustment period bookkeeping ───────────────────
 
     // Drop bonus exercises that were only "this cycle" and the cycle just ended (handled at cycle rollover)
     // For exercises added with cycle persistence, they are already in state.program with bonusDropsAfterCycle
