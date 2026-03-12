@@ -10567,20 +10567,27 @@ function renderHistory() {
 
       const _muscleOrder = ['CHEST','BACK','SHOULDERS','BICEPS','TRICEPS','QUADS','HAMSTRINGS','GLUTES','CALVES'];
       const _rows = _muscleOrder.filter(m => _progMuscles.has(m)).map(muscle => {
-        const actual  = _wsets[muscle] || 0;
-        const target  = getWeeklyVolumeTarget(muscle, _wn) || 1;
-        const { mrv } = VOLUME_LANDMARKS[muscle];
-        const mcolor  = MUSCLE_COLORS[muscle] || 'var(--red-text)';
-        const pct     = Math.min(actual / target, 1);
-        const nearMRV = actual >= Math.round(mrv * 0.9);
+        const actual   = _wsets[muscle] || 0;
+        const notDone  = actual === 0;
+        const target   = getWeeklyVolumeTarget(muscle, _wn) || 1;
+        const { mrv }  = VOLUME_LANDMARKS[muscle];
+        const mcolor   = MUSCLE_COLORS[muscle] || 'var(--red-text)';
+        const pct      = Math.min(actual / target, 1);
+        const nearMRV  = actual >= Math.round(mrv * 0.9);
         const atTarget = actual >= target;
-        const barColor = nearMRV ? 'var(--warning)' : atTarget ? '#50c882' : mcolor;
-        const numColor = nearMRV ? 'var(--warning)' : atTarget ? '#50c882' : 'var(--gray-light)';
-        const label    = muscle.charAt(0) + muscle.slice(1).toLowerCase();
+        const barColor = notDone  ? 'rgba(255,255,255,0.07)'
+                       : nearMRV  ? 'var(--warning)'
+                       : atTarget ? '#50c882'
+                       : mcolor;
+        const nameColor = notDone ? 'var(--gray)' : nearMRV ? 'var(--warning)' : atTarget ? '#50c882' : 'var(--gray-light)';
+        const label     = muscle.charAt(0) + muscle.slice(1).toLowerCase();
+        const rightSide = notDone
+          ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:0.5px;font-style:italic;">not trained yet</span>`
+          : `<span style="color:${nameColor};">${actual}</span><span style="color:rgba(255,255,255,0.25);"> / ${target} sets</span>`;
         return `<div style="margin-bottom:9px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:${numColor};letter-spacing:0.4px;">${label}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;"><span style="color:${numColor};">${actual}</span><span style="color:rgba(255,255,255,0.25);"> / ${target} sets</span></div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:${nameColor};letter-spacing:0.4px;">${label}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;">${rightSide}</div>
           </div>
           <div style="background:rgba(255,255,255,0.07);border-radius:3px;height:5px;overflow:hidden;">
             <div style="height:100%;border-radius:3px;background:${barColor};width:${Math.round(pct * 100)}%;"></div>
@@ -10588,13 +10595,22 @@ function renderHistory() {
         </div>`;
       }).join('');
 
+      const _weekMsg = (state.isDeloadWeek || state.isRestWeek || _wn === 7)
+        ? 'Recovery week — let your body adapt and rebuild.'
+        : _wn <= 2
+        ? 'Building your base — volume increases each week.'
+        : _wn <= 4
+        ? 'Volume is building week over week toward its peak.'
+        : 'Approaching peak volume — recovery week is coming.';
+
       const _footNote = (!_hasWeekBoundary || !_anyActual)
         ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.3px;margin-top:6px;">Complete a session this week to see your sets tracked here.</div>`
         : '';
 
       const _volCard = mkCard();
       _volCard.innerHTML = `
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:12px;">THIS WEEK'S SETS</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:8px;">THIS WEEK'S SETS</div>
+        <div style="font-family:'Barlow',sans-serif;font-size:12px;color:var(--gray);line-height:1.4;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06);">${_weekMsg}</div>
         ${_rows}${_footNote}`;
       container.appendChild(_volCard);
     }
