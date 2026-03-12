@@ -11344,7 +11344,7 @@ function renderHistory() {
     const dotBorder = reached ? 'var(--red-text)' : 'rgba(255,255,255,0.22)';
     const dotBg     = reached ? 'rgba(204,32,39,0.28)' : 'transparent';
     const dotGlow   = reached ? '0 0 8px rgba(204,32,39,0.55)' : 'none';
-    const lblColor  = reached ? 'rgba(215,210,202,0.93)' : 'rgba(255,255,255,0.36)';
+    const lblColor  = reached ? 'rgba(245,230,200,0.92)' : 'rgba(245,230,200,0.30)';
     return `<div style="display:flex;flex-direction:column;align-items:center;">
       <div style="width:13px;height:13px;border-radius:50%;background:${dotBg};border:2px solid ${dotBorder};box-shadow:${dotGlow};position:relative;z-index:1;"></div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:${lblColor};letter-spacing:0.5px;margin-top:7px;white-space:nowrap;">${n.label}</div>
@@ -11379,7 +11379,7 @@ function renderHistory() {
     </div>
 
     <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:4px;line-height:1;">
-      <div style="font-family:'Bebas Neue',cursive;font-size:68px;color:var(--cream);letter-spacing:2px;line-height:0.9;">${_ageBigNum}</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:68px;color:#F5E6C8;letter-spacing:2px;line-height:0.9;">${_ageBigNum}</div>
       <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red-text);letter-spacing:2px;padding-bottom:8px;">${_ageBigUnit}</div>
     </div>
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(200,195,187,0.90);letter-spacing:0.3px;margin-bottom:22px;">${_ageBigSub}</div>
@@ -11391,7 +11391,7 @@ function renderHistory() {
       <div style="display:flex;justify-content:space-between;">${_tNodeHTML}</div>
     </div>
 
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(215,210,202,0.93);line-height:1.70;margin-bottom:14px;">${_agePhaseMsg}</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(245,230,200,0.90);line-height:1.70;margin-bottom:14px;">${_agePhaseMsg}</div>
 
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(185,180,175,0.88);line-height:1.65;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
       Training age is the one metric no shortcut can replicate. Strength ceiling, recovery speed, and muscle density all scale with time consistently spent under the bar.
