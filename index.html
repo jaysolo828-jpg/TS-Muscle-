@@ -13067,33 +13067,92 @@ async function shareStrengthScoreCard() {
   if (_cur) _lines.push(_cur);
   const _descLines  = _lines.slice(0, 3);
   const _descBlockH = _descLines.length * _descLineH;
-  const _descStartY = botTop + Math.round(botH * 0.18) + _descLineH / 2;
+  const _descStartY = botTop + Math.round(botH * 0.14) + _descLineH / 2;
   _descLines.forEach((ln, i) => ctx.fillText(ln, W / 2, _descStartY + i * _descLineH));
 
   // Hairline divider below description
-  const _hairY = _descStartY + _descBlockH + Math.round(botH * 0.10);
+  const _hairY = _descStartY + _descBlockH + Math.round(botH * 0.08);
   ctx.save();
   ctx.strokeStyle = 'rgba(255,255,255,0.12)';
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(PAD, _hairY); ctx.lineTo(W - PAD, _hairY); ctx.stroke();
   ctx.restore();
 
-  // Display name — matches generateAndShareCard colour exactly
-  const name = (state.displayName || state.profile?.name || '').trim().toUpperCase();
-  if (name) {
-    ctx.font = `700 ${Math.round(34 * BS)}px 'Barlow Condensed', Arial`;
+  // ── Logo + brand block — matches generateAndShareCard exactly ────────────
+  const logo = new Image();
+  logo.crossOrigin = 'anonymous';
+  logo.src = './icon.png';
+  await new Promise(resolve => {
+    if (logo.complete && logo.naturalWidth > 0) { resolve(); return; }
+    logo.onload = resolve;
+    logo.onerror = resolve;
+    setTimeout(resolve, 1200);
+  });
+
+  const LOGO_SIZE   = Math.round(96  * BS);
+  const LOGO_GAP    = Math.round(20  * BS);
+  const NAME_SZ     = 64;
+  const URL_SZ      = 30;
+  const LINE_GAP    = Math.round(10  * BS);
+
+  ctx.font = `${Math.round(NAME_SZ * BS)}px 'Bebas Neue', 'Arial Narrow', Arial`;
+  const _brandNameW = ctx.measureText('T&S MUSCLE').width;
+  ctx.font = `600 ${Math.round(URL_SZ * BS)}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+  const _brandUrlW  = ctx.measureText('therapyandsneakers.org').width;
+  const _textBlockW  = Math.max(_brandNameW, _brandUrlW);
+  const _brandBlockW = LOGO_SIZE + LOGO_GAP + _textBlockW;
+  const _blockX      = Math.round((W - _brandBlockW) / 2);
+
+  const _brandCY = H - 310;   // same anchor logic as generateAndShareCard
+  const _logoX   = _blockX;
+  const _logoY   = _brandCY - LOGO_SIZE / 2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(_logoX + LOGO_SIZE / 2, _logoY + LOGO_SIZE / 2, LOGO_SIZE / 2, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  if (logo.naturalWidth > 0) {
+    ctx.drawImage(logo, _logoX, _logoY, LOGO_SIZE, LOGO_SIZE);
+  } else {
+    ctx.fillStyle = '#CC2027';
+    ctx.fillRect(_logoX, _logoY, LOGO_SIZE, LOGO_SIZE);
+    ctx.font = `${Math.round(42 * BS)}px 'Bebas Neue', Arial`;
+    ctx.fillStyle = '#F5E6C8';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('TS', _logoX + LOGO_SIZE / 2, _logoY + LOGO_SIZE / 2);
+  }
+  ctx.restore();
+
+  const _approxNameH  = NAME_SZ * 0.72 * BS;
+  const _approxUrlH   = URL_SZ  * 0.72 * BS;
+  const _totalTextH   = _approxNameH + LINE_GAP + _approxUrlH;
+  const _textX        = _blockX + LOGO_SIZE + LOGO_GAP;
+  const _nameLineY    = _brandCY - _totalTextH / 2 + _approxNameH / 2;
+  const _urlLineY     = _nameLineY + _approxNameH + LINE_GAP;
+
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.font = `${Math.round(NAME_SZ * BS)}px 'Bebas Neue', 'Arial Narrow', Arial`;
+  ctx.fillStyle = '#F5E6C8';
+  ctx.fillText('T&S MUSCLE', _textX, _nameLineY);
+  ctx.font = `600 ${Math.round(URL_SZ * BS)}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+  ctx.fillStyle = '#aaaaaa';
+  ctx.fillText('therapyandsneakers.org', _textX, _urlLineY);
+
+  // Display name — fixed position matching generateAndShareCard
+  const displayName = (state.displayName || state.profile?.name || '').trim();
+  if (displayName) {
+    ctx.font = `600 ${Math.round(34 * BS)}px 'Barlow Condensed', Arial`;
     ctx.fillStyle = 'rgba(245,230,200,0.88)';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(name, W / 2, H - Math.round(148 * (botH / 780)));
+    ctx.fillText(displayName.toUpperCase(), W / 2, H - 148);
   }
 
-  // Bottom red accent + brand — same opacity as other share cards
-  ctx.fillStyle = '#CC2027';
-  ctx.fillRect(PAD, H - 88, W - PAD * 2, 4);
-  ctx.font = `600 ${Math.round(26 * BS)}px 'Barlow Condensed', Arial`;
-  ctx.fillStyle = 'rgba(160,160,160,0.90)';
+  // Tagline pinned to bottom — matches generateAndShareCard exactly
+  ctx.font = `600 ${Math.round(30 * BS)}px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(160,160,160,0.9)';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('THERAPY & SNEAKERS · TSMUSCLE.APP', W / 2, H - 46);
+  ctx.fillText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - 60);
 
   canvas.toBlob(async blob => {
     const file = new File([blob], 'ts-strength-score.png', { type: 'image/png' });
