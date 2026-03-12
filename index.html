@@ -10758,7 +10758,93 @@ function renderHistory() {
     }
   }
 
-  // ── 5. YEAR IN REVIEW ─────────────────────────────────────
+  // ── 5. MOOD LIFT ──────────────────────────────────────────
+  {
+    const _moodLog = state.moodLog || [];
+    if (_moodLog.length > 0) {
+      // Build byDay — newest-first log, first entry per timing per day wins
+      const _byDay = {};
+      _moodLog.forEach(e => {
+        const day = _localDateKey(e.date);
+        if (!_byDay[day]) _byDay[day] = {};
+        if (!_byDay[day][e.timing]) _byDay[day][e.timing] = e;
+      });
+      // Days with both pre + post, sorted oldest → newest
+      const _lifts = Object.entries(_byDay)
+        .filter(([, d]) => d.pre && d.post)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([day, d]) => ({ day, lift: d.post.value - d.pre.value, pre: d.pre, post: d.post }));
+      const _avgLift = _lifts.length
+        ? _lifts.reduce((s, l) => s + l.lift, 0) / _lifts.length
+        : null;
+
+      container.appendChild(mkLabel('MOOD LIFT'));
+      const _moodCard = mkCard();
+
+      if (_lifts.length < 2) {
+        _moodCard.innerHTML = `
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div style="font-size:26px;flex-shrink:0;">🧠</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.55;">
+              Log your mood before <em>and</em> after a couple of sessions to see how much training is shifting it.
+              ${_lifts.length === 1 ? `<br><br>You have 1 session so far — one more to go.` : ''}
+            </div>
+          </div>`;
+      } else {
+        const _avg  = parseFloat(_avgLift.toFixed(1));
+        const _col  = _avg > 0 ? '#4caf50' : _avg < 0 ? 'var(--red)' : 'var(--gray)';
+        const _arr  = _avg > 0 ? '↑' : _avg < 0 ? '↓' : '→';
+        const _disp = _avg > 0 ? `+${_avg.toFixed(1)}` : `${_avg.toFixed(1)}`;
+        const _sub  = _avg > 0 ? 'avg mood boost per session'
+                    : _avg < 0 ? 'avg mood drop per session'
+                    : 'no average change';
+
+        // Bar chart — up to 8 most recent sessions
+        const _recent  = _lifts.slice(-8);
+        const _HALF    = 28;
+        const _PX      = _HALF / 4;
+        const _bars = _recent.map(s => {
+          const l    = s.lift;
+          const col  = l > 0 ? '#4caf50' : l < 0 ? 'var(--red)' : '#777';
+          const barH = Math.min(Math.abs(l) * _PX, _HALF);
+          const lbl  = new Date(s.day + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          return `
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;min-width:0;">
+              <div style="font-size:10px;color:${l > 0 ? col : 'transparent'};margin-bottom:2px;font-family:'Barlow Condensed',sans-serif;">${l > 0 ? '+' + l : '·'}</div>
+              <div style="width:100%;height:${_HALF}px;display:flex;align-items:flex-end;justify-content:center;">
+                ${l > 0 ? `<div style="width:55%;height:${barH}px;background:${col};border-radius:3px 3px 0 0;"></div>` : ''}
+              </div>
+              <div style="width:100%;height:1px;background:#444;"></div>
+              <div style="width:100%;height:${_HALF}px;display:flex;align-items:flex-start;justify-content:center;">
+                ${l < 0 ? `<div style="width:55%;height:${barH}px;background:${col};border-radius:0 0 3px 3px;"></div>` : ''}
+              </div>
+              <div style="font-size:10px;color:${l < 0 ? col : 'transparent'};margin-top:2px;font-family:'Barlow Condensed',sans-serif;">${l < 0 ? l : '·'}</div>
+              <div style="font-size:10px;color:var(--gray);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;font-family:'Barlow Condensed',sans-serif;">${lbl}</div>
+            </div>`;
+        }).join('');
+
+        const _last = _lifts[_lifts.length - 1];
+        _moodCard.innerHTML = `
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+            <div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:40px;color:${_col};line-height:1;">${_arr} ${_disp}</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;margin-top:3px;">${_sub}</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:1px;">across ${_lifts.length} session${_lifts.length !== 1 ? 's' : ''} with pre + post logs</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;margin-left:12px;">
+              <div style="font-size:10px;color:var(--gray);letter-spacing:1px;margin-bottom:5px;">LAST SESSION</div>
+              <div style="font-size:24px;line-height:1;">${_last.pre.emoji} → ${_last.post.emoji}</div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:${_last.lift > 0 ? '#4caf50' : _last.lift < 0 ? 'var(--red)' : 'var(--gray)'};margin-top:2px;">${_last.lift > 0 ? '+' : ''}${_last.lift}</div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">SESSION LIFTS</div>
+          <div style="display:flex;gap:4px;">${_bars}</div>`;
+      }
+      container.appendChild(_moodCard);
+    }
+  }
+
+  // ── 6. YEAR IN REVIEW ─────────────────────────────────────
   const yr = new Date().getFullYear();
   const yrEntries = hist.filter(e => new Date(e.date).getFullYear() === yr);
   if (yrEntries.length >= 10) {
@@ -10815,7 +10901,7 @@ function renderHistory() {
     container.appendChild(yrCard);
   }
 
-  // ── 6. CYCLE RECAP ────────────────────────────────────────
+  // ── 7. CYCLE RECAP ────────────────────────────────────────
   const cycleHistory = state.cycleHistory || [];
   if (cycleHistory.length > 0) {
     container.appendChild(mkLabel('CYCLE RECAP'));
@@ -10890,12 +10976,12 @@ function renderHistory() {
     container.appendChild(cycleSection);
   }
 
-  // ── 7. PERSONAL RECORDS ───────────────────────────────────
+  // ── 8. PERSONAL RECORDS ───────────────────────────────────
   renderPRBoard();
   const prBoard = document.getElementById('pr-board');
   if (prBoard) container.appendChild(prBoard);
 
-  // ── 8. SESSION LOG ────────────────────────────────────────
+  // ── 9. SESSION LOG ────────────────────────────────────────
   if (hist.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
