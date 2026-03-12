@@ -1715,9 +1715,11 @@
     transition: all 0.2s;
   }
 
-  .week-dot.deload { background: var(--warning); border-color: var(--warning); color: var(--black); }
+  .week-dot.deload     { background: var(--warning); border-color: var(--warning); color: var(--black); }
+  .week-dot.deload-mrv { background: var(--red); border-color: var(--red-text); color: var(--white); }
   .week-dot.done { background: var(--red); border-color: var(--red-text); color: var(--white); }
-  .week-dot.current-deload { border: 2px solid var(--warning); color: var(--warning); }
+  .week-dot.current-deload     { border: 2px solid var(--warning); color: var(--warning); }
+  .week-dot.current-deload-mrv { border: 2px solid var(--red-text); color: var(--red-text); }
   .week-dot.final { border: 2px solid #777; color: var(--gray-light); font-size: 12px; }
   .week-dot.final.done { background: var(--red); border-color: var(--red-text); color: var(--white); font-size: 14px; }
 
@@ -5319,16 +5321,16 @@ function renderHome() {
     const _isEarly   = _dWeekNum < 7;
     let _dTitle, _dSub;
     if (_dReason === 'mrv') {
-      _dTitle = _isEarly ? `EARLY DELOAD — WEEK ${_dWeekNum}` : 'DELOAD WEEK ACTIVE';
-      _dSub   = `${_dMuscles.length ? `<strong style="color:var(--cream);">${_dMuscles.join(', ')}</strong> hit their limit this week.` : 'Your muscles hit their limit this week.'} Weights are at 75% — they restore automatically when this week ends.`;
+      _dTitle = _isEarly ? `DELOAD ACTIVE — WEEK ${_dWeekNum}` : 'DELOAD ACTIVE';
+      _dSub   = `${_dMuscles.length ? `Your <strong style="color:var(--cream);">${_dMuscles.join(' and ')}</strong> ${_dMuscles.length === 1 ? 'was' : 'were'} close to this week's limit.` : 'Your muscles were close to this week\'s limit.'} Weights are at 75% — they restore automatically when this week ends.`;
     } else if (_dReason === 'plateau') {
-      _dTitle = _isEarly ? `EARLY DELOAD — WEEK ${_dWeekNum}` : 'DELOAD WEEK ACTIVE';
-      _dSub   = 'Your weights have been stalling. A lighter week clears the built-up fatigue and gets things moving again.';
+      _dTitle = _isEarly ? `DELOAD ACTIVE — WEEK ${_dWeekNum}` : 'DELOAD ACTIVE';
+      _dSub   = 'Your weights were stalling. A lighter week clears the built-up fatigue and gets things moving again.';
     } else if (_dReason === 'longrun') {
-      _dTitle = _isEarly ? `EARLY DELOAD — WEEK ${_dWeekNum}` : 'DELOAD WEEK ACTIVE';
+      _dTitle = _isEarly ? `DELOAD ACTIVE — WEEK ${_dWeekNum}` : 'DELOAD ACTIVE';
       _dSub   = `You've been training hard for ${state.weeksSinceDeload || 5}+ weeks without a break. Time to let it absorb.`;
     } else {
-      _dTitle = 'DELOAD WEEK ACTIVE';
+      _dTitle = 'DELOAD ACTIVE';
       _dSub   = 'Planned lighter week. Weights are at 75% — they restore automatically when this week ends.';
     }
     // ── Session progress pips ────────────────────────────────────────────
@@ -5377,9 +5379,15 @@ function renderHome() {
     }
   } else if (deloadBanner && _showMRVBanner) {
     deloadBanner.style.display = 'block';
-    const _mrvMuscleNames = _mrvApproaching.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase()).join(', ');
-    deloadBanner.querySelector('.deload-title').textContent = 'TIME TO BACK OFF';
-    deloadBanner.querySelector('.deload-text').innerHTML = `<strong style="color:var(--cream);">${_mrvMuscleNames}</strong> ${_mrvApproaching.length === 1 ? 'has' : 'have'} hit their limit for this week. A lighter week now means better results next block. Tap to take a recovery week.` + _skipBtn;
+    const _mrvMuscleNames = _mrvApproaching.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase());
+    const _mrvTitle = _mrvMuscleNames.length === 1
+      ? `YOUR ${_mrvMuscleNames[0].toUpperCase()} NEEDS A BREAK`
+      : 'TIME TO BACK OFF';
+    const _mrvBody = _mrvMuscleNames.length === 1
+      ? `Your <strong style="color:var(--cream);">${_mrvMuscleNames[0]}</strong> is close to its recovery limit for this week. A lighter week now means better results next block. Tap to take a recovery week.`
+      : `Your <strong style="color:var(--cream);">${_mrvMuscleNames.slice(0,-1).join(', ')} and ${_mrvMuscleNames[_mrvMuscleNames.length-1]}</strong> are close to their recovery limit for this week. A lighter week now means better results next block. Tap to take a recovery week.`;
+    deloadBanner.querySelector('.deload-title').textContent = _mrvTitle;
+    deloadBanner.querySelector('.deload-text').innerHTML = _mrvBody + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner && _showPlateauBanner) {
@@ -5431,24 +5439,24 @@ function renderHome() {
     const isWeek7NoLongerDeload = w === 7 && _earlyDeload; // week 7 is just a normal week now
 
     if (isDeloadDot) {
-      dot.textContent = 'D';
-      // Active deload: user is on this exact week AND deload is running
+      dot.textContent = 'R';
+      // Active recovery: user is on this exact week AND deload/rest is running
       const isActiveDeload = isCurrent && (state.isDeloadWeek || state.isRestWeek);
       if (isActiveDeload) {
-        dot.classList.add('current-deload'); // amber border, pulsing
+        dot.classList.add(_earlyDeload ? 'current-deload-mrv' : 'current-deload');
       } else if (isDone || (!isCurrent && state.deloadWeekNum)) {
-        // Deload week has been passed — mark it done
+        // Recovery week has been passed — mark it done
         dot.classList.add('done');
       } else {
-        dot.classList.add('deload'); // future planned slot — amber fill preview
+        dot.classList.add(_earlyDeload ? 'deload-mrv' : 'deload'); // red = MRV-triggered, amber = scheduled
       }
-      if (_earlyDeload) dot.title = `Early deload — week ${_deloadSlot}`;
+      dot.title = _earlyDeload ? `Recovery week — week ${_deloadSlot} (muscle load)` : 'Recovery week — week 7 (scheduled)';
     } else if (isWeek7NoLongerDeload) {
       // The scheduled slot was bypassed — week 7 is now a normal training week
       dot.textContent = '7';
       if (isDone)        dot.classList.add('done');
       else if (isCurrent){ dot.style.borderColor = 'var(--red)'; dot.style.boxShadow = '0 0 8px rgba(204,32,39,0.55)'; }
-      dot.title = 'Week 7 — deload happened earlier this cycle';
+      dot.title = 'Week 7 — recovery happened earlier this cycle';
     } else if (w === 8) {
       dot.textContent = '8';
       dot.classList.add('final');
@@ -5479,8 +5487,8 @@ function renderHome() {
     dotsEl.parentNode.insertBefore(dotsLegend, dotsEl.nextSibling);
   }
   dotsLegend.textContent = _earlyDeload
-    ? `D = EARLY DELOAD (WEEK ${_deloadSlot})`
-    : 'D = WEEK 7 RECOVERY';
+    ? `R = RECOVERY WEEK ${_deloadSlot} · MUSCLE LOAD`
+    : 'R = WEEK 7 · PLANNED RECOVERY';
 
   // Day cards — respect training days limit
   const container = document.getElementById('day-cards');
@@ -6245,28 +6253,28 @@ function openDeloadModal() {
   const subEl   = document.getElementById('deload-modal-sub');
   const iconEl  = document.getElementById('deload-modal-icon');
 
+  // Header is always RECOVERY WEEK — sub-text explains what triggered it
+  if (titleEl) titleEl.textContent = 'RECOVERY WEEK';
+
   if (isPlateau) {
-    if (titleEl) titleEl.textContent = 'BREAK THE PLATEAU';
-    if (iconEl)  iconEl.innerHTML = _trendSvg;
-    if (subEl)   subEl.innerHTML = `No progress across <strong style="color:var(--cream);">${_plateau.stalledCount} of ${_plateau.totalDays}</strong> training days. A recovery week resets accumulated fatigue and gets weights moving again.`;
+    if (iconEl) iconEl.innerHTML = _trendSvg;
+    if (subEl)  subEl.innerHTML = `No weight increases across <strong style="color:var(--cream);">${_plateau.stalledCount} of ${_plateau.totalDays}</strong> training days. A lighter week clears the accumulated fatigue and gets things moving again.`;
   } else if (isMRV) {
-    const _mrvNames = _mrvHits.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase()).join(', ');
-    if (titleEl) titleEl.textContent = 'TIME TO BACK OFF';
-    if (iconEl)  iconEl.innerHTML = _alertSvg;
-    if (subEl)   subEl.innerHTML = `<strong style="color:var(--cream);">${_mrvNames}</strong> ${_mrvHits.length === 1 ? 'has' : 'have'} hit their limit for this week. A lighter week now means better results when the next block starts.`;
+    const _mrvNames = _mrvHits.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase());
+    if (iconEl) iconEl.innerHTML = _alertSvg;
+    if (subEl)  subEl.innerHTML = _mrvNames.length === 1
+      ? `Your <strong style="color:var(--cream);">${_mrvNames[0]}</strong> is close to its recovery limit for this week. A lighter week now means better results when the next block starts.`
+      : `Your <strong style="color:var(--cream);">${_mrvNames.slice(0,-1).join(', ')} and ${_mrvNames[_mrvNames.length-1]}</strong> are close to their recovery limit for this week. A lighter week now means better results when the next block starts.`;
   } else if (isPostponed) {
-    if (titleEl) titleEl.textContent = 'RECOVERY WEEK';
-    if (iconEl)  iconEl.innerHTML = _boltSvg;
-    if (subEl)   subEl.textContent = 'You pushed this from week 7 — last chance this cycle. Choose how to handle it.';
+    if (iconEl) iconEl.innerHTML = _boltSvg;
+    if (subEl)  subEl.textContent = 'You moved your recovery week here — last chance this cycle. Choose Deload to keep training at reduced weight, or Rest Week to take the full week off.';
   } else if (isLongRun) {
-    if (titleEl) titleEl.textContent = 'RECOVERY DUE';
-    if (iconEl)  iconEl.innerHTML = _clockSvg;
-    if (subEl)   subEl.innerHTML = `<strong style="color:var(--cream);">${weeksSince} weeks</strong> of hard training without a break. Fatigue builds quietly — a lighter week now keeps the progress coming.`;
+    if (iconEl) iconEl.innerHTML = _clockSvg;
+    if (subEl)  subEl.innerHTML = `<strong style="color:var(--cream);">${weeksSince} weeks</strong> of hard training without a break. Fatigue builds quietly — a lighter week now keeps the progress coming.`;
   } else {
     // Default: scheduled week 7
-    if (titleEl) titleEl.textContent = 'RECOVERY WEEK';
-    if (iconEl)  iconEl.innerHTML = _boltSvg;
-    if (subEl)   subEl.textContent = 'Week 7 — your scheduled recovery. Choose what works for you, or skip it if you\'re feeling strong.';
+    if (iconEl) iconEl.innerHTML = _boltSvg;
+    if (subEl)  subEl.textContent = 'Your planned recovery week. Choose Deload to keep training at reduced weight, or Rest Week to take the full week off.';
   }
 
   // Postpone button: hide at week 8, set hint based on whether moving is wise
@@ -6348,7 +6356,7 @@ function applyDeloadWeek() {
   delete state.deloadPostponedToWeek;
   saveState();
   document.getElementById('deload-modal').style.display = 'none';
-  showToast('Deload week active — weights at 75% ⚡');
+  showToast('Recovery week active — weights at 75% ⚡');
   renderHome();
 }
 
@@ -9000,7 +9008,7 @@ function finalizeEndSession(save) {
       const _deloadDaysElapsed = (Date.now() - (state.deloadStartDate || Date.now())) / 86400000;
       if (state.deloadSessionsCompleted >= 4 || _deloadDaysElapsed >= 7) {
         endRecoveryWeek();
-        showToast('Deload complete — back to full weight next session 💪');
+        showToast('Recovery week done — back to full weight next session 💪');
       } else {
         saveState();
       }
@@ -13479,11 +13487,11 @@ const TUTORIAL_SLIDES = [
     After each session, a <strong style="color:var(--cream);">progression banner</strong> on each exercise shows the next weight, the reason for the change, and whether it came from a single session or a trend. Toggle this in <strong style="color:var(--red-text);">Settings → Progressive Overload</strong>.`,
   },
   {
-    section: 'DELOAD & REST',
+    section: 'RECOVERY & REST',
     icon: '⚡',
-    title: 'Deload & Rest Weeks',
-    body: `The app prompts you to take a lighter week at Week 7 of each block — or earlier if you're training hard and your muscles are approaching their limit for the week.<br><br>
-    <strong style="color:var(--cream);">Light Week</strong> — Same exercises, weights drop to 75% automatically. You keep training; your joints and tendons get a break. Full weights restore the following week.<br><br>
+    title: 'Recovery & Rest Weeks',
+    body: `The app suggests a Recovery Week at Week 7 of each block — or earlier if a muscle group is getting close to its weekly limit.<br><br>
+    <strong style="color:var(--cream);">Deload</strong> — Same exercises, weights drop to 75% automatically. You keep training; your joints and tendons get a break. Full weights restore the following week.<br><br>
     <strong style="color:var(--cream);">Rest Week</strong> — The program pauses completely. Best if you're feeling run down or need time off.<br><br>
     Both are backed by evidence. The app handles all weight adjustments — no manual changes needed.`,
   },
