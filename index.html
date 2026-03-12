@@ -6910,12 +6910,12 @@ function buildOverloadHint(exId) {
     const _repLine = _repGoal
       ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; margin-top:3px;">Rep target stays at <strong style="color:var(--cream);">${_repGoal} reps</strong> — only the weight changes.</div>`
       : '';
-    return `<div style="background:rgba(243,156,18,0.12); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:10px 12px; margin-bottom:8px;">
+    return `<div style="background:rgba(243,156,18,0.12); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:2px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-        <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">TOO HEAVY?</div>
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">TOO HEAVY?</div>
       </div>
-      <div style="font-size:12px; color:var(--gray-light); padding-left:23px; margin-bottom:4px; line-height:1.5;">${_label}. Drop to <strong style="color:var(--cream);">${ar.suggestedWeight} lbs</strong> this session?</div>
+      <div style="font-size:12px; color:var(--gray-light); padding-left:24px; margin-bottom:4px; line-height:1.5;">${_label}. Drop to <strong style="color:var(--cream);">${ar.suggestedWeight} lbs</strong> this session?</div>
       ${_repLine}
       <div style="display:flex; gap:8px; padding-left:23px; flex-wrap:wrap; margin-top:8px;">
         <button onclick="_autoregAccept('${exId}', ${ar.suggestedWeight})" style="background:rgba(243,156,18,0.18); border:1px solid rgba(243,156,18,0.4); border-radius:8px; color:var(--warning); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; padding:10px 14px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">REDUCE TO ${ar.suggestedWeight} LBS</button>
@@ -6935,12 +6935,12 @@ function buildOverloadHint(exId) {
     const _adjIcon = direction === 'up'
       ? `<polyline points="18 15 12 9 6 15"/>`
       : `<polyline points="18 9 12 15 6 9"/>`;
-    return `<div style="background:rgba(100,149,237,0.1); border:1px solid rgba(100,149,237,0.35); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
+    return `<div style="background:rgba(100,149,237,0.1); border:1px solid rgba(100,149,237,0.35); border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:2px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-        <svg viewBox="0 0 24 24" width="15" height="15" stroke="cornflowerblue" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${_adjIcon}</svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:cornflowerblue;">ADJUSTMENT PERIOD</div>
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="cornflowerblue" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${_adjIcon}</svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:cornflowerblue;">ADJUSTMENT PERIOD</div>
       </div>
-      <div style="font-size:11px; color:var(--gray-light); padding-left:23px; line-height:1.6;">${_adjLabel}</div>
+      <div style="font-size:12px; color:var(--gray-light); padding-left:24px; line-height:1.6;">${_adjLabel}</div>
     </div>`;
   }
 
@@ -6971,39 +6971,39 @@ function buildOverloadHint(exId) {
   );
 
   if (info.changed && info.newWeight > info.lastWeight) {
-    return `<div style="background:rgba(46,204,113,0.12); border:1px solid rgba(46,204,113,0.35); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome ? '5px' : '0'};">
-        <svg viewBox="0 0 24 24" width="15" height="15" stroke="#2ecc71" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#2ecc71;">
+    return `<div style="background:rgba(46,204,113,0.1); border:1px solid rgba(46,204,113,0.3); border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:2px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome ? '6px' : '0'};">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="#2ecc71" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#2ecc71;">
           INCREASE &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
         </div>
       </div>
-      ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
+      ${repOutcome ? `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
     </div>`;
   } else if (info.changed && info.newWeight < info.lastWeight) {
     const deloadNudge = info.consecutiveReductions >= 2
-      ? `<div style="margin-top:6px; padding-left:23px; font-size:11px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:11px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
+      ? `<div style="margin-top:6px; padding-left:24px; font-size:11px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:11px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
       : '';
-    return `<div style="background:rgba(243,156,18,0.14); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-        <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">
+    return `<div style="background:rgba(243,156,18,0.12); border:1px solid rgba(243,156,18,0.4); border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:2px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">
           LOWER WEIGHT &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
         </div>
       </div>
-      <div style="font-size:11px; color:rgba(243,156,18,0.8); padding-left:23px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.3px;">This is intentional — the weight input below is pre-filled lower.</div>
-      ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
+      <div style="font-size:12px; color:rgba(243,156,18,0.75); padding-left:24px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.3px;">Weight pre-filled lower — this is intentional.</div>
+      ${repOutcome ? `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
       ${deloadNudge}
     </div>`;
   } else if (info.lastWeight) {
-    return `<div style="background:rgba(255,255,255,0.03); border:1px solid #252525; border-radius:10px; padding:9px 12px; margin-bottom:8px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome ? '5px' : '0'};">
-        <svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cream)" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:var(--cream);">
+    return `<div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:2px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:${repOutcome ? '6px' : '0'};">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--cream)" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:var(--cream);">
           MAINTAIN &nbsp;<span style="font-weight:400;">${info.lastWeight} lbs</span>
         </div>
       </div>
-      ${repOutcome ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:11px; color:var(--gray); padding-left:23px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
+      ${repOutcome ? `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${repOutcome} · ${reasonHTML} ${modeBadge}</div>` : `<div style="font-size:12px; color:var(--gray); padding-left:24px; line-height:1.6;">${reasonHTML} ${modeBadge}</div>`}
     </div>`;
   }
   return '';
@@ -7428,9 +7428,9 @@ function renderSession() {
           <button class="swap-btn" id="skip-btn-${ex.id}" onclick="toggleSkipExercise('${ex.id}')" style="background:transparent; border-color:#3a3a3a; color:var(--gray-light);">SKIP</button>
         </div>
       </div>
-      ${buildOverloadHint(ex.id)}
       ${buildPlateCalc(ex.id, sets[0]?.weight)}
       ${setsHTML}
+      ${buildOverloadHint(ex.id)}
       <div class="ex-note-row">
         ${(() => { const ln = getLastExNote(ex.id, activeSession.dayId); return ln ? `<div style="font-size:12px; color:#aaaaaa; letter-spacing:0.5px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif;">LAST: ${ln.replace(/"/g, '&quot;')}</div>` : ''; })()}
         <input type="text" class="ex-note-input"
@@ -9393,6 +9393,54 @@ function finalizeEndSession(save) {
             _biggestGain = { name: _exName, gainLbs: _gain };
           }
         }
+        // ── Extra Cycle in Review stats ──────────────────────────
+        // Total volume (weight × reps, non-deload sessions)
+        const _cycleVolume = _cycleEntries
+          .filter(e => !e.isDeload)
+          .reduce((t, e) =>
+            t + Object.values(e.sets || {}).reduce((s, sets) =>
+              s + sets.filter(s2 => s2.done)
+                      .reduce((s3, s2) => s3 + (parseFloat(s2.weight)||0) * (parseInt(s2.reps)||0), 0)
+            , 0), 0);
+        // Average RPE across all logged sets
+        const _allRpeSets = [];
+        _cycleEntries.forEach(e => {
+          Object.values(e.sets || {}).forEach(sets => {
+            sets.filter(s => s.done && s.rpe).forEach(s => _allRpeSets.push(parseFloat(s.rpe)));
+          });
+        });
+        const _avgRpe = _allRpeSets.length
+          ? Math.round((_allRpeSets.reduce((a, b) => a + b, 0) / _allRpeSets.length) * 10) / 10
+          : null;
+        // Volume by muscle group
+        const _muscleVol = {};
+        _cycleEntries.filter(e => !e.isDeload).forEach(e => {
+          Object.entries(e.sets || {}).forEach(([exId, sets]) => {
+            const _m = EX_MUSCLE_MAP[exId];
+            if (!_m) return;
+            const _v = sets.filter(s => s.done)
+              .reduce((s, set) => s + (parseFloat(set.weight)||0) * (parseInt(set.reps)||0), 0);
+            if (_v > 0) _muscleVol[_m] = (_muscleVol[_m] || 0) + _v;
+          });
+        });
+        // Average mood lift during this cycle
+        const _cycleStart = _cycleEntries[0]?.date || '';
+        const _cycleEnd   = _cycleEntries[_cycleEntries.length - 1]?.date || '';
+        const _cycleMoodLog = (state.moodLog || []).filter(m => m.date >= _cycleStart && m.date <= _cycleEnd);
+        const _moodByDay = {};
+        _cycleMoodLog.forEach(e => {
+          const _day = e.date ? e.date.slice(0, 10) : '';
+          if (!_moodByDay[_day]) _moodByDay[_day] = {};
+          if (!_moodByDay[_day][e.timing]) _moodByDay[_day][e.timing] = e;
+        });
+        const _cycleLifts = Object.values(_moodByDay)
+          .filter(d => d.pre && d.post)
+          .map(d => d.post.value - d.pre.value);
+        const _moodLiftAvg = _cycleLifts.length
+          ? Math.round((_cycleLifts.reduce((a, b) => a + b, 0) / _cycleLifts.length) * 10) / 10
+          : null;
+        // ─────────────────────────────────────────────────────────
+
         if (!state.cycleHistory) state.cycleHistory = [];
         state.cycleHistory.push({
           cycleNum: _completingCycle,
@@ -9404,6 +9452,10 @@ function finalizeEndSession(save) {
           biggestGain: _biggestGain,
           startDate: _cycleEntries[0]?.date || null,
           endDate: _cycleEntries[_cycleEntries.length - 1]?.date || null,
+          totalVolume: Math.round(_cycleVolume),
+          avgRpe: _avgRpe,
+          muscleVolume: _muscleVol,
+          moodLiftAvg: _moodLiftAvg,
         });
         if (state.cycleHistory.length > 20) state.cycleHistory = state.cycleHistory.slice(-20);
         // ────────────────────────────────────────────────────────────────
@@ -11263,147 +11315,215 @@ function renderHistory() {
     container.appendChild(_moodCard);
   }
 
-  // ── 6. YEAR IN REVIEW ─────────────────────────────────────
-  const yr = new Date().getFullYear();
-  const yrEntries = hist.filter(e => new Date(e.date).getFullYear() === yr);
-  container.appendChild(mkLabel(`${yr} IN REVIEW`));
-  if (yrEntries.length < 10) {
-    const yrCard = mkCard();
-    const _yrDone = yrEntries.length;
-    const _yrLeft = 10 - _yrDone;
-    yrCard.innerHTML = `<div style="text-align:center;padding:22px 16px 20px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);letter-spacing:0.3px;line-height:1.6;">${_yrDone === 0 ? `Your ${yr} Year in Review will unlock after 10 sessions — every rep counts toward it.` : `${_yrDone} session${_yrDone === 1 ? '' : 's'} down, ${_yrLeft} to go — your ${yr} Year in Review unlocks at 10.`}</div></div>`;
-    container.appendChild(yrCard);
-  } else {
-    const yrSessions = yrEntries.filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done))).length;
-    const yrVolume = yrEntries.reduce((t, entry) =>
-      t + Object.values(entry.sets || {}).reduce((s, sets) =>
-        s + sets.filter(s2 => s2.done).reduce((s3, s2) => s3 + (parseFloat(s2.weight) || 0) * (parseInt(s2.reps) || 0), 0)
-      , 0), 0);
-    const yrHrs = Math.floor(yrEntries.reduce((s, e) => s + (e.duration || 0), 0) / 60);
-    const yrPRs = yrEntries.reduce((n, e) => n + (e.prs?.length || 0), 0);
-    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
-    yrEntries.forEach(e => { dayCounts[new Date(e.date).getDay()]++; });
-    const topDayIdx = dayCounts.indexOf(Math.max(...dayCounts));
-    const topDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][topDayIdx];
-    let bestLift = 0, bestLiftName = '';
-    yrEntries.forEach(entry => {
-      Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
-        sets.filter(s => s.done).forEach(s => {
-          const w = parseFloat(s.weight) || 0;
-          if (w > bestLift) { bestLift = w; bestLiftName = nameMap[exId] || exId; }
-        });
-      });
-    });
-    const yrVolLabel = yrVolume >= 1000000 ? `${(yrVolume / 1000000).toFixed(1)}M` : yrVolume >= 1000 ? `${Math.round(yrVolume / 1000)}k` : `${Math.round(yrVolume)}`;
+  // ── 6. CYCLE IN REVIEW ────────────────────────────────────
+  {
+    const _cir_history = state.cycleHistory || [];
+    container.appendChild(mkLabel('CYCLE IN REVIEW'));
 
-    const yrCard = mkCard();
-    yrCard.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:12px;">
-        <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);line-height:1;">${yrSessions}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
-        </div>
-        <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);line-height:1;">${yrVolLabel} lbs</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">VOLUME</div>
-        </div>
-        <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);line-height:1;">${yrHrs}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">HOURS</div>
-        </div>
-        <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:#f0a500;line-height:1;">${yrPRs}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">PRs</div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.5px;">
-        ${topDay ? `<div>📅 Most trained day: <span style="color:var(--cream);font-weight:700;">${topDay}</span></div>` : ''}
-        ${bestLift > 0 ? `<div>💪 Heaviest lift: <span style="color:var(--cream);font-weight:700;">${bestLift} lbs</span>${bestLiftName ? ` (${bestLiftName})` : ''}</div>` : ''}
-      </div>`;
-    yrCard.appendChild(mkShareBtn('SHARE YEAR IN REVIEW', () =>
-      generateAndShareCard('year_review', { year: yr, sessions: yrSessions, volume: yrVolLabel, hours: yrHrs, prs: yrPRs, topDay, bestLift: bestLift > 0 ? `${bestLift} lbs (${bestLiftName})` : null })
-    ));
-    container.appendChild(yrCard);
-  }
-
-  // ── 7. CYCLE RECAP ────────────────────────────────────────
-  const cycleHistory = state.cycleHistory || [];
-  container.appendChild(mkLabel('CYCLE RECAP'));
-  if (cycleHistory.length === 0) {
-    const cycleEmptyCard = mkCard();
-    cycleEmptyCard.innerHTML = `<div style="text-align:center;padding:22px 16px 20px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);letter-spacing:0.3px;line-height:1.6;">Finish your first 8-week cycle and your Cycle Recap will appear here — sessions completed, PRs hit, consistency score, and your biggest strength gain.</div></div>`;
-    container.appendChild(cycleEmptyCard);
-  } else {
-    const goalLabels = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' };
-    const sorted_ch = [...cycleHistory].sort((a, b) => b.cycleNum - a.cycleNum);
-    const lastCycle = sorted_ch[0];
-    const olderCycles = sorted_ch.slice(1);
-
-    function formatCycleDate(iso) {
-      if (!iso) return '';
-      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-    function buildCycleCard(cyc, isLast) {
-      const consistencyColor = cyc.consistency >= 85 ? '#50c882' : cyc.consistency >= 60 ? 'var(--warning)' : 'var(--gray-light)';
-      const dateRange = (cyc.startDate && cyc.endDate) ? `${formatCycleDate(cyc.startDate)} – ${formatCycleDate(cyc.endDate)}` : '';
-      const goalLabel = goalLabels[cyc.goal] || 'Build Size & Strength';
-      const card = document.createElement('div');
-      card.style.cssText = `background:var(--dark3);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;margin-bottom:${isLast ? '0' : '8px'};`;
-      card.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;color:var(--red-text);">CYCLE ${cyc.cycleNum}</div>
-          ${cyc.prs > 0 ? `<span style="background:rgba(243,156,18,0.12);border:1px solid rgba(243,156,18,0.35);color:var(--warning);font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;">🏆 ${cyc.prs} PR${cyc.prs === 1 ? '' : 'S'}</span>` : ''}
-        </div>
-        ${dateRange ? `<div style="font-size:11px;color:var(--gray);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${dateRange}</div>` : ''}
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:10px;">
-          <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${cyc.sessions}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
-          </div>
-          <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--warning);line-height:1;">${cyc.prs}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">PRs</div>
-          </div>
-          <div style="background:var(--dark2);padding:10px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:${consistencyColor};line-height:1;">${cyc.consistency}%</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">CONSISTENCY</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-          <div style="font-size:12px;color:var(--gray);">${goalLabel} &nbsp;·&nbsp; ${cyc.trainingDays} days/week</div>
-          ${cyc.biggestGain ? `<div style="font-size:12px;color:var(--warning);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">📈 ${cyc.biggestGain.name} +${cyc.biggestGain.gainLbs}lbs</div>` : ''}
+    if (_cir_history.length === 0) {
+      // Locked / teaser state — first cycle not yet complete
+      const _cirLockedCard = mkCard();
+      _cirLockedCard.innerHTML = `
+        <div style="text-align:center;padding:24px 16px 20px;">
+          <div style="font-size:36px;margin-bottom:10px;opacity:0.55;">🏆</div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;color:var(--cream);margin-bottom:8px;">UNLOCKS AFTER CYCLE 1</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;max-width:280px;margin:0 auto;">Finish your first full 8-week cycle — training weeks plus recovery week — and your Cycle in Review drops. Sessions, volume, PRs, avg RPE, which muscles got the most work, your biggest strength gain, and mood data if you've been logging it.</div>
         </div>`;
-      return card;
-    }
-
-    const cycleSection = document.createElement('div');
-    cycleSection.style.cssText = 'margin-bottom:16px;';
-    cycleSection.appendChild(buildCycleCard(lastCycle, olderCycles.length === 0));
-    if (olderCycles.length > 0) {
-      const olderBtn = document.createElement('button');
-      olderBtn.style.cssText = 'width:100%;margin-top:8px;padding:11px;background:transparent;border:1px solid var(--dark4);color:var(--gray);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;';
-      let olderExpanded = false, olderDiv = null;
-      function refreshOlderBtn() {
-        olderBtn.textContent = olderExpanded ? '▴  HIDE OLDER CYCLES' : `▾  VIEW OLDER CYCLES  (${olderCycles.length})`;
+      container.appendChild(_cirLockedCard);
+    } else {
+      // ── Helper: format ISO date ──────────────────────────
+      function _cirFmtDate(iso) {
+        if (!iso) return '';
+        return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       }
-      refreshOlderBtn();
-      olderBtn.onclick = () => {
-        if (!olderExpanded) {
-          olderDiv = document.createElement('div');
-          olderDiv.style.cssText = 'margin-top:8px;';
-          olderCycles.forEach((cyc, i) => olderDiv.appendChild(buildCycleCard(cyc, i === olderCycles.length - 1)));
-          cycleSection.insertBefore(olderDiv, olderBtn);
-          olderExpanded = true;
-        } else {
-          if (olderDiv) { olderDiv.remove(); olderDiv = null; }
-          olderExpanded = false;
+      // ── Helper: volume label (k / M) ─────────────────────
+      function _cirVolLabel(v) {
+        if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`;
+        if (v >= 1000) return `${Math.round(v / 1000)}k`;
+        return `${Math.round(v)}`;
+      }
+      // ── Helper: build a full Cycle in Review card ─────────
+      function _buildCIRCard(cyc, isMostRecent) {
+        const _goalLabels = { size: 'Build Size', strength: 'Build Strength', both: 'Size & Strength' };
+        const _consistencyColor = cyc.consistency >= 85 ? '#50c882' : cyc.consistency >= 60 ? 'var(--warning)' : 'var(--gray-light)';
+        const _dateRange = (cyc.startDate && cyc.endDate)
+          ? `${_cirFmtDate(cyc.startDate)} – ${_cirFmtDate(cyc.endDate)}` : '';
+        const _goalLabel = _goalLabels[cyc.goal] || 'Size & Strength';
+        const _volLabel  = cyc.totalVolume ? _cirVolLabel(cyc.totalVolume) : null;
+
+        // Muscle volume — top 3 by volume
+        const _muscleVol = cyc.muscleVolume || {};
+        const _topMuscles = Object.entries(_muscleVol)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3);
+        const _totalMusVol = Object.values(_muscleVol).reduce((s, v) => s + v, 0) || 1;
+
+        // Celebratory headline (T&S voice)
+        const _headlinePool = [
+          `Eight weeks in the bank.`,
+          `Cycle ${cyc.cycleNum} — done.`,
+          `You showed up. Repeatedly.`,
+          `That's what a full block looks like.`,
+          `Eight weeks of receipts.`,
+        ];
+        const _headline = _headlinePool[cyc.cycleNum % _headlinePool.length];
+
+        // Mood section
+        const _hasMood = cyc.moodLiftAvg !== null && cyc.moodLiftAvg !== undefined;
+        const _moodCol  = _hasMood && cyc.moodLiftAvg > 0 ? '#50c882' : _hasMood && cyc.moodLiftAvg < 0 ? 'var(--red-text)' : 'var(--gray)';
+        const _moodDisp = _hasMood ? (cyc.moodLiftAvg > 0 ? `+${cyc.moodLiftAvg}` : `${cyc.moodLiftAvg}`) : null;
+
+        const card = document.createElement('div');
+        card.style.cssText = 'border-radius:16px;overflow:hidden;border:1px solid rgba(204,32,39,0.2);margin-bottom:8px;';
+
+        card.innerHTML = `
+          <!-- Hero banner -->
+          <div style="background:linear-gradient(160deg,#1c0002,#2e060a,#1a0000);padding:18px 18px 16px;display:flex;align-items:center;gap:14px;border-bottom:1px solid rgba(204,32,39,0.2);">
+            <div style="font-size:32px;flex-shrink:0;line-height:1;">🏆</div>
+            <div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--red-text);letter-spacing:2.5px;line-height:1;">CYCLE ${cyc.cycleNum} IN REVIEW</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(245,230,200,0.6);margin-top:3px;">${_headline}</div>
+              ${_dateRange ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:2px;letter-spacing:0.3px;">${_dateRange}</div>` : ''}
+            </div>
+          </div>
+
+          <!-- Core stats grid: 3 up top, then volume if available -->
+          <div style="background:var(--dark2);padding:14px 14px 0;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">
+              <div style="background:var(--dark3);border-radius:10px;padding:12px 6px;text-align:center;border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--cream);line-height:1;">${cyc.sessions}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:3px;">SESSIONS</div>
+              </div>
+              <div style="background:var(--dark3);border-radius:10px;padding:12px 6px;text-align:center;border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:#f0a500;line-height:1;">${cyc.prs}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:3px;">PRs HIT</div>
+              </div>
+              <div style="background:var(--dark3);border-radius:10px;padding:12px 6px;text-align:center;border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:${_consistencyColor};line-height:1;">${cyc.consistency}%</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:3px;">CONSISTENCY</div>
+              </div>
+            </div>
+
+            <!-- Volume + RPE row -->
+            <div style="display:grid;grid-template-columns:${cyc.avgRpe ? '1fr 1fr' : '1fr'};gap:6px;margin-bottom:${(_topMuscles.length || cyc.biggestGain || _hasMood) ? '10px' : '14px'};">
+              ${_volLabel ? `
+              <div style="background:var(--dark3);border-radius:10px;padding:12px 10px;border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:3px;">TOTAL VOLUME</div>
+                <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${_volLabel} <span style="font-size:13px;color:var(--gray);">lbs</span></div>
+              </div>` : ''}
+              ${cyc.avgRpe ? `
+              <div style="background:var(--dark3);border-radius:10px;padding:12px 10px;border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:3px;">AVG RPE</div>
+                <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--blue);line-height:1;">${cyc.avgRpe} <span style="font-size:13px;color:var(--gray);">/ 10</span></div>
+              </div>` : ''}
+            </div>
+
+            <!-- Muscle volume bars -->
+            ${_topMuscles.length > 0 ? `
+            <div style="margin-bottom:10px;">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:8px;">MOST VOLUME BY MUSCLE</div>
+              ${_topMuscles.map(([muscle, vol], idx) => {
+                const _pct = Math.round((vol / _totalMusVol) * 100);
+                const _barPct = Math.round((vol / (_topMuscles[0][1] || 1)) * 100);
+                const _col = MUSCLE_COLORS[muscle] || '#888';
+                const _badge = idx === 0 ? `<span style="font-size:9px;background:rgba(255,255,255,0.07);border-radius:4px;padding:1px 5px;color:var(--gray);letter-spacing:0.5px;margin-left:6px;">TOP</span>` : '';
+                return `
+                <div style="margin-bottom:6px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--cream);letter-spacing:0.5px;">${muscle}${_badge}</div>
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">${_pct}%</div>
+                  </div>
+                  <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden;">
+                    <div style="height:100%;width:${_barPct}%;background:${_col};border-radius:2px;"></div>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>` : ''}
+
+            <!-- Biggest strength gain -->
+            ${cyc.biggestGain ? `
+            <div style="background:linear-gradient(135deg,rgba(255,165,0,0.05),rgba(240,165,0,0.09));border:1px solid rgba(240,165,0,0.18);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div style="font-size:18px;flex-shrink:0;">📈</div>
+              <div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.5px;color:#c47d00;margin-bottom:1px;">BIGGEST STRENGTH GAIN</div>
+                <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:var(--cream);letter-spacing:1px;line-height:1.2;">${cyc.biggestGain.name}</div>
+                <div style="font-size:11px;color:#f0a500;">+${cyc.biggestGain.gainLbs} lbs over 8 weeks</div>
+              </div>
+            </div>` : ''}
+
+            <!-- Mood lift -->
+            ${_hasMood ? `
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="font-size:18px;">🧠</div>
+                <div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:1px;">MOOD LIFT SCORE</div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);">avg boost per session</div>
+                </div>
+              </div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:${_moodCol};line-height:1;">${_moodDisp}</div>
+            </div>` : ''}
+
+            <!-- Goal + days footer -->
+            <div style="font-size:11px;color:var(--gray);padding-bottom:14px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">${_goalLabel} &nbsp;·&nbsp; ${cyc.trainingDays} days/week</div>
+          </div>`;
+
+        if (isMostRecent) {
+          // Share button only on the most recent cycle card
+          const _shareBtn = document.createElement('button');
+          _shareBtn.style.cssText = 'width:100%;background:rgba(204,32,39,0.12);border:1px solid rgba(204,32,39,0.3);border-top:none;color:var(--red-text);padding:13px 16px;font-family:"Bebas Neue",cursive;font-size:14px;letter-spacing:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:0 0 16px 16px;';
+          _shareBtn.textContent = 'SHARE CYCLE IN REVIEW  →';
+          _shareBtn.onclick = () => generateAndShareCard('cycle_review', {
+            cycleNum: cyc.cycleNum,
+            sessions: cyc.sessions,
+            prs: cyc.prs,
+            consistency: cyc.consistency,
+            volume: _volLabel,
+            avgRpe: cyc.avgRpe,
+            biggestGain: cyc.biggestGain,
+            topMuscle: _topMuscles[0]?.[0] || null,
+            moodLiftAvg: _moodDisp,
+          });
+          card.appendChild(_shareBtn);
         }
-        refreshOlderBtn();
-      };
-      cycleSection.appendChild(olderBtn);
+        return card;
+      }
+
+      // Sort newest first
+      const _cirSorted = [..._cir_history].sort((a, b) => b.cycleNum - a.cycleNum);
+      const _cirLatest  = _cirSorted[0];
+      const _cirOlder   = _cirSorted.slice(1);
+
+      const _cirSection = document.createElement('div');
+      _cirSection.style.cssText = 'margin-bottom:16px;';
+      _cirSection.appendChild(_buildCIRCard(_cirLatest, true));
+
+      if (_cirOlder.length > 0) {
+        const _cirOlderBtn = document.createElement('button');
+        _cirOlderBtn.style.cssText = 'width:100%;margin-top:4px;padding:11px;background:transparent;border:1px solid var(--dark4);color:var(--gray);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;';
+        let _cirOlderExpanded = false, _cirOlderDiv = null;
+        const _refreshCIROlderBtn = () => {
+          _cirOlderBtn.textContent = _cirOlderExpanded ? '▴  HIDE OLDER CYCLES' : `▾  VIEW ${_cirOlder.length} OLDER CYCLE${_cirOlder.length === 1 ? '' : 'S'}`;
+        };
+        _refreshCIROlderBtn();
+        _cirOlderBtn.onclick = () => {
+          if (!_cirOlderExpanded) {
+            _cirOlderDiv = document.createElement('div');
+            _cirOlderDiv.style.cssText = 'margin-top:6px;';
+            _cirOlder.forEach(cyc => _cirOlderDiv.appendChild(_buildCIRCard(cyc, false)));
+            _cirSection.insertBefore(_cirOlderDiv, _cirOlderBtn);
+            _cirOlderExpanded = true;
+          } else {
+            if (_cirOlderDiv) { _cirOlderDiv.remove(); _cirOlderDiv = null; }
+            _cirOlderExpanded = false;
+          }
+          _refreshCIROlderBtn();
+        };
+        _cirSection.appendChild(_cirOlderBtn);
+      }
+      container.appendChild(_cirSection);
     }
-    container.appendChild(cycleSection);
-  } // end else (cycleHistory populated)
+  } // end Cycle in Review
 
   // ── 8. PERSONAL RECORDS ───────────────────────────────────
   renderPRBoard();
@@ -11950,9 +12070,10 @@ const CARD_DAY_PALETTES = [
   { hi: '#c8710e', lo: '#7a4208', line: 'rgba(200,113,14,0.7)',  ui: '#e88520' },  // 4 — orange
   { hi: '#8b0a14', lo: '#50070c', line: 'rgba(139,10,20,0.7)',  ui: '#e8353c' },  // 5 — deep crimson
 ];
-const CARD_PR_THEME     = { hi: '#c07800', lo: '#7a4e00', line: 'rgba(210,160,0,0.75)' };
-const CARD_DELOAD_THEME = { hi: '#1a3050', lo: '#0a1826', line: 'rgba(80,140,220,0.7)' };
-const CARD_MOOD_THEME   = { hi: '#1a1f4e', lo: '#07091c', line: 'rgba(120,130,220,0.45)' };
+const CARD_PR_THEME           = { hi: '#c07800', lo: '#7a4e00', line: 'rgba(210,160,0,0.75)' };
+const CARD_DELOAD_THEME       = { hi: '#1a3050', lo: '#0a1826', line: 'rgba(80,140,220,0.7)' };
+const CARD_MOOD_THEME         = { hi: '#1a1f4e', lo: '#07091c', line: 'rgba(120,130,220,0.45)' };
+const CARD_CYCLE_REVIEW_THEME = { hi: '#2e060a', lo: '#0e0001', line: 'rgba(204,32,39,0.45)' };
 const CARD_MILESTONE_SESSIONS = new Set([10, 25, 50, 100, 200, 365, 500, 1000]);
 
 // Subtle film-grain overlay drawn onto an offscreen tile and tiled via pattern
@@ -12027,10 +12148,11 @@ async function generateAndShareCard(type, data) {
   const _isFlipped = !_isPR && !_isDeload && type !== 'mood' && Math.random() < 0.20;
 
   let _theme;
-  if (_isPR)            _theme = CARD_PR_THEME;
-  else if (_isDeload)   _theme = CARD_DELOAD_THEME;
+  if (_isPR)                        _theme = CARD_PR_THEME;
+  else if (_isDeload)               _theme = CARD_DELOAD_THEME;
   else if (type === 'mood' || type === 'mood_lift_stats') _theme = CARD_MOOD_THEME;
-  else                  _theme = CARD_DAY_PALETTES[(data.dayIndex ?? 0) % CARD_DAY_PALETTES.length];
+  else if (type === 'cycle_review') _theme = CARD_CYCLE_REVIEW_THEME;
+  else                              _theme = CARD_DAY_PALETTES[(data.dayIndex ?? 0) % CARD_DAY_PALETTES.length];
 
   // ── Backgrounds ───────────────────────────────────────────
   if (!_isFlipped) {
@@ -12412,36 +12534,61 @@ async function generateAndShareCard(type, data) {
         bebas(72), deltaColor, MAX_TW, { color: deltaColor + '55', blur: 18 });
     }
 
-  } else if (type === 'year_review') {
-    const tagY  = Math.round(SPLIT * 0.11);
-    const yrY   = Math.round(SPLIT * 0.28);
-    const grid1Y = Math.round(SPLIT * 0.50);
-    const grid2Y = Math.round(SPLIT * 0.70);
-    const subY  = Math.round(SPLIT * 0.87);
+  } else if (type === 'cycle_review') {
+    // ── Cycle in Review share card ────────────────────────────
+    const _crTitleY   = Math.round(SPLIT * 0.10);
+    const _crSubY     = Math.round(SPLIT * 0.20);
+    const _crGrid1Y   = Math.round(SPLIT * 0.38);
+    const _crGrid2Y   = Math.round(SPLIT * 0.57);
+    const _crGainY    = Math.round(SPLIT * 0.74);
+    const _crMuscleY  = Math.round(SPLIT * 0.88);
+    const _crCol1X    = W / 2 - Math.round(220 * S);
+    const _crCol2X    = W / 2 + Math.round(220 * S);
+    const _crCol3X    = W / 2;
+    const _crColW     = Math.round(400 * S);
 
-    drawText(`${data.year || new Date().getFullYear()} IN REVIEW`, W / 2, tagY,
-      barlow(700, 42), 'rgba(255,255,255,0.88)', MAX_TW);
+    // Title
+    drawText(`CYCLE ${data.cycleNum || 1} IN REVIEW`, W / 2, _crTitleY,
+      bebas(52), 'rgba(232,64,74,0.95)', MAX_TW, { color: 'rgba(204,32,39,0.5)', blur: 20 });
 
-    // 4 stats in 2×2 grid
-    const col1X = W / 2 - Math.round(220 * S);
-    const col2X = W / 2 + Math.round(220 * S);
-    const colW  = Math.round(400 * S);
+    // Tagline
+    drawText('8 WEEKS. DONE.', W / 2, _crSubY,
+      barlow(700, 30), 'rgba(245,230,200,0.55)', MAX_TW);
 
-    drawText(String(data.sessions || 0), col1X, grid1Y, bebas(86), '#ffffff', colW, { color: 'rgba(0,0,0,0.3)', blur: 14 });
-    drawText('SESSIONS', col1X, grid1Y + Math.round(52 * S), barlow(600, 26), 'rgba(255,255,255,0.6)', colW);
+    // Sessions + PRs
+    drawText(String(data.sessions || 0), _crCol1X, _crGrid1Y, bebas(90), '#ffffff', _crColW, { color: 'rgba(0,0,0,0.3)', blur: 14 });
+    drawText('SESSIONS', _crCol1X, _crGrid1Y + Math.round(54 * S), barlow(600, 26), 'rgba(255,255,255,0.55)', _crColW);
 
-    drawText(`${data.volume || '0'} lbs`, col2X, grid1Y, bebas(86), '#ffffff', colW, { color: 'rgba(0,0,0,0.3)', blur: 14 });
-    drawText('VOLUME', col2X, grid1Y + Math.round(52 * S), barlow(600, 26), 'rgba(255,255,255,0.6)', colW);
+    drawText(String(data.prs || 0), _crCol2X, _crGrid1Y, bebas(90), '#ffe066', _crColW, { color: 'rgba(255,224,102,0.45)', blur: 18 });
+    drawText('PRs HIT', _crCol2X, _crGrid1Y + Math.round(54 * S), barlow(600, 26), 'rgba(255,255,255,0.55)', _crColW);
 
-    drawText(String(data.hours || 0), col1X, grid2Y, bebas(86), '#ffffff', colW);
-    drawText('HOURS', col1X, grid2Y + Math.round(52 * S), barlow(600, 26), 'rgba(255,255,255,0.6)', colW);
+    // Consistency + avg RPE (or volume if no RPE)
+    const _crStatAColor = data.consistency >= 85 ? '#50c882' : data.consistency >= 60 ? '#f0a500' : 'rgba(255,255,255,0.85)';
+    const _crStatBX = data.avgRpe ? _crCol2X : (data.volume ? _crCol2X : null);
+    drawText(`${data.consistency || 0}%`, _crCol1X, _crGrid2Y, bebas(90), _crStatAColor, _crColW, { color: 'rgba(0,0,0,0.3)', blur: 10 });
+    drawText('CONSISTENCY', _crCol1X, _crGrid2Y + Math.round(54 * S), barlow(600, 26), 'rgba(255,255,255,0.55)', _crColW);
 
-    drawText(String(data.prs || 0), col2X, grid2Y, bebas(86), '#ffe066', colW, { color: 'rgba(255,224,102,0.4)', blur: 18 });
-    drawText('PERSONAL RECORDS', col2X, grid2Y + Math.round(52 * S), barlow(600, 26), 'rgba(255,255,255,0.6)', colW);
+    if (data.avgRpe) {
+      drawText(`RPE ${data.avgRpe}`, _crCol2X, _crGrid2Y, bebas(90), '#5b8dee', _crColW);
+      drawText('AVG EFFORT', _crCol2X, _crGrid2Y + Math.round(54 * S), barlow(600, 26), 'rgba(255,255,255,0.55)', _crColW);
+    } else if (data.volume) {
+      drawText(`${data.volume} lbs`, _crCol2X, _crGrid2Y, bebas(74), '#ffffff', _crColW);
+      drawText('VOLUME', _crCol2X, _crGrid2Y + Math.round(54 * S), barlow(600, 26), 'rgba(255,255,255,0.55)', _crColW);
+    }
 
-    if (data.topDay) {
-      drawText(`MOST TRAINED: ${data.topDay.toUpperCase()}`, W / 2, subY,
-        barlow(600, 32), 'rgba(255,255,255,0.7)', MAX_TW);
+    // Biggest gain
+    if (data.biggestGain) {
+      drawText(`📈 ${data.biggestGain.name.toUpperCase()} +${data.biggestGain.gainLbs} LBS`, W / 2, _crGainY,
+        barlow(700, 28), 'rgba(240,165,0,0.9)', MAX_TW);
+    } else if (data.topMuscle) {
+      drawText(`TOP MUSCLE: ${data.topMuscle}`, W / 2, _crGainY,
+        barlow(700, 28), 'rgba(255,255,255,0.6)', MAX_TW);
+    }
+
+    // Mood lift
+    if (data.moodLiftAvg) {
+      drawText(`MOOD LIFT: ${data.moodLiftAvg} PER SESSION`, W / 2, _crMuscleY,
+        barlow(600, 26), 'rgba(80,200,130,0.85)', MAX_TW);
     }
   }
 
@@ -12618,6 +12765,7 @@ function _getCardShareText(type, data) {
   if (type === 'pr') return `${prefix}just hit a new PR — ${data.exercise} ${data.weight} lbs × ${data.reps} 🏆 therapyandsneakers.org`;
   if (type === 'workout') return `${prefix}just crushed ${data.dayName || 'a workout'} on T&S Muscle 💪 therapyandsneakers.org`;
   if (type === 'weekly') return `${prefix}just completed Week ${data.week} on T&S Muscle ⭐ therapyandsneakers.org`;
+  if (type === 'cycle_review') return `${prefix}just finished Cycle ${data.cycleNum || 1} — ${data.sessions || 0} sessions, ${data.prs || 0} PRs, ${data.consistency || 0}% consistency. That's 8 weeks of real work. 🏆 therapyandsneakers.org`;
   return 'Training with T&S Muscle 💪 therapyandsneakers.org';
 }
 
