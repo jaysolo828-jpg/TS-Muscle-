@@ -5948,21 +5948,6 @@ function toggleRpeSheet() {
   }
 }
 
-function toggleWeightSheet() {
-  const sheet = document.getElementById('weight-sheet');
-  const overlay = document.getElementById('weight-sheet-overlay');
-  if (!sheet) return;
-  const opening = sheet.style.display === 'none';
-  if (opening) {
-    sheet.style.display = 'block';
-    overlay.style.display = 'block';
-    requestAnimationFrame(() => { sheet.style.transform = 'translateY(0)'; });
-  } else {
-    sheet.style.transform = 'translateY(100%)';
-    setTimeout(() => { sheet.style.display = 'none'; overlay.style.display = 'none'; }, 300);
-  }
-}
-
 // ============================================================
 // REP RANGE SHEET
 // ============================================================
@@ -7193,7 +7178,7 @@ function renderSession() {
     let setsHTML = `
       <div class="set-labels">
         <div class="set-label">#</div>
-        <div class="set-label">Weight (lbs) <button class="rpe-info-btn" onclick="toggleWeightSheet()" aria-label="How weights are calculated" style="margin-left:2px;">AUTO <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red-text);"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></button></div>
+        <div class="set-label">Weight (lbs)</div>
         <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:${_goalColor};font-size:11px;font-weight:700;cursor:pointer;border-bottom:1px dashed ${_goalColor}70;padding-bottom:1px;" title="Tap to change · hit ${_repTop} reps to trigger weight increase">GOAL: ${_goalReps}</span></div>
         <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red-text);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
         <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
@@ -16500,36 +16485,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <!-- RPE info bottom sheet -->
-<div id="weight-sheet-overlay" onclick="toggleWeightSheet()" style="display:none; position:fixed; inset:0; z-index:99990; background:rgba(0,0,0,0.5);"></div>
-<div id="weight-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99991; background:var(--dark2); border-radius:20px 20px 0 0; padding:24px 20px calc(40px + env(safe-area-inset-bottom)); box-shadow:0 -4px 30px rgba(0,0,0,0.6); transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1); overflow-y:auto; -webkit-overflow-scrolling:touch;">
-  <div style="width:36px; height:4px; background:var(--dark4); border-radius:2px; margin:0 auto 20px;"></div>
-  <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:var(--gray); letter-spacing:2px; margin-bottom:10px;">HOW WEIGHTS ARE SET</div>
-  <div style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:16px;">
-    Every weight is <strong>auto-calculated</strong> from your last session for that exercise — adjusted by your RPE and whether you hit your rep goal. You don't need to pick a number.
-  </div>
-  <div style="display:flex; flex-direction:column; gap:8px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:0.3px; margin-bottom:16px;">
-    <div style="display:flex; gap:10px; align-items:flex-start;">
-      <span style="color:#2ecc71; flex-shrink:0;">↑</span>
-      <span style="color:var(--gray-light);">Hit the top of your rep goal → weight goes up next session</span>
-    </div>
-    <div style="display:flex; gap:10px; align-items:flex-start;">
-      <span style="color:var(--gray); flex-shrink:0;">→</span>
-      <span style="color:var(--gray-light);">Hit the range but not the top → same weight, add reps</span>
-    </div>
-    <div style="display:flex; gap:10px; align-items:flex-start;">
-      <span style="color:var(--red-text); flex-shrink:0;">↓</span>
-      <span style="color:var(--gray-light);">Missed the rep range → weight drops slightly</span>
-    </div>
-  </div>
-  <div style="background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.3); border-radius:10px; padding:12px 14px; margin-bottom:20px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:10px; color:var(--warning); letter-spacing:2px; margin-bottom:6px;">⚠ IF YOU CHANGE THE WEIGHT</div>
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray-light); line-height:1.55; letter-spacing:0.3px;">
-      The app uses your <strong style="color:var(--cream);">actual logged weight</strong> — not the suggestion — as the baseline for next session. Overriding occasionally is fine, but consistently going lighter will stall your progress.
-    </div>
-  </div>
-  <button onclick="toggleWeightSheet()" style="width:100%; background:var(--dark3); border:none; border-radius:12px; padding:14px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1px; cursor:pointer;">GOT IT</button>
-</div>
-
 <div id="rpe-sheet-overlay" onclick="toggleRpeSheet()" style="display:none; position:fixed; inset:0; z-index:99990; background:rgba(0,0,0,0.5);"></div>
 <div id="rpe-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99991; background:var(--dark2); border-radius:20px 20px 0 0; padding:24px 20px calc(40px + env(safe-area-inset-bottom)); box-shadow:0 -4px 30px rgba(0,0,0,0.6); transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1); overflow-y:auto; -webkit-overflow-scrolling:touch;">
   <div style="width:36px; height:4px; background:var(--dark4); border-radius:2px; margin:0 auto 20px;"></div>
