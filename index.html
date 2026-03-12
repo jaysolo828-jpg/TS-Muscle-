@@ -6954,11 +6954,12 @@ function buildOverloadHint(exId) {
     _minR = parseInt(_rParts[0]) || 0;
     _maxR = parseInt(_rParts[1]) || _minR;
   }
-  const _cardBody = `<div style="font-size:12px; color:var(--gray); padding-left:23px; line-height:1.6;">${_buildReasonSentence(info, _minR, _maxR)}</div>`;
+  // 13px / #aaa — readable but visually secondary to the bold header above
+  const _cardBody = `<div style="font-size:13px; color:var(--gray-light); padding-left:23px; line-height:1.5;">${_buildReasonSentence(info, _minR, _maxR)}</div>`;
 
   if (info.changed && info.newWeight > info.lastWeight) {
     return `<div style="background:rgba(46,204,113,0.12); border:1px solid rgba(46,204,113,0.35); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="#2ecc71" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#2ecc71;">
           INCREASE &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
@@ -6971,7 +6972,7 @@ function buildOverloadHint(exId) {
       ? `<div style="margin-top:6px; padding-left:23px; font-size:12px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:12px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
       : '';
     return `<div style="background:rgba(243,156,18,0.14); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">
           LOWER WEIGHT &nbsp;<span style="color:var(--gray);font-weight:400;">${info.lastWeight}</span> → <span>${info.newWeight} lbs</span>
@@ -6983,7 +6984,7 @@ function buildOverloadHint(exId) {
     </div>`;
   } else if (info.lastWeight) {
     return `<div style="background:rgba(255,255,255,0.03); border:1px solid #252525; border-radius:10px; padding:9px 12px; margin-bottom:8px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cream)" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:var(--cream);">
           MAINTAIN &nbsp;<span style="font-weight:400;">${info.lastWeight} lbs</span>
