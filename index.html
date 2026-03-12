@@ -7006,56 +7006,61 @@ function buildOverloadShimmer(exId) {
 }
 
 // Builds a plain-language, readable explanation for the progression card body.
-// Called from buildOverloadHint — no badges, no dot-separated fragments.
+// No "last session" tag — context is folded naturally into the subject.
 function _buildReasonSentence(info, minR, maxR) {
   const { avgReps, avgRPE, useTrend, sessionCount, changed, newWeight, lastWeight } = info;
-  const ctx = useTrend ? `over your last ${sessionCount} sessions` : 'last session';
+  const multi = useTrend && sessionCount > 1;
+  // Subject phrases — "You hit 12 reps" (single) vs "Averaging 12 reps" (trend)
+  const repsStr = avgReps ? (multi ? `Averaging ${avgReps} reps` : `You hit ${avgReps} reps`) : null;
+  const rpeStr  = avgRPE !== null ? `RPE ${avgRPE.toFixed(1)}` : null;
   const inc = changed && newWeight > lastWeight;
   const dec = changed && newWeight < lastWeight;
 
   if (dec) {
-    if (avgRPE !== null && avgRPE >= 9) {
-      return useTrend
-        ? `RPE has been 9 or higher across multiple recent sessions — this weight is too heavy. Reducing to protect your progress.`
-        : `RPE ${avgRPE.toFixed(1)} last session — this weight is too heavy right now. Reducing.`;
+    if (rpeStr && avgRPE >= 9) {
+      return multi
+        ? `${rpeStr} on average across ${sessionCount} sessions — this weight is too heavy. Reducing to protect your progress.`
+        : `${rpeStr} — this weight is too heavy right now. Reducing.`;
     }
-    if (avgReps !== null && minR > 0 && avgReps < minR) {
-      return `Only ${avgReps} reps ${ctx} — not sustainable at this weight. Dropping down to build back up.`;
+    if (repsStr && minR > 0 && avgReps < minR) {
+      return `${repsStr} — not sustainable at this weight. Dropping down to build back up.`;
     }
     return `This weight is harder than it should be right now. Reducing to reset and rebuild.`;
   }
 
   if (inc) {
-    if (avgRPE !== null) {
+    if (rpeStr) {
       if (avgRPE <= 7) {
-        return avgReps && maxR > 0 && avgReps > maxR
-          ? `${avgReps} reps at RPE ${avgRPE.toFixed(1)} ${ctx} — above your target range and feeling easy. Time to go heavier.`
-          : `RPE ${avgRPE.toFixed(1)} ${ctx} — weight is feeling comfortable. Ready to push heavier.`;
+        return repsStr && maxR > 0 && avgReps > maxR
+          ? `${repsStr} at ${rpeStr} — above target and feeling easy. Time to go heavier.`
+          : `${rpeStr} — weight is feeling comfortable. Ready to push heavier.`;
       }
-      return avgReps
-        ? `${avgReps} reps at RPE ${avgRPE.toFixed(1)} ${ctx}. Hitting your target consistently — ready to increase.`
-        : `Hitting your rep target at RPE ${avgRPE.toFixed(1)} ${ctx}. Ready to go heavier.`;
+      return repsStr
+        ? `${repsStr} at ${rpeStr}. Hitting your target — ready to increase.`
+        : `Hitting your rep target at ${rpeStr}. Ready to go heavier.`;
     }
-    return avgReps && maxR > 0 && avgReps > maxR
-      ? `${avgReps} reps ${ctx} — above your target range. Time to add weight.`
-      : `Consistently hitting the top of your rep range ${ctx}. Time to go heavier.`;
+    return repsStr && maxR > 0 && avgReps > maxR
+      ? `${repsStr} — above your target range. Time to add weight.`
+      : `Consistently hitting the top of your rep range. Time to go heavier.`;
   }
 
   // Maintain
-  if (avgRPE !== null && avgRPE >= 9) {
-    return `RPE ${avgRPE.toFixed(1)} ${ctx} — hit your rep targets first before adding weight.`;
+  if (rpeStr && avgRPE >= 9) {
+    return repsStr
+      ? `${repsStr} at ${rpeStr} — hit your targets before adding weight.`
+      : `${rpeStr} — hit your rep targets before adding weight.`;
   }
   if (avgReps !== null && avgReps > 0) {
     if (minR > 0 && avgReps < minR) {
-      return `${avgReps} reps ${ctx}. Get to ${minR}–${maxR} reps before adding weight.`;
+      return `${repsStr}. Get to ${minR}\u2013${maxR} before adding weight.`;
     }
     if (maxR > 0 && avgReps < maxR) {
-      return `${avgReps} reps ${ctx}. Push to ${maxR} reps before adding weight.`;
+      return `${repsStr}. Push to ${maxR} reps to trigger the next increase.`;
     }
   }
-  return useTrend
-    ? `Building consistency at this weight over ${sessionCount} sessions. Keep quality high before going heavier.`
-    : `Maintaining at this weight. Build to the top of your rep range before going heavier.`;
+  return multi
+    ? `Building consistency across ${sessionCount} sessions. Keep quality high before going heavier.`
+    : `Maintaining quality at this weight. Build to the top of your rep range before going heavier.`;
 }
 
 function _autoregAccept(exId, newWeight) {
