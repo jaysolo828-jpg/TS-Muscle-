@@ -11299,21 +11299,108 @@ function renderHistory() {
   // ── 2. TRAINING AGE ──────────────────────────────────────
   const completedCycles = Math.max(0, (state.cycleCount || 1) - 1);
   const totalWeeks = completedCycles * 8 + (state.weekCount || 1) - 1;
+  // Keep ageLabel for the share card
   const ageLabel = completedCycles === 0
     ? `${state.weekCount || 1} WEEK${(state.weekCount || 1) === 1 ? '' : 'S'} IN`
     : completedCycles === 1 ? '1-CYCLE VETERAN'
     : `${completedCycles}-CYCLE VETERAN`;
-  const ageSub = totalWeeks > 0 ? `${totalWeeks} week${totalWeeks === 1 ? '' : 's'} of training` : 'Just getting started';
+
+  // ── Main display number & unit
+  const _ageBigNum = totalWeeks >= 52 ? Math.floor(totalWeeks / 52) : totalWeeks;
+  const _ageBigUnit = totalWeeks >= 52
+    ? (Math.floor(totalWeeks / 52) > 1 ? 'YEARS' : 'YEAR')
+    : `WEEK${totalWeeks === 1 ? '' : 'S'}`;
+  const _ageBigSub = totalWeeks === 0
+    ? 'Starting from zero — day one counts.'
+    : completedCycles >= 1
+      ? `${completedCycles} full cycle${completedCycles > 1 ? 's' : ''} complete · ${totalWeeks} total weeks`
+      : `Week ${state.weekCount || 1} of your first cycle`;
+
+  // ── Milestone timeline — 5 nodes: START / 8WKS / 6MOS / 1YR / 2YRS
+  const _tNodes = [
+    { weeks: 0,   pct: 0,   label: 'START'  },
+    { weeks: 8,   pct: 25,  label: '8 WKS'  },
+    { weeks: 26,  pct: 50,  label: '6 MOS'  },
+    { weeks: 52,  pct: 75,  label: '1 YR'   },
+    { weeks: 104, pct: 100, label: '2 YRS'  },
+  ];
+  // Interpolate fill % between nodes
+  let _fillPct = 0;
+  for (let i = 0; i < _tNodes.length - 1; i++) {
+    if (totalWeeks >= _tNodes[i + 1].weeks) {
+      _fillPct = _tNodes[i + 1].pct;
+    } else if (totalWeeks >= _tNodes[i].weeks) {
+      const segW = _tNodes[i + 1].weeks - _tNodes[i].weeks;
+      const segP = _tNodes[i + 1].pct   - _tNodes[i].pct;
+      _fillPct = _tNodes[i].pct + ((totalWeeks - _tNodes[i].weeks) / segW) * segP;
+      break;
+    }
+  }
+  _fillPct = Math.min(100, Math.max(0, parseFloat(_fillPct.toFixed(1))));
+
+  // Milestone dot + label HTML
+  const _tNodeHTML = _tNodes.map(n => {
+    const reached = totalWeeks >= n.weeks;
+    const dotBorder = reached ? 'var(--red-text)' : 'rgba(255,255,255,0.18)';
+    const dotBg     = reached ? 'rgba(204,32,39,0.22)' : 'transparent';
+    const dotGlow   = reached ? '0 0 7px rgba(204,32,39,0.50)' : 'none';
+    const lblColor  = reached ? 'rgba(210,205,198,0.90)' : 'rgba(255,255,255,0.22)';
+    return `<div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="width:13px;height:13px;border-radius:50%;background:${dotBg};border:2px solid ${dotBorder};box-shadow:${dotGlow};position:relative;z-index:1;"></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;color:${lblColor};letter-spacing:0.5px;margin-top:7px;white-space:nowrap;">${n.label}</div>
+    </div>`;
+  }).join('');
+
+  // ── Dynamic message keyed to phase
+  const _agePhaseMsg = totalWeeks < 2
+    ? 'Week one. Every serious lifter started exactly here. Show up consistently for the next eight weeks and the habit locks in.'
+    : totalWeeks < 8
+      ? `${totalWeeks} weeks in — you're already building the commitment most people never make. Foundation phase completes at 8 weeks.`
+      : totalWeeks < 13
+        ? 'Foundation phase complete. Your nervous system has adapted and your baseline strength is set — from here the gains compound.'
+        : totalWeeks < 26
+          ? 'Three months in. Compound lifts are starting to feel natural and progress is becoming visible session to session.'
+          : totalWeeks < 52
+            ? 'Six months of consistent training. This is the phase where structural muscle adaptation accelerates — you\'ve earned it.'
+            : totalWeeks < 78
+              ? 'One year under the bar. Recovery is faster, technique is sharper, and every session builds on a real foundation.'
+              : totalWeeks < 104
+                ? 'Eighteen months in. You\'re well past the point where most people quit — everything from here compounds on itself.'
+                : 'Two or more years of consistent training. Strength, recovery, and technique at this level are built — not bought.';
 
   const ageCard = mkCard();
   ageCard.innerHTML = `
-    <div style="text-align:center;padding:4px 0 2px;">
-      <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red-text);letter-spacing:2px;">${ageLabel}</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(205,200,192,0.90);letter-spacing:0.5px;margin-top:5px;">${ageSub}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--red-text)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.85;">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        <polyline points="17 6 23 6 23 12"/>
+      </svg>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:rgba(165,160,155,0.90);">TRAINING AGE</div>
+    </div>
+
+    <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:4px;line-height:1;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:68px;color:var(--cream);letter-spacing:2px;line-height:0.9;">${_ageBigNum}</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red-text);letter-spacing:2px;padding-bottom:8px;">${_ageBigUnit}</div>
+    </div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(185,180,172,0.85);letter-spacing:0.3px;margin-bottom:22px;">${_ageBigSub}</div>
+
+    <div style="position:relative;margin-bottom:34px;">
+      <div style="position:absolute;top:5px;left:6px;right:6px;height:3px;background:rgba(255,255,255,0.10);border-radius:2px;">
+        <div style="height:100%;width:${_fillPct}%;background:var(--red-text);border-radius:2px;box-shadow:0 0 6px rgba(204,32,39,0.35);transition:width 0.6s ease;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;">${_tNodeHTML}</div>
+    </div>
+
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(215,210,202,0.92);line-height:1.65;margin-bottom:14px;">${_agePhaseMsg}</div>
+
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(155,150,145,0.82);line-height:1.6;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);">
+      Training age is the one metric no shortcut can replicate. Strength ceiling, recovery speed, and muscle density all scale with time consistently spent under the bar.
     </div>`;
-  ageCard.appendChild(mkShareBtn('SHARE TRAINING AGE', () =>
-    generateAndShareCard('training_age', { cycles: completedCycles, weeks: totalWeeks, label: ageLabel })
-  ));
+  if (totalWeeks >= 8) {
+    ageCard.appendChild(mkShareBtn('SHARE TRAINING AGE', () =>
+      generateAndShareCard('training_age', { cycles: completedCycles, weeks: totalWeeks, label: ageLabel })
+    ));
+  }
   container.appendChild(ageCard);
 
   // ── 2b. THIS CYCLE ────────────────────────────────────────
