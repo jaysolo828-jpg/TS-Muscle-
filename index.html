@@ -11279,15 +11279,15 @@ function renderHistory() {
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;">
       <div style="background:var(--dark2);padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${volLabel}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">VOLUME</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(165,160,155,0.90);letter-spacing:1px;margin-top:3px;">VOLUME</div>
       </div>
       <div style="background:var(--dark2);padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${timeLabel}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">TIME</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(165,160,155,0.90);letter-spacing:1px;margin-top:3px;">TIME</div>
       </div>
       <div style="background:var(--dark2);padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);line-height:1;">${totalSessions}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-top:2px;">SESSIONS</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(165,160,155,0.90);letter-spacing:1px;margin-top:3px;">SESSIONS</div>
       </div>
     </div>`;
     lifetimeCard.appendChild(mkShareBtn('SHARE LIFETIME STATS', () =>
@@ -11309,7 +11309,7 @@ function renderHistory() {
   ageCard.innerHTML = `
     <div style="text-align:center;padding:4px 0 2px;">
       <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red-text);letter-spacing:2px;">${ageLabel}</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:1px;margin-top:4px;">${ageSub}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(205,200,192,0.90);letter-spacing:0.5px;margin-top:5px;">${ageSub}</div>
     </div>`;
   ageCard.appendChild(mkShareBtn('SHARE TRAINING AGE', () =>
     generateAndShareCard('training_age', { cycles: completedCycles, weeks: totalWeeks, label: ageLabel })
@@ -11361,10 +11361,10 @@ function renderHistory() {
     _cycleCard.innerHTML = `
       <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;">
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--red-text);letter-spacing:2px;line-height:1;">WEEK ${_wn} OF 8</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">CYCLE ${_cn}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(165,160,155,0.90);letter-spacing:1px;">CYCLE ${_cn}</div>
       </div>
       <div style="display:flex;gap:4px;align-items:center;justify-content:space-between;margin-bottom:12px;">${_dotHTML}</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.55;letter-spacing:0.3px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">${_trendText}</div>`;
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(205,200,192,0.90);line-height:1.6;letter-spacing:0.2px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">${_trendText}</div>`;
     container.appendChild(_cycleCard);
 
     // ── Weekly volume bars ────────────────────────────────
@@ -11392,19 +11392,19 @@ function renderHistory() {
         const pct      = Math.min(actual / target, 1);
         const nearMRV  = actual >= Math.round(mrv * 0.9);
         const atTarget = actual >= target;
-        const barColor = notDone  ? 'rgba(255,255,255,0.07)'
+        const barColor = notDone  ? 'rgba(255,255,255,0.08)'
                        : nearMRV  ? 'var(--warning)'
                        : atTarget ? '#50c882'
                        : mcolor;
-        const nameColor = notDone ? 'var(--gray)' : nearMRV ? 'var(--warning)' : atTarget ? '#50c882' : 'var(--gray-light)';
+        const nameColor = notDone ? 'rgba(160,155,150,0.85)' : nearMRV ? 'var(--warning)' : atTarget ? '#50c882' : 'rgba(215,210,202,0.95)';
         const label     = muscle.charAt(0) + muscle.slice(1).toLowerCase();
         const rightSide = notDone
-          ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(255,255,255,0.45);letter-spacing:0.5px;font-style:italic;">not trained yet</span>`
-          : `<span style="color:${nameColor};font-weight:600;">${actual}</span><span style="color:rgba(255,255,255,0.55);"> / ${target} sets</span>`;
-        return `<div style="margin-bottom:11px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;color:${nameColor};letter-spacing:0.5px;">${label}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;">${rightSide}</div>
+          ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(160,155,150,0.75);letter-spacing:0.3px;font-style:italic;">not trained yet</span>`
+          : `<span style="color:${nameColor};font-weight:700;">${actual}</span><span style="color:rgba(200,195,188,0.80);"> / ${target} sets</span>`;
+        return `<div style="margin-bottom:13px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:${nameColor};letter-spacing:0.5px;">${label}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;">${rightSide}</div>
           </div>
           <div style="background:rgba(255,255,255,0.10);border-radius:4px;height:7px;overflow:hidden;">
             <div style="height:100%;border-radius:4px;background:${barColor};width:${Math.round(pct * 100)}%;transition:width 0.3s ease;"></div>
@@ -11421,7 +11421,7 @@ function renderHistory() {
         : 'Approaching peak volume — recovery week is coming.';
 
       const _footNote = (!_hasWeekBoundary || !_anyActual)
-        ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.3px;margin-top:10px;">Complete a session this week to see your sets tracked here.</div>`
+        ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(195,190,182,0.85);letter-spacing:0.2px;margin-top:12px;line-height:1.5;">Complete a session this week to see your sets tracked here.</div>`
         : '';
 
       // ── Readiness ring ────────────────────────────────────────
@@ -11445,7 +11445,7 @@ function renderHistory() {
 
       const _volCard = mkCard();
       _volCard.innerHTML = `
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:14px;">THIS WEEK'S SETS</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(160,155,150,0.9);margin-bottom:14px;">THIS WEEK'S SETS</div>
         <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:14px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08);">
           <div style="position:relative;width:90px;height:90px;">
             <svg width="90" height="90" viewBox="0 0 80 80" style="display:block;transform:rotate(-90deg);">
@@ -11455,12 +11455,12 @@ function renderHistory() {
                 stroke-linecap="round" style="transition:stroke-dashoffset 0.4s ease,stroke 0.4s ease;"/>
             </svg>
             <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
-              <div style="font-family:'Bebas Neue',cursive;font-size:23px;color:${_noData ? 'var(--gray)' : _ringColor};line-height:1;letter-spacing:1px;">${_noData ? '—' : _overallPctInt + '%'}</div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:23px;color:${_noData ? 'rgba(160,155,150,0.85)' : _ringColor};line-height:1;letter-spacing:1px;">${_noData ? '—' : _overallPctInt + '%'}</div>
             </div>
           </div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:0.3px;margin-top:10px;text-align:center;line-height:1.4;">${_ringMsg}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(210,205,198,0.90);letter-spacing:0.2px;margin-top:10px;text-align:center;line-height:1.5;">${_ringMsg}</div>
         </div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(170,170,170,0.75);line-height:1.5;letter-spacing:0.3px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06);">${_weekMsg}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(195,190,182,0.88);line-height:1.6;letter-spacing:0.2px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06);">${_weekMsg}</div>
         ${_rows}${_footNote}`;
       container.appendChild(_volCard);
     }
@@ -11552,15 +11552,15 @@ function renderHistory() {
       const combined = topLifts.reduce((s, l) => s + l.est1RM, 0);
       const bigCard = mkCard();
       bigCard.innerHTML = `
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:10px;">${bigLabel} (EST. 1RM)</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(165,160,155,0.90);margin-bottom:12px;">${bigLabel} (EST. 1RM)</div>
         ${topLifts.map((l, i) => `
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;${i < topLifts.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : ''}">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);letter-spacing:0.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.name.toUpperCase()}</div>
-            <div style="flex-shrink:0;white-space:nowrap;line-height:1;"><span style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--red-text);">${l.est1RM}</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);margin-left:3px;">lbs</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;${i < topLifts.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.07);' : ''}">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;color:var(--cream);letter-spacing:0.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.name.toUpperCase()}</div>
+            <div style="flex-shrink:0;white-space:nowrap;line-height:1;"><span style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--red-text);">${l.est1RM}</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(165,160,155,0.90);margin-left:4px;">lbs</span></div>
           </div>`).join('')}
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">COMBINED TOTAL</div>
-          <div style="flex-shrink:0;white-space:nowrap;line-height:1;"><span style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--gold);">${combined.toLocaleString()}</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-left:3px;">lbs</span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.10);">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(165,160,155,0.90);letter-spacing:1px;">COMBINED TOTAL</div>
+          <div style="flex-shrink:0;white-space:nowrap;line-height:1;"><span style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--gold);">${combined.toLocaleString()}</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(165,160,155,0.90);margin-left:4px;">lbs</span></div>
         </div>`;
       bigCard.appendChild(mkShareBtn('SHARE BIG THREE', () =>
         generateAndShareCard('big_three', { lifts: topLifts, total: combined })
@@ -11610,23 +11610,23 @@ function renderHistory() {
       wvwCard.innerHTML = `
         <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:var(--red-text);letter-spacing:2px;margin-bottom:10px;">WEEK ${curWeek}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden;margin-bottom:10px;">
-          <div style="background:var(--dark2);padding:8px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;margin-bottom:4px;">THIS CYCLE</div>
-            <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);">${fmtVol(thisSt.volume)}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;">LBS</div>
+          <div style="background:var(--dark2);padding:10px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:rgba(165,160,155,0.90);letter-spacing:1px;margin-bottom:5px;">THIS CYCLE</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);">${fmtVol(thisSt.volume)}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(165,160,155,0.80);letter-spacing:1px;margin-top:2px;">LBS</div>
           </div>
-          <div style="background:var(--dark2);padding:8px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;margin-bottom:4px;">LAST CYCLE</div>
-            <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--gray-light);">${fmtVol(lastSt.volume)}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;">LBS</div>
+          <div style="background:var(--dark2);padding:10px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:rgba(165,160,155,0.90);letter-spacing:1px;margin-bottom:5px;">LAST CYCLE</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--gray-light);">${fmtVol(lastSt.volume)}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(165,160,155,0.80);letter-spacing:1px;margin-top:2px;">LBS</div>
           </div>
-          <div style="background:var(--dark2);padding:8px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;margin-bottom:4px;">CHANGE</div>
-            <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:${deltaColor};">${volDelta !== null ? (volDelta >= 0 ? '+' : '') + volDelta + '%' : '—'}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--gray);letter-spacing:1px;">VOL</div>
+          <div style="background:var(--dark2);padding:10px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:rgba(165,160,155,0.90);letter-spacing:1px;margin-bottom:5px;">CHANGE</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:${deltaColor};">${volDelta !== null ? (volDelta >= 0 ? '+' : '') + volDelta + '%' : '—'}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(165,160,155,0.80);letter-spacing:1px;margin-top:2px;">VOL</div>
           </div>
         </div>
-        <div style="display:flex;gap:16px;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">
+        <div style="display:flex;gap:16px;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(190,185,178,0.85);letter-spacing:0.5px;">
           <span>THIS: ${thisSt.sessions} sessions · ${thisSt.prs} PRs</span>
           <span>LAST: ${lastSt.sessions} sessions · ${lastSt.prs} PRs</span>
         </div>`;
