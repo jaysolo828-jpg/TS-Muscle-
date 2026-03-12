@@ -4406,6 +4406,48 @@ function getMRVApproachingMuscles() {
   return approaching;
 }
 
+// Checks whether an exercise has triggered downward autoregulation.
+// Rule A: avg session RPE ≥ 9.5 (effectively RPE 10) for 2 consecutive same-day sessions.
+// Rule B: avg session RPE ≥ 9   for 3 consecutive same-day sessions.
+// Returns { rule, sessionCount, lastWeight, suggestedWeight } or null.
+function checkAutoregulation(exId, dayId) {
+  const sessions = [...(state.history || [])]
+    .reverse()
+    .filter(h => h.dayId === dayId && h.sets?.[exId] && !h.isDeload);
+  if (sessions.length < 2) return null;
+
+  function sessAvgRpe(sess) {
+    const sets = (sess.sets[exId] || []).filter(s => s.done && s.rpe != null && s.rpe !== '');
+    if (!sets.length) return null;
+    return sets.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / sets.length;
+  }
+
+  const rpe0 = sessAvgRpe(sessions[0]);
+  const rpe1 = sessAvgRpe(sessions[1]);
+  if (rpe0 === null || rpe1 === null) return null;
+
+  const lastSets = (sessions[0].sets[exId] || []).filter(s => s.done);
+  const lastWeight = parseFloat(lastSets[lastSets.length - 1]?.weight) || 0;
+  if (!lastWeight) return null;
+
+  const suggestedWeight = Math.max(5, Math.round((lastWeight - getIncrement('small')) / 2.5) * 2.5);
+
+  // Rule A: RPE ~10 for 2 consecutive sessions
+  if (rpe0 >= 9.5 && rpe1 >= 9.5) {
+    return { rule: '2x10', sessionCount: 2, lastWeight, suggestedWeight };
+  }
+
+  // Rule B: RPE 9+ for 3 consecutive sessions
+  if (sessions.length >= 3) {
+    const rpe2 = sessAvgRpe(sessions[2]);
+    if (rpe2 !== null && rpe0 >= 9 && rpe1 >= 9 && rpe2 >= 9) {
+      return { rule: '3x9plus', sessionCount: 3, lastWeight, suggestedWeight };
+    }
+  }
+
+  return null;
+}
+
 // Returns weekly set counts per muscle group based on sessions since the start of
 // the current training week (state.weekStartTimestamp) plus any active session.
 function getWeeklySetsByMuscle() {
@@ -6661,6 +6703,16 @@ function getProgressiveWeight(exId, dayId) {
     consecutiveReductions
   };
 
+  // Autoregulation check — if consecutive high-RPE sessions detected, hold the weight
+  // and let the user confirm the reduction rather than auto-filling it.
+  const _ar = checkAutoregulation(exId, dayId);
+  if (_ar && !activeSession.autoregActed?.[exId]) {
+    activeSession.overloadReasons[exId].autoregSuggestion = _ar;
+    activeSession.overloadReasons[exId].changed = false;
+    activeSession.overloadReasons[exId].newWeight = lastWeight;
+    return String(lastWeight);
+  }
+
   return String(newWeight);
 }
 
@@ -6668,6 +6720,26 @@ function buildOverloadHint(exId) {
   if (state.progressiveOverload === false) return '';
   const info = activeSession?.overloadReasons?.[exId];
   if (!info) return '';
+
+  // Autoregulation confirmation card — shown instead of the normal hint when
+  // consecutive high-RPE sessions are detected. User must confirm the reduction.
+  if (info.autoregSuggestion && !activeSession.autoregActed?.[exId]) {
+    const ar = info.autoregSuggestion;
+    const _label = ar.rule === '2x10'
+      ? `RPE 10 two sessions in a row`
+      : `RPE 9–10 three sessions in a row`;
+    return `<div style="background:rgba(243,156,18,0.12); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:10px 12px; margin-bottom:8px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">TOO HEAVY?</div>
+      </div>
+      <div style="font-size:12px; color:var(--gray-light); padding-left:23px; margin-bottom:8px; line-height:1.5;">${_label}. Drop to <strong style="color:var(--cream);">${ar.suggestedWeight} lbs</strong> this session?</div>
+      <div style="display:flex; gap:8px; padding-left:23px; flex-wrap:wrap;">
+        <button onclick="_autoregAccept('${exId}', ${ar.suggestedWeight})" style="background:rgba(243,156,18,0.18); border:1px solid rgba(243,156,18,0.4); border-radius:6px; color:#f39c12; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.5px; padding:5px 12px; cursor:pointer;">REDUCE TO ${ar.suggestedWeight} LBS</button>
+        <button onclick="_autoregDismiss('${exId}')" style="background:transparent; border:1px solid #3a3a3a; border-radius:6px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:0.5px; padding:5px 12px; cursor:pointer;">KEEP CURRENT</button>
+      </div>
+    </div>`;
+  }
 
   // Rep outcome label + trend/single mode badge
   const modeBadge = info.useTrend
@@ -6732,6 +6804,28 @@ function buildOverloadHint(exId) {
     </div>`;
   }
   return '';
+}
+
+function _autoregAccept(exId, newWeight) {
+  if (!activeSession) return;
+  if (!activeSession.autoregActed) activeSession.autoregActed = {};
+  activeSession.autoregActed[exId] = 'accepted';
+  // Update weight for all undone sets
+  const sets = activeSession.sets[exId];
+  if (sets) sets.forEach(s => { if (!s.done) s.weight = String(newWeight); });
+  // Reflect the accepted change in overloadReasons for the hint card
+  if (activeSession.overloadReasons?.[exId]) {
+    activeSession.overloadReasons[exId].changed = true;
+    activeSession.overloadReasons[exId].newWeight = newWeight;
+  }
+  renderSession();
+}
+
+function _autoregDismiss(exId) {
+  if (!activeSession) return;
+  if (!activeSession.autoregActed) activeSession.autoregActed = {};
+  activeSession.autoregActed[exId] = 'dismissed';
+  renderSession();
 }
 
 // ============================================================
