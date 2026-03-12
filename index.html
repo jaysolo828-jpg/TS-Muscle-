@@ -7148,6 +7148,7 @@ function startSession(dayId) {
     bonusExercises: []
   };
   activeSession.suggestedWeights = {};
+  activeSession.setIntel = {};
   day.exercises.forEach(ex => {
     const suggested = getProgressiveWeight(ex.id, day.id);
     // Store the raw string as-is (preserving '' for "no suggestion") so
@@ -7155,6 +7156,7 @@ function startSession(dayId) {
     // suggestion and no suggestion at all.
     activeSession.suggestedWeights[ex.id] = suggested;
     activeSession.sets[ex.id] = Array.from({length: getGoalSets(ex.id, ex.sets)}, () => ({ weight: suggested, reps: '', rpe: '', done: false }));
+    activeSession.setIntel[ex.id] = activeSession.sets[ex.id].map(() => ({ suggestedReps: null, wasManualOverride: false }));
   });
 
   renderSession();
@@ -7420,6 +7422,18 @@ function renderSession() {
       const weightPlaceholder = lastData ? lastData.weight : '';
       const repsPlaceholder = lastData ? lastData.reps : '';
 
+      // In-session rep intelligence: compute adaptive suggestion for sets after the first.
+      // Only applies when the set hasn't been completed yet and setIntel is initialized.
+      const _intelReps = (si > 0 && !set.done && activeSession?.setIntel?.[ex.id])
+        ? calcIntelSuggestedReps(ex.id, si)
+        : null;
+      if (_intelReps !== null && activeSession?.setIntel?.[ex.id]?.[si]) {
+        activeSession.setIntel[ex.id][si].suggestedReps = _intelReps;
+      }
+      const _repPlaceholder = _intelReps !== null
+        ? String(_intelReps)
+        : (repsPlaceholder || _goalReps.split(/[–\-]/)[0]);
+
       setsHTML += `
         <div class="set-row" id="set-row-${ex.id}-${si}">
           <div class="set-num">${si + 1}</div>
@@ -7427,7 +7441,7 @@ function renderSession() {
             value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
           <div style="position:relative;">
             <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
-              placeholder="${repsPlaceholder || _goalReps.split(/[–\-]/)[0]}"
+              placeholder="${_repPlaceholder}"
               value="${set.reps}" style="padding-right:22px;"
               ${set.done ? 'disabled' : ''}
               onchange="updateSet('${ex.id}',${si},'reps',this.value); updateRepIndicator('${ex.id}',${si},'${_goalReps}')"
@@ -7875,6 +7889,32 @@ function toggleSetDone(exId, setIndex) {
     // so unchecking+reweighting always uses the latest confirmed values.
     _updatePendingManualAdj(exId);
 
+    // In-session set intelligence: record whether user entered the suggested reps
+    // or deviated from them, then push an updated suggestion onto the next set.
+    if (activeSession?.setIntel?.[exId]) {
+      const _intel = activeSession.setIntel[exId][setIndex];
+      if (_intel && _intel.suggestedReps !== null && _intel.suggestedReps !== undefined) {
+        _intel.wasManualOverride = (parseInt(set.reps) !== _intel.suggestedReps);
+      }
+      const _nextIdx = setIndex + 1;
+      const _nextSet = activeSession.sets[exId]?.[_nextIdx];
+      if (_nextSet && !_nextSet.done) {
+        if (!activeSession.setIntel[exId][_nextIdx]) {
+          activeSession.setIntel[exId][_nextIdx] = { suggestedReps: null, wasManualOverride: false };
+        }
+        const _nextSuggestion = calcIntelSuggestedReps(exId, _nextIdx);
+        activeSession.setIntel[exId][_nextIdx].suggestedReps = _nextSuggestion;
+        const _nextRepsInput = document.getElementById(`reps-input-${exId}-${_nextIdx}`);
+        if (_nextRepsInput && !_nextSet.reps) {
+          const _nd = state.program.find(d => d.id === activeSession.dayId);
+          const _ne = _nd?.exercises.find(e => e.id === exId);
+          const _nTarget = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ne?.reps);
+          const _nStd = _nTarget.split(/[–\-]/)[0];
+          _nextRepsInput.placeholder = _nextSuggestion !== null ? String(_nextSuggestion) : _nStd;
+        }
+      }
+    }
+
     // RPE nudge — show inline row if RPE not selected
     if (!set.rpe) {
       setTimeout(() => _showRpeNudge(exId, setIndex), 400);
@@ -7889,6 +7929,30 @@ function toggleSetDone(exId, setIndex) {
     recalcPRForExercise(exId);
     // Recompute pending adjustment — the unchecked set may have been the representative one
     _updatePendingManualAdj(exId);
+
+    // In-session set intelligence: clear this set's override flag and
+    // recalculate the next set's suggestion (it'll return null since this set is
+    // now incomplete, which resets the next placeholder to standard target).
+    if (activeSession?.setIntel?.[exId]) {
+      if (activeSession.setIntel[exId][setIndex]) {
+        activeSession.setIntel[exId][setIndex].wasManualOverride = false;
+      }
+      const _nextIdx = setIndex + 1;
+      const _nextSet = activeSession.sets[exId]?.[_nextIdx];
+      if (_nextSet && !_nextSet.done) {
+        if (activeSession.setIntel[exId][_nextIdx]) {
+          activeSession.setIntel[exId][_nextIdx].suggestedReps = null;
+          activeSession.setIntel[exId][_nextIdx].wasManualOverride = false;
+        }
+        const _nextRepsInput = document.getElementById(`reps-input-${exId}-${_nextIdx}`);
+        if (_nextRepsInput && !_nextSet.reps) {
+          const _nd = state.program.find(d => d.id === activeSession.dayId);
+          const _ne = _nd?.exercises.find(e => e.id === exId);
+          const _nTarget = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ne?.reps);
+          _nextRepsInput.placeholder = _nTarget.split(/[–\-]/)[0];
+        }
+      }
+    }
   }
 
   const day = state.program.find(d => d.id === activeSession.dayId);
@@ -8058,6 +8122,57 @@ window.addEventListener('beforeunload', _saveSessionCheckpoint);
 let restTimers = {}; // { exId: { interval, endTime, total } }
 
 
+
+// ============================================================
+// IN-SESSION SET INTELLIGENCE
+// ============================================================
+// Returns an integer rep suggestion for setIndex based on the exercise's
+// already-completed sets this session, or null to fall back to standard target.
+// Conditions for returning null (fall back):
+//   - setIndex < 1 (first set — no prior data)
+//   - setIntel was never initialized (session started before this feature)
+//   - any prior set is incomplete (missing weight, reps, or RPE)
+//   - any prior set was a manual override (user entered reps ≠ suggestion)
+function calcIntelSuggestedReps(exId, setIndex) {
+  if (setIndex < 1 || !activeSession?.setIntel?.[exId]) return null;
+
+  const _day = state.program.find(d => d.id === activeSession.dayId);
+  const _ex = _day?.exercises.find(e => e.id === exId);
+  const targetReps = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ex?.reps);
+  const parts = targetReps.split(/[–\-]/);
+  const minReps = parseInt(parts[0]) || 1;
+  const maxReps = parseInt(parts[1]) || minReps;
+
+  // All sets before setIndex must be done with full weight + reps + RPE data
+  // and none can have triggered a manual override
+  for (let i = 0; i < setIndex; i++) {
+    const s = activeSession.sets[exId]?.[i];
+    if (!s || !s.done) return null;
+    if (s.weight === '' || s.weight === null || s.weight === undefined) return null;
+    if (s.reps === '' || s.reps === null || s.reps === undefined) return null;
+    if (s.rpe === '' || s.rpe === null || s.rpe === undefined) return null;
+    if (activeSession.setIntel[exId][i]?.wasManualOverride) return null;
+  }
+
+  // Base the suggestion on the immediately preceding set
+  const prev = activeSession.sets[exId][setIndex - 1];
+  const rpe = parseFloat(prev.rpe);
+  const reps = parseInt(prev.reps);
+  if (isNaN(rpe) || isNaN(reps)) return null;
+
+  let suggested;
+  if (rpe <= 7) {
+    // Comfortable — nudge toward top of range
+    suggested = Math.min(maxReps, reps + 1);
+  } else if (rpe <= 8) {
+    // Moderate effort — hold steady
+    suggested = reps;
+  } else {
+    // High effort — ease off slightly
+    suggested = Math.max(minReps, reps - 1);
+  }
+  return suggested;
+}
 
 // ============================================================
 // REP TARGET INDICATOR
