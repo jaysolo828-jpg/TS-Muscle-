@@ -3254,7 +3254,7 @@
   <div class="settings-item" style="cursor:default;">
     <div style="flex:1;">
       <div class="settings-label">Weight Increment Size</div>
-      <div class="settings-sub" id="increment-sub">How much weight to add when progressing</div>
+      <div class="settings-sub" id="increment-sub">Controls how much weight is added during your training sessions when you hit your rep target. Does not affect the automatic weight adjustment at the start of a new cycle — that always uses a small conservative increment to protect your joints and avoid burnout.</div>
     </div>
   </div>
   <div style="display:flex;gap:8px;padding:0 16px 16px;margin-top:-8px;">
@@ -9102,7 +9102,7 @@ function finalizeEndSession(save) {
           const _refWeights = (state.deloadBaseWeights && Object.keys(state.deloadBaseWeights).length > 0)
             ? state.deloadBaseWeights
             : state.startingWeights || {};
-          const _bump = getIncrement('small');
+          const _bump = 2.5; // Fixed conservative increment — independent of user's in-session preference
           // Walk backwards through cycle entries to find most recent weight per exercise
           const _lastUsed = {};
           for (let _ci = _cycleEntries.length - 1; _ci >= 0; _ci--) {
@@ -13476,7 +13476,7 @@ function updateIncrementUI() {
     btn.style.color       = active ? 'var(--cream)' : 'var(--gray)';
   });
   const sub = document.getElementById('increment-sub');
-  if (sub) sub.textContent = 'Currently: ' + lbs[current] + ' lb steps per progression';
+  if (sub) sub.textContent = 'In-session progressive overload: ' + lbs[current] + ' lb steps when you hit your rep target. (Cycle-to-cycle baseline bump always uses a fixed 2.5 lb conservative increment.)';
 }
 
 async function toggleTrainingReminders() {

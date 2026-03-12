@@ -432,8 +432,8 @@ async function simulateSession(page, sessionNum, forceDeload = false) {
             const refWeights = (state.deloadBaseWeights && Object.keys(state.deloadBaseWeights).length > 0)
               ? state.deloadBaseWeights
               : state.startingWeights || {};
-            // Small increment: prefer getIncrement('small') if available, else 5 lbs
-            const bump = (typeof getIncrement === 'function') ? getIncrement('small') : 5;
+            // Fixed 2.5 lb conservative increment — independent of user's in-session preference
+            const bump = 2.5;
             const lastUsed = {};
             for (let ci = cycleEntries.length - 1; ci >= 0; ci--) {
               const ce = cycleEntries[ci];
