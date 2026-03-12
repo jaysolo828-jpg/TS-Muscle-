@@ -6732,18 +6732,27 @@ function buildOverloadHint(exId) {
 
   // Autoregulation confirmation card — shown instead of the normal hint when
   // consecutive high-RPE sessions are detected. User must confirm the reduction.
+  // Only the weight changes; the rep target is read from the program and shown
+  // explicitly so there's no ambiguity.
   if (info.autoregSuggestion && !activeSession.autoregActed?.[exId]) {
     const ar = info.autoregSuggestion;
     const _label = ar.rule === '2x10'
       ? `RPE 10 two sessions in a row`
       : `RPE 9–10 three sessions in a row`;
+    const _arDay = state.program.find(d => d.id === activeSession?.dayId);
+    const _arEx  = _arDay?.exercises.find(e => e.id === exId);
+    const _repGoal = _arEx ? getGoalReps(_arEx.id, _arEx.reps) : null;
+    const _repLine = _repGoal
+      ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; margin-top:3px;">Rep target stays at <strong style="color:var(--cream);">${_repGoal} reps</strong> — only the weight changes.</div>`
+      : '';
     return `<div style="background:rgba(243,156,18,0.12); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:10px 12px; margin-bottom:8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">TOO HEAVY?</div>
       </div>
-      <div style="font-size:12px; color:var(--gray-light); padding-left:23px; margin-bottom:8px; line-height:1.5;">${_label}. Drop to <strong style="color:var(--cream);">${ar.suggestedWeight} lbs</strong> this session?</div>
-      <div style="display:flex; gap:8px; padding-left:23px; flex-wrap:wrap;">
+      <div style="font-size:12px; color:var(--gray-light); padding-left:23px; margin-bottom:4px; line-height:1.5;">${_label}. Drop to <strong style="color:var(--cream);">${ar.suggestedWeight} lbs</strong> this session?</div>
+      ${_repLine}
+      <div style="display:flex; gap:8px; padding-left:23px; flex-wrap:wrap; margin-top:8px;">
         <button onclick="_autoregAccept('${exId}', ${ar.suggestedWeight})" style="background:rgba(243,156,18,0.18); border:1px solid rgba(243,156,18,0.4); border-radius:6px; color:#f39c12; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.5px; padding:5px 12px; cursor:pointer;">REDUCE TO ${ar.suggestedWeight} LBS</button>
         <button onclick="_autoregDismiss('${exId}')" style="background:transparent; border:1px solid #3a3a3a; border-radius:6px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:0.5px; padding:5px 12px; cursor:pointer;">KEEP CURRENT</button>
       </div>
