@@ -4539,6 +4539,7 @@ const GOAL_REPS = {
   'bench':           { strength: '3–5',   size: '8–12',  both: '5–8'   },
   'incline':         { strength: '4–6',   size: '10–12', both: '6–10'  },
   'flye':            { strength: '8–10',  size: '12–15', both: '10–12' },
+  'ohp':             { strength: '4–6',   size: '8–12',  both: '6–10'  },
   'pushdown':        { strength: '8–10',  size: '12–15', both: '10–12' },
   'overhead-tri':    { strength: '6–8',   size: '10–12', both: '8–10'  },
   'lateral':         { strength: '10–12', size: '15–20', both: '12–15' },
@@ -5490,8 +5491,8 @@ function renderHome() {
     // MRV-triggered early recovery — name the muscle(s) if available
     const _legendMuscles = _mrvApproaching.length
       ? _mrvApproaching.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase())
-      : (state.deloadReason === 'mrv' && state.deloadMuscles && state.deloadMuscles.length
-          ? state.deloadMuscles.map(m => m.charAt(0) + m.slice(1).toLowerCase())
+      : (state.deloadReason === 'mrv' && state.deloadMRVMuscles && state.deloadMRVMuscles.length
+          ? state.deloadMRVMuscles.map(m => m.charAt(0) + m.slice(1).toLowerCase())
           : []);
     dotsLegend.textContent = _legendMuscles.length
       ? `R = EARLY RECOVERY · ${_legendMuscles.join(' & ').toUpperCase()}`
@@ -9131,10 +9132,14 @@ function finalizeEndSession(save) {
           // Clean up any lingering deload state so cycle 2 opens fresh
           if (state.deloadBaseWeights) delete state.deloadBaseWeights;
           state.isDeloadWeek = false;
+          state.isRestWeek = false;
           state.weeksSinceDeload = 0;
           delete state.deloadReason;
           delete state.deloadWeekNum;
           delete state.deloadMRVMuscles;
+          delete state.deloadPostponedToWeek;
+          delete state.deloadSessionsCompleted;
+          delete state.deloadStartDate;
         }
         // ────────────────────────────────────────────────────────────────
         state.cycleCount = (state.cycleCount || 1) + 1;
@@ -10615,8 +10620,8 @@ function renderHistory() {
         </div>`;
       }).join('');
 
-      const _weekMsg = (state.isDeloadWeek || state.isRestWeek || _wn === 7)
-        ? 'Recovery week — let your body adapt and rebuild.'
+      const _weekMsg = (state.isDeloadWeek || state.isRestWeek || _wn >= 7)
+        ? (_wn === 8 ? 'Final week of the cycle — keep it light and finish strong.' : 'Recovery week — let your body adapt and rebuild.')
         : _wn <= 2
         ? 'Building your base — volume increases each week.'
         : _wn <= 4
