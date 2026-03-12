@@ -4523,15 +4523,40 @@ const VOLUME_LANDMARKS = {
   CALVES:     { mev: 8,  mav: 14, mrv: 16 },
 };
 
+// Returns the maximum sets the user's current program can deliver for a given
+// muscle across all sessions in one full week. This is the hard ceiling for the
+// volume curve — the ramp target can never exceed what the split structure
+// physically produces, so a user who logs all programmed sets always shows 100%.
+function getProgramWeeklyMaxSets(muscle) {
+  let total = 0;
+  (state.program || []).forEach(day => {
+    (day.exercises || []).forEach(ex => {
+      if (MUSCLE_MAP[ex.id] === muscle) total += (ex.sets || 3);
+    });
+  });
+  return total;
+}
+
 // Returns the target weekly working sets for a muscle at a given mesocycle week.
 // Linearly ramps from MEV at week 1 to MAV at week 6. Week 7+ (deload) = ~40% of MEV.
+// Always capped at what the user's program can physically deliver in one week — the
+// curve ramps within that ceiling, never above it. The ring and bars recalculate on
+// every stats-screen visit (renderHistory), so no log is needed to see the correction.
 function getWeeklyVolumeTarget(muscle, weekNum) {
   const landmarks = VOLUME_LANDMARKS[muscle];
   if (!landmarks) return null;
   const { mev, mav } = landmarks;
-  if (weekNum >= 7) return Math.round(mev * 0.4);
-  const progress = Math.min((weekNum - 1) / 5, 1);
-  return Math.round(mev + (mav - mev) * progress);
+  let target;
+  if (weekNum >= 7) {
+    target = Math.round(mev * 0.4);
+  } else {
+    const progress = Math.min((weekNum - 1) / 5, 1);
+    target = Math.round(mev + (mav - mev) * progress);
+  }
+  // Cap at the program's physical ceiling so targets are always reachable
+  const programMax = getProgramWeeklyMaxSets(muscle);
+  if (programMax > 0) target = Math.min(target, programMax);
+  return target;
 }
 
 // Returns muscle groups whose actual completed sets this week are >= 90% of MRV.
@@ -12612,9 +12637,10 @@ function renderStrengthScoreCard() {
   };
 
   // Build the ℹ info text — includes what the score uses and sessions needed
-  const _infoText = `<div id="ts-score-info-box" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.7;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;">
-    Your T&amp;S Strength Score is calculated from your best estimated 1-rep max across your main lifts (Bench, Row, RDL, Leg Press, Overhead Press), normalized against your bodyweight, biological sex, and age. Consistency of training over 28 days and average RPE over 60 days also factor in.<br><br>
-    The score requires at least <strong style="color:var(--cream);">3 sessions</strong> with any of those lifts logged. It becomes fully accurate after <strong style="color:var(--cream);">8 sessions</strong>. For best results, add your bodyweight, age, and biological sex in Settings → Profile.
+  const _infoText = `<div id="ts-score-info-box" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(210,205,198,0.92);line-height:1.75;margin-bottom:14px;padding:12px 14px;background:rgba(255,255,255,0.05);border-radius:8px;">
+    Your T&amp;S Strength Score is calculated from your best estimated 1-rep max across your main lifts — Bench, Row, RDL, Leg Press, and Incline — normalized against your bodyweight, biological sex, and age.<br><br>
+    Consistency of training over the past 28 days and average RPE over 60 days also factor in.<br><br>
+    Requires at least <strong style="color:var(--cream);">3 sessions</strong> with those lifts logged. Fully accurate after <strong style="color:var(--cream);">8 sessions</strong>. Add your bodyweight, age, and biological sex in Settings → Profile for the best result.
   </div>`;
   const _infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:2px solid var(--red-text);padding:0;cursor:pointer;color:var(--red-text);font-size:14px;line-height:1;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.82;" aria-label="About this score">ℹ</button>`;
 
@@ -12670,7 +12696,7 @@ function renderStrengthScoreCard() {
     ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--red-text);border:1.5px solid var(--red-text);border-radius:20px;padding:3px 11px;display:inline-block;margin-left:6px;">ESTIMATE</span>`
     : '';
   const _estimateNote = quality.isEstimate
-    ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:0.3px;margin-top:10px;line-height:1.5;">${quality.sessionsNeeded} more session${quality.sessionsNeeded !== 1 ? 's' : ''} with your main lifts for a fully accurate score.</div>`
+    ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(195,190,182,0.9);letter-spacing:0.2px;margin-top:12px;line-height:1.6;">${quality.sessionsNeeded} more session${quality.sessionsNeeded !== 1 ? 's' : ''} with your main lifts will make this score fully accurate.</div>`
     : '';
 
   const _barPct = Math.min(100, (score / 1000) * 100);
@@ -12836,22 +12862,33 @@ async function shareStrengthScoreCard() {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Top section — dark charcoal with red tint (distinct from workout cards)
-  const topGrad = ctx.createLinearGradient(0, 0, 0, SPLIT);
-  topGrad.addColorStop(0, '#1c1416');
-  topGrad.addColorStop(1, '#0d080a');
+  // Top section — deep purple radial gradient (signature strength score look)
+  const topGrad = ctx.createRadialGradient(W * 0.5, SPLIT * 0.35, 0, W * 0.5, SPLIT * 0.55, W * 0.85);
+  topGrad.addColorStop(0,   '#2d1b69');
+  topGrad.addColorStop(0.5, '#1a0f3d');
+  topGrad.addColorStop(1,   '#060408');
   ctx.fillStyle = topGrad;
   ctx.fillRect(0, 0, W, SPLIT);
 
-  // Subtle red radial glow behind score number
-  const glow = ctx.createRadialGradient(W / 2, SPLIT * 0.40, 0, W / 2, SPLIT * 0.40, 520);
-  glow.addColorStop(0, 'rgba(204,32,39,0.22)');
+  // Vignette on top section
+  const vig = ctx.createLinearGradient(0, 0, 0, SPLIT * 0.35);
+  vig.addColorStop(0, 'rgba(0,0,0,0.30)');
+  vig.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, SPLIT);
+
+  // Subtle red glow behind score number
+  const glow = ctx.createRadialGradient(W / 2, SPLIT * 0.38, 0, W / 2, SPLIT * 0.38, 480);
+  glow.addColorStop(0, 'rgba(204,32,39,0.28)');
   glow.addColorStop(1, 'rgba(204,32,39,0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, SPLIT);
 
-  // Bottom section — near-black
-  ctx.fillStyle = '#080507';
+  // Bottom section — deep black-purple
+  const botGrad = ctx.createLinearGradient(0, SPLIT, 0, H);
+  botGrad.addColorStop(0, '#0a0510');
+  botGrad.addColorStop(1, '#040206');
+  ctx.fillStyle = botGrad;
   ctx.fillRect(0, SPLIT, W, H - SPLIT);
 
   _drawCardGrain(ctx, W, H);
