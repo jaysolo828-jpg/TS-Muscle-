@@ -11341,13 +11341,13 @@ function renderHistory() {
   // Milestone dot + label HTML
   const _tNodeHTML = _tNodes.map(n => {
     const reached = totalWeeks >= n.weeks;
-    const dotBorder = reached ? 'var(--red-text)' : 'rgba(255,255,255,0.18)';
-    const dotBg     = reached ? 'rgba(204,32,39,0.22)' : 'transparent';
-    const dotGlow   = reached ? '0 0 7px rgba(204,32,39,0.50)' : 'none';
-    const lblColor  = reached ? 'rgba(210,205,198,0.90)' : 'rgba(255,255,255,0.22)';
+    const dotBorder = reached ? 'var(--red-text)' : 'rgba(255,255,255,0.22)';
+    const dotBg     = reached ? 'rgba(204,32,39,0.28)' : 'transparent';
+    const dotGlow   = reached ? '0 0 8px rgba(204,32,39,0.55)' : 'none';
+    const lblColor  = reached ? 'rgba(215,210,202,0.93)' : 'rgba(255,255,255,0.36)';
     return `<div style="display:flex;flex-direction:column;align-items:center;">
       <div style="width:13px;height:13px;border-radius:50%;background:${dotBg};border:2px solid ${dotBorder};box-shadow:${dotGlow};position:relative;z-index:1;"></div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;color:${lblColor};letter-spacing:0.5px;margin-top:7px;white-space:nowrap;">${n.label}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:${lblColor};letter-spacing:0.5px;margin-top:7px;white-space:nowrap;">${n.label}</div>
     </div>`;
   }).join('');
 
@@ -11382,18 +11382,18 @@ function renderHistory() {
       <div style="font-family:'Bebas Neue',cursive;font-size:68px;color:var(--cream);letter-spacing:2px;line-height:0.9;">${_ageBigNum}</div>
       <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--red-text);letter-spacing:2px;padding-bottom:8px;">${_ageBigUnit}</div>
     </div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(185,180,172,0.85);letter-spacing:0.3px;margin-bottom:22px;">${_ageBigSub}</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(200,195,187,0.90);letter-spacing:0.3px;margin-bottom:22px;">${_ageBigSub}</div>
 
-    <div style="position:relative;margin-bottom:34px;">
+    <div style="position:relative;margin-bottom:26px;">
       <div style="position:absolute;top:5px;left:6px;right:6px;height:3px;background:rgba(255,255,255,0.10);border-radius:2px;">
         <div style="height:100%;width:${_fillPct}%;background:var(--red-text);border-radius:2px;box-shadow:0 0 6px rgba(204,32,39,0.35);transition:width 0.6s ease;"></div>
       </div>
       <div style="display:flex;justify-content:space-between;">${_tNodeHTML}</div>
     </div>
 
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(215,210,202,0.92);line-height:1.65;margin-bottom:14px;">${_agePhaseMsg}</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(215,210,202,0.93);line-height:1.70;margin-bottom:14px;">${_agePhaseMsg}</div>
 
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(155,150,145,0.82);line-height:1.6;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(185,180,175,0.88);line-height:1.65;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
       Training age is the one metric no shortcut can replicate. Strength ceiling, recovery speed, and muscle density all scale with time consistently spent under the bar.
     </div>`;
   if (totalWeeks >= 8) {
