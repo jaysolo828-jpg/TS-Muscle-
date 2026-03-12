@@ -2057,8 +2057,6 @@
     </div>
   </div>
 
-  <!-- Profile completeness prompt (one-time, for existing users) -->
-  <div id="home-prompt-area"></div>
 
   <!-- ROTATION BANNER (shown at Week 5+ when exercises are due for rotation) -->
   <div id="rotation-banner" style="display:none; margin-bottom:12px;">
@@ -5107,9 +5105,6 @@ function loadState() {
 
       // Migration: show one-time profile-complete prompt for existing users.
       // New users go through onboarding which already collects these fields.
-      if (state.onboardingComplete && state.shownProfilePrompt === undefined) {
-        state.shownProfilePrompt = false; // will trigger prompt on next renderHome
-      }
     } catch(e) {}
   }
 }
@@ -5239,35 +5234,6 @@ function updateProfileNotifyDot() {
 }
 
 // One-time non-blocking prompt for existing users without age/sex.
-function _maybeShowProfilePrompt() {
-  if (state.shownProfilePrompt !== false) return;
-  if (state.profile?.age && state.profile?.sex) {
-    state.shownProfilePrompt = true; saveState(); return;
-  }
-  state.shownProfilePrompt = true;
-  saveState();
-
-  document.getElementById('profile-prompt-card')?.remove();
-  const prompt = document.createElement('div');
-  prompt.id = 'profile-prompt-card';
-  prompt.style.cssText = 'margin:0 0 16px;background:linear-gradient(135deg,rgba(204,32,39,0.08),rgba(204,32,39,0.04));border:1px solid rgba(204,32,39,0.3);border-radius:14px;padding:16px 16px 14px;position:relative;';
-  prompt.innerHTML = `
-    <button onclick="this.parentElement.remove()" aria-label="Dismiss" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--gray);font-size:18px;cursor:pointer;line-height:1;padding:4px;">✕</button>
-    <div style="display:flex;align-items:flex-start;gap:12px;">
-      <div style="font-size:22px;flex-shrink:0;line-height:1;margin-top:2px;">🏆</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:var(--cream);letter-spacing:1.5px;margin-bottom:5px;">PERSONALIZE YOUR STRENGTH SCORE</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:12px;">Add your age and biological sex in Settings → Profile to get a more accurate T&amp;S Strength Score — one that compares you against the right benchmarks for who you are.</div>
-        <button onclick="document.getElementById('profile-prompt-card').remove();showScreen('settings',document.querySelector('[onclick*=settings]'));" style="background:var(--red);border:none;color:white;padding:10px 16px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;">GO TO PROFILE →</button>
-      </div>
-    </div>`;
-  // Insert into the static prompt container — always exists, no timing issue
-  const area = document.getElementById('home-prompt-area');
-  if (area) {
-    area.innerHTML = '';
-    area.appendChild(prompt);
-  }
-}
 
 // ============================================================
 // HOME SCREEN
@@ -5540,9 +5506,8 @@ function renderHome() {
   ).length;
   document.getElementById('stat-sessions').textContent = realSessions;
 
-  // Profile completeness: notification dot + one-time prompt
+  // Profile completeness: notification dot
   updateProfileNotifyDot();
-  _maybeShowProfilePrompt();
 
   // Time-based greeting
   const greetingEl = document.getElementById('home-greeting');
@@ -12543,6 +12508,25 @@ function calcStrengthScore() {
   return Math.min(1000, Math.max(0, Math.round(avg * _tsConsistencyFactor() * _tsRpeFactor())));
 }
 
+// Returns data-quality metadata for the score card
+// Qualifying session = any session with at least one tracked lift logged with weight + reps
+function _tsScoreQuality() {
+  const TRACKED = ['bench','incline','chest-row','pulldown','rdl','legpress-a','legpress-b'];
+  const sessions = (state.history || []).filter(e =>
+    TRACKED.some(exId => (e.sets?.[exId] || []).some(s => s.done && s.weight && s.reps))
+  ).length;
+  const MIN_SESSIONS = 3;   // minimum to show any score
+  const FULL_SESSIONS = 8;  // sessions needed for a fully accurate score
+  return {
+    sessions,
+    hasMinData:     sessions >= MIN_SESSIONS,
+    isEstimate:     sessions < FULL_SESSIONS,
+    sessionsNeeded: Math.max(0, FULL_SESSIONS - sessions),
+    minSessions:    MIN_SESSIONS,
+    fullSessions:   FULL_SESSIONS,
+  };
+}
+
 // Returns level info for a given score
 function getStrengthLevel(score) {
   if (score === null || score === undefined) return null;
@@ -12586,91 +12570,139 @@ function renderStrengthScoreCard() {
   const card = document.createElement('div');
   card.className = 'ts-score-card';
 
-  const score = state.strengthScore ?? calcStrengthScore();
-  const level = score !== null ? getStrengthLevel(score) : null;
-  const hasBW = !!(parseFloat(state.profile?.bodyweight) > 0);
-  const hist  = (state.history || []).filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done)));
-  const snaps = (state.strengthScoreHistory || []).slice(-8);
+  const score   = state.strengthScore ?? calcStrengthScore();
+  const level   = score !== null ? getStrengthLevel(score) : null;
+  const hasBW   = !!(parseFloat(state.profile?.bodyweight) > 0);
+  const quality = _tsScoreQuality();
+  const snaps   = (state.strengthScoreHistory || []).slice(-8);
 
-  // Recent delta (last 30 days)
-  const cutoff30 = Date.now() - 30 * 86400000;
-  const old30 = [...(state.strengthScoreHistory || [])].reverse().find(s => new Date(s.date).getTime() < cutoff30);
-  const delta30 = (score !== null && old30) ? score - old30.score : null;
-  const deltaStr = delta30 !== null
-    ? delta30 > 0
-      ? `<span style="font-size:17px;color:#2ecc71;line-height:1;">▲</span> +${delta30} pts`
-      : delta30 < 0
-        ? `<span style="font-size:17px;color:var(--red-text);line-height:1;">▼</span> ${delta30} pts`
-        : '— no change'
-    : null;
-  const deltaColor = delta30 > 0 ? '#2ecc71' : delta30 < 0 ? 'var(--red-text)' : 'var(--gray)';
+  // ---- Contextual description messages (fully dynamic, no hardcoded score numbers) ----
+  // Keyed by [tierLabel][position]: 'near' = within 25pts of next tier; else low/mid/high
+  const _DESC = {
+    Beginner: {
+      low:  'You\'re just getting started. Every session builds the score — consistency matters more than anything right now.',
+      mid:  'You\'re building momentum through the Beginner range. Keep showing up and the score will follow.',
+      high: 'You\'re in the upper end of Beginner. A few more consistent sessions and you\'ll cross into Developing.',
+      near: 'You\'re right on the edge of Developing. One solid training block will get you there.',
+    },
+    Developing: {
+      low:  'You\'ve moved past the starting phase. The foundation is there — now it\'s about stacking sessions and adding weight to the bar.',
+      mid:  'Solid progress. You\'re in the middle of the Developing range, which already puts you ahead of most casual gym-goers.',
+      high: 'Upper Developing. You\'re making real progress and getting close to Intermediate territory.',
+      near: 'Almost at Intermediate. A consistent training block with steady progressive overload will get you there.',
+    },
+    Intermediate: {
+      low:  'You\'ve crossed into Intermediate — that puts you above average for your bodyweight. Structured training is paying off.',
+      mid:  'Well into Intermediate territory. Gains take more work here, but each point is meaningful progress.',
+      high: 'Upper Intermediate. You\'re closer to Advanced than to the average gym member.',
+      near: 'On the edge of Advanced. Keep the progressive overload consistent and you\'ll get there this cycle.',
+    },
+    Advanced: {
+      low:  'Advanced-level strength — you\'re lifting well above what most people achieve. This takes real commitment.',
+      mid:  'Firmly in the Advanced range. Very few people reach this level. Each point from here takes quality work.',
+      high: 'Upper Advanced. Elite is within striking distance if you keep the training quality high.',
+      near: 'Right on the edge of Elite. Only a small percentage of lifters ever reach this level.',
+    },
+    Elite: {
+      low:  'Elite-level strength. You\'re in rare company relative to your bodyweight. This takes years of dedicated work.',
+      mid:  'Deep into Elite territory. Scores at this level are exceptional by any standard.',
+      high: 'Top end of the Elite tier. You\'re about as strong as it gets for your bodyweight — seriously impressive.',
+      near: null, // no next tier
+    },
+  };
 
-  const infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:none;padding:0 4px;cursor:pointer;color:var(--red-text);font-size:18px;line-height:1;opacity:0.75;" aria-label="About this score">ℹ</button>`;
-  const infoText = `<div id="ts-score-info-box" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;">Your T&amp;S Strength Score measures how your strength compares to others at your experience level and bodyweight. It grows as you get stronger, train consistently, and work at the right intensity.</div>`;
+  // Build the ℹ info text — includes what the score uses and sessions needed
+  const _infoText = `<div id="ts-score-info-box" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.7;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;">
+    Your T&amp;S Strength Score is calculated from your best estimated 1-rep max across your main lifts (Bench, Row, RDL, Leg Press, Overhead Press), normalized against your bodyweight, biological sex, and age. Consistency of training over 28 days and average RPE over 60 days also factor in.<br><br>
+    The score requires at least <strong style="color:var(--cream);">3 sessions</strong> with any of those lifts logged. It becomes fully accurate after <strong style="color:var(--cream);">8 sessions</strong>. For best results, add your bodyweight, age, and biological sex in Settings → Profile.
+  </div>`;
+  const _infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:2px solid var(--red-text);padding:0;cursor:pointer;color:var(--red-text);font-size:14px;line-height:1;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.82;" aria-label="About this score">ℹ</button>`;
 
-  if (score === null || !hasBW) {
-    let msg = '';
-    if (!hasBW) {
-      msg = 'Add your bodyweight in Settings → Profile to unlock your T&S Strength Score.';
-    } else if (hist.length < 2) {
-      msg = 'Complete a few sessions to unlock your T&S Strength Score.';
-      if (!state.profile?.age || !state.profile?.sex) msg += ' For the most accurate score, add your age and biological sex in Settings under Profile.';
-    } else {
-      msg = 'Log your main lifts (Bench, Row, RDL, Leg Press, Incline) to calculate your score.';
-    }
+  // ---- Empty state: show when no BW, not enough data, or score couldn't be calculated ----
+  if (!hasBW || !quality.hasMinData || score === null) {
+    const _missing = [];
+    if (!hasBW) _missing.push('Bodyweight (Settings → Profile)');
+    if (!state.profile?.sex) _missing.push('Biological sex (Settings → Profile)');
+    if (!state.profile?.age) _missing.push('Age (Settings → Profile)');
+    const _liftMsg = quality.sessions === 0
+      ? `Log at least ${quality.minSessions} sessions with Bench, Row, RDL, Leg Press, or Incline to unlock your score.`
+      : quality.sessions < quality.minSessions
+        ? `${quality.sessions} of ${quality.minSessions} required sessions logged. Log ${quality.minSessions - quality.sessions} more session${quality.minSessions - quality.sessions > 1 ? 's' : ''} with your main lifts.`
+        : 'Log your main lifts (Bench, Row, RDL, Leg Press, Incline) to calculate your score.';
+    const _missingHTML = _missing.length
+      ? `<div style="text-align:left;margin:0 auto 14px;max-width:280px;">${_missing.map(m => `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-bottom:4px;">• ${m}</div>`).join('')}</div>`
+      : '';
     card.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-        <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">T&amp;S STRENGTH SCORE</div>${infoBtn}
-      </div>${infoText}
-      <div style="text-align:center;padding:20px 0 16px;">
-        <div style="font-size:32px;margin-bottom:10px;">🏋️</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;max-width:260px;margin:0 auto 16px;">${msg}</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">T&amp;S STRENGTH SCORE</div>${_infoBtn}
+      </div>${_infoText}
+      <div style="text-align:center;padding:16px 0 14px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;max-width:280px;margin:0 auto 10px;">${_liftMsg}</div>
+        ${_missingHTML}
         <button onclick="showScreen('settings',document.querySelector('[onclick*=settings]'))" style="background:rgba(204,32,39,0.15);border:1px solid rgba(204,32,39,0.4);color:var(--red-text);padding:10px 18px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;">GO TO PROFILE →</button>
       </div>`;
     return card;
   }
 
-  const barPct = Math.min(100, (score / 1000) * 100);
+  // ---- Scored state ----
 
-  // Compute where within the current tier the user sits for contextual description
-  const _TIER_BOUNDS = [[0,200,'Beginner','Developing'],[200,400,'Developing','Intermediate'],[400,600,'Intermediate','Advanced'],[600,800,'Advanced','Elite'],[800,1000,'Elite',null]];
-  const _tier = _TIER_BOUNDS.find(t => score >= t[0] && score < t[1]) || _TIER_BOUNDS[4];
-  const _tierMin = _tier[0], _tierMax = _tier[1], _tierLabel = _tier[2], _nextTier = _tier[3];
-  const _tierPct = (score - _tierMin) / (_tierMax - _tierMin);
-  const _tierPos = _tierPct < 0.33 ? 'lower range' : _tierPct < 0.67 ? 'mid range' : 'upper range';
+  // Compute position within tier
+  const _TIERS = [[0,200,'Beginner','Developing'],[200,400,'Developing','Intermediate'],[400,600,'Intermediate','Advanced'],[600,800,'Advanced','Elite'],[800,1000,'Elite',null]];
+  const _tier     = _TIERS.find(t => score >= t[0] && score < t[1]) || _TIERS[4];
+  const _tierMin  = _tier[0], _tierMax = _tier[1], _tierLabel = _tier[2], _nextTier = _tier[3];
+  const _tierPct  = (score - _tierMin) / (_tierMax - _tierMin); // 0–1 within tier
   const _ptsToNext = _nextTier ? _tierMax - score : 0;
-  let _contextDesc;
-  if (!_nextTier) {
-    _contextDesc = `You are in the ${_tierPos} of ${_tierLabel}. You've reached the top tier — keep pushing.`;
-  } else {
-    const _cycleEst = _ptsToNext <= 40 ? '1 cycle' : _ptsToNext <= 80 ? '1–2 cycles' : _ptsToNext <= 140 ? '2 cycles' : '2–3 cycles';
-    _contextDesc = `You are in the ${_tierPos} of ${_tierLabel}. Train consistently for ${_cycleEst} and you could reach ${_nextTier}.`;
-  }
+  const _posKey   = (_nextTier && _ptsToNext <= 25) ? 'near' : _tierPct < 0.33 ? 'low' : _tierPct < 0.67 ? 'mid' : 'high';
+  const _desc     = _DESC[_tierLabel]?.[_posKey] || `${_tierLabel} level — keep training consistently.`;
+
+  // Recent delta (last 30 days)
+  const _cutoff30 = Date.now() - 30 * 86400000;
+  const _old30    = [...(state.strengthScoreHistory || [])].reverse().find(s => new Date(s.date).getTime() < _cutoff30);
+  const _delta30  = _old30 ? score - _old30.score : null;
+  const _deltaStr = _delta30 !== null
+    ? _delta30 > 0  ? `<span style="font-size:17px;color:#2ecc71;line-height:1;">▲</span> +${_delta30} pts`
+    : _delta30 < 0  ? `<span style="font-size:17px;color:var(--red-text);line-height:1;">▼</span> ${_delta30} pts`
+    :                 '— no change'
+    : null;
+  const _deltaClr = _delta30 > 0 ? '#2ecc71' : _delta30 < 0 ? 'var(--red-text)' : 'var(--gray)';
+
+  // Estimate badge when data is thin
+  const _estimateBadge = quality.isEstimate
+    ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--gray);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:middle;">ESTIMATE</span>`
+    : '';
+  const _estimateNote = quality.isEstimate
+    ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;margin-top:8px;margin-bottom:2px;">${quality.sessionsNeeded} more session${quality.sessionsNeeded !== 1 ? 's' : ''} with your main lifts will make this score fully accurate.</div>`
+    : '';
+
+  const _barPct = Math.min(100, (score / 1000) * 100);
 
   card.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-      <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">T&amp;S STRENGTH SCORE</div>${infoBtn}
-    </div>${infoText}
+      <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">T&amp;S STRENGTH SCORE</div>${_infoBtn}
+    </div>${_infoText}
     <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;">
       <div>
-        <div class="ts-score-number">${score}<span style="font-size:26px;color:var(--gray);letter-spacing:1px;"> / 1000</span></div>
+        <div class="ts-score-number">${score}<span style="font-size:26px;color:var(--gray);letter-spacing:1px;"> / 1000</span>${_estimateBadge}</div>
         <div class="ts-score-level" style="background:${level.bg};color:${level.color};">${level.label}</div>
-        ${deltaStr ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:${deltaColor};letter-spacing:1px;margin-top:6px;">${deltaStr} <span style="color:var(--gray);">LAST 30 DAYS</span></div>` : ''}
+        ${_deltaStr ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:${_deltaClr};letter-spacing:1px;margin-top:6px;">${_deltaStr} <span style="color:var(--gray);">LAST 30 DAYS</span></div>` : ''}
       </div>
       ${_buildScoreSparkline(snaps) ? `<div style="flex-shrink:0;">${_buildScoreSparkline(snaps)}</div>` : ''}
     </div>
     <div class="ts-score-bar-track" style="position:relative;overflow:visible;margin-top:14px;">
-      <div class="ts-score-bar-fill" style="width:${barPct}%;background:${level.color};"></div>
-      <div style="position:absolute;top:50%;left:${barPct}%;transform:translate(-50%,-50%);width:3px;height:13px;background:var(--cream);border-radius:2px;box-shadow:0 0 5px rgba(255,255,255,0.55);pointer-events:none;"></div>
+      <div class="ts-score-bar-fill" style="width:${_barPct}%;background:${level.color};"></div>
+      <div style="position:absolute;top:50%;left:${_barPct}%;transform:translate(-50%,-50%);width:3px;height:13px;background:var(--cream);border-radius:2px;box-shadow:0 0 5px rgba(255,255,255,0.55);pointer-events:none;"></div>
     </div>
-    <div style="display:flex;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-bottom:14px;margin-top:8px;">
+    <div style="display:flex;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;margin-bottom:10px;margin-top:8px;">
       <span>BEGINNER</span><span>DEVELOPING</span><span>INTERMEDIATE</span><span>ADVANCED</span><span>ELITE</span>
     </div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:14px;">${_contextDesc}</div>
-    <button onclick="shareStrengthScoreCard()" style="width:100%;padding:11px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--gray-light);border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      SHARE YOUR SCORE
-    </button>`;
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.6;margin-bottom:4px;">${_desc}</div>
+    ${_estimateNote}
+    <div style="margin-top:14px;">
+      <button onclick="shareStrengthScoreCard()" style="width:100%;padding:11px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--gray-light);border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        SHARE YOUR SCORE
+      </button>
+    </div>`;
   return card;
 }
 
@@ -16119,8 +16151,6 @@ function completeOnboarding() {
   });
   state.rotationMigrated = true;
   state.onboardingComplete = true;
-  state.shownProfilePrompt = true; // new users use onboarding, no post-launch prompt needed
-
   // Save optional age + sex collected in onboarding step 1
   const _obAge = parseInt(document.getElementById('ob-age')?.value);
   const _obSex = document.getElementById('ob-sex')?.value;
