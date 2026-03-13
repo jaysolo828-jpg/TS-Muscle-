@@ -7870,10 +7870,9 @@ function renderSession() {
             <div class="session-ex-name">${displayName}</div>
             ${state.prs?.[ex.id] && !state.prs[ex.id].isBaseline ? `<span id="pr-badge-${ex.id}" style="font-size:12px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:3px 8px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
           </div>
-          ${_coachNote ? `<div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.2;">${_coachNote}</div>` : ''}
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
-            <span id="rep-goal-meta-${ex.id}" style="font-size:12px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${_initRepDisplay}</span>
+            <span id="rep-goal-meta-${ex.id}" style="font-size:12px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${_coachNote ? `<span style="color:var(--gray);">${_coachNote} · </span>` : ''}${sets.length} sets · ${_initRepDisplay}</span>
             ${isPaired ? `<span style="font-size:10px;font-weight:700;color:var(--red-text);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(220,38,38,0.1);padding:3px 8px;border-radius:4px;">SUPERSET ${supersetLabel}</span>` : ''}
             ${isSource ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:3px 8px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
@@ -9994,6 +9993,7 @@ function finalizeEndSession(save) {
       isDeload: activeSession.isDeload || false,
       prs: activeSession.prs || [],
       cycleNum: state.cycleCount || 1,
+      weekCount: state.weekCount || 1,
       supersets: activeSession.supersets || {},
       bonusExercises: (activeSession.bonusExercises || [])
         .filter(b => b.sets.some(s => s.done))
@@ -10145,6 +10145,7 @@ function finalizeEndSession(save) {
           avgRpe: _avgRpe,
           muscleVolume: _muscleVol,
           moodLiftAvg: _moodLiftAvg,
+          weekBandPerf: _computeWeekBandPerf(_cycleEntries, state.profile?.goal || 'both'),
         });
         if (state.cycleHistory.length > 20) state.cycleHistory = state.cycleHistory.slice(-20);
         // ────────────────────────────────────────────────────────────────
@@ -10974,6 +10975,47 @@ function checkConsistencyMilestone(totalSessions, streak) {
   return null;
 }
 
+// Computes peak-week (Week 5–6) target performance for a set of cycle entries.
+// Only considers entries that have weekCount stored (sessions logged after the
+// week-band update). Returns null if no such data exists — callers must skip
+// the performance line entirely in that case rather than showing guessed data.
+//
+// Returns { hit: N, total: M } where:
+//   total = number of Week 5–6 sessions (weekCount 5 or 6, non-deload)
+//   hit   = sessions where ≥50% of logged tracked exercises reached the
+//           Week-5–6 band target (maxReps − span/6)
+function _computeWeekBandPerf(cycleEntries, goal) {
+  const TRACKED = ['bench','incline','chest-row','pulldown','rdl','legpress-a','legpress-b'];
+  // Gate: must have at least one entry with weekCount (post-update sessions only)
+  if (!cycleEntries.some(e => e.weekCount != null)) return null;
+  // Only true peak weeks (5–6), non-deload
+  const peakSessions = cycleEntries.filter(e =>
+    e.weekCount != null && e.weekCount >= 5 && e.weekCount <= 6 && !e.isDeload
+  );
+  if (!peakSessions.length) return null;
+  const g = goal || 'both';
+  let hit = 0;
+  for (const entry of peakSessions) {
+    const results = [];
+    TRACKED.forEach(exId => {
+      const sets = (entry.sets?.[exId] || []).filter(s => s.done && s.reps && parseInt(s.reps) > 0);
+      if (!sets.length) return;
+      const rangeStr = GOAL_REPS[exId]?.[g];
+      if (!rangeStr) return;
+      const parts = rangeStr.split(/[–\-]/);
+      const minR = parseInt(parts[0]) || 0;
+      const maxR = parseInt(parts[1]) || minR;
+      if (maxR <= minR) return;
+      const span = maxR - minR;
+      const bandTarget = Math.min(maxR, Math.round(maxR - span / 6));
+      const avgReps = sets.reduce((s, s2) => s + parseInt(s2.reps), 0) / sets.length;
+      results.push(avgReps >= bandTarget);
+    });
+    if (results.length && results.filter(Boolean).length >= results.length * 0.5) hit++;
+  }
+  return { hit, total: peakSessions.length };
+}
+
 function showCycleCompleteModal() {
   const name = state.profile?.name || 'Champ';
   const cycleNum = state.cycleCount || 2;
@@ -11056,6 +11098,18 @@ function showCycleCompleteModal() {
                 <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:${lv.color};margin-top:2px;">${lv.label}</div>
               </div>
               ${startScore !== null ? `<div style="text-align:right;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:2px;">CYCLE START</div><div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--gray-light);">${startScore}</div>${gained !== null ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:${gainedColor};font-weight:700;margin-top:2px;">${gained > 0 ? '+' : ''}${gained} PTS</div>` : ''}</div>` : ''}
+            </div>
+          </div>`;
+        })()}
+        ${(() => {
+          const wbp = cycleSnap?.weekBandPerf;
+          if (!wbp || wbp.total === 0) return '';
+          const icon = wbp.hit === wbp.total ? '🎯' : wbp.hit >= Math.ceil(wbp.total * 0.67) ? '📈' : '📊';
+          return `<div style="margin-top:10px;padding:12px 14px;background:rgba(100,180,255,0.07);border:1px solid rgba(100,180,255,0.18);border-radius:10px;display:flex;align-items:center;gap:10px;">
+            <div style="font-size:16px;flex-shrink:0;">${icon}</div>
+            <div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(100,180,255,0.65);margin-bottom:2px;">PEAK WEEK PERFORMANCE</div>
+              <div style="font-size:12px;color:var(--gray-light);line-height:1.5;">You hit your peak week targets in ${wbp.hit} of ${wbp.total} Week 5–6 session${wbp.total !== 1 ? 's' : ''}.</div>
             </div>
           </div>`;
         })()}
@@ -12271,6 +12325,20 @@ function renderHistory() {
               <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:${_moodCol};line-height:1;">${_moodDisp}</div>
             </div>` : ''}
 
+            <!-- Peak week performance (only shown when week-band data exists) -->
+            ${(() => {
+              const wbp = cyc.weekBandPerf;
+              if (!wbp || wbp.total === 0) return '';
+              const icon = wbp.hit === wbp.total ? '🎯' : wbp.hit >= Math.ceil(wbp.total * 0.67) ? '📈' : '📊';
+              return `<div style="background:rgba(100,180,255,0.07);border:1px solid rgba(100,180,255,0.15);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <div style="font-size:16px;flex-shrink:0;">${icon}</div>
+                <div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.5px;color:rgba(100,180,255,0.6);margin-bottom:1px;">PEAK WEEK PERFORMANCE</div>
+                  <div style="font-size:11px;color:var(--gray-light);line-height:1.5;">You hit your peak week targets in ${wbp.hit} of ${wbp.total} Week 5–6 session${wbp.total !== 1 ? 's' : ''}.</div>
+                </div>
+              </div>`;
+            })()}
+
             <!-- Goal + days footer -->
             <div style="font-size:11px;color:var(--gray);padding-bottom:14px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">${_goalLabel} &nbsp;·&nbsp; ${cyc.trainingDays} days/week</div>
           </div>`;
@@ -12290,6 +12358,7 @@ function renderHistory() {
             biggestGain: cyc.biggestGain,
             topMuscle: _topMuscles[0]?.[0] || null,
             moodLiftAvg: _moodDisp,
+            weekBandPerf: cyc.weekBandPerf || null,
           });
           card.appendChild(_shareBtn);
         }
@@ -14057,10 +14126,19 @@ async function generateAndShareCard(type, data) {
         barlow(700, 28), 'rgba(255,255,255,0.6)', MAX_TW);
     }
 
-    // Mood lift
+    // Mood lift + week-band performance (stack vertically if both present)
+    let _crBottomY = _crMuscleY;
     if (data.moodLiftAvg) {
-      drawText(`MOOD LIFT: ${data.moodLiftAvg} PER SESSION`, W / 2, _crMuscleY,
+      drawText(`MOOD LIFT: ${data.moodLiftAvg} PER SESSION`, W / 2, _crBottomY,
         barlow(600, 26), 'rgba(80,200,130,0.85)', MAX_TW);
+      _crBottomY += Math.round(SPLIT * 0.07);
+    }
+    if (data.weekBandPerf && data.weekBandPerf.total > 0) {
+      drawText(
+        `PEAK WEEKS · ${data.weekBandPerf.hit} OF ${data.weekBandPerf.total} SESSIONS HIT TARGET`,
+        W / 2, _crBottomY,
+        barlow(600, 26), 'rgba(100,180,255,0.85)', MAX_TW
+      );
     }
   }
 
