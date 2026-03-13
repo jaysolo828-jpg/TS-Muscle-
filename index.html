@@ -16667,6 +16667,21 @@ function completeOnboarding() {
     state.profile.sex = _obSex;
   }
 
+  // Anchor the week clock to the Monday of the current calendar week so
+  // week-band tightening always counts from a clean boundary. A user who
+  // onboards mid-week (e.g. Thursday) is still in Week 1 and will not be
+  // prematurely bumped to Week 2 targets before completing their first
+  // full training week.
+  (function() {
+    const _now = new Date();
+    const _dayOfWeek = _now.getDay(); // 0 = Sun, 1 = Mon, …, 6 = Sat
+    const _daysToMon = _dayOfWeek === 0 ? -6 : 1 - _dayOfWeek;
+    const _monday = new Date(_now);
+    _monday.setDate(_now.getDate() + _daysToMon);
+    _monday.setHours(0, 0, 0, 0);
+    state.weekStartTimestamp = _monday.getTime();
+  })();
+
   saveState();
   document.getElementById('onboarding-modal').style.display = 'none';
   const _obFade = document.getElementById('ob-scroll-fade');
