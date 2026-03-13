@@ -12889,6 +12889,76 @@ function _tsRpeFactor() {
   return 0.98;
 }
 
+// Week-band target performance factor.
+// Measures how consistently the user hits the upper portion of their rep range
+// (the tightened Week-5-6 target) vs only the lower end across recent sessions.
+//
+// Gate: returns 1.00 (neutral — no score change) until the user has at least
+// one full 6-week band cycle of tracked exercise data (42 days). This ensures
+// existing users see zero score change until they have enough history.
+//
+// Factor range: 1.00 – 1.03 (floor = 1.00, no penalty for lower-end performers).
+function _tsWeekBandFactor() {
+  const TRACKED = ['bench','incline','chest-row','pulldown','rdl','legpress-a','legpress-b'];
+  const CYCLE_MS = 42 * 86400000; // 42 days = one full 6-week band cycle
+
+  // Find the earliest date a tracked-exercise set was logged
+  let firstTrackedMs = Infinity;
+  (state.history || []).forEach(entry => {
+    if (TRACKED.some(exId => (entry.sets?.[exId] || []).some(s => s.done && s.weight && s.reps))) {
+      const ms = new Date(entry.date).getTime();
+      if (ms < firstTrackedMs) firstTrackedMs = ms;
+    }
+  });
+
+  // Not enough history to have completed one full cycle → neutral
+  if (!isFinite(firstTrackedMs) || (Date.now() - firstTrackedMs) < CYCLE_MS) return 1.00;
+
+  // For each logged set on a tracked exercise (last 60 days), compute how far
+  // through the goal rep range the user landed: 0 = hit minimum, 1 = hit maximum.
+  // Week-5-6 band target ≈ maxReps − span/6, which maps to ~0.83 on this scale.
+  const goal     = state.profile?.goal || 'both';
+  const cutoffMs = Date.now() - 60 * 86400000;
+  const ratios   = [];
+
+  (state.history || [])
+    .filter(e => new Date(e.date).getTime() >= cutoffMs)
+    .forEach(entry => {
+      TRACKED.forEach(exId => {
+        const sets = (entry.sets?.[exId] || []).filter(s => s.done && s.reps && parseInt(s.reps) > 0);
+        if (!sets.length) return;
+
+        const rangeStr = GOAL_REPS[exId]?.[goal];
+        if (!rangeStr) return;
+        const parts = rangeStr.split(/[–\-]/);
+        const minR  = parseInt(parts[0]) || 0;
+        const maxR  = parseInt(parts[1]) || minR;
+        if (maxR <= minR) return; // single-value range — can't compute position
+
+        const span = maxR - minR;
+        sets.forEach(s => {
+          const reps = parseInt(s.reps);
+          if (!reps) return;
+          ratios.push(Math.max(0, Math.min(1.5, (reps - minR) / span)));
+        });
+      });
+    });
+
+  if (ratios.length < 5) return 1.00; // too sparse — stay neutral
+
+  const avg = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+
+  // Map average range-achievement to multiplier:
+  //   avg < 0.35  → lower-end of range (week 1-2 level)  → 1.00 (neutral, no penalty)
+  //   avg 0.35–0.55 → mid-range (week 3-4 level)          → 1.01
+  //   avg 0.55–0.75 → upper-mid                            → 1.02
+  //   avg ≥ 0.75  → week 5-6 level and above              → 1.03
+  if (avg >= 0.75) return 1.03;
+  if (avg >= 0.55) return 1.02;
+  if (avg >= 0.35) return 1.01;
+  return 1.00;
+}
+
 // Main score calc. Returns integer 0-1000, or null if not enough data.
 function calcStrengthScore() {
   if (!state.history || state.history.length < 1) return null;
@@ -12913,7 +12983,7 @@ function calcStrengthScore() {
   }
   if (liftScores.length < 2) return null;
   const avg = liftScores.reduce((a, b) => a + b, 0) / liftScores.length;
-  return Math.min(1000, Math.max(0, Math.round(avg * _tsConsistencyFactor() * _tsRpeFactor())));
+  return Math.min(1000, Math.max(0, Math.round(avg * _tsConsistencyFactor() * _tsRpeFactor() * _tsWeekBandFactor())));
 }
 
 // Returns data-quality metadata for the score card
