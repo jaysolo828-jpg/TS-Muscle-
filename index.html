@@ -8699,6 +8699,10 @@ function skipDynamicSet(exId) {
 // Pushes a new set into activeSession.sets[exId] and renders an identical set row.
 function addDynamicSet(exId) {
   if (!activeSession?.sets[exId]) return;
+  // Back-to-back gate: enforce before any DOM mutation so a rapid double-tap or a
+  // timing-triggered duplicate card can never insert more than one dynamic set per
+  // exercise per session. Checked first, before the card is removed or any state changes.
+  if (activeSession.dynamicSetExpansion?.[exId] === 'added') return;
 
   // Remove suggestion card
   const card = document.getElementById('dynamic-set-suggestion-' + exId);
