@@ -4559,6 +4559,62 @@ function getWeeklyVolumeTarget(muscle, weekNum) {
   return target;
 }
 
+// Returns the average RPE logged across all exercises mapped to a given muscle group
+// for sessions that fall within the given time window [startMs, endMs].
+// Returns null if no RPE data exists for that window.
+function _getAvgRPEForMuscle(muscle, startMs, endMs) {
+  const sessions = (state.history || []).filter(e => {
+    const t = new Date(e.date).getTime();
+    return t >= startMs && t < endMs;
+  });
+  let totalRPE = 0, count = 0;
+  sessions.forEach(entry => {
+    Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
+      if (MUSCLE_MAP[exId] !== muscle) return;
+      sets.filter(s => s.done && s.rpe != null && s.rpe !== '').forEach(s => {
+        totalRPE += parseFloat(s.rpe);
+        count++;
+      });
+    });
+  });
+  return count > 0 ? totalRPE / count : null;
+}
+
+// RPE-adjusted weekly volume target.
+// When the previous week's average RPE for a muscle is >= 9.5, reduce the target
+// by 1 set vs the previous week's base target (but never below MEV).
+// When it's >= 9.0, hold the target at last week's level instead of ramping.
+// Otherwise returns the standard ramp from getWeeklyVolumeTarget.
+// This ensures that accumulated high-RPE weeks slow the ramp before MRV is reached.
+function getRPEAdjustedVolumeTarget(muscle, weekNum) {
+  const base = getWeeklyVolumeTarget(muscle, weekNum);
+  if (!base || weekNum <= 1 || state.isDeloadWeek || state.isRestWeek) return base;
+
+  // Compute "last week" window using weekStartTimestamp
+  const weekStart = state.weekStartTimestamp;
+  if (!weekStart) return base;
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const prevWeekStart = weekStart - WEEK_MS;
+  const prevWeekEnd   = weekStart;
+
+  const prevAvgRPE = _getAvgRPEForMuscle(muscle, prevWeekStart, prevWeekEnd);
+  if (prevAvgRPE === null) return base; // no RPE data → no adjustment
+
+  const landmarks = VOLUME_LANDMARKS[muscle];
+  if (!landmarks) return base;
+  const prevWeekBase = getWeeklyVolumeTarget(muscle, weekNum - 1) || base;
+
+  if (prevAvgRPE >= 9.5) {
+    // High fatigue signal — reduce by 1 set, but never below MEV
+    return Math.max(landmarks.mev, prevWeekBase - 1);
+  }
+  if (prevAvgRPE >= 9.0) {
+    // Moderate fatigue signal — hold at last week's level, don't continue ramping
+    return prevWeekBase;
+  }
+  return base;
+}
+
 // Returns muscle groups whose actual completed sets this week are >= 90% of MRV.
 // Used to trigger an early deload before recovery capacity breaks down.
 function getMRVApproachingMuscles() {
@@ -6078,6 +6134,14 @@ function checkSessionProgressSignal(exId) {
   const setsAtOrAboveTop = doneSets.filter(s => parseInt(s.reps) >= maxReps).length;
   if (setsAtOrAboveTop < Math.ceil(doneSets.length / 2)) return;
 
+  // Don't show badge if average RPE is too high (>= 9) — the weight suggestion engine
+  // will hold or reduce rather than increase, so the badge would be misleading.
+  const rpeSets = doneSets.filter(s => s.rpe);
+  if (rpeSets.length > 0) {
+    const avgRPE = rpeSets.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / rpeSets.length;
+    if (avgRPE >= 9) return;
+  }
+
   const badge = document.createElement('div');
   badge.className = 'session-progress-signal';
   badge.innerHTML = `
@@ -6672,11 +6736,32 @@ function _detectDeloadReason() {
   return 'manual';
 }
 
+// Computes the weight reduction factor for a deload based on MRV proximity.
+// For MRV-triggered deloads: maps proximity (0.9–1.0+) to reduction of 15–35%.
+// At exactly 90% of MRV → 15% reduction (factor 0.85).
+// At 100%+ of MRV      → 35% reduction (factor 0.65).
+// For all other deload types, returns the standard 0.75 (25% reduction).
+function _computeDeloadFactor(reason) {
+  if (reason !== 'mrv') return 0.75;
+  const hitting = getMRVApproachingMuscles();
+  if (!hitting.length) return 0.75;
+  let maxReduction = 0;
+  hitting.forEach(({ actual, mrv }) => {
+    const proximity = actual / mrv; // 0.9 to 1.0+
+    const reductionPct = Math.min(35, 15 + (proximity - 0.9) / 0.1 * 20);
+    if (reductionPct > maxReduction) maxReduction = reductionPct;
+  });
+  return +(1 - maxReduction / 100).toFixed(4);
+}
+
 // Stamps deload reason + week number onto state so the banner can read them later.
+// Also stores the computed deload factor so weight logic stays consistent
+// for the duration of the recovery week even if MRV values change.
 function _stampDeloadContext() {
   const reason = _detectDeloadReason();
   state.deloadReason  = reason;
   state.deloadWeekNum = state.weekCount || 1;
+  state.deloadReductionFactor = _computeDeloadFactor(reason);
   if (reason === 'mrv') {
     state.deloadMRVMuscles = getMRVApproachingMuscles().map(m => m.muscle);
   } else {
@@ -6685,22 +6770,23 @@ function _stampDeloadContext() {
 }
 
 function applyDeloadWeek() {
-  // Reduce all starting weights by ~25% for this week (keep at 75% of normal)
+  _stampDeloadContext(); // sets deloadReason and deloadReductionFactor FIRST
+  const _factor = state.deloadReductionFactor || 0.75;
+  const _pctLabel = Math.round((1 - _factor) * 100);
   if (!state.startingWeights) state.startingWeights = {};
   if (!state.deloadBaseWeights) {
     state.deloadBaseWeights = { ...state.startingWeights };
   }
   Object.keys(state.startingWeights).forEach(id => {
-    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * 0.75 / 2.5) * 2.5;
+    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * _factor / 2.5) * 2.5;
   });
-  _stampDeloadContext();
   state.isDeloadWeek = true;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
   delete state.deloadPostponedToWeek;
   saveState();
   document.getElementById('deload-modal').style.display = 'none';
-  showToast('Recovery week active — weights at 75% ⚡');
+  showToast(`Recovery week active — weights at ${100 - _pctLabel}% ⚡`);
   renderHome();
 }
 
@@ -6721,14 +6807,16 @@ function applyRestWeek() {
 
 // Aliases used by the 5-week deload suggestion modal
 function activateDeloadWeek() {
+  _stampDeloadContext(); // sets deloadReason and deloadReductionFactor FIRST
+  const _factor = state.deloadReductionFactor || 0.75;
+  const _pctLabel = Math.round((1 - _factor) * 100);
   if (!state.startingWeights) state.startingWeights = {};
   if (!state.deloadBaseWeights) {
     state.deloadBaseWeights = { ...state.startingWeights };
   }
   Object.keys(state.startingWeights).forEach(id => {
-    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * 0.75 / 2.5) * 2.5;
+    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * _factor / 2.5) * 2.5;
   });
-  _stampDeloadContext();
   state.isDeloadWeek = true;
   state.weeksSinceDeload = 0;
   state.deloadStartDate = Date.now();
@@ -6737,7 +6825,7 @@ function activateDeloadWeek() {
   saveState();
   const m = document.getElementById('deload-suggest-modal');
   if (m) m.remove();
-  showToast('Light week active — weights at 75% ⚡');
+  showToast(`Light week active — weights at ${100 - _pctLabel}% ⚡`);
   renderHome();
 }
 
@@ -6794,6 +6882,7 @@ function endRecoveryWeek() {
   state.isRestWeek = false;
   delete state.deloadStartDate;
   delete state.deloadSessionsCompleted;
+  delete state.deloadReductionFactor;
   saveState();
 }
 
@@ -6856,13 +6945,21 @@ function getProgressiveWeight(exId, dayId) {
     return '';
   }
 
-  // During deload week, bypass progression — use 75% of base (pre-deload) weight
+  // During rest week, return no weight prescription — user should rest, not train.
+  if (state.isRestWeek) return '';
+
+  // During deload week, bypass progression — use the stored reduction factor.
+  // Scheduled deloads always use 0.75 (25% off). MRV-triggered deloads use a
+  // variable factor (0.65–0.85) based on how close the user was to MRV when
+  // the deload was activated. Falls back to 0.75 for existing users without
+  // a stored factor (e.g. deload was activated before this feature shipped).
   if (state.isDeloadWeek) {
+    const _dlFactor = state.deloadReductionFactor || 0.75;
     const baseWeight = parseFloat(state.deloadBaseWeights?.[exId] || 0);
-    if (baseWeight) return String(Math.max(5, Math.round(baseWeight * 0.75 / 2.5) * 2.5));
+    if (baseWeight) return String(Math.max(5, Math.round(baseWeight * _dlFactor / 2.5) * 2.5));
     const lastSessionSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done);
     const lastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
-    if (lastWeight) return String(Math.max(5, Math.round(lastWeight * 0.75 / 2.5) * 2.5));
+    if (lastWeight) return String(Math.max(5, Math.round(lastWeight * _dlFactor / 2.5) * 2.5));
     return state.startingWeights?.[exId] ? String(state.startingWeights[exId]) : '';
   }
 
@@ -9903,6 +10000,7 @@ function finalizeEndSession(save) {
           delete state.deloadPostponedToWeek;
           delete state.deloadSessionsCompleted;
           delete state.deloadStartDate;
+          delete state.deloadReductionFactor;
         }
         // ────────────────────────────────────────────────────────────────
         state.cycleCount = (state.cycleCount || 1) + 1;
@@ -11473,7 +11571,7 @@ function renderHistory() {
       const _rows = _muscleOrder.filter(m => _progMuscles.has(m)).map(muscle => {
         const actual   = _wsets[muscle] || 0;
         const notDone  = actual === 0;
-        const target   = getWeeklyVolumeTarget(muscle, _wn) || 1;
+        const target   = getRPEAdjustedVolumeTarget(muscle, _wn) || 1;
         const { mrv }  = VOLUME_LANDMARKS[muscle];
         const mcolor   = MUSCLE_COLORS[muscle] || 'var(--red-text)';
         const pct      = Math.min(actual / target, 1);
@@ -11514,7 +11612,7 @@ function renderHistory() {
       // ── Readiness ring ────────────────────────────────────────
       const _ringMuscles = _muscleOrder.filter(m => _progMuscles.has(m));
       const _totalActual = _ringMuscles.reduce((s, m) => s + (_wsets[m] || 0), 0);
-      const _totalTarget = _ringMuscles.reduce((s, m) => s + (getWeeklyVolumeTarget(m, _wn) || 1), 0);
+      const _totalTarget = _ringMuscles.reduce((s, m) => s + (getRPEAdjustedVolumeTarget(m, _wn) || 1), 0);
       const _overallPct  = _totalTarget > 0 ? Math.min(_totalActual / _totalTarget, 1) : 0;
       const _overallPctInt = Math.round(_overallPct * 100);
       const _ringR = 34;
