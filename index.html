@@ -6412,7 +6412,7 @@ function openRepRangeSheet(exId) {
       ? `↑ ${avgReps} avg reps — above ${currentRange}. Progressive overload will increase weight next session.`
       : avgReps >= maxR
       ? `✓ ${avgReps} avg reps — at the top of your range. Weight goes up next session.`
-      : `✓ ${avgReps} avg reps — on target. Build to ${maxR} reps to trigger a weight increase.`;
+      : `✓ ${avgReps} avg reps — successful set. Build to ${maxR} reps to trigger weight increase.`;
     recentHTML = `
       <div style="background:var(--dark3);border-radius:10px;padding:11px 14px;margin-bottom:18px;">
         <div style="font-size:11px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:5px;">LAST SESSION</div>
@@ -8338,6 +8338,9 @@ function toggleSetDone(exId, setIndex) {
     }
   }
 
+  // Update rep goal label dynamically after every set completion/undo
+  updateRepGoalLabel(exId);
+
   // Checkpoint: auto-save after every completed set so crash/swipe-away recovery has recent data
   if (set.done && activeSession) {
     try { localStorage.setItem('ts-muscle-paused', JSON.stringify(activeSession)); } catch(e) {}
@@ -8485,6 +8488,85 @@ function calcIntelSuggestedReps(exId, setIndex) {
     suggested = Math.max(minReps, reps - 1);
   }
   return suggested;
+}
+
+// ============================================================
+// DYNAMIC REP GOAL LABEL
+// ============================================================
+// Returns { label, title } for the rep-goal-label element based on current
+// within-session context: manual-adj period, RPE trend, or performance signal.
+// Returns null when there is no session data yet — caller keeps the static range.
+function getContextualRepTarget(exId) {
+  if (!activeSession) return null;
+  const _day = state.program.find(d => d.id === activeSession.dayId);
+  const _ex = _day?.exercises.find(e => e.id === exId);
+  const targetReps = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ex?.reps);
+  const parts = targetReps.split(/[–\-]/);
+  const minReps = parseInt(parts[0]) || 1;
+  const maxReps = parseInt(parts[1]) || minReps;
+
+  // Manual adjustment period (stored across sessions or detected this session)
+  // → show lower end so user focuses on adapting to new weight first
+  const _hasStoredAdj = !!_getManualAdj(exId, activeSession.dayId);
+  const _hasPendingAdj = !!(activeSession.pendingManualAdj?.[exId]);
+  if (_hasStoredAdj || _hasPendingAdj) {
+    return {
+      label: `GOAL: ${minReps}`,
+      title: `Adapting to new weight — build reps back up · hit ${maxReps} to trigger weight increase`
+    };
+  }
+
+  // Use done sets WITH RPE logged for trend signal
+  const doneSets = (activeSession.sets[exId] || []).filter(s =>
+    s.done && s.rpe != null && s.rpe !== ''
+  );
+  if (!doneSets.length) return null; // no intel yet — keep static range
+
+  // Average RPE of last 1–2 done sets
+  const recentSets = doneSets.slice(-2);
+  const avgRPE = recentSets.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / recentSets.length;
+  const lastReps = parseInt(doneSets[doneSets.length - 1].reps) || 0;
+
+  if (avgRPE >= 9) {
+    // High RPE — pull back to lower end of range
+    return {
+      label: `GOAL: ${minReps}`,
+      title: `RPE trending high — aim for lower end of range · hit ${maxReps} to trigger weight increase`
+    };
+  }
+  if (avgRPE <= 7 && lastReps >= maxReps - 1) {
+    // Strong performance near top — nudge to max
+    return {
+      label: `GOAL: ${maxReps}`,
+      title: `Strong set — push for ${maxReps} reps to trigger weight increase`
+    };
+  }
+  if (avgRPE <= 7) {
+    // Comfortable but not near top — nudge one rep higher
+    const nudge = Math.min(maxReps, Math.max(minReps, lastReps + 1));
+    return {
+      label: `GOAL: ${nudge}`,
+      title: `Feeling good — aim for ${nudge} reps · hit ${maxReps} to trigger weight increase`
+    };
+  }
+  // Moderate RPE (~7–9) — hold at last reps or mid-range
+  const target = (lastReps >= minReps && lastReps <= maxReps)
+    ? lastReps
+    : Math.round((minReps + maxReps) / 2);
+  return {
+    label: `GOAL: ${target}`,
+    title: `Steady effort — aim for ${target} reps · hit ${maxReps} to trigger weight increase`
+  };
+}
+
+// Updates the rep-goal-label DOM element for exId after a set is completed or undone.
+function updateRepGoalLabel(exId) {
+  const el = document.getElementById(`rep-goal-label-${exId}`);
+  if (!el) return;
+  const result = getContextualRepTarget(exId);
+  if (!result) return; // no data yet — keep static range as rendered
+  el.textContent = result.label;
+  el.title = result.title;
 }
 
 // ============================================================
