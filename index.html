@@ -4950,6 +4950,65 @@ function getGoalReps(exId, fallback) {
   return GOAL_REPS[exId]?.[goal] || fallback || '8–12';
 }
 
+// ── CYCLE PERIODIZATION ───────────────────────────────────────────────────────
+// Coach copy for the single-line intention note shown beneath the exercise name.
+// Keys: goal × week-band. Used by getCycleWeekBandNote().
+const CYCLE_WEEK_COACH_COPY = {
+  strength: {
+    '1-2': 'Build the foundation',
+    '3-4': 'Add weight, stay sharp',
+    '5-6': 'Chase the top of your range',
+  },
+  size: {
+    '1-2': 'Build the pattern',
+    '3-4': 'Finding your ceiling',
+    '5-6': 'Push the range',
+  },
+  both: {
+    '1-2': 'Establish the baseline',
+    '3-4': 'Build strength and volume',
+    '5-6': 'Peak week — leave nothing',
+  },
+};
+
+// Returns the current cycle week band: '1-2', '3-4', '5-6', or 'recovery'.
+// Based solely on state.weekCount — split type and day count are irrelevant.
+function getCycleWeekBand() {
+  if (state.isDeloadWeek || state.isRestWeek) return 'recovery';
+  const w = state.weekCount || 1;
+  if (w <= 2) return '1-2';
+  if (w <= 4) return '3-4';
+  return '5-6';
+}
+
+// Returns the tightened single-number rep target for exId based on cycle week band.
+// Progressively narrows toward the top of the range: lower third → middle → upper third.
+// During recovery/deload returns the lower end (no tightening applied).
+function getCycleWeekBandRepTarget(exId) {
+  const _day = state.program?.find(d => d.id === (activeSession?.dayId));
+  const _ex = _day?.exercises.find(e => e.id === exId);
+  const targetReps = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ex?.reps);
+  const parts = targetReps.split(/[–\-]/);
+  const minReps = parseInt(parts[0]) || 1;
+  const maxReps = parseInt(parts[1]) || minReps;
+  const span = maxReps - minReps;
+  const band = getCycleWeekBand();
+  if (band === 'recovery') return minReps;
+  if (band === '1-2') return Math.max(minReps, Math.round(minReps + span / 6));
+  if (band === '3-4') return Math.round((minReps + maxReps) / 2);
+  return Math.min(maxReps, Math.round(maxReps - span / 6)); // '5-6'
+}
+
+// Returns the coaching copy for the current cycle week band and goal,
+// or '' during recovery week (note should be hidden entirely).
+function getCycleWeekBandNote() {
+  const band = getCycleWeekBand();
+  if (band === 'recovery') return '';
+  const goal = state.profile?.goal || 'both';
+  return CYCLE_WEEK_COACH_COPY[goal]?.[band] || '';
+}
+// ── END CYCLE PERIODIZATION ───────────────────────────────────────────────────
+
 // Computes representative set counts for main lifts and accessories for a given goal.
 // Used in goal picker UI so displayed counts match the actual engine behaviour.
 function getGoalSetSummary(goal) {
@@ -7702,6 +7761,8 @@ function renderSession() {
     const _goalReps = getGoalReps(ex.id, ex.reps);
     const _goalColor = _sessionDayColor;
     const _repTop = parseInt((_goalReps.split(/[–\-]/)[1] || _goalReps.split(/[–\-]/)[0])) || 0;
+    const _initBandTarget = getCycleWeekBandRepTarget(ex.id);
+    const _coachNote = getCycleWeekBandNote();
 
     // Build prev-session panel (only if history exists for this exercise)
     const _lastSets = sets.map((_, si) => getLastSetData(ex.id, si)).filter(Boolean);
@@ -7722,7 +7783,7 @@ function renderSession() {
       <div class="set-labels">
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
-        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:${_goalColor};font-size:11px;font-weight:700;cursor:pointer;border-bottom:1px dashed ${_goalColor}70;padding-bottom:1px;" title="Tap to change · hit ${_repTop} reps to trigger weight increase">GOAL: ${_goalReps}</span></div>
+        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:${_goalColor};font-size:11px;font-weight:700;cursor:pointer;border-bottom:1px dashed ${_goalColor}70;padding-bottom:1px;" title="Tap to change · hit ${_repTop} reps to trigger weight increase">GOAL: ${_initBandTarget}</span></div>
         <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red-text);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
         <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
       </div>
@@ -7794,6 +7855,7 @@ function renderSession() {
             <div class="session-ex-name">${displayName}</div>
             ${state.prs?.[ex.id] && !state.prs[ex.id].isBaseline ? `<span id="pr-badge-${ex.id}" style="font-size:12px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:3px 8px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
           </div>
+          ${_coachNote ? `<div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.2;">${_coachNote}</div>` : ''}
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
             <span id="rep-goal-meta-${ex.id}" style="font-size:12px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${_goalReps}</span>
@@ -8505,8 +8567,10 @@ function getContextualRepTarget(exId) {
   const minReps = parseInt(parts[0]) || 1;
   const maxReps = parseInt(parts[1]) || minReps;
 
-  // Manual adjustment period (stored across sessions or detected this session)
-  // → show lower end so user focuses on adapting to new weight first
+  // Cycle week band target is the neutral baseline for this session
+  const bandTarget = getCycleWeekBandRepTarget(exId);
+
+  // Manual adjustment period → use lower end regardless of week band
   const _hasStoredAdj = !!_getManualAdj(exId, activeSession.dayId);
   const _hasPendingAdj = !!(activeSession.pendingManualAdj?.[exId]);
   if (_hasStoredAdj || _hasPendingAdj) {
@@ -8520,7 +8584,14 @@ function getContextualRepTarget(exId) {
   const doneSets = (activeSession.sets[exId] || []).filter(s =>
     s.done && s.rpe != null && s.rpe !== ''
   );
-  if (!doneSets.length) return null; // no intel yet — keep static range
+
+  // No RPE data yet — show cycle band target as the starting point
+  if (!doneSets.length) {
+    return {
+      label: `GOAL: ${bandTarget}`,
+      title: `Week ${state.weekCount || 1} target · hit ${maxReps} to trigger weight increase`
+    };
+  }
 
   // Average RPE of last 1–2 done sets
   const recentSets = doneSets.slice(-2);
@@ -8542,17 +8613,17 @@ function getContextualRepTarget(exId) {
     };
   }
   if (avgRPE <= 7) {
-    // Comfortable but not near top — nudge one rep higher
-    const nudge = Math.min(maxReps, Math.max(minReps, lastReps + 1));
+    // Comfortable — nudge one rep above last set, floored at band target
+    const nudge = Math.min(maxReps, Math.max(bandTarget, lastReps + 1));
     return {
       label: `GOAL: ${nudge}`,
       title: `Feeling good — aim for ${nudge} reps · hit ${maxReps} to trigger weight increase`
     };
   }
-  // Moderate RPE (~7–9) — hold at last reps or mid-range
+  // Moderate RPE (~7–9) — hold near band target, anchored by last reps
   const target = (lastReps >= minReps && lastReps <= maxReps)
-    ? lastReps
-    : Math.round((minReps + maxReps) / 2);
+    ? Math.max(bandTarget - 1, Math.min(lastReps, bandTarget + 1))
+    : bandTarget;
   return {
     label: `GOAL: ${target}`,
     title: `Steady effort — aim for ${target} reps · hit ${maxReps} to trigger weight increase`
