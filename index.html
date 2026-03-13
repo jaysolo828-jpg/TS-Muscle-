@@ -8638,12 +8638,21 @@ function _canSuggestDynamicSet(exId) {
   const increment = _getDynamicSetIncrement(exId);
 
   // Current weekly sets for this muscle (includes done sets from this session)
-  const currentCount = (getWeeklySetsByMuscle())[muscle] || 0;
+  let effectiveCount = (getWeeklySetsByMuscle())[muscle] || 0;
 
-  // Volume target must support adding one more (current is below target)
-  if (weeklyTarget === null || currentCount >= weeklyTarget) return false;
+  // Pair accounting: getWeeklySetsByMuscle only counts DONE sets, so planned-but-not-yet-done
+  // sets from a superset partner aren't included. Project them in so that adding a set to exId
+  // can't push the pair past MRV once the partner finishes their remaining session sets.
+  const _partnerId = activeSession.supersets?.[exId];
+  if (_partnerId && MUSCLE_MAP[_partnerId] === muscle) {
+    const _partnerUndone = (activeSession.sets[_partnerId] || []).filter(s => !s.done).length;
+    effectiveCount += _partnerUndone * _getDynamicSetIncrement(_partnerId);
+  }
+
+  // Volume target must support adding one more (effective count is below target)
+  if (weeklyTarget === null || effectiveCount >= weeklyTarget) return false;
   // Adding the set must not push past MRV
-  if (currentCount + increment > mrv) return false;
+  if (effectiveCount + increment > mrv) return false;
 
   return true;
 }
@@ -8712,6 +8721,11 @@ function addDynamicSet(exId) {
 
   // Push the new set into the live session state
   sets.push({ done: false, weight: prevWeight, reps: '', rpe: '', note: '' });
+
+  // Checkpoint crash-recovery snapshot so the partial set isn't lost on swipe-away.
+  // Mirrors the identical checkpoint in toggleSetDone — ensures the undone dynamic set
+  // is captured by the incomplete-session warning and saved to history on explicit exit.
+  try { localStorage.setItem('ts-muscle-paused', JSON.stringify(activeSession)); } catch(e) {}
 
   // Initialise setIntel entry so within-session intelligence works on this set
   if (activeSession.setIntel?.[exId]) {
@@ -9598,6 +9612,9 @@ function doSwap(altName, permanent, isUnilateral) {
   if (activeSession) {
     // Store isUnilateral on the session swap entry so _isUnilateral() can read it
     activeSession.swaps[exId] = { name: altName, isUnilateral: isUnilateral || false };
+    // Clear any dynamic set suggestion state from the original exercise so the
+    // replacement starts fresh and goes through its own 50% threshold check.
+    if (activeSession.dynamicSetExpansion) delete activeSession.dynamicSetExpansion[exId];
     renderSession();
     showToast(permanent ? 'Swapped permanently ✓' : 'Swapped for today ✓');
   }
