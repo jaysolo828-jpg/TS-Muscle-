@@ -1897,21 +1897,6 @@
     z-index: 0;
   }
 
-  /* Gold shimmer on overload reason text */
-  @keyframes goldShimmer {
-    0%   { background-position: -250% center; }
-    100% { background-position: 50% center; }
-  }
-  .overload-reason {
-    background: linear-gradient(90deg, #9a7020 0%, #d4a827 35%, #f0d060 50%, #d4a827 65%, #9a7020 100%);
-    background-size: 250% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: goldShimmer 3s ease-out 1 forwards;
-    font-weight: 600;
-  }
-
   /* TABLET / DESKTOP: center the app at phone width */
   @media (min-width: 680px) {
     .app-content {
@@ -7419,16 +7404,6 @@ function buildOverloadHint(exId) {
   return '';
 }
 
-// Returns the gold shimmer accent for an exercise — rendered OUTSIDE the exercise card
-function buildOverloadShimmer(exId) {
-  if (state.progressiveOverload === false) return '';
-  const info = activeSession?.overloadReasons?.[exId];
-  if (!info?.reason) return '';
-  const m = info.reason.match(/\b(building consistency|stay consistent|maintain and build quality)\b/i);
-  if (!m) return '';
-  return `<div style="text-align:center; padding:3px 16px 9px; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;"><span class="overload-reason">${m[0]}</span></div>`;
-}
-
 // Builds a plain-language, readable explanation for the progression card body.
 // No "last session" tag — context is folded naturally into the subject.
 function _buildReasonSentence(info, minR, maxR) {
@@ -7933,13 +7908,6 @@ function renderSession() {
     `;
 
     container.appendChild(exEl);
-    // Gold shimmer accent — lives outside the overflow:hidden exercise card so it truly floats
-    const _shimmerHTML = buildOverloadShimmer(ex.id);
-    if (_shimmerHTML) {
-      const _sDiv = document.createElement('div');
-      _sDiv.innerHTML = _shimmerHTML;
-      container.appendChild(_sDiv.firstElementChild);
-    }
 
     // Connector strip between adjacent paired exercises
     const nextEx = orderedExercises[orderedExercises.indexOf(ex) + 1];
