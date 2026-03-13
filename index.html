@@ -3757,6 +3757,12 @@
       <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">✍️ WRITE YOUR OWN</div>
       <input type="text" id="custom-exercise-input" class="set-input" placeholder="e.g. Hammer Curl, Box Jump..." style="width:100%; text-align:left; padding:10px 14px; margin-bottom:6px;" oninput="checkCustomExerciseMuscle(this.value)"/>
       <div id="custom-muscle-warning" style="display:none; font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#f39c12; letter-spacing:0.5px; margin-bottom:8px; padding:0 2px;">⚠️ This looks like a <span id="custom-muscle-warning-type"></span> exercise — you're swapping a <span id="custom-muscle-warning-cur"></span> exercise. That's fine, just double-check!</div>
+      <div id="custom-unilateral-toggle-row" style="display:none; align-items:center; justify-content:space-between; padding:4px 0 8px; gap:10px;">
+        <span style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray-light); letter-spacing:0.3px; line-height:1.3;">Unilateral exercise? (single arm or single leg)</span>
+        <div id="custom-unilateral-toggle" onclick="toggleCustomUnilateral()" style="width:42px; height:24px; border-radius:12px; background:var(--dark4); border:1px solid var(--dark3); cursor:pointer; position:relative; transition:background 0.2s; flex-shrink:0;">
+          <div id="custom-unilateral-knob" style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:var(--gray); transition:transform 0.2s;"></div>
+        </div>
+      </div>
       <div id="custom-swap-btns" style="display:none; flex-direction:column; gap:8px;">
         <div style="display:flex; gap:8px;">
           <button class="swap-today-btn" style="flex:1;" onclick="doCustomSwap(false)">JUST TODAY</button>
@@ -5134,6 +5140,7 @@ let state = {
 let activeSession = null;
 let pendingSwap = null;
 let pairingSourceId = null; // exercise ID currently waiting for a pair partner
+let _customSwapIsUnilateral = false; // tracks state of the custom-exercise unilateral toggle
 const HISTORY_PAGE_SIZE = 10; // entries per page in the "older sessions" section
 
 // ============================================================
@@ -8588,10 +8595,23 @@ function calcIntelSuggestedReps(exId, setIndex) {
 // downstream system (completion check, PR detection, strength score, history,
 // weekly volume tracker, wrap-up screen) picks it up automatically.
 
+// Returns true when exId should be treated as a unilateral movement for
+// volume-counting and strength-score purposes. Checks:
+//   1. Pre-loaded UNILATERAL_EXERCISES constant (hard-coded bilaterals)
+//   2. state.customUnilateralExercises — exercises permanently swapped to
+//      a custom unilateral name by the user
+//   3. activeSession.swaps[exId].isUnilateral — session-only custom swap
+function _isUnilateral(exId) {
+  if (UNILATERAL_EXERCISES.has(exId)) return true;
+  if (state.customUnilateralExercises?.[exId]) return true;
+  if (activeSession?.swaps?.[exId]?.isUnilateral) return true;
+  return false;
+}
+
 // How many weekly sets one physical set of exId counts as.
 // Unilateral exercises work each limb separately so count as 2.
 function _getDynamicSetIncrement(exId) {
-  return UNILATERAL_EXERCISES.has(exId) ? 2 : 1;
+  return _isUnilateral(exId) ? 2 : 1;
 }
 
 // Returns true when all conditions are met to show the expansion suggestion.
@@ -9352,6 +9372,15 @@ function openAltModal(ex) {
     document.getElementById('custom-swap-btn-simple').style.display = 'block';
   }
 
+  // Reset unilateral toggle to off each time the modal opens
+  _customSwapIsUnilateral = false;
+  const _uniRow    = document.getElementById('custom-unilateral-toggle-row');
+  const _uniToggle = document.getElementById('custom-unilateral-toggle');
+  const _uniKnob   = document.getElementById('custom-unilateral-knob');
+  if (_uniRow)    _uniRow.style.display = 'none';
+  if (_uniToggle) _uniToggle.style.background = 'var(--dark4)';
+  if (_uniKnob)   { _uniKnob.style.transform = ''; _uniKnob.style.background = 'var(--gray)'; }
+
   modal.classList.add('open');
 }
 
@@ -9361,6 +9390,11 @@ const _MUSCLE_BUCKET = { CHEST:'upper', BACK:'upper', SHOULDERS:'upper', TRICEPS
 
 function checkCustomExerciseMuscle(val) {
   const w = document.getElementById('custom-muscle-warning');
+
+  // Show the unilateral toggle row only when the user has typed something
+  const _uniRow = document.getElementById('custom-unilateral-toggle-row');
+  if (_uniRow) _uniRow.style.display = val && val.trim() ? 'flex' : 'none';
+
   if (!val || !pendingSwap) { w.style.display = 'none'; return; }
   const muscle = MUSCLE_MAP[pendingSwap.exId];
   if (!muscle) { w.style.display = 'none'; return; }
@@ -9378,6 +9412,19 @@ function checkCustomExerciseMuscle(val) {
     w.style.display = 'block';
   } else {
     w.style.display = 'none';
+  }
+}
+
+function toggleCustomUnilateral() {
+  _customSwapIsUnilateral = !_customSwapIsUnilateral;
+  const toggle = document.getElementById('custom-unilateral-toggle');
+  const knob   = document.getElementById('custom-unilateral-knob');
+  if (_customSwapIsUnilateral) {
+    if (toggle) toggle.style.background = '#2ecc71';
+    if (knob)   { knob.style.transform = 'translateX(18px)'; knob.style.background = 'white'; }
+  } else {
+    if (toggle) toggle.style.background = 'var(--dark4)';
+    if (knob)   { knob.style.transform = ''; knob.style.background = 'var(--gray)'; }
   }
 }
 
@@ -9507,10 +9554,13 @@ function doSwapFromDropdown(permanent) {
 function doCustomSwap(permanent) {
   const name = document.getElementById('custom-exercise-input').value.trim();
   if (!name) { showToast('Enter an exercise name first', 'error'); return; }
-  doSwap(name, permanent);
+  doSwap(name, permanent, _customSwapIsUnilateral);
 }
 
-function doSwap(altName, permanent) {
+// isUnilateral is only passed (true) from doCustomSwap when the user has
+// toggled the "Unilateral exercise?" switch in the WRITE YOUR OWN section.
+// doSwapFromDropdown never passes it, so pre-loaded alt swaps are unaffected.
+function doSwap(altName, permanent, isUnilateral) {
   if (!pendingSwap) return;
   const { dayId, exId, onboardMode } = pendingSwap;
 
@@ -9533,12 +9583,21 @@ function doSwap(altName, permanent) {
     const ex = day.exercises.find(e => e.id === exId);
     ex.name = altName;
     ex.cycleIntroduced = state.cycleCount || 1; // reset rotation timer on manual swap
+    // Persist the unilateral flag so volume tracking and strength score survive reload
+    if (!state.customUnilateralExercises) state.customUnilateralExercises = {};
+    if (isUnilateral) {
+      state.customUnilateralExercises[exId] = true;
+    } else {
+      // User re-swapped without the toggle — clear any prior unilateral flag for this slot
+      delete state.customUnilateralExercises[exId];
+    }
     saveState();
     showToast('Exercise permanently swapped!');
   }
 
   if (activeSession) {
-    activeSession.swaps[exId] = { name: altName };
+    // Store isUnilateral on the session swap entry so _isUnilateral() can read it
+    activeSession.swaps[exId] = { name: altName, isUnilateral: isUnilateral || false };
     renderSession();
     showToast(permanent ? 'Swapped permanently ✓' : 'Swapped for today ✓');
   }
@@ -13109,14 +13168,18 @@ function _tsNormalizeLift(ratio, stds) {
   return 1000;
 }
 
-// Best estimated 1RM for an exercise over the last N days (Epley: w*(1+r/30))
-function getBestE1RM(exId, days) {
+// Best estimated 1RM for an exercise over the last N days (Epley: w*(1+r/30)).
+// When isUnilateral is true the user logs per-side weight; multiply by 2 to get
+// the bilateral-equivalent load before applying the Epley formula, so the result
+// is comparable to the bilateral-only TS_STRENGTH_STANDARDS thresholds.
+function getBestE1RM(exId, days, isUnilateral) {
   const cutoff = Date.now() - days * 86400000;
+  const wMult = isUnilateral ? 2 : 1;
   let best = 0;
   (state.history || []).forEach(entry => {
     if (new Date(entry.date).getTime() < cutoff) return;
     (entry.sets?.[exId] || []).filter(s => s.done && s.weight && s.reps).forEach(s => {
-      const w = parseFloat(s.weight), r = parseInt(s.reps);
+      const w = parseFloat(s.weight) * wMult, r = parseInt(s.reps);
       if (!w || !r || r < 1) return;
       const e1rm = r === 1 ? w : Math.round(w * (1 + r / 30));
       if (e1rm > best) best = e1rm;
@@ -13235,7 +13298,9 @@ function calcStrengthScore() {
   for (const group of TS_LIFT_PRIORITY) {
     let groupScore = null;
     for (const exId of group) {
-      const e1rm = getBestE1RM(exId, 90);
+      // Pass isUnilateral so the e1rm is computed on the bilateral-equivalent weight
+      // when the user has permanently swapped this slot to a custom unilateral movement.
+      const e1rm = getBestE1RM(exId, 90, state.customUnilateralExercises?.[exId] === true);
       if (!e1rm) continue;
       const ratio = e1rm / bw;
       const baseStds = TS_STRENGTH_STANDARDS[exId]?.[sex] || TS_STRENGTH_STANDARDS[exId]?.neutral;
