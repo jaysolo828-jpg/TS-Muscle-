@@ -7762,7 +7762,8 @@ function renderSession() {
     const _goalColor = _sessionDayColor;
     const _repTop = parseInt((_goalReps.split(/[–\-]/)[1] || _goalReps.split(/[–\-]/)[0])) || 0;
     const _initBandTarget = getCycleWeekBandRepTarget(ex.id);
-    const _coachNote = getCycleWeekBandNote();
+    const _inManualAdj = !!_getManualAdj(ex.id, activeSession.dayId) || !!(activeSession.pendingManualAdj?.[ex.id]);
+    const _coachNote = _inManualAdj ? '' : getCycleWeekBandNote();
 
     // Build prev-session panel (only if history exists for this exercise)
     const _lastSets = sets.map((_, si) => getLastSetData(ex.id, si)).filter(Boolean);
