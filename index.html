@@ -7328,8 +7328,11 @@ function buildOverloadHint(exId) {
     _minR = parseInt(_rParts[0]) || 0;
     _maxR = parseInt(_rParts[1]) || _minR;
   }
+  // Suppress reason line entirely during the manual weight adjustment period
   // 13px / #aaa — readable but visually secondary to the bold header above
-  const _cardBody = `<div style="font-size:13px; color:var(--gray-light); padding-left:23px; line-height:1.5;">${_buildReasonSentence(info, _minR, _maxR)}</div>`;
+  const _cardBody = info.inAdjustmentPeriod
+    ? ''
+    : `<div style="font-size:13px; color:var(--gray-light); padding-left:23px; line-height:1.5;">${_buildReasonSentence(info, _minR, _maxR)}</div>`;
 
   if (info.changed && info.newWeight > info.lastWeight) {
     return `<div style="background:rgba(46,204,113,0.12); border:1px solid rgba(46,204,113,0.35); border-radius:10px; padding:9px 12px; margin-bottom:8px;">
@@ -7392,15 +7395,13 @@ function _buildReasonSentence(info, minR, maxR) {
   const dec = changed && newWeight < lastWeight;
 
   if (dec) {
-    if (rpeStr && avgRPE >= 9) {
-      return multi
-        ? `${rpeStr} on average across ${sessionCount} sessions — this weight is too heavy. Reducing to protect your progress.`
-        : `${rpeStr} — this weight is too heavy right now. Reducing.`;
-    }
-    if (repsStr && minR > 0 && avgReps < minR) {
-      return `${repsStr} — not sustainable at this weight. Dropping down to build back up.`;
-    }
-    return `This weight is harder than it should be right now. Reducing to reset and rebuild.`;
+    const _decCopy = {
+      '1-2':     'Early in the cycle — consider dropping weight to find your working range',
+      '3-4':     'RPE is running high — a small drop will keep quality up',
+      '5-6':     'High RPE in peak week is normal — only drop if form is breaking down',
+      'recovery':'Reduce weight and focus on movement quality',
+    };
+    return _decCopy[getCycleWeekBand()] || _decCopy['3-4'];
   }
 
   if (inc) {
@@ -7419,23 +7420,14 @@ function _buildReasonSentence(info, minR, maxR) {
       : `Consistently hitting the top of your rep range. Time to go heavier.`;
   }
 
-  // Maintain
-  if (rpeStr && avgRPE >= 9) {
-    return repsStr
-      ? `${repsStr} at ${rpeStr} — hit your targets before adding weight.`
-      : `${rpeStr} — hit your rep targets before adding weight.`;
-  }
-  if (avgReps !== null && avgReps > 0) {
-    if (minR > 0 && avgReps < minR) {
-      return `${repsStr}. Get to ${minR}\u2013${maxR} before adding weight.`;
-    }
-    if (maxR > 0 && avgReps < maxR) {
-      return `${repsStr}. Push to ${maxR} reps to trigger the next increase.`;
-    }
-  }
-  return multi
-    ? `Building consistency across ${sessionCount} sessions. Keep quality high before going heavier.`
-    : `Maintaining quality at this weight. Build to the top of your rep range before going heavier.`;
+  // Maintain — week-band-aware copy
+  const _maintainCopy = {
+    '1-2':     'Build consistency at this weight first',
+    '3-4':     'Push toward the top of your rep range to trigger the next increase',
+    '5-6':     "Hit the top of your range — you're in peak week",
+    'recovery':'Focus on form and feel today — no pressure to push',
+  };
+  return _maintainCopy[getCycleWeekBand()] || _maintainCopy['3-4'];
 }
 
 function _autoregAccept(exId, newWeight) {
