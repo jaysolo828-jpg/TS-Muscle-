@@ -18428,6 +18428,125 @@ function checkInactivityPrompt() {
   // Reset prompt flag when user logs a new workout
 }
 
+// ── ONE-TIME UNILATERAL AUDIT PROMPT ────────────────────────────────────
+// Shown once to existing users who have custom exercises stored before the
+// unilateral toggle was introduced. Lets them classify each custom exercise.
+
+function _getCustomExercises() {
+  if (!state.program) return [];
+  // Build default name + pre-loaded alt names per exId from all known splits
+  const defaultNames = {};
+  const altNameSets = {};
+  Object.values(SPLIT_PROGRAMS).forEach(days => {
+    days.forEach(day => {
+      (day.exercises || []).forEach(ex => {
+        defaultNames[ex.id] = ex.name;
+        if (!altNameSets[ex.id]) altNameSets[ex.id] = new Set();
+        (ex.alts || []).forEach(a => altNameSets[ex.id].add(a.name));
+      });
+    });
+  });
+  const custom = [];
+  const seen = new Set();
+  state.program.forEach(day => {
+    (day.exercises || []).forEach(ex => {
+      if (seen.has(ex.id)) return;
+      seen.add(ex.id);
+      if (!defaultNames[ex.id]) return;
+      if (ex.name === defaultNames[ex.id]) return; // not swapped
+      if (altNameSets[ex.id]?.has(ex.name)) return; // pre-loaded alt, not custom
+      custom.push({ exId: ex.id, name: ex.name });
+    });
+  });
+  return custom;
+}
+
+function checkUnilateralAudit() {
+  if (!state.onboardingComplete || state.unilateralAuditShown) return;
+  const custom = _getCustomExercises();
+  if (!custom.length) {
+    state.unilateralAuditShown = true;
+    saveState();
+    return;
+  }
+  setTimeout(() => _showUnilateralAuditPrompt(custom), 800);
+}
+
+function _showUnilateralAuditPrompt(exercises) {
+  window._uniAuditSelected = new Set();
+  window._uniAuditExercises = exercises;
+
+  const rows = exercises.map(ex =>
+    `<div id="uni-audit-row-${ex.exId}"
+         onclick="_toggleUniAuditRow('${ex.exId}')"
+         style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--dark4);border:1px solid var(--dark3);border-radius:10px;cursor:pointer;transition:background 0.15s,border-color 0.15s;margin-bottom:8px;">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:var(--cream);letter-spacing:0.3px;">${ex.name}</span>
+      <span class="uni-audit-check" style="display:none;color:#2ecc71;font-size:16px;font-weight:bold;">✓</span>
+    </div>`
+  ).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'uni-audit-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;line-height:1.2;flex:1;padding-right:12px;">DO ANY OF YOUR CUSTOM EXERCISES WORK ONE SIDE AT A TIME?</div>
+        <button onclick="_dismissUnilateralAudit()" style="background:none;border:none;color:var(--gray);font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;">✕</button>
+      </div>
+      <div style="font-size:13px;color:var(--gray-light);line-height:1.5;margin-bottom:18px;">Tap to mark them. Unilateral exercises count as 2 sets toward your weekly volume.</div>
+      <div>${rows}</div>
+      <button onclick="_confirmUnilateralAudit()" style="width:100%;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;margin-top:8px;">DONE →</button>
+    </div>`;
+  window._uniAuditOverlay = overlay;
+  document.body.appendChild(overlay);
+}
+
+function _toggleUniAuditRow(exId) {
+  const s = window._uniAuditSelected;
+  const el = document.getElementById('uni-audit-row-' + exId);
+  if (!s || !el) return;
+  if (s.has(exId)) {
+    s.delete(exId);
+    el.style.background = 'var(--dark4)';
+    el.style.borderColor = 'var(--dark3)';
+    el.querySelector('.uni-audit-check').style.display = 'none';
+  } else {
+    s.add(exId);
+    el.style.background = 'rgba(46,204,113,0.12)';
+    el.style.borderColor = '#2ecc71';
+    el.querySelector('.uni-audit-check').style.display = 'block';
+  }
+}
+
+function _confirmUnilateralAudit() {
+  const selected = window._uniAuditSelected;
+  const exercises = window._uniAuditExercises;
+  if (!state.customUnilateralExercises) state.customUnilateralExercises = {};
+  (exercises || []).forEach(ex => {
+    if (selected?.has(ex.exId)) {
+      state.customUnilateralExercises[ex.exId] = true;
+    } else {
+      delete state.customUnilateralExercises[ex.exId];
+    }
+  });
+  state.unilateralAuditShown = true;
+  saveState();
+  if (window._uniAuditOverlay) window._uniAuditOverlay.remove();
+  delete window._uniAuditSelected;
+  delete window._uniAuditOverlay;
+  delete window._uniAuditExercises;
+}
+
+function _dismissUnilateralAudit() {
+  state.unilateralAuditShown = true;
+  saveState();
+  if (window._uniAuditOverlay) window._uniAuditOverlay.remove();
+  delete window._uniAuditSelected;
+  delete window._uniAuditOverlay;
+  delete window._uniAuditExercises;
+}
+
 function checkImplementationIntention() {
   if (!state.implementationIntentions || state.implementationIntentions.length === 0) return;
   // Find the most recent unchecked intention
@@ -18776,6 +18895,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMoodHistory();
   renderMoodInsights();
   checkInactivityPrompt();
+  checkUnilateralAudit();
   checkImplementationIntention();
   checkTestWeekReview();
   updateTrainingDaysSub();
