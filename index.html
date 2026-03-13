@@ -7872,11 +7872,11 @@ function renderSession() {
           </div>
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;">${_muscle}</span>` : ''}
-            <span id="rep-goal-meta-${ex.id}" style="font-size:12px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${_initRepDisplay}</span>
+            <span id="rep-goal-meta-${ex.id}" style="font-size:12px; color:#c0c0c0; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px;">${sets.length} sets · ${_initRepDisplay}</span>
             ${isPaired ? `<span style="font-size:10px;font-weight:700;color:var(--red-text);letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(220,38,38,0.1);padding:3px 8px;border-radius:4px;">SUPERSET ${supersetLabel}</span>` : ''}
             ${isSource ? `<span style="font-size:10px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:3px 8px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
-          ${_coachNote ? `<div style="font-size:11px;color:var(--gray);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.2;">${_coachNote}</div>` : ''}
+          ${_coachNote ? `<div style="font-size:11px;color:#9a9a9a;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.2;">${_coachNote}</div>` : ''}
         </div>
         <div style="display:flex; align-items:flex-start; gap:6px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end;">
           <button class="swap-btn" onclick="openExInfo('${ex.id}')" title="How to do this exercise" style="padding:5px 9px; font-size:14px; line-height:1;">?</button>
