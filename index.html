@@ -4133,6 +4133,7 @@ const DEFAULT_PROGRAM = [
           { name: 'Glute Bridge (Floor)', note: 'Bodyweight or DB on hips', ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
           { name: 'Cable Pull-Through', note: 'Hip hinge glute builder', ytLink: 'https://youtu.be/pv8e6OSyETE' },
           { name: 'Smith Machine Hip Thrust', note: 'More stable barbell option', ytLink: 'https://youtu.be/0od5lwWMGV8' },
+          { name: 'Glute Isolator Machine', note: 'Precor kneeling machine — pure glute max isolation', ytLink: '' },
           { name: 'Donkey Kick (Cable)', note: 'Glute isolation, unilateral', ytLink: 'https://youtu.be/SqO-VUEak2M' },
           { name: 'Single Leg Hip Thrust', note: 'Unilateral for max glute activation', ytLink: 'https://youtu.be/0od5lwWMGV8' },
           { name: 'Banded Hip Thrust', note: 'Band across hips adds hip abduction', ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
@@ -4424,6 +4425,7 @@ const BSS_EXERCISE = {
     { name: 'Leg Press (Single Leg)',   note: 'Machine version — easier on balance',             ytLink: 'https://youtu.be/K_BXb4e9ljo' },
     { name: 'Goblet Squat',            note: 'Bilateral, beginner-friendly',                    ytLink: 'https://youtu.be/MeIiIdhvXT4' },
     { name: 'Pistol Squat (Assisted)', note: 'Advanced single-leg squat with support',          ytLink: 'https://youtu.be/bH3mRwnAN88' },
+    { name: 'Glute Isolator Machine',       note: 'Precor kneeling machine — switch to isolation if balance is limiting', ytLink: '' },
   ]
 };
 const HIP_ABDUCTION_EXERCISE = {
@@ -4443,9 +4445,21 @@ const DONKEY_KICK_EXERCISE = {
   note: 'Per leg — ankle attachment on cable, keep hips square throughout',
   ytLink: 'https://youtu.be/SqO-VUEak2M',
   alts: [
+    { name: 'Glute Isolator Machine',       note: 'Precor kneeling machine — pure glute max isolation', ytLink: '' },
     { name: 'Banded Kickback',          note: 'Band around ankle, standing or on all fours',     ytLink: 'https://youtu.be/SqO-VUEak2M' },
-    { name: 'Machine Glute Kickback',   note: 'Dedicated glute kickback machine if available',   ytLink: 'https://youtu.be/SqO-VUEak2M' },
     { name: 'Hip Thrust (Barbell)',     note: 'Heavier loaded glute max option',                 ytLink: 'https://youtu.be/0od5lwWMGV8' },
+    { name: 'Cable Pull-Through',       note: 'Hip hinge variation for glute max',               ytLink: 'https://youtu.be/pv8e6OSyETE' },
+    { name: 'Glute Bridge (Floor)',     note: 'Bodyweight or DB on hips',                        ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
+  ]
+};
+const GLUTE_ISO_EXERCISE = {
+  id: 'glute-iso', name: 'Glute Isolator Machine', sets: 3, reps: '12–15', rest: '60 sec',
+  note: 'Per leg — kneel on pad, drive heel back and up, keep hips square and core braced',
+  ytLink: '',
+  alts: [
+    { name: 'Cable Donkey Kick',        note: 'Cable version of the same movement pattern',     ytLink: 'https://youtu.be/SqO-VUEak2M' },
+    { name: 'Banded Kickback',          note: 'Band around ankle, standing or on all fours',     ytLink: 'https://youtu.be/SqO-VUEak2M' },
+    { name: 'Hip Thrust (Barbell)',     note: 'Heavier compound glute max option',               ytLink: 'https://youtu.be/0od5lwWMGV8' },
     { name: 'Cable Pull-Through',       note: 'Hip hinge variation for glute max',               ytLink: 'https://youtu.be/pv8e6OSyETE' },
     { name: 'Glute Bridge (Floor)',     note: 'Bodyweight or DB on hips',                        ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
   ]
@@ -4459,6 +4473,7 @@ const GLUTE_PROGRAM = [
       DEFAULT_PROGRAM[3].exercises[4], // pull-through
       DEFAULT_PROGRAM[1].exercises[3], // ham-curl-a
       BSS_EXERCISE,
+      GLUTE_ISO_EXERCISE,
       DEFAULT_PROGRAM[1].exercises[5], // calf-a
     ]
   },
@@ -4498,7 +4513,7 @@ const MUSCLE_MAP = {
   'legpress-b': 'QUADS', 'single-legpress': 'QUADS', 'leg-ext-b': 'QUADS',
   rdl: 'HAMSTRINGS', 'ham-curl-a': 'HAMSTRINGS', 'ham-curl-b': 'HAMSTRINGS',
   'hip-thrust-a': 'GLUTES', 'pull-through': 'GLUTES',
-  'bss': 'GLUTES', 'hip-abduction': 'GLUTES', 'donkey-kick': 'GLUTES',
+  'bss': 'GLUTES', 'hip-abduction': 'GLUTES', 'donkey-kick': 'GLUTES', 'glute-iso': 'GLUTES',
   'calf-a': 'CALVES', 'calf-b': 'CALVES',
 };
 const MUSCLE_COLORS = {
@@ -4855,6 +4870,7 @@ const FORM_CUES = {
   'bss':            ["Rear foot elevated on bench — toes or top of foot, whichever is comfortable", "Front foot far enough forward that your shin stays vertical at bottom", "Drive through your front heel to stand — feel the glute fire", "Keep your torso upright; leaning forward shifts load to quads"],
   'hip-abduction':  ["Sit tall with back flat against pad, feet off the floor or lightly resting", "Push knees out against the pads using your outer glutes — not your hips", "Control the return — don't let the weight slam the pads closed", "Pause 1 second at full abduction to maximize glute medius activation"],
   'donkey-kick':    ["Ankle strap on the cable, face the machine on all fours or standing", "Keep hips completely square — no rotation allowed", "Drive your heel toward the ceiling, squeeze the glute hard at the top", "Control the descent — resist the cable on the way down"],
+  'glute-iso':      ["Kneel on the pad with your knee, forearms on the armrest, grip the handles", "Place your working foot on the rear pedal — heel contact, not toes", "Drive your leg back and up in an arc, squeezing the glute hard at the top", "Control the return — don't let the weight pull your leg forward"],
 };
 
 // Goal-aligned rep ranges per exercise
@@ -4893,6 +4909,7 @@ const GOAL_REPS = {
   'bss':             { strength: '6–8',   size: '10–12', both: '8–10'  },
   'hip-abduction':   { strength: '12–15', size: '15–20', both: '12–15' },
   'donkey-kick':     { strength: '12–15', size: '15',    both: '12–15' },
+  'glute-iso':       { strength: '10–12', size: '12–15', both: '10–12' },
 };
 
 // Goal-aligned set counts per exercise
@@ -4933,6 +4950,7 @@ const GOAL_SETS = {
   'bss':             { strength: 4, size: 3, both: 4 },
   'hip-abduction':   { strength: 3, size: 4, both: 3 },
   'donkey-kick':     { strength: 3, size: 4, both: 3 },
+  'glute-iso':       { strength: 3, size: 4, both: 3 },
 };
 
 // Returns the goal-adjusted set count for an exercise.
@@ -14261,25 +14279,7 @@ async function generateAndShareCard(type, data) {
     }
   }
 
-  // ── T&S Strength Score badge (workout / weekly / cycle review cards) ─────
-  if ((type === 'workout' || type === 'weekly' || type === 'cycle_review') && state.strengthScore != null) {
-    const _cs = state.strengthScore;
-    const _cl = getStrengthLevel(_cs);
-    const _sy = H - 296;
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(PAD, _sy - 30); ctx.lineTo(W - PAD, _sy - 30); ctx.stroke();
-    ctx.restore();
-    drawText('T&S STRENGTH SCORE', W / 2, _sy,
-      barlow(700, 22, BS), 'rgba(255,255,255,0.4)', MAX_TW);
-    ctx.save();
-    ctx.shadowColor = _cl.color + '55'; ctx.shadowBlur = Math.round(16 * BS);
-    drawText(String(_cs), W / 2, _sy + Math.round(54 * BS),
-      bebas(72, BS), _cl.color, MAX_TW);
-    ctx.restore();
-    drawText(_cl.label, W / 2, _sy + Math.round(110 * BS),
-      barlow(700, 26, BS), _cl.color + 'cc', MAX_TW);
-  }
+  // T&S Strength Score is only shown on the dedicated Strength Score card (shareStrengthScoreCard)
 
   // Display name — fixed position, above tagline
   if (displayName) {
