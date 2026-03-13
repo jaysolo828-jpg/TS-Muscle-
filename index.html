@@ -7517,7 +7517,10 @@ function startSession(dayId) {
     supersets: day.supersets ? { ...day.supersets } : {},
     isDeload: !!(state.isDeloadWeek || state.isRestWeek),
     exerciseOrder: day.exercises.map(e => e.id),
-    bonusExercises: []
+    bonusExercises: [],
+    // Snapshot the active goal so getContextualRepTarget can detect a mid-session
+    // goal switch and discard RPE intel logged under the previous goal's rep ranges.
+    goalAtStart: state.profile?.goal || 'both',
   };
   activeSession.suggestedWeights = {};
   activeSession.setIntel = {};
@@ -8578,6 +8581,18 @@ function getContextualRepTarget(exId) {
     return {
       label: `GOAL: ${minReps}`,
       title: `Adapting to new weight — build reps back up · hit ${maxReps} to trigger weight increase`
+    };
+  }
+
+  // If the training goal was changed after this session started, discard any
+  // in-session RPE data — it was logged under the previous goal's rep ranges
+  // and should not influence the new goal's band target calculations.
+  const _sessionGoalMismatch = activeSession.goalAtStart &&
+    activeSession.goalAtStart !== (state.profile?.goal || 'both');
+  if (_sessionGoalMismatch) {
+    return {
+      label: `GOAL: ${bandTarget}`,
+      title: `Week ${state.weekCount || 1} target · hit ${maxReps} to trigger weight increase`
     };
   }
 
@@ -11130,6 +11145,7 @@ function applyCycleGoal(newGoal, btn) {
   const previewEl = document.getElementById('cycle-goal-rep-preview');
   if (previewEl) previewEl.innerHTML = buildGoalRepPreviewHTML(newGoal);
   if (state.profile) state.profile.goal = newGoal;
+  state.goalChangedAt = Date.now();
   saveState();
   setTimeout(() => {
     document.getElementById('cycle-goal-picker')?.remove();
