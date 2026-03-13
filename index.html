@@ -9871,8 +9871,15 @@ function showSessionWrapUp() {
       </div>
       <!-- Upgrade prompt for today-only bonuses -->
       ${upgradePromptHTML}
-      <!-- No-RPE nudge -->
-      ${(()=>{const _anyRpe=Object.values(activeSession.sets||{}).some(sets=>sets.some(s=>s.done&&s.rpe!=null&&s.rpe!==''));return _anyRpe?'':`<div style="background:var(--dark3);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;"><div style="font-size:16px;flex-shrink:0;">💡</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.5;letter-spacing:0.3px;">Try logging effort (RPE) next time — it helps the app fine-tune your weights each session.</div></div>`;})()}
+      <!-- No-RPE nudge: standard for Weeks 1-4, more prominent for Weeks 5-6 -->
+      ${(()=>{
+        const _anyRpe=Object.values(activeSession.sets||{}).some(sets=>sets.some(s=>s.done&&s.rpe!=null&&s.rpe!==''));
+        if(_anyRpe) return '';
+        if(getCycleWeekBand()==='5-6'){
+          return `<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.28);border-radius:10px;padding:12px 14px;margin-bottom:16px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);line-height:1.5;letter-spacing:0.3px;">Peak week RPE matters most — it helps the app know if you actually pushed the range.</div></div>`;
+        }
+        return `<div style="background:var(--dark3);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;"><div style="font-size:16px;flex-shrink:0;">💡</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.5;letter-spacing:0.3px;">Try logging effort (RPE) next time — it helps the app fine-tune your weights each session.</div></div>`;
+      })()}
       <!-- Notes field in wrapup — impossible to miss -->
       <div style="margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
