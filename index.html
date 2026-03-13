@@ -4999,6 +4999,20 @@ function getCycleWeekBandRepTarget(exId) {
   return Math.min(maxReps, Math.round(maxReps - span / 6)); // '5-6'
 }
 
+// Returns a tightened 2-rep range string (e.g. '10-11') for the current cycle
+// week band. The range is always two distinct numbers within [minReps, maxReps].
+function getCycleWeekBandRepRange(exId) {
+  const _day = state.program?.find(d => d.id === (activeSession?.dayId));
+  const _ex = _day?.exercises.find(e => e.id === exId);
+  const targetReps = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ex?.reps);
+  const parts = targetReps.split(/[–\-]/);
+  const minReps = parseInt(parts[0]) || 1;
+  const maxReps = parseInt(parts[1]) || minReps;
+  const t = getCycleWeekBandRepTarget(exId);
+  if (t < maxReps) return `${t}-${t + 1}`;
+  return `${Math.max(minReps, t - 1)}-${t}`;
+}
+
 // Returns the coaching copy for the current cycle week band and goal,
 // or '' during recovery week (note should be hidden entirely).
 function getCycleWeekBandNote() {
@@ -7759,8 +7773,10 @@ function renderSession() {
     const _initBandTarget = getCycleWeekBandRepTarget(ex.id);
     const _goalRepMin = parseInt(_goalReps.split(/[–\-]/)[0]) || _initBandTarget;
     const _inManualAdj = !!_getManualAdj(ex.id, activeSession.dayId) || !!(activeSession.pendingManualAdj?.[ex.id]);
-    // rep goal label/meta show lower end of range during manual adj, band target otherwise
-    const _initRepDisplay = _inManualAdj ? String(_goalRepMin) : String(_initBandTarget);
+    // rep goal label/meta always show a 2-number tight range
+    const _initRepDisplay = _inManualAdj
+      ? (_goalRepMin < _repTop ? `${_goalRepMin}-${_goalRepMin + 1}` : `${Math.max(1, _repTop - 1)}-${_repTop}`)
+      : getCycleWeekBandRepRange(ex.id);
     const _coachNote = _inManualAdj ? '' : getCycleWeekBandNote();
 
     // Build prev-session panel (only if history exists for this exercise)
@@ -8568,13 +8584,21 @@ function getContextualRepTarget(exId) {
 
   // Cycle week band target is the neutral baseline for this session
   const bandTarget = getCycleWeekBandRepTarget(exId);
+  const bandRange = getCycleWeekBandRepRange(exId);
 
-  // Manual adjustment period → use lower end regardless of week band
+  // Helper: build a tight 2-number range string anchored at t, within [lo, hi]
+  function _tr(t) {
+    if (t < maxReps) return `${t}-${t + 1}`;
+    return `${Math.max(minReps, t - 1)}-${t}`;
+  }
+
+  // Manual adjustment period → lower end range regardless of week band
   const _hasStoredAdj = !!_getManualAdj(exId, activeSession.dayId);
   const _hasPendingAdj = !!(activeSession.pendingManualAdj?.[exId]);
   if (_hasStoredAdj || _hasPendingAdj) {
+    const adjRange = minReps < maxReps ? `${minReps}-${minReps + 1}` : `${Math.max(1, minReps - 1)}-${minReps}`;
     return {
-      label: `GOAL: ${minReps}`,
+      label: `GOAL: ${adjRange}`,
       title: `Adapting to new weight — build reps back up · hit ${maxReps} to trigger weight increase`
     };
   }
@@ -8586,7 +8610,7 @@ function getContextualRepTarget(exId) {
     activeSession.goalAtStart !== (state.profile?.goal || 'both');
   if (_sessionGoalMismatch) {
     return {
-      label: `GOAL: ${bandTarget}`,
+      label: `GOAL: ${bandRange}`,
       title: `Week ${state.weekCount || 1} target · hit ${maxReps} to trigger weight increase`
     };
   }
@@ -8596,10 +8620,10 @@ function getContextualRepTarget(exId) {
     s.done && s.rpe != null && s.rpe !== ''
   );
 
-  // No RPE data yet — show cycle band target as the starting point
+  // No RPE data yet — show cycle band range as the starting point
   if (!doneSets.length) {
     return {
-      label: `GOAL: ${bandTarget}`,
+      label: `GOAL: ${bandRange}`,
       title: `Week ${state.weekCount || 1} target · hit ${maxReps} to trigger weight increase`
     };
   }
@@ -8612,14 +8636,16 @@ function getContextualRepTarget(exId) {
   if (avgRPE >= 9) {
     // High RPE — pull back to lower end of range
     return {
-      label: `GOAL: ${minReps}`,
+      label: `GOAL: ${_tr(minReps)}`,
       title: `RPE trending high — aim for lower end of range · hit ${maxReps} to trigger weight increase`
     };
   }
   if (avgRPE <= 7 && lastReps >= maxReps - 1) {
-    // Strong performance near top — nudge to max
+    // Strong performance near top — show top of range
+    const topLo = Math.max(minReps, maxReps - 1);
+    const topRange = topLo < maxReps ? `${topLo}-${maxReps}` : `${maxReps - 1}-${maxReps}`;
     return {
-      label: `GOAL: ${maxReps}`,
+      label: `GOAL: ${topRange}`,
       title: `Strong set — push for ${maxReps} reps to trigger weight increase`
     };
   }
@@ -8627,7 +8653,7 @@ function getContextualRepTarget(exId) {
     // Comfortable — nudge one rep above last set, floored at band target
     const nudge = Math.min(maxReps, Math.max(bandTarget, lastReps + 1));
     return {
-      label: `GOAL: ${nudge}`,
+      label: `GOAL: ${_tr(nudge)}`,
       title: `Feeling good — aim for ${nudge} reps · hit ${maxReps} to trigger weight increase`
     };
   }
@@ -8636,7 +8662,7 @@ function getContextualRepTarget(exId) {
     ? Math.max(bandTarget - 1, Math.min(lastReps, bandTarget + 1))
     : bandTarget;
   return {
-    label: `GOAL: ${target}`,
+    label: `GOAL: ${_tr(target)}`,
     title: `Steady effort — aim for ${target} reps · hit ${maxReps} to trigger weight increase`
   };
 }
