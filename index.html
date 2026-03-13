@@ -15285,6 +15285,10 @@ function applySplitType() {
   if (!pendingSplitType) return;
   state.splitType = pendingSplitType;
   state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[pendingSplitType] || DEFAULT_PROGRAM));
+  // IMPORTANT: state.weekCount and state.weekStartTimestamp are intentionally NOT
+  // modified here. The cycle week counter must continue uninterrupted through a
+  // split change so week-band tightening (getCycleWeekBand) and the contextual
+  // coaching note stay aligned with the user's actual position in the cycle.
   // Reset training days to the new split's natural length when switching splits
   const programLen = state.program.length;
   if (!state.trainingDaysPerWeek || state.trainingDaysPerWeek > programLen) {
