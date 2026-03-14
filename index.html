@@ -4826,6 +4826,15 @@ function applySetReduction(muscle) {
       activeSession.dynamicSetExpansion[partnerId] = 'set-reduction-applied';
     }
   });
+  // Persist the list of affected exercise IDs so finalizeEndSession can include
+  // it in the history entry, allowing getProgressiveWeight to treat this session
+  // as fully completed when computing the weight baseline for the next session.
+  if (!activeSession.setReductionAppliedExercises) activeSession.setReductionAppliedExercises = [];
+  reduced.forEach(id => {
+    if (!activeSession.setReductionAppliedExercises.includes(id)) {
+      activeSession.setReductionAppliedExercises.push(id);
+    }
+  });
   if (!activeSession.setReductionBanners) activeSession.setReductionBanners = {};
   activeSession.setReductionBanners[muscle] = 'applied';
   renderSession();
@@ -7326,7 +7335,11 @@ function getProgressiveWeight(exId, dayId) {
     });
   }
 
-  const allSetsCompleted = lastSessionSets.length >= getGoalSets(ex?.id, ex?.sets);
+  // If the most recent session included a user-confirmed set reduction for this
+  // exercise, treat it as fully completed so the weight baseline is preserved.
+  // The reduced count was intentional and must not gate the next progression step.
+  const _lastSessionHadReduction = !!sameDaySessions[0].setReductionAppliedExercises?.includes(exId);
+  const allSetsCompleted = _lastSessionHadReduction || lastSessionSets.length >= getGoalSets(ex?.id, ex?.sets);
   const exceededRange  = avgReps > repRangeTop;
   const hitRepRangeTop = avgReps >= repRangeTop;
   const hitRepRange    = avgReps >= repRangeMin && avgReps <= repRangeTop;
@@ -10518,7 +10531,13 @@ function finalizeEndSession(save) {
       supersets: activeSession.supersets || {},
       bonusExercises: (activeSession.bonusExercises || [])
         .filter(b => b.sets.some(s => s.done))
-        .map(b => ({ id: b.id, name: b.name, persistence: b.persistence, sets: b.sets }))
+        .map(b => ({ id: b.id, name: b.name, persistence: b.persistence, sets: b.sets })),
+      // Exercises that had a user-confirmed set reduction this session. Persisted so
+      // getProgressiveWeight can bypass the allSetsCompleted gate on the next session
+      // and not treat the one-time lower set count as the new baseline.
+      ...(activeSession.setReductionAppliedExercises?.length
+        ? { setReductionAppliedExercises: activeSession.setReductionAppliedExercises }
+        : {})
     };
 
     state.history.push(entry);
