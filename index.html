@@ -1521,6 +1521,19 @@
   .deload-title { font-family: 'Bebas Neue', cursive; font-size: 28px; letter-spacing: 3px; color: var(--warning); margin-bottom: 8px; text-shadow: 0 0 20px rgba(243,156,18,0.35); }
   .deload-text { font-size: 14px; color: var(--gray-light); line-height: 1.6; }
 
+  /* SET REDUCTION SUGGESTION BANNER */
+  .set-reduction-banner {
+    background: #202020;
+    border-left: 3px solid #c8901e;
+    border-radius: 0 10px 10px 0;
+    padding: 10px 14px;
+    margin: 14px 16px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
   /* ROTATION */
   .rotation-banner {
     background: linear-gradient(135deg, #081a10, #0d2418);
@@ -4683,6 +4696,149 @@ function getRPEAdjustedVolumeTarget(muscle, weekNum) {
   return base;
 }
 
+// ── SET REDUCTION SUGGESTION ─────────────────────────────────────────────────
+// Detects sustained fatigue patterns and surfaces a one-tap banner suggesting
+// the user do one fewer set per exercise for a muscle group in the current session.
+// Two trigger conditions (either one fires the banner):
+//   A. Avg session RPE >= 9 for 3 consecutive sessions targeting that muscle.
+//   B. Weekly sets for that muscle have reached 85%+ of MRV AND avg RPE this
+//      week is >= 9 for that muscle.
+// Suppressed during deload weeks, rest weeks, and the 2-session manual weight
+// adjustment period. Only evaluates sessions logged after state.setReductionEnabledAt
+// so historical data from before this feature shipped is never analyzed.
+
+// Returns an array of avg-RPE values (most recent first, up to maxSessions)
+// for sessions that include exercises targeting the given muscle group.
+// Skips sessions with no RPE data for that muscle and deload sessions.
+function _getMuscleSessionRPEs(muscle, maxSessions) {
+  const enabledAt = state.setReductionEnabledAt || 0;
+  const sessions = [...(state.history || [])]
+    .filter(h => new Date(h.date).getTime() >= enabledAt && !h.isDeload)
+    .reverse(); // most recent first
+  const result = [];
+  for (const sess of sessions) {
+    if (result.length >= maxSessions) break;
+    const rpeVals = [];
+    Object.entries(sess.sets || {}).forEach(([exId, exSets]) => {
+      if (MUSCLE_MAP[exId] !== muscle) return;
+      exSets.filter(s => s.done && s.rpe != null && s.rpe !== '').forEach(s => rpeVals.push(parseFloat(s.rpe)));
+    });
+    if (rpeVals.length === 0) continue;
+    result.push(rpeVals.reduce((a, b) => a + b, 0) / rpeVals.length);
+  }
+  return result;
+}
+
+// Returns true if either trigger condition fires for the given muscle group.
+// Must be called only while activeSession is set.
+function _checkSetReductionTrigger(muscle) {
+  if (!activeSession) return false;
+  if (state.isDeloadWeek || state.isRestWeek) return false;
+  if (!state.setReductionEnabledAt) return false;
+
+  // Suppress if any exercise targeting this muscle is in the 2-session manual adj period
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  if (!day) return false;
+  const muscleExs = day.exercises.filter(ex => MUSCLE_MAP[ex.id] === muscle);
+  if (muscleExs.length === 0) return false;
+  const anyInManualAdj = muscleExs.some(ex =>
+    _getManualAdj(ex.id, activeSession.dayId) ||
+    activeSession.pendingManualAdj?.[ex.id]
+  );
+  if (anyInManualAdj) return false;
+
+  // Trigger A: avg session RPE >= 9 for 3 consecutive sessions on this muscle
+  const rpes = _getMuscleSessionRPEs(muscle, 3);
+  if (rpes.length >= 3 && rpes[0] >= 9 && rpes[1] >= 9 && rpes[2] >= 9) return true;
+
+  // Trigger B: 85%+ of weekly MRV AND RPE trending high this week
+  const landmarks = VOLUME_LANDMARKS[muscle];
+  if (landmarks) {
+    const weeklySets = (getWeeklySetsByMuscle())[muscle] || 0;
+    if (weeklySets >= landmarks.mrv * 0.85) {
+      const weekStart = state.weekStartTimestamp;
+      const enabledAt = state.setReductionEnabledAt || 0;
+      if (weekStart) {
+        const cutoff = Math.max(weekStart, enabledAt);
+        const weekRPE = _getAvgRPEForMuscle(muscle, cutoff, Date.now() + 1);
+        if (weekRPE !== null && weekRPE >= 9) return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+// Returns exercises in the current session targeting the given muscle that are
+// eligible for set reduction (>= 2 sets loaded, not the undone last set already done).
+function _getSetReductionEligibleExercises(muscle) {
+  if (!activeSession) return [];
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  if (!day) return [];
+  return day.exercises.filter(ex =>
+    MUSCLE_MAP[ex.id] === muscle &&
+    activeSession.sets[ex.id] &&
+    activeSession.sets[ex.id].length >= 2
+  );
+}
+
+// Returns true if removing one set per eligible exercise won't drop total
+// planned weekly sets for this muscle below MEV.
+function _setReductionPassesMEVFloor(muscle, eligibleExs) {
+  const landmarks = VOLUME_LANDMARKS[muscle];
+  if (!landmarks) return true;
+  const weeklyDone = (getWeeklySetsByMuscle())[muscle] || 0;
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  if (!day) return true;
+  const allMuscleExs = day.exercises.filter(ex => MUSCLE_MAP[ex.id] === muscle && activeSession.sets[ex.id]);
+  const undoneSets = allMuscleExs.reduce((sum, ex) => sum + activeSession.sets[ex.id].filter(s => !s.done).length, 0);
+  // weeklyDone already includes done sets from the active session, so
+  // weeklyDone + undoneSets = total planned for this week
+  const afterReduction = weeklyDone + undoneSets - eligibleExs.length;
+  return afterReduction >= landmarks.mev;
+}
+
+// Called when the user taps REDUCE SETS on the banner.
+// Removes the last undone set from each eligible exercise (and its superset
+// partner if it shares the same muscle group), blocks dynamic set expansion
+// for the affected exercises, then re-renders the session.
+function applySetReduction(muscle) {
+  if (!activeSession) return;
+  const eligible = _getSetReductionEligibleExercises(muscle);
+  const reduced = new Set();
+  eligible.forEach(ex => {
+    if (reduced.has(ex.id)) return;
+    const sets = activeSession.sets[ex.id];
+    if (sets && sets.length >= 2 && !sets[sets.length - 1].done) {
+      sets.pop();
+      reduced.add(ex.id);
+    }
+    if (!activeSession.dynamicSetExpansion) activeSession.dynamicSetExpansion = {};
+    activeSession.dynamicSetExpansion[ex.id] = 'set-reduction-applied';
+    // Handle superset partner with the same muscle group
+    const partnerId = activeSession.supersets?.[ex.id];
+    if (partnerId && MUSCLE_MAP[partnerId] === muscle && !reduced.has(partnerId)) {
+      const partnerSets = activeSession.sets[partnerId];
+      if (partnerSets && partnerSets.length >= 2 && !partnerSets[partnerSets.length - 1].done) {
+        partnerSets.pop();
+        reduced.add(partnerId);
+      }
+      activeSession.dynamicSetExpansion[partnerId] = 'set-reduction-applied';
+    }
+  });
+  if (!activeSession.setReductionBanners) activeSession.setReductionBanners = {};
+  activeSession.setReductionBanners[muscle] = 'applied';
+  renderSession();
+}
+
+// Called when the user taps KEEP AS IS — dismisses the banner for this session.
+function dismissSetReductionBanner(muscle) {
+  if (!activeSession) return;
+  if (!activeSession.setReductionBanners) activeSession.setReductionBanners = {};
+  activeSession.setReductionBanners[muscle] = 'dismissed';
+  renderSession();
+}
+
 // Returns muscle groups whose actual completed sets this week are >= 90% of MRV.
 // Used to trigger an early deload before recovery capacity breaks down.
 function getMRVApproachingMuscles() {
@@ -5334,6 +5490,11 @@ function loadState() {
       // Migration: ensure profile has age and sex fields (added in this update)
       if (state.profile && state.profile.age === undefined) state.profile.age = null;
       if (state.profile && state.profile.sex === undefined) state.profile.sex = null;
+
+      // Migration: record the timestamp at which the set reduction suggestion feature
+      // was first active. Only sessions logged after this point are evaluated, so
+      // existing historical data is never retroactively analyzed.
+      if (!state.setReductionEnabledAt) state.setReductionEnabledAt = Date.now();
 
       // Migration: show one-time profile-complete prompt for existing users.
       // New users go through onboarding which already collects these fields.
@@ -7804,6 +7965,10 @@ function renderSession() {
   const _sessionDc = CARD_DAY_PALETTES[_sessionDayIdx % CARD_DAY_PALETTES.length];
   const _sessionDayColor = _sessionDc ? (_sessionDc.ui || _sessionDc.hi) : 'var(--red)';
 
+  // Tracks which muscle groups have already had a set-reduction banner injected
+  // this render pass so we only show one banner per muscle per render.
+  const _srBannersShown = new Set();
+
   orderedExercises.forEach(ex => {
     const sets = activeSession.sets[ex.id];
     const doneSets = sets.filter(s => s.done).length;
@@ -7967,6 +8132,38 @@ function renderSession() {
           oninput="updateExNote('${ex.id}', this.value)"/>
       </div>
     `;
+
+    // Inject set-reduction suggestion banner before the first exercise for each
+    // muscle group that has triggered the fatigue detection. One banner per muscle
+    // per render pass — dismissed or applied banners are skipped.
+    if (_muscle && !_srBannersShown.has(_muscle)) {
+      _srBannersShown.add(_muscle);
+      const _srStatus = activeSession.setReductionBanners?.[_muscle];
+      if (!_srStatus) {
+        const _srEligible = _getSetReductionEligibleExercises(_muscle);
+        if (
+          _srEligible.length > 0 &&
+          _checkSetReductionTrigger(_muscle) &&
+          _setReductionPassesMEVFloor(_muscle, _srEligible)
+        ) {
+          const _srCurrentSets = activeSession.sets[_srEligible[0].id]?.length || 3;
+          const _srSuggestedSets = _srCurrentSets - 1;
+          const _srMuscleDisplay = _muscle.charAt(0) + _muscle.slice(1).toLowerCase();
+          const _srEl = document.createElement('div');
+          _srEl.className = 'set-reduction-banner';
+          _srEl.innerHTML =
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:15px;font-weight:700;color:var(--cream);letter-spacing:0.3px;line-height:1.2;margin-bottom:5px;">' + _srMuscleDisplay + '</div>' +
+              '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:0.2px;line-height:1.45;">Your ' + _srMuscleDisplay.toLowerCase() + ' is showing fatigue signs. Consider doing ' + _srSuggestedSets + ' sets today instead of ' + _srCurrentSets + ' — quality over quantity.</div>' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:9px;flex-shrink:0;margin-left:4px;padding-top:1px;">' +
+              '<button onclick="applySetReduction(\'' + _muscle + '\')" style="background:transparent;border:1px solid #c8901e;color:#c8901e;padding:5px 10px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:32px;">REDUCE SETS</button>' +
+              '<button onclick="dismissSetReductionBanner(\'' + _muscle + '\')" style="background:none;border:none;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:0.4px;cursor:pointer;padding:2px 0;-webkit-tap-highlight-color:transparent;white-space:nowrap;">KEEP AS IS</button>' +
+            '</div>';
+          container.appendChild(_srEl);
+        }
+      }
+    }
 
     container.appendChild(exEl);
 
@@ -15982,7 +16179,8 @@ const TUTORIAL_SLIDES = [
     <strong style="color:var(--cream);">🍽 Plate calculator</strong> — shows exact plate loading<br>
     <strong style="color:var(--cream);">📝 Notes field</strong> — for cues or reminders<br><br>
     When you're done, tap <strong style="color:var(--red-text);">COMPLETE ✓</strong> to see your session summary — set outcomes and next-session weights — before anything saves. Need to stop early? Tap <strong style="color:var(--cream);">EXIT</strong> to save progress and resume later.<br><br>
-    If your volume supports it mid-session, the app may suggest adding a set. Tap <strong style="color:var(--red-text);">ADD SET</strong> to accept or <strong style="color:var(--cream);">SKIP</strong> to pass — it only shows when the programming calls for it.`,
+    If your volume supports it mid-session, the app may suggest adding a set. Tap <strong style="color:var(--red-text);">ADD SET</strong> to accept or <strong style="color:var(--cream);">SKIP</strong> to pass — it only shows when the programming calls for it.<br><br>
+    If a muscle group is showing fatigue signs, the app may suggest reducing sets for that muscle today. Tap <strong style="color:#c8901e;">REDUCE SETS</strong> to accept or <strong style="color:var(--gray-light);">KEEP AS IS</strong> to proceed normally.`,
   },
   {
     section: 'SUPERSETS',
@@ -16026,7 +16224,8 @@ const TUTORIAL_SLIDES = [
     <strong style="color:var(--red-text);">Sessions 1–2:</strong> Progression is based on your most recent session — reps hit and RPE logged.<br><br>
     <strong style="color:var(--red-text);">Session 3 onwards:</strong> The app switches to <strong style="color:var(--cream);">trend logic</strong> — it averages your RPE and reps across your last 3 sessions before deciding to increase, hold, or reduce. One great day won't spike your weight. One hard day won't tank it.<br><br>
     If your effort is consistently high across multiple sessions, the app will suggest dropping the weight slightly — one hard session won't trigger this, but a pattern will.<br><br>
-    After each session, a <strong style="color:var(--cream);">progression banner</strong> on each exercise shows the next weight, the reason for the change, and whether it came from a single session or a trend. Toggle this in <strong style="color:var(--red-text);">Settings → Progressive Overload</strong>.`,
+    After each session, a <strong style="color:var(--cream);">progression banner</strong> on each exercise shows the next weight, the reason for the change, and whether it came from a single session or a trend. Toggle this in <strong style="color:var(--red-text);">Settings → Progressive Overload</strong>.<br><br>
+    If a muscle group shows sustained fatigue across multiple sessions, the app may also suggest doing fewer sets that day. Same principle — <strong style="color:var(--cream);">you decide</strong>, it never changes anything automatically.`,
   },
   {
     section: 'TRAINING LOAD',
