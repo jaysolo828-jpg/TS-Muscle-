@@ -2500,6 +2500,25 @@
 </div>
 
 <!-- ============================================================
+     GAP RETURN MODAL — shown when user returns after 10+ day absence
+     ============================================================ -->
+<div id="gap-return-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(204,32,39,0.3); overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+    <div style="height:4px; background:linear-gradient(90deg,transparent,var(--red),transparent);"></div>
+    <div style="padding:24px;">
+      <div style="text-align:center; margin-bottom:20px;">
+        <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:2px; margin-bottom:8px;">WELCOME BACK</div>
+        <div id="gap-return-body" style="font-size:14px; color:var(--gray); line-height:1.6;"></div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <button id="gap-continue-btn" onclick="continueAfterGap()" style="background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;"></button>
+        <button onclick="resetCycleAfterGap()" style="background:transparent; border:1px solid #444; color:var(--gray-light); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1.5px; cursor:pointer;">RESET TO WEEK 1</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
      ROTATION MODAL
      ============================================================ -->
 <div class="modal-overlay" id="rotation-modal" onclick="if(event.target===this)closeRotationModal()">
@@ -10285,6 +10304,7 @@ function finalizeEndSession(save) {
     state.history.push(entry);
     state.totalSessions++;
     state.inactivityPromptShown = false;
+    state.gapReturnShown = false;
 
     // ── Manual weight adjustment period bookkeeping ───────────────────────
     // 1. Tick down any adjustment periods already in progress for this day's
@@ -18420,6 +18440,52 @@ function checkTrainingReminder() {
   });
 }
 
+function checkGapReturnPrompt() {
+  if (state.programPaused) return;
+  if (!state.history || state.history.length === 0) return;
+  if (state.gapReturnShown) return;
+  const lastSession = state.history[state.history.length - 1];
+  if (!lastSession) return;
+  const daysSince = Math.floor((Date.now() - new Date(lastSession.date)) / 86400000);
+  if (daysSince < 10) return;
+  // Suppress the standard 3/7-day inactivity prompt for this app open
+  state.inactivityPromptShown = true;
+  state.gapReturnShown = true;
+  saveState();
+  const weekNum = state.weekCount || 1;
+  document.getElementById('gap-return-body').textContent =
+    `${daysSince} days since your last session. Your cycle is at Week ${weekNum}. Pick up where you left off, or wipe the slate and start fresh. Either way, you're here.`;
+  document.getElementById('gap-continue-btn').textContent = `CONTINUE — WEEK ${weekNum} \u2192`;
+  document.getElementById('gap-return-modal').style.display = 'flex';
+}
+
+function continueAfterGap() {
+  document.getElementById('gap-return-modal').style.display = 'none';
+}
+
+function resetCycleAfterGap() {
+  document.getElementById('gap-return-modal').style.display = 'none';
+  state.weekCount = 1;
+  state.cycleCount = (state.cycleCount || 1) + 1;
+  state.isDeloadWeek = false;
+  state.isRestWeek = false;
+  // Anchor the new cycle's week counter to Monday of the current calendar week
+  const _now = new Date();
+  const _mon = new Date(_now);
+  _mon.setDate(_now.getDate() - ((_now.getDay() + 6) % 7));
+  _mon.setHours(0, 0, 0, 0);
+  state.weekStartTimestamp = _mon.getTime();
+  delete state.deloadReason;
+  delete state.deloadWeekNum;
+  delete state.deloadMRVMuscles;
+  delete state.deloadPostponedToWeek;
+  delete state.deloadSessionsCompleted;
+  delete state.deloadStartDate;
+  delete state.deloadReductionFactor;
+  saveState();
+  renderHome();
+}
+
 function checkInactivityPrompt() {
   if (state.programPaused) return;
   if (!state.history || state.history.length === 0) return;
@@ -18923,6 +18989,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSelfCompassionLog();
   renderMoodHistory();
   renderMoodInsights();
+  checkGapReturnPrompt();
   checkInactivityPrompt();
   checkUnilateralAudit();
   checkImplementationIntention();
