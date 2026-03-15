@@ -15475,13 +15475,12 @@ async function generateAndShareCard(type, data) {
   const _songArtist = data.songArtist || null;
   if (_songTitle || _songArtist) {
 
-    // ── Y anchors — two distinct zones in the credits section ────────────
-    // Non-stats: rule(H-390=Y1530) credit(H-300=Y1620) name(H-155=Y1765) tag(H-100=Y1820)
-    //            → credit-to-name: 145px breathing room; name-to-tag: 55px tight unit
-    // Stats:     rule(H-272=Y1648) credit(H-218=Y1702) name(H-148=Y1772) tag(H-93=Y1827)
-    //            → credit-to-name: 70px breathing room; name-to-tag: 55px tight unit
+    // ── Y anchors — three-zone equal distribution (name is in corner, not here) ──
+    // Non-stats: rule(H-390=Y1530) credit(H-260=Y1660) tag(H-130=Y1790) → equal 130px gaps
+    // Stats:     rule(H-272=Y1648) credit(H-181=Y1739) tag(H-90=Y1830)  → equal ~91px gaps
+    // Name: bottom-right corner at (W-PAD, H-52) — independent of this stack
     const _ruleY    = hasStats ? H - 272 : H - 390;
-    const _creditCY = hasStats ? H - 218 : H - 300;  // centre of credit block
+    const _creditCY = hasStats ? H - 181 : H - 260;  // centre of credit block
 
     // Rule — same style as stats hairline
     ctx.save();
@@ -15619,19 +15618,21 @@ async function generateAndShareCard(type, data) {
   }
   // ── End music credit block ────────────────────────────────────────────────
 
-  // ── Display name and tagline — evenly spaced with credit block above ──
+  // ── Display name — bottom-right corner signature ──────────────────────
+  // Independent of the vertical stack; always at a fixed corner anchor.
   if (displayName) {
-    const _dnY = (_songTitle || _songArtist)
-      ? (hasStats ? H - 148 : H - 155)
-      : H - 190;
-    drawText(displayName, W / 2, _dnY,
-      barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
+    ctx.save();
+    ctx.textAlign    = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.font         = barlow(500, 16, BS);
+    ctx.fillStyle    = 'rgba(255,255,255,0.60)';
+    ctx.fillText(displayName, W - PAD, H - 52);
+    ctx.restore();
   }
 
+  // ── Tagline — centred; Y is the bottom anchor of the three-zone layout ─
   const _tagY = (_songTitle || _songArtist)
-    ? (displayName
-        ? (hasStats ? H - 93  : H - 100)   // Jay present — tight unit below Jay
-        : (hasStats ? H - 140 : H - 145))  // Jay absent  — recentred between credit and bottom
+    ? (hasStats ? H - 90 : H - 130)
     : H - 90;
   drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
     barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
