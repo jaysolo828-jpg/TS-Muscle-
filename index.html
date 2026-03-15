@@ -8527,30 +8527,71 @@ function selectRpeFromNudge(exId, setIndex, rpe) {
   _removeRpeNudge(exId, setIndex);
 }
 
+// Debounce map: prevents a rapid double-tap from toggling a set's done state twice.
+// Keyed by "exId-setIndex"; value is the timestamp of the last successful toggle.
+var _setDoneLastToggle = {};
+
 function toggleSetDone(exId, setIndex) {
   if (!activeSession?.sets[exId]?.[setIndex]) return;
+
+  // Double-tap guard: ignore a second tap within 600 ms of the first.
+  // This is the primary defence against mobile touch events firing twice.
+  var _dbKey = exId + '-' + setIndex;
+  var _now = Date.now();
+  if (_setDoneLastToggle[_dbKey] && _now - _setDoneLastToggle[_dbKey] < 600) return;
+
   // Clear any "up next" pulse on this card (user is now acting on it)
   document.getElementById('session-ex-' + exId)?.classList.remove('superset-up-next');
 
   const set = activeSession.sets[exId][setIndex];
-  set.done = !set.done;
+  const willBeDone = !set.done;
+
+  // ── Input capture (marking done only) ─────────────────────────────────────
+  // Capture values BEFORE mutating done state so we read the live DOM values,
+  // not values that may have been cleared by a concurrent dispatchEvent call.
+  // Order matters: capture → dispatch (flush pending handlers) → re-apply
+  // captured values so dispatch cannot accidentally overwrite valid data with ''.
+  if (willBeDone) {
+    const captureRow = document.getElementById(`set-row-${exId}-${setIndex}`);
+    if (captureRow) {
+      const wInput = captureRow.querySelector('input[type="number"]:first-of-type');
+      const rInput = captureRow.querySelectorAll('input[type="number"]')[1];
+      // Read what the user sees right now (authoritative source)
+      const capturedWeight = wInput ? wInput.value : '';
+      const capturedReps   = rInput ? rInput.value : '';
+      // Flush any pending onchange handlers (e.g. user tapped done without blurring)
+      if (wInput) wInput.dispatchEvent(new Event('change'));
+      if (rInput) rInput.dispatchEvent(new Event('change'));
+      // Re-apply directly-captured values as authoritative.  A dispatchEvent with
+      // an empty input value calls updateSet(…, '') which clears the stored field;
+      // we override that here so a prior valid value is never lost.
+      if (capturedWeight !== '') set.weight = capturedWeight;
+      if (capturedReps   !== '') set.reps   = capturedReps;
+    }
+  }
+
+  // ── Data write ─────────────────────────────────────────────────────────────
+  set.done = willBeDone;
+
+  // ── Reliability check ──────────────────────────────────────────────────────
+  // Verify the in-memory write succeeded before updating the visual.
+  // If the state object is somehow stale or the session was invalidated between
+  // the guard above and here, abort without showing a false confirmation.
+  if (activeSession.sets[exId]?.[setIndex]?.done !== willBeDone) {
+    set.done = !willBeDone; // revert
+    return;
+  }
+
+  // Record the successful toggle timestamp (debounce)
+  _setDoneLastToggle[_dbKey] = _now;
+
+  // ── Visual update (only after data write confirmed) ────────────────────────
   const btn = document.querySelector(`#set-row-${exId}-${setIndex} .set-done-btn`);
-  btn.classList.toggle('done', set.done);
+  if (btn) btn.classList.toggle('done', set.done);
   const row = document.getElementById(`set-row-${exId}-${setIndex}`);
   if (row) row.querySelectorAll('input, select').forEach(el => el.disabled = set.done);
 
-  // Capture any unsaved input values before PR check
   if (set.done) {
-    const row = document.getElementById(`set-row-${exId}-${setIndex}`);
-    if (row) {
-      const wInput = row.querySelector('input[type="number"]:first-of-type');
-      const rInput = row.querySelectorAll('input[type="number"]')[1];
-      // Dispatch change to flush any pending onchange handlers before reading
-      if (wInput) wInput.dispatchEvent(new Event('change'));
-      if (rInput) rInput.dispatchEvent(new Event('change'));
-      if (wInput && wInput.value !== '') set.weight = wInput.value;
-      if (rInput && rInput.value !== '') set.reps = rInput.value;
-    }
     checkForPR(exId, set);
     // Detect manual weight change: a set is fully complete only when both weight
     // and reps are logged.  _updatePendingManualAdj recomputes from ALL done sets
@@ -10525,9 +10566,8 @@ function _getExercisesWithIncompleteDoneSets() {
   Object.entries(activeSession.sets).forEach(([exId, sets]) => {
     if (skipped[exId]) return;
     const hasIncomplete = sets.some(s =>
-      s.done &&
-      (s.weight === '' || parseFloat(s.weight) <= 0 ||
-       s.reps === '' || parseInt(s.reps) <= 0)
+      s.done && !s.coachRemoved &&
+      (!(parseFloat(s.weight) > 0) || !(parseInt(s.reps) > 0))
     );
     if (!hasIncomplete) return;
     // Resolve display name: swap override → program → bonus exercises → exId
