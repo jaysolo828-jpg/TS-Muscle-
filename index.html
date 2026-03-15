@@ -15475,20 +15475,13 @@ async function generateAndShareCard(type, data) {
   const _songArtist = data.songArtist || null;
   if (_songTitle || _songArtist) {
 
-    // ── Y positions ───────────────────────────────────────────────────────
-    // Three-line stacked record-credit layout. Each element on its own line.
-    // Non-stats cards have generous room; stats cards are compact due to the
-    // stats strip occupying Y ~1500–1614.
-    //
-    // Non-stats: rule(Y1500) +42→ MOOD(Y1542) +72→ title(Y1614) +58→ artist(Y1672)
-    //            +80→ displayName(Y1752) +86→ tagline(Y1838) — 82px to bottom
-    //
-    // Stats:     rule(Y1648) +44→ MOOD(Y1692) +48→ title(Y1740) +46→ artist(Y1786)
-    //            +50→ displayName(Y1836) +44→ tagline(Y1880) — 40px to bottom
-    const _ruleY       = hasStats ? H - 272 : H - 420;
-    const _moodY       = hasStats ? H - 228 : H - 378;
-    const _titleLineY  = hasStats ? H - 180 : H - 306;
-    const _artistLineY = hasStats ? H - 134 : H - 248;
+    // ── Y anchors — evenly distributed centre-to-centre spacing ──────────
+    // Non-stats: rule(H-390=Y1530) credit(H-290=Y1630) name(H-190=Y1730) tag(H-90=Y1830)
+    //            → equal 100px gaps, 90px bottom margin
+    // Stats:     rule(H-272=Y1648) credit(H-208=Y1712) name(H-144=Y1776) tag(H-80=Y1840)
+    //            → equal 64px gaps, 80px bottom margin
+    const _ruleY    = hasStats ? H - 272 : H - 390;
+    const _creditCY = hasStats ? H - 208 : H - 290;  // centre of credit block
 
     // Rule — same style as stats hairline
     ctx.save();
@@ -15500,47 +15493,137 @@ async function generateAndShareCard(type, data) {
     ctx.stroke();
     ctx.restore();
 
-    // Font sizes — strong hierarchy: tiny label / large headline / medium secondary
-    const _moodSz   = Math.round(14 * BS);  // ~21px — section label
-    const _titleSz  = Math.round(36 * BS);  // ~54px — headline, most prominent
-    const _artistSz = Math.round(20 * BS);  // ~30px — secondary
+    // ── Single inline line: MOOD:  Title  ·  Artist ──────────────────────
+    // All parts share one font size; differentiated by weight / style / colour.
+    // If the full line overflows MAX_TW the artist wraps to a second line
+    // centred below — MOOD: and the title always stay together on line 1.
+    const _cSz        = Math.round(26 * BS);  // ~39px — unified size
+    const _moodFont   = `600 ${_cSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+    const _titleFont  = `italic ${_cSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+    const _artistFont = `${_cSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+    const _gap1       = Math.round(8  * BS);  // space between MOOD: and title
+    const _dotPad     = Math.round(8  * BS);  // space on each side of the dot
+    const _wrapOffset = Math.round(25 * BS);  // ±offset from creditCY when wrapping
 
-    // MOOD — centred, spaced uppercase, muted section header
+    // Measure each part at natural size
     ctx.save();
-    ctx.letterSpacing = '5px';
-    drawText('MOOD', W / 2, _moodY, barlow(600, 14, BS), 'rgba(155,150,145,0.78)', MAX_TW);
+    ctx.letterSpacing = '3px';
+    ctx.font = _moodFont;
+    const _moodW = ctx.measureText('MOOD:').width;
     ctx.restore();
 
-    // Song title — centred, italic, white, the dominant element
+    ctx.font = _titleFont;
+    const _titleW  = _songTitle  ? ctx.measureText(_songTitle).width  : 0;
+    ctx.font = _artistFont;
+    const _dotW    = ctx.measureText('·').width;
+    const _artistW = _songArtist ? ctx.measureText(_songArtist).width : 0;
+
+    // Determine whether artist must wrap
+    const _hasBoth     = Boolean(_songTitle && _songArtist);
+    const _naturalLineW = _moodW + _gap1
+      + (_songTitle  ? _titleW  : 0)
+      + (_hasBoth    ? _dotPad + _dotW + _dotPad + _artistW : 0)
+      + (!_songTitle && _songArtist ? _artistW : 0);
+    const _wrapArtist = _hasBoth && _naturalLineW > MAX_TW;
+
+    // Vertical positions — if wrapping, both lines are centred on _creditCY
+    const _line1Y = _wrapArtist ? _creditCY - _wrapOffset : _creditCY;
+    const _line2Y = _creditCY + _wrapOffset;  // only used when _wrapArtist
+
+    // ── Draw line 1 ───────────────────────────────────────────────────────
+    // Calculate the width that will actually be drawn for horizontal centering
+    const _maxTitleW = _songTitle
+      ? MAX_TW - _moodW - _gap1
+        - (!_wrapArtist && _hasBoth ? _dotPad + _dotW + _dotPad + _artistW : 0)
+      : 0;
+    const _drawnTitleW = Math.min(_titleW, Math.max(0, _maxTitleW));
+
+    let _l1W;
     if (_songTitle) {
-      drawText(_songTitle, W / 2, _titleLineY,
-        `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`,
-        'rgba(255,255,255,0.97)', MAX_TW);
+      _l1W = _moodW + _gap1 + _drawnTitleW
+           + (!_wrapArtist && _hasBoth ? _dotPad + _dotW + _dotPad + _artistW : 0);
+    } else {
+      // artist-only: MOOD: + gap + artist
+      _l1W = Math.min(_moodW + _gap1 + _artistW, MAX_TW);
     }
 
-    // Artist — centred, muted secondary below title
-    if (_songArtist) {
-      const _artY = _songTitle ? _artistLineY : _titleLineY;
-      drawText(_songArtist, W / 2, _artY,
-        `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`,
+    ctx.save();
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.letterSpacing = '0px';
+
+    let _xc = (W - _l1W) / 2;
+
+    // MOOD: label — spaced, muted
+    ctx.letterSpacing = '3px';
+    ctx.font      = _moodFont;
+    ctx.fillStyle = 'rgba(150,145,140,0.75)';
+    ctx.fillText('MOOD:', _xc, _line1Y);
+    _xc += _moodW + _gap1;
+    ctx.letterSpacing = '0px';
+
+    if (_songTitle) {
+      // Song title — italic, white
+      ctx.font      = _titleFont;
+      ctx.fillStyle = 'rgba(255,255,255,0.97)';
+      if (_titleW > _drawnTitleW && _drawnTitleW > 0) {
+        // Title too long even after artist is excluded — scale it horizontally
+        ctx.save();
+        ctx.scale(_drawnTitleW / _titleW, 1);
+        ctx.fillText(_songTitle, _xc * (_titleW / _drawnTitleW), _line1Y);
+        ctx.restore();
+      } else {
+        ctx.fillText(_songTitle, _xc, _line1Y);
+      }
+      _xc += _drawnTitleW;
+
+      // Separator dot + artist — only when both present and not wrapping
+      if (_hasBoth && !_wrapArtist) {
+        _xc += _dotPad;
+        ctx.font      = _artistFont;
+        ctx.fillStyle = 'rgba(135,130,125,0.60)';
+        ctx.fillText('·', _xc, _line1Y);
+        _xc += _dotW + _dotPad;
+        ctx.fillStyle = 'rgba(175,170,165,0.80)';
+        ctx.fillText(_songArtist, _xc, _line1Y);
+      }
+    } else {
+      // Artist-only case: no italic, no dot, same muted style
+      ctx.font      = _artistFont;
+      ctx.fillStyle = 'rgba(175,170,165,0.80)';
+      const _maxArtW = MAX_TW - _moodW - _gap1;
+      if (_artistW > _maxArtW && _maxArtW > 0) {
+        ctx.save();
+        ctx.scale(_maxArtW / _artistW, 1);
+        ctx.fillText(_songArtist, _xc * (_artistW / _maxArtW), _line1Y);
+        ctx.restore();
+      } else {
+        ctx.fillText(_songArtist, _xc, _line1Y);
+      }
+    }
+
+    ctx.restore();
+
+    // ── Line 2: artist (only when wrapping) ──────────────────────────────
+    if (_wrapArtist) {
+      drawText(_songArtist, W / 2, _line2Y, _artistFont,
         'rgba(175,170,165,0.80)', MAX_TW);
     }
   }
   // ── End music credit block ────────────────────────────────────────────────
 
-  // Display name — clear break below the song credit block
+  // ── Display name and tagline — evenly spaced with credit block above ──
   if (displayName) {
     const _dnY = (_songTitle || _songArtist)
-      ? (hasStats ? H - 84 : H - 168)
-      : H - 158;
+      ? (hasStats ? H - 144 : H - 190)
+      : H - 190;
     drawText(displayName, W / 2, _dnY,
       barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
   }
 
-  // Tagline — generous bottom margin
   const _tagY = (_songTitle || _songArtist)
-    ? (hasStats ? H - 40 : H - 82)
-    : H - 84;
+    ? (hasStats ? H - 80 : H - 90)
+    : H - 90;
   drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
     barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
 
