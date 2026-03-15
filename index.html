@@ -8964,7 +8964,10 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
     6: 'All planned sets completed — close out the exercise with a brief note on overall performance.',
   };
 
-  return 'You are a terse, knowledgeable strength and conditioning coach providing a single brief coaching insight between sets during a workout. Your cue should be 1-2 short sentences maximum — direct, practical, no fluff.\n\nContext:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- Session ' + (sessionCount + 1) + ' overall\n- Rep target range: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Sets so far: ' + setsSummary + '\n- ' + prevStr + '\n- Trigger reason: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + '\n\nWrite ONE coaching cue (1-2 sentences). No greeting, no sign-off. Just the coaching insight.';
+  var sessCtx = _getSessionExerciseContext(exId);
+  var exercisePositionStr = 'Exercise ' + (sessCtx.currentExerciseIndex + 1) + ' of ' + sessCtx.totalExercises + ' (' + sessCtx.completedExercises + ' completed, ' + sessCtx.exercisesRemaining + ' remaining after this)';
+
+  return 'You are a terse, knowledgeable strength and conditioning coach providing a single brief coaching insight between sets during a workout. Your cue should be 1-2 short sentences maximum — direct, practical, no fluff.\n\nFactor in how many exercises remain in this session when generating the cue. An RPE of 8.5 on Exercise 1 of 6 is a different signal than RPE 8.5 on Exercise 5 of 6. If significant compound movements remain in the session factor that into any load or set recommendations. Never suggest pushing intensity on an early exercise if doing so would compromise the quality of remaining compound work.\n\nContext:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Session position: ' + exercisePositionStr + '\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- Session ' + (sessionCount + 1) + ' overall\n- Rep target range: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Sets so far: ' + setsSummary + '\n- ' + prevStr + '\n- Trigger reason: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + '\n\nWrite ONE coaching cue (1-2 sentences). No greeting, no sign-off. Just the coaching insight.';
 }
 
 async function _fetchCoachingCue(prompt) {
@@ -9003,12 +9006,31 @@ async function _fetchCoachingCue(prompt) {
 
 // Returns true if a REMOVE SET action button should be offered (fatigue triggers only,
 // when there are undone sets remaining and at least 2 sets have been completed).
+// Threshold is adjusted based on session position:
+// - Early/mid session (2+ exercises remaining): lower threshold (doneSets >= 1) because
+//   fatigue management matters more when compound work remains.
+// - Last exercise (0 exercises remaining): higher threshold (doneSets >= 3) because
+//   set removal has less impact on overall session quality at that point.
+// - Default: doneSets >= 2.
 function _coachingCueWarrantsRemove(exId, setIndex, triggerNum) {
   if (triggerNum !== 1 && triggerNum !== 3 && triggerNum !== 4) return false;
   var sets = (activeSession && activeSession.sets[exId]) || [];
   var doneSets = sets.filter(function(s) { return s.done; }).length;
   var undoneSets = sets.filter(function(s) { return !s.done && !s.coachRemoved; }).length;
-  return doneSets >= 2 && undoneSets >= 1;
+  if (undoneSets < 1) return false;
+
+  var sessCtx = _getSessionExerciseContext(exId);
+  var doneThreshold;
+  if (sessCtx.exercisesRemaining === 0) {
+    // Last exercise: set removal has less impact, raise the threshold
+    doneThreshold = 3;
+  } else if (sessCtx.exercisesRemaining >= 2) {
+    // Early/mid session with compound work likely remaining: weigh removal more heavily
+    doneThreshold = 1;
+  } else {
+    doneThreshold = 2;
+  }
+  return doneSets >= doneThreshold;
 }
 
 // Removes the last undone set for exId (marks coachRemoved so it is excluded from
@@ -9282,6 +9304,46 @@ function _isUnilateral(exId) {
   return false;
 }
 
+// Returns session exercise context for exId: how many exercises are in this
+// session, how many were completed before this exercise, and how many exercises
+// remain after this exercise (i.e. exercises the user hasn't started yet).
+function _getSessionExerciseContext(exId) {
+  var fallback = { totalExercises: 1, completedExercises: 0, exercisesRemaining: 0, currentExerciseIndex: 0 };
+  if (!activeSession) return fallback;
+  var _day = state.program && state.program.find(function(d) { return d.id === activeSession.dayId; });
+  var exercises = (_day && _day.exercises) || [];
+  var totalExercises = exercises.length;
+  if (totalExercises === 0) return fallback;
+
+  var currentExerciseIndex = 0;
+  var completedExercises = 0;
+  var exercisesRemaining = 0;
+  var foundCurrent = false;
+
+  exercises.forEach(function(ex, i) {
+    if (ex.id === exId) {
+      currentExerciseIndex = i;
+      foundCurrent = true;
+    } else if (!foundCurrent) {
+      // Count exercises before current that are fully done
+      var exSets = (activeSession.sets[ex.id] || []).filter(function(s) { return !s.coachRemoved; });
+      if (exSets.length > 0 && exSets.every(function(s) { return s.done; })) {
+        completedExercises++;
+      }
+    } else {
+      // Count exercises that come after the current exercise
+      exercisesRemaining++;
+    }
+  });
+
+  return {
+    totalExercises: totalExercises,
+    completedExercises: completedExercises,
+    exercisesRemaining: exercisesRemaining,
+    currentExerciseIndex: currentExerciseIndex,
+  };
+}
+
 // How many weekly sets one physical set of exId counts as.
 // Unilateral exercises work each limb separately so count as 2.
 function _getDynamicSetIncrement(exId) {
@@ -9327,6 +9389,14 @@ function _canSuggestDynamicSet(exId) {
   if (weeklyTarget === null || effectiveCount >= weeklyTarget) return false;
   // Adding the set must not push past MRV
   if (effectiveCount + increment > mrv) return false;
+
+  // Session context: if 3 or more exercises remain in this session and the user is
+  // already at their weekly volume target for this muscle, the remaining exercises
+  // will add sufficient volume — do not suggest an additional set now.
+  // (This is explicit documentation of the already-blocked case; it also future-proofs
+  // against any edge where effectiveCount is calculated conservatively.)
+  const _sessCtx = _getSessionExerciseContext(exId);
+  if (_sessCtx.exercisesRemaining >= 3 && effectiveCount >= weeklyTarget) return false;
 
   return true;
 }
