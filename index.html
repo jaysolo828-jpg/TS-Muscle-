@@ -6280,6 +6280,9 @@ function renderHome() {
               <button onclick="event.stopPropagation();shareHistoryEntry('${_stats.lastId}')" style="background:none;border:none;color:${_dayColor};opacity:0.6;cursor:pointer;padding:2px 0 2px 8px;display:flex;align-items:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;" title="Share">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
               </button>
+              <button onclick="event.stopPropagation();openSongEditSheet('${_stats.lastId}')" style="background:none;border:none;color:var(--gray);opacity:0.5;cursor:pointer;padding:2px 0 2px 6px;display:flex;align-items:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;" title="Add song">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              </button>
             </div>` : doneThisWeek ? `
             <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.35);color:#27ae60;border-radius:20px;padding:5px 10px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:6px;">
               <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -10973,6 +10976,20 @@ function showSessionWrapUp() {
           box-sizing:border-box;
         " placeholder="Form cues, how it felt, anything to remember..."></textarea>
       </div>
+      <!-- Optional session song — cultural accent, not a form -->
+      <div style="border-top:1px solid rgba(255,255,255,0.07);margin-bottom:20px;padding-top:20px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--gray)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">Session Song</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(165,160,155,0.5);letter-spacing:0.5px;margin-left:auto;">Optional</span>
+        </div>
+        <input id="wrapup-song-title" type="text" placeholder="Song title (optional)"
+          style="width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:0.3px;box-sizing:border-box;outline:none;margin-bottom:10px;"
+        />
+        <input id="wrapup-song-artist" type="text" placeholder="Artist (optional)"
+          style="width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:rgba(165,160,155,0.85);padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:0.3px;box-sizing:border-box;outline:none;"
+        />
+      </div>
       <button onclick="saveWrapupNotesAndFinish()"
         style="width:100%;background:#2ecc71;border:none;color:#0a0a0a;padding:16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:1.5px;cursor:pointer;box-shadow:0 4px 16px rgba(46,204,113,0.3);">
         SAVE &amp; FINISH ✓
@@ -10996,6 +11013,13 @@ function saveWrapupNotesAndFinish() {
     if (wrapupVal) {
       sessionField.value = sessionVal ? sessionVal + '\n' + wrapupVal : wrapupVal;
     }
+  }
+  // Capture optional song data
+  if (activeSession) {
+    const titleVal  = (document.getElementById('wrapup-song-title')?.value  || '').trim();
+    const artistVal = (document.getElementById('wrapup-song-artist')?.value || '').trim();
+    activeSession.songTitle  = titleVal  || null;
+    activeSession.songArtist = artistVal || null;
   }
   const modal = document.getElementById('session-wrapup-modal');
   if (modal) modal.remove();
@@ -11066,6 +11090,9 @@ function finalizeEndSession(save) {
         : {}),
       // Count of coach-directed set removals this session (for Cycle in Review).
       coachingInterventions: Object.values(activeSession.sets || {}).flat().filter(s => s.coachRemoved).length,
+      // Optional session song — both default to null, completely independent
+      songTitle:  activeSession.songTitle  || null,
+      songArtist: activeSession.songArtist || null,
     };
 
     state.history.push(entry);
@@ -12505,6 +12532,58 @@ function saveHistoryNote(entryId) {
   showToast('Note saved ✓');
 }
 
+function openSongEditSheet(entryId) {
+  const entry = state.history.find(e => String(e.id) === String(entryId));
+  if (!entry) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'song-edit-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:flex-end;padding:0;';
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 24px calc(32px + env(safe-area-inset-bottom));width:100%;max-width:480px;margin:0 auto;border:1px solid var(--dark3);">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--gray)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;">SESSION SONG</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;margin-left:auto;">OPTIONAL</div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;margin-bottom:7px;">SONG TITLE</div>
+        <input id="song-edit-title" type="text" placeholder="Song title (optional)"
+          value="${escapeHtml(entry.songTitle || '')}"
+          style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);border-radius:10px;padding:13px 14px;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:0.3px;outline:none;box-sizing:border-box;"
+        />
+      </div>
+      <div style="margin-bottom:24px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;margin-bottom:7px;">ARTIST</div>
+        <input id="song-edit-artist" type="text" placeholder="Artist (optional)"
+          value="${escapeHtml(entry.songArtist || '')}"
+          style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:rgba(165,160,155,0.9);border-radius:10px;padding:13px 14px;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:0.3px;outline:none;box-sizing:border-box;"
+        />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="document.getElementById('song-edit-modal').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
+        <button onclick="saveSongData('${entryId}')" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;">SAVE</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  setTimeout(() => document.getElementById('song-edit-title')?.focus(), 100);
+}
+
+function saveSongData(entryId) {
+  const titleInput  = document.getElementById('song-edit-title');
+  const artistInput = document.getElementById('song-edit-artist');
+  const entry = state.history.find(e => String(e.id) === String(entryId));
+  if (!entry) return;
+  entry.songTitle  = titleInput?.value?.trim()  || null;
+  entry.songArtist = artistInput?.value?.trim() || null;
+  saveState();
+  document.getElementById('song-edit-modal')?.remove();
+  _statsRenderKey = null;
+  renderHistory();
+  showToast('Song saved ✓');
+}
+
 function confirmDeleteSession(entryId) {
   const entry = state.history.find(e => String(e.id) === String(entryId));
   if (!entry) return;
@@ -13670,11 +13749,24 @@ function renderHistoryDetail(entry) {
   if (entry.notes) {
     html += `<div class="history-notes-box" id="history-note-display-${entry.id}" style="margin-bottom:6px;">📝 ${escapeHtml(entry.notes)}</div>`;
   }
+  if (entry.songTitle || entry.songArtist) {
+    html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;padding:7px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.07);">
+      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="var(--gray)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.7;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--cream);font-style:italic;letter-spacing:0.3px;">${escapeHtml(entry.songTitle || '')}</span>${entry.songTitle && entry.songArtist ? `<span style="color:rgba(165,160,155,0.5);font-size:11px;">·</span>` : ''}<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.3px;">${escapeHtml(entry.songArtist || '')}</span>
+    </div>`;
+  }
+  html += `<div style="display:flex;gap:8px;flex-wrap:wrap;">`;
   html += `<button onclick="event.stopPropagation(); editHistoryNote('${entry.id}')"
     style="background:none; border:1px solid var(--dark4); color:var(--gray); border-radius:8px;
     padding:5px 12px; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1px; cursor:pointer;">
     ${entry.notes ? '✏️ EDIT NOTE' : '+ ADD NOTE'}
   </button>`;
+  html += `<button onclick="event.stopPropagation(); openSongEditSheet('${entry.id}')"
+    style="background:none;border:1px solid var(--dark4);color:var(--gray);border-radius:8px;padding:5px 12px;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    ${(entry.songTitle || entry.songArtist) ? 'EDIT SONG' : '+ ADD SONG'}
+  </button>`;
+  html += `</div>`;
   html += `</div>`;
 
   return html;
@@ -14437,7 +14529,9 @@ function shareHistoryEntry(entryId) {
     weekLabel: dateStr,
     dayIndex: di < 0 ? 0 : di,
     isDeload: !!(entry.isDeload),
-    stats
+    stats,
+    songTitle:  entry.songTitle  || null,
+    songArtist: entry.songArtist || null,
   });
 }
 
@@ -15366,6 +15460,119 @@ async function generateAndShareCard(type, data) {
   }
 
   // T&S Strength Score is only shown on the dedicated Strength Score card (shareStrengthScoreCard)
+
+  // ── Music credit block — only rendered when song data is present ──────────
+  // Card must be pixel-identical to today when no song data exists.
+  const _songTitle  = data.songTitle  || null;
+  const _songArtist = data.songArtist || null;
+  if (_songTitle || _songArtist) {
+    // Thin muted horizontal rule above block — visually separates from content above
+    const _ruleY = H - 260;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(PAD, _ruleY);
+    ctx.lineTo(W - PAD, _ruleY);
+    ctx.stroke();
+    ctx.restore();
+
+    // Determine which lines to render
+    const _hasBoth = _songTitle && _songArtist;
+    const _titleLineY  = _hasBoth ? H - 224 : H - 213;
+    const _artistLineY = H - 185;
+
+    // Music note glyph size (drawn inline with title)
+    const _noteSz = Math.round(16 * BS);
+    const _titleSz = Math.round(20 * BS);
+    const _artistSz = Math.round(16 * BS);
+
+    if (_songTitle) {
+      // Measure note glyph and title to center the combined span
+      ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+      const _noteW = ctx.measureText('♩').width;
+      ctx.font = `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+      const _rawTitleW = ctx.measureText(_songTitle).width;
+      // Cap at MAX_TW - glyph - gap
+      const _gap = Math.round(10 * BS);
+      const _titleMaxW = MAX_TW - _noteW - _gap;
+      const _titleW = Math.min(_rawTitleW, _titleMaxW);
+      const _totalSpan = _noteW + _gap + _titleW;
+      const _startX = (W - _totalSpan) / 2;
+
+      // Draw glyph
+      ctx.save();
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fillText('♩', _startX, _titleLineY);
+      ctx.restore();
+
+      // Draw title (italic, white)
+      ctx.save();
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.font = `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+      ctx.fillStyle = 'rgba(245,230,200,0.92)';
+      const _titleDrawX = _startX + _noteW + _gap;
+      if (_rawTitleW > _titleMaxW) {
+        ctx.save();
+        ctx.scale(_titleMaxW / _rawTitleW, 1);
+        ctx.fillText(_songTitle, _titleDrawX * (_rawTitleW / _titleMaxW), _titleLineY);
+        ctx.restore();
+      } else {
+        ctx.fillText(_songTitle, _titleDrawX, _titleLineY);
+      }
+      ctx.restore();
+    }
+
+    if (_songArtist) {
+      // Artist line — muted secondary, plain (not italic)
+      // If no title present, draw a glyph prefix too
+      if (!_songTitle) {
+        ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+        const _noteW2 = ctx.measureText('♩').width;
+        ctx.font = `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+        const _rawArtW = ctx.measureText(_songArtist).width;
+        const _gap2 = Math.round(10 * BS);
+        const _artMaxW = MAX_TW - _noteW2 - _gap2;
+        const _artW = Math.min(_rawArtW, _artMaxW);
+        const _totalSpan2 = _noteW2 + _gap2 + _artW;
+        const _startX2 = (W - _totalSpan2) / 2;
+
+        ctx.save();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.fillText('♩', _startX2, _titleLineY);
+        ctx.restore();
+
+        ctx.save();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+        ctx.fillStyle = 'rgba(165,160,155,0.82)';
+        const _artDrawX = _startX2 + _noteW2 + _gap2;
+        if (_rawArtW > _artMaxW) {
+          ctx.save();
+          ctx.scale(_artMaxW / _rawArtW, 1);
+          ctx.fillText(_songArtist, _artDrawX * (_rawArtW / _artMaxW), _titleLineY);
+          ctx.restore();
+        } else {
+          ctx.fillText(_songArtist, _artDrawX, _titleLineY);
+        }
+        ctx.restore();
+      } else {
+        // Both present — artist on its own line below the title, centered
+        drawText(_songArtist, W / 2, _artistLineY,
+          `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`,
+          'rgba(165,160,155,0.78)', MAX_TW);
+      }
+    }
+  }
+  // ── End music credit block ────────────────────────────────────────────────
 
   // Display name — fixed position, above tagline
   if (displayName) {
