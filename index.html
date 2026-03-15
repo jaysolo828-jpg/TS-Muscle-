@@ -9939,10 +9939,13 @@ function updateSessionProgress() {
 
   day.exercises.forEach(ex => {
     const sets = activeSession.sets[ex.id];
-    totalSets += sets.length;
-    const done = sets.filter(s => s.done).length;
+    // Exclude coach-removed sets: they were intentionally eliminated and must not
+    // prevent an exercise from reaching completion or inflate the incomplete count.
+    const eligible = sets.filter(s => !s.coachRemoved);
+    totalSets += eligible.length;
+    const done = eligible.filter(s => s.done).length;
     doneSets += done;
-    if (done === sets.length) doneExercises++;
+    if (eligible.length > 0 && done === eligible.length) doneExercises++;
   });
 
   const pct = totalSets > 0 ? (doneSets / totalSets) * 100 : 0;
@@ -10646,7 +10649,11 @@ function _continueEndSession(save) {
     let incompleteSets = 0, incompleteExercises = 0;
     Object.entries(activeSession.sets).forEach(([exId, sets]) => {
       if (skipped[exId]) return;
-      const missing = sets.filter(s => !s.done).length;
+      // Coach-removed sets (coachRemoved: true) are intentionally eliminated — they
+      // must not be counted as missing sets, and must not trigger the incomplete
+      // session warning or block the session from saving identically to an unmodified
+      // session (which is required for correct streak counting).
+      const missing = sets.filter(s => !s.done && !s.coachRemoved).length;
       if (missing > 0) { incompleteSets += missing; incompleteExercises++; }
     });
     if (incompleteSets > 0) {
