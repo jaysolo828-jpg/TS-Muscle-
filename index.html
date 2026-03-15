@@ -3396,6 +3396,14 @@
     <div class="settings-arrow" id="progressive-overload-icon"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
   </div>
 
+  <div class="settings-item" onclick="toggleBetweenSetCoaching()">
+    <div>
+      <div class="settings-label">Between-Set Coaching</div>
+      <div id="between-set-coaching-sub" class="settings-sub" style="color:#2ecc71;">On — live insights after certain sets</div>
+    </div>
+    <div class="settings-arrow" id="between-set-coaching-icon"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+  </div>
+
   <!-- WEIGHT INCREMENT SETTING -->
   <div class="settings-item" style="cursor:default;">
     <div style="flex:1;">
@@ -5032,7 +5040,7 @@ function getWeeklySetsByMuscle() {
       // counts as 2 toward the muscle group total. Use persistent flags only (not the
       // session-swap flag) since historical entries reflect a potentially different session.
       const mult = (UNILATERAL_EXERCISES.has(exId) || state.customUnilateralExercises?.[exId]) ? 2 : 1;
-      counts[muscle] += sets.filter(s => s.done).length * mult;
+      counts[muscle] += sets.filter(s => s.done && !s.coachRemoved).length * mult;
     });
   });
 
@@ -5043,7 +5051,7 @@ function getWeeklySetsByMuscle() {
       if (!muscle || !Object.prototype.hasOwnProperty.call(counts, muscle)) return;
       // For the active session _isUnilateral also captures session-only swaps.
       const mult = _isUnilateral(exId) ? 2 : 1;
-      counts[muscle] += sets.filter(s => s.done).length * mult;
+      counts[muscle] += sets.filter(s => s.done && !s.coachRemoved).length * mult;
     });
   }
 
@@ -7278,7 +7286,7 @@ function getProgressiveWeight(exId, dayId) {
     const _dlFactor = state.deloadReductionFactor || 0.75;
     const baseWeight = parseFloat(state.deloadBaseWeights?.[exId] || 0);
     if (baseWeight) return String(Math.max(5, Math.round(baseWeight * _dlFactor / 2.5) * 2.5));
-    const lastSessionSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done);
+    const lastSessionSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done && !s.coachRemoved);
     const lastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
     if (lastWeight) return String(Math.max(5, Math.round(lastWeight * _dlFactor / 2.5) * 2.5));
     return state.startingWeights?.[exId] ? String(state.startingWeights[exId]) : '';
@@ -7299,7 +7307,7 @@ function getProgressiveWeight(exId, dayId) {
   // Aggregate data across sessions
   let allSets = [];
   sessions.forEach(sess => {
-    const s = (sess.sets[exId] || []).filter(s => s.done);
+    const s = (sess.sets[exId] || []).filter(s => s.done && !s.coachRemoved);
     allSets = allSets.concat(s);
   });
 
@@ -7307,7 +7315,7 @@ function getProgressiveWeight(exId, dayId) {
 
 
   // Use most recent session's last weight as baseline
-  const lastSessionSets = (sameDaySessions[0].sets[exId] || []).filter(s => s.done);
+  const lastSessionSets = (sameDaySessions[0].sets[exId] || []).filter(s => s.done && !s.coachRemoved);
   const lastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
   if (!lastWeight) return '';
 
@@ -8693,6 +8701,11 @@ function toggleSetDone(exId, setIndex) {
     setTimeout(function() { _checkAndShowDynamicSetSuggestion(exId); }, 250);
   }
 
+  // Between-set coaching cue — fires 600ms after set completion (after dynamic set expansion check)
+  if (set.done) {
+    setTimeout(function() { _maybeFireCoachingCue(exId, setIndex); }, 600);
+  }
+
   // Checkpoint: auto-save after every completed set so crash/swipe-away recovery has recent data
   if (set.done && activeSession) {
     try { localStorage.setItem('ts-muscle-paused', JSON.stringify(activeSession)); } catch(e) {}
@@ -8701,6 +8714,332 @@ function toggleSetDone(exId, setIndex) {
 
 
 
+
+// ============================================================
+// BETWEEN-SET COACHING CUE SYSTEM
+// ============================================================
+const _COACHING_API_KEY = ''; // Set your Anthropic API key here
+let _coachingCueAbortController = null;
+var _coachingCueObservers = {}; // exId → IntersectionObserver
+
+function toggleBetweenSetCoaching() {
+  state.betweenSetCoaching = !(state.betweenSetCoaching !== false);
+  saveState();
+  updateBetweenSetCoachingUI();
+  showToast(state.betweenSetCoaching !== false ? 'Between-Set Coaching on' : 'Between-Set Coaching off');
+}
+
+function updateBetweenSetCoachingUI() {
+  var sub = document.getElementById('between-set-coaching-sub');
+  var icon = document.getElementById('between-set-coaching-icon');
+  var on = state.betweenSetCoaching !== false;
+  if (sub) {
+    sub.textContent = on ? 'On — live insights after certain sets' : 'Off';
+    sub.style.color = on ? '#2ecc71' : 'var(--gray)';
+  }
+  if (icon) {
+    var stroke = on ? '#2ecc71' : 'var(--gray)';
+    icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="' + stroke + '" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+  }
+}
+
+function _cancelCoachingCue() {
+  if (_coachingCueAbortController) {
+    try { _coachingCueAbortController.abort(); } catch(e) {}
+    _coachingCueAbortController = null;
+  }
+}
+
+function _clearCoachingCueCard(exId) {
+  if (_coachingCueObservers[exId]) {
+    try { _coachingCueObservers[exId].disconnect(); } catch(e) {}
+    delete _coachingCueObservers[exId];
+  }
+  var card = document.getElementById('coaching-cue-' + exId);
+  if (card) card.remove();
+  if (activeSession && activeSession.coachingCues) {
+    delete activeSession.coachingCues[exId];
+  }
+}
+
+// Evaluates trigger conditions for exId after setIndex was completed.
+// Returns { trigger: number, data: object } or null if no trigger fires.
+function _evalCoachingCueTriggers(exId, setIndex) {
+  if (!activeSession) return null;
+  var sessionCount = (state.history || []).length; // sessions logged before this one
+  var isCalibrationWeek = (state.cycleCount || 1) === 1 && (state.weekCount || 1) === 1;
+  var isRecovery = state.isDeloadWeek || state.isRestWeek;
+
+  // Recovery/deload: suppress all triggers
+  if (isRecovery) return null;
+
+  // Determine which triggers are allowed based on session count and calibration week
+  var allowedTriggers;
+  if (isCalibrationWeek) {
+    allowedTriggers = { 5: true };
+  } else if (sessionCount <= 1) {
+    allowedTriggers = { 5: true };
+  } else if (sessionCount <= 3) {
+    allowedTriggers = { 1: true, 2: true, 5: true };
+  } else {
+    allowedTriggers = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true };
+  }
+
+  var sets = (activeSession.sets[exId] || []).filter(function(s) { return s.done; });
+  var currentSet = sets[setIndex] || sets[sets.length - 1];
+  if (!currentSet) return null;
+
+  // Parse rep range for this exercise
+  var _day = state.program && state.program.find(function(d) { return d.id === activeSession.dayId; });
+  var _ex = _day && _day.exercises.find(function(e) { return e.id === exId; });
+  var repStr = getGoalReps(exId, (_ex && _ex.reps) || '8-12');
+  var repParts = repStr.split(/[–\-]/);
+  var repMin = parseInt(repParts[0]) || 8;
+  var repMax = parseInt(repParts[1]) || repMin;
+
+  var currentReps = parseInt(currentSet.reps) || 0;
+  var currentRpe = parseFloat(currentSet.rpe) || 0;
+
+  // Trigger 5: First set completed — always-available (except recovery, already gated above)
+  if (allowedTriggers[5] && setIndex === 0) {
+    return { trigger: 5, data: { reps: currentReps, rpe: currentRpe, repMin: repMin, repMax: repMax } };
+  }
+
+  // Trigger 1: RPE very high + reps below target (overload/fatigue indicator)
+  if (allowedTriggers[1]) {
+    var doneSets = sets.filter(function(s, i) { return i <= setIndex; });
+    var highRpeLowRepCount = doneSets.filter(function(s) {
+      var r = parseInt(s.reps) || 0;
+      var rpe = parseFloat(s.rpe) || 0;
+      return rpe >= 9 && r < repMin - 1;
+    }).length;
+    if (highRpeLowRepCount >= 2 || (currentRpe >= 9.5 && currentReps > 0 && currentReps <= repMin - 2)) {
+      return { trigger: 1, data: { reps: currentReps, rpe: currentRpe, repMin: repMin, repMax: repMax } };
+    }
+  }
+
+  // Trigger 2: Reps at/above top of range for 2+ consecutive sets (strength milestone)
+  if (allowedTriggers[2]) {
+    var doneSets2 = sets.filter(function(s, i) { return i <= setIndex; });
+    var topSetsCount = doneSets2.filter(function(s) { return (parseInt(s.reps) || 0) >= repMax; }).length;
+    if (topSetsCount >= 2) {
+      return { trigger: 2, data: { reps: currentReps, rpe: currentRpe, repMin: repMin, repMax: repMax, topSetsCount: topSetsCount } };
+    }
+  }
+
+  // Trigger 3: RPE spike this set vs previous set (+2 or more, current RPE ≥ 8)
+  if (allowedTriggers[3] && setIndex >= 1) {
+    var prevSet3 = sets[setIndex - 1];
+    var prevRpe3 = parseFloat(prevSet3 && prevSet3.rpe) || 0;
+    if (prevRpe3 > 0 && currentRpe > 0 && currentRpe >= prevRpe3 + 2 && currentRpe >= 8) {
+      return { trigger: 3, data: { reps: currentReps, rpe: currentRpe, prevRpe: prevRpe3, repMin: repMin, repMax: repMax } };
+    }
+  }
+
+  // Trigger 4: Consistent high RPE — last 2 sets both RPE 8+
+  if (allowedTriggers[4] && setIndex >= 2) {
+    var recent4 = sets.slice(Math.max(0, setIndex - 1), setIndex + 1);
+    var allHigh4 = recent4.length >= 2 && recent4.every(function(s) { return (parseFloat(s.rpe) || 0) >= 8; });
+    if (allHigh4) {
+      var avgRpe4 = recent4.reduce(function(sum, s) { return sum + (parseFloat(s.rpe) || 0); }, 0) / recent4.length;
+      return { trigger: 4, data: { reps: currentReps, rpe: currentRpe, avgRpe: Math.round(avgRpe4 * 10) / 10 } };
+    }
+  }
+
+  // Trigger 6: Completed all planned (goal) sets for this exercise
+  if (allowedTriggers[6]) {
+    var goalSets6 = getGoalSets(exId, (_ex && _ex.sets) || 3);
+    if (setIndex === goalSets6 - 1 && setIndex >= 1) {
+      return { trigger: 6, data: { reps: currentReps, rpe: currentRpe, goalSets: goalSets6 } };
+    }
+  }
+
+  return null;
+}
+
+function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
+  var _day = state.program && state.program.find(function(d) { return d.id === activeSession.dayId; });
+  var _ex = _day && _day.exercises.find(function(e) { return e.id === exId; });
+  var exName = (activeSession.swaps && activeSession.swaps[exId] && activeSession.swaps[exId].name)
+    || (_ex && _ex.name) || exId;
+  var muscle = MUSCLE_MAP[exId] || 'muscle';
+  var band = getCycleWeekBand();
+  var weekNum = state.weekCount || 1;
+  var cycleNum = state.cycleCount || 1;
+  var sessionCount = (state.history || []).length;
+
+  var sets = (activeSession.sets[exId] || []).filter(function(s) { return s.done; });
+  var setsSummary = sets.slice(0, setIndex + 1).map(function(s, i) {
+    return 'Set ' + (i + 1) + ': ' + (s.reps || '?') + ' reps @ ' + (s.weight || '?') + ' lbs' + (s.rpe ? ', RPE ' + s.rpe : '');
+  }).join(' | ');
+
+  var lastData = getLastSetData(exId, setIndex);
+  var prevStr = lastData
+    ? 'Previous session set ' + (setIndex + 1) + ': ' + (lastData.reps || '?') + ' reps @ ' + (lastData.weight || '?') + ' lbs'
+    : 'No previous session data for this set.';
+
+  var triggerDescriptions = {
+    1: 'The athlete is showing signs of excessive fatigue — RPE is very high relative to reps completed. Weight may be too heavy or fatigue is accumulating.',
+    2: 'The athlete is consistently hitting the top of their rep range or exceeding it — a strength milestone that may warrant a weight increase next session.',
+    3: 'RPE spiked significantly this set compared to the previous set — a notable jump in difficulty worth noting.',
+    4: 'RPE has been consistently high (8+) across multiple recent sets — cumulative fatigue is building.',
+    5: 'First set completed — give a brief, encouraging coaching note to set the tone for the rest of the exercise.',
+    6: 'All planned sets completed — close out the exercise with a brief note on overall performance.',
+  };
+
+  return 'You are a terse, knowledgeable strength and conditioning coach providing a single brief coaching insight between sets during a workout. Your cue should be 1-2 short sentences maximum — direct, practical, no fluff.\n\nContext:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- Session ' + (sessionCount + 1) + ' overall\n- Rep target range: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Sets so far: ' + setsSummary + '\n- ' + prevStr + '\n- Trigger reason: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + '\n\nWrite ONE coaching cue (1-2 sentences). No greeting, no sign-off. Just the coaching insight.';
+}
+
+async function _fetchCoachingCue(prompt) {
+  if (!_COACHING_API_KEY) return null;
+  _cancelCoachingCue();
+  var controller = new AbortController();
+  _coachingCueAbortController = controller;
+  var timer = setTimeout(function() { try { controller.abort(); } catch(e) {} }, 3000);
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': _COACHING_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 100,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!resp.ok) return null;
+    var json = await resp.json();
+    return (json && json.content && json.content[0] && json.content[0].text && json.content[0].text.trim()) || null;
+  } catch(e) {
+    clearTimeout(timer);
+    return null;
+  } finally {
+    if (_coachingCueAbortController === controller) _coachingCueAbortController = null;
+  }
+}
+
+// Returns true if a REMOVE SET action button should be offered (fatigue triggers only,
+// when there are undone sets remaining and at least 2 sets have been completed).
+function _coachingCueWarrantsRemove(exId, setIndex, triggerNum) {
+  if (triggerNum !== 1 && triggerNum !== 3 && triggerNum !== 4) return false;
+  var sets = (activeSession && activeSession.sets[exId]) || [];
+  var doneSets = sets.filter(function(s) { return s.done; }).length;
+  var undoneSets = sets.filter(function(s) { return !s.done && !s.coachRemoved; }).length;
+  return doneSets >= 2 && undoneSets >= 1;
+}
+
+// Removes the last undone set for exId (marks coachRemoved so it is excluded from
+// progressive overload and volume calculations while staying in the array).
+function _coachRemoveSet(exId) {
+  if (!activeSession || !activeSession.sets[exId]) return;
+  var sets = activeSession.sets[exId];
+  var removeIdx = -1;
+  for (var i = sets.length - 1; i >= 0; i--) {
+    if (!sets[i].done && !sets[i].coachRemoved) { removeIdx = i; break; }
+  }
+  if (removeIdx < 0) return;
+  sets[removeIdx].coachRemoved = true;
+  var row = document.getElementById('set-row-' + exId + '-' + removeIdx);
+  if (row) row.remove();
+  _clearCoachingCueCard(exId);
+  updateSessionProgress();
+  showToast('Set removed');
+}
+
+function _showCoachingCueCard(exId, cueText, warrantRemove) {
+  var existing = document.getElementById('coaching-cue-' + exId);
+  if (existing) existing.remove();
+
+  var sets = activeSession && activeSession.sets[exId];
+  if (!sets) return;
+  var lastSetRow = document.getElementById('set-row-' + exId + '-' + (sets.length - 1));
+  if (!lastSetRow) return;
+
+  var safe = String(cueText)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  var removeBtnHtml = warrantRemove
+    ? '<button onclick="_coachRemoveSet(\'' + exId + '\')" style="margin-top:8px;background:none;border:1px solid rgba(255,255,255,0.15);color:var(--gray-light);padding:4px 10px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.8px;cursor:pointer;-webkit-tap-highlight-color:transparent;">REMOVE SET</button>'
+    : '';
+
+  var card = document.createElement('div');
+  card.id = 'coaching-cue-' + exId;
+  card.style.cssText = 'margin:6px 0;padding:11px 13px 10px;background:#111;border:none;border-radius:10px;';
+  card.innerHTML =
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--cream);line-height:1.45;letter-spacing:0.2px;">' + safe + '</div>' +
+        removeBtnHtml +
+      '</div>' +
+      '<div style="flex-shrink:0;font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:0.8px;white-space:nowrap;margin-top:1px;">&#10022; Live insight</div>' +
+    '</div>';
+
+  lastSetRow.insertAdjacentElement('afterend', card);
+  _watchCoachingCueVisibility(exId);
+}
+
+function _watchCoachingCueVisibility(exId) {
+  var card = document.getElementById('coaching-cue-' + exId);
+  if (!card || typeof IntersectionObserver === 'undefined') return;
+  if (_coachingCueObservers[exId]) {
+    try { _coachingCueObservers[exId].disconnect(); } catch(e) {}
+  }
+  var hasBeenVisible = false;
+  var obs = new IntersectionObserver(function(entries) {
+    var entry = entries[0];
+    if (entry.isIntersecting) {
+      hasBeenVisible = true;
+    } else if (hasBeenVisible) {
+      _clearCoachingCueCard(exId);
+    }
+  }, { threshold: 0.1 });
+  obs.observe(card);
+  _coachingCueObservers[exId] = obs;
+}
+
+async function _maybeFireCoachingCue(exId, setIndex) {
+  if (!activeSession) return;
+  // Settings gate
+  if (state.betweenSetCoaching === false) return;
+  // Manual adjustment suppression
+  if (_getManualAdj(exId, activeSession.dayId)) return;
+  // Don't show if dynamic set suggestion is already visible
+  if (document.getElementById('dynamic-set-suggestion-' + exId)) return;
+  // Don't show if a coaching cue card is already present for this exercise
+  if (document.getElementById('coaching-cue-' + exId)) return;
+  // Superset pairing: only fire after a complete round (partner has matched done count)
+  var partnerId = activeSession.supersets && activeSession.supersets[exId];
+  if (partnerId) {
+    var myDone = (activeSession.sets[exId] || []).filter(function(s) { return s.done; }).length;
+    var partnerDone = (activeSession.sets[partnerId] || []).filter(function(s) { return s.done; }).length;
+    if (partnerDone < myDone) return;
+  }
+
+  var result = _evalCoachingCueTriggers(exId, setIndex);
+  if (!result) return;
+
+  if (!activeSession.coachingCues) activeSession.coachingCues = {};
+
+  var warrantRemove = _coachingCueWarrantsRemove(exId, setIndex, result.trigger);
+  var cueText = await _fetchCoachingCue(_buildCoachingCuePrompt(exId, setIndex, result.trigger, result.data));
+
+  // Re-validate session is still active and cue wasn't cleared during API call
+  if (!activeSession) return;
+  if (activeSession.coachingCues && activeSession.coachingCues[exId] && activeSession.coachingCues[exId].cleared) return;
+  if (!cueText) return; // fail silently — offline, timeout, or no API key
+
+  activeSession.coachingCues[exId] = { trigger: result.trigger, setIndex: setIndex, cueText: cueText };
+  _showCoachingCueCard(exId, cueText, warrantRemove);
+}
 
 // ============================================================
 // LIVE SESSION TIMER
@@ -8920,6 +9259,8 @@ function _checkAndShowDynamicSetSuggestion(exId) {
   if (!_canSuggestDynamicSet(exId)) return;
   // Guard against duplicate card (e.g. rapid double-tap)
   if (document.getElementById('dynamic-set-suggestion-' + exId)) return;
+  // Don't show if a coaching cue card is currently visible for this exercise
+  if (document.getElementById('coaching-cue-' + exId)) return;
 
   const sets = activeSession.sets[exId];
   const lastSetRow = document.getElementById('set-row-' + exId + '-' + (sets.length - 1));
@@ -9252,6 +9593,9 @@ function toggleSkipExercise(exId) {
       skipBtn.style.color = 'var(--red)';
       skipBtn.textContent = 'SKIPPED';
     }
+    // Clear any coaching cue card and state for this exercise
+    _clearCoachingCueCard(exId);
+    _cancelCoachingCue();
     showToast('Exercise skipped');
   } else {
     if (exEl) exEl.style.opacity = '';
@@ -10506,6 +10850,8 @@ function _upgradeBonus(bonusId, persistence) {
 }
 
 function finalizeEndSession(save) {
+  // Cancel any in-flight coaching cue API call
+  _cancelCoachingCue();
   // Always clear the crash-recovery snapshot — session is now fully completed or discarded
   _lsRemove('ts-muscle-paused');
   _idbSet('ts-muscle-paused', null);
@@ -15127,9 +15473,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 
 const APP_CHANGELOG = {
+  '1.4.1': [
+    'New: Live Coaching Insights — After certain sets the app generates a live coaching cue based on your RPE, reps, and where you are in your cycle. It only fires when something specific is worth noting. Turn it off in Settings → Between-Set Coaching.',
+  ],
   '1.4.0': [
     'New: Choose your training split during setup — Upper / Lower, Push / Pull / Legs, or Full Body',
     'New: Swap exercises before your first workout — tap ALT on any exercise in the Starting Weights step',
@@ -16210,6 +16559,20 @@ const TUTORIAL_SLIDES = [
     When you're done, tap <strong style="color:var(--red-text);">COMPLETE ✓</strong> to see your session summary — set outcomes and next-session weights — before anything saves. Need to stop early? Tap <strong style="color:var(--cream);">EXIT</strong> to save progress and resume later.<br><br>
     If your volume supports it mid-session, the app may suggest adding a set. Tap <strong style="color:var(--red-text);">ADD SET</strong> to accept or <strong style="color:var(--cream);">SKIP</strong> to pass — it only shows when the programming calls for it.<br><br>
     If a muscle group is showing fatigue signs, the app may suggest reducing sets for that muscle today. Tap <strong style="color:#c8901e;">REDUCE SETS</strong> to accept or <strong style="color:var(--gray-light);">KEEP AS IS</strong> to proceed normally.`,
+  },
+  {
+    section: 'LIVE COACHING',
+    icon: '✦',
+    title: 'Live Coaching Insights',
+    body: `After certain sets, the app generates a live coaching cue based on what just happened — your RPE, reps, weight, and where you are in your cycle.<br><br>
+    It only fires when something specific is worth noting:<br>
+    <strong style="color:var(--cream);">High RPE with low reps</strong> — weight may be too heavy<br>
+    <strong style="color:var(--cream);">Hitting the top of your rep range</strong> — you may be ready to progress<br>
+    <strong style="color:var(--cream);">RPE spike mid-set</strong> — fatigue building faster than expected<br>
+    <strong style="color:var(--cream);">Consistent high RPE</strong> — cumulative fatigue across sets<br>
+    <strong style="color:var(--cream);">First set / all sets complete</strong> — brief performance notes<br><br>
+    If fatigue signals are strong enough, a <strong style="color:var(--cream);">REMOVE SET</strong> option may appear to help you manage load in real time.<br><br>
+    Turn it off anytime in <strong style="color:var(--red-text);">Settings → Between-Set Coaching</strong>.`,
   },
   {
     section: 'SUPERSETS',
@@ -19274,6 +19637,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateTrainingDaysSub();
   updateSplitTypeSub();
   updateProgressiveOverloadUI();
+  updateBetweenSetCoachingUI();
   updateIncrementUI();
   updateNotificationsUI();
   updateGoalSettingsSub();
