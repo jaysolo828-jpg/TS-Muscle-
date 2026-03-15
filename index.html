@@ -7360,7 +7360,13 @@ function getProgressiveWeight(exId, dayId) {
   const _lastSessionHadReduction = !!sameDaySessions[0].setReductionAppliedExercises?.includes(exId);
   const allSetsCompleted = _lastSessionHadReduction || lastSessionSets.length >= getGoalSets(ex?.id, ex?.sets);
   const exceededRange  = avgReps > repRangeTop;
-  const hitRepRangeTop = avgReps >= repRangeTop;
+  // Use the week-band tightened target so a user who hits their periodized target
+  // (e.g. 9 reps in weeks 1-2 of an 8-12 range) gets the increase signal even
+  // though 9 < 12. Falls back to repRangeTop outside of an active session.
+  const _weekBandTop   = (typeof getCycleWeekBandRepTarget === 'function' && activeSession)
+    ? (getCycleWeekBandRepTarget(exId) || repRangeTop)
+    : repRangeTop;
+  const hitRepRangeTop = avgReps >= Math.min(repRangeTop, _weekBandTop);
   const hitRepRange    = avgReps >= repRangeMin && avgReps <= repRangeTop;
   const missedRange    = avgReps < repRangeMin;
 
@@ -13946,7 +13952,7 @@ function getBestE1RM(exId, days, isUnilateral) {
   let best = 0;
   (state.history || []).forEach(entry => {
     if (new Date(entry.date).getTime() < cutoff) return;
-    (entry.sets?.[exId] || []).filter(s => s.done && s.weight && s.reps).forEach(s => {
+    (entry.sets?.[exId] || []).filter(s => s.done && s.weight && s.reps && !s.coachRemoved).forEach(s => {
       const w = parseFloat(s.weight) * wMult, r = parseInt(s.reps);
       if (!w || !r || r < 1) return;
       const e1rm = r === 1 ? w : Math.round(w * (1 + r / 30));
@@ -15601,6 +15607,16 @@ if ('serviceWorker' in navigator) {
 const APP_VERSION = '1.4.2';
 
 const APP_CHANGELOG = {
+  '1.4.2': [
+    'Fix: Rep indicators (▲✓▼) and READY TO PROGRESS badge now correctly use your week-band periodized rep target, not the flat top of your rep range',
+    'Fix: Weight increase suggestions now trigger at your periodized rep target so mid-cycle progressions are no longer blocked',
+    'Fix: Best estimated 1RM and Strength Score now exclude coach-removed sets from consideration',
+    'Fix: Returning from a Program Pause no longer re-shows the gap check modal',
+    'Fix: Set Reduction and Rep Range Tightening are now correctly suppressed during Test Week',
+    'Fix: Deload weight shown in the deload banner now reflects your actual reduction factor, not a hardcoded 75%',
+    'Fix: Restoring default exercises now uses the correct program for your chosen split',
+    'Fix: Backup files missing newer fields (Between-Set Coaching toggle, custom unilateral exercises, week count) are now filled with safe defaults on import',
+  ],
   '1.4.1': [
     'New: Live Coaching Insights — After certain sets the app generates a live coaching cue based on your RPE, reps, and where you are in your cycle. It only fires when something specific is worth noting. Turn it off in Settings → Between-Set Coaching.',
     'New: Dynamic Set Expansion — When you consistently hit the top of your rep range across sets, the app suggests adding an extra set to keep the stimulus growing.',
