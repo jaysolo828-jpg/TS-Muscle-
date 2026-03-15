@@ -15476,12 +15476,17 @@ async function generateAndShareCard(type, data) {
   if (_songTitle || _songArtist) {
     const _hasBoth = _songTitle && _songArtist;
 
-    // Y positions — generous on non-stats cards (more vertical room),
-    // more compact on stats cards (stats strip already consumes the upper area)
-    const _ruleY       = hasStats ? H - 272 : H - 360;
-    const _moodLabelY  = hasStats ? H - 230 : H - 314;
-    const _titleLineY  = hasStats ? H - 184 : H - 264;
-    const _artistLineY = hasStats ? H - 134 : H - 206;
+    // Y positions — non-stats cards have ample room so the rule is pushed higher,
+    // giving the credits section generous breathing space below it.
+    // Stats cards are physically constrained by the stats strip above.
+    //
+    // Non-stats (no-stats, song present) — rule at Y 1500, gaps ~50–74px:
+    //   rule(1500) → MOOD(1550,+50) → title(1606,+56) → artist(1668,+62)
+    // Stats — rule at Y 1648, modest gaps; stats strip occupies Y 1500–1614
+    const _ruleY       = hasStats ? H - 272 : H - 420;
+    const _moodLabelY  = hasStats ? H - 230 : H - 370;
+    const _titleLineY  = hasStats ? H - 184 : H - 314;
+    const _artistLineY = hasStats ? H - 134 : H - 252;
 
     // Rule — identical to the stats hairline: same PAD width, lineWidth 2, same opacity
     ctx.save();
@@ -15497,10 +15502,10 @@ async function generateAndShareCard(type, data) {
     const _titleSz  = Math.round(32 * BS);  // ~48px — headline
     const _artistSz = Math.round(22 * BS);  // ~33px — secondary
 
-    // "MOOD" label — small spaced uppercase, sits above the song title like an album liner credit
+    // "MOOD" label — legible spaced uppercase label above the song title
     ctx.save();
     ctx.letterSpacing = '5px';
-    drawText('MOOD', W / 2, _moodLabelY, barlow(600, 14, BS), 'rgba(160,160,160,0.62)', MAX_TW);
+    drawText('MOOD', W / 2, _moodLabelY, barlow(700, 20, BS), 'rgba(220,215,210,0.90)', MAX_TW);
     ctx.restore();
 
     // Song title — italic, centred, no glyph
@@ -15520,18 +15525,18 @@ async function generateAndShareCard(type, data) {
   }
   // ── End music credit block ────────────────────────────────────────────────
 
-  // Display name — increased breathing room; repositioned when song present
+  // Display name — generous gap below artist; repositioned when song present
   if (displayName) {
     const _dnY = (_songTitle || _songArtist)
-      ? (hasStats ? H - 80 : H - 142)
+      ? (hasStats ? H - 80 : H - 182)
       : H - 158;
     drawText(displayName, W / 2, _dnY,
       barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
   }
 
-  // Tagline — more generous bottom margin; repositioned when song present
+  // Tagline — ample bottom margin; repositioned when song present
   const _tagY = (_songTitle || _songArtist)
-    ? (hasStats ? H - 38 : H - 78)
+    ? (hasStats ? H - 38 : H - 104)
     : H - 84;
   drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
     barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
