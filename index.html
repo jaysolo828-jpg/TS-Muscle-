@@ -15607,6 +15607,16 @@ if ('serviceWorker' in navigator) {
 const APP_VERSION = '1.4.2';
 
 const APP_CHANGELOG = {
+  '1.4.2': [
+    'Fix: Rep indicators (▲✓▼) and READY TO PROGRESS badge now correctly use your week-band periodized rep target, not the flat top of your rep range',
+    'Fix: Weight increase suggestions now trigger at your periodized rep target so mid-cycle progressions are no longer blocked',
+    'Fix: Best estimated 1RM and Strength Score now exclude coach-removed sets from consideration',
+    'Fix: Returning from a Program Pause no longer re-shows the gap check modal',
+    'Fix: Set Reduction and Rep Range Tightening are now correctly suppressed during Test Week',
+    'Fix: Deload weight shown in the deload banner now reflects your actual reduction factor, not a hardcoded 75%',
+    'Fix: Restoring default exercises now uses the correct program for your chosen split',
+    'Fix: Backup files missing newer fields (Between-Set Coaching toggle, custom unilateral exercises, week count) are now filled with safe defaults on import',
+  ],
   '1.4.1': [
     'New: Live Coaching Insights — After certain sets the app generates a live coaching cue based on your RPE, reps, and where you are in your cycle. It only fires when something specific is worth noting. Turn it off in Settings → Between-Set Coaching.',
     'New: Dynamic Set Expansion — When you consistently hit the top of your rep range across sets, the app suggests adding an extra set to keep the stimulus growing.',
