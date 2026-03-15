@@ -6305,7 +6305,7 @@ function renderHome() {
             <div onclick="event.stopPropagation();openSongEditSheet('${_stats.lastId}')" style="margin-top:6px;display:flex;align-items:center;gap:5px;cursor:pointer;padding:1px 0;-webkit-tap-highlight-color:transparent;">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--gray)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:1;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
               ${(_stats.songTitle || _stats.songArtist)
-                ? `${_stats.songTitle ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--cream);font-style:italic;letter-spacing:0.3px;">${escapeHtml(_stats.songTitle)}</span>${_stats.songArtist ? `<span style="color:rgba(165,160,155,0.4);font-size:14px;margin:0 2px;">·</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.2px;">${escapeHtml(_stats.songArtist)}</span>` : ''}` : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.2px;">${escapeHtml(_stats.songArtist)}</span>`}`
+                ? `${_stats.songTitle ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--cream);font-style:italic;letter-spacing:0.3px;">${escapeHtml(_stats.songTitle)}</span>${_stats.songArtist ? `<span style="color:rgba(165,160,155,0.4);font-size:14px;margin:0 2px;">·</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(185,180,175,0.9);letter-spacing:0.2px;">${escapeHtml(_stats.songArtist)}</span>` : ''}` : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(185,180,175,0.9);letter-spacing:0.2px;">${escapeHtml(_stats.songArtist)}</span>`}`
                 : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(165,160,155,0.75);font-style:italic;letter-spacing:0.3px;">Add a session song</span>`
               }
             </div>` : doneThisWeek ? `
@@ -15475,13 +15475,13 @@ async function generateAndShareCard(type, data) {
   const _songArtist = data.songArtist || null;
   if (_songTitle || _songArtist) {
 
-    // ── Y anchors — evenly distributed centre-to-centre spacing ──────────
-    // Non-stats: rule(H-390=Y1530) credit(H-290=Y1630) name(H-190=Y1730) tag(H-90=Y1830)
-    //            → equal 100px gaps, 90px bottom margin
-    // Stats:     rule(H-272=Y1648) credit(H-208=Y1712) name(H-144=Y1776) tag(H-80=Y1840)
-    //            → equal 64px gaps, 80px bottom margin
+    // ── Y anchors — two distinct zones in the credits section ────────────
+    // Non-stats: rule(H-390=Y1530) credit(H-300=Y1620) name(H-155=Y1765) tag(H-100=Y1820)
+    //            → credit-to-name: 145px breathing room; name-to-tag: 55px tight unit
+    // Stats:     rule(H-272=Y1648) credit(H-218=Y1702) name(H-148=Y1772) tag(H-93=Y1827)
+    //            → credit-to-name: 70px breathing room; name-to-tag: 55px tight unit
     const _ruleY    = hasStats ? H - 272 : H - 390;
-    const _creditCY = hasStats ? H - 208 : H - 290;  // centre of credit block
+    const _creditCY = hasStats ? H - 218 : H - 300;  // centre of credit block
 
     // Rule — same style as stats hairline
     ctx.save();
@@ -15494,16 +15494,21 @@ async function generateAndShareCard(type, data) {
     ctx.restore();
 
     // ── Single inline line: MOOD:  Title  ·  Artist ──────────────────────
-    // All parts share one font size; differentiated by weight / style / colour.
+    // Parts have differentiated sizes: song title is the visual hero (largest),
+    // MOOD: is a small label, artist and dot are subordinate.
     // If the full line overflows MAX_TW the artist wraps to a second line
     // centred below — MOOD: and the title always stay together on line 1.
-    const _cSz        = Math.round(26 * BS);  // ~39px — unified size
-    const _moodFont   = `600 ${_cSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-    const _titleFont  = `italic ${_cSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-    const _artistFont = `${_cSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-    const _gap1       = Math.round(8  * BS);  // space between MOOD: and title
-    const _dotPad     = Math.round(8  * BS);  // space on each side of the dot
-    const _wrapOffset = Math.round(25 * BS);  // ±offset from creditCY when wrapping
+    const _moodSz    = Math.round(20 * BS);  // small label
+    const _titleSz   = Math.round(36 * BS);  // hero — largest element in credits
+    const _artistSz  = Math.round(21 * BS);  // subordinate artist name
+    const _dotSz     = Math.round(30 * BS);  // clearly visible separator dot
+    const _moodFont   = `600 ${_moodSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+    const _titleFont  = `italic 700 ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+    const _artistFont = `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+    const _dotFont    = `600 ${_dotSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+    const _gap1       = Math.round(10 * BS);  // space between MOOD: and title
+    const _dotPad     = Math.round(9  * BS);  // space on each side of the dot
+    const _wrapOffset = Math.round(30 * BS);  // ±offset from creditCY when wrapping
 
     // Measure each part at natural size
     ctx.save();
@@ -15514,8 +15519,9 @@ async function generateAndShareCard(type, data) {
 
     ctx.font = _titleFont;
     const _titleW  = _songTitle  ? ctx.measureText(_songTitle).width  : 0;
-    ctx.font = _artistFont;
+    ctx.font = _dotFont;
     const _dotW    = ctx.measureText('·').width;
+    ctx.font = _artistFont;
     const _artistW = _songArtist ? ctx.measureText(_songArtist).width : 0;
 
     // Determine whether artist must wrap
@@ -15580,10 +15586,11 @@ async function generateAndShareCard(type, data) {
       // Separator dot + artist — only when both present and not wrapping
       if (_hasBoth && !_wrapArtist) {
         _xc += _dotPad;
-        ctx.font      = _artistFont;
-        ctx.fillStyle = 'rgba(135,130,125,0.60)';
+        ctx.font      = _dotFont;
+        ctx.fillStyle = 'rgba(135,130,125,0.75)';
         ctx.fillText('·', _xc, _line1Y);
         _xc += _dotW + _dotPad;
+        ctx.font      = _artistFont;
         ctx.fillStyle = 'rgba(175,170,165,0.80)';
         ctx.fillText(_songArtist, _xc, _line1Y);
       }
@@ -15615,14 +15622,14 @@ async function generateAndShareCard(type, data) {
   // ── Display name and tagline — evenly spaced with credit block above ──
   if (displayName) {
     const _dnY = (_songTitle || _songArtist)
-      ? (hasStats ? H - 144 : H - 190)
+      ? (hasStats ? H - 148 : H - 155)
       : H - 190;
     drawText(displayName, W / 2, _dnY,
       barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
   }
 
   const _tagY = (_songTitle || _songArtist)
-    ? (hasStats ? H - 80 : H - 90)
+    ? (hasStats ? H - 93 : H - 100)
     : H - 90;
   drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
     barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
