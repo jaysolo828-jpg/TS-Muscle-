@@ -6048,7 +6048,9 @@ function renderHome() {
     let _dTitle, _dSub;
     if (_dReason === 'mrv') {
       _dTitle = _isEarly ? `DELOAD ACTIVE — WEEK ${_dWeekNum}` : 'DELOAD ACTIVE';
-      _dSub   = `${_dMuscles.length ? `Your <strong style="color:var(--cream);">${_dMuscles.join(' and ')}</strong> ${_dMuscles.length === 1 ? 'was' : 'were'} close to this week's limit.` : 'Your muscles were close to this week\'s limit.'} Weights are at 75% — they restore automatically when this week ends.`;
+      // Use the actual computed reduction factor (variable 15–35% for MRV, not a fixed 75%)
+      const _mrvWeightPct = Math.round((state.deloadReductionFactor || 0.75) * 100);
+      _dSub   = `${_dMuscles.length ? `Your <strong style="color:var(--cream);">${_dMuscles.join(' and ')}</strong> ${_dMuscles.length === 1 ? 'was' : 'were'} close to this week's limit.` : 'Your muscles were close to this week\'s limit.'} Weights are at ${_mrvWeightPct}% — they restore automatically when this week ends.`;
     } else if (_dReason === 'plateau') {
       _dTitle = _isEarly ? `DELOAD ACTIVE — WEEK ${_dWeekNum}` : 'DELOAD ACTIVE';
       _dSub   = 'Your weights were stalling. A lighter week clears the built-up fatigue and gets things moving again.';
@@ -6462,12 +6464,14 @@ function checkSessionProgressSignal(exId) {
   const doneSets = (activeSession.sets[exId] || []).filter(s => s.done && s.reps);
   if (!doneSets.length) return;
 
-  const repStr = getGoalReps(exId, ex.reps);
-  const parts = repStr.split(/[–\-]/);
-  const maxReps = parseInt(parts[1]) || parseInt(parts[0]) || 0;
-  if (!maxReps) return;
+  // Use the week-band tightened target as the "top of range" threshold.
+  // Badge should only show when the user has hit the tightened target for this week —
+  // not just the flat goal max. E.g. in Weeks 5-6 a user hitting the middle of the
+  // flat range should not see the badge unless they've hit the tightened upper target.
+  const weekBandTarget = getCycleWeekBandRepTarget(exId);
+  if (!weekBandTarget) return;
 
-  const setsAtOrAboveTop = doneSets.filter(s => parseInt(s.reps) >= maxReps).length;
+  const setsAtOrAboveTop = doneSets.filter(s => parseInt(s.reps) >= weekBandTarget).length;
   if (setsAtOrAboveTop < Math.ceil(doneSets.length / 2)) return;
 
   // Don't show badge if average RPE is too high (>= 9) — the weight suggestion engine
@@ -9608,7 +9612,7 @@ function updateRepIndicator(exId, setIndex, _ignored) {
   const _ex = _day?.exercises.find(e => e.id === exId);
   const targetReps = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ex?.reps);
 
-  // Parse target range — handles "8", "8–12", "8-12", "10–15"
+  // Parse flat goal range — handles "8", "8–12", "8-12", "10–15"
   let minReps = 0, maxReps = 999;
   if (targetReps) {
     const parts = targetReps.split(/[–\-]/);
@@ -9616,20 +9620,27 @@ function updateRepIndicator(exId, setIndex, _ignored) {
     maxReps = parseInt(parts[1]) || minReps;
   }
 
-  if (logged >= minReps && logged <= maxReps) {
-    // Hit the target
-    indicator.textContent = '✓';
-    indicator.style.color = '#2ecc71';
-    input.style.borderColor = 'rgba(46,204,113,0.5)';
-    input.style.color = '#2ecc71';
-  } else if (logged > maxReps) {
-    // Exceeded — great
+  // Week-band tightened target — the minimum reps that count as a "hit" this week.
+  // In Weeks 1-2 this is the lower third; in Weeks 5-6 near the top of the range.
+  // Falls back to minReps when activeSession is not set or function unavailable.
+  const weekBandTarget = (activeSession && typeof getCycleWeekBandRepTarget === 'function')
+    ? getCycleWeekBandRepTarget(exId)
+    : minReps;
+
+  if (logged > maxReps) {
+    // Exceeded flat top — above the goal range entirely
     indicator.textContent = '▲';
     indicator.style.color = '#2ecc71';
     input.style.borderColor = 'rgba(46,204,113,0.5)';
     input.style.color = '#2ecc71';
+  } else if (logged >= weekBandTarget) {
+    // Hit the week-band tightened target (within or at flat top)
+    indicator.textContent = '✓';
+    indicator.style.color = '#2ecc71';
+    input.style.borderColor = 'rgba(46,204,113,0.5)';
+    input.style.color = '#2ecc71';
   } else {
-    // Fell short
+    // Fell short of tightened target — even if within the flat goal range
     indicator.textContent = '▼';
     indicator.style.color = 'var(--red)';
     input.style.borderColor = 'rgba(204,32,39,0.5)';
@@ -10478,6 +10489,16 @@ function saveExInfoLink() {
   ytBtn.style.background = '#CC0000';
   document.getElementById('ex-info-link-edit').style.display = 'none';
   showToast('Video link saved ✓');
+}
+
+// Safe YouTube link opener — shows a T&S-voice message instead of navigating
+// to a broken/undefined URL when the link is missing or malformed.
+function _safeOpenYtLink(url) {
+  if (!url || typeof url !== 'string' || !url.match(/^https?:\/\//)) {
+    showToast('Video link unavailable. You can add your own in Settings → Exercise Links.');
+    return;
+  }
+  window.open(url, '_blank');
 }
 
 function openExInfoSearch() {
@@ -15523,7 +15544,16 @@ function restoreDefaults() {
 }
 function confirmRestoreDefaults() {
   document.getElementById('restore-defaults-modal').style.display = 'none';
-  state.program = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
+  // Use the defaults for the user's current split, not always the base Upper/Lower default.
+  // This ensures a PPL or Full Body user gets their own split's original exercises back.
+  state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[state.splitType] || DEFAULT_PROGRAM));
+  // Stamp cycleIntroduced on all restored exercises so the rotation feature doesn't
+  // immediately suggest swapping exercises that were just restored.
+  const _currCycle = state.cycleCount || 1;
+  state.program.forEach(day => {
+    day.exercises.forEach(ex => { ex.cycleIntroduced = _currCycle; });
+  });
+  state.rotationMigrated = true;
   saveState();
   renderHome();
   showToast('Default exercises restored ✓');
@@ -17451,7 +17481,10 @@ function buildObManualSlots() {
       const sel = i === 0 ? ' selected' : '';
       const label = i === 0 ? `★ ${opt.display}` : opt.display;
       const escaped = opt.apply.replace(/'/g, "\\'");
-      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${escaped}',this)">${label}<span onclick="event.stopPropagation();window.open('${opt.ytLink}','_blank')" style="margin-left:6px;color:var(--red-text);font-size:11px;" title="Watch tutorial">▶</span></button>`;
+      const ytSpan = opt.ytLink
+        ? `<span onclick="event.stopPropagation();_safeOpenYtLink('${opt.ytLink}')" style="margin-left:6px;color:var(--red-text);font-size:11px;" title="Watch tutorial">▶</span>`
+        : '';
+      return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${escaped}',this)">${label}${ytSpan}</button>`;
     }).join('');
     html += `
       <div style="background:var(--dark3); border-radius:12px; padding:14px; margin-bottom:12px;">
