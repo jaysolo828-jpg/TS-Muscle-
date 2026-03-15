@@ -15629,7 +15629,9 @@ async function generateAndShareCard(type, data) {
   }
 
   const _tagY = (_songTitle || _songArtist)
-    ? (hasStats ? H - 93 : H - 100)
+    ? (displayName
+        ? (hasStats ? H - 93  : H - 100)   // Jay present — tight unit below Jay
+        : (hasStats ? H - 140 : H - 145))  // Jay absent  — recentred between credit and bottom
     : H - 90;
   drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
     barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
