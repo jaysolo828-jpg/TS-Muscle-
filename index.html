@@ -4857,14 +4857,15 @@ function dismissSetReductionBanner(muscle) {
   renderSession();
 }
 
-// Returns muscle groups whose actual completed sets this week are >= 90% of MRV.
-// Used to trigger an early deload before recovery capacity breaks down.
+// Returns muscle groups whose actual completed sets this week are >= 95% of MRV.
+// Threshold raised from 90% — fires only when genuinely at the limit, not during
+// normal mid-cycle accumulation. Week gate applied separately in renderHome.
 function getMRVApproachingMuscles() {
   const weeklySets = getWeeklySetsByMuscle();
   const approaching = [];
   Object.entries(VOLUME_LANDMARKS).forEach(([muscle, { mrv }]) => {
     const actual = weeklySets[muscle] || 0;
-    if (actual > 0 && actual >= mrv * 0.9) {
+    if (actual > 0 && actual >= mrv * 0.95) {
       approaching.push({ muscle, actual, mrv });
     }
   });
@@ -5518,6 +5519,14 @@ function loadState() {
 
       // Migration: show one-time profile-complete prompt for existing users.
       // New users go through onboarding which already collects these fields.
+
+      // One-time migration: clear the old "SKIP THIS CYCLE" suppression set by
+      // the previous MRV banner so the updated rules can evaluate correctly.
+      // The new "NOT NOW" is session-scoped only and no longer touches this flag.
+      if (!state.mrvBannerMigrated) {
+        delete state.deloadDismissedAtCycle;
+        state.mrvBannerMigrated = true;
+      }
     } catch(e) {}
   }
 }
@@ -5911,10 +5920,16 @@ function getDayStats(dayId) {
     prCount: (last.prs || []).length,
     duration: last.duration || null,
     lastDoneLabel,
-    hasData: lastVol > 0
+    hasData: lastVol > 0,
+    songTitle:  last.songTitle  || null,
+    songArtist: last.songArtist || null,
   };
 }
 
+
+// Session-scoped flag: MRV banner dismissed for this app load only.
+// Resets on next page load so the banner re-evaluates fresh every session.
+let _mrvBannerDismissedThisLoad = false;
 
 function renderHome() {
   const realSessions = state.history.filter(entry =>
@@ -6028,7 +6043,10 @@ function renderHome() {
     ? (Date.now() - new Date(_lastTrainedSession.date).getTime()) / 86400000 : 0;
   const _isReturningUser = _daysSinceTraining >= 14 && !state.programPaused;
   const _mrvApproaching = (!state.isDeloadWeek && !state.isRestWeek && !_dismissedThisCycle) ? getMRVApproachingMuscles() : [];
-  const _showMRVBanner = _mrvApproaching.length > 0 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !state.deloadPostponedToWeek && !_dismissedThisCycle;
+  // Week gate: MRV early-recovery banner must never fire before Week 5.
+  // Weeks 1-4 are the volume-building phase — set reduction handles any approaching
+  // limits there. Only Weeks 5-6 (weekCount 5 or 6) are valid windows.
+  const _showMRVBanner = _mrvApproaching.length > 0 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !state.deloadPostponedToWeek && !_dismissedThisCycle && (state.weekCount || 1) >= 5 && !_mrvBannerDismissedThisLoad;
   const _showPlateauBanner = _plateau.stalled && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
   const _showLongRunBanner = !_showPlateauBanner && !_showMRVBanner && _weeksSinceDeload >= 5 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
   const _skipBtn = `<div style="margin-top:12px;"><button onclick="event.stopPropagation();dismissDeloadSuggestion(true);" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;padding:7px 16px;border-radius:8px;-webkit-tap-highlight-color:transparent;">NOT NOW — SKIP THIS CYCLE</button></div>`;
@@ -6108,14 +6126,17 @@ function renderHome() {
     deloadBanner.style.display = 'block';
     const _mrvMuscleNames = _mrvApproaching.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase());
     const _mrvTitle = _mrvMuscleNames.length === 1
-      ? `YOUR ${_mrvMuscleNames[0].toUpperCase()} NEEDS A BREAK`
-      : 'TIME TO BACK OFF';
+      ? `${_mrvMuscleNames[0].toUpperCase()} IS NEAR ITS WEEKLY LIMIT`
+      : 'APPROACHING WEEKLY LIMIT';
     const _mrvBody = _mrvMuscleNames.length === 1
-      ? `Your <strong style="color:var(--cream);">${_mrvMuscleNames[0]}</strong> is close to its recovery limit for this week. A lighter week now means better results next block. Tap to take a recovery week.`
-      : `Your <strong style="color:var(--cream);">${_mrvMuscleNames.slice(0,-1).join(', ')} and ${_mrvMuscleNames[_mrvMuscleNames.length-1]}</strong> are close to their recovery limit for this week. A lighter week now means better results next block. Tap to take a recovery week.`;
+      ? `Your <strong style="color:var(--cream);">${_mrvMuscleNames[0]}</strong> is approaching its weekly volume limit. A lighter week now sets up a stronger next block. Tap to choose your recovery type.`
+      : `Your <strong style="color:var(--cream);">${_mrvMuscleNames.slice(0,-1).join(', ')} and ${_mrvMuscleNames[_mrvMuscleNames.length-1]}</strong> are approaching their weekly volume limit. A lighter week now sets up a stronger next block. Tap to choose your recovery type.`;
+    // Session-scoped "NOT NOW" — does not suppress for the rest of the cycle
+    const _mrvNotNowBtn = `<div style="margin-top:12px;"><button onclick="event.stopPropagation();dismissMRVBanner();" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;padding:7px 16px;border-radius:8px;-webkit-tap-highlight-color:transparent;">NOT NOW</button></div>`;
     deloadBanner.querySelector('.deload-title').textContent = _mrvTitle;
-    deloadBanner.querySelector('.deload-text').innerHTML = _mrvBody + _skipBtn;
-    deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+    deloadBanner.querySelector('.deload-text').innerHTML = _mrvBody + _mrvNotNowBtn;
+    // Rising bar chart icon — communicates volume approaching ceiling, not an alarm
+    deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner && _showPlateauBanner) {
     deloadBanner.style.display = 'block';
@@ -6280,9 +6301,13 @@ function renderHome() {
               <button onclick="event.stopPropagation();shareHistoryEntry('${_stats.lastId}')" style="background:none;border:none;color:${_dayColor};opacity:0.6;cursor:pointer;padding:2px 0 2px 8px;display:flex;align-items:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;" title="Share">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
               </button>
-              <button onclick="event.stopPropagation();openSongEditSheet('${_stats.lastId}')" style="background:none;border:none;color:var(--gray);opacity:0.5;cursor:pointer;padding:2px 0 2px 6px;display:flex;align-items:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;" title="Add song">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-              </button>
+            </div>
+            <div onclick="event.stopPropagation();openSongEditSheet('${_stats.lastId}')" style="margin-top:7px;display:flex;align-items:center;gap:5px;cursor:pointer;padding:1px 0;-webkit-tap-highlight-color:transparent;">
+              <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="var(--gray)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.5;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              ${(_stats.songTitle || _stats.songArtist)
+                ? `${_stats.songTitle ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--cream);font-style:italic;letter-spacing:0.3px;">${escapeHtml(_stats.songTitle)}</span>${_stats.songArtist ? `<span style="color:rgba(165,160,155,0.4);font-size:10px;margin:0 2px;">·</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.2px;">${escapeHtml(_stats.songArtist)}</span>` : ''}` : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.2px;">${escapeHtml(_stats.songArtist)}</span>`}`
+                : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(165,160,155,0.4);font-style:italic;letter-spacing:0.3px;">Add a session song</span>`
+              }
             </div>` : doneThisWeek ? `
             <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.35);color:#27ae60;border-radius:20px;padding:5px 10px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:6px;">
               <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -7011,10 +7036,10 @@ function openDeloadModal() {
     if (subEl)  subEl.innerHTML = `No weight increases across <strong style="color:var(--cream);">${_plateau.stalledCount} of ${_plateau.totalDays}</strong> training days. A lighter week clears the accumulated fatigue and gets things moving again.`;
   } else if (isMRV) {
     const _mrvNames = _mrvHits.map(m => m.muscle.charAt(0) + m.muscle.slice(1).toLowerCase());
-    if (iconEl) iconEl.innerHTML = _alertSvg;
+    if (iconEl) iconEl.innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>';
     if (subEl)  subEl.innerHTML = _mrvNames.length === 1
-      ? `Your <strong style="color:var(--cream);">${_mrvNames[0]}</strong> is close to its recovery limit for this week. A lighter week now means better results when the next block starts.`
-      : `Your <strong style="color:var(--cream);">${_mrvNames.slice(0,-1).join(', ')} and ${_mrvNames[_mrvNames.length-1]}</strong> are close to their recovery limit for this week. A lighter week now means better results when the next block starts.`;
+      ? `Your <strong style="color:var(--cream);">${_mrvNames[0]}</strong> is approaching its weekly volume limit. A lighter week now sets up a stronger next block. Choose how you want to recover below.`
+      : `Your <strong style="color:var(--cream);">${_mrvNames.slice(0,-1).join(', ')} and ${_mrvNames[_mrvNames.length-1]}</strong> are approaching their weekly volume limit. A lighter week now sets up a stronger next block. Choose how you want to recover below.`;
   } else if (isPostponed) {
     if (iconEl) iconEl.innerHTML = _boltSvg;
     if (subEl)  subEl.textContent = 'You moved your recovery week here — last chance this cycle. Choose Deload to keep training at reduced weight, or Rest Week to take the full week off.';
@@ -7196,6 +7221,13 @@ function dismissDeloadSuggestion(fromBanner) {
     if (el.style && el.style.zIndex === '9000') el.remove();
   });
   showToast("Got it — we'll suggest again next cycle 👍");
+  renderHome();
+}
+
+// Lightweight MRV banner dismissal — session-scoped only, never touches state.
+// Banner can re-evaluate on the next app load if MRV is still being approached.
+function dismissMRVBanner() {
+  _mrvBannerDismissedThisLoad = true;
   renderHome();
 }
 
@@ -10976,20 +11008,6 @@ function showSessionWrapUp() {
           box-sizing:border-box;
         " placeholder="Form cues, how it felt, anything to remember..."></textarea>
       </div>
-      <!-- Optional session song — cultural accent, not a form -->
-      <div style="border-top:1px solid rgba(255,255,255,0.07);margin-bottom:20px;padding-top:20px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--gray)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">Session Song</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(165,160,155,0.5);letter-spacing:0.5px;margin-left:auto;">Optional</span>
-        </div>
-        <input id="wrapup-song-title" type="text" placeholder="Song title (optional)"
-          style="width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:0.3px;box-sizing:border-box;outline:none;margin-bottom:10px;"
-        />
-        <input id="wrapup-song-artist" type="text" placeholder="Artist (optional)"
-          style="width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:rgba(165,160,155,0.85);padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:0.3px;box-sizing:border-box;outline:none;"
-        />
-      </div>
       <button onclick="saveWrapupNotesAndFinish()"
         style="width:100%;background:#2ecc71;border:none;color:#0a0a0a;padding:16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:1.5px;cursor:pointer;box-shadow:0 4px 16px rgba(46,204,113,0.3);">
         SAVE &amp; FINISH ✓
@@ -11013,13 +11031,6 @@ function saveWrapupNotesAndFinish() {
     if (wrapupVal) {
       sessionField.value = sessionVal ? sessionVal + '\n' + wrapupVal : wrapupVal;
     }
-  }
-  // Capture optional song data
-  if (activeSession) {
-    const titleVal  = (document.getElementById('wrapup-song-title')?.value  || '').trim();
-    const artistVal = (document.getElementById('wrapup-song-artist')?.value || '').trim();
-    activeSession.songTitle  = titleVal  || null;
-    activeSession.songArtist = artistVal || null;
   }
   const modal = document.getElementById('session-wrapup-modal');
   if (modal) modal.remove();
@@ -12580,6 +12591,7 @@ function saveSongData(entryId) {
   saveState();
   document.getElementById('song-edit-modal')?.remove();
   _statsRenderKey = null;
+  renderHome();
   renderHistory();
   showToast('Song saved ✓');
 }
@@ -13749,22 +13761,18 @@ function renderHistoryDetail(entry) {
   if (entry.notes) {
     html += `<div class="history-notes-box" id="history-note-display-${entry.id}" style="margin-bottom:6px;">📝 ${escapeHtml(entry.notes)}</div>`;
   }
-  if (entry.songTitle || entry.songArtist) {
-    html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;padding:7px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.07);">
-      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="var(--gray)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.7;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--cream);font-style:italic;letter-spacing:0.3px;">${escapeHtml(entry.songTitle || '')}</span>${entry.songTitle && entry.songArtist ? `<span style="color:rgba(165,160,155,0.5);font-size:11px;">·</span>` : ''}<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.3px;">${escapeHtml(entry.songArtist || '')}</span>
-    </div>`;
-  }
+  html += `<div onclick="event.stopPropagation();openSongEditSheet('${entry.id}')" style="display:flex;align-items:center;gap:6px;margin-bottom:9px;cursor:pointer;padding:2px 0;-webkit-tap-highlight-color:transparent;">
+    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="var(--gray)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.5;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    ${(entry.songTitle || entry.songArtist)
+      ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);font-style:italic;letter-spacing:0.3px;">${escapeHtml(entry.songTitle || '')}</span>${entry.songTitle && entry.songArtist ? `<span style="color:rgba(165,160,155,0.4);font-size:11px;margin:0 2px;">·</span>` : ''}<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.2px;">${escapeHtml(entry.songArtist || '')}</span>`
+      : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(165,160,155,0.4);font-style:italic;letter-spacing:0.3px;">Add a session song</span>`
+    }
+  </div>`;
   html += `<div style="display:flex;gap:8px;flex-wrap:wrap;">`;
   html += `<button onclick="event.stopPropagation(); editHistoryNote('${entry.id}')"
     style="background:none; border:1px solid var(--dark4); color:var(--gray); border-radius:8px;
     padding:5px 12px; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1px; cursor:pointer;">
     ${entry.notes ? '✏️ EDIT NOTE' : '+ ADD NOTE'}
-  </button>`;
-  html += `<button onclick="event.stopPropagation(); openSongEditSheet('${entry.id}')"
-    style="background:none;border:1px solid var(--dark4);color:var(--gray);border-radius:8px;padding:5px 12px;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
-    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-    ${(entry.songTitle || entry.songArtist) ? 'EDIT SONG' : '+ ADD SONG'}
   </button>`;
   html += `</div>`;
   html += `</div>`;
