@@ -6303,7 +6303,7 @@ function renderHome() {
               </button>
             </div>
             <div onclick="event.stopPropagation();openSongEditSheet('${_stats.lastId}')" style="margin-top:12px;display:flex;align-items:center;gap:5px;cursor:pointer;padding:1px 0;-webkit-tap-highlight-color:transparent;">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gray)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:1;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--gray)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:1;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
               ${(_stats.songTitle || _stats.songArtist)
                 ? `${_stats.songTitle ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--cream);font-style:italic;letter-spacing:0.3px;">${escapeHtml(_stats.songTitle)}</span>${_stats.songArtist ? `<span style="color:rgba(165,160,155,0.4);font-size:14px;margin:0 2px;">·</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.2px;">${escapeHtml(_stats.songArtist)}</span>` : ''}` : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.2px;">${escapeHtml(_stats.songArtist)}</span>`}`
                 : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(165,160,155,0.75);font-style:italic;letter-spacing:0.3px;">Add a session song</span>`
@@ -15476,16 +15476,19 @@ async function generateAndShareCard(type, data) {
   if (_songTitle || _songArtist) {
 
     // ── Y positions ───────────────────────────────────────────────────────
-    // Non-stats layout (most card types) — MOOD+title share one line, freeing
-    // a full row which is redistributed into generous gaps below:
-    //   rule(Y1500) +52→ line1-MOOD+title(Y1552) +84→ artist(Y1636)
-    //   +106→ displayName(Y1742) +92→ tagline(Y1834) — 86px to bottom edge
+    // Three-line stacked record-credit layout. Each element on its own line.
+    // Non-stats cards have generous room; stats cards are compact due to the
+    // stats strip occupying Y ~1500–1614.
     //
-    // Stats layout — stats strip occupies ~Y1500–1614, everything is compact:
-    //   rule(Y1648) +42→ line1(Y1690) +60→ artist(Y1750) +70→ name(Y1820) +58→ tagline(Y1878)
-    const _ruleY      = hasStats ? H - 272 : H - 420;
-    const _line1Y     = hasStats ? H - 230 : H - 368;  // MOOD + title inline
-    const _artistLineY = hasStats ? H - 170 : H - 284; // artist on its own line below
+    // Non-stats: rule(Y1500) +42→ MOOD(Y1542) +72→ title(Y1614) +58→ artist(Y1672)
+    //            +80→ displayName(Y1752) +86→ tagline(Y1838) — 82px to bottom
+    //
+    // Stats:     rule(Y1648) +44→ MOOD(Y1692) +48→ title(Y1740) +46→ artist(Y1786)
+    //            +50→ displayName(Y1836) +44→ tagline(Y1880) — 40px to bottom
+    const _ruleY       = hasStats ? H - 272 : H - 420;
+    const _moodY       = hasStats ? H - 228 : H - 378;
+    const _titleLineY  = hasStats ? H - 180 : H - 306;
+    const _artistLineY = hasStats ? H - 134 : H - 248;
 
     // Rule — same style as stats hairline
     ctx.save();
@@ -15497,70 +15500,38 @@ async function generateAndShareCard(type, data) {
     ctx.stroke();
     ctx.restore();
 
-    // Font sizes
-    const _moodSz   = Math.round(18 * BS);  // ~27px — MOOD label
-    const _titleSz  = Math.round(30 * BS);  // ~45px — title (inline with MOOD)
-    const _artistSz = Math.round(22 * BS);  // ~33px — artist
+    // Font sizes — strong hierarchy: tiny label / large headline / medium secondary
+    const _moodSz   = Math.round(14 * BS);  // ~21px — section label
+    const _titleSz  = Math.round(36 * BS);  // ~54px — headline, most prominent
+    const _artistSz = Math.round(20 * BS);  // ~30px — secondary
 
-    // ── Line 1: "MOOD" + song title on one line, centred as a block ──────
-    // If only artist present (no title), put MOOD + artist on line 1 instead.
-    const _line1Content = _songTitle || _songArtist;
-    const _line1Font    = _songTitle
-      ? `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`
-      : `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-    const _line1Color   = 'rgba(255,245,225,0.97)';
-    const _inlineGap    = Math.round(14 * BS);  // space between MOOD and title
-
-    // Measure MOOD with letter-spacing active so the width is accurate
+    // MOOD — centred, spaced uppercase, muted section header
     ctx.save();
     ctx.letterSpacing = '5px';
-    ctx.font = `700 ${_moodSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-    const _moodW = ctx.measureText('MOOD').width;
+    drawText('MOOD', W / 2, _moodY, barlow(600, 14, BS), 'rgba(155,150,145,0.78)', MAX_TW);
     ctx.restore();
 
-    // Measure content text
-    ctx.font = _line1Font;
-    const _contentW = ctx.measureText(_line1Content).width;
+    // Song title — centred, italic, white, the dominant element
+    if (_songTitle) {
+      drawText(_songTitle, W / 2, _titleLineY,
+        `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`,
+        'rgba(255,255,255,0.97)', MAX_TW);
+    }
 
-    // Center the MOOD+content block; scale it down horizontally if it overflows
-    const _line1TotalW = _moodW + _inlineGap + _contentW;
-    const _line1Scale  = _line1TotalW > MAX_TW ? MAX_TW / _line1TotalW : 1;
-    const _line1StartX = (W - _line1TotalW * _line1Scale) / 2;
-
-    ctx.save();
-    ctx.textAlign    = 'left';
-    ctx.textBaseline = 'middle';
-    // Translate to the block's left edge so scale() compresses from that origin
-    ctx.translate(_line1StartX, _line1Y);
-    ctx.scale(_line1Scale, 1);
-
-    // Draw MOOD
-    ctx.letterSpacing = '5px';
-    ctx.font          = `700 ${_moodSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-    ctx.fillStyle     = 'rgba(220,215,210,0.90)';
-    ctx.fillText('MOOD', 0, 0);
-
-    // Draw title (or artist-only content) immediately after MOOD
-    ctx.letterSpacing = '0px';
-    ctx.font          = _line1Font;
-    ctx.fillStyle     = _line1Color;
-    ctx.fillText(_line1Content, _moodW + _inlineGap, 0);
-
-    ctx.restore();
-
-    // ── Line 2: artist — only when both title and artist are present ──────
-    if (_songTitle && _songArtist) {
-      drawText(_songArtist, W / 2, _artistLineY,
+    // Artist — centred, muted secondary below title
+    if (_songArtist) {
+      const _artY = _songTitle ? _artistLineY : _titleLineY;
+      drawText(_songArtist, W / 2, _artY,
         `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`,
-        'rgba(195,190,185,0.92)', MAX_TW);
+        'rgba(175,170,165,0.80)', MAX_TW);
     }
   }
   // ── End music credit block ────────────────────────────────────────────────
 
-  // Display name — clear gap below the song credit block
+  // Display name — clear break below the song credit block
   if (displayName) {
     const _dnY = (_songTitle || _songArtist)
-      ? (hasStats ? H - 100 : H - 178)
+      ? (hasStats ? H - 84 : H - 168)
       : H - 158;
     drawText(displayName, W / 2, _dnY,
       barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
@@ -15568,7 +15539,7 @@ async function generateAndShareCard(type, data) {
 
   // Tagline — generous bottom margin
   const _tagY = (_songTitle || _songArtist)
-    ? (hasStats ? H - 42 : H - 86)
+    ? (hasStats ? H - 40 : H - 82)
     : H - 84;
   drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
     barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
