@@ -15474,48 +15474,45 @@ async function generateAndShareCard(type, data) {
   const _songTitle  = data.songTitle  || null;
   const _songArtist = data.songArtist || null;
   if (_songTitle || _songArtist) {
-    // Thin horizontal rule — clearly separates stats section from music credit
-    const _ruleY = H - 300;
+    const _hasBoth = _songTitle && _songArtist;
+
+    // Rule — identical to the stats hairline: same PAD width, lineWidth 2, same opacity
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(PAD, _ruleY);
-    ctx.lineTo(W - PAD, _ruleY);
+    ctx.moveTo(PAD, H - 260);
+    ctx.lineTo(W - PAD, H - 260);
     ctx.stroke();
     ctx.restore();
 
-    // Vertical positions — breathing room above and below
-    const _hasBoth = _songTitle && _songArtist;
-    const _titleLineY  = _hasBoth ? H - 258 : H - 244;
-    const _artistLineY = H - 210;
+    // Font sizes — title is a prominent headline; glyph matches title size for inline alignment
+    const _titleSz  = Math.round(32 * BS);  // 48px — headline
+    const _artistSz = Math.round(22 * BS);  // 33px — clear secondary
 
-    // Font sizes
-    const _noteSz  = Math.round(18 * BS);
-    const _titleSz = Math.round(22 * BS);
-    const _artistSz = Math.round(18 * BS);
+    // Vertical centres — generous gap above rule, balanced spacing to display name / tagline
+    const _titleLineY  = _hasBoth ? H - 218 : H - 206;
+    const _artistLineY = H - 168;
 
+    // ── Title line (glyph inline, same font size = perfect baseline match) ──
     if (_songTitle) {
-      ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+      ctx.font = `${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
       const _noteW = ctx.measureText('♩').width;
       ctx.font = `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
       const _rawTitleW = ctx.measureText(_songTitle).width;
-      const _gap = Math.round(10 * BS);
+      const _gap = Math.round(8 * BS);
       const _titleMaxW = MAX_TW - _noteW - _gap;
-      const _titleW = Math.min(_rawTitleW, _titleMaxW);
-      const _totalSpan = _noteW + _gap + _titleW;
+      const _totalSpan = _noteW + _gap + Math.min(_rawTitleW, _titleMaxW);
       const _startX = (W - _totalSpan) / 2;
 
-      // Draw glyph — legible opacity
       ctx.save();
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-      ctx.fillStyle = 'rgba(255,255,255,0.72)';
+      ctx.font = `${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+      ctx.fillStyle = 'rgba(255,255,255,0.80)';
       ctx.fillText('♩', _startX, _titleLineY);
       ctx.restore();
 
-      // Draw title — bright cream, clearly legible
       ctx.save();
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
@@ -15533,24 +15530,23 @@ async function generateAndShareCard(type, data) {
       ctx.restore();
     }
 
+    // ── Artist line ───────────────────────────────────────────────────────
     if (_songArtist) {
       if (!_songTitle) {
-        // Artist-only: draw glyph + artist on the single line
-        ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+        // Artist-only: glyph (title-sized for alignment) + artist centred together
+        ctx.font = `${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
         const _noteW2 = ctx.measureText('♩').width;
         ctx.font = `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
         const _rawArtW = ctx.measureText(_songArtist).width;
-        const _gap2 = Math.round(10 * BS);
+        const _gap2 = Math.round(8 * BS);
         const _artMaxW = MAX_TW - _noteW2 - _gap2;
-        const _artW = Math.min(_rawArtW, _artMaxW);
-        const _totalSpan2 = _noteW2 + _gap2 + _artW;
-        const _startX2 = (W - _totalSpan2) / 2;
+        const _startX2 = (W - (_noteW2 + _gap2 + Math.min(_rawArtW, _artMaxW))) / 2;
 
         ctx.save();
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-        ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        ctx.font = `${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+        ctx.fillStyle = 'rgba(255,255,255,0.80)';
         ctx.fillText('♩', _startX2, _titleLineY);
         ctx.restore();
 
@@ -15559,18 +15555,18 @@ async function generateAndShareCard(type, data) {
         ctx.textBaseline = 'middle';
         ctx.font = `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
         ctx.fillStyle = 'rgba(195,190,185,0.95)';
-        const _artDrawX = _startX2 + _noteW2 + _gap2;
+        const _artDrawX2 = _startX2 + _noteW2 + _gap2;
         if (_rawArtW > _artMaxW) {
           ctx.save();
           ctx.scale(_artMaxW / _rawArtW, 1);
-          ctx.fillText(_songArtist, _artDrawX * (_rawArtW / _artMaxW), _titleLineY);
+          ctx.fillText(_songArtist, _artDrawX2 * (_rawArtW / _artMaxW), _titleLineY);
           ctx.restore();
         } else {
-          ctx.fillText(_songArtist, _artDrawX, _titleLineY);
+          ctx.fillText(_songArtist, _artDrawX2, _titleLineY);
         }
         ctx.restore();
       } else {
-        // Both present — artist on its own line, clearly legible secondary
+        // Both present — artist centred on its own line below title
         drawText(_songArtist, W / 2, _artistLineY,
           `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`,
           'rgba(195,190,185,0.95)', MAX_TW);
@@ -15579,14 +15575,16 @@ async function generateAndShareCard(type, data) {
   }
   // ── End music credit block ────────────────────────────────────────────────
 
-  // Display name — fixed position, above tagline
+  // Display name — conditionally repositioned when song present for cohesive credits section
   if (displayName) {
-    drawText(displayName, W / 2, H - 148,
+    const _dnY = (_songTitle || _songArtist) ? H - 116 : H - 148;
+    drawText(displayName, W / 2, _dnY,
       barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
   }
 
-  // Tagline pinned to bottom
-  drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - 60,
+  // Tagline — conditionally repositioned when song present; unchanged otherwise
+  const _tagY = (_songTitle || _songArtist) ? H - 66 : H - 60;
+  drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
     barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
 
   // Share
