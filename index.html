@@ -4742,6 +4742,8 @@ function _getMuscleSessionRPEs(muscle, maxSessions) {
 function _checkSetReductionTrigger(muscle) {
   if (!activeSession) return false;
   if (state.isDeloadWeek || state.isRestWeek) return false;
+  // Test week: suppress set reduction — user is max-effort testing, not fatigued
+  if (state.onboardingComplete && !state.testWeekComplete) return false;
   if (!state.setReductionEnabledAt) return false;
 
   // Suppress if any exercise targeting this muscle is in the 2-session manual adj period
@@ -5244,6 +5246,8 @@ function getCycleWeekBandRepTarget(exId) {
   const span = maxReps - minReps;
   const band = getCycleWeekBand();
   if (band === 'recovery') return minReps;
+  // Test week: no rep tightening — user is testing max effort, not following a band target
+  if (state.onboardingComplete && !state.testWeekComplete) return minReps;
   if (band === '1-2') return Math.max(minReps, Math.round(minReps + span / 6));
   if (band === '3-4') return Math.round((minReps + maxReps) / 2);
   return Math.min(maxReps, Math.round(maxReps - span / 6)); // '5-6'
@@ -5810,6 +5814,9 @@ function resumeProgram() {
   delete state.pauseReason;
   delete state.pauseWeekCount;
   delete state.pauseStreak;
+  // Suppress gap-return modal: the user was paused, not inactive — mark as seen
+  // so checkGapReturnPrompt doesn't fire on the next app open after resume.
+  state.gapReturnShown = true;
   saveState();
   renderHome();
   updatePauseSettingsLabel();
@@ -8807,12 +8814,23 @@ function _clearCoachingCueCard(exId) {
 // Returns { trigger: number, data: object } or null if no trigger fires.
 function _evalCoachingCueTriggers(exId, setIndex) {
   if (!activeSession) return null;
-  var sessionCount = (state.history || []).length; // sessions logged before this one
   var isCalibrationWeek = (state.cycleCount || 1) === 1 && (state.weekCount || 1) === 1;
+  var isTestWeek = state.onboardingComplete && !state.testWeekComplete;
   var isRecovery = state.isDeloadWeek || state.isRestWeek;
 
   // Recovery/deload: suppress all triggers
   if (isRecovery) return null;
+
+  // Count sessions relevant to trigger gating — reset at goal or split changes
+  var _gatingTimestamp = Math.max(state.goalChangedAt || 0, state.splitChangedAt || 0);
+  var sessionCount;
+  if (_gatingTimestamp > 0) {
+    sessionCount = (state.history || []).filter(function(e) {
+      return new Date(e.date).getTime() >= _gatingTimestamp;
+    }).length;
+  } else {
+    sessionCount = (state.history || []).length; // sessions logged before this one
+  }
 
   // Determine which triggers are allowed based on session count and calibration week
   var allowedTriggers;
@@ -8824,6 +8842,12 @@ function _evalCoachingCueTriggers(exId, setIndex) {
     allowedTriggers = { 1: true, 2: true, 5: true };
   } else {
     allowedTriggers = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true };
+  }
+
+  // Test week: triggers 3 and 4 require multi-set RPE patterns — suppress during max-effort testing
+  if (isTestWeek) {
+    delete allowedTriggers[3];
+    delete allowedTriggers[4];
   }
 
   var sets = (activeSession.sets[exId] || []).filter(function(s) { return s.done; });
@@ -8839,7 +8863,9 @@ function _evalCoachingCueTriggers(exId, setIndex) {
   var repMax = parseInt(repParts[1]) || repMin;
 
   var currentReps = parseInt(currentSet.reps) || 0;
-  var currentRpe = parseFloat(currentSet.rpe) || 0;
+  // Use null (not 0) for unlogged RPE so trigger guards (`rpe > 0`, `rpe >= 9`) naturally
+  // exclude sets where the user never entered an RPE value.
+  var currentRpe = parseFloat(currentSet.rpe) || null;
 
   // Trigger 5: First set completed — always-available (except recovery, already gated above)
   if (allowedTriggers[5] && setIndex === 0) {
@@ -8851,7 +8877,7 @@ function _evalCoachingCueTriggers(exId, setIndex) {
     var doneSets = sets.filter(function(s, i) { return i <= setIndex; });
     var highRpeLowRepCount = doneSets.filter(function(s) {
       var r = parseInt(s.reps) || 0;
-      var rpe = parseFloat(s.rpe) || 0;
+      var rpe = parseFloat(s.rpe) || null;
       return rpe >= 9 && r < repMin - 1;
     }).length;
     if (highRpeLowRepCount >= 2 || (currentRpe >= 9.5 && currentReps > 0 && currentReps <= repMin - 2)) {
@@ -8871,7 +8897,7 @@ function _evalCoachingCueTriggers(exId, setIndex) {
   // Trigger 3: RPE spike this set vs previous set (+2 or more, current RPE ≥ 8)
   if (allowedTriggers[3] && setIndex >= 1) {
     var prevSet3 = sets[setIndex - 1];
-    var prevRpe3 = parseFloat(prevSet3 && prevSet3.rpe) || 0;
+    var prevRpe3 = parseFloat(prevSet3 && prevSet3.rpe) || null;
     if (prevRpe3 > 0 && currentRpe > 0 && currentRpe >= prevRpe3 + 2 && currentRpe >= 8) {
       return { trigger: 3, data: { reps: currentReps, rpe: currentRpe, prevRpe: prevRpe3, repMin: repMin, repMax: repMax } };
     }
@@ -8880,7 +8906,8 @@ function _evalCoachingCueTriggers(exId, setIndex) {
   // Trigger 4: Consistent high RPE — last 2 sets both RPE 8+
   if (allowedTriggers[4] && setIndex >= 2) {
     var recent4 = sets.slice(Math.max(0, setIndex - 1), setIndex + 1);
-    var allHigh4 = recent4.length >= 2 && recent4.every(function(s) { return (parseFloat(s.rpe) || 0) >= 8; });
+    // Use null for unlogged RPE: `null >= 8` is false, correctly excluding un-logged sets
+    var allHigh4 = recent4.length >= 2 && recent4.every(function(s) { return (parseFloat(s.rpe) || null) >= 8; });
     if (allHigh4) {
       var avgRpe4 = recent4.reduce(function(sum, s) { return sum + (parseFloat(s.rpe) || 0); }, 0) / recent4.length;
       return { trigger: 4, data: { reps: currentReps, rpe: currentRpe, avgRpe: Math.round(avgRpe4 * 10) / 10 } };
@@ -10940,7 +10967,9 @@ function finalizeEndSession(save) {
       // and not treat the one-time lower set count as the new baseline.
       ...(activeSession.setReductionAppliedExercises?.length
         ? { setReductionAppliedExercises: activeSession.setReductionAppliedExercises }
-        : {})
+        : {}),
+      // Count of coach-directed set removals this session (for Cycle in Review).
+      coachingInterventions: Object.values(activeSession.sets || {}).flat().filter(s => s.coachRemoved).length,
     };
 
     state.history.push(entry);
@@ -11074,6 +11103,8 @@ function finalizeEndSession(save) {
           : null;
         // ─────────────────────────────────────────────────────────
 
+        const _coachInterventions = _cycleEntries.reduce((sum, e) => sum + (e.coachingInterventions || 0), 0);
+
         if (!state.cycleHistory) state.cycleHistory = [];
         state.cycleHistory.push({
           cycleNum: _completingCycle,
@@ -11090,6 +11121,7 @@ function finalizeEndSession(save) {
           muscleVolume: _muscleVol,
           moodLiftAvg: _moodLiftAvg,
           weekBandPerf: _computeWeekBandPerf(_cycleEntries, state.profile?.goal || 'both'),
+          coachingInterventions: _coachInterventions || 0,
         });
         if (state.cycleHistory.length > 20) state.cycleHistory = state.cycleHistory.slice(-20);
         // ────────────────────────────────────────────────────────────────
@@ -13302,6 +13334,12 @@ function renderHistory() {
               </div>`;
             })()}
 
+            <!-- Coaching interventions (only shown when coach removed sets this cycle) -->
+            ${cyc.coachingInterventions > 0 ? `
+            <div style="font-size:11px;color:rgba(100,180,255,0.7);padding-bottom:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">
+              Live coach made ${cyc.coachingInterventions} set adjustment${cyc.coachingInterventions !== 1 ? 's' : ''} this cycle
+            </div>` : ''}
+
             <!-- Goal + days footer -->
             <div style="font-size:11px;color:var(--gray);padding-bottom:14px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">${_goalLabel} &nbsp;·&nbsp; ${cyc.trainingDays} days/week</div>
           </div>`;
@@ -14157,7 +14195,7 @@ function renderStrengthScoreCard() {
       <div style="text-align:center;padding:16px 0 14px;">
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;max-width:280px;margin:0 auto 10px;">${_liftMsg}</div>
         ${_missingHTML}
-        <button onclick="showScreen('settings',document.querySelector('[onclick*=settings]'))" style="background:rgba(204,32,39,0.15);border:1px solid rgba(204,32,39,0.4);color:var(--red-text);padding:10px 18px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;">GO TO PROFILE →</button>
+        ${_missing.length > 0 ? `<button onclick="showScreen('settings',document.querySelector('[onclick*=settings]'))" style="background:rgba(204,32,39,0.15);border:1px solid rgba(204,32,39,0.4);color:var(--red-text);padding:10px 18px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;">GO TO PROFILE →</button>` : ''}
       </div>`;
     return card;
   }
@@ -14254,14 +14292,14 @@ function shareCurrentPR() {
 
 function _buildSessionStats(sets, prs, startTime, prevSets) {
   let volume = 0;
-  Object.values(sets || {}).forEach(s => s.filter(x => x.done).forEach(x => {
+  Object.values(sets || {}).forEach(s => s.filter(x => x.done && !x.coachRemoved).forEach(x => {
     volume += (parseFloat(x.weight) || 0) * (parseInt(x.reps) || 0);
   }));
   if (!volume) return null;
   let delta = null;
   if (prevSets) {
     let prevVol = 0;
-    Object.values(prevSets).forEach(s => s.filter(x => x.done).forEach(x => {
+    Object.values(prevSets).forEach(s => s.filter(x => x.done && !x.coachRemoved).forEach(x => {
       prevVol += (parseFloat(x.weight) || 0) * (parseInt(x.reps) || 0);
     }));
     if (prevVol > 0) delta = Math.round(((volume - prevVol) / prevVol) * 100);
@@ -15420,6 +15458,16 @@ function handleImport(e) {
         ? new Date(parsed.lastBackupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         : null;
       state = { ...state, ...parsed };
+      // Gracefully handle missing fields when restoring older backups:
+      // betweenSetCoaching: default on (existing check is `!== false`, so undefined = on)
+      if (state.betweenSetCoaching === undefined) state.betweenSetCoaching = true;
+      // customUnilateralExercises: introduced with unilateral tracking — default empty object
+      if (!state.customUnilateralExercises) state.customUnilateralExercises = {};
+      // weekCount: if missing from an old backup, derive from session history as a fallback
+      if (!state.weekCount) {
+        const _daysPerWeek = state.trainingDaysPerWeek || state.program?.length || 4;
+        state.weekCount = Math.max(1, Math.ceil((state.history || []).length / _daysPerWeek));
+      }
       saveState();
       updateStreak();
       renderHome();
@@ -15520,11 +15568,15 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.4.2';
 
 const APP_CHANGELOG = {
   '1.4.1': [
     'New: Live Coaching Insights — After certain sets the app generates a live coaching cue based on your RPE, reps, and where you are in your cycle. It only fires when something specific is worth noting. Turn it off in Settings → Between-Set Coaching.',
+    'New: Dynamic Set Expansion — When you consistently hit the top of your rep range across sets, the app suggests adding an extra set to keep the stimulus growing.',
+    'New: Set Reduction — When your RPE trends high or your weekly volume approaches your MRV, the coach can suggest removing a set to protect recovery.',
+    'New: Rep Range Tightening — As you move through your cycle, rep targets progressively narrow toward the top of your range to align with the increasing intensity of later training weeks.',
+    'New: Exercise Rotation — After exercises have been in your program for a full cycle, the app may suggest swapping them for a variation to drive continued adaptation and reduce staleness.',
   ],
   '1.4.0': [
     'New: Choose your training split during setup — Upper / Lower, Push / Pull / Legs, or Full Body',
@@ -16416,6 +16468,9 @@ function applySplitType() {
   if (!pendingSplitType) return;
   state.splitType = pendingSplitType;
   state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[pendingSplitType] || DEFAULT_PROGRAM));
+  // Reset coaching cue session-count gating when the split changes — the user's
+  // exercise history is no longer directly comparable, so start the gate counter fresh.
+  state.splitChangedAt = Date.now();
   // IMPORTANT: state.weekCount and state.weekStartTimestamp are intentionally NOT
   // modified here. The cycle week counter must continue uninterrupted through a
   // split change so week-band tightening (getCycleWeekBand) and the contextual
