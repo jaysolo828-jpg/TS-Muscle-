@@ -15476,114 +15476,63 @@ async function generateAndShareCard(type, data) {
   if (_songTitle || _songArtist) {
     const _hasBoth = _songTitle && _songArtist;
 
+    // Y positions — generous on non-stats cards (more vertical room),
+    // more compact on stats cards (stats strip already consumes the upper area)
+    const _ruleY       = hasStats ? H - 272 : H - 360;
+    const _moodLabelY  = hasStats ? H - 230 : H - 314;
+    const _titleLineY  = hasStats ? H - 184 : H - 264;
+    const _artistLineY = hasStats ? H - 134 : H - 206;
+
     // Rule — identical to the stats hairline: same PAD width, lineWidth 2, same opacity
     ctx.save();
     ctx.strokeStyle = 'rgba(255,255,255,0.12)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(PAD, H - 260);
-    ctx.lineTo(W - PAD, H - 260);
+    ctx.moveTo(PAD, _ruleY);
+    ctx.lineTo(W - PAD, _ruleY);
     ctx.stroke();
     ctx.restore();
 
-    // Font sizes — title is a prominent headline; glyph matches title size for inline alignment
-    const _titleSz  = Math.round(32 * BS);  // 48px — headline
-    const _artistSz = Math.round(22 * BS);  // 33px — clear secondary
+    // Font sizes — title is a prominent headline; artist is clear secondary
+    const _titleSz  = Math.round(32 * BS);  // ~48px — headline
+    const _artistSz = Math.round(22 * BS);  // ~33px — secondary
 
-    // Vertical centres — generous gap above rule, balanced spacing to display name / tagline
-    const _titleLineY  = _hasBoth ? H - 218 : H - 206;
-    const _artistLineY = H - 168;
+    // "MOOD" label — small spaced uppercase, sits above the song title like an album liner credit
+    ctx.save();
+    ctx.letterSpacing = '5px';
+    drawText('MOOD', W / 2, _moodLabelY, barlow(600, 14, BS), 'rgba(160,160,160,0.62)', MAX_TW);
+    ctx.restore();
 
-    // ── Title line (glyph inline, same font size = perfect baseline match) ──
+    // Song title — italic, centred, no glyph
     if (_songTitle) {
-      ctx.font = `${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-      const _noteW = ctx.measureText('♩').width;
-      ctx.font = `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-      const _rawTitleW = ctx.measureText(_songTitle).width;
-      const _gap = Math.round(8 * BS);
-      const _titleMaxW = MAX_TW - _noteW - _gap;
-      const _totalSpan = _noteW + _gap + Math.min(_rawTitleW, _titleMaxW);
-      const _startX = (W - _totalSpan) / 2;
-
-      ctx.save();
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.font = `${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-      ctx.fillStyle = 'rgba(255,255,255,0.80)';
-      ctx.fillText('♩', _startX, _titleLineY);
-      ctx.restore();
-
-      ctx.save();
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.font = `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-      ctx.fillStyle = 'rgba(255,245,225,0.97)';
-      const _titleDrawX = _startX + _noteW + _gap;
-      if (_rawTitleW > _titleMaxW) {
-        ctx.save();
-        ctx.scale(_titleMaxW / _rawTitleW, 1);
-        ctx.fillText(_songTitle, _titleDrawX * (_rawTitleW / _titleMaxW), _titleLineY);
-        ctx.restore();
-      } else {
-        ctx.fillText(_songTitle, _titleDrawX, _titleLineY);
-      }
-      ctx.restore();
+      drawText(_songTitle, W / 2, _titleLineY,
+        `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`,
+        'rgba(255,245,225,0.97)', MAX_TW);
     }
 
-    // ── Artist line ───────────────────────────────────────────────────────
+    // Artist — muted secondary, centred below title (or at title position if title absent)
     if (_songArtist) {
-      if (!_songTitle) {
-        // Artist-only: glyph (title-sized for alignment) + artist centred together
-        ctx.font = `${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-        const _noteW2 = ctx.measureText('♩').width;
-        ctx.font = `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-        const _rawArtW = ctx.measureText(_songArtist).width;
-        const _gap2 = Math.round(8 * BS);
-        const _artMaxW = MAX_TW - _noteW2 - _gap2;
-        const _startX2 = (W - (_noteW2 + _gap2 + Math.min(_rawArtW, _artMaxW))) / 2;
-
-        ctx.save();
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.font = `${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-        ctx.fillStyle = 'rgba(255,255,255,0.80)';
-        ctx.fillText('♩', _startX2, _titleLineY);
-        ctx.restore();
-
-        ctx.save();
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.font = `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-        ctx.fillStyle = 'rgba(195,190,185,0.95)';
-        const _artDrawX2 = _startX2 + _noteW2 + _gap2;
-        if (_rawArtW > _artMaxW) {
-          ctx.save();
-          ctx.scale(_artMaxW / _rawArtW, 1);
-          ctx.fillText(_songArtist, _artDrawX2 * (_rawArtW / _artMaxW), _titleLineY);
-          ctx.restore();
-        } else {
-          ctx.fillText(_songArtist, _artDrawX2, _titleLineY);
-        }
-        ctx.restore();
-      } else {
-        // Both present — artist centred on its own line below title
-        drawText(_songArtist, W / 2, _artistLineY,
-          `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`,
-          'rgba(195,190,185,0.95)', MAX_TW);
-      }
+      const _artY = _songTitle ? _artistLineY : _titleLineY;
+      drawText(_songArtist, W / 2, _artY,
+        `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`,
+        'rgba(195,190,185,0.92)', MAX_TW);
     }
   }
   // ── End music credit block ────────────────────────────────────────────────
 
-  // Display name — conditionally repositioned when song present for cohesive credits section
+  // Display name — increased breathing room; repositioned when song present
   if (displayName) {
-    const _dnY = (_songTitle || _songArtist) ? H - 116 : H - 148;
+    const _dnY = (_songTitle || _songArtist)
+      ? (hasStats ? H - 80 : H - 142)
+      : H - 158;
     drawText(displayName, W / 2, _dnY,
       barlow(600, 34, BS), 'rgba(245,230,200,0.88)', MAX_TW);
   }
 
-  // Tagline — conditionally repositioned when song present; unchanged otherwise
-  const _tagY = (_songTitle || _songArtist) ? H - 66 : H - 60;
+  // Tagline — more generous bottom margin; repositioned when song present
+  const _tagY = (_songTitle || _songArtist)
+    ? (hasStats ? H - 38 : H - 78)
+    : H - 84;
   drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
     barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
 
