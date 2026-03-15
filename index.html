@@ -8975,6 +8975,11 @@ function addDynamicSet(exId) {
   const prevSet = sets[sets.length - 1];
   const newSetIndex = sets.length;
 
+  // Look up previous session's data for this specific set index so the new row
+  // can show per-set historical weight/reps as placeholders — matching the behaviour
+  // of renderSession() for pre-configured sets.
+  const lastData = getLastSetData(exId, newSetIndex);
+
   // Pre-fill weight from the previous set's confirmed logged weight.
   // This automatically reflects any manual weight adjustment the user made,
   // since toggleSetDone already flushed DOM values into prevSet.weight.
@@ -9003,9 +9008,10 @@ function addDynamicSet(exId) {
   const _minReps = parseInt(_parts[0]) || 1;
   const _inManualAdj = !!_getManualAdj(exId, activeSession.dayId) || !!(activeSession.pendingManualAdj?.[exId]);
 
+  // Fallback chain mirrors renderSession(): intel → previous session's per-set reps → goal reps
   let _repPlaceholder = _inManualAdj
     ? String(_minReps)
-    : String(getCycleWeekBandRepTarget(exId));
+    : (lastData?.reps ? String(lastData.reps) : String(getCycleWeekBandRepTarget(exId)));
 
   // Apply within-session intelligence if preceding sets qualify
   const _intelReps = calcIntelSuggestedReps(exId, newSetIndex);
@@ -9014,13 +9020,17 @@ function addDynamicSet(exId) {
     _repPlaceholder = String(_intelReps);
   }
 
+  // Weight placeholder: prefer previous session's per-set weight (matching renderSession),
+  // fall back to current session's adjacent set weight.
+  const _weightPlaceholder = lastData?.weight || prevWeight || '0';
+
   // Build the new set row — identical structure to renderSession() set rows
   const setRow = document.createElement('div');
   setRow.className = 'set-row';
   setRow.id = 'set-row-' + exId + '-' + newSetIndex;
   setRow.innerHTML =
     '<div class="set-num">' + (newSetIndex + 1) + '</div>' +
-    '<input type="number" inputmode="decimal" class="set-input" placeholder="' + (prevWeight || '0') + '"' +
+    '<input type="number" inputmode="decimal" class="set-input" placeholder="' + _weightPlaceholder + '"' +
       ' value="' + (prevWeight !== '' ? prevWeight : '') + '"' +
       ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'weight\',this.value)"/>' +
     '<div style="position:relative;">' +
