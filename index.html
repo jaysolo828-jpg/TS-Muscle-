@@ -15474,10 +15474,10 @@ async function generateAndShareCard(type, data) {
   const _songTitle  = data.songTitle  || null;
   const _songArtist = data.songArtist || null;
   if (_songTitle || _songArtist) {
-    // Thin muted horizontal rule above block — visually separates from content above
-    const _ruleY = H - 260;
+    // Thin horizontal rule — clearly separates stats section from music credit
+    const _ruleY = H - 300;
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(PAD, _ruleY);
@@ -15485,44 +15485,42 @@ async function generateAndShareCard(type, data) {
     ctx.stroke();
     ctx.restore();
 
-    // Determine which lines to render
+    // Vertical positions — breathing room above and below
     const _hasBoth = _songTitle && _songArtist;
-    const _titleLineY  = _hasBoth ? H - 224 : H - 213;
-    const _artistLineY = H - 185;
+    const _titleLineY  = _hasBoth ? H - 258 : H - 244;
+    const _artistLineY = H - 210;
 
-    // Music note glyph size (drawn inline with title)
-    const _noteSz = Math.round(16 * BS);
-    const _titleSz = Math.round(20 * BS);
-    const _artistSz = Math.round(16 * BS);
+    // Font sizes
+    const _noteSz  = Math.round(18 * BS);
+    const _titleSz = Math.round(22 * BS);
+    const _artistSz = Math.round(18 * BS);
 
     if (_songTitle) {
-      // Measure note glyph and title to center the combined span
       ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
       const _noteW = ctx.measureText('♩').width;
       ctx.font = `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
       const _rawTitleW = ctx.measureText(_songTitle).width;
-      // Cap at MAX_TW - glyph - gap
       const _gap = Math.round(10 * BS);
       const _titleMaxW = MAX_TW - _noteW - _gap;
       const _titleW = Math.min(_rawTitleW, _titleMaxW);
       const _totalSpan = _noteW + _gap + _titleW;
       const _startX = (W - _totalSpan) / 2;
 
-      // Draw glyph
+      // Draw glyph — legible opacity
       ctx.save();
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fillStyle = 'rgba(255,255,255,0.72)';
       ctx.fillText('♩', _startX, _titleLineY);
       ctx.restore();
 
-      // Draw title (italic, white)
+      // Draw title — bright cream, clearly legible
       ctx.save();
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.font = `italic ${_titleSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-      ctx.fillStyle = 'rgba(245,230,200,0.92)';
+      ctx.fillStyle = 'rgba(255,245,225,0.97)';
       const _titleDrawX = _startX + _noteW + _gap;
       if (_rawTitleW > _titleMaxW) {
         ctx.save();
@@ -15536,9 +15534,8 @@ async function generateAndShareCard(type, data) {
     }
 
     if (_songArtist) {
-      // Artist line — muted secondary, plain (not italic)
-      // If no title present, draw a glyph prefix too
       if (!_songTitle) {
+        // Artist-only: draw glyph + artist on the single line
         ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
         const _noteW2 = ctx.measureText('♩').width;
         ctx.font = `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
@@ -15553,7 +15550,7 @@ async function generateAndShareCard(type, data) {
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.font = `${_noteSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.fillStyle = 'rgba(255,255,255,0.72)';
         ctx.fillText('♩', _startX2, _titleLineY);
         ctx.restore();
 
@@ -15561,7 +15558,7 @@ async function generateAndShareCard(type, data) {
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.font = `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`;
-        ctx.fillStyle = 'rgba(165,160,155,0.82)';
+        ctx.fillStyle = 'rgba(195,190,185,0.95)';
         const _artDrawX = _startX2 + _noteW2 + _gap2;
         if (_rawArtW > _artMaxW) {
           ctx.save();
@@ -15573,10 +15570,10 @@ async function generateAndShareCard(type, data) {
         }
         ctx.restore();
       } else {
-        // Both present — artist on its own line below the title, centered
+        // Both present — artist on its own line, clearly legible secondary
         drawText(_songArtist, W / 2, _artistLineY,
           `${_artistSz}px 'Barlow Condensed', 'Arial Narrow', Arial`,
-          'rgba(165,160,155,0.78)', MAX_TW);
+          'rgba(195,190,185,0.95)', MAX_TW);
       }
     }
   }
