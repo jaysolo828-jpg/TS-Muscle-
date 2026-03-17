@@ -8230,7 +8230,7 @@ function renderSession() {
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;background:${_mColor}18;">${_muscle}</span>` : ''}
             ${isSource ? `<span style="font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:3px 8px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
-          ${_coachNote ? `<div class="coach-note-gold" style="font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.3;">${_coachNote}</div>` : ''}
+          ${!isPaired && _coachNote ? `<div class="coach-note-gold" style="font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.3;">${_coachNote}</div>` : ''}
         </div>
         <div style="display:flex; align-items:flex-start; gap:6px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end;">
           <button class="swap-btn" onclick="openExInfo('${ex.id}')" title="How to do this exercise" style="padding:6px 10px; font-size:14px;">?</button>
@@ -8243,6 +8243,7 @@ function renderSession() {
           <button class="swap-btn" id="skip-btn-${ex.id}" onclick="toggleSkipExercise('${ex.id}')" style="background:transparent; border-color:#3a3a3a; color:var(--gray-light);">SKIP</button>
         </div>
       </div>
+      ${isPaired && _coachNote ? `<div class="coach-note-gold" style="font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.3;padding:8px 16px 4px 46px;">${_coachNote}</div>` : ''}
       ${buildOverloadHint(ex.id)}
       ${buildPlateCalc(ex.id, sets[0]?.weight)}
       ${setsHTML}
