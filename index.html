@@ -2432,6 +2432,9 @@
     <div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">Log a few moods to unlock your Workout Mood Lift score.</div></div>
   </div>
 
+  <!-- Showing Up Anyway -->
+  <div id="showing-up-anyway-panel" style="margin-bottom:16px;"></div>
+
   <!-- Mood History -->
   <div class="section-title">MOOD <span>LOG</span></div>
   <div id="mood-history-list" style="margin-bottom:16px;">
@@ -5602,7 +5605,7 @@ function showScreen(name, el) {
   if (name === 'history') { renderHistory(); renderProgress(); renderProgressChart(); }
 
   if (name === 'cardio') renderCardioHistory();
-  if (name === 'mindset') { renderValuesCard(); renderBarrierHistory(); renderMoodHistory(); renderMoodInsights(); renderSelfCompassionLog(); }
+  if (name === 'mindset') { renderValuesCard(); renderBarrierHistory(); renderMoodHistory(); renderMoodInsights(); renderShowingUpAnyway(); renderSelfCompassionLog(); }
 
   if (name === 'settings') {
     const nameInput = document.getElementById('display-name-input');
@@ -14895,12 +14898,12 @@ async function generateAndShareCard(type, data) {
   const _isDeload  = !!(data.isDeload);
   const _isMilestone = CARD_MILESTONE_SESSIONS.has(state.totalSessions ?? -1);
   // 20% chance of flipping the layout (dark top, colored bottom) for regular cards
-  const _isFlipped = !_isPR && !_isDeload && type !== 'mood' && Math.random() < 0.20;
+  const _isFlipped = !_isPR && !_isDeload && type !== 'mood' && type !== 'showing_up_anyway' && Math.random() < 0.20;
 
   let _theme;
   if (_isPR)                        _theme = CARD_PR_THEME;
   else if (_isDeload)               _theme = CARD_DELOAD_THEME;
-  else if (type === 'mood' || type === 'mood_lift_stats') _theme = CARD_MOOD_THEME;
+  else if (type === 'mood' || type === 'mood_lift_stats' || type === 'showing_up_anyway') _theme = CARD_MOOD_THEME;
   else if (type === 'cycle_review') _theme = CARD_CYCLE_REVIEW_THEME;
   else                              _theme = CARD_DAY_PALETTES[(data.dayIndex ?? 0) % CARD_DAY_PALETTES.length];
 
@@ -15282,6 +15285,65 @@ async function generateAndShareCard(type, data) {
     if (volDelta !== null) {
       drawText(`${volDelta >= 0 ? '+' : ''}${volDelta}% VOLUME`, W / 2, subY,
         bebas(72), deltaColor, MAX_TW, { color: deltaColor + '55', blur: 18 });
+    }
+
+  } else if (type === 'showing_up_anyway') {
+    // Purple/blue radial glow — mood theme
+    const _suaGlow = ctx.createRadialGradient(W / 2, SPLIT * 0.45, 0, W / 2, SPLIT * 0.45, W * 0.65);
+    _suaGlow.addColorStop(0,   'rgba(160,140,255,0.22)');
+    _suaGlow.addColorStop(0.5, 'rgba(100,80,200,0.09)');
+    _suaGlow.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = _suaGlow;
+    ctx.fillRect(0, 0, W, SPLIT);
+
+    const _suaTagY  = Math.round(SPLIT * 0.12);
+    const _suaNumY  = Math.round(SPLIT * 0.40);
+    const _suaSub1Y = Math.round(SPLIT * 0.58);
+    const _suaSub2Y = Math.round(SPLIT * 0.71);
+    const _suaSub3Y = Math.round(SPLIT * 0.83);
+
+    drawText('SHOWING UP ANYWAY', W / 2, _suaTagY,
+      barlow(700, 32), 'rgba(180,170,255,0.75)', MAX_TW);
+
+    if (data.lowWithPR > 0) {
+      // Hero: PR count in green
+      ctx.save();
+      ctx.shadowColor = 'rgba(80,200,130,0.6)';
+      ctx.shadowBlur  = Math.round(44 * S);
+      drawText(String(data.lowWithPR), W / 2, _suaNumY, bebas(200), '#50c882', MAX_TW);
+      ctx.restore();
+
+      drawText(`PR${data.lowWithPR !== 1 ? 'S' : ''} HIT`, W / 2, _suaSub1Y,
+        bebas(68), 'rgba(255,255,255,0.88)', MAX_TW);
+      drawText(`IN ${data.lowTotal} LOW-MOOD SESSION${data.lowTotal !== 1 ? 'S' : ''}`, W / 2, _suaSub2Y,
+        barlow(700, 38), 'rgba(200,195,255,0.82)', MAX_TW);
+
+      if (data.highNoPR > 0 && data.totalHigh > 0) {
+        drawText(`${data.highNoPR} OF ${data.totalHigh} HIGH-MOOD SESSIONS: NO PR`, W / 2, _suaSub3Y,
+          barlow(500, 28), 'rgba(255,255,255,0.38)', MAX_TW);
+      }
+
+    } else if (data.lowTotal > 0) {
+      // Hero: show-up count in lavender
+      ctx.save();
+      ctx.shadowColor = 'rgba(180,170,255,0.5)';
+      ctx.shadowBlur  = Math.round(40 * S);
+      drawText(String(data.lowTotal), W / 2, _suaNumY, bebas(200), 'rgba(200,195,255,0.95)', MAX_TW);
+      ctx.restore();
+
+      drawText('LOW-MOOD SESSIONS', W / 2, _suaSub1Y,
+        bebas(64), 'rgba(255,255,255,0.88)', MAX_TW);
+      drawText('TRAINED THROUGH ALL OF THEM', W / 2, _suaSub2Y,
+        barlow(700, 38), 'rgba(200,195,255,0.82)', MAX_TW);
+
+    } else {
+      // No matched workout sessions yet
+      drawText('YOU SHOW UP', W / 2, _suaNumY - Math.round(68 * S),
+        bebas(90), '#ffffff', MAX_TW);
+      drawText('EVERY TIME', W / 2, _suaNumY + Math.round(68 * S),
+        bebas(90), '#ffffff', MAX_TW);
+      drawText('THAT\'S THE WHOLE THING', W / 2, _suaSub2Y,
+        barlow(600, 36), 'rgba(200,195,255,0.72)', MAX_TW);
     }
 
   } else if (type === 'cycle_review') {
@@ -18706,6 +18768,7 @@ function saveMoodEntry() {
   showToast(`Mood logged: ${entry.emoji} ${entry.label}`);
   renderMoodHistory();
   renderMoodInsights();
+  renderShowingUpAnyway();
   renderMoodCheckinLabel();
 }
 
@@ -18853,6 +18916,7 @@ function deleteMoodEntry(idx) {
   saveState();
   renderMoodHistory();
   renderMoodInsights();
+  renderShowingUpAnyway();
 }
 
 function updateMoodDots(scroller) {
@@ -18941,15 +19005,6 @@ function renderMoodInsights() {
   const preFreq = {};
   dedupedPre.forEach(e => preFreq[e.label] = (preFreq[e.label] || 0) + 1);
   const mostCommonPre = Object.entries(preFreq).sort((a, b) => b[1] - a[1])[0];
-
-  // Weekly trend (last 5 weeks, deduped)
-  const weeklyData = [];
-  for (let w = 4; w >= 0; w--) {
-    const wStart = new Date(); wStart.setDate(wStart.getDate() - (w + 1) * 7);
-    const wEnd   = new Date(); wEnd.setDate(wEnd.getDate() - w * 7);
-    const entries = allDeduped.filter(e => { const d = new Date(e.date); return d >= wStart && d < wEnd; });
-    if (entries.length) weeklyData.push({ label: w === 0 ? 'Now' : `W-${w}`, avg: (entries.reduce((s, e) => s + e.value, 0) / entries.length).toFixed(1) });
-  }
 
   // Mood on workout days (deduped)
   const workoutDates = new Set((state.history || []).map(h => h.date ? _localDateKey(h.date) : null).filter(Boolean));
@@ -19111,25 +19166,6 @@ function renderMoodInsights() {
       </div>`;
   }
 
-  if (weeklyData.length >= 2) {
-    let trendBars = '';
-    weeklyData.forEach(w => {
-      const pct = ((w.avg - 1) / 4) * 100;
-      const barColor = w.avg >= 4 ? 'var(--red)' : w.avg >= 3 ? '#888' : '#555';
-      trendBars += `
-        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
-          <div style="font-size:11px; color:var(--gray-light);">${w.avg}</div>
-          <div style="width:100%; background:${barColor}; border-radius:4px 4px 0 0; height:${Math.max(pct * 0.6, 6)}px;"></div>
-          <div style="font-size:11px; color:var(--gray-light);">${w.label}</div>
-        </div>`;
-    });
-    deepDataHtml += `
-      <div class="card" style="padding:14px; margin-bottom:10px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:12px;">WEEKLY MOOD TREND</div>
-        <div style="display:flex; align-items:flex-end; gap:6px; height:60px;">${trendBars}</div>
-      </div>`;
-  }
-
   if (mostCommonPre) {
     deepDataHtml += `
       <div class="card" style="padding:14px; margin-bottom:10px;">
@@ -19181,6 +19217,120 @@ function renderMoodInsights() {
   const sc = container.querySelector('#mood-insights-scroller');
   const s0 = sc && sc.querySelector('.mood-slide');
   if (sc && s0) requestAnimationFrame(() => { sc.style.height = s0.scrollHeight + 'px'; });
+}
+
+// ============================================================
+// SHOWING UP ANYWAY CARD
+// Surfaces performance data from low-mood sessions (pre ≤ 3)
+// ============================================================
+let _suaShareData = null;
+
+function renderShowingUpAnyway() {
+  const container = document.getElementById('showing-up-anyway-panel');
+  if (!container) return;
+  const log = state.moodLog || [];
+
+  // Build byDay — first-seen wins per timing per day (log is newest-first via unshift)
+  const byDay = {};
+  log.forEach(e => {
+    const day = _localDateKey(e.date);
+    if (!byDay[day]) byDay[day] = {};
+    if (!byDay[day][e.timing]) byDay[day][e.timing] = e;
+  });
+
+  // Days with a pre-workout mood logged (deduped)
+  const daysWithPre = Object.entries(byDay).filter(([_, d]) => d.pre);
+
+  // Need at least 5 pre-mood sessions before showing the card
+  const THRESHOLD = 5;
+  if (daysWithPre.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  if (daysWithPre.length < THRESHOLD) {
+    const needed = THRESHOLD - daysWithPre.length;
+    container.innerHTML = `
+      <div class="section-title">SHOWING UP <span>ANYWAY</span></div>
+      <div class="card" style="padding:20px 20px 18px;">
+        <div style="font-size:14px; color:var(--gray-light); line-height:1.7;">Log your pre-workout mood before ${needed} more session${needed !== 1 ? 's' : ''} and we'll show you something interesting about how you perform on your hardest days.</div>
+      </div>`;
+    return;
+  }
+
+  // Low-mood sessions: pre mood ≤ 3 (Neutral or below)
+  const lowMoodDays = daysWithPre.filter(([_, d]) => d.pre.value <= 3);
+
+  // Match mood days to workout history by local date
+  const history = state.history || [];
+  const sessionByDay = {};
+  history.forEach(s => {
+    if (s.date) {
+      const day = _localDateKey(s.date);
+      if (!sessionByDay[day]) sessionByDay[day] = s;
+    }
+  });
+
+  const lowMoodWorkouts = lowMoodDays
+    .map(([day, d]) => ({ day, pre: d.pre, session: sessionByDay[day] }))
+    .filter(x => x.session);
+  const totalLow = lowMoodWorkouts.length;
+  const lowWithPR = lowMoodWorkouts.filter(x => x.session.prs && x.session.prs.length > 0).length;
+
+  // High-mood sessions (pre ≥ 4) where no PRs were hit
+  const highMoodDays = daysWithPre.filter(([_, d]) => d.pre.value >= 4);
+  const highMoodWorkouts = highMoodDays
+    .map(([day, d]) => ({ day, pre: d.pre, session: sessionByDay[day] }))
+    .filter(x => x.session);
+  const totalHigh = highMoodWorkouts.length;
+  const highNoPR = highMoodWorkouts.filter(x => !x.session.prs || x.session.prs.length === 0).length;
+
+  // Determine primary insight and flip-side copy
+  let primaryInsight, flipSide, shareInsight;
+
+  if (totalLow === 0) {
+    primaryInsight = `You've logged ${daysWithPre.length} pre-workout moods. Keep going — once you train on a hard day, this card gets interesting.`;
+    flipSide = null;
+    shareInsight = 'Showing up is the whole thing.';
+  } else if (lowWithPR === 0) {
+    primaryInsight = `You trained through ${totalLow} low-mood session${totalLow !== 1 ? 's' : ''}. Every single one counts.`;
+    flipSide = (highNoPR > 0 && totalHigh > 0)
+      ? `${highNoPR} of your ${totalHigh} high-mood sessions didn't produce PRs either. Feeling ready doesn't guarantee anything.`
+      : 'Showing up on a hard day is never nothing. The body keeps score.';
+    shareInsight = `${totalLow} low-mood session${totalLow !== 1 ? 's' : ''}. All of them count.`;
+  } else {
+    primaryInsight = `You hit PR${lowWithPR !== 1 ? 's' : ''} in ${lowWithPR} of your ${totalLow} low-mood session${totalLow !== 1 ? 's' : ''}.`;
+    flipSide = (highNoPR > 0 && totalHigh > 0)
+      ? `For comparison — ${highNoPR} of your ${totalHigh} high-mood session${totalHigh !== 1 ? 's' : ''} didn't produce a PR. Mood is a bad predictor. Showing up isn't.`
+      : 'Mood predicted nothing. You showed up and your body responded.';
+    shareInsight = primaryInsight;
+  }
+
+  _suaShareData = { insight: shareInsight, lowTotal: totalLow, lowWithPR, highNoPR, totalHigh };
+
+  const shareBtn = totalLow > 0 ? `
+    <button onclick="shareShowingUpAnyway()" style="margin-top:16px; width:100%; padding:10px; background:transparent; border:1px solid rgba(255,255,255,0.12); color:var(--gray-light); border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; -webkit-tap-highlight-color:transparent;">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      SHARE
+    </button>` : '';
+
+  const flipHtml = flipSide ? `
+    <div style="border-top:1px solid #272727; padding-top:14px; margin-top:4px;">
+      <div style="font-size:13px; color:var(--gray-light); line-height:1.65;">${flipSide}</div>
+    </div>` : '';
+
+  container.innerHTML = `
+    <div class="section-title">SHOWING UP <span>ANYWAY</span></div>
+    <div class="card" style="padding:20px 20px 18px;">
+      <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:14px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">LOW-MOOD SESSIONS · PRE ≤ NEUTRAL</div>
+      <div style="font-size:17px; color:var(--cream); line-height:1.55; margin-bottom:14px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.2px;">${primaryInsight}</div>
+      ${flipHtml}
+      ${shareBtn}
+    </div>`;
+}
+
+function shareShowingUpAnyway() {
+  if (!_suaShareData) return;
+  generateAndShareCard('showing_up_anyway', _suaShareData);
 }
 
 // ============================================================
@@ -20104,6 +20254,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSelfCompassionLog();
   renderMoodHistory();
   renderMoodInsights();
+  renderShowingUpAnyway();
   checkGapReturnPrompt();
   checkInactivityPrompt();
   checkUnilateralAudit();
