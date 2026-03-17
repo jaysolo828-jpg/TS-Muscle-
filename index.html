@@ -7643,7 +7643,7 @@ function buildOverloadHint(exId) {
     const _repLine = _repGoal
       ? `<div style="font-size:11px; color:var(--gray-light); padding-left:23px; margin-top:3px;">Rep target stays at <strong style="color:var(--cream);">${_repGoal} reps</strong> — only the weight changes.</div>`
       : '';
-    return `<div style="background:rgba(243,156,18,0.12); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:10px 12px; margin:8px 0 8px;">
+    return `<div style="background:rgba(243,156,18,0.12); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:10px 12px; margin:8px 16px 8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">TOO HEAVY?</div>
@@ -7668,7 +7668,7 @@ function buildOverloadHint(exId) {
     const _adjIcon = direction === 'up'
       ? `<polyline points="18 15 12 9 6 15"/>`
       : `<polyline points="18 9 12 15 6 9"/>`;
-    return `<div style="background:rgba(100,149,237,0.1); border:1px solid rgba(100,149,237,0.35); border-radius:10px; padding:9px 12px; margin:8px 0 8px;">
+    return `<div style="background:rgba(100,149,237,0.1); border:1px solid rgba(100,149,237,0.35); border-radius:10px; padding:9px 12px; margin:8px 16px 8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="cornflowerblue" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${_adjIcon}</svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; color:cornflowerblue;">ADJUSTMENT PERIOD</div>
@@ -7694,7 +7694,7 @@ function buildOverloadHint(exId) {
     : `<div style="font-size:13px; color:var(--gray-light); padding-left:23px; line-height:1.5;">${_buildReasonSentence(info, _minR, _maxR)}</div>`;
 
   if (info.changed && info.newWeight > info.lastWeight) {
-    return `<div style="background:rgba(46,204,113,0.12); border:1px solid rgba(46,204,113,0.35); border-radius:10px; padding:9px 12px; margin:8px 0 8px;">
+    return `<div style="background:rgba(46,204,113,0.12); border:1px solid rgba(46,204,113,0.35); border-radius:10px; padding:9px 12px; margin:8px 16px 8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="#2ecc71" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#2ecc71;">
@@ -7707,7 +7707,7 @@ function buildOverloadHint(exId) {
     const deloadNudge = info.consecutiveReductions >= 2
       ? `<div style="margin-top:6px; padding-left:23px; font-size:12px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row — <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:12px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
       : '';
-    return `<div style="background:rgba(243,156,18,0.14); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:9px 12px; margin:8px 0 8px;">
+    return `<div style="background:rgba(243,156,18,0.14); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:9px 12px; margin:8px 16px 8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="#f39c12" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 9 12 15 6 9"/></svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:#f39c12;">
@@ -7719,7 +7719,7 @@ function buildOverloadHint(exId) {
       ${deloadNudge}
     </div>`;
   } else if (info.lastWeight) {
-    return `<div style="background:rgba(255,255,255,0.03); border:1px solid #252525; border-radius:10px; padding:9px 12px; margin:8px 0 8px;">
+    return `<div style="background:rgba(255,255,255,0.03); border:1px solid #252525; border-radius:10px; padding:9px 12px; margin:8px 16px 8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cream)" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; color:var(--cream);">
