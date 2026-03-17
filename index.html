@@ -9352,16 +9352,28 @@ function calcIntelSuggestedReps(exId, setIndex) {
   const reps = parseInt(prev.reps);
   if (isNaN(rpe) || isNaN(reps)) return null;
 
+  // Determine the week-band floor for fatigue-signal detection.
+  // E.g. for a goal range of 8–12 during weeks 3-4, band might be "10-11" → bandMin = 10.
+  const _bandRange = getCycleWeekBandRepRange(exId);
+  const _bandParts = _bandRange.split(/[–\-]/);
+  const bandMin = parseInt(_bandParts[0]) || minReps;
+  const deficit = bandMin - reps; // positive when below band floor
+
   let suggested;
   if (rpe <= 7) {
     // Comfortable — nudge toward top of range
     suggested = Math.min(maxReps, reps + 1);
+  } else if (deficit >= 2 && rpe >= 8) {
+    // Meaningfully below week-band floor + high RPE — strong fatigue signal.
+    // Scale downward adjustment with both deficit severity and RPE intensity.
+    const drop = Math.max(1, Math.round(deficit * (rpe - 7) / 3));
+    suggested = Math.max(1, reps - drop);
   } else if (rpe <= 8) {
     // Moderate effort — hold steady
     suggested = reps;
   } else {
-    // High effort — ease off slightly
-    suggested = Math.max(minReps, reps - 1);
+    // High effort, at or near range — ease off by 1
+    suggested = Math.max(reps < minReps ? 1 : minReps, reps - 1);
   }
   return suggested;
 }
