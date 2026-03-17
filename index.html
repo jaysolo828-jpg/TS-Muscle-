@@ -8243,7 +8243,7 @@ function renderSession() {
           <button class="swap-btn" id="skip-btn-${ex.id}" onclick="toggleSkipExercise('${ex.id}')" style="background:transparent; border-color:#3a3a3a; color:var(--gray-light);">SKIP</button>
         </div>
       </div>
-      ${isPaired && _coachNote ? `<div class="coach-note-gold" style="font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.3;padding:8px 16px 4px 46px;">${_coachNote}</div>` : ''}
+      ${isPaired && _coachNote ? `<div class="coach-note-gold" style="font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.3;padding:8px 16px 4px 16px;">${_coachNote}</div>` : ''}
       ${buildOverloadHint(ex.id)}
       ${buildPlateCalc(ex.id, sets[0]?.weight)}
       ${setsHTML}
