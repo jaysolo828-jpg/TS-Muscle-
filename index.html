@@ -4926,8 +4926,8 @@ function checkAutoregulation(exId, dayId, raiseThreshold) {
     return null;
   }
 
-  // Rule A: RPE ~10 for 2 consecutive sessions
-  if (rpe0 >= 9.5 && rpe1 >= 9.5) {
+  // Rule A: RPE 10 for 2 consecutive sessions
+  if (rpe0 >= 10 && rpe1 >= 10) {
     return { rule: '2x10', sessionCount: 2, lastWeight, suggestedWeight };
   }
 
@@ -9369,12 +9369,13 @@ function calcIntelSuggestedReps(exId, setIndex) {
   const _bandRange = getCycleWeekBandRepRange(exId);
   const _bandParts = _bandRange.split(/[–\-]/);
   const bandMin = parseInt(_bandParts[0]) || minReps;
+  const bandMax = parseInt(_bandParts[1]) || bandMin;
   const deficit = bandMin - reps; // positive when below band floor
 
   let suggested;
   if (rpe <= 7) {
-    // Comfortable — nudge toward top of range
-    suggested = Math.min(maxReps, reps + 1);
+    // Comfortable — nudge toward top of week-band range
+    suggested = Math.min(bandMax, reps + 1);
   } else if (deficit >= 2 && rpe >= 8) {
     // Meaningfully below week-band floor + high RPE — strong fatigue signal.
     // Scale downward adjustment with both deficit severity and RPE intensity.
@@ -9475,12 +9476,11 @@ function _canSuggestDynamicSet(exId) {
   const doneSets = sets.filter(s => s.done).length;
   if (doneSets < Math.ceil(sets.length * 0.75)) return false;
 
-  // RPE gate: only suggest when ALL completed sets have RPE logged and RPE ≤ 6.
-  // If any completed set lacks an RPE value, treat as insufficient data — do not fire.
+  // RPE gate: only evaluate sets that have an RPE logged; sets with no RPE are skipped.
+  // Fires only when all logged RPEs are 6 or below — missing RPE values are neutral.
   const doneSetsData = sets.filter(s => s.done);
-  const allRPELogged = doneSetsData.every(s => s.rpe !== undefined && s.rpe !== null && s.rpe !== '');
-  if (!allRPELogged) return false;
-  if (doneSetsData.some(s => Number(s.rpe) >= 7)) return false;
+  const rpeLoggedSets = doneSetsData.filter(s => s.rpe !== undefined && s.rpe !== null && s.rpe !== '');
+  if (rpeLoggedSets.some(s => Number(s.rpe) >= 7)) return false;
 
   const muscle = MUSCLE_MAP[exId];
   if (!muscle || !VOLUME_LANDMARKS[muscle]) return false;
@@ -9502,18 +9502,19 @@ function _canSuggestDynamicSet(exId) {
     effectiveCount += _partnerUndone * _getDynamicSetIncrement(_partnerId);
   }
 
-  // Volume target must support adding one more (effective count is below target)
-  if (weeklyTarget === null || effectiveCount >= weeklyTarget) return false;
+  // Volume target must be defined
+  if (weeklyTarget === null) return false;
   // Adding the set must not push past MRV
   if (effectiveCount + increment > mrv) return false;
 
-  // Session context: if 3 or more exercises remain in this session and the user is
-  // already at their weekly volume target for this muscle, the remaining exercises
+  // Session context: if 3 or more exercises remain in this session for this muscle
+  // and the user is already at their weekly volume target, the remaining exercises
   // will add sufficient volume — do not suggest an additional set now.
-  // (This is explicit documentation of the already-blocked case; it also future-proofs
-  // against any edge where effectiveCount is calculated conservatively.)
   const _sessCtx = _getSessionExerciseContext(exId);
   if (_sessCtx.exercisesRemaining >= 3 && effectiveCount >= weeklyTarget) return false;
+
+  // Volume target must support adding one more (effective count must be below target)
+  if (effectiveCount >= weeklyTarget) return false;
 
   return true;
 }
