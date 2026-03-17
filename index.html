@@ -9064,8 +9064,11 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
 
   var sessCtx = _getSessionExerciseContext(exId);
   var exercisePositionStr = 'Exercise ' + (sessCtx.currentExerciseIndex + 1) + ' of ' + sessCtx.totalExercises + ' (' + sessCtx.completedExercises + ' completed, ' + sessCtx.exercisesRemaining + ' remaining after this)';
+  var muscleGroupStr = sessCtx.muscleGroupRemaining > 0
+    ? sessCtx.muscleGroupRemaining + ' more ' + muscle + ' exercise' + (sessCtx.muscleGroupRemaining !== 1 ? 's' : '') + ' remaining this session'
+    : 'No more ' + muscle + ' exercises remaining this session';
 
-  return 'You are a terse, knowledgeable strength and conditioning coach providing a single brief coaching insight between sets during a workout. Your cue should be 1-2 short sentences maximum — direct, practical, no fluff.\n\nFactor in how many exercises remain in this session when generating the cue. An RPE of 8.5 on Exercise 1 of 6 is a different signal than RPE 8.5 on Exercise 5 of 6. If significant compound movements remain in the session factor that into any load or set recommendations. Never suggest pushing intensity on an early exercise if doing so would compromise the quality of remaining compound work.\n\nContext:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Session position: ' + exercisePositionStr + '\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- Session ' + (sessionCount + 1) + ' overall\n- Rep target range: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Sets so far: ' + setsSummary + '\n- ' + prevStr + '\n- Trigger reason: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + '\n\nWrite ONE coaching cue (1-2 sentences). No greeting, no sign-off. Just the coaching insight.';
+  return 'You are a terse, knowledgeable strength and conditioning coach providing a single brief coaching insight between sets during a workout. Your cue should be 1-2 short sentences maximum — direct, practical, no fluff.\n\nFactor in how many exercises remain in this session when generating the cue. An RPE of 8.5 on Exercise 1 of 6 is a different signal than RPE 8.5 on Exercise 5 of 6. If significant compound movements remain in the session factor that into any load or set recommendations. Never suggest pushing intensity on an early exercise if doing so would compromise the quality of remaining compound work. When muscle-group remaining is 1 or more, factor in cumulative fatigue for that muscle group and reference it in the cue. Treat muscle-group remaining count and session total as independent context signals — both should influence the recommendation when relevant.\n\nContext:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- Session ' + (sessionCount + 1) + ' overall\n- Rep target range: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Sets so far: ' + setsSummary + '\n- ' + prevStr + '\n- Trigger reason: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + '\n\nWrite ONE coaching cue (1-2 sentences). No greeting, no sign-off. Just the coaching insight.';
 }
 
 async function _fetchCoachingCue(prompt) {
@@ -9419,16 +9422,18 @@ function _isUnilateral(exId) {
 // session, how many were completed before this exercise, and how many exercises
 // remain after this exercise (i.e. exercises the user hasn't started yet).
 function _getSessionExerciseContext(exId) {
-  var fallback = { totalExercises: 1, completedExercises: 0, exercisesRemaining: 0, currentExerciseIndex: 0 };
+  var fallback = { totalExercises: 1, completedExercises: 0, exercisesRemaining: 0, currentExerciseIndex: 0, muscleGroupRemaining: 0 };
   if (!activeSession) return fallback;
   var _day = state.program && state.program.find(function(d) { return d.id === activeSession.dayId; });
   var exercises = (_day && _day.exercises) || [];
   var totalExercises = exercises.length;
   if (totalExercises === 0) return fallback;
 
+  var currentMuscle = MUSCLE_MAP[exId] || null;
   var currentExerciseIndex = 0;
   var completedExercises = 0;
   var exercisesRemaining = 0;
+  var muscleGroupRemaining = 0;
   var foundCurrent = false;
 
   exercises.forEach(function(ex, i) {
@@ -9444,6 +9449,12 @@ function _getSessionExerciseContext(exId) {
     } else {
       // Count exercises that come after the current exercise
       exercisesRemaining++;
+      // Count same-muscle exercises after current that are not yet fully completed
+      var afterSets = (activeSession.sets[ex.id] || []).filter(function(s) { return !s.coachRemoved; });
+      var isComplete = afterSets.length > 0 && afterSets.every(function(s) { return s.done; });
+      if (!isComplete && currentMuscle && MUSCLE_MAP[ex.id] === currentMuscle) {
+        muscleGroupRemaining++;
+      }
     }
   });
 
@@ -9452,6 +9463,7 @@ function _getSessionExerciseContext(exId) {
     completedExercises: completedExercises,
     exercisesRemaining: exercisesRemaining,
     currentExerciseIndex: currentExerciseIndex,
+    muscleGroupRemaining: muscleGroupRemaining,
   };
 }
 
