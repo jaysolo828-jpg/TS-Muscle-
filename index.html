@@ -9447,9 +9447,16 @@ function _canSuggestDynamicSet(exId) {
   const sets = activeSession.sets[exId];
   if (!sets || sets.length === 0) return false;
 
-  // Must have completed at least half of the pre-loaded set count
+  // Must have completed at least 75% of the pre-loaded set count
   const doneSets = sets.filter(s => s.done).length;
-  if (doneSets < Math.ceil(sets.length / 2)) return false;
+  if (doneSets < Math.ceil(sets.length * 0.75)) return false;
+
+  // RPE gate: only suggest when ALL completed sets have RPE logged and RPE ≤ 6.
+  // If any completed set lacks an RPE value, treat as insufficient data — do not fire.
+  const doneSetsData = sets.filter(s => s.done);
+  const allRPELogged = doneSetsData.every(s => s.rpe !== undefined && s.rpe !== null && s.rpe !== '');
+  if (!allRPELogged) return false;
+  if (doneSetsData.some(s => Number(s.rpe) >= 7)) return false;
 
   const muscle = MUSCLE_MAP[exId];
   if (!muscle || !VOLUME_LANDMARKS[muscle]) return false;
