@@ -5260,9 +5260,10 @@ function getCycleWeekBandRepTarget(exId) {
   if (band === 'recovery') return minReps;
   // Test week: no rep tightening — user is testing max effort, not following a band target
   if (state.onboardingComplete && !state.testWeekComplete) return minReps;
-  if (band === '1-2') return Math.max(minReps, Math.round(minReps + span / 6));
-  if (band === '3-4') return Math.round((minReps + maxReps) / 2);
-  return Math.min(maxReps, Math.round(maxReps - span / 6)); // '5-6'
+  const thirdW = Math.floor(span / 3);
+  if (band === '1-2') return minReps;
+  if (band === '3-4') return minReps + thirdW + 1;
+  return maxReps - thirdW; // '5-6'
 }
 
 // Returns a tightened 2-rep range string (e.g. '10-11') for the current cycle
@@ -5274,9 +5275,19 @@ function getCycleWeekBandRepRange(exId) {
   const parts = targetReps.split(/[–\-]/);
   const minReps = parseInt(parts[0]) || 1;
   const maxReps = parseInt(parts[1]) || minReps;
-  const t = getCycleWeekBandRepTarget(exId);
-  if (t < maxReps) return `${t}-${t + 1}`;
-  return `${Math.max(minReps, t - 1)}-${t}`;
+  const span = maxReps - minReps;
+  const thirdW = Math.floor(span / 3);
+  const band = getCycleWeekBand();
+  let lo, hi;
+  if (band === '1-2') { lo = minReps; hi = minReps + thirdW; }
+  else if (band === '3-4') { lo = minReps + thirdW + 1; hi = maxReps - thirdW - 1; }
+  else { lo = maxReps - thirdW; hi = maxReps; } // '5-6' or recovery
+  // Ensure a 2-number range for display consistency
+  if (lo === hi) {
+    if (lo < maxReps) hi = lo + 1;
+    else lo = Math.max(minReps, hi - 1);
+  }
+  return `${lo}-${hi}`;
 }
 
 // Returns the coaching copy for the current cycle week band and goal,
@@ -12184,7 +12195,7 @@ function checkConsistencyMilestone(totalSessions, streak) {
 // Returns { hit: N, total: M } where:
 //   total = number of Week 5–6 sessions (weekCount 5 or 6, non-deload)
 //   hit   = sessions where ≥50% of logged tracked exercises reached the
-//           Week-5–6 band target (maxReps − span/6)
+//           Week-5–6 band target (maxReps − floor(span/3))
 function _computeWeekBandPerf(cycleEntries, goal) {
   const TRACKED = ['bench','incline','chest-row','pulldown','rdl','legpress-a','legpress-b'];
   // Gate: must have at least one entry with weekCount (post-update sessions only)
@@ -12208,7 +12219,7 @@ function _computeWeekBandPerf(cycleEntries, goal) {
       const maxR = parseInt(parts[1]) || minR;
       if (maxR <= minR) return;
       const span = maxR - minR;
-      const bandTarget = Math.min(maxR, Math.round(maxR - span / 6));
+      const bandTarget = maxR - Math.floor(span / 3);
       const avgReps = sets.reduce((s, s2) => s + parseInt(s2.reps), 0) / sets.length;
       results.push(avgReps >= bandTarget);
     });
