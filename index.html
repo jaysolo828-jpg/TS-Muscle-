@@ -6268,7 +6268,21 @@ function renderHome() {
     .filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done)))
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   const weekRemainder = (state.totalSessions || 0) % (state.trainingDaysPerWeek || state.program?.length || 4);
-  const sessionsThisWeek = weekRemainder === 0 ? [] : realSessionsOrdered.slice(-weekRemainder);
+
+  // If the week rolled over today (session-based), keep the completed session cards
+  // visible until midnight — only the display is delayed, not the underlying state.
+  const _rolloverTs = state.weekRolledOverAt || 0;
+  const _todayMid = new Date(); _todayMid.setHours(0, 0, 0, 0);
+  const _rolloverMid = _rolloverTs ? new Date(_rolloverTs) : null;
+  if (_rolloverMid) _rolloverMid.setHours(0, 0, 0, 0);
+  const _showCompletedWeek = weekRemainder === 0
+    && _rolloverTs > 0
+    && _rolloverMid !== null
+    && _rolloverMid.getTime() === _todayMid.getTime();
+
+  const sessionsThisWeek = _showCompletedWeek
+    ? realSessionsOrdered.slice(-(state.trainingDaysPerWeek || state.program?.length || 4))
+    : (weekRemainder === 0 ? [] : realSessionsOrdered.slice(-weekRemainder));
   const completedThisWeekIds = new Set(sessionsThisWeek.map(e => e.dayId));
 
   visibleDays.forEach((day, dayIdx) => {
@@ -6343,6 +6357,14 @@ function renderHome() {
     `;
     container.appendChild(card);
   });
+
+  // Week-complete message — shown until midnight when the session-based rollover happened today
+  if (_showCompletedWeek && state.weekRolledOverPrevWeek) {
+    const _wcMsg = document.createElement('div');
+    _wcMsg.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:13px;color:var(--gray);text-align:center;padding:6px 0 10px;letter-spacing:0.3px;';
+    _wcMsg.textContent = `Week ${state.weekRolledOverPrevWeek} complete · Well done.`;
+    container.appendChild(_wcMsg);
+  }
 
 }
 
@@ -11159,9 +11181,11 @@ function finalizeEndSession(save) {
       .filter(h => new Date(h.date).getTime() >= (state.weekStartTimestamp || 0)).length;
     const _calendarBased = _daysSinceWeekStart >= 7 && !_sessionBased && _sessionsThisWeek >= 1;
     if (_sessionBased || _calendarBased) {
+      if (_sessionBased) state.weekRolledOverAt = Date.now();
       state.weekStartTimestamp = Date.now();
       state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
       const prevWeek = state.weekCount;
+      if (_sessionBased) state.weekRolledOverPrevWeek = prevWeek;
       state.weekCount = Math.min(state.weekCount + 1, 8);
       // Cycle complete — was on week 8, now would roll over
       if (prevWeek === 8) {
@@ -14446,7 +14470,6 @@ function renderStrengthScoreCard() {
         </div>
         ${_deltaStr ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:${_deltaClr};letter-spacing:1px;margin-top:8px;">${_deltaStr} <span style="color:var(--gray);">LAST 30 DAYS</span></div>` : ''}
       </div>
-      ${_buildScoreSparkline(snaps) ? `<div style="flex-shrink:0;">${_buildScoreSparkline(snaps)}</div>` : ''}
     </div>
     <div class="ts-score-bar-track" style="position:relative;overflow:visible;margin-top:16px;">
       <div class="ts-score-bar-fill" style="width:${_barPct}%;background:${level.color};border-radius:6px;"></div>
@@ -19321,7 +19344,6 @@ function renderShowingUpAnyway() {
   container.innerHTML = `
     <div class="section-title">SHOWING UP <span>ANYWAY</span></div>
     <div class="card" style="padding:20px 20px 18px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:14px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">LOW-MOOD SESSIONS · PRE ≤ NEUTRAL</div>
       <div style="font-size:17px; color:var(--cream); line-height:1.55; margin-bottom:14px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.2px;">${primaryInsight}</div>
       ${flipHtml}
       ${shareBtn}
