@@ -5283,6 +5283,7 @@ function getCycleWeekBandRepRange(exId) {
   else if (band === '3-4') { lo = minReps + thirdW + 1; hi = maxReps - thirdW - 1; }
   else { lo = maxReps - thirdW; hi = maxReps; } // '5-6' or recovery
   // Ensure a 2-number range for display consistency
+  if (lo > hi) { const tmp = lo; lo = hi; hi = tmp; }
   if (lo === hi) {
     if (lo < maxReps) hi = lo + 1;
     else lo = Math.max(minReps, hi - 1);
