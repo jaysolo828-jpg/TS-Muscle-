@@ -9360,8 +9360,10 @@ function calcIntelSuggestedReps(exId, setIndex) {
     // Moderate effort — hold steady
     suggested = reps;
   } else {
-    // High effort — ease off slightly
-    suggested = Math.max(minReps, reps - 1);
+    // High effort — ease off slightly.
+    // If already below range floor, don't clamp back up — that would ignore
+    // the strong fatigue signal (below-range reps + high RPE).
+    suggested = Math.max(reps < minReps ? 1 : minReps, reps - 1);
   }
   return suggested;
 }
