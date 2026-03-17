@@ -18880,7 +18880,7 @@ function renderMoodInsights() {
   const log = state.moodLog || [];
 
   if (log.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">Log a few moods to unlock your Workout Mood Lift score.</div></div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">Log a few moods to unlock your mood pattern insights.</div></div>';
     return;
   }
 
@@ -19052,17 +19052,7 @@ function renderMoodInsights() {
         </div>`;
     }
 
-    slides.push(`
-      <div class="card" style="padding:16px; text-align:center;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WORKOUT MOOD LIFT</div>
-        <div style="font-family:'Bebas Neue',cursive; font-size:42px; color:${liftColor}; line-height:1;">${liftArrow} ${liftDisplay}</div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-top:6px;">${liftLabel}</div>
-        <div style="font-size:11px; color:var(--gray); margin-top:4px;">across ${lifts.length} session${lifts.length !== 1 ? 's' : ''} with pre + post logs</div>
-        ${liftNarrative ? `<div style="font-size:12px; color:var(--gray); line-height:1.6; margin-top:12px; padding-top:12px; border-top:1px solid #333; text-align:left;">${liftNarrative}</div>` : ''}
-        ${barChartHtml}
-      </div>`);
-
-    // Slide 2 — Best session + Showed up anyway
+    // Slide 1 — Best session + Showed up anyway
     const statCards = [];
     if (bestSession && bestSession.lift > 0) {
       const bd    = new Date(bestSession.day + 'T12:00:00');
