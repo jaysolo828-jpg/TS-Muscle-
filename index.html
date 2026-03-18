@@ -19396,19 +19396,11 @@ function renderMoodInsights() {
 
   // Slide 0 — Overview (always)
   slides.push(`
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-      <div class="card" style="text-align:center; padding:14px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">CHECK-IN STREAK</div>
-        <div style="font-size:22px; margin-bottom:2px;">🔥</div>
-        <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${mindsetStreak}</div>
-        <div style="font-size:11px; color:var(--gray);">day${mindsetStreak !== 1 ? 's' : ''} in a row</div>
-      </div>
-      <div class="card" style="text-align:center; padding:14px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">THIS WEEK</div>
-        <div style="font-size:22px; margin-bottom:2px;">📅</div>
-        <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${logsThisWeek}</div>
-        <div style="font-size:11px; color:var(--gray);">mood log${logsThisWeek !== 1 ? 's' : ''}</div>
-      </div>
+    <div class="card" style="text-align:center; padding:14px;">
+      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">THIS WEEK</div>
+      <div style="font-size:22px; margin-bottom:2px;">📅</div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${logsThisWeek}</div>
+      <div style="font-size:11px; color:var(--gray);">mood log${logsThisWeek !== 1 ? 's' : ''}</div>
     </div>`);
 
   // Slide 1 — Mood Lift + narrative inline + bar chart
