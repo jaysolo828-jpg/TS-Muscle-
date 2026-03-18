@@ -19330,8 +19330,18 @@ function renderMoodInsights() {
   // Best session (biggest single-day positive lift)
   const bestSession = lifts.length ? lifts.reduce((best, l) => l.lift > best.lift ? l : best, lifts[0]) : null;
 
-  // Showed up anyway — came in at mood ≤2, still logged post
-  const showedUpAnyway = lifts.filter(l => l.preEntry.value <= 2).length;
+  // Showed up anyway — pre mood ≤3 AND a completed workout session exists for that day
+  const _suaHistory = state.history || [];
+  const _suaSessionByDay = {};
+  _suaHistory.forEach(s => {
+    if (s && s.date) {
+      const day = _localDateKey(s.date);
+      if (!_suaSessionByDay[day]) _suaSessionByDay[day] = s;
+    }
+  });
+  const showedUpAnyway = Object.entries(byDay)
+    .filter(([day, d]) => d.pre && d.pre.value <= 3 && _suaSessionByDay[day])
+    .length;
 
   // Check-in streak
   const logDays = new Set(log.map(e => _localDateKey(e.date)));
