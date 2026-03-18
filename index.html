@@ -8977,7 +8977,7 @@ function toggleSetDone(exId, setIndex) {
 // ============================================================
 // BETWEEN-SET COACHING CUE SYSTEM
 // ============================================================
-const _COACHING_API_KEY = ''; // Set your Anthropic API key here
+const _COACHING_API_KEY = '__ANTHROPIC_API_KEY__'; // Injected at deploy time via GitHub Actions secret
 let _coachingCueAbortController = null;
 var _coachingCueObservers = {}; // exId → IntersectionObserver
 let _lastSessionInsights = {}; // exId -> insight string or null (display-only, never saved)
