@@ -5699,7 +5699,7 @@ function updatePauseSettingsLabel() {
     const reasonLabels = { illness: 'Illness', injury: 'Injury', emergency: 'Emergency', travel: 'Travel' };
     label.textContent = 'Resume Program';
     label.style.color = 'var(--warning)';
-    sub.textContent = `Paused ${days} day${days !== 1 ? 's' : ''} ago · ${reasonLabels[state.pauseReason] || 'On pause'} — tap to resume`;
+    sub.textContent = `Paused ${days} day${days !== 1 ? 's' : ''} ago · ${reasonLabels[state.pauseReason || ''] || 'On pause'} — tap to resume`;
     sub.style.color = 'var(--warning)';
     if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--warning)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
   } else {
@@ -5789,6 +5789,7 @@ function selectPauseReason(btn, reason) {
 }
 
 function confirmPauseProgram() {
+  if (state.pauseUsedThisCycle) return;
   const selected = document.querySelector('.pause-reason-btn.selected');
   if (!selected) return;
   const reason = selected.dataset.reason;
@@ -5816,7 +5817,7 @@ function showResumeProgramModal() {
   const pausedDate = new Date(state.pausedAt);
   const days = Math.floor((Date.now() - pausedDate) / (1000 * 60 * 60 * 24));
   const reasonLabels = { illness: 'illness', injury: 'injury', emergency: 'a personal emergency', travel: 'travel' };
-  const reasonText = reasonLabels[state.pauseReason] || 'recovery';
+  const reasonText = reasonLabels[state.pauseReason || ''] || 'recovery';
 
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -6034,7 +6035,7 @@ function renderHome() {
     const daysLeft = Math.max(0, 14 - pausedDays);
     const urgency = pausedDays > 10;
     const reasonIcons = { illness: '🤒', injury: '🩹', emergency: '🏠', travel: '✈️' };
-    const icon = reasonIcons[state.pauseReason] || '⏸';
+    const icon = reasonIcons[state.pauseReason || ''] || '⏸';
     pauseBanner.style.cssText = `margin-bottom:12px; background:var(--dark2); border:1px solid ${urgency ? 'rgba(255,107,107,0.5)' : 'rgba(243,156,18,0.4)'}; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:14px; cursor:pointer;`;
     pauseBanner.onclick = () => showResumeProgramModal();
     pauseBanner.innerHTML = `
@@ -11164,6 +11165,10 @@ function finalizeEndSession(save) {
       save = false;
     }
   }
+  if (save && activeSession && state.programPaused) {
+    showToast('Program is paused — session not saved.');
+    save = false;
+  }
   if (save && activeSession) {
     activeSession.notes = document.getElementById('session-notes').value;
     activeSession.endTime = Date.now();
@@ -11242,7 +11247,7 @@ function finalizeEndSession(save) {
     // This prevents low-frequency users from waiting a month to reach the next week.
     if (!state.weekStartTimestamp) state.weekStartTimestamp = Date.now();
     const _weekLen = state.trainingDaysPerWeek || state.program?.length || 4;
-    const _sessionBased = state.totalSessions % _weekLen === 0;
+    const _sessionBased = (state.totalSessions || 0) % _weekLen === 0;
     const _daysSinceWeekStart = (Date.now() - state.weekStartTimestamp) / 86400000;
     const _sessionsThisWeek = (state.history || [])
       .filter(h => new Date(h.date).getTime() >= (state.weekStartTimestamp || 0)).length;
@@ -11415,6 +11420,9 @@ function finalizeEndSession(save) {
             !ex.bonusDropsAfterCycle || ex.bonusDropsAfterCycle >= state.cycleCount
           );
         });
+        if (state.programPaused && state.pauseStreak != null) {
+          state.streak = state.pauseStreak;
+        }
         state.pauseUsedThisCycle = false;
         state.programPaused = false;
         delete state.pausedAt;
@@ -12753,7 +12761,7 @@ function recalcPRsFromHistory() {
 
   state.history.forEach(entry => {
     Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
-      sets.filter(s => s.done && s.weight && s.reps).forEach(set => {
+      sets.filter(s => s.done && s.weight && s.reps && !s.coachRemoved).forEach(set => {
         const w = parseFloat(set.weight);
         const r = parseInt(set.reps);
         if (!w || !r) return;
