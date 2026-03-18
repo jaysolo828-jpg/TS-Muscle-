@@ -38,9 +38,21 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  /* Auto-hiding scroll indicator: brand-red, flush right, thin line */
+  /* Hide native scrollbars; custom scroll thumb used instead */
   * { scrollbar-width: none; }
   *::-webkit-scrollbar { display: none; }
+  .scroll-thumb {
+    position: fixed;
+    right: 0;
+    width: 3px;
+    min-height: 40px;
+    background: var(--red);
+    border-radius: 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 99999;
+  }
 
   html {
     overscroll-behavior: none;
@@ -4045,69 +4057,65 @@
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ============================================================
-// AUTO-HIDE SCROLL INDICATOR — brand-red, flush right, thin line
+// SCROLL INDICATOR — brand-red thumb, flush right, proportional
 // ============================================================
 (function(){
-  var indicators = new WeakMap();
+  var thumbs = new WeakMap();
   var fadeTimers = new WeakMap();
 
-  function getIndicator(el){
-    if(indicators.has(el)) return indicators.get(el);
-    var bar = document.createElement('div');
-    bar.style.cssText = 'position:absolute;top:0;right:0;width:3px;min-height:18px;background:var(--red);border-radius:0;opacity:0;transition:opacity 0.35s ease;pointer-events:none;z-index:99999;';
-    // Ensure the scrollable container is a positioning context
-    var pos = getComputedStyle(el).position;
-    if(pos === 'static') el.style.position = 'relative';
-    el.appendChild(bar);
-    indicators.set(el, bar);
-    return bar;
+  function getThumb(el){
+    if(thumbs.has(el)) return thumbs.get(el);
+    var t = document.createElement('div');
+    t.className = 'scroll-thumb';
+    document.body.appendChild(t);
+    thumbs.set(el, t);
+    return t;
   }
 
-  function updateIndicator(el){
+  function updateThumb(el){
     var sh = el.scrollHeight, ch = el.clientHeight;
-    if(sh <= ch) return; // not scrollable
-    var bar = getIndicator(el);
+    if(sh <= ch){
+      if(thumbs.has(el)) thumbs.get(el).style.opacity = '0';
+      return;
+    }
+    var t = getThumb(el);
+    var rect = el.getBoundingClientRect();
     var ratio = ch / sh;
-    var barH = Math.max(18, Math.round(ch * ratio));
-    var maxTop = ch - barH;
+    var tH = Math.max(40, Math.round(rect.height * ratio));
     var scrollRatio = el.scrollTop / (sh - ch);
-    var top = Math.round(scrollRatio * maxTop);
-    bar.style.height = barH + 'px';
-    bar.style.top = top + 'px';
-    bar.style.opacity = '1';
+    var trackH = rect.height - tH;
+    var top = rect.top + Math.round(scrollRatio * trackH);
+    t.style.height = tH + 'px';
+    t.style.top = top + 'px';
+    t.style.right = Math.round(window.innerWidth - rect.right) + 'px';
+    t.style.opacity = '1';
     clearTimeout(fadeTimers.get(el));
-    fadeTimers.set(el, setTimeout(function(){ bar.style.opacity = '0'; }, 800));
+    fadeTimers.set(el, setTimeout(function(){ t.style.opacity = '0'; }, 900));
   }
 
-  function findScrollParents(el){
-    var found = [];
+  function findScrollable(el){
     while(el && el !== document.body){
       if(el instanceof HTMLElement){
         var s = getComputedStyle(el);
-        if(s.overflowY === 'auto' || s.overflowY === 'scroll' ||
-           s.overflowX === 'auto' || s.overflowX === 'scroll'){
-          found.push(el);
-        }
+        if(s.overflowY === 'auto' || s.overflowY === 'scroll') return el;
       }
       el = el.parentElement;
     }
-    return found;
+    return null;
   }
 
-  // Capture-phase scroll listener
   document.addEventListener('scroll', function(e){
     var el = e.target;
     if(el === document || el === document.documentElement) el = document.scrollingElement || document.documentElement;
-    if(el instanceof HTMLElement) updateIndicator(el);
+    if(el instanceof HTMLElement) updateThumb(el);
   }, true);
 
-  // Touch/wheel listeners for extra coverage
   function onInteraction(e){
-    var parents = findScrollParents(e.target);
-    for(var i = 0; i < parents.length; i++) updateIndicator(parents[i]);
+    var el = findScrollable(e.target);
+    if(el) updateThumb(el);
   }
-  document.addEventListener('touchmove', onInteraction, {passive: true, capture: true});
-  document.addEventListener('wheel', onInteraction, {passive: true, capture: true});
+  document.addEventListener('touchmove', onInteraction, {passive:true, capture:true});
+  document.addEventListener('wheel', onInteraction, {passive:true, capture:true});
 })();
 
 // ============================================================
