@@ -14509,7 +14509,7 @@ function renderStrengthScoreCard() {
     Consistency of training over the past 28 days and average RPE over 60 days also factor in.<br><br>
     Requires at least <strong style="color:var(--cream);">3 sessions</strong> with those lifts logged. Fully accurate after <strong style="color:var(--cream);">8 sessions</strong>. Add your bodyweight, age, and biological sex in Settings → Profile for the best result.
   </div>`;
-  const _infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:2px solid var(--red-text);padding:0;cursor:pointer;color:var(--red-text);font-size:14px;line-height:1;width:44px;height:44px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.82;" aria-label="About this score">ℹ</button>`;
+  const _infoBtn = `<button onclick="_toggleScoreInfo(this)" style="background:none;border:2px solid var(--red-text);padding:0;cursor:pointer;color:var(--red-text);font-size:14px;line-height:1;width:44px;height:44px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.82;" aria-label="About this score"><span style="font-size:20px;line-height:1;">ℹ</span></button>`;
 
   // ---- Empty state: show when no BW, not enough data, or score couldn't be calculated ----
   if (!hasBW || !quality.hasMinData || score === null) {
