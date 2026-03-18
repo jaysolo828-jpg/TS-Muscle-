@@ -19391,40 +19391,40 @@ function renderMoodInsights() {
     return;
   }
 
-  // ── Session-based consistency (this week / last week) ────────
-  const lastWeekStart = new Date(weekStart);
-  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-  const lastWeekStartKey = _localDateKey(lastWeekStart);
-  const weekStartKey     = _localDateKey(weekStart);
-  const todayKey2        = _localDateKey(today);
+  // ── Session-based consistency (this training week / last training week) ──
+  // Uses state.weekStartTimestamp — the same boundary the app uses for weekly
+  // set counts and volume tracking — so "this week" matches training week, not
+  // calendar week.
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const trainingWeekStart = state.weekStartTimestamp || 0;
+  const trainingLastWeekStart = trainingWeekStart - WEEK_MS;
 
-  const workoutsThisWeek = (state.history || []).filter(h => {
-    if (!h.date) return false;
-    const k = _localDateKey(h.date);
-    return k >= weekStartKey && k <= todayKey2;
-  }).length;
+  const workoutsThisWeek = (state.history || []).filter(h =>
+    h.date && new Date(h.date).getTime() >= trainingWeekStart
+  ).length;
   const workoutsLastWeek = (state.history || []).filter(h => {
     if (!h.date) return false;
-    const k = _localDateKey(h.date);
-    return k >= lastWeekStartKey && k < weekStartKey;
+    const t = new Date(h.date).getTime();
+    return t >= trainingLastWeekStart && t < trainingWeekStart;
   }).length;
 
   const moodDaysThisWeekSet = new Set(allDeduped
-    .filter(e => { const k = _localDateKey(e.date); return k >= weekStartKey && k <= todayKey2; })
+    .filter(e => new Date(e.date).getTime() >= trainingWeekStart)
     .map(e => _localDateKey(e.date)));
-  const sessionsWithMoodThisWeek = (state.history || []).filter(h => {
-    if (!h.date) return false;
-    const k = _localDateKey(h.date);
-    return k >= weekStartKey && k <= todayKey2 && moodDaysThisWeekSet.has(k);
-  }).length;
+  const sessionsWithMoodThisWeek = (state.history || []).filter(h =>
+    h.date && new Date(h.date).getTime() >= trainingWeekStart &&
+    moodDaysThisWeekSet.has(_localDateKey(h.date))
+  ).length;
 
-  const moodDaysLastWeekSet = new Set(allDeduped
-    .filter(e => { const k = _localDateKey(e.date); return k >= lastWeekStartKey && k < weekStartKey; })
-    .map(e => _localDateKey(e.date)));
+  const moodDaysLastWeekSet = new Set(allDeduped.filter(e => {
+    const t = new Date(e.date).getTime();
+    return t >= trainingLastWeekStart && t < trainingWeekStart;
+  }).map(e => _localDateKey(e.date)));
   const sessionsWithMoodLastWeek = (state.history || []).filter(h => {
     if (!h.date) return false;
-    const k = _localDateKey(h.date);
-    return k >= lastWeekStartKey && k < weekStartKey && moodDaysLastWeekSet.has(k);
+    const t = new Date(h.date).getTime();
+    return t >= trainingLastWeekStart && t < trainingWeekStart &&
+      moodDaysLastWeekSet.has(_localDateKey(h.date));
   }).length;
 
   // ── Build slides ─────────────────────────────────────────────
