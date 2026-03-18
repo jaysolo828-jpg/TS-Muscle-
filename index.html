@@ -12893,9 +12893,10 @@ function renderHistory() {
 
   // ── 1. LIFETIME ──────────────────────────────────────────
   const totalVolume = hist.reduce((t, entry) =>
-    t + Object.values(entry.sets || {}).reduce((s, sets) =>
-      s + sets.filter(s2 => s2.done).reduce((s3, s2) => s3 + (parseFloat(s2.weight) || 0) * (parseInt(s2.reps) || 0), 0)
-    , 0), 0);
+    t + Object.entries(entry.sets || {}).reduce((s, [exId2, sets]) => {
+      const uniMult = (UNILATERAL_EXERCISES.has(exId2) || state.customUnilateralExercises?.[exId2]) ? 2 : 1;
+      return s + sets.filter(s2 => s2.done && !s2.coachRemoved).reduce((s3, s2) => s3 + (parseFloat(s2.weight) || 0) * (parseInt(s2.reps) || 0), 0) * uniMult;
+    }, 0), 0);
   const totalMins = hist.reduce((s, e) => s + (e.duration || 0), 0);
   const totalHrs = Math.floor(totalMins / 60);
   const remMins = totalMins % 60;
@@ -13948,7 +13949,8 @@ function renderProgressChart() {
     const maxReps = Math.max(...doneSets.map(s => parseInt(s.reps) || 0));
 
     if (chartMode === 'volume') {
-      const volume = doneSets.reduce((sum, s) => sum + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0), 0);
+      const uniMult = (UNILATERAL_EXERCISES.has(exId) || state.customUnilateralExercises?.[exId]) ? 2 : 1;
+      const volume = doneSets.filter(s => !s.coachRemoved).reduce((sum, s) => sum + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0), 0) * uniMult;
       if (volume > 0) dataPoints.push({ date: new Date(entry.date), weight: volume, setsCount: doneSets.length, avgRPE, maxReps });
     } else {
       const maxWeight = Math.max(...doneSets.map(s => parseFloat(s.weight) || 0));
