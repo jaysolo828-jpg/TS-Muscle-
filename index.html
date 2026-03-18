@@ -4054,7 +4054,8 @@
 (function(){
   const timers = new WeakMap();
   document.addEventListener('scroll', function(e){
-    const el = e.target;
+    var el = e.target;
+    if(el === document || el === document.documentElement) el = document.scrollingElement || document.documentElement;
     if(!(el instanceof HTMLElement)) return;
     el.classList.add('is-scrolling');
     clearTimeout(timers.get(el));
