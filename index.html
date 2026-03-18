@@ -19391,6 +19391,42 @@ function renderMoodInsights() {
     return;
   }
 
+  // ── Session-based consistency (this week / last week) ────────
+  const lastWeekStart = new Date(weekStart);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const lastWeekStartKey = _localDateKey(lastWeekStart);
+  const weekStartKey     = _localDateKey(weekStart);
+  const todayKey2        = _localDateKey(today);
+
+  const workoutsThisWeek = (state.history || []).filter(h => {
+    if (!h.date) return false;
+    const k = _localDateKey(h.date);
+    return k >= weekStartKey && k <= todayKey2;
+  }).length;
+  const workoutsLastWeek = (state.history || []).filter(h => {
+    if (!h.date) return false;
+    const k = _localDateKey(h.date);
+    return k >= lastWeekStartKey && k < weekStartKey;
+  }).length;
+
+  const moodDaysThisWeekSet = new Set(allDeduped
+    .filter(e => { const k = _localDateKey(e.date); return k >= weekStartKey && k <= todayKey2; })
+    .map(e => _localDateKey(e.date)));
+  const sessionsWithMoodThisWeek = (state.history || []).filter(h => {
+    if (!h.date) return false;
+    const k = _localDateKey(h.date);
+    return k >= weekStartKey && k <= todayKey2 && moodDaysThisWeekSet.has(k);
+  }).length;
+
+  const moodDaysLastWeekSet = new Set(allDeduped
+    .filter(e => { const k = _localDateKey(e.date); return k >= lastWeekStartKey && k < weekStartKey; })
+    .map(e => _localDateKey(e.date)));
+  const sessionsWithMoodLastWeek = (state.history || []).filter(h => {
+    if (!h.date) return false;
+    const k = _localDateKey(h.date);
+    return k >= lastWeekStartKey && k < weekStartKey && moodDaysLastWeekSet.has(k);
+  }).length;
+
   // ── Build slides ─────────────────────────────────────────────
   const slides = [];
 
@@ -19398,9 +19434,10 @@ function renderMoodInsights() {
   slides.push(`
     <div class="card" style="text-align:center; padding:14px;">
       <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">THIS WEEK</div>
-      <div style="font-size:22px; margin-bottom:2px;">📅</div>
-      <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${logsThisWeek}</div>
-      <div style="font-size:11px; color:var(--gray);">mood log${logsThisWeek !== 1 ? 's' : ''}</div>
+      <div style="font-size:22px; margin-bottom:2px;">💡</div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${sessionsWithMoodThisWeek} of ${workoutsThisWeek}</div>
+      <div style="font-size:11px; color:var(--gray);">sessions this week</div>
+      ${workoutsLastWeek > 0 ? `<div style="font-size:11px; color:var(--gray); margin-top:4px;">${sessionsWithMoodLastWeek} log${sessionsWithMoodLastWeek !== 1 ? 's' : ''} last week</div>` : ''}
     </div>`);
 
   // Slide 1 — Mood Lift + narrative inline + bar chart
