@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v26';
+const CACHE_NAME = 'ts-muscle-v27';
 const ASSETS = ['./index.html', './icon.png', './icon-192.png', './manifest.json'];
 
 // On install: precache all app assets so the app works fully offline
@@ -22,8 +22,23 @@ self.addEventListener('activate', e => {
 // On fetch: network first, fall back to cache so app loads after restart with no internet.
 // For HTML requests use cache:'no-store' to bypass the browser's HTTP cache — without this
 // the browser's own cache can silently serve a stale index.html, preventing version banners.
+// config.js is always fetched fresh — it is served by a Netlify Edge Function that injects
+// the API key at runtime. It must never be served from cache.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+
+  // config.js: always network, never cache. If network fails return empty key as fallback.
+  if (e.request.url.includes('config.js')) {
+    e.respondWith(
+      fetch(new Request(e.request, { cache: 'no-store' }))
+        .catch(() => new Response("window.ANTHROPIC_API_KEY = '';", {
+          status: 200,
+          headers: { 'content-type': 'application/javascript' }
+        }))
+    );
+    return;
+  }
+
   const isHTML = e.request.destination === 'document' ||
     e.request.url.endsWith('.html') ||
     new URL(e.request.url).pathname === '/';
