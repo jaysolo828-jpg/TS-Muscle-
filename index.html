@@ -8951,9 +8951,9 @@ function _evalCoachingCueTriggers(exId, setIndex) {
   var allowedTriggers;
   if (isCalibrationWeek) {
     allowedTriggers = { 5: true };
-  } else if (sessionCount <= 1) {
+  } else if (sessionCount <= 2) {
     allowedTriggers = { 5: true };
-  } else if (sessionCount <= 3) {
+  } else if (sessionCount <= 4) {
     allowedTriggers = { 1: true, 2: true, 5: true };
   } else {
     allowedTriggers = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true };
