@@ -19330,8 +19330,8 @@ function renderMoodInsights() {
   // Best session (biggest single-day positive lift)
   const bestSession = lifts.length ? lifts.reduce((best, l) => l.lift > best.lift ? l : best, lifts[0]) : null;
 
-  // Showed up anyway — came in at mood ≤2, still logged post
-  const showedUpAnyway = lifts.filter(l => l.preEntry.value <= 2).length;
+  // Showed up anyway — came in at pre mood ≤3, regardless of whether post was logged
+  const showedUpAnyway = dedupedPre.filter(e => e.value <= 3).length;
 
   // Check-in streak
   const logDays = new Set(log.map(e => _localDateKey(e.date)));
