@@ -2043,7 +2043,7 @@
   }
 
 </style>
-<script src="config.js"></script>
+<script src="config.js?v=20260318"></script>
 </head>
 <body>
 <!-- SPLASH SCREEN -->
@@ -8979,7 +8979,7 @@ function toggleSetDone(exId, setIndex) {
 // ============================================================
 // BETWEEN-SET COACHING CUE SYSTEM
 // ============================================================
-const _COACHING_API_KEY = window.ANTHROPIC_API_KEY || '';
+function _getCoachingApiKey() { return window.ANTHROPIC_API_KEY || ''; }
 let _coachingCueAbortController = null;
 var _coachingCueObservers = {}; // exId → IntersectionObserver
 let _lastSessionInsights = {}; // exId -> insight string or null (display-only, never saved)
@@ -9181,7 +9181,7 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
 }
 
 async function _fetchCoachingCue(prompt) {
-  if (!_COACHING_API_KEY) return null;
+  if (!_getCoachingApiKey()) return null;
   _cancelCoachingCue();
   var controller = new AbortController();
   _coachingCueAbortController = controller;
@@ -9191,7 +9191,7 @@ async function _fetchCoachingCue(prompt) {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': _COACHING_API_KEY,
+        'x-api-key': _getCoachingApiKey(),
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
@@ -9218,7 +9218,7 @@ async function _fetchCoachingCue(prompt) {
 // LAST SESSION INSIGHT FEATURE
 // ============================================================
 async function _fetchLastSessionInsights() {
-  if (!activeSession || !_COACHING_API_KEY) return;
+  if (!activeSession || !_getCoachingApiKey()) return;
   // Never fire during calibration week, deload, or rest week
   if ((state.cycleCount || 1) === 1 && (state.weekCount || 1) === 1) return;
   if (state.isDeloadWeek || state.isRestWeek || activeSession.isDeload) return;
@@ -9274,7 +9274,7 @@ async function _fetchLastSessionInsights() {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': _COACHING_API_KEY,
+        'x-api-key': _getCoachingApiKey(),
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
