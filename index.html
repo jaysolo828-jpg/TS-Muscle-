@@ -9439,25 +9439,40 @@ function _watchCoachingCueVisibility(exId) {
 }
 
 async function _maybeFireCoachingCue(exId, setIndex) {
-  if (!activeSession) return;
+  console.log('[CoachingCue] _maybeFireCoachingCue called — exId:', exId, 'setIndex:', setIndex);
+  console.log('[CoachingCue] 1. activeSession truthy:', !!activeSession);
+  if (!activeSession) { console.log('[CoachingCue] BLOCKED: no activeSession'); return; }
+  console.log('[CoachingCue] 2. _COACHING_API_KEY non-empty:', !!_getCoachingApiKey(), '(length:', _getCoachingApiKey().length, ')');
   // Settings gate
-  if (state.betweenSetCoaching === false) return;
+  console.log('[CoachingCue] 3. state.betweenSetCoaching:', state.betweenSetCoaching, '— blocking if === false:', state.betweenSetCoaching === false);
+  if (state.betweenSetCoaching === false) { console.log('[CoachingCue] BLOCKED: betweenSetCoaching is false'); return; }
   // Manual adjustment suppression
-  if (_getManualAdj(exId, activeSession.dayId)) return;
+  var manualAdj = _getManualAdj(exId, activeSession.dayId);
+  console.log('[CoachingCue] 4. manual adjustment active for this exercise:', !!manualAdj, manualAdj);
+  if (manualAdj) { console.log('[CoachingCue] BLOCKED: manual adjustment active'); return; }
   // Don't show if dynamic set suggestion is already visible
-  if (document.getElementById('dynamic-set-suggestion-' + exId)) return;
+  var dynCard = document.getElementById('dynamic-set-suggestion-' + exId);
+  console.log('[CoachingCue] 5. dynamic set suggestion card visible:', !!dynCard);
+  if (dynCard) { console.log('[CoachingCue] BLOCKED: dynamic set suggestion card present'); return; }
   // Don't show if a coaching cue card is already present for this exercise
-  if (document.getElementById('coaching-cue-' + exId)) return;
+  var cueCard = document.getElementById('coaching-cue-' + exId);
+  console.log('[CoachingCue] 6. coaching cue card already visible:', !!cueCard);
+  if (cueCard) { console.log('[CoachingCue] BLOCKED: coaching cue card already present'); return; }
   // Superset pairing: only fire after a complete round (partner has matched done count)
   var partnerId = activeSession.supersets && activeSession.supersets[exId];
   if (partnerId) {
     var myDone = (activeSession.sets[exId] || []).filter(function(s) { return s.done; }).length;
     var partnerDone = (activeSession.sets[partnerId] || []).filter(function(s) { return s.done; }).length;
-    if (partnerDone < myDone) return;
+    console.log('[CoachingCue] 7. superset partner check — partnerId:', partnerId, 'myDone:', myDone, 'partnerDone:', partnerDone, '— blocking (partnerDone < myDone):', partnerDone < myDone);
+    if (partnerDone < myDone) { console.log('[CoachingCue] BLOCKED: superset partner not yet caught up'); return; }
+  } else {
+    console.log('[CoachingCue] 7. superset partner check — no superset partner');
   }
 
   var result = _evalCoachingCueTriggers(exId, setIndex);
-  if (!result) return;
+  console.log('[CoachingCue] 8. _evalCoachingCueTriggers returned:', result);
+  if (!result) { console.log('[CoachingCue] BLOCKED: _evalCoachingCueTriggers returned falsy'); return; }
+  console.log('[CoachingCue] All guards passed — proceeding to fetch cue...');
 
   if (!activeSession.coachingCues) activeSession.coachingCues = {};
 
