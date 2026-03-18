@@ -7945,6 +7945,7 @@ function startSession(dayId) {
         document.getElementById('session-notes').value = activeSession.notes || '';
         _lastSessionInsights = {};
         _insightInteracted = {};
+        _insightsCallComplete = false;
         renderSession();
         startSessionTimer();
         document.getElementById('workout-session').classList.add('active');
@@ -7990,6 +7991,7 @@ function startSession(dayId) {
 
   _lastSessionInsights = {};
   _insightInteracted = {};
+  _insightsCallComplete = false;
   renderSession();
   startSessionTimer();
   document.getElementById('workout-session').classList.add('active');
@@ -8985,6 +8987,7 @@ var _coachingCueObservers = {}; // exId → IntersectionObserver
 let _lastSessionInsights = {}; // exId -> insight string or null (display-only, never saved)
 let _insightInteracted = {};   // exId -> true once user has tapped the note field
 let _insightAbortController = null;
+let _insightsCallComplete = false; // true once _fetchLastSessionInsights has settled (any outcome)
 
 function toggleBetweenSetCoaching() {
   state.betweenSetCoaching = !(state.betweenSetCoaching !== false);
@@ -9218,6 +9221,7 @@ async function _fetchCoachingCue(prompt) {
 // LAST SESSION INSIGHT FEATURE
 // ============================================================
 async function _fetchLastSessionInsights() {
+  try {
   if (!activeSession || !_getCoachingApiKey()) return;
   // Never fire during calibration week, deload, or rest week
   if ((state.cycleCount || 1) === 1 && (state.weekCount || 1) === 1) return;
@@ -9300,6 +9304,9 @@ async function _fetchLastSessionInsights() {
     // Fail silently — no error shown to user
   } finally {
     if (_insightAbortController === controller) _insightAbortController = null;
+  }
+  } finally {
+    _insightsCallComplete = true;
   }
 }
 
@@ -9473,6 +9480,18 @@ async function _maybeFireCoachingCue(exId, setIndex) {
   console.log('[CoachingCue] 8. _evalCoachingCueTriggers returned:', result);
   if (!result) { console.log('[CoachingCue] BLOCKED: _evalCoachingCueTriggers returned falsy'); return; }
   console.log('[CoachingCue] All guards passed — proceeding to fetch cue...');
+
+  // If _fetchLastSessionInsights is still in-flight, wait for it to settle before
+  // making our own API call — avoids a rate-limit collision on the first exercise.
+  if (!_insightsCallComplete) {
+    var _insightWait = 0;
+    while (!_insightsCallComplete && _insightWait < 3000) {
+      await new Promise(function(resolve) { setTimeout(resolve, 200); });
+      _insightWait += 200;
+    }
+    // Re-validate session wasn't discarded while waiting
+    if (!activeSession) return;
+  }
 
   if (!activeSession.coachingCues) activeSession.coachingCues = {};
 
