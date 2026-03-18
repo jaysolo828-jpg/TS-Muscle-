@@ -36,8 +36,15 @@
     --blue: #5b8dee;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; scrollbar-width: none; }
-  *::-webkit-scrollbar { display: none; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  /* Auto-hiding scrollbar: thin, flush to edge, fades out after scrolling stops */
+  *::-webkit-scrollbar { width: 4px; height: 4px; background: transparent; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+  .is-scrolling::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); }
+  * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  .is-scrolling { scrollbar-color: rgba(255,255,255,0.25) transparent; }
 
   html {
     overscroll-behavior: none;
@@ -4041,6 +4048,20 @@
 <div class="toast" id="toast"></div>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ============================================================
+// AUTO-HIDE SCROLLBAR — adds .is-scrolling class during scroll
+// ============================================================
+(function(){
+  const timers = new WeakMap();
+  document.addEventListener('scroll', function(e){
+    const el = e.target;
+    if(!(el instanceof HTMLElement)) return;
+    el.classList.add('is-scrolling');
+    clearTimeout(timers.get(el));
+    timers.set(el, setTimeout(function(){ el.classList.remove('is-scrolling'); }, 800));
+  }, true);
+})();
+
 // ============================================================
 // DATA
 // ============================================================
