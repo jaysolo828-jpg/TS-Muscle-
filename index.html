@@ -5532,6 +5532,13 @@ function loadState() {
         state.prsSyncedFromHistory = true;
       }
 
+      // One-time migration: recalc PRs to strip any inflation caused by coach-removed sets
+      // that were included before Fix 4 filtered them out of recalcPRsFromHistory().
+      if (!state.prCoachRemovedFixed) {
+        recalcPRsFromHistory();
+        state.prCoachRemovedFixed = true;
+      }
+
       // Migration: ensure profile has age and sex fields (added in this update)
       if (state.profile && state.profile.age === undefined) state.profile.age = null;
       if (state.profile && state.profile.sex === undefined) state.profile.sex = null;
@@ -12843,7 +12850,7 @@ function renderHistoryItem(entry, container, insertBefore) {
 let _statsRenderKey = null;
 function _getStatsKey() {
   const h = state.history || [];
-  return `${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}|${state.strengthScore ?? ''}`;
+  return `v2|${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}|${state.strengthScore ?? ''}`;
 }
 
 function renderHistory() {
