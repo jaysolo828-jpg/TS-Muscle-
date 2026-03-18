@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -29,7 +30,18 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
+          if [ -z "${ANTHROPIC_API_KEY}" ]; then
+            echo "ERROR: ANTHROPIC_API_KEY secret is empty or not set."
+            echo "Add it as an environment secret on the 'github-pages' environment"
+            echo "(repo Settings → Environments → github-pages → Add secret)."
+            exit 1
+          fi
           sed -i "s|__ANTHROPIC_API_KEY__|${ANTHROPIC_API_KEY}|g" index.html
+          if grep -q '__ANTHROPIC_API_KEY__' index.html; then
+            echo "ERROR: placeholder was not replaced — sed substitution failed."
+            exit 1
+          fi
+          echo "API key injected successfully."
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
