@@ -2043,6 +2043,7 @@
   }
 
 </style>
+<script src="config.js"></script>
 </head>
 <body>
 <!-- SPLASH SCREEN -->
@@ -8978,7 +8979,7 @@ function toggleSetDone(exId, setIndex) {
 // ============================================================
 // BETWEEN-SET COACHING CUE SYSTEM
 // ============================================================
-const _COACHING_API_KEY = '__ANTHROPIC_API_KEY__'; // Injected at deploy time via GitHub Actions secret
+const _COACHING_API_KEY = window.ANTHROPIC_API_KEY || '';
 let _coachingCueAbortController = null;
 var _coachingCueObservers = {}; // exId → IntersectionObserver
 let _lastSessionInsights = {}; // exId -> insight string or null (display-only, never saved)
