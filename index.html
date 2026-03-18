@@ -7941,10 +7941,13 @@ function startSession(dayId) {
         }
         _lsRemove('ts-muscle-paused');
         document.getElementById('session-notes').value = activeSession.notes || '';
+        _lastSessionInsights = {};
+        _insightInteracted = {};
         renderSession();
         startSessionTimer();
         document.getElementById('workout-session').classList.add('active');
         showToast('Workout resumed 💪');
+        _fetchLastSessionInsights();
       };
         return;
       }
@@ -7983,9 +7986,12 @@ function startSession(dayId) {
     activeSession.setIntel[ex.id] = activeSession.sets[ex.id].map(() => ({ suggestedReps: null, wasManualOverride: false }));
   });
 
+  _lastSessionInsights = {};
+  _insightInteracted = {};
   renderSession();
   startSessionTimer();
   document.getElementById('workout-session').classList.add('active');
+  _fetchLastSessionInsights();
 }
 
 // ============================================================
@@ -8355,11 +8361,12 @@ function renderSession() {
       ${buildOverloadHint(ex.id)}
       ${buildPlateCalc(ex.id, sets[0]?.weight)}
       ${setsHTML}
-      <div class="ex-note-row">
+      <div class="ex-note-row" id="note-row-${ex.id}">
         ${(() => { const ln = getLastExNote(ex.id, activeSession.dayId); return ln ? `<div style="font-size:12px; color:#aaaaaa; letter-spacing:0.5px; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif;">LAST: ${ln.replace(/"/g, '&quot;')}</div>` : ''; })()}
-        <input type="text" class="ex-note-input"
+        <input type="text" class="ex-note-input" id="note-input-${ex.id}"
           placeholder="Note (form cue, how it felt…)"
           value="${(activeSession.exNotes?.[ex.id] || '').replace(/"/g, '&quot;')}"
+          onfocus="dismissInsight('${ex.id}')"
           oninput="updateExNote('${ex.id}', this.value)"/>
       </div>
     `;
@@ -8424,6 +8431,7 @@ function renderSession() {
   updateSessionProgress();
   _initDragHandles();
   renderBonusExercises();
+  _applyInsightsToNoteFields();
 }
 
 
@@ -8972,6 +8980,9 @@ function toggleSetDone(exId, setIndex) {
 const _COACHING_API_KEY = ''; // Set your Anthropic API key here
 let _coachingCueAbortController = null;
 var _coachingCueObservers = {}; // exId → IntersectionObserver
+let _lastSessionInsights = {}; // exId -> insight string or null (display-only, never saved)
+let _insightInteracted = {};   // exId -> true once user has tapped the note field
+let _insightAbortController = null;
 
 function toggleBetweenSetCoaching() {
   state.betweenSetCoaching = !(state.betweenSetCoaching !== false);
@@ -9198,6 +9209,129 @@ async function _fetchCoachingCue(prompt) {
     return null;
   } finally {
     if (_coachingCueAbortController === controller) _coachingCueAbortController = null;
+  }
+}
+
+// ============================================================
+// LAST SESSION INSIGHT FEATURE
+// ============================================================
+async function _fetchLastSessionInsights() {
+  if (!activeSession || !_COACHING_API_KEY) return;
+  // Never fire during calibration week, deload, or rest week
+  if ((state.cycleCount || 1) === 1 && (state.weekCount || 1) === 1) return;
+  if (state.isDeloadWeek || state.isRestWeek || activeSession.isDeload) return;
+
+  var currentCycle = state.cycleCount || 1;
+  var dayId = activeSession.dayId;
+
+  // Find the most recent completed session for this day within the current cycle
+  var prevSession = null;
+  for (var i = state.history.length - 1; i >= 0; i--) {
+    var h = state.history[i];
+    if (h.dayId === dayId && h.cycleNum === currentCycle) {
+      prevSession = h;
+      break;
+    }
+  }
+  if (!prevSession) return;
+
+  // Collect all exercise IDs in the current session (includes superset partners)
+  var day = state.program.find(function(d) { return d.id === dayId; });
+  if (!day) return;
+  var currentExIds = activeSession.exerciseOrder || day.exercises.map(function(e) { return e.id; });
+
+  // Build list of exercises that have a saved note in the previous session
+  var exercisesWithNotes = [];
+  currentExIds.forEach(function(exId) {
+    var note = prevSession.exNotes && prevSession.exNotes[exId];
+    if (note && note.trim()) {
+      var ex = day.exercises.find(function(e) { return e.id === exId; });
+      var name = (prevSession.swaps && prevSession.swaps[exId] && prevSession.swaps[exId].name)
+        || (ex && ex.name) || exId;
+      exercisesWithNotes.push({ exId: exId, name: name, note: note.trim() });
+    }
+  });
+  if (exercisesWithNotes.length === 0) return;
+
+  var exerciseList = exercisesWithNotes.map(function(e) {
+    return 'Exercise ID: ' + e.exId + '\nExercise name: ' + e.name + '\nPrevious note: "' + e.note + '"';
+  }).join('\n\n');
+
+  var prompt = 'You are analyzing workout notes from a previous training session.\n\n'
+    + 'For each exercise, extract only body signals or performance signals that would be directly actionable for that specific exercise in today\'s session. '
+    + 'Return an insight of 15 words or less. Return null if the note contains only generic observations like "good session", "felt great", "great workout", or nothing exercise-specific.\n\n'
+    + 'Return ONLY a raw JSON object keyed by exercise ID. No markdown, no code blocks, no explanation.\n\n'
+    + 'Exercises:\n' + exerciseList + '\n\n'
+    + 'Required format: {"exId1": "insight text", "exId2": null}';
+
+  var controller = new AbortController();
+  _insightAbortController = controller;
+  var timer = setTimeout(function() { try { controller.abort(); } catch(e) {} }, 3000);
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': _COACHING_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!resp.ok) return;
+    var json = await resp.json();
+    var text = json && json.content && json.content[0] && json.content[0].text && json.content[0].text.trim();
+    if (!text) return;
+    var insights;
+    try { insights = JSON.parse(text); } catch(e) { return; }
+    if (!insights || typeof insights !== 'object') return;
+    _lastSessionInsights = insights;
+    _applyInsightsToNoteFields();
+  } catch(e) {
+    clearTimeout(timer);
+    // Fail silently — no error shown to user
+  } finally {
+    if (_insightAbortController === controller) _insightAbortController = null;
+  }
+}
+
+function _applyInsightsToNoteFields() {
+  if (!activeSession) return;
+  Object.keys(_lastSessionInsights).forEach(function(exId) {
+    var insight = _lastSessionInsights[exId];
+    if (!insight || typeof insight !== 'string') return;
+    // Skip if user has already interacted with this field
+    if (_insightInteracted[exId]) return;
+    // Skip if user already has a typed note saved for this exercise
+    if (activeSession.exNotes && activeSession.exNotes[exId]) return;
+    var rowEl = document.getElementById('note-row-' + exId);
+    var inputEl = document.getElementById('note-input-' + exId);
+    if (!rowEl || !inputEl) return;
+    rowEl.style.borderLeft = '3px solid var(--red)';
+    inputEl.value = 'Last session: ' + insight;
+    inputEl.style.color = 'white';
+    inputEl.style.fontStyle = 'normal';
+    inputEl.dataset.hasInsight = 'true';
+  });
+}
+
+function dismissInsight(exId) {
+  _insightInteracted[exId] = true;
+  // Drop red border immediately — before anything else
+  var rowEl = document.getElementById('note-row-' + exId);
+  if (rowEl) rowEl.style.borderLeft = '';
+  var inputEl = document.getElementById('note-input-' + exId);
+  if (inputEl && inputEl.dataset.hasInsight === 'true') {
+    delete inputEl.dataset.hasInsight;
+    inputEl.value = '';
+    inputEl.style.color = '';
+    inputEl.style.fontStyle = '';
   }
 }
 
