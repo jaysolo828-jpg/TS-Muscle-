@@ -36,7 +36,8 @@
     --blue: #5b8dee;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
 
   html {
     overscroll-behavior: none;
@@ -257,8 +258,7 @@
   .mood-timing-btn.selected { border-color: var(--warning); color: var(--warning); background: rgba(243,156,18,0.12); }
 
   /* Mood insights carousel */
-  #mood-insights-scroller { display:flex; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; align-items:flex-start; transition:height 0.25s ease; }
-  #mood-insights-scroller::-webkit-scrollbar { display:none; }
+  #mood-insights-scroller { display:flex; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; align-items:flex-start; transition:height 0.25s ease; }
   .mood-slide { min-width:100%; flex-shrink:0; scroll-snap-align:start; box-sizing:border-box; align-self:flex-start; }
   .mood-dot { width:6px; height:6px; border-radius:50%; background:#3a3a3a; transition:all 0.25s; flex-shrink:0; }
   .mood-dot.active { width:18px; border-radius:3px; background:var(--red); }
@@ -628,6 +628,7 @@
     background: var(--black);
     z-index: 200;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding-bottom: calc(100px + env(safe-area-inset-bottom));
   }
 
@@ -962,9 +963,7 @@
   }
   .rpe-nudge-pills {
     display: flex; gap: 5px; flex-wrap: nowrap; overflow-x: auto; flex: 1;
-    scrollbar-width: none;
   }
-  .rpe-nudge-pills::-webkit-scrollbar { display: none; }
   .rpe-nudge-btn {
     background: var(--dark4); border: 1px solid #3a3a3a;
     color: var(--white); border-radius: 8px;
