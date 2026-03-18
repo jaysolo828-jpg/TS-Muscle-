@@ -2,5 +2,5 @@
   publish = "."
 
 [[edge_functions]]
-  function = "config-js"
+  function = "config"
   path = "/config.js"
