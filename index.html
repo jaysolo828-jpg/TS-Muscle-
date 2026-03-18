@@ -628,7 +628,13 @@
     background: var(--black);
     z-index: 200;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+
+  .workout-session::-webkit-scrollbar {
+    display: none;
   }
 
   .workout-session.active { display: block; }
