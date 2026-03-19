@@ -6046,7 +6046,7 @@ function getDayStats(dayId) {
 let _mrvBannerDismissedThisLoad = false;
 
 function renderHome() {
-  const realSessions = state.history.filter(entry =>
+  const realSessions = (state.history || []).filter(entry =>
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
   ).length;
   document.getElementById('stat-sessions').textContent = realSessions;
@@ -7098,7 +7098,7 @@ function updateStreak() {
 
   // Group history by ISO week (Mon-based)
   const weekCounts = {};
-  state.history.forEach(h => {
+  (state.history || []).forEach(h => {
     const d = new Date(h.date);
     const week = getISOWeek(d);
     weekCounts[week] = (weekCounts[week] || 0) + 1;
@@ -7452,7 +7452,7 @@ function getProgressiveWeight(exId, dayId) {
   const goal = state.profile?.goal || 'both';
 
   // Collect up to last 3 sessions for this same day
-  const sameDaySessions = [...state.history]
+  const sameDaySessions = [...(state.history || [])]
     .reverse()
     .filter(h => h.dayId === dayId && h.sets?.[exId] && !h.isDeload);
 
@@ -8440,7 +8440,7 @@ function renderSession() {
 
 
 function getLastExNote(exId, dayId) {
-  for (let i = state.history.length - 1; i >= 0; i--) {
+  for (let i = (state.history || []).length - 1; i >= 0; i--) {
     const h = state.history[i];
     if (h.dayId === dayId && h.exNotes && h.exNotes[exId]) {
       return h.exNotes[exId];
@@ -8450,7 +8450,7 @@ function getLastExNote(exId, dayId) {
 }
 
 function getLastSetData(exId, setIndex) {
-  for (let i = state.history.length - 1; i >= 0; i--) {
+  for (let i = (state.history || []).length - 1; i >= 0; i--) {
     const h = state.history[i];
     if (h.dayId === activeSession.dayId && h.sets && h.sets[exId] && h.sets[exId][setIndex]) {
       return h.sets[exId][setIndex];
@@ -11208,14 +11208,15 @@ function showSessionWrapUp() {
     const parts = repStr.split(/[–-]/);
     const minReps = parseInt(parts[0]) || 0;
     const maxReps = parseInt(parts[1]) || minReps;
+    const weekBandTarget = getCycleWeekBandRepTarget(ex.id) || minReps;
 
     // Per-set outcomes
     const outcomes = sets.map(s => {
       const r = parseInt(s.reps);
       totalSets++;
-      if (r > maxReps)      { exceededSets++; return { icon:'▲', color:'#2ecc71', reps:r }; }
-      else if (r >= minReps) { hitSets++;      return { icon:'✓', color:'#2ecc71', reps:r }; }
-      else                   { missedSets++;   return { icon:'▼', color:'#CC2027', reps:r }; }
+      if (r > maxReps)             { exceededSets++; return { icon:'▲', color:'#2ecc71', reps:r }; }
+      else if (r >= weekBandTarget) { hitSets++;      return { icon:'✓', color:'#2ecc71', reps:r }; }
+      else                          { missedSets++;   return { icon:'▼', color:'#CC2027', reps:r }; }
     });
 
     // Overall exercise signal
@@ -11434,7 +11435,8 @@ function finalizeEndSession(save) {
     save = false;
   }
   if (save && activeSession) {
-    activeSession.notes = document.getElementById('session-notes').value;
+    const _sessionNotesEl = document.getElementById('session-notes');
+    activeSession.notes = _sessionNotesEl ? _sessionNotesEl.value : '';
     activeSession.endTime = Date.now();
     activeSession.date = new Date().toISOString();
 
@@ -11470,6 +11472,7 @@ function finalizeEndSession(save) {
       songArtist: activeSession.songArtist || null,
     };
 
+    if (!state.history) state.history = [];
     state.history.push(entry);
     state.totalSessions++;
     state.inactivityPromptShown = false;
@@ -11776,7 +11779,8 @@ function finalizeEndSession(save) {
   }
 
   document.getElementById('workout-session').classList.remove('active');
-  document.getElementById('session-notes').value = '';
+  const _notesElClear = document.getElementById('session-notes');
+  if (_notesElClear) _notesElClear.value = '';
   activeSession = null;
 
   // Check for deload suggestion after teardown
@@ -14202,7 +14206,7 @@ function renderProgressChart() {
   const exId = document.getElementById('exercise-picker').value;
   const dataPoints = [];
 
-  state.history.forEach(entry => {
+  (state.history || []).forEach(entry => {
     const sets = entry.sets?.[exId];
     if (!sets) return;
     const doneSets = sets.filter(s => s.done && s.weight);
@@ -20091,11 +20095,12 @@ function checkTrainingReminder() {
 
   // Check if already trained today
   const todayStr = new Date().toDateString();
-  const trainedToday = state.history.some(e => new Date(e.date).toDateString() === todayStr);
+  const trainedToday = (state.history || []).some(e => new Date(e.date).toDateString() === todayStr);
   if (trainedToday) return;
 
   // Only nudge if 2+ days since last session
-  const last = state.history[state.history.length - 1];
+  const _hist = state.history || [];
+  const last = _hist[_hist.length - 1];
   const daysSinceLast = last ? Math.floor((Date.now() - new Date(last.date)) / 86400000) : 99;
   if (daysSinceLast < 2) return;
 
