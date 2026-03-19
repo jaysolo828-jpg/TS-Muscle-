@@ -10223,8 +10223,15 @@ function updateRepIndicator(exId, setIndex, _ignored) {
     indicator.style.color = '#2ecc71';
     input.style.borderColor = 'rgba(46,204,113,0.5)';
     input.style.color = '#2ecc71';
+  } else if (logged >= minReps) {
+    // Within the flat goal range but below the week-band tightened target.
+    // Show amber nudge — NOT red — because the user IS hitting a valid rep count.
+    indicator.textContent = '▲';
+    indicator.style.color = '#f59e0b';
+    input.style.borderColor = 'rgba(245,158,11,0.5)';
+    input.style.color = '#f59e0b';
   } else {
-    // Fell short of tightened target — even if within the flat goal range
+    // Strictly below the minimum of the goal range — genuine miss
     indicator.textContent = '▼';
     indicator.style.color = 'var(--red)';
     input.style.borderColor = 'rgba(204,32,39,0.5)';
@@ -11335,8 +11342,9 @@ function showSessionWrapUp() {
     const outcomes = sets.map(s => {
       const r = parseInt(s.reps);
       totalSets++;
-      if (r > maxReps)             { exceededSets++; return { icon:'▲', color:'#2ecc71', reps:r }; }
+      if (r > maxReps)              { exceededSets++; return { icon:'▲', color:'#2ecc71', reps:r }; }
       else if (r >= weekBandTarget) { hitSets++;      return { icon:'✓', color:'#2ecc71', reps:r }; }
+      else if (r >= minReps)        { hitSets++;      return { icon:'▲', color:'#f59e0b', reps:r }; }
       else                          { missedSets++;   return { icon:'▼', color:'#CC2027', reps:r }; }
     });
 
