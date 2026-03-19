@@ -7945,7 +7945,6 @@ function startSession(dayId) {
         document.getElementById('session-notes').value = activeSession.notes || '';
         _lastSessionInsights = {};
         _insightInteracted = {};
-        _insightsCallComplete = false;
         renderSession();
         startSessionTimer();
         document.getElementById('workout-session').classList.add('active');
@@ -7991,7 +7990,6 @@ function startSession(dayId) {
 
   _lastSessionInsights = {};
   _insightInteracted = {};
-  _insightsCallComplete = false;
   renderSession();
   startSessionTimer();
   document.getElementById('workout-session').classList.add('active');
@@ -8989,7 +8987,7 @@ var _coachingCueObservers = {}; // exId → IntersectionObserver
 let _lastSessionInsights = {}; // exId -> insight string or null (display-only, never saved)
 let _insightInteracted = {};   // exId -> true once user has tapped the note field
 let _insightAbortController = null;
-let _insightsCallComplete = false; // true once _fetchLastSessionInsights has settled (any outcome)
+
 
 function toggleBetweenSetCoaching() {
   state.betweenSetCoaching = !(state.betweenSetCoaching !== false);
@@ -9308,7 +9306,6 @@ async function _fetchLastSessionInsights() {
     if (_insightAbortController === controller) _insightAbortController = null;
   }
   } finally {
-    _insightsCallComplete = true;
   }
 }
 
@@ -9448,21 +9445,15 @@ function _watchCoachingCueVisibility(exId) {
 }
 
 async function _maybeFireCoachingCue(exId, setIndex) {
-  console.log('[CoachingCue] _maybeFireCoachingCue called — exId:', exId, 'setIndex:', setIndex);
-  console.log('[CoachingCue] 1. activeSession truthy:', !!activeSession);
-  if (!activeSession) { console.log('[CoachingCue] BLOCKED: no activeSession'); return; }
-  console.log('[CoachingCue] 2. _COACHING_API_KEY non-empty:', !!_getCoachingApiKey(), '(length:', _getCoachingApiKey().length, ')');
+  if (!activeSession) return;
   // Settings gate
-  console.log('[CoachingCue] 3. state.betweenSetCoaching:', state.betweenSetCoaching, '— blocking if === false:', state.betweenSetCoaching === false);
-  if (state.betweenSetCoaching === false) { console.log('[CoachingCue] BLOCKED: betweenSetCoaching is false'); return; }
+  if (state.betweenSetCoaching === false) return;
   // Don't show if dynamic set suggestion is already visible
   var dynCard = document.getElementById('dynamic-set-suggestion-' + exId);
-  console.log('[CoachingCue] 4. dynamic set suggestion card visible:', !!dynCard);
-  if (dynCard) { console.log('[CoachingCue] BLOCKED: dynamic set suggestion card present'); return; }
+  if (dynCard) return;
   // Don't show if a coaching cue card is already present for this exercise
   var cueCard = document.getElementById('coaching-cue-' + exId);
-  console.log('[CoachingCue] 5. coaching cue card already visible:', !!cueCard);
-  if (cueCard) { console.log('[CoachingCue] BLOCKED: coaching cue card already present'); return; }
+  if (cueCard) return;
   // Superset pairing: suppress mid-session cues until the partner has matched the round,
   // but always allow the cue once this exercise has completed all its planned sets.
   // This prevents the leading exercise from being permanently silenced when the user
@@ -9472,29 +9463,11 @@ async function _maybeFireCoachingCue(exId, setIndex) {
     var myDone = (activeSession.sets[exId] || []).filter(function(s) { return s.done; }).length;
     var partnerDone = (activeSession.sets[partnerId] || []).filter(function(s) { return s.done; }).length;
     var goalSetsForEx = getGoalSets(exId, (activeSession.sets[exId] || []).length);
-    var midSessionBlock = partnerDone < myDone && myDone < goalSetsForEx;
-    console.log('[CoachingCue] 6. superset partner check — partnerId:', partnerId, 'myDone:', myDone, 'partnerDone:', partnerDone, 'goalSets:', goalSetsForEx, '— blocking:', midSessionBlock);
-    if (midSessionBlock) { console.log('[CoachingCue] BLOCKED: superset partner not yet caught up (mid-session)'); return; }
-  } else {
-    console.log('[CoachingCue] 6. superset partner check — no superset partner');
+    if (partnerDone < myDone && myDone < goalSetsForEx) return;
   }
 
   var result = _evalCoachingCueTriggers(exId, setIndex);
-  console.log('[CoachingCue] 7. _evalCoachingCueTriggers returned:', result);
-  if (!result) { console.log('[CoachingCue] BLOCKED: _evalCoachingCueTriggers returned falsy'); return; }
-  console.log('[CoachingCue] All guards passed — proceeding to fetch cue...');
-
-  // If _fetchLastSessionInsights is still in-flight, wait for it to settle before
-  // making our own API call — avoids a rate-limit collision on the first exercise.
-  if (!_insightsCallComplete) {
-    var _insightWait = 0;
-    while (!_insightsCallComplete && _insightWait < 3000) {
-      await new Promise(function(resolve) { setTimeout(resolve, 200); });
-      _insightWait += 200;
-    }
-    // Re-validate session wasn't discarded while waiting
-    if (!activeSession) return;
-  }
+  if (!result) return;
 
   if (!activeSession.coachingCues) activeSession.coachingCues = {};
 
