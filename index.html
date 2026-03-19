@@ -8966,6 +8966,7 @@ function toggleSetDone(exId, setIndex) {
 
   // Between-set coaching cue — fires 600ms after set completion (after dynamic set expansion check)
   if (set.done) {
+    _clearCoachingCueCard(exId);
     setTimeout(function() { _maybeFireCoachingCue(exId, setIndex); }, 600);
   }
 
