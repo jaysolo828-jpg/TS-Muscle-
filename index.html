@@ -7481,6 +7481,18 @@ function getProgressiveWeight(exId, dayId) {
     return state.startingWeights?.[exId] ? String(state.startingWeights[exId]) : '';
   }
 
+  // During calibration week (Cycle 1, Week 1) or test week, return the starting
+  // weight unchanged — no increase or decrease suggestion. Mirrors the suppression
+  // already in place for deload and rest weeks.
+  const _isCalibrationWeek = (state.cycleCount || 1) === 1 && (state.weekCount || 1) === 1;
+  const _isTestWeek = state.onboardingComplete && !state.testWeekComplete;
+  if (_isCalibrationWeek || _isTestWeek) {
+    if (state.startingWeights?.[exId]) return String(state.startingWeights[exId]);
+    const _calSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done && !s.coachRemoved);
+    const _calWeight = parseFloat(_calSets[_calSets.length - 1]?.weight) || 0;
+    return _calWeight ? String(_calWeight) : '';
+  }
+
   const day = state.program.find(d => d.id === dayId);
   const ex = day?.exercises.find(e => e.id === exId);
   const repStr = ex ? getGoalReps(ex.id, ex.reps) : '8–12';
@@ -7488,9 +7500,21 @@ function getProgressiveWeight(exId, dayId) {
   const repRangeMin = parseInt(repParts[0]) || 8;
   const repRangeTop = parseInt(repParts[1]) || repRangeMin;
 
+  // Exclude sessions where the user manually overrode the suggested weight.
+  // Those sessions reflect a different load and their RPE/rep data would skew
+  // the progressive overload calculation. Legacy sessions (no suggestedWeights
+  // stored) are always included so existing history is unaffected.
+  const nonOverrideSessions = sameDaySessions.filter(h => {
+    const suggested = h.suggestedWeights?.[exId];
+    if (suggested === undefined || suggested === '') return true; // legacy or no suggestion: include
+    const doneSets = (h.sets[exId] || []).filter(s => s.done && parseFloat(s.weight) > 0 && parseInt(s.reps) > 0);
+    if (doneSets.length === 0) return true;
+    return parseFloat(doneSets[0].weight) === parseFloat(suggested);
+  });
+
   // Determine if we have enough data for trend mode (3+ sessions)
-  const useTrend = sameDaySessions.length >= 3;
-  const sessions = useTrend ? sameDaySessions.slice(0, 3) : sameDaySessions.slice(0, 1);
+  const useTrend = nonOverrideSessions.length >= 3;
+  const sessions = useTrend ? nonOverrideSessions.slice(0, 3) : nonOverrideSessions.slice(0, 1);
   const modeLabel = useTrend ? '3-session trend' : 'last session';
 
   // Aggregate data across sessions
@@ -7505,8 +7529,19 @@ function getProgressiveWeight(exId, dayId) {
 
   // Use most recent session's last weight as baseline
   const lastSessionSets = (sameDaySessions[0].sets[exId] || []).filter(s => s.done && !s.coachRemoved);
-  const lastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
-  if (!lastWeight) return '';
+  const _rawLastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
+  if (!_rawLastWeight) return '';
+
+  // Long-gap return: if the most recent same-day session was more than 14 days
+  // ago, apply a conservative 10% reduction to the base weight before running
+  // the progressive overload calculation. This does not apply on the first-ever
+  // session (already returned above when sameDaySessions is empty).
+  const _daysSinceLast = sameDaySessions[0].date
+    ? (Date.now() - new Date(sameDaySessions[0].date).getTime()) / 86400000
+    : 0;
+  const lastWeight = (_daysSinceLast > 14)
+    ? Math.max(5, Math.round(_rawLastWeight * 0.9 / 2.5) * 2.5)
+    : _rawLastWeight;
 
   // Avg RPE across all sessions in window (only sets with RPE logged)
   const rpeSets = allSets.filter(s => s.rpe);
@@ -11470,6 +11505,11 @@ function finalizeEndSession(save) {
       // Optional session song — both default to null, completely independent
       songTitle:  activeSession.songTitle  || null,
       songArtist: activeSession.songArtist || null,
+      // Record the weight that was suggested at session start for each exercise.
+      // Used by getProgressiveWeight to detect manual overrides when evaluating
+      // the trend window — sessions where the user deviated from the suggestion
+      // reflect a different load and should not skew RPE/rep averages.
+      suggestedWeights: activeSession.suggestedWeights ? { ...activeSession.suggestedWeights } : {},
     };
 
     if (!state.history) state.history = [];
@@ -11581,7 +11621,7 @@ function finalizeEndSession(save) {
         const _muscleVol = {};
         _cycleEntries.filter(e => !e.isDeload).forEach(e => {
           Object.entries(e.sets || {}).forEach(([exId, sets]) => {
-            const _m = EX_MUSCLE_MAP[exId];
+            const _m = MUSCLE_MAP[exId];
             if (!_m) return;
             const _v = sets.filter(s => s.done)
               .reduce((s, set) => s + (parseFloat(set.weight)||0) * (parseInt(set.reps)||0), 0);
@@ -18960,9 +19000,9 @@ function showTestWeekReview() {
       return parseFloat(doneSets[doneSets.length - 1]?.weight) || 0;
     })();
     const current = lastLoggedWeight || state.startingWeights?.[ex.id] || 0;
-    const lighter = Math.round(current * 0.9 / 5) * 5;
+    const lighter = Math.round(current * 0.9 / 2.5) * 2.5;
     const same = current;
-    const heavier = Math.round(current * 1.1 / 5) * 5;
+    const heavier = Math.round(current * 1.1 / 2.5) * 2.5;
     rows += `
       <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:12px;padding:14px;margin-bottom:10px;">
         <div style="font-size:13px;color:var(--cream);margin-bottom:10px;">${ex.name} <span style="color:var(--gray);font-size:11px;">(${ex.day})</span></div>
