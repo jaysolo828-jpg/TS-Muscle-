@@ -9467,13 +9467,18 @@ async function _maybeFireCoachingCue(exId, setIndex) {
   var cueCard = document.getElementById('coaching-cue-' + exId);
   console.log('[CoachingCue] 6. coaching cue card already visible:', !!cueCard);
   if (cueCard) { console.log('[CoachingCue] BLOCKED: coaching cue card already present'); return; }
-  // Superset pairing: only fire after a complete round (partner has matched done count)
+  // Superset pairing: suppress mid-session cues until the partner has matched the round,
+  // but always allow the cue once this exercise has completed all its planned sets.
+  // This prevents the leading exercise from being permanently silenced when the user
+  // does all its sets sequentially before starting the partner (non-interleaved usage).
   var partnerId = activeSession.supersets && activeSession.supersets[exId];
   if (partnerId) {
     var myDone = (activeSession.sets[exId] || []).filter(function(s) { return s.done; }).length;
     var partnerDone = (activeSession.sets[partnerId] || []).filter(function(s) { return s.done; }).length;
-    console.log('[CoachingCue] 7. superset partner check — partnerId:', partnerId, 'myDone:', myDone, 'partnerDone:', partnerDone, '— blocking (partnerDone < myDone):', partnerDone < myDone);
-    if (partnerDone < myDone) { console.log('[CoachingCue] BLOCKED: superset partner not yet caught up'); return; }
+    var goalSetsForEx = getGoalSets(exId, (activeSession.sets[exId] || []).length);
+    var midSessionBlock = partnerDone < myDone && myDone < goalSetsForEx;
+    console.log('[CoachingCue] 7. superset partner check — partnerId:', partnerId, 'myDone:', myDone, 'partnerDone:', partnerDone, 'goalSets:', goalSetsForEx, '— blocking:', midSessionBlock);
+    if (midSessionBlock) { console.log('[CoachingCue] BLOCKED: superset partner not yet caught up (mid-session)'); return; }
   } else {
     console.log('[CoachingCue] 7. superset partner check — no superset partner');
   }
