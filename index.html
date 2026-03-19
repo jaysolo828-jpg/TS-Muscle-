@@ -9191,32 +9191,112 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
   var cycleNum = state.cycleCount || 1;
   var sessionCount = (state.history || []).length;
 
-  var sets = (activeSession.sets[exId] || []).filter(function(s) { return s.done; });
+  // Training goal
+  var trainingGoal = (state.profile && state.profile.goal) || 'both';
+
+  // All sets for this exercise (planned + done)
+  var allSetsForEx = activeSession.sets[exId] || [];
+  var totalPlannedSets = allSetsForEx.length;
+  var setNumberStr = 'Set ' + (setIndex + 1) + ' of ' + totalPlannedSets;
+
+  // Sets completed so far (for summary)
+  var sets = allSetsForEx.filter(function(s) { return s.done; });
   var setsSummary = sets.slice(0, setIndex + 1).map(function(s, i) {
     return 'Set ' + (i + 1) + ': ' + (s.reps || '?') + ' reps @ ' + (s.weight || '?') + ' lbs' + (s.rpe ? ', RPE ' + s.rpe : '');
   }).join(' | ');
 
+  // Previous set within this session
+  var prevInSessionSet = setIndex > 0 ? allSetsForEx[setIndex - 1] : null;
+  var prevInSessionStr = (prevInSessionSet && prevInSessionSet.done)
+    ? (prevInSessionSet.reps || '?') + ' reps @ ' + (prevInSessionSet.weight || '?') + ' lbs' + (prevInSessionSet.rpe ? ', RPE ' + prevInSessionSet.rpe : '')
+    : 'None';
+
+  // Superset partner
+  var partnerId = activeSession.supersets && activeSession.supersets[exId];
+  var supersetStr = 'None';
+  if (partnerId) {
+    var _partnerEx = _day && _day.exercises.find(function(e) { return e.id === partnerId; });
+    var partnerName = (activeSession.swaps && activeSession.swaps[partnerId] && activeSession.swaps[partnerId].name)
+      || (_partnerEx && _partnerEx.name) || partnerId;
+    supersetStr = 'Yes — paired with ' + partnerName;
+  }
+
+  // Session duration so far
+  var sessionDurStr = 'Unknown';
+  if (activeSession.startTime) {
+    var durMins = Math.floor((Date.now() - activeSession.startTime) / 60000);
+    sessionDurStr = durMins + ' min' + (durMins !== 1 ? 's' : '');
+  }
+
+  // Weight increase queued? — replicate checkSessionProgressSignal logic on sets done so far
+  var weightIncreaseQueued = false;
+  if (state.progressiveOverload !== false) {
+    var doneSets = allSetsForEx.filter(function(s) { return s.done && s.reps; });
+    var weekBandTarget = getCycleWeekBandRepTarget(exId);
+    if (doneSets.length && weekBandTarget) {
+      var setsAtTop = doneSets.filter(function(s) { return parseInt(s.reps) >= weekBandTarget; }).length;
+      if (setsAtTop >= Math.ceil(doneSets.length / 2)) {
+        var rpeSetsDone = doneSets.filter(function(s) { return s.rpe; });
+        var avgRPEDone = rpeSetsDone.length
+          ? rpeSetsDone.reduce(function(sum, s) { return sum + parseFloat(s.rpe); }, 0) / rpeSetsDone.length
+          : 0;
+        if (avgRPEDone < 9) weightIncreaseQueued = true;
+      }
+    }
+  }
+
+  // Manual adjustment period
+  var manualAdj = _getManualAdj(exId, activeSession.dayId);
+  var manualAdjStr = manualAdj
+    ? 'Yes — weight recently adjusted ' + manualAdj.direction + ' (' + manualAdj.sessionsLeft + ' adjustment session' + (manualAdj.sessionsLeft !== 1 ? 's' : '') + ' remaining)'
+    : 'No';
+
+  // Last session's full performance on this exercise
+  var lastSessionExStr = 'No previous data.';
+  for (var i = (state.history || []).length - 1; i >= 0; i--) {
+    var h = state.history[i];
+    if (h.dayId === activeSession.dayId && h.sets && h.sets[exId]) {
+      var hSets = h.sets[exId].filter(function(s) { return s.done && s.reps; });
+      if (hSets.length) {
+        var hWeights = hSets.map(function(s) { return s.weight; }).filter(Boolean);
+        var hReps = hSets.map(function(s) { return s.reps; });
+        var hRPEVals = hSets.filter(function(s) { return s.rpe; }).map(function(s) { return parseFloat(s.rpe); });
+        var hAvgRPE = hRPEVals.length
+          ? (hRPEVals.reduce(function(a, b) { return a + b; }, 0) / hRPEVals.length).toFixed(1)
+          : null;
+        var hWMin = hWeights.length ? Math.min.apply(null, hWeights) : null;
+        var hWMax = hWeights.length ? Math.max.apply(null, hWeights) : null;
+        var hWeightStr = hWMin !== null
+          ? (hWMin === hWMax ? hWMin + ' lbs' : hWMin + '–' + hWMax + ' lbs')
+          : '?';
+        lastSessionExStr = hSets.length + ' sets @ ' + hWeightStr + ', reps: ' + hReps.join('/') + (hAvgRPE ? ', avg RPE ' + hAvgRPE : '');
+        break;
+      }
+    }
+  }
+
+  // Per-set comparison with last session
   var lastData = getLastSetData(exId, setIndex);
-  var prevStr = lastData
-    ? 'Previous session set ' + (setIndex + 1) + ': ' + (lastData.reps || '?') + ' reps @ ' + (lastData.weight || '?') + ' lbs'
-    : 'No previous session data for this set.';
+  var prevSetStr = lastData
+    ? 'Set ' + (setIndex + 1) + ' last session: ' + (lastData.reps || '?') + ' reps @ ' + (lastData.weight || '?') + ' lbs'
+    : 'No data for this set last session.';
 
   var triggerDescriptions = {
-    1: 'The athlete is showing signs of excessive fatigue — RPE is very high relative to reps completed. Weight may be too heavy or fatigue is accumulating.',
-    2: 'The athlete is consistently hitting the top of their rep range or exceeding it — a strength milestone that may warrant a weight increase next session.',
-    3: 'RPE spiked significantly this set compared to the previous set — a notable jump in difficulty worth noting.',
-    4: 'RPE has been consistently high (8+) across multiple recent sets — cumulative fatigue is building.',
-    5: 'First set completed — give a brief, encouraging coaching note to set the tone for the rest of the exercise.',
-    6: 'All planned sets completed — close out the exercise with a brief note on overall performance.',
+    1: 'RPE is very high relative to reps — fatigue may be accumulating or weight may be too heavy.',
+    2: 'Consistently hitting or exceeding the top of the rep range — may warrant a weight increase next session.',
+    3: 'RPE spiked significantly vs the previous set — notable jump in difficulty.',
+    4: 'RPE has been consistently high (8+) across multiple sets — cumulative fatigue building.',
+    5: 'First set completed — set the tone for the rest of the exercise.',
+    6: 'All planned sets completed — close out the exercise.',
   };
 
   var sessCtx = _getSessionExerciseContext(exId);
-  var exercisePositionStr = 'Exercise ' + (sessCtx.currentExerciseIndex + 1) + ' of ' + sessCtx.totalExercises + ' (' + sessCtx.completedExercises + ' completed, ' + sessCtx.exercisesRemaining + ' remaining after this)';
+  var exercisePositionStr = 'Exercise ' + (sessCtx.currentExerciseIndex + 1) + ' of ' + sessCtx.totalExercises + ' (' + sessCtx.exercisesRemaining + ' remaining after this)';
   var muscleGroupStr = sessCtx.muscleGroupRemaining > 0
-    ? sessCtx.muscleGroupRemaining + ' more ' + muscle + ' exercise' + (sessCtx.muscleGroupRemaining !== 1 ? 's' : '') + ' remaining this session'
-    : 'No more ' + muscle + ' exercises remaining this session';
+    ? sessCtx.muscleGroupRemaining + ' more ' + muscle + ' exercise' + (sessCtx.muscleGroupRemaining !== 1 ? 's' : '') + ' remaining'
+    : 'No more ' + muscle + ' exercises this session';
 
-  return 'You are a terse, knowledgeable strength and conditioning coach providing a single brief coaching insight between sets during a workout. Your cue should be 1-2 short sentences maximum — direct, practical, no fluff.\n\nFactor in how many exercises remain in this session when generating the cue. An RPE of 8.5 on Exercise 1 of 6 is a different signal than RPE 8.5 on Exercise 5 of 6. If significant compound movements remain in the session factor that into any load or set recommendations. Never suggest pushing intensity on an early exercise if doing so would compromise the quality of remaining compound work. When muscle-group remaining is 1 or more, factor in cumulative fatigue for that muscle group and reference it in the cue. Treat muscle-group remaining count and session total as independent context signals — both should influence the recommendation when relevant.\n\nContext:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- Session ' + (sessionCount + 1) + ' overall\n- Rep target range: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Sets so far: ' + setsSummary + '\n- ' + prevStr + '\n- Trigger reason: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + '\n\nWrite ONE coaching cue (1-2 sentences). No greeting, no sign-off. Just the coaching insight.';
+  return 'You are a knowledgeable training partner giving a single between-set coaching cue. Write exactly 1–2 short sentences. Direct, confident, human. No greetings, no sign-offs, no filler.\n\nVoice rules:\n- Short punchy sentences. Observational and instructional only.\n- Never comment on form, technique, or control — you cannot see these. Never say "good control", "solid form", "nice technique", "clean reps", or anything similar.\n- Never say "Great work", "Amazing", "Well done", or generic praise.\n- Only reference what is explicitly in the session data below.\n\nContext rules:\n- Use all available context to make the cue specific to this exact moment — reference the week, the set number, progression from last set, superset partner if relevant, whether a weight increase is already queued.\n- If weight increase is queued for next session: acknowledge the performance and encourage finishing the session strong. Do not suggest load changes.\n- If in manual adjustment period: reflect that weight was recently changed and the focus is on adapting to the new load.\n- If part of a superset: factor in the paired exercise and how it affects pacing and effort for this movement.\n- Factor in session position — RPE 8.5 on exercise 1 of 6 is a different signal than RPE 8.5 on exercise 5 of 6.\n- When same-muscle exercises remain, factor in cumulative fatigue for that muscle group.\n\nTone examples (right):\n- "140 for 12 at RPE 8 — same weight as last session. Set 3 is where you find out if you\'re ready to move up."\n- "Week 5, set 2 of 4. RPE climbing from last set — pace yourself, you\'ve got pulldown paired after this."\n- "Adjustment period — 140 is new territory. Stay consistent on reps before pushing RPE."\n\nSession data:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Training goal: ' + trainingGoal + '\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- ' + setNumberStr + '\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Rep target: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Superset: ' + supersetStr + '\n- Sets this session: ' + setsSummary + '\n- Previous set this session: ' + prevInSessionStr + '\n- Weight increase queued next session: ' + (weightIncreaseQueued ? 'Yes' : 'No') + '\n- Manual adjustment period: ' + manualAdjStr + '\n- Session duration: ' + sessionDurStr + '\n- Last session this exercise: ' + lastSessionExStr + '\n- ' + prevSetStr + '\n- Trigger: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + '\n\nWrite exactly 1–2 sentences. No greeting, no sign-off.';
 }
 
 async function _fetchCoachingCue(prompt) {
