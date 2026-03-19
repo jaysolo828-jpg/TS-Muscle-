@@ -4833,8 +4833,9 @@ function _getMuscleSessionRPEs(muscle, maxSessions) {
 function _checkSetReductionTrigger(muscle) {
   if (!activeSession) return false;
   if (state.isDeloadWeek || state.isRestWeek) return false;
-  // Test week: suppress set reduction — user is max-effort testing, not fatigued
-  if (state.onboardingComplete && !state.testWeekComplete) return false;
+  // Test week: suppress set reduction — user is max-effort testing, not fatigued.
+  // Guard on week 1 so a dismissed review modal never permanently blocks week 2+.
+  if (state.testWeekComplete === false && (state.weekCount || 1) <= 1) return false;
   if (!state.setReductionEnabledAt) return false;
   // Never before Week 5 — not enough training history to make a reliable fatigue call
   if ((state.weekCount || 1) < 5) return false;
@@ -5341,8 +5342,9 @@ function getCycleWeekBandRepTarget(exId) {
   const span = maxReps - minReps;
   const band = getCycleWeekBand();
   if (band === 'recovery') return minReps;
-  // Test week: no rep tightening — user is testing max effort, not following a band target
-  if (state.onboardingComplete && !state.testWeekComplete) return minReps;
+  // Test week: no rep tightening — user is testing max effort, not following a band target.
+  // Guard on week 1 so a dismissed review modal never permanently blocks week 2+.
+  if (state.testWeekComplete === false && (state.weekCount || 1) <= 1) return minReps;
   const thirdW = Math.floor(span / 3);
   if (band === '1-2') return minReps;
   if (band === '3-4') return minReps + thirdW + 1;
@@ -7486,7 +7488,9 @@ function getProgressiveWeight(exId, dayId) {
   // weight unchanged — no increase or decrease suggestion. Mirrors the suppression
   // already in place for deload and rest weeks.
   const _isCalibrationWeek = (state.cycleCount || 1) === 1 && (state.weekCount || 1) === 1;
-  const _isTestWeek = state.onboardingComplete && !state.testWeekComplete;
+  // Test week is only week 1. Guard on weekCount so a dismissed review modal
+  // never permanently suppresses progression in week 2+.
+  const _isTestWeek = state.testWeekComplete === false && (state.weekCount || 1) <= 1;
   if (_isCalibrationWeek || _isTestWeek) {
     if (state.startingWeights?.[exId]) return String(state.startingWeights[exId]);
     const _calSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done && !s.coachRemoved);
@@ -9071,7 +9075,7 @@ function _clearCoachingCueCard(exId) {
 function _evalCoachingCueTriggers(exId, setIndex) {
   if (!activeSession) return null;
   var isCalibrationWeek = (state.cycleCount || 1) === 1 && (state.weekCount || 1) === 1;
-  var isTestWeek = state.onboardingComplete && !state.testWeekComplete;
+  var isTestWeek = state.testWeekComplete === false && (state.weekCount || 1) <= 1;
   var isRecovery = state.isDeloadWeek || state.isRestWeek;
 
   // Recovery/deload: suppress all triggers
