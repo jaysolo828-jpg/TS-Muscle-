@@ -8252,11 +8252,8 @@ function renderSession() {
 
   orderedExercises.forEach(ex => {
     const sets = activeSession.sets[ex.id];
-    // Exclude coach-removed sets: they are intentionally eliminated and must not
-    // prevent an exercise from being marked complete or inflate the set count.
-    const eligibleSets = sets.filter(s => !s.coachRemoved);
-    const doneSets = eligibleSets.filter(s => s.done).length;
-    const isCompleted = eligibleSets.length > 0 && doneSets === eligibleSets.length;
+    const doneSets = sets.filter(s => s.done).length;
+    const isCompleted = doneSets === sets.length;
     const swappedName = activeSession.swaps[ex.id] ? activeSession.swaps[ex.id].name : null;
     const displayName = swappedName || ex.name;
 
@@ -8296,16 +8293,8 @@ function renderSession() {
       : getCycleWeekBandRepRange(ex.id);
     const _coachNote = _inManualAdj ? '' : getCycleWeekBandNote();
 
-    // Build prev-session panel (only if history exists for this exercise).
-    // Exclude coach-removed sets: they're not being performed this session,
-    // so showing their historical data would display a "Set N" row with no
-    // corresponding active set row, confusing the user.
-    const _lastSets = sets.reduce((acc, s, si) => {
-      if (s.coachRemoved) return acc;
-      const d = getLastSetData(ex.id, si);
-      if (d) acc.push(d);
-      return acc;
-    }, []);
+    // Build prev-session panel (only if history exists for this exercise)
+    const _lastSets = sets.map((_, si) => getLastSetData(ex.id, si)).filter(Boolean);
     const _prevBtnHTML = _lastSets.length
       ? `<button class="prev-session-btn" onclick="togglePrevPanel('${ex.id}')">PREV <span id="prev-arrow-${ex.id}">▾</span></button>`
       : '';
@@ -8331,10 +8320,6 @@ function renderSession() {
     `;
 
     sets.forEach((set, si) => {
-      // Coach-removed sets stay in the array (for history/overload integrity) but
-      // must never render a DOM row — especially on re-renders triggered by exercise
-      // swaps or session resume, where their row would otherwise reappear as active.
-      if (set.coachRemoved) return;
       // Pre-fill with last session data if available
       const lastData = getLastSetData(ex.id, si);
       const weightPlaceholder = lastData ? lastData.weight : '';
@@ -8943,10 +8928,7 @@ function toggleSetDone(exId, setIndex) {
 
   const day = state.program.find(d => d.id === activeSession.dayId);
   const sets = activeSession.sets[exId];
-  // Exclude coach-removed sets so a coach-removed undone set does not prevent
-  // the exercise from being considered complete when all eligible sets are done.
-  const _eligibleSets = sets.filter(s => !s.coachRemoved);
-  const allDone = _eligibleSets.length > 0 && _eligibleSets.every(s => s.done);
+  const allDone = sets.every(s => s.done);
   const exEl = document.getElementById('session-ex-' + exId);
   if (exEl) exEl.classList.toggle('completed', allDone);
 
@@ -9524,16 +9506,6 @@ function _coachRemoveSet(exId) {
   sets[removeIdx].coachRemoved = true;
   var row = document.getElementById('set-row-' + exId + '-' + removeIdx);
   if (row) row.remove();
-  // Block dynamic set expansion for this exercise — a coach-remove signals the
-  // user's volume is already at its limit; offering to add a set back would contradict that.
-  if (!activeSession.dynamicSetExpansion) activeSession.dynamicSetExpansion = {};
-  if (activeSession.dynamicSetExpansion[exId] === undefined) {
-    activeSession.dynamicSetExpansion[exId] = 'coach-removed';
-  }
-  // Checkpoint crash-recovery snapshot so the removal survives a hard crash.
-  // (Normal navigation is already covered by the pagehide/beforeunload handlers,
-  // but a hard crash — tab kill, OOM — would restore a stale snapshot without this.)
-  try { localStorage.setItem('ts-muscle-paused', JSON.stringify(activeSession)); } catch(e) {}
   _clearCoachingCueCard(exId);
   updateSessionProgress();
   showToast('Set removed');
@@ -10074,7 +10046,7 @@ function addDynamicSet(exId) {
 
   // Max sets informational notice — shown (once) when total sets exceed 8
   if (sets.length > 8) {
-    const _exEl = document.getElementById('session-ex-' + exId);
+    const _exEl = document.getElementById('session-exercise-' + exId);
     const _existingNotice = _exEl?.querySelector('.max-sets-notice');
     if (_exEl && !_existingNotice) {
       const _notice = document.createElement('div');
@@ -11914,7 +11886,6 @@ function finalizeEndSession(save) {
         delete state.pauseReason;
         delete state.pauseWeekCount;
         delete state.pauseStreak;
-        _updateAndSaveStrengthScore();
         saveState();
         updateStreak();
         renderHome();
