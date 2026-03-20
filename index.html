@@ -6480,8 +6480,12 @@ function renderHome() {
   // Week-complete message — shown until midnight when the session-based rollover happened today
   if (_showCompletedWeek && state.weekRolledOverPrevWeek) {
     const _wcMsg = document.createElement('div');
-    _wcMsg.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:13px;color:var(--gray);text-align:center;padding:6px 0 10px;letter-spacing:0.3px;';
-    _wcMsg.textContent = `Week ${state.weekRolledOverPrevWeek} complete · Well done.`;
+    const _nextWeek = state.weekRolledOverPrevWeek + 1;
+    _wcMsg.style.cssText = 'text-align:center;padding:28px 20px 24px;border-top:1px solid #2a2a2a;margin-top:4px;';
+    _wcMsg.innerHTML = `
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-bottom:8px;">Week ${state.weekRolledOverPrevWeek} complete \u00b7 Well done.</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray);letter-spacing:0.4px;">Your Week ${_nextWeek} workouts unlock at midnight.</div>
+    `;
     container.appendChild(_wcMsg);
   }
 
