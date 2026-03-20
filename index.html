@@ -11532,7 +11532,7 @@ function showSessionWrapUp() {
   const _totalCycleWeeks = 6;
   const _cycleDots = Array.from({length: _totalCycleWeeks}, (_, i) => {
     const filled = (i + 1) <= Math.min(_cycleWeek, _totalCycleWeeks);
-    return `<span style="font-size:13px;color:${filled ? 'var(--cream)' : '#3a3a3a'};line-height:1;">●</span>`;
+    return `<span style="font-size:17px;color:${filled ? 'var(--cream)' : '#505050'};line-height:1;">●</span>`;
   }).join('');
   const _weekLabel = (state.isDeloadWeek || state.isRestWeek) ? 'RECOVERY' : `WEEK ${_cycleWeek} OF ${_totalCycleWeeks}`;
 
@@ -11544,19 +11544,21 @@ function showSessionWrapUp() {
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
       <!-- Header: workout name + DONE -->
-      <div style="margin-bottom:10px;">
-        <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;line-height:1;">${activeSession.dayName ? activeSession.dayName + ' \u2014 DONE.' : 'SESSION \u2014 DONE.'}</div>
+      <div style="margin-bottom:16px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:34px;color:var(--cream);letter-spacing:2px;line-height:1;">${activeSession.dayName ? activeSession.dayName + ' \u2014 DONE.' : 'SESSION \u2014 DONE.'}</div>
       </div>
       <!-- Cycle progress bar -->
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px;">
-        <div style="display:flex;gap:4px;">${_cycleDots}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;margin-left:2px;">${_weekLabel}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+        <div style="display:flex;gap:6px;">${_cycleDots}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:1px;margin-left:2px;">${_weekLabel}</div>
       </div>
       <!-- Auto-generated session summary line -->
-      <div style="background:var(--dark3);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:${summaryColor};flex-shrink:0;"></div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);letter-spacing:0.5px;">${_summaryParts}</div>
+      <div style="background:var(--dark3);border-radius:10px;padding:14px 16px;margin-bottom:24px;display:flex;align-items:center;gap:10px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:${summaryColor};flex-shrink:0;"></div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;color:var(--cream);letter-spacing:0.5px;">${_summaryParts}</div>
       </div>
+      <!-- Separator between summary and exercise breakdown -->
+      <div style="border-top:1px solid #333;margin-bottom:20px;"></div>
       <!-- Per-exercise rows -->
       <div style="margin-bottom:${bonusSummaryRows ? '0' : '20px'};">
         ${rows}
@@ -11568,9 +11570,10 @@ function showSessionWrapUp() {
         ${bonusSummaryRows}
       </div>` : ''}
       <!-- Legend -->
-      <div style="display:flex;gap:16px;margin-bottom:20px;padding:10px 14px;background:var(--dark3);border-radius:10px;">
-        <div style="font-size:11px;color:#2ecc71;font-family:'Barlow Condensed',sans-serif;">▲ Exceeded &nbsp; ✓ Hit range</div>
-        <div style="font-size:11px;color:#CC2027;font-family:'Barlow Condensed',sans-serif;">▼ Below target</div>
+      <div style="display:flex;gap:20px;align-items:center;margin-top:4px;margin-bottom:28px;padding:14px 16px;background:var(--dark3);border-radius:10px;">
+        <div style="font-size:14px;color:#2ecc71;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">▲ Exceeded</div>
+        <div style="font-size:14px;color:#2ecc71;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">✓ Hit range</div>
+        <div style="font-size:14px;color:#CC2027;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">▼ Below target</div>
       </div>
       <!-- Upgrade prompt for today-only bonuses -->
       ${upgradePromptHTML}
