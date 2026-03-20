@@ -9316,7 +9316,7 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
   };
 
   var sessCtx = _getSessionExerciseContext(exId);
-  var exercisePositionStr = 'Exercise ' + (sessCtx.currentExerciseIndex + 1) + ' of ' + sessCtx.totalExercises + ' (' + sessCtx.exercisesRemaining + ' remaining after this)';
+  var exercisePositionStr = 'Exercise ' + (sessCtx.currentExerciseIndex + 1) + ' of ' + sessCtx.totalExercises + ' (' + sessCtx.exercisesRemaining + ' remaining after this; is last exercise: ' + (sessCtx.isLastExercise ? 'YES' : 'NO') + ')';
   var muscleGroupStr = sessCtx.muscleGroupRemaining > 0
     ? sessCtx.muscleGroupRemaining + ' more ' + muscle + ' exercise' + (sessCtx.muscleGroupRemaining !== 1 ? 's' : '') + ' remaining'
     : 'No more ' + muscle + ' exercises this session';
@@ -9344,7 +9344,7 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
     }
   }
 
-  return 'You are a knowledgeable training partner giving a single between-set coaching cue. Write exactly 1–2 short sentences. Direct, confident, human. No greetings, no sign-offs, no filler.\n\nVoice rules:\n- Short punchy sentences. Observational and instructional only.\n- Never comment on form, technique, or control — you cannot see these. Never say "good control", "solid form", "nice technique", "clean reps", or anything similar.\n- Never say "Great work", "Amazing", "Well done", or generic praise.\n- Only reference what is explicitly in the session data below.\n\nContext rules:\n- Use all available context to make the cue specific to this exact moment — reference the week, the set number, progression from last set, superset partner if relevant, whether a weight increase is already queued.\n- If weight increase is queued for next session: acknowledge the performance and encourage finishing the session strong. Do not suggest load changes.\n- If in manual adjustment period: reflect that weight was recently changed and the focus is on adapting to the new load.\n- If part of a superset: factor in the paired exercise and how it affects pacing and effort for this movement.\n- Factor in session position — RPE 8.5 on exercise 1 of 6 is a different signal than RPE 8.5 on exercise 5 of 6.\n- When same-muscle exercises remain, factor in cumulative fatigue for that muscle group.' + restRpeVoiceRule + '\n\nTone examples (right):\n- "140 for 12 at RPE 8 — same weight as last session. Set 3 is where you find out if you\'re ready to move up."\n- "Week 5, set 2 of 4. RPE climbing from last set — pace yourself, you\'ve got pulldown paired after this."\n- "Adjustment period — 140 is new territory. Stay consistent on reps before pushing RPE."\n\nSession data:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Training goal: ' + trainingGoal + '\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- ' + setNumberStr + '\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Rep target: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Superset: ' + supersetStr + '\n- Sets this session: ' + setsSummary + '\n- Previous set this session: ' + prevInSessionStr + '\n- Weight increase queued next session: ' + (weightIncreaseQueued ? 'Yes' : 'No') + '\n- Manual adjustment period: ' + manualAdjStr + '\n- Session duration: ' + sessionDurStr + '\n- Last session this exercise: ' + lastSessionExStr + '\n- ' + prevSetStr + '\n- Trigger: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + restRpeObservation + '\n\nWrite exactly 1–2 sentences. No greeting, no sign-off.';
+  return 'You are a knowledgeable training partner giving a single between-set coaching cue. Write exactly 1–2 short sentences. Direct, confident, human. No greetings, no sign-offs, no filler.\n\nVoice rules:\n- Short punchy sentences. Observational and instructional only.\n- Never comment on form, technique, or control — you cannot see these. Never say "good control", "solid form", "nice technique", "clean reps", or anything similar.\n- Never say "Great work", "Amazing", "Well done", or generic praise.\n- Only reference what is explicitly in the session data below.\n\nContext rules:\n- Use all available context to make the cue specific to this exact moment — reference the week, the set number, progression from last set, superset partner if relevant, whether a weight increase is already queued.\n- If weight increase is queued for next session: acknowledge the performance and encourage finishing the session strong. Do not suggest load changes.\n- If in manual adjustment period: reflect that weight was recently changed and the focus is on adapting to the new load.\n- If part of a superset: factor in the paired exercise and how it affects pacing and effort for this movement.\n- Factor in session position — RPE 8.5 on exercise 1 of 6 is a different signal than RPE 8.5 on exercise 5 of 6.\n- When same-muscle exercises remain, factor in cumulative fatigue for that muscle group.\n- NEVER assume or infer exercise position, session progress, or how many exercises remain. Use only the explicit values in the session data below. If position data is absent or unclear, omit any reference to exercise order entirely — do not guess.' + restRpeVoiceRule + '\n\nTone examples (right):\n- "140 for 12 at RPE 8 — same weight as last session. Set 3 is where you find out if you\'re ready to move up."\n- "Week 5, set 2 of 4. RPE climbing from last set — pace yourself, you\'ve got pulldown paired after this."\n- "Adjustment period — 140 is new territory. Stay consistent on reps before pushing RPE."\n\nSession data:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Training goal: ' + trainingGoal + '\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- ' + setNumberStr + '\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Rep target: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Superset: ' + supersetStr + '\n- Sets this session: ' + setsSummary + '\n- Previous set this session: ' + prevInSessionStr + '\n- Weight increase queued next session: ' + (weightIncreaseQueued ? 'Yes' : 'No') + '\n- Manual adjustment period: ' + manualAdjStr + '\n- Session duration: ' + sessionDurStr + '\n- Last session this exercise: ' + lastSessionExStr + '\n- ' + prevSetStr + '\n- Trigger: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + restRpeObservation + '\n\nWrite exactly 1–2 sentences. No greeting, no sign-off.';
 }
 
 async function _fetchCoachingCue(prompt) {
@@ -9839,41 +9839,43 @@ function _isUnilateral(exId) {
 // session, how many were completed before this exercise, and how many exercises
 // remain after this exercise (i.e. exercises the user hasn't started yet).
 function _getSessionExerciseContext(exId) {
-  var fallback = { totalExercises: 1, completedExercises: 0, exercisesRemaining: 0, currentExerciseIndex: 0, muscleGroupRemaining: 0 };
+  var fallback = { totalExercises: 1, completedExercises: 0, exercisesRemaining: 0, currentExerciseIndex: 0, muscleGroupRemaining: 0, isLastExercise: true };
   if (!activeSession) return fallback;
   var _day = state.program && state.program.find(function(d) { return d.id === activeSession.dayId; });
-  var exercises = (_day && _day.exercises) || [];
-  var totalExercises = exercises.length;
+  if (!_day) return fallback;
+
+  // Use the session's actual exercise order — respects user reordering.
+  // Fall back to the day plan order only if no session order recorded.
+  var orderedIds = activeSession.exerciseOrder || _day.exercises.map(function(e) { return e.id; });
+  var skipped = activeSession.skipped || {};
+
+  // Active exercises: session order, minus any the user has explicitly skipped.
+  var activeIds = orderedIds.filter(function(id) { return !skipped[id]; });
+  var totalExercises = activeIds.length;
   if (totalExercises === 0) return fallback;
 
   var currentMuscle = MUSCLE_MAP[exId] || null;
-  var currentExerciseIndex = 0;
-  var completedExercises = 0;
-  var exercisesRemaining = 0;
-  var muscleGroupRemaining = 0;
-  var foundCurrent = false;
+  var currentExerciseIndex = activeIds.indexOf(exId);
+  // Guard: if exId isn't in the active list (skipped or not present), use position 0.
+  if (currentExerciseIndex === -1) currentExerciseIndex = 0;
 
-  exercises.forEach(function(ex, i) {
-    if (ex.id === exId) {
-      currentExerciseIndex = i;
-      foundCurrent = true;
-    } else if (!foundCurrent) {
-      // Count exercises before current that are fully done
-      var exSets = (activeSession.sets[ex.id] || []).filter(function(s) { return !s.coachRemoved; });
-      if (exSets.length > 0 && exSets.every(function(s) { return s.done; })) {
-        completedExercises++;
-      }
-    } else {
-      // Count exercises that come after the current exercise
-      exercisesRemaining++;
-      // Count same-muscle exercises after current that are not yet fully completed
-      var afterSets = (activeSession.sets[ex.id] || []).filter(function(s) { return !s.coachRemoved; });
-      var isComplete = afterSets.length > 0 && afterSets.every(function(s) { return s.done; });
-      if (!isComplete && currentMuscle && MUSCLE_MAP[ex.id] === currentMuscle) {
-        muscleGroupRemaining++;
-      }
-    }
-  });
+  var exercisesRemaining = totalExercises - currentExerciseIndex - 1;
+  var isLastExercise = exercisesRemaining === 0;
+
+  // Count fully-done exercises that appear before the current one (session order).
+  var completedExercises = 0;
+  for (var i = 0; i < currentExerciseIndex; i++) {
+    var exSets = (activeSession.sets[activeIds[i]] || []).filter(function(s) { return !s.coachRemoved; });
+    if (exSets.length > 0 && exSets.every(function(s) { return s.done; })) completedExercises++;
+  }
+
+  // Count same-muscle exercises after current that are not yet fully completed.
+  var muscleGroupRemaining = 0;
+  for (var j = currentExerciseIndex + 1; j < activeIds.length; j++) {
+    var afterSets = (activeSession.sets[activeIds[j]] || []).filter(function(s) { return !s.coachRemoved; });
+    var isComplete = afterSets.length > 0 && afterSets.every(function(s) { return s.done; });
+    if (!isComplete && currentMuscle && MUSCLE_MAP[activeIds[j]] === currentMuscle) muscleGroupRemaining++;
+  }
 
   return {
     totalExercises: totalExercises,
@@ -9881,6 +9883,7 @@ function _getSessionExerciseContext(exId) {
     exercisesRemaining: exercisesRemaining,
     currentExerciseIndex: currentExerciseIndex,
     muscleGroupRemaining: muscleGroupRemaining,
+    isLastExercise: isLastExercise,
   };
 }
 
