@@ -10074,7 +10074,7 @@ function addDynamicSet(exId) {
 
   // Max sets informational notice — shown (once) when total sets exceed 8
   if (sets.length > 8) {
-    const _exEl = document.getElementById('session-exercise-' + exId);
+    const _exEl = document.getElementById('session-ex-' + exId);
     const _existingNotice = _exEl?.querySelector('.max-sets-notice');
     if (_exEl && !_existingNotice) {
       const _notice = document.createElement('div');
