@@ -8870,6 +8870,8 @@ function toggleSetDone(exId, setIndex) {
 
   if (set.done) {
     checkForPR(exId, set);
+    // Record completion timestamp for rest gap calculation between consecutive sets
+    set.completedAt = Date.now();
     // Detect manual weight change: a set is fully complete only when both weight
     // and reps are logged.  _updatePendingManualAdj recomputes from ALL done sets
     // so unchecking+reweighting always uses the latest confirmed values.
@@ -9319,7 +9321,30 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
     ? sessCtx.muscleGroupRemaining + ' more ' + muscle + ' exercise' + (sessCtx.muscleGroupRemaining !== 1 ? 's' : '') + ' remaining'
     : 'No more ' + muscle + ' exercises this session';
 
-  return 'You are a knowledgeable training partner giving a single between-set coaching cue. Write exactly 1–2 short sentences. Direct, confident, human. No greetings, no sign-offs, no filler.\n\nVoice rules:\n- Short punchy sentences. Observational and instructional only.\n- Never comment on form, technique, or control — you cannot see these. Never say "good control", "solid form", "nice technique", "clean reps", or anything similar.\n- Never say "Great work", "Amazing", "Well done", or generic praise.\n- Only reference what is explicitly in the session data below.\n\nContext rules:\n- Use all available context to make the cue specific to this exact moment — reference the week, the set number, progression from last set, superset partner if relevant, whether a weight increase is already queued.\n- If weight increase is queued for next session: acknowledge the performance and encourage finishing the session strong. Do not suggest load changes.\n- If in manual adjustment period: reflect that weight was recently changed and the focus is on adapting to the new load.\n- If part of a superset: factor in the paired exercise and how it affects pacing and effort for this movement.\n- Factor in session position — RPE 8.5 on exercise 1 of 6 is a different signal than RPE 8.5 on exercise 5 of 6.\n- When same-muscle exercises remain, factor in cumulative fatigue for that muscle group.\n\nTone examples (right):\n- "140 for 12 at RPE 8 — same weight as last session. Set 3 is where you find out if you\'re ready to move up."\n- "Week 5, set 2 of 4. RPE climbing from last set — pace yourself, you\'ve got pulldown paired after this."\n- "Adjustment period — 140 is new territory. Stay consistent on reps before pushing RPE."\n\nSession data:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Training goal: ' + trainingGoal + '\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- ' + setNumberStr + '\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Rep target: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Superset: ' + supersetStr + '\n- Sets this session: ' + setsSummary + '\n- Previous set this session: ' + prevInSessionStr + '\n- Weight increase queued next session: ' + (weightIncreaseQueued ? 'Yes' : 'No') + '\n- Manual adjustment period: ' + manualAdjStr + '\n- Session duration: ' + sessionDurStr + '\n- Last session this exercise: ' + lastSessionExStr + '\n- ' + prevSetStr + '\n- Trigger: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + '\n\nWrite exactly 1–2 sentences. No greeting, no sign-off.';
+  // ── Rest gap + RPE delta (per-set timestamp tracking) ───────────────────────
+  // Surfaces a live rest/RPE observation only when: delta >= 1.5, rest <= 60s,
+  // gap is realistic (< 30 min), and this exercise hasn't been flagged yet.
+  var restRpeObservation = '';
+  var restRpeVoiceRule = '';
+  var _curSet = allSetsForEx[setIndex];
+  var _prvSet = setIndex > 0 ? allSetsForEx[setIndex - 1] : null;
+  if (_prvSet && _prvSet.done && _prvSet.completedAt && _curSet && _curSet.completedAt) {
+    var _gapSec = Math.round((_curSet.completedAt - _prvSet.completedAt) / 1000);
+    var _curRpe  = _curSet.rpe  ? parseFloat(_curSet.rpe)  : null;
+    var _prvRpe  = _prvSet.rpe  ? parseFloat(_prvSet.rpe)  : null;
+    var _rpeDelta = (_curRpe !== null && _prvRpe !== null) ? (_curRpe - _prvRpe) : null;
+    // Skip if gap is unrealistic (app was backgrounded)
+    if (_gapSec <= 1800 && _rpeDelta !== null && _rpeDelta >= 1.5 && _gapSec >= 0 && _gapSec <= 60) {
+      if (!activeSession.restRpeFlagged) activeSession.restRpeFlagged = {};
+      if (!activeSession.restRpeFlagged[exId]) {
+        activeSession.restRpeFlagged[exId] = true;
+        restRpeObservation = '\n- Rest/RPE observation: only ' + _gapSec + 's rest between the last two sets; RPE jumped +' + _rpeDelta.toFixed(1) + ' (from ' + _prvRpe + ' to ' + _curRpe + '). Weave this into the cue as a live observation — like a coach who noticed something. Vary the framing naturally. Do not state it like a rule firing.';
+        restRpeVoiceRule = '\n- A short-rest/RPE-spike pattern is flagged: surface it as something you noticed, not a template. Vary your language. If the pattern continues across later sets, acknowledge the trend but reframe it — never repeat the same phrasing.';
+      }
+    }
+  }
+
+  return 'You are a knowledgeable training partner giving a single between-set coaching cue. Write exactly 1–2 short sentences. Direct, confident, human. No greetings, no sign-offs, no filler.\n\nVoice rules:\n- Short punchy sentences. Observational and instructional only.\n- Never comment on form, technique, or control — you cannot see these. Never say "good control", "solid form", "nice technique", "clean reps", or anything similar.\n- Never say "Great work", "Amazing", "Well done", or generic praise.\n- Only reference what is explicitly in the session data below.\n\nContext rules:\n- Use all available context to make the cue specific to this exact moment — reference the week, the set number, progression from last set, superset partner if relevant, whether a weight increase is already queued.\n- If weight increase is queued for next session: acknowledge the performance and encourage finishing the session strong. Do not suggest load changes.\n- If in manual adjustment period: reflect that weight was recently changed and the focus is on adapting to the new load.\n- If part of a superset: factor in the paired exercise and how it affects pacing and effort for this movement.\n- Factor in session position — RPE 8.5 on exercise 1 of 6 is a different signal than RPE 8.5 on exercise 5 of 6.\n- When same-muscle exercises remain, factor in cumulative fatigue for that muscle group.' + restRpeVoiceRule + '\n\nTone examples (right):\n- "140 for 12 at RPE 8 — same weight as last session. Set 3 is where you find out if you\'re ready to move up."\n- "Week 5, set 2 of 4. RPE climbing from last set — pace yourself, you\'ve got pulldown paired after this."\n- "Adjustment period — 140 is new territory. Stay consistent on reps before pushing RPE."\n\nSession data:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Training goal: ' + trainingGoal + '\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- ' + setNumberStr + '\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Rep target: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Superset: ' + supersetStr + '\n- Sets this session: ' + setsSummary + '\n- Previous set this session: ' + prevInSessionStr + '\n- Weight increase queued next session: ' + (weightIncreaseQueued ? 'Yes' : 'No') + '\n- Manual adjustment period: ' + manualAdjStr + '\n- Session duration: ' + sessionDurStr + '\n- Last session this exercise: ' + lastSessionExStr + '\n- ' + prevSetStr + '\n- Trigger: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + restRpeObservation + '\n\nWrite exactly 1–2 sentences. No greeting, no sign-off.';
 }
 
 async function _fetchCoachingCue(prompt) {
