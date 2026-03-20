@@ -11360,11 +11360,11 @@ function showSessionWrapUp() {
     let nextHint = '';
     if (overload) {
       if (overload.newWeight > overload.lastWeight) {
-        nextHint = `<span style="color:#2ecc71;">↑ ${overload.lastWeight}→${overload.newWeight} lbs next session</span>`;
+        nextHint = `<span style="color:#2ecc71;font-size:15px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">↑ ${overload.newWeight} lbs next session</span>`;
       } else if (overload.newWeight < overload.lastWeight) {
-        nextHint = `<span style="color:#f39c12;">↓ ${overload.lastWeight}→${overload.newWeight} lbs next session</span>`;
+        nextHint = `<span style="color:#f39c12;font-size:15px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">↓ ${overload.newWeight} lbs next session</span>`;
       } else if (overload.lastWeight) {
-        nextHint = `<span style="color:var(--gray);">→ Stay at ${overload.lastWeight} lbs</span>`;
+        nextHint = `<span style="color:var(--cream);font-size:15px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">→ Stay at ${overload.lastWeight} lbs</span>`;
       }
     }
 
@@ -11373,17 +11373,13 @@ function showSessionWrapUp() {
     ).join('<span style="color:#333;margin:0 3px;">·</span>');
 
     rows += `
-      <div style="border-bottom:1px solid var(--dark3);padding:12px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">${ex.name}</div>
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            ${setDots}
-            ${avgRPE ? `<span style="color:var(--gray-light);font-size:11px;letter-spacing:0.5px;margin-left:2px;">RPE ${avgRPE}</span>` : ''}
-          </div>
+      <div style="border-bottom:1px solid var(--dark3);padding:16px 0;">
+        <div style="font-size:13px;color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">${ex.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;${nextHint ? 'margin-bottom:8px;' : ''}">
+          ${setDots}
+          ${avgRPE ? `<span style="color:var(--gray-light);font-size:11px;letter-spacing:0.5px;margin-left:4px;">RPE ${avgRPE}</span>` : ''}
         </div>
-        <div style="text-align:right;font-size:11px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0;">
-          ${nextHint}
-        </div>
+        ${nextHint ? `<div>${nextHint}</div>` : ''}
       </div>`;
   });
 
@@ -11400,7 +11396,7 @@ function showSessionWrapUp() {
     const PERSIST_META = { today: { label: 'TODAY ONLY', color: '#888' }, cycle: { label: 'THIS CYCLE', color: '#4a8af5' }, permanent: { label: 'PERMANENT', color: '#2ecc71' } };
     const pm = PERSIST_META[bonus.persistence] || PERSIST_META.today;
     bonusSummaryRows += `
-      <div style="border-bottom:1px solid var(--dark3);padding:12px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+      <div style="border-bottom:1px solid var(--dark3);padding:16px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
             <div style="font-size:13px;color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;">${bonus.name}</div>
@@ -11438,23 +11434,57 @@ function showSessionWrapUp() {
 
   // Summary bar
   const summaryColor = missedSets > 0 ? '#f39c12' : '#2ecc71';
-  const summaryText = missedSets === 0
-    ? `${hitSets + exceededSets} of ${totalSets} sets hit or exceeded target`
-    : `${hitSets + exceededSets} of ${totalSets} sets on target · ${missedSets} missed`;
+  // Session duration in minutes
+  const sessionDurMins = activeSession.startTime
+    ? Math.round((Date.now() - activeSession.startTime) / 60000)
+    : null;
+
+  // Overall avg RPE across all main exercises
+  const _allRpeVals = [];
+  day.exercises.forEach(ex => {
+    (activeSession.sets[ex.id] || []).filter(s => s.done && s.rpe != null && s.rpe !== '').forEach(s => _allRpeVals.push(parseFloat(s.rpe)));
+  });
+  const overallAvgRPE = _allRpeVals.length
+    ? (_allRpeVals.reduce((a, b) => a + b, 0) / _allRpeVals.length).toFixed(1)
+    : null;
+
+  // Auto-generated summary line parts
+  const _sHit = hitSets + exceededSets;
+  const _summaryParts = [
+    `<span class="wrapup-stat" data-final="${_sHit}">${_sHit}</span> of <span class="wrapup-stat" data-final="${totalSets}">${totalSets}</span> sets hit`,
+    overallAvgRPE ? `Avg RPE <span class="wrapup-stat" data-final="${overallAvgRPE}" data-float="1">${overallAvgRPE}</span>` : null,
+    sessionDurMins ? `<span class="wrapup-stat" data-final="${sessionDurMins}">${sessionDurMins}</span> min` : null,
+  ].filter(Boolean).join(' · ');
+
+  // Cycle progress bar
+  const _cycleWeek = (state.isDeloadWeek || state.isRestWeek) ? 7 : Math.min(state.weekCount || 1, 6);
+  const _totalCycleWeeks = 6;
+  const _cycleDots = Array.from({length: _totalCycleWeeks}, (_, i) => {
+    const filled = (i + 1) <= Math.min(_cycleWeek, _totalCycleWeeks);
+    return `<span style="font-size:13px;color:${filled ? 'var(--cream)' : '#3a3a3a'};line-height:1;">●</span>`;
+  }).join('');
+  const _weekLabel = (state.isDeloadWeek || state.isRestWeek) ? 'RECOVERY' : `WEEK ${_cycleWeek} OF ${_totalCycleWeeks}`;
+
+  const summaryColor = missedSets > 0 ? '#f39c12' : '#2ecc71';
 
   const modal = document.createElement('div');
   modal.id = 'session-wrapup-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-      <div style="margin-bottom:4px;">
-        <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;line-height:1;">SESSION SUMMARY</div>
-        ${activeSession.dayName ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;margin-top:3px;">${activeSession.dayName}</div>` : ''}
+      <!-- Header: workout name + DONE -->
+      <div style="margin-bottom:10px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;line-height:1;">${activeSession.dayName ? activeSession.dayName + ' \u2014 DONE.' : 'SESSION \u2014 DONE.'}</div>
       </div>
-      <!-- Rep outcome summary bar -->
+      <!-- Cycle progress bar -->
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px;">
+        <div style="display:flex;gap:4px;">${_cycleDots}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;margin-left:2px;">${_weekLabel}</div>
+      </div>
+      <!-- Auto-generated session summary line -->
       <div style="background:var(--dark3);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
         <div style="width:8px;height:8px;border-radius:50%;background:${summaryColor};flex-shrink:0;"></div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);letter-spacing:0.5px;">${summaryText}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);letter-spacing:0.5px;">${_summaryParts}</div>
       </div>
       <!-- Per-exercise rows -->
       <div style="margin-bottom:${bonusSummaryRows ? '0' : '20px'};">
@@ -11498,7 +11528,7 @@ function showSessionWrapUp() {
         " placeholder="Form cues, how it felt, anything to remember..."></textarea>
       </div>
       <button onclick="saveWrapupNotesAndFinish()"
-        style="width:100%;background:#2ecc71;border:none;color:#0a0a0a;padding:16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:1.5px;cursor:pointer;box-shadow:0 4px 16px rgba(46,204,113,0.3);">
+        style="width:100%;background:#FFD700;border:none;color:#0a0a0a;padding:16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:1.5px;cursor:pointer;box-shadow:0 4px 16px rgba(255,215,0,0.3);">
         SAVE &amp; FINISH ✓
       </button>
       <button onclick="document.getElementById('session-wrapup-modal').remove(); document.getElementById('workout-session').scrollTop=document.getElementById('workout-session').scrollHeight;"
@@ -11508,6 +11538,33 @@ function showSessionWrapUp() {
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  // Stat counter animation — counts up to final values on load
+  (function() {
+    var statEls = modal.querySelectorAll('.wrapup-stat');
+    if (!statEls.length) return;
+    var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) return; // display final values immediately (already set in HTML)
+    statEls.forEach(function(el, i) {
+      var finalVal = parseFloat(el.dataset.final);
+      var isFloat = el.dataset.float === '1';
+      el.textContent = isFloat ? '0.0' : '0';
+      setTimeout(function() {
+        var startTs = null;
+        var dur = 800;
+        function step(ts) {
+          if (!startTs) startTs = ts;
+          var progress = Math.min((ts - startTs) / dur, 1);
+          var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+          var cur = finalVal * eased;
+          el.textContent = isFloat ? cur.toFixed(1) : Math.round(cur);
+          if (progress < 1) requestAnimationFrame(step);
+          else el.textContent = isFloat ? finalVal.toFixed(1) : String(finalVal);
+        }
+        requestAnimationFrame(step);
+      }, i * 200);
+    });
+  })();
 }
 
 function saveWrapupNotesAndFinish() {
