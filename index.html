@@ -9045,6 +9045,7 @@ function toggleSetDone(exId, setIndex) {
 function _getCoachingApiKey() { return window.ANTHROPIC_API_KEY || ''; }
 let _coachingCueAbortController = null;
 var _coachingCueObservers = {}; // exId → IntersectionObserver
+var _coachingCueFetching = {};  // exId → true while an API call is in-flight for that exercise
 let _lastSessionInsights = {}; // exId -> insight string or null (display-only, never saved)
 let _insightInteracted = {};   // exId -> true once user has tapped the note field
 let _insightAbortController = null;
@@ -9194,10 +9195,13 @@ function _evalCoachingCueTriggers(exId, setIndex) {
     }
   }
 
-  // Trigger 6: Completed all planned (goal) sets for this exercise
+  // Trigger 6: Second-to-last planned set — gives actionable info before the final set.
+  // Fires after setIndex === goalSets6 - 2, i.e. one set remains.
+  // Does NOT fire after the last set (setIndex === goalSets6 - 1): the separate all-sets-done
+  // guard in _maybeFireCoachingCue suppresses any cue once every set is completed.
   if (allowedTriggers[6]) {
     var goalSets6 = getGoalSets(exId, (_ex && _ex.sets) || 3);
-    if (setIndex === goalSets6 - 1 && setIndex >= 1) {
+    if (setIndex === goalSets6 - 2 && setIndex >= 1) {
       return { trigger: 6, data: { reps: currentReps, rpe: currentRpe, goalSets: goalSets6 } };
     }
   }
@@ -9629,6 +9633,9 @@ async function _maybeFireCoachingCue(exId, setIndex) {
   // Don't show if a coaching cue card is already present for this exercise
   var cueCard = document.getElementById('coaching-cue-' + exId);
   if (cueCard) return;
+  // Suppress if every active set is already done — cue must never fire after the last set
+  var _activeSets = (activeSession.sets[exId] || []).filter(function(s) { return !s.coachRemoved; });
+  if (_activeSets.length > 0 && _activeSets.every(function(s) { return s.done; })) return;
   // Superset pairing: suppress mid-session cues until the partner has matched the round,
   // but always allow the cue once this exercise has completed all its planned sets.
   // This prevents the leading exercise from being permanently silenced when the user
@@ -9644,18 +9651,28 @@ async function _maybeFireCoachingCue(exId, setIndex) {
   var result = _evalCoachingCueTriggers(exId, setIndex);
   if (!result) return;
 
+  // Block a second API call for this exercise if one is already in-flight.
+  // Prevents race conditions when sets are logged in rapid succession.
+  if (_coachingCueFetching[exId]) return;
+  _coachingCueFetching[exId] = true;
+
   if (!activeSession.coachingCues) activeSession.coachingCues = {};
 
   var warrantRemove = _coachingCueWarrantsRemove(exId, setIndex, result.trigger);
-  var cueText = await _fetchCoachingCue(_buildCoachingCuePrompt(exId, setIndex, result.trigger, result.data));
+  try {
+    var cueText = await _fetchCoachingCue(_buildCoachingCuePrompt(exId, setIndex, result.trigger, result.data));
 
-  // Re-validate session is still active and cue wasn't cleared during API call
-  if (!activeSession) return;
-  if (activeSession.coachingCues && activeSession.coachingCues[exId] && activeSession.coachingCues[exId].cleared) return;
-  if (!cueText) return; // fail silently — offline, timeout, or no API key
+    // Re-validate session is still active and cue wasn't cleared during API call
+    if (!activeSession) return;
+    if (activeSession.coachingCues && activeSession.coachingCues[exId] && activeSession.coachingCues[exId].cleared) return;
+    if (!cueText) return; // fail silently — offline, timeout, or no API key
 
-  activeSession.coachingCues[exId] = { trigger: result.trigger, setIndex: setIndex, cueText: cueText };
-  _showCoachingCueCard(exId, cueText, warrantRemove);
+    activeSession.coachingCues[exId] = { trigger: result.trigger, setIndex: setIndex, cueText: cueText };
+    _showCoachingCueCard(exId, cueText, warrantRemove);
+  } finally {
+    // Always release the lock so future sets can trigger a cue normally.
+    _coachingCueFetching[exId] = false;
+  }
 }
 
 // ============================================================
