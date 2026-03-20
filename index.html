@@ -9036,7 +9036,7 @@ function toggleSetDone(exId, setIndex) {
 
   // Checkpoint: auto-save after every completed set so crash/swipe-away recovery has recent data
   if (set.done && activeSession) {
-    try { localStorage.setItem('ts-muscle-paused', JSON.stringify(activeSession)); } catch(e) {}
+    try { const _chk = JSON.stringify(activeSession); localStorage.setItem('ts-muscle-paused', _chk); _idbSet('ts-muscle-paused', _chk); } catch(e) {}
   }
 }
 
@@ -9566,7 +9566,7 @@ function _coachRemoveSet(exId) {
   // Checkpoint crash-recovery snapshot so the removal survives a hard crash.
   // (Normal navigation is already covered by the pagehide/beforeunload handlers,
   // but a hard crash — tab kill, OOM — would restore a stale snapshot without this.)
-  try { localStorage.setItem('ts-muscle-paused', JSON.stringify(activeSession)); } catch(e) {}
+  try { const _chk = JSON.stringify(activeSession); localStorage.setItem('ts-muscle-paused', _chk); _idbSet('ts-muscle-paused', _chk); } catch(e) {}
   _clearCoachingCueCard(exId);
   updateSessionProgress();
   showToast('Set removed');
@@ -10052,7 +10052,7 @@ function addDynamicSet(exId) {
   // Checkpoint crash-recovery snapshot so the partial set isn't lost on swipe-away.
   // Mirrors the identical checkpoint in toggleSetDone — ensures the undone dynamic set
   // is captured by the incomplete-session warning and saved to history on explicit exit.
-  try { localStorage.setItem('ts-muscle-paused', JSON.stringify(activeSession)); } catch(e) {}
+  try { const _chk = JSON.stringify(activeSession); localStorage.setItem('ts-muscle-paused', _chk); _idbSet('ts-muscle-paused', _chk); } catch(e) {}
 
   // Initialise setIntel entry so within-session intelligence works on this set
   if (activeSession.setIntel?.[exId]) {
@@ -11791,9 +11791,9 @@ function finalizeEndSession(save) {
       if (_sessionBased) state.weekRolledOverAt = Date.now();
       state.weekStartTimestamp = Date.now();
       state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
-      const prevWeek = state.weekCount;
+      const prevWeek = state.weekCount || 1;
       if (_sessionBased) state.weekRolledOverPrevWeek = prevWeek;
-      state.weekCount = Math.min(state.weekCount + 1, 8);
+      state.weekCount = Math.min((state.weekCount || 1) + 1, 8);
       // Cycle complete — was on week 8, now would roll over
       if (prevWeek === 8) {
         state.weekCount = 1;
