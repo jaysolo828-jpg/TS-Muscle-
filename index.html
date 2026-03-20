@@ -2690,7 +2690,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Bro Split</span>
         </div>
-        <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">5 days. One muscle group per day. Chest, Back, Shoulders, Arms, Legs. High volume.</div>
+        <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">5 days. One muscle group per day. Chest, Back, Legs, Shoulders, Arms. High volume.</div>
       </button>
       <button class="settings-day-btn" id="stb-glute" onclick="selectSplitTypeSettings('glute', this)">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -4509,7 +4509,7 @@ const FULLBODY_PROGRAM = [
 ];
 
 // ── BRO SPLIT (5-day classic bodybuilding) ────────────────────
-// Chest/Triceps · Back/Biceps · Shoulders · Arms · Legs
+// Chest/Triceps · Back/Biceps · Legs · Shoulders · Arms
 const BRO_PROGRAM = [
   {
     id: 'bro-chest', day: 'Monday', badge: 'CHEST', name: 'Chest + Triceps',
@@ -4532,7 +4532,11 @@ const BRO_PROGRAM = [
     ]
   },
   {
-    id: 'bro-shoulders', day: 'Wednesday', badge: 'SHOULDERS', name: 'Shoulders + Rear Delts',
+    id: 'bro-legs', day: 'Wednesday', badge: 'LEGS', name: 'Quads + Hamstrings + Glutes',
+    exercises: DEFAULT_PROGRAM[1].exercises   // full lower A block
+  },
+  {
+    id: 'bro-shoulders', day: 'Thursday', badge: 'SHOULDERS', name: 'Shoulders + Rear Delts',
     exercises: [
       DEFAULT_PROGRAM[0].exercises[5], // ohp
       DEFAULT_PROGRAM[0].exercises[6], // lateral
@@ -4540,17 +4544,13 @@ const BRO_PROGRAM = [
     ]
   },
   {
-    id: 'bro-arms', day: 'Thursday', badge: 'ARMS', name: 'Biceps + Triceps',
+    id: 'bro-arms', day: 'Friday', badge: 'ARMS', name: 'Biceps + Triceps',
     exercises: [
       DEFAULT_PROGRAM[2].exercises[3], // ez-curl
       DEFAULT_PROGRAM[2].exercises[4], // preacher
       DEFAULT_PROGRAM[0].exercises[3], // pushdown
       DEFAULT_PROGRAM[0].exercises[4], // overhead-tri
     ]
-  },
-  {
-    id: 'bro-legs', day: 'Friday', badge: 'LEGS', name: 'Quads + Hamstrings + Glutes',
-    exercises: DEFAULT_PROGRAM[1].exercises   // full lower A block
   }
 ];
 
@@ -4733,9 +4733,11 @@ function getWeeklyVolumeTarget(muscle, weekNum) {
     const progress = Math.min((weekNum - 1) / 5, 1);
     target = Math.round(mev + (mav - mev) * progress);
   }
-  // Cap at the program's physical ceiling so targets are always reachable
+  // Cap at the program's physical ceiling so targets are always reachable.
+  // If the program has zero exercises for this muscle, return 0 — no phantom target.
   const programMax = getProgramWeeklyMaxSets(muscle);
-  if (programMax > 0) target = Math.min(target, programMax);
+  if (programMax === 0) return 0;
+  target = Math.min(target, programMax);
   return target;
 }
 
@@ -17362,8 +17364,8 @@ function updateSettingsDayButtonDescriptions() {
                  5: 'Full Body A–E. Very high frequency. Ensure sleep and nutrition are dialled.' },
     bro:       { 2: 'Two muscle groups. Most muscles undertrained this week.',
                  3: 'Chest, Back, and Legs. Shoulders and Arms work as secondaries.',
-                 4: 'Four dedicated days. One muscle group shares a session.',
-                 5: 'The full Bro Split: Chest, Back, Shoulders, Arms, Legs.' },
+                 4: 'Chest, Back, Legs, Shoulders. Arms get indirect work from pressing and pulling.',
+                 5: 'The full Bro Split: Chest, Back, Legs, Shoulders, Arms.' },
     glute:     { 2: 'One glute session + one upper day per week.',
                  3: 'Full program: two glute days + one balanced upper session.',
                  4: 'Full program + one repeat. Extra frequency for glutes or upper.',
@@ -18290,8 +18292,8 @@ function getSplitAwareDayExplanation(n) {
     bro: {
       1: '1 day/week: One muscle group per session. Low overall frequency.',
       2: '2 days/week: Two muscle groups per week. Most muscles undertrained.',
-      3: '3 days/week: Chest, Back, Legs or similar. Shoulders and Arms worked as secondaries.',
-      4: '4 days/week: Four muscle groups dedicated. One group shares a day.',
+      3: '3 days/week: Chest, Back, Legs. Shoulders and Arms worked as secondaries.',
+      4: '4 days/week: Chest, Back, Legs, Shoulders. Arms get indirect work from pressing and pulling.',
       5: '5 days/week: The full Bro Split. Each muscle group gets one dedicated session.',
       6: '6 days/week: Full Bro Split + one repeat. High weekly volume.',
     },
@@ -18327,7 +18329,7 @@ function selectSplitOnboard(type, btn) {
     ul: 'Upper/Lower is the gold standard for hypertrophy. Each muscle group gets targeted twice per week with full recovery built in between.',
     ppl: 'Push/Pull/Legs gives you one focused session per movement pattern. Run it 3 days per week or 6 days for double frequency.',
     fullbody: 'Full Body training maximizes frequency. Every muscle gets stimulated in every session. Perfect for 2–3 days per week.',
-    bro: 'Bro Split dedicates each day to one muscle group: Chest, Back, Shoulders, Arms, Legs. High volume per session, 5 days per week.',
+    bro: 'Bro Split dedicates each day to one muscle group: Chest, Back, Legs, Shoulders, Arms. High volume per session, 5 days per week.',
     glute: 'Glute Priority targets glutes twice per week with hip thrusts, RDLs, and isolation work, plus one balanced upper body day.',
   };
   // Expand the tip inline inside the selected button; reset all others to their short text
@@ -18648,8 +18650,8 @@ function updateDayButtonsForSplit(type) {
     bro: {
       2: 'Two muscle groups per week. Most muscles undertrained.',
       3: 'Chest, Back, and Legs. Shoulders and Arms work as secondaries.',
-      4: 'Four dedicated days. One muscle group shares another session.',
-      5: 'The full Bro Split. Chest, Back, Shoulders, Arms, Legs. Optimal.',
+      4: 'Chest, Back, Legs, Shoulders. Arms get indirect work from pressing and pulling.',
+      5: 'The full Bro Split. Chest, Back, Legs, Shoulders, Arms. Optimal.',
     },
     glute: {
       2: 'One glute session + one upper day per week.',
