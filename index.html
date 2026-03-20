@@ -8252,8 +8252,11 @@ function renderSession() {
 
   orderedExercises.forEach(ex => {
     const sets = activeSession.sets[ex.id];
-    const doneSets = sets.filter(s => s.done).length;
-    const isCompleted = doneSets === sets.length;
+    // Exclude coach-removed sets: they are intentionally eliminated and must not
+    // prevent an exercise from being marked complete or inflate the set count.
+    const eligibleSets = sets.filter(s => !s.coachRemoved);
+    const doneSets = eligibleSets.filter(s => s.done).length;
+    const isCompleted = eligibleSets.length > 0 && doneSets === eligibleSets.length;
     const swappedName = activeSession.swaps[ex.id] ? activeSession.swaps[ex.id].name : null;
     const displayName = swappedName || ex.name;
 
@@ -8928,7 +8931,10 @@ function toggleSetDone(exId, setIndex) {
 
   const day = state.program.find(d => d.id === activeSession.dayId);
   const sets = activeSession.sets[exId];
-  const allDone = sets.every(s => s.done);
+  // Exclude coach-removed sets so a coach-removed undone set does not prevent
+  // the exercise from being considered complete when all eligible sets are done.
+  const _eligibleSets = sets.filter(s => !s.coachRemoved);
+  const allDone = _eligibleSets.length > 0 && _eligibleSets.every(s => s.done);
   const exEl = document.getElementById('session-ex-' + exId);
   if (exEl) exEl.classList.toggle('completed', allDone);
 
@@ -9506,6 +9512,16 @@ function _coachRemoveSet(exId) {
   sets[removeIdx].coachRemoved = true;
   var row = document.getElementById('set-row-' + exId + '-' + removeIdx);
   if (row) row.remove();
+  // Block dynamic set expansion for this exercise — a coach-remove signals the
+  // user's volume is already at its limit; offering to add a set back would contradict that.
+  if (!activeSession.dynamicSetExpansion) activeSession.dynamicSetExpansion = {};
+  if (activeSession.dynamicSetExpansion[exId] === undefined) {
+    activeSession.dynamicSetExpansion[exId] = 'coach-removed';
+  }
+  // Checkpoint crash-recovery snapshot so the removal survives a hard crash.
+  // (Normal navigation is already covered by the pagehide/beforeunload handlers,
+  // but a hard crash — tab kill, OOM — would restore a stale snapshot without this.)
+  try { localStorage.setItem('ts-muscle-paused', JSON.stringify(activeSession)); } catch(e) {}
   _clearCoachingCueCard(exId);
   updateSessionProgress();
   showToast('Set removed');
