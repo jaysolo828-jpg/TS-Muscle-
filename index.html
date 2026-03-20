@@ -8296,8 +8296,16 @@ function renderSession() {
       : getCycleWeekBandRepRange(ex.id);
     const _coachNote = _inManualAdj ? '' : getCycleWeekBandNote();
 
-    // Build prev-session panel (only if history exists for this exercise)
-    const _lastSets = sets.map((_, si) => getLastSetData(ex.id, si)).filter(Boolean);
+    // Build prev-session panel (only if history exists for this exercise).
+    // Exclude coach-removed sets: they're not being performed this session,
+    // so showing their historical data would display a "Set N" row with no
+    // corresponding active set row, confusing the user.
+    const _lastSets = sets.reduce((acc, s, si) => {
+      if (s.coachRemoved) return acc;
+      const d = getLastSetData(ex.id, si);
+      if (d) acc.push(d);
+      return acc;
+    }, []);
     const _prevBtnHTML = _lastSets.length
       ? `<button class="prev-session-btn" onclick="togglePrevPanel('${ex.id}')">PREV <span id="prev-arrow-${ex.id}">▾</span></button>`
       : '';
@@ -8323,6 +8331,10 @@ function renderSession() {
     `;
 
     sets.forEach((set, si) => {
+      // Coach-removed sets stay in the array (for history/overload integrity) but
+      // must never render a DOM row — especially on re-renders triggered by exercise
+      // swaps or session resume, where their row would otherwise reappear as active.
+      if (set.coachRemoved) return;
       // Pre-fill with last session data if available
       const lastData = getLastSetData(ex.id, si);
       const weightPlaceholder = lastData ? lastData.weight : '';
