@@ -11432,8 +11432,6 @@ function showSessionWrapUp() {
 
   if (!rows && !bonusSummaryRows) { finalizeEndSession(true); return; }
 
-  // Summary bar
-  const summaryColor = missedSets > 0 ? '#f39c12' : '#2ecc71';
   // Session duration in minutes
   const sessionDurMins = activeSession.startTime
     ? Math.round((Date.now() - activeSession.startTime) / 60000)
