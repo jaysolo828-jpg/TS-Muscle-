@@ -11912,6 +11912,7 @@ function finalizeEndSession(save) {
         delete state.pauseReason;
         delete state.pauseWeekCount;
         delete state.pauseStreak;
+        _updateAndSaveStrengthScore();
         saveState();
         updateStreak();
         renderHome();
