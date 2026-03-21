@@ -11449,6 +11449,7 @@ function saveAndExitSession() {
   showScreen('home', document.querySelector('.nav-item'));
   renderHome();
   showToast('Workout saved. Resume anytime 💾');
+  checkDeferredSWUpdate();
 }
 
 function showDiscardConfirm() {
@@ -11491,6 +11492,7 @@ function discardSession() {
   showScreen('home', document.querySelector('.nav-item'));
   renderHome();
   showToast('Workout discarded');
+  checkDeferredSWUpdate();
 }
 
 function showIncompleteWarning(setCount, exCount) {
@@ -12223,6 +12225,7 @@ function finalizeEndSession(save) {
         document.getElementById('workout-session').classList.remove('active');
               document.getElementById('session-notes').value = '';
         activeSession = null;
+        checkDeferredSWUpdate();
         return;
       }
     }
@@ -12302,6 +12305,7 @@ function finalizeEndSession(save) {
   const _notesElClear = document.getElementById('session-notes');
   if (_notesElClear) _notesElClear.value = '';
   activeSession = null;
+  checkDeferredSWUpdate();
 
   // Check for deload suggestion after teardown
   setTimeout(checkDeloadSuggestion, 1200);
@@ -16872,13 +16876,88 @@ function showToast(msg, type) {
 }
 
 
+// ── Service Worker update notification ──
+let _pendingSWUpdate = false;   // true when a new SW is ready but workout is active
+let _waitingSW = null;          // reference to the waiting service worker
+
+function isWorkoutActive() {
+  return document.getElementById('workout-session').classList.contains('active');
+}
+
+function showSWUpdateBanner() {
+  if (document.getElementById('sw-update-banner')) return;
+  if (sessionStorage.getItem('ts_muscle_sw_dismissed')) return;
+  if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
+
+  const banner = document.createElement('div');
+  banner.id = 'sw-update-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:100000;animation:slideDownBanner 0.45s cubic-bezier(0.175,0.885,0.32,1.1);';
+  banner.innerHTML = `
+    <div style="background:#1a1a1a;border-bottom:1px solid rgba(255,255,255,0.08);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div onclick="applySWUpdate()" style="flex:1;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(255,255,255,0.85);letter-spacing:0.3px;">
+        A new update is available. <span style="text-decoration:underline;">Tap to refresh.</span>
+      </div>
+      <button onclick="dismissSWBanner(event)" aria-label="Dismiss" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;line-height:1;padding:4px 2px;cursor:pointer;">&times;</button>
+    </div>`;
+  document.body.prepend(banner);
+}
+
+function applySWUpdate() {
+  const btn = document.querySelector('#sw-update-banner div[onclick]');
+  if (btn) { btn.textContent = 'Updating\u2026'; btn.style.opacity = '0.6'; }
+  if (_waitingSW) {
+    _waitingSW.postMessage({ type: 'SKIP_WAITING' });
+  } else {
+    window.location.reload();
+  }
+}
+
+function dismissSWBanner(e) {
+  e.stopPropagation();
+  sessionStorage.setItem('ts_muscle_sw_dismissed', '1');
+  const b = document.getElementById('sw-update-banner');
+  if (b) b.remove();
+}
+
+function checkDeferredSWUpdate() {
+  if (_pendingSWUpdate && !isWorkoutActive()) {
+    _pendingSWUpdate = false;
+    showSWUpdateBanner();
+  }
+}
+
+// Track waiting SW from a registration
+function _trackWaiting(sw) {
+  _waitingSW = sw;
+  showSWUpdateBanner();
+}
+
 // Register service worker — real sw.js file so Chrome/iOS treat this as a proper PWA
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
-  // When a new SW activates (skipWaiting fired), reload so the fresh JS + version check run
+  const _hadController = !!navigator.serviceWorker.controller;
+
+  navigator.serviceWorker.register('./sw.js').then(function(reg) {
+    // If a SW is already waiting when we load (e.g. installed in background)
+    if (reg.waiting) { _trackWaiting(reg.waiting); }
+
+    // Detect newly installed SW entering waiting state
+    reg.addEventListener('updatefound', function() {
+      const newSW = reg.installing;
+      if (!newSW) return;
+      newSW.addEventListener('statechange', function() {
+        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+          _trackWaiting(newSW);
+        }
+      });
+    });
+  }).catch(() => {});
+
+  // When the waiting SW activates (user tapped the banner), reload to pick up new assets
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!_hadController) return; // first install, not an update
     window.location.reload();
   });
+
   // iOS PWA stays suspended in memory — force a SW update check every time the app
   // is brought to the foreground so updates aren't skipped when launching from home screen
   document.addEventListener('visibilitychange', () => {
@@ -16887,6 +16966,7 @@ if ('serviceWorker' in navigator) {
         .then(reg => { if (reg) reg.update(); })
         .catch(() => {});
       checkTrainingReminder();
+      checkDeferredSWUpdate();
     }
   });
 }
