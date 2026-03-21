@@ -21291,15 +21291,49 @@ function renderCardioHistory() {
     const speed = s.details.speed ? `${s.details.speed} mph` : '';
     const incline = s.details.incline ? `${s.details.incline}% incline` : '';
     const meta = [dist, cal, pace, speed, incline].filter(Boolean).join(' · ');
-    return `<div class="history-item" style="cursor:default;">
-      <div>
+    return `<div class="history-item" style="cursor:default;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+      <div style="flex:1;min-width:0;">
         <div class="history-date">${date}</div>
         <div class="history-day" style="font-size:15px;">${typeLabel}</div>
         <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">${s.duration} min${meta ? ' · ' + meta : ''}</div>
         ${s.details.notes ? `<div style="font-size:12px; color:var(--gray-light); margin-top:6px; padding-left:10px; border-left:2px solid var(--dark4);">${s.details.notes}</div>` : ''}
       </div>
+      <button onclick="event.stopPropagation();confirmDeleteCardioSession('${s.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--gray);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Delete session">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
     </div>`;
   }).join('');
+}
+
+function confirmDeleteCardioSession(sessionId) {
+  const entry = (state.cardioHistory || []).find(s => String(s.id) === String(sessionId));
+  if (!entry) return;
+  const dateStr = new Date(entry.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const typeLabelMap = { treadmill: 'Treadmill', outdoor: 'Outdoor Run', walk: 'Walk', briskwalk: 'Brisk Walk', jog: 'Jog' };
+  const typeLabel = typeLabelMap[entry.type] || entry.type;
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">DELETE CARDIO SESSION?</div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">${typeLabel} — ${entry.duration} min<br><span style="color:var(--gray);">${dateStr}</span></div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
+        <button onclick="this.closest('[style*=fixed]').remove();deleteCardioSession('${sessionId}')" style="flex:1;background:#8b0000;border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">DELETE</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function deleteCardioSession(sessionId) {
+  if (!state.cardioHistory) return;
+  const idx = state.cardioHistory.findIndex(s => String(s.id) === String(sessionId));
+  if (idx === -1) return;
+  state.cardioHistory.splice(idx, 1);
+  saveState();
+  renderCardioHistory();
+  showToast('Cardio session removed');
 }
 
 function calcPace() {
