@@ -81,7 +81,9 @@ async function getState(page) {
         testWeekComplete: s.testWeekComplete || false,
         testWeekReviewShown: s.testWeekReviewShown || false,
         streak: s.streak || 0,
-        profile: s.profile ? { goal: s.profile.goal } : null,
+        profile: s.profile ? { goal: s.profile.goal, experience: s.profile.experience || 'intermediate' } : null,
+        experienceLevelConfirmed: s.experienceLevelConfirmed || false,
+        pendingExperienceLevel: s.pendingExperienceLevel || null,
         cardioHistoryLength: (s.cardioHistory || []).length,
         moodHistoryLength: (s.moodHistory || []).length,
         isPaused: s.programPaused || false,
@@ -115,7 +117,22 @@ async function dismissTutorialIfVisible(page) {
       dismissed.push('install-welcome');
     }
 
-    // 3. Any other fixed full-screen overlays with very high z-index
+    // 3. Experience level confirmation banner
+    const expBanner = document.getElementById('exp-level-confirm-banner');
+    if (expBanner && getComputedStyle(expBanner).display !== 'none') {
+      if (typeof state !== 'undefined') { state.experienceLevelConfirmed = true; if (typeof saveState === 'function') saveState(); }
+      expBanner.style.display = 'none';
+      dismissed.push('exp-level-confirm-banner');
+    }
+
+    // 4. Level-up suggestion card
+    const levelUpCard = document.getElementById('level-up-suggestion-card');
+    if (levelUpCard && getComputedStyle(levelUpCard).display !== 'none') {
+      levelUpCard.style.display = 'none';
+      dismissed.push('level-up-suggestion-card');
+    }
+
+    // 5. Any other fixed full-screen overlays with very high z-index
     document.querySelectorAll('[style*="position:fixed"],[style*="position: fixed"]').forEach(el => {
       const z = parseInt(getComputedStyle(el).zIndex, 10);
       if (z >= 99999 && getComputedStyle(el).display !== 'none') {
@@ -1407,6 +1424,56 @@ async function main() {
     }
     await checkForJsErrors(page, 'pause/resume', consoleErrors);
 
+    // ── EXTRA: Test Experience Level Volume Landmarks ──────────────────────────
+    console.log('\n  Testing experience level volume landmark multipliers...');
+    const expLvlResult = await page.evaluate(() => {
+      try {
+        const results = {};
+        const levels = ['beginner', 'intermediate', 'advanced'];
+        const origExp = state.profile?.experience;
+        for (const lvl of levels) {
+          if (!state.profile) state.profile = {};
+          state.profile.experience = lvl;
+          const chest = getScaledVolumeLandmarks('CHEST');
+          const back  = getScaledVolumeLandmarks('BACK');
+          results[lvl] = {
+            chest: { mev: chest.mev, mav: chest.mav, mrv: chest.mrv },
+            back:  { mev: back.mev,  mav: back.mav,  mrv: back.mrv },
+          };
+        }
+        // Restore original
+        state.profile.experience = origExp;
+        return { ok: true, results };
+      } catch(e) {
+        return { ok: false, error: e.message };
+      }
+    });
+    if (expLvlResult.ok) {
+      const r = expLvlResult.results;
+      console.log(`    Beginner  CHEST: MEV=${r.beginner.chest.mev} MAV=${r.beginner.chest.mav} MRV=${r.beginner.chest.mrv}`);
+      console.log(`    Intermediate CHEST: MEV=${r.intermediate.chest.mev} MAV=${r.intermediate.chest.mav} MRV=${r.intermediate.chest.mrv}`);
+      console.log(`    Advanced  CHEST: MEV=${r.advanced.chest.mev} MAV=${r.advanced.chest.mav} MRV=${r.advanced.chest.mrv}`);
+      // Validate beginner CHEST mev < intermediate < advanced
+      if (r.beginner.chest.mev >= r.intermediate.chest.mev || r.intermediate.chest.mev >= r.advanced.chest.mev) {
+        logBug('ExpLevel', `Volume landmarks not properly scaled: beg=${r.beginner.chest.mev} int=${r.intermediate.chest.mev} adv=${r.advanced.chest.mev}`);
+      }
+      // Validate MEV never below 2
+      for (const lvl of ['beginner', 'intermediate', 'advanced']) {
+        if (r[lvl].chest.mev < 2 || r[lvl].back.mev < 2) {
+          logBug('ExpLevel', `MEV below 2 for ${lvl}: chest=${r[lvl].chest.mev} back=${r[lvl].back.mev}`);
+        }
+      }
+      // Validate MRV never above 25
+      for (const lvl of ['beginner', 'intermediate', 'advanced']) {
+        if (r[lvl].chest.mrv > 25 || r[lvl].back.mrv > 25) {
+          logBug('ExpLevel', `MRV above 25 for ${lvl}: chest=${r[lvl].chest.mrv} back=${r[lvl].back.mrv}`);
+        }
+      }
+    } else {
+      logBug('ExpLevel', `Error testing volume landmarks: ${expLvlResult.error}`);
+    }
+    await checkForJsErrors(page, 'experience-level', consoleErrors);
+
     // ── EXTRA: Test Bodyweight logging ────────────────────────────────────────
     console.log('\n  Testing Bodyweight logging...');
     const bwResult = await page.evaluate(() => {
@@ -1431,6 +1498,9 @@ async function main() {
     console.log(`  Current week: ${finalState?.weekCount}`);
     console.log(`  Current cycle: ${finalState?.cycleCount || 1}`);
     console.log(`  History entries: ${finalState?.historyLength}`);
+    console.log(`  Experience level: ${finalState?.profile?.experience || 'intermediate'}`);
+    console.log(`  Experience confirmed: ${finalState?.experienceLevelConfirmed || false}`);
+    console.log(`  Pending level: ${finalState?.pendingExperienceLevel || 'none'}`);
     console.log(`  Cardio sessions: ${finalState?.cardioHistoryLength || 0}`);
     console.log(`  Mood entries: ${finalState?.moodHistoryLength || 0}`);
 
