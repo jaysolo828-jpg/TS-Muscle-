@@ -5525,6 +5525,8 @@ let state = {
 };
 
 let activeSession = null;
+let _lastRenderedDate = null;       // tracks the date string when renderHome() last ran
+let _midnightCheckInterval = null;  // 60-second interval to detect midnight rollover
 let pendingSwap = null;
 let pairingSourceId = null; // exercise ID currently waiting for a pair partner
 let _customSwapIsUnilateral = false; // tracks state of the custom-exercise unilateral toggle
@@ -5757,6 +5759,9 @@ function showScreen(name, el) {
   if (!screen) return;
   screen.classList.add('active');
   if (el) el.classList.add('active');
+
+  // Manage midnight rollover interval — only runs on home screen
+  if (name === 'home') { _startMidnightCheckInterval(); } else { _stopMidnightCheckInterval(); }
 
   // Trigger bounce-in on cards
   screen.querySelectorAll('.day-card, .card, .history-item, .settings-item').forEach(card => {
@@ -6232,7 +6237,27 @@ function _dismissLevelUp() {
   if (card) card.style.display = 'none';
 }
 
+// ---- Midnight rollover interval helpers ----
+function _startMidnightCheckInterval() {
+  _stopMidnightCheckInterval();
+  // Only run when the home screen is active (not during a workout session)
+  const homeActive = document.getElementById('screen-home')?.classList.contains('active');
+  const sessionActive = document.getElementById('workout-session')?.classList.contains('active');
+  if (!homeActive || sessionActive) return;
+  _midnightCheckInterval = setInterval(() => {
+    if (_lastRenderedDate && new Date().toDateString() !== _lastRenderedDate) {
+      renderHome();
+    }
+  }, 60000);
+}
+function _stopMidnightCheckInterval() {
+  if (_midnightCheckInterval) { clearInterval(_midnightCheckInterval); _midnightCheckInterval = null; }
+}
+
 function renderHome() {
+  _lastRenderedDate = new Date().toDateString();
+  _startMidnightCheckInterval();
+
   const realSessions = (state.history || []).filter(entry =>
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
   ).length;
@@ -8201,6 +8226,7 @@ function startSession(dayId) {
   }
 
   pairingSourceId = null;
+  _stopMidnightCheckInterval(); // stop midnight check during active workout
   const day = state.program.find(d => d.id === dayId);
   activeSession = {
     dayId,
@@ -16967,6 +16993,16 @@ if ('serviceWorker' in navigator) {
         .catch(() => {});
       checkTrainingReminder();
       checkDeferredSWUpdate();
+
+      // Midnight rollover: if the date changed while backgrounded, refresh home screen
+      if (_lastRenderedDate && new Date().toDateString() !== _lastRenderedDate) {
+        renderHome();
+      }
+      // Restart the 60-second midnight check interval on foreground
+      _startMidnightCheckInterval();
+    } else {
+      // Stop the interval while backgrounded to save resources
+      _stopMidnightCheckInterval();
     }
   });
 }
