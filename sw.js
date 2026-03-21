@@ -1,12 +1,16 @@
-const CACHE_NAME = 'ts-muscle-v27';
+const CACHE_NAME = 'ts-muscle-v28';
 const ASSETS = ['./index.html', './icon.png', './icon-192.png', './manifest.json'];
 
 // On install: precache all app assets so the app works fully offline
 self.addEventListener('install', e => {
-  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).catch(() => {})
   );
+});
+
+// Allow the page to trigger skipWaiting when the user taps the update banner
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // On activate: delete old caches from previous versions
