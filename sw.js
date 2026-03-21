@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v33';
+const CACHE_NAME = 'ts-muscle-v35';
 const ASSETS = ['./index.html', './icon.png', './icon-192.png', './manifest.json'];
 
 // On install: precache all app assets so the app works fully offline

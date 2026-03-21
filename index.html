@@ -15617,41 +15617,103 @@ async function shareStrengthScoreCard() {
     ctx.fillText(t, x, barY + barH + 16);
   });
 
-  // ── Bottom section ─────────────────────────────────────────────────────
+  // ── Bottom section — communicates what the score is + celebrates it ─────
   const botTop = SPLIT + 4;
-  const botH   = H - botTop;
-  const BS     = botH / 520; // same scale factor as generateAndShareCard
+  const displayName = (state.displayName || state.profile?.name || '').trim();
 
-  // Dynamic description — word-wrap, scaled to canvas
-  const _descFontSz = Math.round(34 * BS);
-  const _descLineH  = Math.round(52 * BS);
-  ctx.font = `400 ${_descFontSz}px 'Barlow Condensed', Arial`;
-  ctx.fillStyle = 'rgba(220,215,205,0.93)';
+  // 30-day score delta
+  const _cutoff30 = Date.now() - 30 * 86400000;
+  const _old30 = [...(state.strengthScoreHistory || [])].reverse()
+    .find(s => new Date(s.date).getTime() < _cutoff30);
+  const _delta30 = _old30 ? score - _old30.score : null;
+
+  // ── "What is this?" explainer — so anyone seeing the card gets it ──────
+  let _curY = botTop + 72;
+
+  ctx.font = `700 28px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.40)';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const _maxLW = W - PAD * 2.4;
+  ctx.letterSpacing = '3px';
+  ctx.fillText('WHAT IS THIS?', W / 2, _curY);
+  ctx.letterSpacing = '0px';
+  _curY += 52;
+
+  // Explainer text — short, punchy, tells people what they're looking at
+  const _explainer = 'Your Strength Score measures how strong you are relative to your bodyweight across your main lifts. It updates every session.';
+  ctx.font = `400 32px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(220,215,205,0.78)';
+  const _maxLW = W - PAD * 3;
+  const _eWords = _explainer.split(' ');
+  const _eLines = [];
+  let _eCur = '';
+  for (const w of _eWords) {
+    const test = _eCur ? _eCur + ' ' + w : w;
+    if (ctx.measureText(test).width > _maxLW && _eCur) { _eLines.push(_eCur); _eCur = w; }
+    else _eCur = test;
+  }
+  if (_eCur) _eLines.push(_eCur);
+  _eLines.slice(0, 3).forEach((ln, i) => { ctx.fillText(ln, W / 2, _curY + i * 46); });
+  _curY += _eLines.slice(0, 3).length * 46 + 36;
+
+  // ── Hairline separator ─────────────────────────────────────────────────
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(PAD + 60, _curY); ctx.lineTo(W - PAD - 60, _curY); ctx.stroke();
+  ctx.restore();
+  _curY += 44;
+
+  // ── Dynamic tier description — their personal level callout ────────────
+  ctx.font = `600 36px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(245,230,200,0.92)';
   const _words = _cardDesc.split(' ');
-  const _lines = [];
+  const _dLines = [];
   let _cur = '';
   for (const w of _words) {
     const test = _cur ? _cur + ' ' + w : w;
-    if (ctx.measureText(test).width > _maxLW && _cur) { _lines.push(_cur); _cur = w; }
+    if (ctx.measureText(test).width > _maxLW && _cur) { _dLines.push(_cur); _cur = w; }
     else _cur = test;
   }
-  if (_cur) _lines.push(_cur);
-  const _descLines  = _lines.slice(0, 3);
-  const _descBlockH = _descLines.length * _descLineH;
-  const _descStartY = botTop + Math.round(botH * 0.14) + _descLineH / 2;
-  _descLines.forEach((ln, i) => ctx.fillText(ln, W / 2, _descStartY + i * _descLineH));
+  if (_cur) _dLines.push(_cur);
+  _dLines.slice(0, 2).forEach((ln, i) => { ctx.fillText(ln, W / 2, _curY + i * 52); });
+  _curY += _dLines.slice(0, 2).length * 52;
 
-  // Hairline divider below description
-  const _hairY = _descStartY + _descBlockH + Math.round(botH * 0.08);
-  ctx.save();
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(PAD, _hairY); ctx.lineTo(W - PAD, _hairY); ctx.stroke();
-  ctx.restore();
+  // ── 30-day change (if available) ───────────────────────────────────────
+  if (_delta30 !== null && _delta30 !== 0) {
+    _curY += 32;
+    const sign = _delta30 > 0 ? '+' : '';
+    const _dColor = _delta30 > 0 ? '#2ecc71' : '#cc2027';
+    ctx.font = `700 54px 'Bebas Neue', Arial`;
+    ctx.fillStyle = _dColor;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(`${sign}${_delta30} PTS`, W / 2, _curY);
+    ctx.font = `600 24px 'Barlow Condensed', Arial`;
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.fillText('LAST 30 DAYS', W / 2, _curY + 38);
+    _curY += 80;
+  } else {
+    _curY += 36;
+  }
 
-  // ── Logo + brand block — matches generateAndShareCard exactly ────────────
+  // ── Display name — cursive signature ───────────────────────────────────
+  if (displayName) {
+    const _nameSz = displayName.length > 10 ? 56 : displayName.length > 6 ? 66 : 76;
+    ctx.font = `${_nameSz}px 'Satisfy', cursive`;
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const _dnW = ctx.measureText(displayName).width;
+    const _dnMax = W - PAD * 2;
+    if (_dnW > _dnMax) {
+      ctx.save(); ctx.scale(_dnMax / _dnW, 1);
+      ctx.fillText(displayName, (W / 2) * (_dnW / _dnMax), _curY);
+      ctx.restore();
+    } else {
+      ctx.fillText(displayName, W / 2, _curY);
+    }
+    _curY += 56;
+  }
+
+  // ── Logo + brand block — centred in remaining space ────────────────────
   const logo = new Image();
   logo.crossOrigin = 'anonymous';
   logo.src = './icon.png';
@@ -15662,82 +15724,62 @@ async function shareStrengthScoreCard() {
     setTimeout(resolve, 1200);
   });
 
-  const LOGO_SIZE   = Math.round(96  * BS);
-  const LOGO_GAP    = Math.round(20  * BS);
-  const NAME_SZ     = 64;
-  const URL_SZ      = 30;
-  const LINE_GAP    = Math.round(10  * BS);
+  const LOGO_SIZE = 76;
+  const LOGO_GAP  = 16;
+  const NAME_SZ   = 50;
+  const URL_SZ    = 25;
+  const LINE_GAP  = 9;
 
-  ctx.font = `${Math.round(NAME_SZ * BS)}px 'Bebas Neue', 'Arial Narrow', Arial`;
+  // Centre brand block between content and tagline
+  const _brandCY = Math.round((_curY + 12 + H - 72) / 2);
+
+  ctx.font = `${NAME_SZ}px 'Bebas Neue', 'Arial Narrow', Arial`;
   const _brandNameW = ctx.measureText('T&S MUSCLE').width;
-  ctx.font = `600 ${Math.round(URL_SZ * BS)}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+  ctx.font = `600 ${URL_SZ}px 'Barlow Condensed', 'Arial Narrow', Arial`;
   const _brandUrlW  = ctx.measureText('therapyandsneakers.org').width;
   const _textBlockW  = Math.max(_brandNameW, _brandUrlW);
   const _brandBlockW = LOGO_SIZE + LOGO_GAP + _textBlockW;
   const _blockX      = Math.round((W - _brandBlockW) / 2);
 
-  const _brandCY = H - 310;   // same anchor logic as generateAndShareCard
-  const _logoX   = _blockX;
-  const _logoY   = _brandCY - LOGO_SIZE / 2;
+  const _logoX = _blockX;
+  const _logoY = _brandCY - LOGO_SIZE / 2;
 
   ctx.save();
   ctx.beginPath();
   ctx.arc(_logoX + LOGO_SIZE / 2, _logoY + LOGO_SIZE / 2, LOGO_SIZE / 2, 0, Math.PI * 2);
-  ctx.closePath();
-  ctx.clip();
+  ctx.closePath(); ctx.clip();
   if (logo.naturalWidth > 0) {
     ctx.drawImage(logo, _logoX, _logoY, LOGO_SIZE, LOGO_SIZE);
   } else {
     ctx.fillStyle = '#CC2027';
     ctx.fillRect(_logoX, _logoY, LOGO_SIZE, LOGO_SIZE);
-    ctx.font = `${Math.round(42 * BS)}px 'Bebas Neue', Arial`;
+    ctx.font = `34px 'Bebas Neue', Arial`;
     ctx.fillStyle = '#F5E6C8';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('TS', _logoX + LOGO_SIZE / 2, _logoY + LOGO_SIZE / 2);
   }
   ctx.restore();
 
-  const _approxNameH  = NAME_SZ * 0.72 * BS;
-  const _approxUrlH   = URL_SZ  * 0.72 * BS;
-  const _totalTextH   = _approxNameH + LINE_GAP + _approxUrlH;
-  const _textX        = _blockX + LOGO_SIZE + LOGO_GAP;
-  const _nameLineY    = _brandCY - _totalTextH / 2 + _approxNameH / 2;
-  const _urlLineY     = _nameLineY + _approxNameH + LINE_GAP;
+  const _approxNameH = NAME_SZ * 0.72;
+  const _approxUrlH  = URL_SZ * 0.72;
+  const _totalTextH  = _approxNameH + LINE_GAP + _approxUrlH;
+  const _textX       = _blockX + LOGO_SIZE + LOGO_GAP;
+  const _nameLineY   = _brandCY - _totalTextH / 2 + _approxNameH / 2;
+  const _urlLineY    = _nameLineY + _approxNameH + LINE_GAP;
 
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ctx.font = `${Math.round(NAME_SZ * BS)}px 'Bebas Neue', 'Arial Narrow', Arial`;
+  ctx.font = `${NAME_SZ}px 'Bebas Neue', 'Arial Narrow', Arial`;
   ctx.fillStyle = '#F5E6C8';
   ctx.fillText('T&S MUSCLE', _textX, _nameLineY);
-  ctx.font = `600 ${Math.round(URL_SZ * BS)}px 'Barlow Condensed', 'Arial Narrow', Arial`;
+  ctx.font = `600 ${URL_SZ}px 'Barlow Condensed', 'Arial Narrow', Arial`;
   ctx.fillStyle = '#aaaaaa';
   ctx.fillText('therapyandsneakers.org', _textX, _urlLineY);
 
-  // Display name — above tagline with auto-shrink for long names
-  const displayName = (state.displayName || state.profile?.name || '').trim();
-  if (displayName) {
-    const _dnSz = displayName.length > 10 ? 26
-                : displayName.length > 6  ? 30
-                : 34;
-    ctx.font = `600 ${Math.round(_dnSz * BS)}px 'Barlow Condensed', Arial`;
-    ctx.fillStyle = 'rgba(245,230,200,0.88)';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const _dnW = ctx.measureText(displayName.toUpperCase()).width;
-    const _dnMax = W - 128;
-    if (_dnW > _dnMax) {
-      ctx.save();
-      ctx.scale(_dnMax / _dnW, 1);
-      ctx.fillText(displayName.toUpperCase(), (W / 2) * (_dnW / _dnMax), H - 148);
-      ctx.restore();
-    } else {
-      ctx.fillText(displayName.toUpperCase(), W / 2, H - 148);
-    }
-  }
-
-  // Tagline pinned to bottom — matches generateAndShareCard exactly
-  ctx.font = `600 ${Math.round(30 * BS)}px 'Barlow Condensed', Arial`;
+  // ── Tagline ────────────────────────────────────────────────────────────
+  ctx.font = `600 30px 'Barlow Condensed', Arial`;
   ctx.fillStyle = 'rgba(160,160,160,0.9)';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - 60);
+  ctx.fillText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, H - 56);
 
   canvas.toBlob(async blob => {
     const file = new File([blob], 'ts-strength-score.png', { type: 'image/png' });
