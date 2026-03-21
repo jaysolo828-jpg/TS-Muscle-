@@ -16330,7 +16330,7 @@ async function generateAndShareCard(type, data) {
     setTimeout(resolve, 1200);
   });
 
-  const displayName  = (state.displayName || '').trim();
+  const displayName  = (state.displayName || state.profile?.name || '').trim();
   const LOGO_SIZE    = Math.round(96  * BS);
   const LOGO_GAP     = Math.round(20  * BS);
   const NAME_SZ      = 64;
@@ -16640,7 +16640,7 @@ function _downloadShareCard(blob) {
 }
 
 function _getCardShareText(type, data) {
-  const name = (state.displayName || '').trim();
+  const name = (state.displayName || state.profile?.name || '').trim();
   const prefix = name ? `${name} ` : '';
   if (type === 'mood_lift_stats') return `${prefix}${data.avg > 0 ? `averages a ${data.disp} mood boost after every session` : `tracking mood before and after every session`} on T&S Muscle 🧠 therapyandsneakers.org`;
   if (type === 'streak') return `${prefix}just hit a ${data.value}-week streak on T&S Muscle! 🔥 therapyandsneakers.org`;
