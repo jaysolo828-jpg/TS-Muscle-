@@ -15686,13 +15686,25 @@ async function shareStrengthScoreCard() {
   ctx.fillStyle = '#aaaaaa';
   ctx.fillText('therapyandsneakers.org', _textX, _urlLineY);
 
-  // Display name — fixed position matching generateAndShareCard
+  // Display name — above tagline with auto-shrink for long names
   const displayName = (state.displayName || state.profile?.name || '').trim();
   if (displayName) {
-    ctx.font = `600 ${Math.round(34 * BS)}px 'Barlow Condensed', Arial`;
+    const _dnSz = displayName.length > 10 ? 26
+                : displayName.length > 6  ? 30
+                : 34;
+    ctx.font = `600 ${Math.round(_dnSz * BS)}px 'Barlow Condensed', Arial`;
     ctx.fillStyle = 'rgba(245,230,200,0.88)';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(displayName.toUpperCase(), W / 2, H - 148);
+    const _dnW = ctx.measureText(displayName.toUpperCase()).width;
+    const _dnMax = W - 128;
+    if (_dnW > _dnMax) {
+      ctx.save();
+      ctx.scale(_dnMax / _dnW, 1);
+      ctx.fillText(displayName.toUpperCase(), (W / 2) * (_dnW / _dnMax), H - 148);
+      ctx.restore();
+    } else {
+      ctx.fillText(displayName.toUpperCase(), W / 2, H - 148);
+    }
   }
 
   // Tagline pinned to bottom — matches generateAndShareCard exactly
@@ -16583,25 +16595,30 @@ async function generateAndShareCard(type, data) {
   }
   // ── End music credit block ────────────────────────────────────────────────
 
+  // ── Tagline — centred; Y shifts up when a display name is present ────
+  const _hasName = !!(displayName);
+  const _tagYBase = (_songTitle || _songArtist)
+    ? (hasStats ? H - 90 : H - 130)
+    : H - 90;
+  const _tagY = _hasName ? _tagYBase - 34 : _tagYBase;
+  drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
+    barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
+
   // ── Display name — bottom-right corner signature ──────────────────────
-  // Independent of the vertical stack; always at a fixed corner anchor.
-  // PAD on both axes keeps it consistent with card edge margins.
-  if (displayName) {
+  // Sits below the tagline; font shrinks for longer names to avoid collision.
+  if (_hasName) {
     ctx.save();
     ctx.textAlign    = 'right';
     ctx.textBaseline = 'middle';
-    ctx.font         = `${Math.round(58 * BS)}px 'Satisfy', cursive`;
+    const _nameBaseSz = 58;
+    const _nameSz = displayName.length > 10 ? 42
+                  : displayName.length > 6  ? 50
+                  : _nameBaseSz;
+    ctx.font         = `${Math.round(_nameSz * BS)}px 'Satisfy', cursive`;
     ctx.fillStyle    = 'rgba(255,255,255,0.85)';
     ctx.fillText(displayName, W - PAD, H - PAD);
     ctx.restore();
   }
-
-  // ── Tagline — centred; Y is the bottom anchor of the three-zone layout ─
-  const _tagY = (_songTitle || _songArtist)
-    ? (hasStats ? H - 90 : H - 130)
-    : H - 90;
-  drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
-    barlow(600, 30, BS), 'rgba(160,160,160,0.9)', MAX_TW);
 
   // Share
   canvas.toBlob(async (blob) => {
