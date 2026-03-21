@@ -15591,12 +15591,9 @@ async function shareStrengthScoreCard() {
     ctx.fillText(t, x, barY + barH + 16);
   });
 
-  // ── Bottom section — celebration layout ──────────────────────────────────
+  // ── Bottom section — communicates what the score is + celebrates it ─────
   const botTop = SPLIT + 4;
-
-  // ── Gather data ────────────────────────────────────────────────────────
   const displayName = (state.displayName || state.profile?.name || '').trim();
-  const totalSessions = (state.history || []).length;
 
   // 30-day score delta
   const _cutoff30 = Date.now() - 30 * 86400000;
@@ -15604,29 +15601,79 @@ async function shareStrengthScoreCard() {
     .find(s => new Date(s.date).getTime() < _cutoff30);
   const _delta30 = _old30 ? score - _old30.score : null;
 
-  // Top lifts — best e1RM per scored lift group
-  const _LIFT_NAMES = {
-    'bench': 'BENCH', 'incline': 'INCLINE', 'chest-row': 'ROW',
-    'pulldown': 'PULLDOWN', 'rdl': 'RDL', 'legpress-a': 'LEG PRESS', 'legpress-b': 'LEG PRESS'
-  };
-  const _topLifts = [];
-  for (const group of TS_LIFT_PRIORITY) {
-    for (const exId of group) {
-      const isUni = UNILATERAL_EXERCISES.has(exId) || !!state.customUnilateralExercises?.[exId];
-      const e1rm = getBestE1RM(exId, 90, isUni);
-      if (e1rm) {
-        _topLifts.push({ name: _LIFT_NAMES[exId] || exId.toUpperCase(), e1rm });
-        break;
-      }
-    }
+  // ── "What is this?" explainer — so anyone seeing the card gets it ──────
+  let _curY = botTop + 72;
+
+  ctx.font = `700 28px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(255,255,255,0.40)';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '3px';
+  ctx.fillText('WHAT IS THIS?', W / 2, _curY);
+  ctx.letterSpacing = '0px';
+  _curY += 52;
+
+  // Explainer text — short, punchy, tells people what they're looking at
+  const _explainer = 'Your Strength Score measures how strong you are relative to your bodyweight across your main lifts. It updates every session.';
+  ctx.font = `400 32px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(220,215,205,0.78)';
+  const _maxLW = W - PAD * 3;
+  const _eWords = _explainer.split(' ');
+  const _eLines = [];
+  let _eCur = '';
+  for (const w of _eWords) {
+    const test = _eCur ? _eCur + ' ' + w : w;
+    if (ctx.measureText(test).width > _maxLW && _eCur) { _eLines.push(_eCur); _eCur = w; }
+    else _eCur = test;
+  }
+  if (_eCur) _eLines.push(_eCur);
+  _eLines.slice(0, 3).forEach((ln, i) => { ctx.fillText(ln, W / 2, _curY + i * 46); });
+  _curY += _eLines.slice(0, 3).length * 46 + 36;
+
+  // ── Hairline separator ─────────────────────────────────────────────────
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(PAD + 60, _curY); ctx.lineTo(W - PAD - 60, _curY); ctx.stroke();
+  ctx.restore();
+  _curY += 44;
+
+  // ── Dynamic tier description — their personal level callout ────────────
+  ctx.font = `600 36px 'Barlow Condensed', Arial`;
+  ctx.fillStyle = 'rgba(245,230,200,0.92)';
+  const _words = _cardDesc.split(' ');
+  const _dLines = [];
+  let _cur = '';
+  for (const w of _words) {
+    const test = _cur ? _cur + ' ' + w : w;
+    if (ctx.measureText(test).width > _maxLW && _cur) { _dLines.push(_cur); _cur = w; }
+    else _cur = test;
+  }
+  if (_cur) _dLines.push(_cur);
+  _dLines.slice(0, 2).forEach((ln, i) => { ctx.fillText(ln, W / 2, _curY + i * 52); });
+  _curY += _dLines.slice(0, 2).length * 52;
+
+  // ── 30-day change (if available) ───────────────────────────────────────
+  if (_delta30 !== null && _delta30 !== 0) {
+    _curY += 32;
+    const sign = _delta30 > 0 ? '+' : '';
+    const _dColor = _delta30 > 0 ? '#2ecc71' : '#cc2027';
+    ctx.font = `700 54px 'Bebas Neue', Arial`;
+    ctx.fillStyle = _dColor;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(`${sign}${_delta30} PTS`, W / 2, _curY);
+    ctx.font = `600 24px 'Barlow Condensed', Arial`;
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.fillText('LAST 30 DAYS', W / 2, _curY + 38);
+    _curY += 80;
+  } else {
+    _curY += 36;
   }
 
-  // ── Display name — large cursive signature ─────────────────────────────
-  let _curY = botTop + 64;
+  // ── Display name — cursive signature ───────────────────────────────────
   if (displayName) {
     const _nameSz = displayName.length > 10 ? 56 : displayName.length > 6 ? 66 : 76;
     ctx.font = `${_nameSz}px 'Satisfy', cursive`;
-    ctx.fillStyle = 'rgba(255,255,255,0.88)';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const _dnW = ctx.measureText(displayName).width;
     const _dnMax = W - PAD * 2;
@@ -15637,115 +15684,7 @@ async function shareStrengthScoreCard() {
     } else {
       ctx.fillText(displayName, W / 2, _curY);
     }
-    _curY += 64;
-  }
-
-  // ── Description — clean and readable ───────────────────────────────────
-  ctx.font = `400 34px 'Barlow Condensed', Arial`;
-  ctx.fillStyle = 'rgba(220,215,205,0.85)';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const _maxLW = W - PAD * 3;
-  const _words = _cardDesc.split(' ');
-  const _dLines = [];
-  let _cur = '';
-  for (const w of _words) {
-    const test = _cur ? _cur + ' ' + w : w;
-    if (ctx.measureText(test).width > _maxLW && _cur) { _dLines.push(_cur); _cur = w; }
-    else _cur = test;
-  }
-  if (_cur) _dLines.push(_cur);
-  _dLines.slice(0, 2).forEach((ln, i) => { ctx.fillText(ln, W / 2, _curY + i * 50); });
-  _curY += _dLines.slice(0, 2).length * 50 + 40;
-
-  // ── Stats row: 30-DAY CHANGE | SESSIONS ────────────────────────────────
-  const _statCols = [];
-  if (_delta30 !== null) {
-    const sign = _delta30 > 0 ? '+' : '';
-    _statCols.push({
-      value: `${sign}${_delta30}`,
-      label: '30-DAY CHANGE',
-      color: _delta30 > 0 ? '#2ecc71' : _delta30 < 0 ? '#cc2027' : 'rgba(255,255,255,0.5)'
-    });
-  }
-  if (totalSessions > 0) {
-    _statCols.push({ value: String(totalSessions), label: 'TOTAL SESSIONS', color: 'rgba(255,255,255,0.92)' });
-  }
-
-  if (_statCols.length > 0) {
-    // Hairline above stats
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(PAD + 40, _curY); ctx.lineTo(W - PAD - 40, _curY); ctx.stroke();
-    ctx.restore();
-    _curY += 48;
-
-    const _colW = (W - PAD * 2) / _statCols.length;
-    _statCols.forEach((col, i) => {
-      const cx = PAD + _colW * i + _colW / 2;
-      // Big value
-      ctx.font = `700 60px 'Bebas Neue', Arial`;
-      ctx.fillStyle = col.color;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(col.value, cx, _curY);
-      // Label below
-      ctx.font = `600 24px 'Barlow Condensed', Arial`;
-      ctx.fillStyle = 'rgba(255,255,255,0.38)';
-      ctx.fillText(col.label, cx, _curY + 42);
-
-      // Vertical divider between columns
-      if (i < _statCols.length - 1) {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(PAD + _colW * (i + 1), _curY - 30);
-        ctx.lineTo(PAD + _colW * (i + 1), _curY + 54);
-        ctx.stroke();
-        ctx.restore();
-      }
-    });
-    _curY += 100;
-  }
-
-  // ── Top lifts grid ─────────────────────────────────────────────────────
-  if (_topLifts.length > 0) {
-    // Hairline above lifts
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(PAD + 40, _curY); ctx.lineTo(W - PAD - 40, _curY); ctx.stroke();
-    ctx.restore();
-    _curY += 32;
-
-    // Section header
-    ctx.font = `700 24px 'Barlow Condensed', Arial`;
-    ctx.fillStyle = 'rgba(255,255,255,0.32)';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('EST. 1-REP MAX  ·  LAST 90 DAYS', W / 2, _curY);
-    _curY += 40;
-
-    // 3-column grid
-    const cols = 3;
-    const _liftColW = (W - PAD * 2) / cols;
-    const _liftRowH = 82;
-    _topLifts.forEach((lift, i) => {
-      const row = Math.floor(i / cols);
-      const col = i % cols;
-      const cx = PAD + _liftColW * col + _liftColW / 2;
-      const cy = _curY + row * _liftRowH;
-      // E1RM value — bold, bright
-      ctx.font = `700 48px 'Bebas Neue', Arial`;
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(`${lift.e1rm}`, cx, cy);
-      // Lift name — smaller label
-      ctx.font = `600 22px 'Barlow Condensed', Arial`;
-      ctx.fillStyle = 'rgba(255,255,255,0.38)';
-      ctx.fillText(lift.name, cx, cy + 32);
-    });
-    const liftRows = Math.ceil(_topLifts.length / cols);
-    _curY += liftRows * _liftRowH + 16;
+    _curY += 56;
   }
 
   // ── Logo + brand block — centred in remaining space ────────────────────
@@ -15759,14 +15698,14 @@ async function shareStrengthScoreCard() {
     setTimeout(resolve, 1200);
   });
 
-  const LOGO_SIZE = 80;
-  const LOGO_GAP  = 18;
-  const NAME_SZ   = 52;
-  const URL_SZ    = 26;
-  const LINE_GAP  = 10;
+  const LOGO_SIZE = 76;
+  const LOGO_GAP  = 16;
+  const NAME_SZ   = 50;
+  const URL_SZ    = 25;
+  const LINE_GAP  = 9;
 
   // Centre brand block between content and tagline
-  const _brandCY = Math.round((_curY + 10 + H - 76) / 2);
+  const _brandCY = Math.round((_curY + 12 + H - 72) / 2);
 
   ctx.font = `${NAME_SZ}px 'Bebas Neue', 'Arial Narrow', Arial`;
   const _brandNameW = ctx.measureText('T&S MUSCLE').width;
@@ -15788,7 +15727,7 @@ async function shareStrengthScoreCard() {
   } else {
     ctx.fillStyle = '#CC2027';
     ctx.fillRect(_logoX, _logoY, LOGO_SIZE, LOGO_SIZE);
-    ctx.font = `36px 'Bebas Neue', Arial`;
+    ctx.font = `34px 'Bebas Neue', Arial`;
     ctx.fillStyle = '#F5E6C8';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('TS', _logoX + LOGO_SIZE / 2, _logoY + LOGO_SIZE / 2);
