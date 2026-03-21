@@ -2845,15 +2845,15 @@
         <div style="display:flex; flex-direction:column; gap:8px;">
           <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'beginner', this)">
             <div style="font-weight:bold;">Beginner</div>
-            <div style="font-size:13px; color:var(--gray-light); margin-top:6px; line-height:1.5;">Under 1 year of consistent training</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:6px; line-height:1.5;">Under 1 year of consistent training, or returning after a long break</div>
           </button>
           <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'intermediate', this)">
             <div style="font-weight:bold;">Intermediate</div>
-            <div style="font-size:13px; color:var(--gray-light); margin-top:6px; line-height:1.5;">1–3 years. Comfortable with the main lifts.</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:6px; line-height:1.5;">1–3 years of consistent training. Comfortable with the main lifts.</div>
           </button>
           <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'advanced', this)">
             <div style="font-weight:bold;">Advanced</div>
-            <div style="font-size:13px; color:var(--gray-light); margin-top:6px; line-height:1.5;">3+ years of consistent, structured training</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:6px; line-height:1.5;">3+ years of consistent, structured progressive training</div>
           </button>
         </div>
         <input type="hidden" id="ob-experience" value=""/>
@@ -3106,7 +3106,7 @@
       <div style="display:flex; gap:10px; margin-bottom:16px;">
         <div style="flex:1; background:rgba(204,32,39,0.07); border:1px solid rgba(204,32,39,0.28); border-radius:12px; padding:12px 13px;">
           <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; color:var(--red-text); letter-spacing:1px; margin-bottom:4px;">DON'T OVERTHINK</div>
-          <div style="font-size:12px; color:var(--gray-light); line-height:1.5;">Week 1 RPE scores auto-adjust everything.</div>
+          <div style="font-size:12px; color:var(--gray-light); line-height:1.5;">Don't overthink it. You can update this anytime in Settings as you progress.</div>
         </div>
         <div style="flex:1; background:var(--dark3); border:1px solid #333; border-radius:12px; padding:12px 13px;">
           <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; color:var(--gray-light); letter-spacing:1px; margin-bottom:4px;">ISOLATIONS</div>
@@ -3540,6 +3540,17 @@
       <div class="settings-sub" id="bw-settings-sub">Used for strength benchmarks and cardio calories</div>
     </div>
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+  </div>
+  <!-- Experience Level -->
+  <div style="padding:0 16px 12px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Experience Level</div>
+    <div style="display:flex;gap:8px;" id="settings-exp-btns">
+      <button class="profile-sex-btn" id="settings-exp-beginner" onclick="setExperienceLevel('beginner')" style="flex:1;">Beginner</button>
+      <button class="profile-sex-btn" id="settings-exp-intermediate" onclick="setExperienceLevel('intermediate')" style="flex:1;">Intermediate</button>
+      <button class="profile-sex-btn" id="settings-exp-advanced" onclick="setExperienceLevel('advanced')" style="flex:1;">Advanced</button>
+    </div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Affects your weekly volume targets, weight progression, and coaching style.</div>
+    <div id="settings-exp-pending-msg" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--warning);margin-top:6px;letter-spacing:0.3px;line-height:1.4;">This will take effect at the start of your next cycle.</div>
   </div>
 
   <!-- DATA -->
@@ -4687,10 +4698,28 @@ const UNILATERAL_EXERCISES = new Set([
   'single-legpress', 'bss', 'donkey-kick', 'db-row', 'glute-iso',
 ]);
 
+// ── EXPERIENCE LEVEL HELPERS ─────────────────────────────────────────────────
+// Returns the currently active experience level, respecting timing rules:
+// - New users (cycle 1, week 1, no history): immediate
+// - Existing users mid-cycle: use pending level only after cycle rollover
+// - Existing users between cycles: immediate
+// Falls back to 'intermediate' if unset.
+function getEffectiveExperienceLevel() {
+  const raw = state.profile?.experience;
+  const level = (raw === 'beginner' || raw === 'intermediate' || raw === 'advanced') ? raw : 'intermediate';
+  return level;
+}
+
+// Returns true if this is a brand new user (first session ever)
+function _isNewUser() {
+  return (state.cycleCount || 1) === 1 && (state.weekCount || 1) === 1 && (!state.history || state.history.length === 0);
+}
+
 // Mike Israetel / RP Strength volume landmarks — weekly working sets per muscle group.
 // mev = minimum effective volume (below = too little stimulus for growth)
 // mav = maximum adaptive volume (the optimal sweet spot for hypertrophy)
 // mrv = maximum recoverable volume (above = over-training, recovery breaks down)
+// These are the INTERMEDIATE baseline values. Scaled by experience level via getScaledVolumeLandmarks().
 const VOLUME_LANDMARKS = {
   CHEST:      { mev: 8,  mav: 16, mrv: 22 },
   BACK:       { mev: 10, mav: 18, mrv: 25 },
@@ -4702,6 +4731,26 @@ const VOLUME_LANDMARKS = {
   GLUTES:     { mev: 4,  mav: 12, mrv: 16 },
   CALVES:     { mev: 8,  mav: 14, mrv: 16 },
 };
+
+// Returns scaled volume landmarks for a muscle group based on experience level.
+// Beginner: MEV × 0.7, MAV × 0.75, MRV × 0.75
+// Intermediate: unchanged
+// Advanced: MEV × 1.15, MAV × 1.2, MRV × 1.2
+// MEV never below 2, MRV never above 25.
+function getScaledVolumeLandmarks(muscle) {
+  const base = VOLUME_LANDMARKS[muscle];
+  if (!base) return null;
+  const level = getEffectiveExperienceLevel();
+  if (level === 'intermediate') return base;
+  const multipliers = level === 'beginner'
+    ? { mev: 0.7, mav: 0.75, mrv: 0.75 }
+    : { mev: 1.15, mav: 1.2, mrv: 1.2 };
+  return {
+    mev: Math.max(2, Math.round(base.mev * multipliers.mev)),
+    mav: Math.round(base.mav * multipliers.mav),
+    mrv: Math.min(25, Math.round(base.mrv * multipliers.mrv)),
+  };
+}
 
 // Returns the maximum sets the user's current program can deliver for a given
 // muscle across all sessions in one full week. This is the hard ceiling for the
@@ -4723,7 +4772,7 @@ function getProgramWeeklyMaxSets(muscle) {
 // curve ramps within that ceiling, never above it. The ring and bars recalculate on
 // every stats-screen visit (renderHistory), so no log is needed to see the correction.
 function getWeeklyVolumeTarget(muscle, weekNum) {
-  const landmarks = VOLUME_LANDMARKS[muscle];
+  const landmarks = getScaledVolumeLandmarks(muscle);
   if (!landmarks) return null;
   const { mev, mav } = landmarks;
   let target;
@@ -4782,7 +4831,7 @@ function getRPEAdjustedVolumeTarget(muscle, weekNum) {
   const prevAvgRPE = _getAvgRPEForMuscle(muscle, prevWeekStart, prevWeekEnd);
   if (prevAvgRPE === null) return base; // no RPE data → no adjustment
 
-  const landmarks = VOLUME_LANDMARKS[muscle];
+  const landmarks = getScaledVolumeLandmarks(muscle);
   if (!landmarks) return base;
   const prevWeekBase = getWeeklyVolumeTarget(muscle, weekNum - 1) || base;
 
@@ -4858,7 +4907,7 @@ function _checkSetReductionTrigger(muscle) {
   if (rpes.length >= 3 && rpes[0] >= 9 && rpes[1] >= 9 && rpes[2] >= 9) return true;
 
   // Trigger B: 85%+ of weekly MRV AND RPE trending high this week
-  const landmarks = VOLUME_LANDMARKS[muscle];
+  const landmarks = getScaledVolumeLandmarks(muscle);
   if (landmarks) {
     const weeklySets = (getWeeklySetsByMuscle())[muscle] || 0;
     if (weeklySets >= landmarks.mrv * 0.85) {
@@ -4891,7 +4940,7 @@ function _getSetReductionEligibleExercises(muscle) {
 // Returns true if removing one set per eligible exercise won't drop total
 // planned weekly sets for this muscle below MEV.
 function _setReductionPassesMEVFloor(muscle, eligibleExs) {
-  const landmarks = VOLUME_LANDMARKS[muscle];
+  const landmarks = getScaledVolumeLandmarks(muscle);
   if (!landmarks) return true;
   const weeklyDone = (getWeeklySetsByMuscle())[muscle] || 0;
   const day = state.program.find(d => d.id === activeSession.dayId);
@@ -4960,10 +5009,12 @@ function dismissSetReductionBanner(muscle) {
 function getMRVApproachingMuscles() {
   const weeklySets = getWeeklySetsByMuscle();
   const approaching = [];
-  Object.entries(VOLUME_LANDMARKS).forEach(([muscle, { mrv }]) => {
+  Object.keys(VOLUME_LANDMARKS).forEach(muscle => {
+    const scaled = getScaledVolumeLandmarks(muscle);
+    if (!scaled) return;
     const actual = weeklySets[muscle] || 0;
-    if (actual > 0 && actual >= mrv * 0.95) {
-      approaching.push({ muscle, actual, mrv });
+    if (actual > 0 && actual >= scaled.mrv * 0.95) {
+      approaching.push({ muscle, actual, mrv: scaled.mrv });
     }
   });
   return approaching;
@@ -5725,6 +5776,7 @@ function showScreen(name, el) {
     const ageInput = document.getElementById('profile-age-input');
     if (ageInput) ageInput.value = state.profile?.age || '';
     _updateSexButtons(state.profile?.sex || null);
+    _updateExpLevelButtons();
     const bwSub = document.getElementById('bw-settings-sub');
     if (bwSub && state.profile?.bodyweight) bwSub.textContent = `${state.profile.bodyweight} lbs`;
     updateProfileNotifyDot();
@@ -5755,6 +5807,36 @@ function _updateSexButtons(sex) {
   const fBtn = document.getElementById('profile-sex-female');
   if (mBtn) mBtn.classList.toggle('selected', sex === 'male');
   if (fBtn) fBtn.classList.toggle('selected', sex === 'female');
+}
+
+// ── EXPERIENCE LEVEL SETTINGS ─────────────────────────────────────────────
+function setExperienceLevel(level) {
+  if (!state.profile) state.profile = {};
+  const isNewUser = _isNewUser();
+  const isBetweenCycles = (state.weekCount || 1) === 1;
+  if (isNewUser || isBetweenCycles) {
+    // Apply immediately
+    state.profile.experience = level;
+    delete state.pendingExperienceLevel;
+  } else {
+    // Mid-cycle: store as pending, apply at next cycle rollover
+    state.pendingExperienceLevel = level;
+  }
+  saveState();
+  _updateExpLevelButtons();
+}
+
+function _updateExpLevelButtons() {
+  const current = state.profile?.experience || 'intermediate';
+  const pending = state.pendingExperienceLevel;
+  ['beginner', 'intermediate', 'advanced'].forEach(lvl => {
+    const btn = document.getElementById('settings-exp-' + lvl);
+    if (btn) btn.classList.toggle('selected', lvl === current);
+  });
+  const pendingMsg = document.getElementById('settings-exp-pending-msg');
+  if (pendingMsg) {
+    pendingMsg.style.display = (pending && pending !== current) ? 'block' : 'none';
+  }
 }
 
 // Separate handler for onboarding sex buttons — uses dedicated IDs
@@ -6050,6 +6132,106 @@ function getDayStats(dayId) {
 // Resets on next page load so the banner re-evaluates fresh every session.
 let _mrvBannerDismissedThisLoad = false;
 
+// ── FIX 9: Experience Level Confirmation Banner ──────────────────────────────
+// Shows a one-time banner for existing users who haven't confirmed their level.
+function _renderExpLevelConfirmBanner() {
+  let banner = document.getElementById('exp-level-confirm-banner');
+  // Never show during active session, for new users, or if already confirmed
+  const shouldShow = !activeSession
+    && !_isNewUser()
+    && state.onboardingComplete
+    && !state.experienceLevelConfirmed;
+  if (!shouldShow) {
+    if (banner) banner.style.display = 'none';
+    return;
+  }
+  const level = getEffectiveExperienceLevel();
+  const levelLabel = level.charAt(0).toUpperCase() + level.slice(1);
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'exp-level-confirm-banner';
+    const weekTracker = document.querySelector('.week-tracker');
+    if (weekTracker) weekTracker.parentNode.insertBefore(banner, weekTracker.nextSibling);
+    else document.getElementById('home-main-content')?.appendChild(banner);
+  }
+  banner.style.cssText = 'background:var(--dark2);border:1px solid rgba(255,255,255,0.1);border-left:4px solid #c8901e;border-radius:12px;padding:14px 16px;margin-bottom:14px;';
+  banner.innerHTML = `
+    <div style="font-size:13px;color:rgba(235,230,222,0.92);line-height:1.5;margin-bottom:10px;">Experience level now drives your training volume and progression. Yours is set to <strong style="color:var(--cream);">${levelLabel}</strong>. Tap to confirm or update in Settings.</div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="state.experienceLevelConfirmed=true;saveState();document.getElementById('exp-level-confirm-banner').style.display='none';" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:var(--cream);padding:10px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">LOOKS RIGHT</button>
+      <button onclick="state.experienceLevelConfirmed=true;saveState();document.getElementById('exp-level-confirm-banner').style.display='none';showScreen('settings',document.querySelector('[onclick*=settings]'));" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:var(--gray-light);padding:10px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">UPDATE IN SETTINGS</button>
+    </div>`;
+  banner.style.display = 'block';
+}
+
+// ── FIX 10: Level-Up Suggestion Card ─────────────────────────────────────────
+// Shows after a completed cycle if performance suggests the user is ready to move up.
+function _renderLevelUpSuggestionCard() {
+  let card = document.getElementById('level-up-suggestion-card');
+  const level = getEffectiveExperienceLevel();
+  // Only suggest for beginner/intermediate, never suggest moving down
+  if (level === 'advanced') {
+    if (card) card.style.display = 'none';
+    return;
+  }
+  // Check if dismissed recently (within last 2 cycles)
+  if (state.levelUpDismissedAtCycle && (state.cycleCount || 1) - state.levelUpDismissedAtCycle < 2) {
+    if (card) card.style.display = 'none';
+    return;
+  }
+  // Only evaluate after a completed cycle (cycleHistory must have at least one entry)
+  const lastCycle = (state.cycleHistory || []).length > 0
+    ? state.cycleHistory[state.cycleHistory.length - 1]
+    : null;
+  if (!lastCycle || lastCycle.cycleNum !== (state.cycleCount || 1) - 1) {
+    if (card) card.style.display = 'none';
+    return;
+  }
+  // Conditions: 80%+ sessions hit week-band rep targets, avg RPE ≤ 8, ≥ 3 PRs
+  const wbPerf = lastCycle.weekBandPerf;
+  const hitRate = wbPerf && wbPerf.total > 0 ? Math.round((wbPerf.hit / wbPerf.total) * 100) : 0;
+  const avgRpe = lastCycle.avgRpe;
+  const prCount = lastCycle.prs || 0;
+  const shouldShow = hitRate >= 80 && avgRpe !== null && avgRpe <= 8 && prCount >= 3;
+  if (!shouldShow) {
+    if (card) card.style.display = 'none';
+    return;
+  }
+  const nextLevel = level === 'beginner' ? 'Intermediate' : 'Advanced';
+  if (!card) {
+    card = document.createElement('div');
+    card.id = 'level-up-suggestion-card';
+    const weekTracker = document.querySelector('.week-tracker');
+    if (weekTracker) weekTracker.parentNode.insertBefore(card, weekTracker.nextSibling);
+    else document.getElementById('home-main-content')?.appendChild(card);
+  }
+  card.style.cssText = 'background:var(--dark2);border:1px solid rgba(255,255,255,0.1);border-left:4px solid #c8901e;border-radius:12px;padding:14px 16px;margin-bottom:14px;';
+  card.innerHTML = `
+    <div style="font-size:13px;color:rgba(235,230,222,0.92);line-height:1.5;margin-bottom:10px;">Your last cycle suggests you're ready to train at <strong style="color:var(--cream);">${nextLevel}</strong>. Want to make the move? It takes effect next cycle.</div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="_acceptLevelUp()" style="flex:1;background:rgba(200,144,30,0.15);border:1px solid rgba(200,144,30,0.4);color:#c8901e;padding:10px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">LET'S GO</button>
+      <button onclick="_dismissLevelUp()" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:var(--gray-light);padding:10px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">NOT YET</button>
+    </div>`;
+  card.style.display = 'block';
+}
+
+function _acceptLevelUp() {
+  const level = getEffectiveExperienceLevel();
+  const next = level === 'beginner' ? 'intermediate' : 'advanced';
+  if (!state.profile) state.profile = {};
+  state.pendingExperienceLevel = next;
+  saveState();
+  const card = document.getElementById('level-up-suggestion-card');
+  if (card) card.style.display = 'none';
+}
+
+function _dismissLevelUp() {
+  state.levelUpDismissedAtCycle = state.cycleCount || 1;
+  saveState();
+  const card = document.getElementById('level-up-suggestion-card');
+  if (card) card.style.display = 'none';
+}
+
 function renderHome() {
   const realSessions = (state.history || []).filter(entry =>
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
@@ -6275,6 +6457,12 @@ function renderHome() {
 
   // Rotation banner
   checkRotationBanner();
+
+  // ── FIX 9: Experience level confirmation banner for existing users ─────
+  _renderExpLevelConfirmBanner();
+
+  // ── FIX 10: Level-up suggestion card after cycle rollover ──────────────
+  _renderLevelUpSuggestionCard();
 
   // Week tracker label — show cycle context on cycle 2+
   const weekTrackerLabel = document.getElementById('week-tracker-label');
@@ -7524,7 +7712,9 @@ function getProgressiveWeight(exId, dayId) {
   });
 
   // Determine if we have enough data for trend mode (3+ sessions)
-  const useTrend = nonOverrideSessions.length >= 3;
+  // Beginner: single-session mode always. Intermediate/Advanced: trend after 3 sessions.
+  const _expLevel = getEffectiveExperienceLevel();
+  const useTrend = _expLevel !== 'beginner' && nonOverrideSessions.length >= 3;
   const sessions = useTrend ? nonOverrideSessions.slice(0, 3) : nonOverrideSessions.slice(0, 1);
   const modeLabel = useTrend ? '3-session trend' : 'last session';
 
@@ -7598,10 +7788,12 @@ function getProgressiveWeight(exId, dayId) {
   // Must hit rep target AND RPE is manageable across the window
   // 2-of-3 gate: allow one hard session without blocking progress.
   // highRPESessionCount <= 1 means at most one outlier session is OK.
+  // Advanced: stricter RPE threshold (≤7.5 instead of ≤8)
+  const _rpeThreshold = _expLevel === 'advanced' ? 7.5 : 8;
   const trendReadyToIncrease = useTrend
-    ? (hitRepRangeTop && avgRPE !== null && avgRPE <= 8 && highRPESessionCount <= 1)
+    ? (hitRepRangeTop && avgRPE !== null && avgRPE <= _rpeThreshold && highRPESessionCount <= 1)
       || (hitRepRangeTop && avgRPE === null)
-      || (exceededRange && (avgRPE === null || avgRPE <= 8))
+      || (exceededRange && (avgRPE === null || avgRPE <= _rpeThreshold))
     : true; // single session — use regular logic
 
   // Flag for reduce signal: in trend mode require 2+ high RPE sessions
@@ -7702,6 +7894,12 @@ function getProgressiveWeight(exId, dayId) {
     }
   }
 
+  // Experience-level increment scaling: beginner × 1.25, advanced × 0.85
+  if (newWeight > lastWeight) {
+    const _incr = newWeight - lastWeight;
+    const _scale = _expLevel === 'beginner' ? 1.25 : _expLevel === 'advanced' ? 0.85 : 1;
+    newWeight = lastWeight + _incr * _scale;
+  }
   // Round to nearest 2.5 lbs, never below 5
   newWeight = Math.max(5, Math.round(newWeight / 2.5) * 2.5);
 
@@ -8439,7 +8637,8 @@ function renderSession() {
     // Inject set-reduction suggestion banner before the first exercise for each
     // muscle group that has triggered the fatigue detection. One banner per muscle
     // per render pass — dismissed or applied banners are skipped.
-    if (_muscle && !_srBannersShown.has(_muscle)) {
+    // FIX 4: Suppress set reduction (Level 2 autoregulation) entirely for beginners.
+    if (_muscle && !_srBannersShown.has(_muscle) && getEffectiveExperienceLevel() !== 'beginner') {
       _srBannersShown.add(_muscle);
       const _srStatus = activeSession.setReductionBanners?.[_muscle];
       if (!_srStatus) {
@@ -9354,7 +9553,50 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
     }
   }
 
-  return 'You are a knowledgeable training partner giving a single between-set coaching cue. Write exactly 1–2 short sentences. Direct, confident, human. No greetings, no sign-offs, no filler.\n\nVoice rules:\n- Short punchy sentences. Observational and instructional only.\n- Never comment on form, technique, or control — you cannot see these. Never say "good control", "solid form", "nice technique", "clean reps", or anything similar.\n- Never say "Great work", "Amazing", "Well done", or generic praise.\n- Only reference what is explicitly in the session data below.\n\nContext rules:\n- Use all available context to make the cue specific to this exact moment — reference the week, the set number, progression from last set, superset partner if relevant, whether a weight increase is already queued.\n- If weight increase is queued for next session: acknowledge the performance and encourage finishing the session strong. Do not suggest load changes.\n- If in manual adjustment period: reflect that weight was recently changed and the focus is on adapting to the new load.\n- If part of a superset: factor in the paired exercise and how it affects pacing and effort for this movement.\n- Factor in session position — RPE 8.5 on exercise 1 of 6 is a different signal than RPE 8.5 on exercise 5 of 6.\n- When same-muscle exercises remain, factor in cumulative fatigue for that muscle group.\n- NEVER assume or infer exercise position, session progress, or how many exercises remain. Use only the explicit values in the session data below. If position data is absent or unclear, omit any reference to exercise order entirely — do not guess.' + restRpeVoiceRule + '\n\nTone examples (right):\n- "140 for 12 at RPE 8 — same weight as last session. Set 3 is where you find out if you\'re ready to move up."\n- "Week 5, set 2 of 4. RPE climbing from last set — pace yourself, you\'ve got pulldown paired after this."\n- "Adjustment period — 140 is new territory. Stay consistent on reps before pushing RPE."\n\nSession data:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Training goal: ' + trainingGoal + '\n- Week ' + weekNum + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- ' + setNumberStr + '\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Rep target: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Superset: ' + supersetStr + '\n- Sets this session: ' + setsSummary + '\n- Previous set this session: ' + prevInSessionStr + '\n- Weight increase queued next session: ' + (weightIncreaseQueued ? 'Yes' : 'No') + '\n- Manual adjustment period: ' + manualAdjStr + '\n- Session duration: ' + sessionDurStr + '\n- Last session this exercise: ' + lastSessionExStr + '\n- ' + prevSetStr + '\n- Trigger: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + restRpeObservation + '\n\nWrite exactly 1–2 sentences. No greeting, no sign-off.';
+  // ── Additional context fields for experience-level coaching ──────────────
+  var _expLevelCtx = (typeof getEffectiveExperienceLevel === 'function') ? getEffectiveExperienceLevel() : 'intermediate';
+  var _totalWeeks = 8;
+  var _cycleWeekStr = 'Week ' + weekNum + ' of ' + _totalWeeks;
+  var _trainingDaysPerWeek = state.trainingDaysPerWeek || state.program?.length || 4;
+
+  // Reps trending up or down within this session for this exercise
+  var _repTrendStr = 'N/A';
+  if (sets.length >= 2) {
+    var _lastReps = parseInt(sets[sets.length - 1].reps) || 0;
+    var _prevReps = parseInt(sets[sets.length - 2].reps) || 0;
+    if (_lastReps > 0 && _prevReps > 0) {
+      _repTrendStr = _lastReps > _prevReps ? 'Trending up' : _lastReps < _prevReps ? 'Trending down' : 'Steady';
+    }
+  }
+
+  // Whether this exercise has consistently hit or missed rep targets across last 3 sessions
+  var _repConsistencyStr = 'Insufficient data';
+  var _weekBandTarget = (typeof getCycleWeekBandRepTarget === 'function') ? getCycleWeekBandRepTarget(exId) : null;
+  if (_weekBandTarget) {
+    var _last3 = [...(state.history || [])].reverse().filter(function(h) { return h.dayId === activeSession.dayId && h.sets && h.sets[exId] && !h.isDeload; }).slice(0, 3);
+    if (_last3.length >= 2) {
+      var _hitCount = 0;
+      _last3.forEach(function(h) {
+        var _hSets = (h.sets[exId] || []).filter(function(s) { return s.done && parseInt(s.reps) > 0; });
+        var _hAvg = _hSets.length ? _hSets.reduce(function(a, s) { return a + parseInt(s.reps); }, 0) / _hSets.length : 0;
+        if (_hAvg >= _weekBandTarget) _hitCount++;
+      });
+      _repConsistencyStr = _hitCount >= _last3.length ? 'Consistently hitting targets' : _hitCount === 0 ? 'Consistently missing targets' : 'Mixed — hitting ' + _hitCount + ' of ' + _last3.length + ' sessions';
+    }
+  }
+
+  // Current RPE trend across the whole session — average RPE of all sets logged so far
+  var _sessionRpeStr = 'No RPE data yet';
+  var _allSessionSets = [];
+  Object.values(activeSession.sets || {}).forEach(function(exSets) {
+    exSets.filter(function(s) { return s.done && s.rpe; }).forEach(function(s) { _allSessionSets.push(parseFloat(s.rpe)); });
+  });
+  if (_allSessionSets.length > 0) {
+    var _sessAvgRpe = (_allSessionSets.reduce(function(a, b) { return a + b; }, 0) / _allSessionSets.length).toFixed(1);
+    _sessionRpeStr = 'Avg RPE across session so far: ' + _sessAvgRpe + ' (' + _allSessionSets.length + ' sets)';
+  }
+
+  return 'You are a coach standing next to the user during their workout. Talk exactly like a real coach would — direct, plain language, no jargon, no fitness terminology. Never use the words RPE, MRV, MEV, week-band, periodization, mesocycle, or any technical training term in your response. The data informs what you say but never appears in your words.\n\nAdjust your coaching style based on experience level:\nBeginner: tell them what to do and keep it simple. Focus on consistency. More instructional.\nIntermediate: reference what\'s happening in the session and how it compares to last time. Trust they know what to do.\nAdvanced: trust them to act on the observation. Less instruction, more precise awareness. Short and sharp.\n\nAll three levels use the same direct coach voice — plain sentences, no jargon. The difference is how much context you explain, not how you talk.\n\nGood examples:\nBeginner: \'You hit your numbers on that set. Stay at this weight and focus on finishing the last two sets strong.\'\nIntermediate: \'One more rep than last session at the same effort. Set 3 is where you prove it.\'\nAdvanced: \'Working harder set to set. Two left — pace yourself.\'\n\nBad examples — never say these: \'Good control on that set.\' \'Great work today.\' \'You are doing amazing.\' \'Your RPE indicates accumulated fatigue.\'\n\nMaximum three sentences. Observational and instructional only. Never reference form, technique, or control — you cannot see these things. Only reference what is in the data.' + restRpeVoiceRule + '\n\nContext rules:\n- Use all available context to make the cue specific to this exact moment.\n- If weight increase is queued for next session: acknowledge the performance and encourage finishing the session strong.\n- If in manual adjustment period: reflect that weight was recently changed and the focus is on adapting to the new load.\n- NEVER assume or infer exercise position, session progress, or how many exercises remain. Use only the explicit values below.\n\nSession data:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Training goal: ' + trainingGoal + '\n- ' + _cycleWeekStr + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- Experience level: ' + _expLevelCtx + '\n- Training days per week: ' + _trainingDaysPerWeek + '\n- ' + setNumberStr + '\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Rep target: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Reps trending this session: ' + _repTrendStr + '\n- Rep target consistency (last 3 sessions): ' + _repConsistencyStr + '\n- Session RPE trend: ' + _sessionRpeStr + '\n- Superset: ' + supersetStr + '\n- Sets this session: ' + setsSummary + '\n- Previous set this session: ' + prevInSessionStr + '\n- Weight increase queued next session: ' + (weightIncreaseQueued ? 'Yes' : 'No') + '\n- Manual adjustment period: ' + manualAdjStr + '\n- Session duration: ' + sessionDurStr + '\n- Last session this exercise: ' + lastSessionExStr + '\n- ' + prevSetStr + '\n- Trigger: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + restRpeObservation + '\n\nWrite 1–3 sentences max. No greeting, no sign-off.';
 }
 
 async function _fetchCoachingCue(prompt) {
@@ -9942,7 +10184,8 @@ function _canSuggestDynamicSet(exId) {
 
   const weekNum = state.weekCount || 1;
   const weeklyTarget = getRPEAdjustedVolumeTarget(muscle, weekNum);
-  const mrv = VOLUME_LANDMARKS[muscle].mrv;
+  const _scaledLandmarks = getScaledVolumeLandmarks(muscle);
+  const mrv = _scaledLandmarks ? _scaledLandmarks.mrv : VOLUME_LANDMARKS[muscle].mrv;
   const increment = _getDynamicSetIncrement(exId);
 
   // Current weekly sets for this muscle (includes done sets from this session)
@@ -11950,6 +12193,12 @@ function finalizeEndSession(save) {
           delete state.deloadReductionFactor;
         }
         // ────────────────────────────────────────────────────────────────
+        // ── Apply pending experience level change at cycle rollover ───
+        if (state.pendingExperienceLevel) {
+          if (!state.profile) state.profile = {};
+          state.profile.experience = state.pendingExperienceLevel;
+          delete state.pendingExperienceLevel;
+        }
         state.cycleCount = (state.cycleCount || 1) + 1;
         // Drop "this cycle" bonus exercises that have expired
         state.program.forEach(day => {
@@ -13407,6 +13656,13 @@ function renderHistory() {
   // ── 0. T&S STRENGTH SCORE — most prominent card ───────────
   container.appendChild(renderStrengthScoreCard());
 
+  // ── Experience level indicator ────────────────────────────
+  const _expIndicator = document.createElement('div');
+  const _expLabel = getEffectiveExperienceLevel();
+  _expIndicator.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;margin-bottom:12px;margin-top:-4px;';
+  _expIndicator.textContent = 'Training as: ' + _expLabel.charAt(0).toUpperCase() + _expLabel.slice(1);
+  container.appendChild(_expIndicator);
+
   // ── Helpers ──────────────────────────────────────────────
   function mkLabel(text) {
     const el = document.createElement('div');
@@ -13651,7 +13907,8 @@ function renderHistory() {
         const actual   = _wsets[muscle] || 0;
         const notDone  = actual === 0;
         const target   = getRPEAdjustedVolumeTarget(muscle, _wn) || 1;
-        const { mrv }  = VOLUME_LANDMARKS[muscle];
+        const _sl      = getScaledVolumeLandmarks(muscle) || VOLUME_LANDMARKS[muscle];
+        const mrv      = _sl.mrv;
         const mcolor   = MUSCLE_COLORS[muscle] || 'var(--red-text)';
         const pct      = Math.min(actual / target, 1);
         const nearMRV  = actual >= Math.round(mrv * 0.9);
@@ -16638,9 +16895,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.5.0';
 
 const APP_CHANGELOG = {
+  '1.5.0': [
+    'New: Experience level now drives your training. Volume targets, weight progression, and coaching cues all adjust based on whether you\'re a beginner, intermediate, or advanced lifter. Check your level in Settings and update it anytime.',
+  ],
   '1.4.2': [
     'Fix: Rep indicators (▲✓▼) and READY TO PROGRESS badge now correctly use your week-band periodized rep target, not the flat top of your rep range',
     'Fix: Weight increase suggestions now trigger at your periodized rep target so mid-cycle progressions are no longer blocked',
@@ -17716,6 +17976,12 @@ const TUTORIAL_SLIDES = [
     <strong style="color:var(--cream);">→ Starting weights for your compound lifts</strong><br><br>
     Not sure about a starting weight? Tap <strong style="color:var(--red-text);">1RM CALC</strong> next to any lift. Enter a weight you've used for any number of reps, and the app estimates your ideal working weight automatically.<br><br>
     You can redo this setup anytime from <strong style="color:var(--red-text);">Settings → Redo Initial Setup</strong>.`,
+  },
+  {
+    section: 'EXPERIENCE LEVEL',
+    icon: '📊',
+    title: 'YOUR EXPERIENCE LEVEL MATTERS',
+    body: `Beginner, intermediate, or advanced — your level drives how much volume you train, how fast you progress, and how the app coaches you. You can update it anytime in <strong style="color:var(--red-text);">Settings</strong> as you grow.`,
   },
   {
     section: 'TEST WEEK',
@@ -18886,7 +19152,13 @@ function calculate1RM() {
   // Epley formula
   const oneRM = Math.round(w * (1 + r / 30));
   const goal = document.getElementById('ob-goal').value || 'both';
-  const pct = goal === 'strength' ? 0.80 : goal === 'size' ? 0.68 : 0.74;
+  const _1rmExp = (document.getElementById('ob-experience')?.value || state.profile?.experience || 'intermediate');
+  const _1rmPcts = {
+    beginner:     { strength: 0.75, size: 0.63, both: 0.69 },
+    intermediate: { strength: 0.80, size: 0.68, both: 0.74 },
+    advanced:     { strength: 0.83, size: 0.72, both: 0.78 },
+  };
+  const pct = (_1rmPcts[_1rmExp] || _1rmPcts.intermediate)[goal] || 0.74;
   const working = Math.round(oneRM * pct / 2.5) * 2.5; // round to nearest 2.5
 
   document.getElementById('onerm-result-val').textContent = oneRM + ' lbs';
