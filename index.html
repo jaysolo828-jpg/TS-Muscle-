@@ -16624,7 +16624,7 @@ async function generateAndShareCard(type, data) {
   // ── Tagline — centred; Y shifts up when a display name is present ────
   const _hasName = !!(displayName);
   const _tagYBase = (_songTitle || _songArtist)
-    ? (hasStats ? H - 90 : H - 130)
+    ? (hasStats ? H - 70 : H - 110)
     : H - 90;
   const _tagY = _hasName ? _tagYBase - 34 : _tagYBase;
   drawText('WHERE CULTURE & PURPOSE COLLIDE', W / 2, _tagY,
