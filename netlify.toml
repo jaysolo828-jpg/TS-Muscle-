@@ -8,3 +8,7 @@
 [[edge_functions]]
   function = "supabase-config"
   path = "/supabase-config.js"
+
+[[edge_functions]]
+  function = "send-notification"
+  path = "/send-notification"
