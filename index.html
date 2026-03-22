@@ -822,6 +822,9 @@
     color: var(--cream);
     line-height: 1.1;
     letter-spacing: 0.2px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
   }
 
   .muscle-pill {
@@ -2486,7 +2489,7 @@
   </div>
   <div class="header-right">
     <button class="icon-btn" id="lib-open-btn" onclick="openExerciseLibrary(null)" aria-label="Exercise Library" title="Exercise Library">
-      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--red)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
     <button class="icon-btn" onclick="exportData()" aria-label="Export Data" title="Export Data">
   <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
@@ -9047,7 +9050,7 @@ function renderSession() {
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--red)" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
         </div>
         <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; margin:0 10px;">
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0;">
             <div class="session-ex-name" onclick="openExerciseLibrary('${ex.id}')" style="cursor:pointer;">${displayName}</div>
             ${state.prs?.[ex.id] && !state.prs[ex.id].isBaseline ? `<span id="pr-badge-${ex.id}" style="font-size:12px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:3px 8px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
           </div>
@@ -17387,7 +17390,7 @@ function isWorkoutActive() {
 
 function showSWUpdateBanner() {
   if (document.getElementById('sw-update-banner')) return;
-  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v38')) return;
+  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v39')) return;
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
   const banner = document.createElement('div');
@@ -17415,7 +17418,7 @@ function applySWUpdate() {
 
 function dismissSWBanner(e) {
   e.stopPropagation();
-  sessionStorage.setItem('ts_muscle_sw_dismissed_v38', '1');
+  sessionStorage.setItem('ts_muscle_sw_dismissed_v39', '1');
   const b = document.getElementById('sw-update-banner');
   if (b) b.remove();
 }
@@ -17530,9 +17533,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 
 const APP_CHANGELOG = {
+  '1.6.1': [
+    'Fix: Search icon on the home screen now shows in brand red.',
+    'Fix: Exercise names on the active workout screen now wrap cleanly on all screen sizes.',
+  ],
   '1.6.0': [
     'New: Exercise Library. Tap the 🔍 icon in the header or tap any exercise name to browse 257 exercises across 10 muscle groups. Filter by muscle, search by name, expand cards for 4 evidence-based form cues, save favourites, watch YouTube demos, and swap exercises directly into your active session or program.',
   ],
