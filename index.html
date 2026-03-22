@@ -4059,7 +4059,7 @@
     <a id="contact-email-link" style="font-family:'Barlow Condensed',sans-serif; font-size:14px; color:var(--gray-light); letter-spacing:0; text-decoration:none; cursor:pointer; padding:8px 0; min-height:44px; display:flex; align-items:center;"></a>
     <script>(function(){ var u='Jay@'+'therapyandsneakers'+'.org'; var a=document.getElementById('contact-email-link'); if(a){a.textContent=u;a.href='mailto:'+u;} })();</script>
   </div>
-  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#777; letter-spacing:2px;">T&S MUSCLE v1.3.3 · THERAPY & SNEAKERS</div>
+  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#777; letter-spacing:2px;">T&S MUSCLE v1.3.4 · THERAPY & SNEAKERS</div>
 
   <div style="text-align:center; margin-top:30px; color: var(--gray); font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">
     T&S MUSCLE · WHERE CULTURE AND PURPOSE COLLIDE
@@ -4218,11 +4218,11 @@
 
     <!-- CURRENT EXERCISE YOUTUBE LINK -->
     <div id="current-yt-section" style="background:var(--dark3); border-radius:12px; padding:12px 14px; margin-bottom:16px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">📺 WATCH CURRENT EXERCISE</div>
+      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">📺 WHAT YOU DO NOW</div>
       <div style="display:flex; align-items:center; gap:8px;">
         <a id="current-yt-link" href="#" target="_blank" style="flex:1; background:#FF0000; color:white; border:none; border-radius:8px; padding:8px 12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer; text-decoration:none; display:flex; align-items:center; gap:6px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-          WATCH ON YOUTUBE
+          WATCH CURRENT
         </a>
         <button onclick="editYtLink('current')" style="background:var(--dark4); border:1px solid var(--dark4); color:var(--gray-light); border-radius:8px; padding:8px 10px; font-size:14px; cursor:pointer;">✏️</button>
       </div>
@@ -4246,11 +4246,12 @@
 
     <!-- SELECTED ALT DETAILS -->
     <div id="alt-detail-section" style="display:none; background:var(--dark3); border-radius:12px; padding:12px 14px; margin-bottom:16px;">
+      <div id="alt-detail-label" style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">📺 WHAT YOU'D SWAP TO</div>
       <div id="alt-detail-note" style="font-size:13px; color:var(--gray-light); margin-bottom:10px;"></div>
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
         <a id="alt-yt-link" href="#" target="_blank" style="flex:1; background:#FF0000; color:white; border:none; border-radius:8px; padding:8px 12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer; text-decoration:none; display:flex; align-items:center; gap:6px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-          WATCH ON YOUTUBE
+          WATCH SWAP OPTION
         </a>
         <button onclick="editYtLink('alt')" style="background:var(--dark4); border:1px solid var(--dark4); color:var(--gray-light); border-radius:8px; padding:8px 10px; font-size:14px; cursor:pointer;">✏️</button>
       </div>
@@ -17463,7 +17464,7 @@ function isWorkoutActive() {
 
 function showSWUpdateBanner() {
   if (document.getElementById('sw-update-banner')) return;
-  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v45')) return;
+  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v46')) return;
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
   const banner = document.createElement('div');
@@ -17491,7 +17492,7 @@ function applySWUpdate() {
 
 function dismissSWBanner(e) {
   e.stopPropagation();
-  sessionStorage.setItem('ts_muscle_sw_dismissed_v45', '1');
+  sessionStorage.setItem('ts_muscle_sw_dismissed_v46', '1');
   const b = document.getElementById('sw-update-banner');
   if (b) b.remove();
 }
@@ -17647,6 +17648,9 @@ const APP_CHANGELOG = {
   '1.3.3': [
     'New: Persistent "prev: X × Y" label under each weight input so last session data stays visible while you type',
     'New: Estimated 1RM shown in the PR celebration modal using the Epley formula',
+  ],
+  '1.3.4': [
+    'Improved: Swap screen now clearly labels which YouTube button is your current exercise vs. what you\'d swap to',
   ],
   '1.3.3': [
     'Improved: Exercise swap screen now shows only same-muscle exercises — no more irrelevant options',
