@@ -2457,7 +2457,7 @@
 
 </style>
 <script src="config.js?v=20260318"></script>
-<script src="supabase-config.js?v=20260322"></script>
+<script>window.SUPABASE_URL = 'https://idiaozmcnckopwfisdpu.supabase.co'; window.SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_c8-lPLNrgTCPbtSxWVh_Xw_ybZ3s8KG';</script>
 <script src="onesignal-config.js?v=20260322"></script>
 <script src="supabase.min.js"></script>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -3947,6 +3947,12 @@
   </div>
 
   <!-- PROFILE -->
+  <!-- ACCOUNT -->
+  <div class="section-title" style="margin-top:8px;">ACCOUNT</div>
+  <div id="settings-account-section">
+    <!-- Populated by _updateSettingsAccountSection() -->
+  </div>
+
   <div class="section-title" style="margin-top:8px;">PROFILE</div>
   <!-- Display Name -->
   <div style="padding:0 16px 12px;">
@@ -6210,14 +6216,14 @@ function _getSupabaseClient() {
 // Show/hide the auth card on the home screen
 function _updateSupabaseAuthCard() {
   const card = document.getElementById('supabase-auth-card');
-  if (!card) return;
-  // Never show during an active workout session
-  if (activeSession) { card.style.display = 'none'; return; }
-  // Hide if already signed in
-  if (state.supabaseUserId) { card.style.display = 'none'; return; }
-  // Hide if dismissed this session
-  if (state.supabaseDismissed) { card.style.display = 'none'; return; }
-  card.style.display = 'block';
+  if (card) {
+    if (activeSession || state.supabaseUserId || state.supabaseDismissed) {
+      card.style.display = 'none';
+    } else {
+      card.style.display = 'block';
+    }
+  }
+  _updateSettingsAccountSection();
 }
 
 function supabaseDismiss() {
@@ -6226,36 +6232,84 @@ function supabaseDismiss() {
   _updateSupabaseAuthCard();
 }
 
-function supabaseShowEmailForm() {
-  const form = document.getElementById('supabase-email-form');
-  if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+function _updateSettingsAccountSection() {
+  const el = document.getElementById('settings-account-section');
+  if (!el) return;
+  if (state.supabaseUserId) {
+    const name = state.supabaseDisplayName || state.displayName || 'Connected';
+    el.innerHTML = `
+      <div class="settings-item" style="cursor:default;">
+        <div>
+          <div class="settings-label">${name}</div>
+          <div class="settings-sub">Signed in &mdash; your data syncs across devices</div>
+        </div>
+        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      </div>
+      <div class="settings-item" onclick="supabaseSignOut()">
+        <div>
+          <div class="settings-label" style="color:var(--gray);">Sign Out</div>
+        </div>
+        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div style="padding:4px 16px 14px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);line-height:1.5;margin-bottom:12px;">Sign in to connect with friends and back up your data.</div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="supabaseSignInGoogle()" style="flex:1;background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:12px 8px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SIGN IN WITH GOOGLE</button>
+          <button onclick="supabaseShowEmailForm('settings')" style="flex:1;background:transparent;border:1.5px solid #C0392B;color:#C0392B;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:12px 8px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">USE EMAIL</button>
+        </div>
+        <div id="settings-email-form" style="display:none;margin-top:10px;">
+          <input id="settings-email-input" type="email" placeholder="Email" autocomplete="email" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:14px;padding:11px 12px;border-radius:8px;margin-bottom:8px;outline:none;">
+          <input id="settings-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:14px;padding:11px 12px;border-radius:8px;margin-bottom:8px;outline:none;">
+          <button onclick="supabaseSignInEmailFromSettings()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SIGN IN / CREATE ACCOUNT</button>
+        </div>
+      </div>`;
+  }
 }
 
-async function _loadSupabaseConfig() {
-  // Dynamically re-fetch supabase-config.js if env vars didn't load
-  // (can happen when SW update interrupts the initial script load)
-  if (window.SUPABASE_URL) return;
-  try {
-    const res = await fetch('/supabase-config.js?t=' + Date.now(), { cache: 'no-store' });
-    const js  = await res.text();
-    // Parse values directly — avoids any eval/new Function/CSP issues
-    const urlMatch = js.match(/window\.SUPABASE_URL\s*=\s*'([^']*)'/);
-    const keyMatch = js.match(/window\.SUPABASE_PUBLISHABLE_KEY\s*=\s*'([^']*)'/);
-    if (urlMatch?.[1]) window.SUPABASE_URL = urlMatch[1];
-    if (keyMatch?.[1]) window.SUPABASE_PUBLISHABLE_KEY = keyMatch[1];
-  } catch(e) {}
+async function supabaseSignOut() {
+  const sb = _getSupabaseClient();
+  if (sb) { try { await sb.auth.signOut(); } catch(e) {} }
+  state.supabaseUserId = null;
+  state.supabaseDisplayName = null;
+  _supabaseClient = null;
+  _updateSupabaseAuthCard();
+  _updateSettingsAccountSection();
+  showToast('Signed out.');
 }
+
+function supabaseShowEmailForm(source) {
+  if (source === 'settings') {
+    const form = document.getElementById('settings-email-form');
+    if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  } else {
+    const form = document.getElementById('supabase-email-form');
+    if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+async function supabaseSignInEmailFromSettings() {
+  const email = (document.getElementById('settings-email-input')?.value || '').trim();
+  const password = (document.getElementById('settings-password-input')?.value || '');
+  const sb = _getSupabaseClient();
+  if (!sb) { showToast('Social features unavailable. Please try again.'); return; }
+  if (!email || !password) { showToast('Enter email and password.'); return; }
+  try {
+    let { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error?.message?.includes('Invalid login')) {
+      ({ data, error } = await sb.auth.signUp({ email, password }));
+    }
+    if (error) { showToast(error.message || 'Sign in failed.'); return; }
+    if (data?.user) await _onSupabaseSignIn(data.user);
+  } catch(e) { showToast(e.message || 'Sign in failed.'); }
+}
+
+
 
 async function supabaseSignInGoogle() {
-  // Re-fetch config if it didn't load during page init
-  await _loadSupabaseConfig();
   const sb = _getSupabaseClient();
-  if (!sb) {
-    const noUrl = !window.SUPABASE_URL;
-    const noSdk = typeof window.supabase === 'undefined';
-    showToast(noUrl ? 'Config missing: SUPABASE_URL not loaded' : noSdk ? 'Supabase SDK not loaded' : 'Social features unavailable');
-    return;
-  }
+  if (!sb) { showToast('Social features unavailable. Please try again.'); return; }
   try {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
