@@ -4234,11 +4234,14 @@
 
     <!-- PRESET DROPDOWN -->
     <div style="margin-bottom:16px;">
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">CHOOSE AN ALTERNATIVE</div>
+      <div onclick="_toggleAltList()" style="display:flex; align-items:center; justify-content:space-between; background:var(--dark3); border:1px solid var(--dark4); border-radius:10px; padding:12px 14px; cursor:pointer; user-select:none;">
+        <span id="alt-list-label" style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--gray);">Select an exercise</span>
+        <svg id="alt-list-chevron" viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s; flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
       <select id="alt-dropdown" style="display:none;">
         <option value="">Select an exercise</option>
       </select>
-      <div id="alt-custom-list"></div>
+      <div id="alt-custom-list" style="display:none;"></div>
     </div>
 
     <!-- SELECTED ALT DETAILS -->
@@ -9063,7 +9066,7 @@ function renderSession() {
         </div>
         <div style="display:flex; align-items:flex-start; gap:6px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end;">
           <button class="swap-btn" onclick="openExInfo('${ex.id}')" title="How to do this exercise" style="padding:6px 10px; font-size:14px;">?</button>
-          ${ex.alts && ex.alts.length ? `<button class="swap-btn" onclick="openSessionSwap('${ex.id}')">SWAP ⇔</button>` : ''}
+          <button class="swap-btn" onclick="openSessionSwap('${ex.id}')">SWAP ⇔</button>
           <button class="swap-btn" id="pair-btn-${ex.id}"
             onclick="${isSource ? 'pairingSourceId=null;renderSession();' : `startPairSelection('${ex.id}')`}"
             style="${isPaired ? 'border-color:var(--red-text);color:var(--red-text);' : isSource ? 'border-color:#f59e0b;color:#f59e0b;' : ''}">
@@ -11439,6 +11442,8 @@ function openAltModal(ex) {
     dropdown.appendChild(progGrp);
   }
   dropdown.value = '';
+  const _altLabel = document.getElementById('alt-list-label');
+  if (_altLabel) { _altLabel.textContent = 'Select an exercise'; _altLabel.style.color = 'var(--gray)'; }
   _renderAltList();
 
   // Show right swap buttons
@@ -11534,9 +11539,12 @@ function _renderAltList() {
   const container = document.getElementById('alt-custom-list');
   if (!container) return;
   container.innerHTML = '';
+  container.style.display = 'none';
+  const chevron = document.getElementById('alt-list-chevron');
+  if (chevron) chevron.style.transform = '';
   const groups = Array.from(dropdown.children).filter(c => c.tagName === 'OPTGROUP');
-  if (!groups.length) { container.style.cssText = ''; return; }
-  container.style.cssText = 'border:1px solid var(--dark4); border-radius:10px; overflow:hidden; max-height:260px; overflow-y:auto; -webkit-overflow-scrolling:touch;';
+  if (!groups.length) return;
+  container.style.cssText = 'display:none; border:1px solid var(--dark4); border-top:none; border-radius:0 0 10px 10px; overflow:hidden; max-height:260px; overflow-y:auto; -webkit-overflow-scrolling:touch;';
   groups.forEach((grp, gi) => {
     const hdr = document.createElement('div');
     hdr.style.cssText = 'padding:10px 14px 8px; border-left:3px solid var(--red); font-family:\'Barlow Condensed\',sans-serif; font-size:13px; font-weight:700; color:var(--gray-light); letter-spacing:2px; background:var(--dark2);' + (gi > 0 ? 'border-top:1px solid var(--dark4);' : '');
@@ -11556,11 +11564,27 @@ function _renderAltList() {
   });
 }
 
+function _toggleAltList() {
+  const container = document.getElementById('alt-custom-list');
+  const chevron = document.getElementById('alt-list-chevron');
+  const toggle = container.querySelector('[data-value]') !== null || container.children.length > 0;
+  if (!toggle) return;
+  const isOpen = container.style.display !== 'none';
+  container.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
 function _selectAltItem(val, el) {
   const dropdown = document.getElementById('alt-dropdown');
+  const label = document.getElementById('alt-list-label');
+  const container = document.getElementById('alt-custom-list');
+  const chevron = document.getElementById('alt-list-chevron');
   document.querySelectorAll('#alt-custom-list [data-value]').forEach(r => { r.style.background = 'var(--dark3)'; });
   el.style.background = 'rgba(204,32,39,0.12)';
   dropdown.value = val;
+  if (label) { label.textContent = el.textContent; label.style.color = 'var(--cream)'; }
+  container.style.display = 'none';
+  if (chevron) chevron.style.transform = '';
   onAltDropdownChange();
 }
 
@@ -17429,7 +17453,7 @@ function isWorkoutActive() {
 
 function showSWUpdateBanner() {
   if (document.getElementById('sw-update-banner')) return;
-  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v43')) return;
+  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v44')) return;
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
   const banner = document.createElement('div');
@@ -17457,7 +17481,7 @@ function applySWUpdate() {
 
 function dismissSWBanner(e) {
   e.stopPropagation();
-  sessionStorage.setItem('ts_muscle_sw_dismissed_v43', '1');
+  sessionStorage.setItem('ts_muscle_sw_dismissed_v44', '1');
   const b = document.getElementById('sw-update-banner');
   if (b) b.remove();
 }
@@ -17572,11 +17596,11 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.6.5';
+const APP_VERSION = '1.6.6';
 
 const APP_CHANGELOG = {
-  '1.6.5': [
-    'Improved: Swap exercise modal now shows a scrollable in-app list instead of the OS picker. "SUGGESTED" and "FROM YOUR PROGRAM" display as proper section headers.',
+  '1.6.6': [
+    'Improved: Swap exercise list is now collapsible — tap to open, tap your pick and it closes. SWAP button now shows on every exercise. "SUGGESTED" and "FROM YOUR PROGRAM" display as proper section headers.',
   ],
   '1.6.1': [
     'Fix: Search icon on the home screen now shows in brand red.',
