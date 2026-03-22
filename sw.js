@@ -2,14 +2,17 @@
 // can manage its own push subscription lifecycle.
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'ts-muscle-v47';
+const CACHE_NAME = 'ts-muscle-v48';
 const ASSETS = ['./index.html', './exercise-library.js', './icon.png', './icon-192.png', './manifest.json'];
 
-// On install: precache all app assets so the app works fully offline
+// On install: precache all app assets so the app works fully offline.
+// skipWaiting() makes the new SW take over immediately rather than waiting
+// for all tabs to close — this unblocks users stuck on a broken cached page.
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).catch(() => {})
   );
+  self.skipWaiting();
 });
 
 // Allow the page to trigger skipWaiting when the user taps the update banner
@@ -17,14 +20,25 @@ self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// On activate: delete old caches from previous versions
+// On activate: delete old caches, claim all clients, then force-reload any
+// open pages so they immediately pick up the new index.html.
+// Only reloads on updates (old caches existed), not on first install.
 self.addEventListener('activate', e => {
-  e.waitUntil(Promise.all([
-    self.clients.claim(),
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
-  ]));
+  e.waitUntil(
+    caches.keys().then(keys => {
+      const oldCaches = keys.filter(k => k !== CACHE_NAME);
+      const isUpdate  = oldCaches.length > 0;
+      return Promise.all([
+        self.clients.claim(),
+        Promise.all(oldCaches.map(k => caches.delete(k)))
+      ]).then(() => {
+        if (!isUpdate) return;
+        return self.clients.matchAll({ type: 'window' }).then(cs =>
+          Promise.all(cs.map(c => { try { return c.navigate(c.url); } catch(e) {} }))
+        );
+      });
+    })
+  );
 });
 
 // Handle notification action button taps.
