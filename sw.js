@@ -2,7 +2,7 @@
 // can manage its own push subscription lifecycle.
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'ts-muscle-v46';
+const CACHE_NAME = 'ts-muscle-v47';
 const ASSETS = ['./index.html', './exercise-library.js', './icon.png', './icon-192.png', './manifest.json'];
 
 // On install: precache all app assets so the app works fully offline

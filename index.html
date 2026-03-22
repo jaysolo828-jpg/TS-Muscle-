@@ -2459,7 +2459,7 @@
 <script src="config.js?v=20260318"></script>
 <script src="supabase-config.js?v=20260322"></script>
 <script src="onesignal-config.js?v=20260322"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 <body>
@@ -18389,9 +18389,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.6.6';
+const APP_VERSION = '1.6.7';
 
 const APP_CHANGELOG = {
+  '1.6.7': [
+    'Fix: App now loads correctly on all connections. A background script was blocking the home screen from rendering — this is resolved.',
+  ],
   '1.6.6': [
     'Improved: Swap exercise list is now collapsible — tap to open, tap your pick and it closes. SWAP button now shows on every exercise. "SUGGESTED" and "FROM YOUR PROGRAM" display as proper section headers.',
   ],
