@@ -18389,9 +18389,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.6.7';
+const APP_VERSION = '1.6.8';
 
 const APP_CHANGELOG = {
+  '1.6.8': [
+    'Fix: App now updates automatically in the background. Previously a stuck update could leave the home screen blank — this is resolved.',
+  ],
   '1.6.7': [
     'Fix: App now loads correctly on all connections. A background script was blocking the home screen from rendering — this is resolved.',
   ],
