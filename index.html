@@ -2042,6 +2042,416 @@
     color: var(--cream);
   }
 
+/* ── EXERCISE LIBRARY ───────────────────────────────────────────────────── */
+.lib-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 900;
+  align-items: flex-end;
+  justify-content: center;
+}
+.lib-overlay.lib-open .lib-modal {
+  transform: translateY(0);
+}
+.lib-modal {
+  width: 100%;
+  height: 95vh;
+  background: var(--dark2);
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+}
+.lib-header {
+  padding: 16px 16px 0;
+  flex-shrink: 0;
+}
+.lib-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.lib-title {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 26px;
+  letter-spacing: 2px;
+  color: var(--cream);
+}
+.lib-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--dark3);
+  border: 1px solid var(--dark4);
+  color: var(--gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.lib-search-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+.lib-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray);
+  pointer-events: none;
+  display: flex;
+}
+.lib-search-bar {
+  width: 100%;
+  background: var(--dark3);
+  border: 1px solid var(--dark4);
+  border-radius: 10px;
+  padding: 10px 12px 10px 38px;
+  color: var(--cream);
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  box-sizing: border-box;
+  outline: none;
+  -webkit-appearance: none;
+}
+.lib-search-bar::placeholder { color: var(--gray); }
+.lib-search-bar:focus { border-color: var(--red); }
+.lib-filter-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scrollbar-width: none;
+}
+.lib-filter-chips::-webkit-scrollbar { display: none; }
+.lib-chip {
+  flex-shrink: 0;
+  padding: 5px 13px;
+  border-radius: 20px;
+  border: 1px solid var(--dark4);
+  background: var(--dark3);
+  color: var(--gray-light);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.lib-chip.active {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+.lib-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px calc(env(safe-area-inset-bottom) + 24px);
+}
+.lib-section-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gray);
+  text-transform: uppercase;
+  margin: 16px 0 8px;
+}
+.lib-guidance {
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  color: var(--gray);
+  text-align: center;
+  padding: 48px 24px;
+  line-height: 1.6;
+}
+.lib-card {
+  background: var(--dark3);
+  border: 1px solid var(--dark4);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.lib-card.expanded { border-color: var(--red); }
+.lib-card-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.lib-card-info { flex: 1; min-width: 0; }
+.lib-card-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--cream);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lib-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.lib-card-snapshot {
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lib-muscle-pill {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+.lib-equip-pill {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--gray);
+  border: 1px solid var(--dark4);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+.lib-star-badge { font-size: 12px; }
+.lib-card-chevron {
+  color: var(--gray);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.lib-card.expanded .lib-card-chevron { transform: rotate(180deg); }
+.lib-card-body {
+  display: none;
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--dark4);
+}
+.lib-card.expanded .lib-card-body { display: block; }
+.lib-cues-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--gray);
+  text-transform: uppercase;
+  margin: 12px 0 8px;
+}
+.lib-cue {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 9px;
+  align-items: flex-start;
+}
+.lib-cue-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red-text);
+  flex-shrink: 0;
+  width: 16px;
+  padding-top: 1px;
+}
+.lib-cue-text {
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  color: var(--gray-light);
+  line-height: 1.5;
+}
+.lib-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.lib-heart-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--dark4);
+  border: 1px solid var(--dark4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.lib-heart-btn.faved {
+  background: rgba(204,32,39,0.15);
+  border-color: rgba(204,32,39,0.45);
+}
+.lib-yt-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: rgba(255,0,0,0.08);
+  border: 1px solid rgba(255,0,0,0.25);
+  color: #ff4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.lib-action-btn {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  min-width: 90px;
+  text-align: center;
+}
+.lib-action-btn.swap-active {
+  background: var(--red);
+  color: #fff;
+}
+.lib-action-btn.swap-program {
+  background: var(--dark4);
+  border: 1px solid var(--dark4);
+  color: var(--cream);
+}
+/* ── SWAP IN PROGRAM SHEET ─────────────────────────────────────────────── */
+.lib-swap-sheet {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.78);
+  z-index: 950;
+  align-items: flex-end;
+  justify-content: center;
+}
+.lib-swap-sheet.open { display: flex; }
+.lib-swap-body {
+  width: 100%;
+  background: var(--dark2);
+  border-radius: 20px 20px 0 0;
+  border: 1px solid var(--dark3);
+  padding: 24px 20px calc(env(safe-area-inset-bottom) + 24px);
+  animation: slideUp 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.lib-swap-title {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--cream);
+  margin-bottom: 6px;
+}
+.lib-swap-sub {
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  color: var(--gray);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.lib-swap-preview {
+  background: rgba(204,32,39,0.08);
+  border: 1px solid rgba(204,32,39,0.25);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+}
+.lib-swap-preview-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--red-text);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.lib-swap-preview-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cream);
+}
+.lib-swap-option {
+  background: var(--dark3);
+  border: 1px solid var(--dark4);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.lib-swap-option:active { border-color: var(--red); background: rgba(204,32,39,0.08); }
+.lib-swap-option.selected { border-color: var(--red); background: rgba(204,32,39,0.08); }
+.lib-swap-option-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cream);
+}
+.lib-swap-option-day {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 3px;
+  letter-spacing: 0.3px;
+}
+.lib-swap-confirm-btn {
+  width: 100%;
+  margin-top: 16px;
+  background: var(--red);
+  border: none;
+  color: #fff;
+  padding: 15px;
+  border-radius: 12px;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 18px;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+.lib-swap-cancel-btn {
+  width: 100%;
+  margin-top: 8px;
+  background: transparent;
+  border: none;
+  color: var(--gray);
+  padding: 12px;
+  border-radius: 8px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
 </style>
 <script src="config.js?v=20260318"></script>
 </head>
@@ -2075,6 +2485,9 @@
     </div>
   </div>
   <div class="header-right">
+    <button class="icon-btn" id="lib-open-btn" onclick="openExerciseLibrary(null)" aria-label="Exercise Library" title="Exercise Library">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
     <button class="icon-btn" onclick="exportData()" aria-label="Export Data" title="Export Data">
   <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
 </button>
@@ -4068,6 +4481,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="exercise-library.js"></script>
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ============================================================
 // SCROLL INDICATOR — brand-red thumb, flush right, proportional
@@ -6673,7 +7087,7 @@ function renderHome() {
         ${day.exercises.map(ex => `
           <div class="exercise-item">
             <div>
-              <div class="exercise-name">${ex.name}</div>
+              <div class="exercise-name" onclick="openExerciseLibraryByName('${ex.name}')" style="cursor:pointer;">${ex.name}</div>
               <div class="exercise-meta">${getGoalSets(ex.id, ex.sets)} sets × ${getGoalReps(ex.id, ex.reps)}${ex.rest ? ' · ⏱ rest' : ''}${ex.note ? ' · <span style="color:var(--gray-light);">' + ex.note + '</span>' : ''}</div>
             </div>
             ${ex.alts && ex.alts.length ? `<button class="alt-btn" onclick="showAltsPreview('${day.id}','${ex.id}')">ALT</button>` : ''}
@@ -8626,7 +9040,7 @@ function renderSession() {
         </div>
         <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; margin:0 10px;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <div class="session-ex-name">${displayName}</div>
+            <div class="session-ex-name" onclick="openExerciseLibrary('${ex.id}')" style="cursor:pointer;">${displayName}</div>
             ${state.prs?.[ex.id] && !state.prs[ex.id].isBaseline ? `<span id="pr-badge-${ex.id}" style="font-size:12px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:3px 8px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
           </div>
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
@@ -21497,6 +21911,491 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: true });
 })();
 
+// ============================================================
+// EXERCISE LIBRARY
+// ============================================================
+
+// ── Lookup maps (built once on load) ─────────────────────────────────────
+const _LIB_BY_ID = {};
+const _LIB_BY_NAME = {};
+(function _buildLibMaps() {
+  if (typeof EXERCISE_LIBRARY === 'undefined') return;
+  EXERCISE_LIBRARY.forEach(function(ex) {
+    _LIB_BY_ID[ex.id] = ex;
+    _LIB_BY_NAME[ex.name.toLowerCase()] = ex;
+  });
+})();
+
+// Maps program exercise ID → library exercise ID (built from alsoInProgram data)
+const PROGRAM_TO_LIB_ID = {
+  'bench':         'barbell-bench-press',
+  'incline':       'incline-db-press',
+  'flye':          'cable-flye-mid',
+  'db-row':        'single-arm-db-row',
+  'pulldown':      'lat-pulldown',
+  'pull-through':  'cable-pull-through',
+  'chest-row':     'chest-supported-row',
+  'ohp':           'barbell-ohp',
+  'lateral':       'cable-lateral-raise',
+  'rear-delt':     'pec-deck-rear-delt',
+  'ez-curl':       'ez-bar-curl',
+  'preacher':      'ez-bar-preacher-curl',
+  'pushdown':      'cable-pushdown',
+  'overhead-tri':  'single-arm-db-overhead-extension',
+  'legpress-a':    'leg-press-mid-foot',
+  'legpress-b':    'leg-press-high-foot',
+  'leg-ext-a':     'machine-leg-extension',
+  'leg-ext-b':     'machine-leg-extension',
+  'single-legpress': 'single-leg-press',
+  'bss':           'db-bulgarian-split-squat',
+  'rdl':           'barbell-rdl',
+  'ham-curl-a':    'machine-lying-curl',
+  'ham-curl-b':    'nordic-curl',
+  'hip-thrust-a':  'barbell-hip-thrust',
+  'hip-abduction': 'machine-hip-abduction',
+  'donkey-kick':   'cable-donkey-kick',
+  'glute-iso':     'glute-iso-machine',
+  'calf-a':        'machine-standing-calf-raise',
+  'calf-b':        'machine-seated-calf-raise',
+};
+
+// Muscle group display colors (lowercase keys to match library muscleGroup field)
+const LIB_MUSCLE_COLORS = {
+  chest:      '#5b9cf6',
+  back:       '#3bbfb8',
+  shoulders:  '#6ab8e0',
+  biceps:     '#6b9fd4',
+  triceps:    '#9d84d4',
+  quads:      '#e07b54',
+  hamstrings: '#e07070',
+  glutes:     '#c97dae',
+  calves:     '#78aa6a',
+  core:       '#a0a0a0',
+};
+
+const LIB_MUSCLE_ORDER = ['chest','back','shoulders','biceps','triceps','quads','hamstrings','glutes','calves','core'];
+
+// ── State ─────────────────────────────────────────────────────────────────
+let libOpen = false;
+let libSearchQuery = '';
+let libActiveFilter = null;    // muscle group string or null = all
+let libExpandedId = null;
+let libContextExId = null;     // program ex ID that opened the library (session swap context)
+let libSwapTarget = null;      // library exercise object queued for program swap
+let libSwapSelectedProgExId = null;  // chosen program exercise ID to replace
+
+// ── Open / Close ──────────────────────────────────────────────────────────
+function openExerciseLibrary(contextExId) {
+  if (typeof EXERCISE_LIBRARY === 'undefined') {
+    showToast('Exercise library not loaded', 'error');
+    return;
+  }
+  libContextExId = contextExId || null;
+  libOpen = true;
+  libExpandedId = null;
+  libSearchQuery = '';
+  document.getElementById('lib-search').value = '';
+
+  if (contextExId && MUSCLE_MAP[contextExId]) {
+    libActiveFilter = MUSCLE_MAP[contextExId].toLowerCase();
+  } else {
+    libActiveFilter = null;
+  }
+
+  state.libFavorites = state.libFavorites || {};
+
+  const overlay = document.getElementById('lib-overlay');
+  overlay.style.display = 'flex';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      overlay.classList.add('lib-open');
+    });
+  });
+  renderLibrary();
+}
+
+function openExerciseLibraryByName(name) {
+  if (typeof EXERCISE_LIBRARY === 'undefined') {
+    showToast('Exercise library not loaded', 'error');
+    return;
+  }
+  const ex = _LIB_BY_NAME[name.toLowerCase()];
+  libContextExId = null;
+  libOpen = true;
+  libExpandedId = ex ? ex.id : null;
+  libSearchQuery = '';
+  document.getElementById('lib-search').value = '';
+  libActiveFilter = ex ? ex.muscleGroup : null;
+  state.libFavorites = state.libFavorites || {};
+
+  const overlay = document.getElementById('lib-overlay');
+  overlay.style.display = 'flex';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      overlay.classList.add('lib-open');
+    });
+  });
+  renderLibrary();
+
+  if (ex) {
+    setTimeout(function() {
+      const el = document.getElementById('lib-card-' + ex.id);
+      if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }, 380);
+  }
+}
+
+function closeExerciseLibrary() {
+  const overlay = document.getElementById('lib-overlay');
+  overlay.classList.remove('lib-open');
+  setTimeout(function() {
+    overlay.style.display = 'none';
+    libOpen = false;
+  }, 320);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function renderLibrary() {
+  if (typeof EXERCISE_LIBRARY === 'undefined') return;
+
+  // Render filter chips
+  const chipsEl = document.getElementById('lib-chips');
+  const chips = ['all'].concat(LIB_MUSCLE_ORDER);
+  chipsEl.innerHTML = chips.map(function(g) {
+    const isAll = g === 'all';
+    const active = isAll ? libActiveFilter === null : libActiveFilter === g;
+    const label = isAll ? 'ALL' : g.toUpperCase();
+    const color = !isAll && LIB_MUSCLE_COLORS[g];
+    const style = (active && !isAll && color)
+      ? 'style="background:' + color + '22;border-color:' + color + ';color:' + color + ';"'
+      : '';
+    return '<button class="lib-chip' + (active ? ' active' : '') + '" ' + style +
+      'onclick="libSetFilter(\'' + g + '\')">' + label + '</button>';
+  }).join('');
+
+  // Filter exercises
+  const query = libSearchQuery.trim().toLowerCase();
+  let exercises = EXERCISE_LIBRARY.filter(function(ex) {
+    if (libActiveFilter && ex.muscleGroup !== libActiveFilter) return false;
+    if (query) {
+      return ex.name.toLowerCase().includes(query) ||
+             ex.snapshot.toLowerCase().includes(query) ||
+             ex.equipment.toLowerCase().includes(query) ||
+             ex.muscleGroup.toLowerCase().includes(query);
+    }
+    return true;
+  });
+
+  const listEl = document.getElementById('lib-list');
+
+  if (exercises.length === 0) {
+    listEl.innerHTML = '<div class="lib-guidance">No exercises match your search.<br>Try a different filter or keyword.</div>';
+    return;
+  }
+
+  let html = '';
+
+  // "YOUR EXERCISES" section — context muscle group exercises, shown first if opened from a session exercise
+  if (libContextExId && MUSCLE_MAP[libContextExId] && !libActiveFilter && !query) {
+    const muscle = MUSCLE_MAP[libContextExId].toLowerCase();
+    const yours = exercises.filter(function(ex) { return ex.muscleGroup === muscle; });
+    const others = exercises.filter(function(ex) { return ex.muscleGroup !== muscle; });
+    if (yours.length) {
+      html += '<div class="lib-section-label">YOUR EXERCISES</div>';
+      html += yours.map(function(ex) { return renderLibCard(ex); }).join('');
+      if (others.length) {
+        html += '<div class="lib-section-label">ALL EXERCISES</div>';
+        html += others.map(function(ex) { return renderLibCard(ex); }).join('');
+      }
+    } else {
+      html += exercises.map(function(ex) { return renderLibCard(ex); }).join('');
+    }
+  } else {
+    html += exercises.map(function(ex) { return renderLibCard(ex); }).join('');
+  }
+
+  listEl.innerHTML = html;
+}
+
+function renderLibCard(ex) {
+  const isExpanded = libExpandedId === ex.id;
+  const isFaved = !!(state.libFavorites && state.libFavorites[ex.id]);
+  const color = LIB_MUSCLE_COLORS[ex.muscleGroup] || '#888';
+
+  // Determine action buttons
+  const showSwapActive = !!(activeSession && libContextExId);
+  // Find if this exercise's similarity group has a program counterpart
+  const hasProgramSlot = _libGetSwappableProgSlots(ex).length > 0;
+
+  const expandedClass = isExpanded ? ' expanded' : '';
+
+  let bodyHtml = '';
+  if (isExpanded) {
+    // Cues
+    const cuesHtml = ex.cues.map(function(cue, i) {
+      return '<div class="lib-cue"><span class="lib-cue-num">' + (i+1) + '</span><span class="lib-cue-text">' + _escHtml(cue) + '</span></div>';
+    }).join('');
+
+    // Action buttons
+    let actionsHtml = '';
+    actionsHtml += '<button class="lib-heart-btn' + (isFaved ? ' faved' : '') + '" onclick="toggleLibFavorite(event,\'' + ex.id + '\')" aria-label="Favorite">' +
+      (isFaved
+        ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="#CC2027" stroke="#CC2027" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+        : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--gray)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+      ) + '</button>';
+
+    if (ex.ytUrl) {
+      actionsHtml += '<a class="lib-yt-btn" href="' + ex.ytUrl + '" target="_blank" rel="noopener" aria-label="Watch on YouTube">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6a3 3 0 0 0-2.1 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>' +
+        '</a>';
+    }
+
+    if (showSwapActive) {
+      actionsHtml += '<button class="lib-action-btn swap-active" onclick="doLibSwapActive(\'' + ex.id + '\')">SWAP TO THIS</button>';
+    }
+    if (hasProgramSlot) {
+      actionsHtml += '<button class="lib-action-btn swap-program" onclick="openLibSwapProgram(\'' + ex.id + '\')">SWAP IN PROGRAM</button>';
+    }
+
+    bodyHtml = '<div class="lib-card-body">' +
+      '<div class="lib-cues-title">FORM CUES</div>' +
+      cuesHtml +
+      '<div class="lib-card-actions">' + actionsHtml + '</div>' +
+      '</div>';
+  }
+
+  return '<div class="lib-card' + expandedClass + '" id="lib-card-' + ex.id + '">' +
+    '<div class="lib-card-summary" onclick="toggleLibCard(\'' + ex.id + '\')">' +
+      '<div class="lib-card-info">' +
+        '<div class="lib-card-name">' + _escHtml(ex.name) + (ex.goldStar ? ' <span class="lib-star-badge" title="Top pick">⭐</span>' : '') + '</div>' +
+        '<div class="lib-card-meta">' +
+          '<span class="lib-muscle-pill" style="color:' + color + ';border-color:' + color + '44;background:' + color + '18;">' + ex.muscleGroup.toUpperCase() + '</span>' +
+          '<span class="lib-equip-pill">' + _escHtml(ex.equipment) + '</span>' +
+        '</div>' +
+        '<div class="lib-card-snapshot">' + _escHtml(ex.snapshot) + '</div>' +
+      '</div>' +
+      '<svg class="lib-card-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+    '</div>' +
+    bodyHtml +
+    '</div>';
+}
+
+function toggleLibCard(id) {
+  libExpandedId = libExpandedId === id ? null : id;
+  renderLibrary();
+  if (libExpandedId) {
+    setTimeout(function() {
+      const el = document.getElementById('lib-card-' + id);
+      if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }, 50);
+  }
+}
+
+function libSetFilter(g) {
+  libActiveFilter = (g === 'all') ? null : g;
+  libExpandedId = null;
+  renderLibrary();
+  document.getElementById('lib-list').scrollTop = 0;
+}
+
+// ── Favorites ─────────────────────────────────────────────────────────────
+function toggleLibFavorite(e, id) {
+  e.stopPropagation();
+  state.libFavorites = state.libFavorites || {};
+  if (state.libFavorites[id]) {
+    delete state.libFavorites[id];
+  } else {
+    state.libFavorites[id] = true;
+  }
+  saveState();
+  // Re-render just the card by updating the button
+  const btn = e.currentTarget;
+  const isFaved = !!state.libFavorites[id];
+  btn.className = 'lib-heart-btn' + (isFaved ? ' faved' : '');
+  btn.innerHTML = isFaved
+    ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="#CC2027" stroke="#CC2027" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--gray)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+}
+
+// ── Swap To This (active session) ─────────────────────────────────────────
+function doLibSwapActive(libExId) {
+  if (!activeSession || !libContextExId) return;
+  const libEx = _LIB_BY_ID[libExId];
+  if (!libEx) return;
+  activeSession.swaps = activeSession.swaps || {};
+  activeSession.swaps[libContextExId] = { name: libEx.name, isUnilateral: false };
+  saveState();
+  renderSession();
+  closeExerciseLibrary();
+  showToast(libEx.name + ' swapped in for this session', 'success');
+}
+
+// ── Swap In Program ───────────────────────────────────────────────────────
+function _libGetSwappableProgSlots(libEx) {
+  // Find all program exercise IDs that share the same similarityGroup as libEx
+  const results = [];
+  const seen = new Set();
+  Object.entries(PROGRAM_TO_LIB_ID).forEach(function(entry) {
+    const progId = entry[0];
+    const mappedLibId = entry[1];
+    const mappedLibEx = _LIB_BY_ID[mappedLibId];
+    if (!mappedLibEx) return;
+    if (mappedLibEx.muscleGroup !== libEx.muscleGroup) return;
+    if (mappedLibEx.similarityGroup !== libEx.similarityGroup) return;
+    if (seen.has(progId)) return;
+    seen.add(progId);
+    // Find this exercise in all program days
+    Object.values(SPLIT_PROGRAMS).forEach(function(prog) {
+      prog.forEach(function(day) {
+        day.exercises.forEach(function(ex) {
+          if (ex.id === progId) {
+            results.push({ progId: progId, ex: ex, day: day });
+          }
+        });
+      });
+    });
+  });
+  // Deduplicate by progId (since programs share exercise objects)
+  const unique = [];
+  const ids = new Set();
+  results.forEach(function(r) {
+    if (!ids.has(r.progId)) {
+      ids.add(r.progId);
+      unique.push(r);
+    }
+  });
+  return unique;
+}
+
+function openLibSwapProgram(libExId) {
+  const libEx = _LIB_BY_ID[libExId];
+  if (!libEx) return;
+  libSwapTarget = libEx;
+  libSwapSelectedProgExId = null;
+
+  const slots = _libGetSwappableProgSlots(libEx);
+  if (slots.length === 0) {
+    showToast('No matching program slot found', 'info');
+    return;
+  }
+
+  // If only one slot and it's the same exercise, still show confirmation
+  const sheet = document.getElementById('lib-swap-sheet');
+  const body = document.getElementById('lib-swap-body');
+
+  let optionsHtml = '';
+  slots.forEach(function(slot) {
+    optionsHtml += '<div class="lib-swap-option" id="swap-opt-' + slot.progId + '" onclick="libSelectSwapSlot(\'' + slot.progId + '\')">' +
+      '<div class="lib-swap-option-name">' + _escHtml(slot.ex.name) + '</div>' +
+      '<div class="lib-swap-option-day">' + _escHtml(slot.day.badge || slot.day.name) + ' · ' + _escHtml(slot.day.day || '') + '</div>' +
+      '</div>';
+  });
+
+  // Auto-select if only one slot
+  if (slots.length === 1) {
+    libSwapSelectedProgExId = slots[0].progId;
+  }
+
+  body.innerHTML =
+    '<div class="lib-swap-title">SWAP IN PROGRAM</div>' +
+    '<div class="lib-swap-sub">Replace an existing program exercise with <strong style="color:var(--cream);">' + _escHtml(libEx.name) + '</strong>.</div>' +
+    '<div class="lib-swap-preview">' +
+      '<div class="lib-swap-preview-label">ADDING</div>' +
+      '<div class="lib-swap-preview-name">' + _escHtml(libEx.name) + '</div>' +
+    '</div>' +
+    (slots.length > 1 ? '<div class="lib-section-label" style="margin-top:0;">REPLACE WHICH EXERCISE?</div>' : '') +
+    optionsHtml +
+    '<button class="lib-swap-confirm-btn" id="lib-swap-confirm" onclick="confirmLibSwapProgram()">CONFIRM SWAP</button>' +
+    '<button class="lib-swap-cancel-btn" onclick="closeLibSwapSheet()">CANCEL</button>';
+
+  sheet.classList.add('open');
+
+  // Auto-select if single slot
+  if (slots.length === 1) {
+    const opt = document.getElementById('swap-opt-' + slots[0].progId);
+    if (opt) opt.classList.add('selected');
+  }
+}
+
+function libSelectSwapSlot(progId) {
+  libSwapSelectedProgExId = progId;
+  document.querySelectorAll('.lib-swap-option').forEach(function(el) {
+    el.classList.remove('selected');
+  });
+  const el = document.getElementById('swap-opt-' + progId);
+  if (el) el.classList.add('selected');
+}
+
+function confirmLibSwapProgram() {
+  if (!libSwapTarget || !libSwapSelectedProgExId) {
+    showToast('Select an exercise to replace first', 'info');
+    return;
+  }
+  const libEx = libSwapTarget;
+  const progId = libSwapSelectedProgExId;
+
+  // Find and mutate the exercise object in all programs (shared by reference)
+  let swapped = false;
+  Object.values(SPLIT_PROGRAMS).forEach(function(prog) {
+    prog.forEach(function(day) {
+      day.exercises.forEach(function(ex) {
+        if (ex.id === progId) {
+          ex.name = libEx.name;
+          if (libEx.ytUrl) ex.ytLink = libEx.ytUrl;
+          swapped = true;
+        }
+      });
+    });
+  });
+
+  if (swapped) {
+    // Persist the swap so it survives a page reload via state
+    state.libProgramSwaps = state.libProgramSwaps || {};
+    state.libProgramSwaps[progId] = libEx.id;
+    saveState();
+    closeLibSwapSheet();
+    closeExerciseLibrary();
+    renderHome();
+    showToast(libEx.name + ' added to your program', 'success');
+  }
+}
+
+function closeLibSwapSheet() {
+  document.getElementById('lib-swap-sheet').classList.remove('open');
+  libSwapTarget = null;
+  libSwapSelectedProgExId = null;
+}
+
+// ── Utility ───────────────────────────────────────────────────────────────
+function _escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// Re-apply any saved program swaps on startup so names persist after reload
+(function _reapplyLibProgramSwaps() {
+  if (!state || !state.libProgramSwaps) return;
+  Object.entries(state.libProgramSwaps).forEach(function(entry) {
+    const progId = entry[0];
+    const libExId = entry[1];
+    const libEx = _LIB_BY_ID[libExId];
+    if (!libEx) return;
+    Object.values(SPLIT_PROGRAMS).forEach(function(prog) {
+      prog.forEach(function(day) {
+        day.exercises.forEach(function(ex) {
+          if (ex.id === progId) {
+            ex.name = libEx.name;
+            if (libEx.ytUrl) ex.ytLink = libEx.ytUrl;
+          }
+        });
+      });
+    });
+  });
+})();
+
 </script>
 
 <!-- EXIT SESSION MODAL -->
@@ -21629,6 +22528,31 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   </div>
   <button onclick="toggleRpeSheet()" style="width:100%; background:var(--dark3); border:none; border-radius:12px; padding:14px; color:var(--gray); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1px; cursor:pointer;">GOT IT</button>
+</div>
+
+<!-- ── EXERCISE LIBRARY OVERLAY ─────────────────────────────────────────── -->
+<div id="lib-overlay" class="lib-overlay" onclick="if(event.target===this)closeExerciseLibrary()">
+  <div class="lib-modal">
+    <div class="lib-header">
+      <div class="lib-header-top">
+        <div class="lib-title">EXERCISE LIBRARY</div>
+        <button class="lib-close-btn" onclick="closeExerciseLibrary()">✕</button>
+      </div>
+      <div class="lib-search-wrap">
+        <span class="lib-search-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input class="lib-search-bar" id="lib-search" type="search" placeholder="Search exercises…" oninput="libSearchQuery=this.value;renderLibrary()">
+      </div>
+      <div class="lib-filter-chips" id="lib-chips"></div>
+    </div>
+    <div class="lib-list" id="lib-list"></div>
+  </div>
+</div>
+
+<!-- ── SWAP IN PROGRAM SHEET ─────────────────────────────────────────────── -->
+<div id="lib-swap-sheet" class="lib-swap-sheet" onclick="if(event.target===this)closeLibSwapSheet()">
+  <div class="lib-swap-body" id="lib-swap-body"></div>
 </div>
 
 </body>
