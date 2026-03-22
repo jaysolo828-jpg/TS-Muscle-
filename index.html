@@ -6375,6 +6375,7 @@ async function _checkSupabaseSession() {
 const _friendCache = {};       // userId -> { display_name, username, last_active }
 let _friendSearchTimer = null; // debounce handle for username search
 let _currentSignalId   = null; // UUID of the active workout signal row in Supabase
+let _startNotifyTimer  = null; // handle for the 9-minute delayed start notification
 
 async function _renderFriendsSection() {
   const container = document.getElementById('social-modal-content');
@@ -6736,11 +6737,19 @@ async function _sendWorkoutSignal(dayName) {
     }).select('id').single();
     if (error || !data) return;
     _currentSignalId = data.id;
-    _notifyFriends(
-      displayName + ' is training',
-      'They just started a workout. Go show up.',
-      _currentSignalId
-    );
+    // Delay the "is training" notification by 9 minutes so quick sessions
+    // or false starts don't spam friends. Cancel if the session ends first.
+    const signalId = data.id;
+    _startNotifyTimer = setTimeout(function() {
+      _startNotifyTimer = null;
+      // Only send if the session is still active (not saved or discarded)
+      if (!activeSession) return;
+      _notifyFriends(
+        displayName + ' is training',
+        'They just started a workout. Go show up.',
+        signalId
+      );
+    }, 9 * 60 * 1000);
   } catch(e) {}
 }
 
@@ -13220,6 +13229,8 @@ function _upgradeBonus(bonusId, persistence) {
 function finalizeEndSession(save) {
   // Cancel any in-flight coaching cue API call
   _cancelCoachingCue();
+  // Cancel the delayed "is training" start notification — session is ending regardless
+  if (_startNotifyTimer) { clearTimeout(_startNotifyTimer); _startNotifyTimer = null; }
   // Always clear the crash-recovery snapshot — session is now fully completed or discarded
   _lsRemove('ts-muscle-paused');
   _idbSet('ts-muscle-paused', null);
