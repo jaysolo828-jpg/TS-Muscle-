@@ -11541,7 +11541,7 @@ function _renderAltList() {
 
   groups.forEach((grp, gi) => {
     const hdr = document.createElement('div');
-    hdr.style.cssText = 'padding:8px 14px 6px; font-family:\'Barlow Condensed\',sans-serif; font-size:11px; font-weight:700; color:var(--gray); letter-spacing:1.5px; background:var(--dark2);' + (gi > 0 ? 'border-top:1px solid var(--dark4);' : '');
+    hdr.style.cssText = 'padding:10px 14px 8px; font-family:\'Barlow Condensed\',sans-serif; font-size:13px; font-weight:700; color:var(--gray-light); letter-spacing:2px; background:var(--dark2); border-left:3px solid var(--red); padding-left:11px;' + (gi > 0 ? 'border-top:1px solid var(--dark4);' : '');
     hdr.textContent = grp.label;
     container.appendChild(hdr);
 
@@ -17432,7 +17432,7 @@ function isWorkoutActive() {
 
 function showSWUpdateBanner() {
   if (document.getElementById('sw-update-banner')) return;
-  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v40')) return;
+  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v41')) return;
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
   const banner = document.createElement('div');
@@ -17460,7 +17460,7 @@ function applySWUpdate() {
 
 function dismissSWBanner(e) {
   e.stopPropagation();
-  sessionStorage.setItem('ts_muscle_sw_dismissed_v40', '1');
+  sessionStorage.setItem('ts_muscle_sw_dismissed_v41', '1');
   const b = document.getElementById('sw-update-banner');
   if (b) b.remove();
 }
@@ -17575,11 +17575,11 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.6.2';
+const APP_VERSION = '1.6.3';
 
 const APP_CHANGELOG = {
-  '1.6.2': [
-    'Fix: Swap exercise modal now shows "SUGGESTED" and "FROM YOUR PROGRAM" as proper styled section headers instead of a native OS dropdown.',
+  '1.6.3': [
+    'Fix: "RECOMMENDED" and "FROM YOUR PROGRAM" headers in the swap modal now display as proper section headers with the app\'s red accent bar styling.',
   ],
   '1.6.1': [
     'Fix: Search icon on the home screen now shows in brand red.',
