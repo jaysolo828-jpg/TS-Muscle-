@@ -4048,7 +4048,7 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
   </div>
 
-  <div class="settings-item" onclick="checkForAppUpdate()">
+  <div class="settings-item" onclick="checkForSWUpdate()">
     <div>
       <div class="settings-label">Check for Updates</div>
       <div class="settings-sub" id="update-check-sub">Tap to refresh to the latest version</div>
@@ -18284,7 +18284,7 @@ function checkDeferredSWUpdate() {
   }
 }
 
-function checkForAppUpdate() {
+function checkForSWUpdate() {
   const sub = document.getElementById('update-check-sub');
   if (sub) sub.textContent = 'Checking\u2026';
 
