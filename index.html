@@ -17390,7 +17390,7 @@ function isWorkoutActive() {
 
 function showSWUpdateBanner() {
   if (document.getElementById('sw-update-banner')) return;
-  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v38')) return;
+  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v39')) return;
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
   const banner = document.createElement('div');
@@ -17418,7 +17418,7 @@ function applySWUpdate() {
 
 function dismissSWBanner(e) {
   e.stopPropagation();
-  sessionStorage.setItem('ts_muscle_sw_dismissed_v38', '1');
+  sessionStorage.setItem('ts_muscle_sw_dismissed_v39', '1');
   const b = document.getElementById('sw-update-banner');
   if (b) b.remove();
 }
@@ -17533,9 +17533,13 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 
 const APP_CHANGELOG = {
+  '1.6.1': [
+    'Fix: Search icon on the home screen now shows in brand red.',
+    'Fix: Exercise names on the active workout screen now wrap cleanly on all screen sizes.',
+  ],
   '1.6.0': [
     'New: Exercise Library. Tap the 🔍 icon in the header or tap any exercise name to browse 257 exercises across 10 muscle groups. Filter by muscle, search by name, expand cards for 4 evidence-based form cues, save favourites, watch YouTube demos, and swap exercises directly into your active session or program.',
   ],
