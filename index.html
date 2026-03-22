@@ -6248,7 +6248,9 @@ async function supabaseSignInGoogle() {
   await _loadSupabaseConfig();
   const sb = _getSupabaseClient();
   if (!sb) {
-    showToast('Social features unavailable — check your connection and try again.');
+    const noUrl = !window.SUPABASE_URL;
+    const noSdk = typeof window.supabase === 'undefined';
+    showToast(noUrl ? 'Config missing: SUPABASE_URL not loaded' : noSdk ? 'Supabase SDK not loaded' : 'Social features unavailable');
     return;
   }
   try {
