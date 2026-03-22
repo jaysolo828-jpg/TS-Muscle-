@@ -6686,12 +6686,12 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
       .single();
     if (sub?.onesignal_player_id) {
       const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+      const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
+      const _emoji = _rxnEmoji[reactionType] || reactionType;
       fetch('/send-notification', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
-      const _emoji = _rxnEmoji[reactionType] || reactionType;
-      body: JSON.stringify({
+        body: JSON.stringify({
           player_ids: [sub.onesignal_player_id],
           title: fromName + ' reacted to your workout',
           body:  'They gave you a ' + _emoji
@@ -18389,9 +18389,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.6.8';
+const APP_VERSION = '1.6.9';
 
 const APP_CHANGELOG = {
+  '1.6.9': [
+    'Fix: Critical bug where the app appeared broken after the social features update — buttons unresponsive and history missing. All data is intact and fully restored.',
+  ],
   '1.6.8': [
     'Fix: App now updates automatically in the background. Previously a stuck update could leave the home screen blank — this is resolved.',
   ],
