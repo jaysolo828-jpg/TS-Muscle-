@@ -4234,9 +4234,9 @@
 
     <!-- PRESET DROPDOWN -->
     <div style="margin-bottom:16px;">
-      <div onclick="_toggleAltList()" style="display:flex; align-items:center; justify-content:space-between; background:var(--dark3); border:1px solid var(--dark4); border-radius:10px; padding:12px 14px; cursor:pointer; user-select:none;">
-        <span id="alt-list-label" style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--gray);">Select an exercise</span>
-        <svg id="alt-list-chevron" viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s; flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+      <div onclick="_toggleAltList()" style="display:flex; align-items:center; justify-content:space-between; background:var(--red); border:none; border-radius:10px; padding:16px 18px; cursor:pointer; user-select:none;">
+        <span id="alt-list-label" style="font-family:'Bebas Neue',cursive; font-size:22px; color:#fff; letter-spacing:1.5px;">SELECT AN EXERCISE</span>
+        <svg id="alt-list-chevron" viewBox="0 0 24 24" width="22" height="22" stroke="#fff" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s; flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <select id="alt-dropdown" style="display:none;">
         <option value="">Select an exercise</option>
@@ -11443,7 +11443,7 @@ function openAltModal(ex) {
   }
   dropdown.value = '';
   const _altLabel = document.getElementById('alt-list-label');
-  if (_altLabel) { _altLabel.textContent = 'Select an exercise'; _altLabel.style.color = 'var(--gray)'; }
+  if (_altLabel) { _altLabel.textContent = 'SELECT AN EXERCISE'; _altLabel.style.color = '#fff'; }
   _renderAltList();
 
   // Show right swap buttons
@@ -11582,7 +11582,7 @@ function _selectAltItem(val, el) {
   document.querySelectorAll('#alt-custom-list [data-value]').forEach(r => { r.style.background = 'var(--dark3)'; });
   el.style.background = 'rgba(204,32,39,0.12)';
   dropdown.value = val;
-  if (label) { label.textContent = el.textContent; label.style.color = 'var(--cream)'; }
+  if (label) { label.textContent = el.textContent.toUpperCase(); label.style.color = '#fff'; }
   container.style.display = 'none';
   if (chevron) chevron.style.transform = '';
   onAltDropdownChange();
