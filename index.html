@@ -2457,6 +2457,10 @@
 
 </style>
 <script src="config.js?v=20260318"></script>
+<script src="supabase-config.js?v=20260322"></script>
+<script src="onesignal-config.js?v=20260322"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 <body>
 <!-- SPLASH SCREEN -->
@@ -2490,6 +2494,10 @@
   <div class="header-right">
     <button class="icon-btn" id="lib-open-btn" onclick="openExerciseLibrary(null)" aria-label="Exercise Library" title="Exercise Library">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--red)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.24" y2="14.24"/></svg>
+    </button>
+    <button class="icon-btn" id="social-open-btn" onclick="openSocialModal()" aria-label="Friends" title="Friends" style="position:relative;">
+      <span id="social-notify-dot" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--black);pointer-events:none;z-index:1;" aria-hidden="true"></span>
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     </button>
     <button class="icon-btn" onclick="exportData()" aria-label="Export Data" title="Export Data">
   <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
@@ -2559,6 +2567,24 @@
   <div class="week-tracker">
     <div class="week-label" id="week-tracker-label">Program Weeks</div>
     <div class="week-dots" id="week-dots"></div>
+  </div>
+
+  <!-- SUPABASE SOCIAL SIGN-IN PROMPT (hidden by default, shown via JS) -->
+  <div id="supabase-auth-card" style="display:none; margin-bottom:16px; border-radius:14px; background:#161414; border-left:3px solid #C0392B; padding:16px 16px 12px;">
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; color:var(--cream); letter-spacing:0.3px; line-height:1.5; margin-bottom:14px;">Connect with friends and never lose your data. Takes 30 seconds.</div>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+      <button onclick="supabaseSignInGoogle()" style="flex:1; background:#C0392B; border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px 8px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">SIGN IN WITH GOOGLE</button>
+      <button onclick="supabaseShowEmailForm()" style="flex:1; background:transparent; border:1.5px solid #C0392B; color:#C0392B; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px 8px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">USE EMAIL</button>
+    </div>
+    <!-- Inline email form (hidden until USE EMAIL is tapped) -->
+    <div id="supabase-email-form" style="display:none; margin-bottom:10px;">
+      <input id="supabase-email-input" type="email" placeholder="Email" autocomplete="email" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
+      <input id="supabase-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
+      <button onclick="supabaseSignInEmail()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">SIGN IN / CREATE ACCOUNT</button>
+    </div>
+    <div style="text-align:center;">
+      <button onclick="supabaseDismiss()" style="background:none; border:none; color:#666; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1px; cursor:pointer; padding:4px 8px; -webkit-tap-highlight-color:transparent;">SKIP FOR NOW</button>
+    </div>
   </div>
 
   <div class="section-title">YOUR <span>PROGRAM</span><span id="home-split-badge" style="margin-left:auto; font-size:11px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); color:var(--red-text); padding:4px 10px; border-radius:20px; letter-spacing:1.5px; font-weight:700; font-family:'Barlow Condensed',sans-serif;"></span></div>
@@ -5955,6 +5981,7 @@ let state = {
 };
 
 let activeSession = null;
+let _supabaseClient = null;         // Supabase JS client (initialized after config loads)
 let _lastRenderedDate = null;       // tracks the date string when renderHome() last ran
 let _midnightCheckInterval = null;  // 60-second interval to detect midnight rollover
 let pendingSwap = null;
@@ -6162,6 +6189,750 @@ function saveState() {
     } catch(e2) {
       showToast('Storage full. Oldest history trimmed to save space.', 'error');
     }
+  }
+}
+
+// ============================================================
+// SUPABASE — Social Layer (auth + social features only)
+// Training data stays in localStorage — Supabase only handles
+// user accounts, friends, notifications, reactions, challenges.
+// ============================================================
+
+function _getSupabaseClient() {
+  if (_supabaseClient) return _supabaseClient;
+  const url = window.SUPABASE_URL || '';
+  const key = window.SUPABASE_PUBLISHABLE_KEY || '';
+  if (!url || !key || typeof window.supabase === 'undefined') return null;
+  _supabaseClient = window.supabase.createClient(url, key);
+  return _supabaseClient;
+}
+
+// Show/hide the auth card on the home screen
+function _updateSupabaseAuthCard() {
+  const card = document.getElementById('supabase-auth-card');
+  if (!card) return;
+  // Never show during an active workout session
+  if (activeSession) { card.style.display = 'none'; return; }
+  // Hide if already signed in
+  if (state.supabaseUserId) { card.style.display = 'none'; return; }
+  // Hide if dismissed this session
+  if (state.supabaseDismissed) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+}
+
+function supabaseDismiss() {
+  state.supabaseDismissed = true;
+  // Not saved to localStorage — only lasts this session
+  _updateSupabaseAuthCard();
+}
+
+function supabaseShowEmailForm() {
+  const form = document.getElementById('supabase-email-form');
+  if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function supabaseSignInGoogle() {
+  const sb = _getSupabaseClient();
+  if (!sb) { showToast('Social features unavailable. Try again later.'); return; }
+  try {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+    if (error) showToast('Sign in failed. Please try again.');
+  } catch(e) {
+    showToast('Sign in failed. Please try again.');
+  }
+}
+
+async function supabaseSignInEmail() {
+  const sb = _getSupabaseClient();
+  if (!sb) { showToast('Social features unavailable. Try again later.'); return; }
+  const email = (document.getElementById('supabase-email-input')?.value || '').trim();
+  const password = (document.getElementById('supabase-password-input')?.value || '');
+  if (!email || !password) { showToast('Enter your email and password.'); return; }
+  try {
+    // Try sign-in first, then sign-up if user doesn't exist
+    let result = await sb.auth.signInWithPassword({ email, password });
+    if (result.error && result.error.message && result.error.message.toLowerCase().includes('invalid')) {
+      result = await sb.auth.signUp({ email, password });
+    }
+    if (result.error) { showToast(result.error.message || 'Sign in failed.'); return; }
+    if (result.data?.user) {
+      await _onSupabaseSignIn(result.data.user);
+    } else {
+      showToast('Check your email to confirm your account.');
+    }
+  } catch(e) {
+    showToast('Sign in failed. Please try again.');
+  }
+}
+
+async function _onSupabaseSignIn(user) {
+  const sb = _getSupabaseClient();
+  if (!sb || !user) return;
+
+  // Persist user ID and display name
+  state.supabaseUserId = user.id;
+  const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || '';
+  state.supabaseDisplayName = rawName;
+  state.supabaseDismissed = false;
+  saveState();
+
+  // Check if user already has a row in public.users
+  const { data: existingUser } = await sb.from('users').select('id, username').eq('id', user.id).single();
+
+  if (!existingUser) {
+    // New user — upsert their profile (username will be set in the bottom sheet)
+    const tempUsername = 'user_' + user.id.replace(/-/g, '').slice(0, 12);
+    await sb.from('users').upsert({
+      id: user.id,
+      display_name: rawName || tempUsername,
+      username: tempUsername,
+      avatar_color: '#C0392B'
+    });
+    // Show username setup bottom sheet
+    _showUsernameSheet(user.id, rawName);
+  } else if (!existingUser.username || existingUser.username.startsWith('user_')) {
+    _showUsernameSheet(user.id, rawName);
+  } else {
+    _updateSupabaseAuthCard();
+    _updateSocialNotifyDot();
+    _swStoreUserId(user.id);
+    _requestNotificationPermission();
+    showToast("You're connected. Find friends in Settings.");
+  }
+}
+
+function _showUsernameSheet(userId, displayName) {
+  // Remove any existing sheet
+  const existing = document.getElementById('username-setup-sheet');
+  if (existing) existing.remove();
+
+  const sheet = document.createElement('div');
+  sheet.id = 'username-setup-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #C0392B;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">CHOOSE YOUR USERNAME</div>
+      <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);margin-bottom:18px;line-height:1.5;">Lowercase, no spaces, max 20 characters.</div>
+      <input id="username-sheet-input" type="text" placeholder="yourusername" maxlength="20"
+        style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:16px;padding:13px 14px;border-radius:10px;margin-bottom:16px;outline:none;"
+        oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+      <button onclick="_saveUsername('${userId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LOOKS GOOD</button>
+    </div>`;
+  document.body.appendChild(sheet);
+  setTimeout(() => { document.getElementById('username-sheet-input')?.focus(); }, 100);
+}
+
+async function _saveUsername(userId) {
+  const input = document.getElementById('username-sheet-input');
+  const username = (input?.value || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (!username || username.length < 2) { showToast('Pick a username (at least 2 characters).'); return; }
+
+  const sb = _getSupabaseClient();
+  if (!sb) { showToast('Could not save username. Try again.'); return; }
+
+  const { error } = await sb.from('users').update({ username }).eq('id', userId);
+  if (error) {
+    if (error.code === '23505') { showToast('That username is taken. Try another.'); return; }
+    showToast('Could not save username. Try again.');
+    return;
+  }
+
+  const sheet = document.getElementById('username-setup-sheet');
+  if (sheet) sheet.remove();
+  _updateSupabaseAuthCard();
+  _updateSocialNotifyDot();
+  _swStoreUserId(state.supabaseUserId);
+  _requestNotificationPermission();
+  showToast("You're connected. Find friends in Settings.");
+}
+
+// Handle OAuth redirect on page load (Google OAuth returns here)
+async function _checkSupabaseSession() {
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user && !state.supabaseUserId) {
+      await _onSupabaseSignIn(session.user);
+    } else if (session?.user) {
+      // Already have user ID, just update auth card visibility
+      state.supabaseUserId = session.user.id;
+      _updateSupabaseAuthCard();
+      // Ensure SW has the userId for notification action handling
+      _swStoreUserId(session.user.id);
+    }
+    _updateSocialNotifyDot();
+  } catch(e) {}
+}
+
+// ============================================================
+// FRIENDS — social friend system
+// ============================================================
+
+const _friendCache = {};       // userId -> { display_name, username, last_active }
+let _friendSearchTimer = null; // debounce handle for username search
+let _currentSignalId   = null; // UUID of the active workout signal row in Supabase
+let _startNotifyTimer  = null; // handle for the 9-minute delayed start notification
+
+async function _renderFriendsSection() {
+  const container = document.getElementById('social-modal-content');
+  if (!container) return;
+
+  if (!state.supabaseUserId) {
+    container.innerHTML = '<div style="padding:10px 0 4px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);letter-spacing:0.3px;">Sign in to connect with friends.</div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <input type="text" id="friend-search-input" placeholder="Search by username"
+      style="width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:14px;outline:none;-webkit-appearance:none;margin-bottom:4px;"
+      oninput="_friendsSearch(this.value)">
+    <div id="friend-search-results" style="margin-bottom:12px;"></div>
+
+    <div id="friends-pending-section" style="display:none;margin-bottom:14px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">PENDING REQUESTS</div>
+      <div id="friends-pending-list"></div>
+    </div>
+
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">MY FRIENDS</div>
+    <div id="friends-list"></div>
+
+    <button onclick="inviteFriend()" style="width:100%;margin-top:14px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:13px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">INVITE A FRIEND</button>
+  `;
+
+  _loadPendingRequests();
+  _loadFriendsList();
+}
+
+function _friendsSearch(query) {
+  clearTimeout(_friendSearchTimer);
+  const results = document.getElementById('friend-search-results');
+  if (!results) return;
+  const q = (query || '').trim();
+  if (q.length < 2) { results.innerHTML = ''; return; }
+  results.innerHTML = '<div style="padding:6px 0;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);">Searching...</div>';
+  _friendSearchTimer = setTimeout(() => _doFriendSearch(q), 350);
+}
+
+async function _doFriendSearch(query) {
+  const results = document.getElementById('friend-search-results');
+  if (!results) return;
+  const sb = _getSupabaseClient();
+  if (!sb) { results.innerHTML = ''; return; }
+
+  const { data } = await sb.from('users')
+    .select('id, display_name, username')
+    .ilike('username', '%' + query + '%')
+    .neq('id', state.supabaseUserId)
+    .limit(8);
+
+  if (!data || data.length === 0) {
+    results.innerHTML = '<div style="padding:6px 0;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);">No users found.</div>';
+    return;
+  }
+
+  data.forEach(u => { _friendCache[u.id] = u; });
+  results.innerHTML = data.map(u =>
+    `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);">${escapeHtml(u.display_name)}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">@${escapeHtml(u.username)}</div>
+      </div>
+      <button onclick="_sendFriendRequest('${u.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">ADD FRIEND</button>
+    </div>`
+  ).join('');
+}
+
+async function _sendFriendRequest(addresseeId, btn) {
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  const { error } = await sb.from('friendships').insert({
+    requester_id: state.supabaseUserId,
+    addressee_id: addresseeId,
+    status: 'pending'
+  });
+
+  if (error) {
+    if (btn) { btn.disabled = false; btn.textContent = 'ADD FRIEND'; }
+    showToast('Could not send request. Try again.');
+    return;
+  }
+  if (btn) { btn.textContent = 'SENT \u2713'; btn.style.background = '#333'; btn.style.color = 'var(--gray)'; }
+  showToast('Friend request sent');
+}
+
+async function _loadPendingRequests() {
+  const sb = _getSupabaseClient();
+  const section = document.getElementById('friends-pending-section');
+  const list = document.getElementById('friends-pending-list');
+  if (!sb || !section || !list) return;
+
+  const { data: rows } = await sb.from('friendships')
+    .select('id, requester_id')
+    .eq('addressee_id', state.supabaseUserId)
+    .eq('status', 'pending');
+
+  if (!rows || rows.length === 0) { section.style.display = 'none'; return; }
+
+  const ids = rows.map(r => r.requester_id);
+  const { data: users } = await sb.from('users').select('id, display_name, username').in('id', ids);
+  const uMap = {};
+  (users || []).forEach(u => { uMap[u.id] = u; });
+
+  section.style.display = 'block';
+  list.innerHTML = rows.map(f => {
+    const u = uMap[f.requester_id] || {};
+    return `<div class="friends-request-item" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;">
+        <div style="font-size:14px;color:var(--cream);">${escapeHtml(u.display_name || 'Unknown')}</div>
+        <div style="font-size:11px;color:var(--gray);">@${escapeHtml(u.username || '')}</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="_acceptFriendRequest('${f.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 12px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:44px;">ACCEPT</button>
+        <button onclick="_declineFriendRequest('${f.id}',this)" style="background:transparent;border:1px solid #444;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 12px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:44px;">DECLINE</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function _acceptFriendRequest(friendshipId, btn) {
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  if (btn) btn.disabled = true;
+  await sb.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId);
+  showToast("You're now connected");
+  _renderFriendsSection();
+}
+
+async function _declineFriendRequest(friendshipId, btn) {
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  if (btn) btn.disabled = true;
+  await sb.from('friendships').update({ status: 'declined' }).eq('id', friendshipId);
+  const row = btn?.closest('.friends-request-item');
+  if (row) row.remove();
+  const list = document.getElementById('friends-pending-list');
+  if (list && list.children.length === 0) {
+    const sec = document.getElementById('friends-pending-section');
+    if (sec) sec.style.display = 'none';
+  }
+}
+
+async function _loadFriendsList() {
+  const sb = _getSupabaseClient();
+  const list = document.getElementById('friends-list');
+  if (!sb || !list) return;
+
+  const { data: rows } = await sb.from('friendships')
+    .select('requester_id, addressee_id')
+    .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
+    .eq('status', 'accepted');
+
+  if (!rows || rows.length === 0) {
+    list.innerHTML = '<div style="padding:8px 0;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);">No friends yet. Search above to add someone.</div>';
+    return;
+  }
+
+  const friendIds = rows.map(f => f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id);
+  const { data: users } = await sb.from('users').select('id, display_name, username, last_active').in('id', friendIds);
+
+  if (!users || users.length === 0) {
+    list.innerHTML = '<div style="padding:8px 0;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);">No friends yet.</div>';
+    return;
+  }
+
+  const now = Date.now();
+  users.forEach(u => { _friendCache[u.id] = u; });
+
+  list.innerHTML = users.map(u => {
+    const lastTs = u.last_active ? new Date(u.last_active).getTime() : 0;
+    const recentlyActive = lastTs > 0 && (now - lastTs) < 86400000;
+    const lastText = lastTs ? _timeAgo(lastTs) : 'Not recently active';
+    const initial = (u.display_name || '?').charAt(0).toUpperCase();
+    return `<div onclick="_openFriendActivity('${u.id}')"
+      style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="position:relative;flex-shrink:0;">
+          <div style="width:36px;height:36px;border-radius:50%;background:#C0392B;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:18px;color:#fff;">${escapeHtml(initial)}</div>
+          ${recentlyActive ? '<div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#C0392B;border:2px solid #1a1a1a;"></div>' : ''}
+        </div>
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);">${escapeHtml(u.display_name)}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">@${escapeHtml(u.username)} \u00b7 ${lastText}</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;
+  }).join('');
+}
+
+function _timeAgo(ts) {
+  const d = Date.now() - ts;
+  const m = Math.floor(d / 60000);
+  if (m < 2) return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+
+async function _openFriendActivity(userId) {
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  const cached = _friendCache[userId] || {};
+
+  const existing = document.getElementById('friend-activity-sheet');
+  if (existing) existing.remove();
+
+  const sheet = document.createElement('div');
+  sheet.id = 'friend-activity-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 20px 40px;max-height:80vh;overflow-y:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+        <div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;">${escapeHtml(cached.display_name || 'Friend')}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);">@${escapeHtml(cached.username || '')}</div>
+        </div>
+        <button onclick="document.getElementById('friend-activity-sheet').remove()" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>
+      </div>
+      <div id="friend-activity-signals">
+        <div style="text-align:center;padding:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);">Loading...</div>
+      </div>
+    </div>`;
+  document.body.appendChild(sheet);
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+
+  const [{ data: signals }, { data: myRxns }] = await Promise.all([
+    sb.from('workout_signals')
+      .select('id, workout_name, started_at, signal_type')
+      .eq('user_id', userId)
+      .order('started_at', { ascending: false })
+      .limit(3),
+    sb.from('reactions')
+      .select('signal_id, reaction_type')
+      .eq('from_user_id', state.supabaseUserId)
+  ]);
+
+  const reacted = {};
+  (myRxns || []).forEach(r => { reacted[r.signal_id] = r.reaction_type; });
+
+  const sigEl = document.getElementById('friend-activity-signals');
+  if (!sigEl) return;
+
+  if (!signals || signals.length === 0) {
+    sigEl.innerHTML = '<div style="text-align:center;padding:20px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);">No recent workout activity.</div>';
+    return;
+  }
+
+  const RXNS = [{ t: 'thumbs_up', e: '\ud83d\udc4d' }, { t: 'fist_bump', e: '\ud83d\udc4a' }, { t: 'fire', e: '\ud83d\udd25' }, { t: 'checkmark', e: '\u2713' }];
+  const signalLabels = { started: 'Started', completed: 'Completed', pr: 'Hit a PR', hard_day: 'Hard day' };
+
+  sigEl.innerHTML = signals.map(s => {
+    const when = _timeAgo(new Date(s.started_at).getTime());
+    const label = signalLabels[s.signal_type] || s.signal_type;
+    const hasReacted = !!reacted[s.id];
+    const btns = RXNS.map(r => {
+      const isThis = reacted[s.id] === r.t;
+      return '<button onclick="_sendReaction(\'' + s.id + '\',\'' + userId + '\',\'' + r.t + '\',this)"'
+        + ' style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid ' + (isThis ? '#C0392B' : '#333') + ';background:' + (isThis ? 'rgba(192,57,43,0.15)' : 'transparent') + ';color:var(--cream);font-size:18px;cursor:pointer;-webkit-tap-highlight-color:transparent;"'
+        + (hasReacted ? ' disabled' : '') + '>' + r.e + '</button>';
+    }).join('');
+    return '<div class="friend-signal-card" style="background:#1a1a1a;border-radius:12px;padding:14px;margin-bottom:10px;">'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);margin-bottom:2px;">' + escapeHtml(s.workout_name || 'Workout') + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-bottom:12px;">' + label + ' \u00b7 ' + when + '</div>'
+      + '<div style="display:flex;gap:8px;">' + btns + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+async function _sendReaction(signalId, toUserId, reactionType, btn) {
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  const card = btn?.closest('.friend-signal-card');
+  if (btn) btn.disabled = true;
+  if (card) card.querySelectorAll('button').forEach(b => { b.disabled = true; });
+
+  const { error } = await sb.from('reactions').insert({
+    from_user_id: state.supabaseUserId,
+    to_user_id: toUserId,
+    signal_id: signalId,
+    reaction_type: reactionType
+  });
+
+  if (error) {
+    if (btn) btn.disabled = false;
+    if (card) card.querySelectorAll('button').forEach(b => { b.disabled = false; });
+    showToast('Could not send reaction.');
+    return;
+  }
+
+  if (btn) {
+    btn.style.borderColor = '#C0392B';
+    btn.style.background = 'rgba(192,57,43,0.15)';
+  }
+
+  // Send push notification via OneSignal edge function
+  try {
+    const { data: sub } = await sb.from('onesignal_subscriptions')
+      .select('onesignal_player_id')
+      .eq('user_id', toUserId)
+      .limit(1)
+      .single();
+    if (sub?.onesignal_player_id) {
+      const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+      fetch('/send-notification', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
+      const _emoji = _rxnEmoji[reactionType] || reactionType;
+      body: JSON.stringify({
+          player_ids: [sub.onesignal_player_id],
+          title: fromName + ' reacted to your workout',
+          body:  'They gave you a ' + _emoji
+        })
+      }).catch(() => {});
+    }
+  } catch (e) {}
+}
+
+async function _updateLastActive() {
+  if (!state.supabaseUserId) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  try {
+    await sb.from('users').update({ last_active: new Date().toISOString() }).eq('id', state.supabaseUserId);
+  } catch (e) {}
+}
+
+function inviteFriend() {
+  const appUrl = window.location.origin || '';
+  const text = 'Train with me on T&S Muscle. Where culture and purpose collide. ' + appUrl;
+  if (navigator.share) {
+    navigator.share({ text }).catch(() => {});
+  } else {
+    navigator.clipboard?.writeText(text).then(() => showToast('Invite link copied!')).catch(() => {});
+  }
+}
+
+// ── Workout Signals ────────────────────────────────────────────────────────
+
+// Called at the start of a fresh session — inserts a signal row and notifies friends.
+async function _sendWorkoutSignal(dayName) {
+  if (!state.supabaseUserId) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  const displayName = state.supabaseDisplayName || state.displayName || 'Someone';
+  try {
+    const { data, error } = await sb.from('workout_signals').insert({
+      user_id:      state.supabaseUserId,
+      workout_name: dayName,
+      started_at:   new Date().toISOString(),
+      signal_type:  'started'
+    }).select('id').single();
+    if (error || !data) return;
+    _currentSignalId = data.id;
+    // Delay the "is training" notification by 9 minutes so quick sessions
+    // or false starts don't spam friends. Cancel if the session ends first.
+    const signalId = data.id;
+    _startNotifyTimer = setTimeout(function() {
+      _startNotifyTimer = null;
+      // Only send if the session is still active (not saved or discarded)
+      if (!activeSession) return;
+      _notifyFriends(
+        displayName + ' is training',
+        'They just started a workout. Go show up.',
+        signalId
+      );
+    }, 9 * 60 * 1000);
+  } catch(e) {}
+}
+
+// Called when a session is saved — updates the signal row and notifies friends.
+async function _completeWorkoutSignal() {
+  const signalId = _currentSignalId;
+  _currentSignalId = null;
+  if (!signalId || !state.supabaseUserId) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  const displayName = state.supabaseDisplayName || state.displayName || 'Someone';
+  try {
+    await sb.from('workout_signals').update({
+      completed_at: new Date().toISOString(),
+      signal_type:  'completed'
+    }).eq('id', signalId).eq('user_id', state.supabaseUserId);
+    _notifyFriends(
+      displayName + ' finished training',
+      'They finished their workout. Go show up.',
+      signalId
+    );
+  } catch(e) {}
+}
+
+// Sends a push notification to all accepted friends via the Netlify edge function.
+// signalId is included so friends' notifications carry an action button that can
+// send a reaction back without opening the app (handled in sw.js).
+async function _notifyFriends(title, body, signalId) {
+  if (!state.supabaseUserId) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  try {
+    const { data: friendships } = await sb.from('friendships')
+      .select('requester_id, addressee_id')
+      .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
+      .eq('status', 'accepted');
+    if (!friendships?.length) return;
+
+    const friendIds = friendships.map(f =>
+      f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id
+    );
+
+    const { data: subs } = await sb.from('onesignal_subscriptions')
+      .select('onesignal_player_id')
+      .in('user_id', friendIds);
+    if (!subs?.length) return;
+
+    const playerIds = subs.map(s => s.onesignal_player_id);
+    const payload = { player_ids: playerIds, title, body };
+
+    // Include 👍 action button so friends can react from the lock screen.
+    // The service worker reads their userId from IndexedDB and POSTs to /record-reaction.
+    if (signalId) {
+      payload.buttons = [{ id: 'thumbs_up', text: '👍 Nice work' }];
+      payload.data    = { signal_id: signalId, to_user_id: state.supabaseUserId };
+    }
+
+    fetch('/send-notification', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+  } catch(e) {}
+}
+
+// ── OneSignal / Push Permission ────────────────────────────────────────────
+
+// Initialise OneSignal with our app ID (served via Netlify edge function at runtime).
+// Called once during app startup.
+function _initOneSignal() {
+  if (!window.ONESIGNAL_APP_ID) return;
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(function(OneSignal) {
+    OneSignal.init({
+      appId: window.ONESIGNAL_APP_ID,
+      // Point OneSignal at our existing service worker so its push subscription
+      // management coexists with our caching and notification-click handlers.
+      serviceWorkerPath: '/sw.js',
+      serviceWorkerParam: { scope: '/' },
+      // Don't auto-prompt — we prompt after sign-in via _requestNotificationPermission()
+      autoResubscribe: true,
+      notifyButton: { enable: false }
+    });
+  });
+}
+
+// Ask for push notification permission immediately after the user signs in.
+// Only asked once; if denied, social features continue without push.
+async function _requestNotificationPermission() {
+  if (state.notificationPermissionAsked) return;
+  if (!window.ONESIGNAL_APP_ID) return;
+  state.notificationPermissionAsked = true;
+  saveState();
+
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      const granted = await OneSignal.Notifications.requestPermission();
+      if (!granted || !state.supabaseUserId) return;
+
+      // Brief wait for the push subscription to register
+      await new Promise(function(r) { setTimeout(r, 1500); });
+
+      const playerId = OneSignal.User.PushSubscription.id;
+      if (!playerId) return;
+
+      const sb = _getSupabaseClient();
+      if (!sb) return;
+
+      const ua = (navigator.userAgent || '').toLowerCase();
+      const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
+
+      await sb.from('onesignal_subscriptions').upsert(
+        { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
+        { onConflict: 'user_id,platform' }
+      );
+    } catch(e) {}
+  });
+}
+
+// Store the signed-in user's Supabase ID in IndexedDB so the service worker
+// can read it when handling notification action button taps without opening the app.
+function _swStoreUserId(userId) {
+  try {
+    var req = indexedDB.open('ts-muscle-sw', 1);
+    req.onupgradeneeded = function(e) { e.target.result.createObjectStore('meta'); };
+    req.onsuccess = function(e) {
+      var db = e.target.result;
+      db.transaction('meta', 'readwrite').objectStore('meta').put(userId || null, 'userId');
+    };
+  } catch(e) {}
+}
+
+function openSocialModal() {
+  // Mark reactions/requests as seen so the dot clears
+  state.socialLastSeen = new Date().toISOString();
+  saveState();
+  const overlay = document.getElementById('social-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      overlay.classList.add('lib-open');
+    });
+  });
+  _renderFriendsSection();
+  // Dot clears immediately when modal opens
+  const dot = document.getElementById('social-notify-dot');
+  if (dot) dot.style.display = 'none';
+}
+
+function closeSocialModal() {
+  const overlay = document.getElementById('social-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('lib-open');
+  setTimeout(function() {
+    overlay.style.display = 'none';
+  }, 320);
+  // Re-evaluate dot after closing in case new activity arrived
+  _updateSocialNotifyDot();
+}
+
+async function _updateSocialNotifyDot() {
+  const dot = document.getElementById('social-notify-dot');
+  if (!dot) return;
+  if (!state.supabaseUserId) { dot.style.display = 'none'; return; }
+  const sb = _getSupabaseClient();
+  if (!sb) { dot.style.display = 'none'; return; }
+  try {
+    const lastSeen = state.socialLastSeen || '1970-01-01T00:00:00.000Z';
+    const [{ count: pendingCount }, { count: rxnCount }] = await Promise.all([
+      sb.from('friendships')
+        .select('id', { count: 'exact', head: true })
+        .eq('addressee_id', state.supabaseUserId)
+        .eq('status', 'pending'),
+      sb.from('reactions')
+        .select('id', { count: 'exact', head: true })
+        .eq('to_user_id', state.supabaseUserId)
+        .gt('created_at', lastSeen)
+    ]);
+    dot.style.display = ((pendingCount || 0) + (rxnCount || 0)) > 0 ? 'block' : 'none';
+  } catch (e) {
+    dot.style.display = 'none';
   }
 }
 
@@ -7134,6 +7905,9 @@ function renderHome() {
     `;
     container.appendChild(_wcMsg);
   }
+
+  // Social auth card visibility
+  _updateSupabaseAuthCard();
 
 }
 
@@ -8697,6 +9471,8 @@ function startSession(dayId) {
   // Delay insights fetch by 4 s so it doesn't collide with the first exercise's
   // coaching cue API call in the same rate-limit window.
   setTimeout(_fetchLastSessionInsights, 4000);
+  // Send workout-start signal to Supabase and notify friends (fire-and-forget)
+  _sendWorkoutSignal(activeSession.dayName || activeSession.dayFocus || 'Workout');
 }
 
 // ============================================================
@@ -12453,6 +13229,8 @@ function _upgradeBonus(bonusId, persistence) {
 function finalizeEndSession(save) {
   // Cancel any in-flight coaching cue API call
   _cancelCoachingCue();
+  // Cancel the delayed "is training" start notification — session is ending regardless
+  if (_startNotifyTimer) { clearTimeout(_startNotifyTimer); _startNotifyTimer = null; }
   // Always clear the crash-recovery snapshot — session is now fully completed or discarded
   _lsRemove('ts-muscle-paused');
   _idbSet('ts-muscle-paused', null);
@@ -12514,6 +13292,8 @@ function finalizeEndSession(save) {
 
     if (!state.history) state.history = [];
     state.history.push(entry);
+    // Update workout signal to 'completed' and notify friends (fire-and-forget)
+    _completeWorkoutSignal();
     state.totalSessions++;
     state.inactivityPromptShown = false;
     state.gapReturnShown = false;
@@ -17596,6 +18376,8 @@ if ('serviceWorker' in navigator) {
       }
       // Restart the 60-second midnight check interval on foreground
       _startMidnightCheckInterval();
+      // Update last_active timestamp in Supabase whenever app comes to foreground
+      _updateLastActive();
     } else {
       // Stop the interval while backgrounded to save resources
       _stopMidnightCheckInterval();
@@ -18057,6 +18839,14 @@ try {
   }
   // Show the install welcome prompt to any non-installed visitor
   showInstallWelcome();
+  // Reset supabaseDismissed each app load (it's session-scoped only)
+  state.supabaseDismissed = false;
+  // Initialise OneSignal push SDK (app ID loaded from onesignal-config.js edge function)
+  _initOneSignal();
+  // Check Supabase session (handles OAuth redirect and restores auth state)
+  _checkSupabaseSession();
+  // Update social notification dot (friend requests, new reactions)
+  _updateSocialNotifyDot();
   // Hide install row if already running as installed PWA
   if (_isInstalled) {
     const row = document.getElementById('install-app-row');
@@ -22678,6 +23468,19 @@ function _escHtml(str) {
 </div>
 
 <!-- ── EXERCISE LIBRARY OVERLAY ─────────────────────────────────────────── -->
+<!-- SOCIAL / FRIENDS MODAL — same animation pattern as exercise library -->
+<div id="social-overlay" class="lib-overlay" onclick="if(event.target===this)closeSocialModal()">
+  <div class="lib-modal">
+    <div class="lib-header">
+      <div class="lib-header-top">
+        <div class="lib-title">FRIENDS</div>
+        <button class="lib-close-btn" onclick="closeSocialModal()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="lib-list" id="social-modal-content"></div>
+  </div>
+</div>
+
 <div id="lib-overlay" class="lib-overlay" onclick="if(event.target===this)closeExerciseLibrary()">
   <div class="lib-modal">
     <div class="lib-header">
