@@ -5957,6 +5957,7 @@ let activeSession = null;
 let _lastRenderedDate = null;       // tracks the date string when renderHome() last ran
 let _midnightCheckInterval = null;  // 60-second interval to detect midnight rollover
 let pendingSwap = null;
+let _progAltExId = null;
 let pairingSourceId = null; // exercise ID currently waiting for a pair partner
 let _customSwapIsUnilateral = false; // tracks state of the custom-exercise unilateral toggle
 const HISTORY_PAGE_SIZE = 10; // entries per page in the "older sessions" section
@@ -11595,21 +11596,26 @@ function onAltDropdownChange() {
   const idx = dropdown.value;
   if (idx === '') { document.getElementById('alt-detail-section').style.display = 'none'; return; }
 
-  // "FROM YOUR PROGRAM" selection — pre-fill the custom input and let user confirm
+  // "MORE OPTIONS" selection — show the detail section with that exercise's references
   if (idx.startsWith('prog:')) {
     const name = idx.slice(5);
-    document.getElementById('alt-detail-section').style.display = 'none';
-    const customInput = document.getElementById('custom-exercise-input');
-    customInput.value = name;
-    checkCustomExerciseMuscle(name);
-    if (pendingSwap.sessionMode) {
-      document.getElementById('custom-swap-btns').style.display = 'flex';
-      document.getElementById('custom-swap-btn-simple').style.display = 'none';
-    } else {
-      document.getElementById('custom-swap-btns').style.display = 'none';
-      document.getElementById('custom-swap-btn-simple').style.display = 'block';
-    }
-    customInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    let foundEx = null;
+    state.program.forEach(d => d.exercises.forEach(e => { if (e.name === name) foundEx = e; }));
+    _progAltExId = foundEx ? foundEx.id : null;
+    const customLinks = JSON.parse(localStorage.getItem('ts-yt-links') || '{}');
+    const progYt = foundEx ? (customLinks[foundEx.id + '_main'] || foundEx.ytLink || '') : '';
+    document.getElementById('alt-detail-note').textContent = '';
+    document.getElementById('edit-yt-alt').style.display = 'none';
+    const altYtEl = document.getElementById('alt-yt-link');
+    altYtEl.href = progYt || '#';
+    altYtEl.style.opacity = progYt ? '1' : '0.4';
+    altYtEl.style.pointerEvents = progYt ? 'auto' : 'none';
+    document.getElementById('yt-link-input-alt').value = progYt;
+    const sessionBtns = document.getElementById('alt-swap-btns-session');
+    const permBtn = document.getElementById('alt-swap-btn-perm');
+    if (pendingSwap.sessionMode) { sessionBtns.style.display = 'flex'; permBtn.style.display = 'none'; }
+    else { sessionBtns.style.display = 'none'; permBtn.style.display = 'block'; }
+    document.getElementById('alt-detail-section').style.display = 'block';
     return;
   }
 
@@ -11669,7 +11675,8 @@ function saveYtLink(type) {
     document.getElementById('edit-yt-current').style.display = 'none';
   } else {
     const idx = document.getElementById('alt-dropdown').value;
-    customLinks[exId + '_alt_' + idx] = url;
+    const saveKey = (idx.startsWith('prog:') && _progAltExId) ? _progAltExId + '_main' : exId + '_alt_' + idx;
+    customLinks[saveKey] = url;
     const link = document.getElementById('alt-yt-link');
     link.href = url; link.style.opacity = '1'; link.style.pointerEvents = 'auto';
     document.getElementById('edit-yt-alt').style.display = 'none';
@@ -11684,6 +11691,7 @@ function saveYtLink(type) {
 function doSwapFromDropdown(permanent) {
   const idx = document.getElementById('alt-dropdown').value;
   if (idx === '') { showToast('Select an exercise first', 'error'); return; }
+  if (idx.startsWith('prog:')) { doSwap(idx.slice(5), permanent); return; }
   const { dayId, exId } = pendingSwap;
   const day = state.program.find(d => d.id === dayId);
   const ex = day?.exercises.find(e => e.id === exId);
