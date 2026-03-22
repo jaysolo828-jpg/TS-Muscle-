@@ -6231,23 +6231,24 @@ function supabaseShowEmailForm() {
   if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
 }
 
+async function _loadSupabaseConfig() {
+  // Dynamically re-fetch supabase-config.js if env vars didn't load
+  // (can happen when SW update interrupts the initial script load)
+  if (window.SUPABASE_URL) return;
+  try {
+    const res = await fetch('/supabase-config.js?t=' + Date.now(), { cache: 'no-store' });
+    const js  = await res.text();
+    // eslint-disable-next-line no-new-func
+    new Function(js)();
+  } catch(e) {}
+}
+
 async function supabaseSignInGoogle() {
-  // If SDK loaded with defer it may not be ready yet — wait up to 4s
-  if (typeof window.supabase === 'undefined') {
-    for (let i = 0; i < 8; i++) {
-      await new Promise(r => setTimeout(r, 500));
-      if (typeof window.supabase !== 'undefined') break;
-    }
-  }
+  // Re-fetch config if it didn't load during page init
+  await _loadSupabaseConfig();
   const sb = _getSupabaseClient();
   if (!sb) {
-    if (!window.SUPABASE_URL) {
-      showToast('Supabase not configured. Check env vars in Netlify.');
-    } else if (typeof window.supabase === 'undefined') {
-      showToast('SDK still loading — please try again in a moment.');
-    } else {
-      showToast('Social features unavailable. Try again later.');
-    }
+    showToast('Social features unavailable — check your connection and try again.');
     return;
   }
   try {
