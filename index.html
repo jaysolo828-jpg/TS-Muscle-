@@ -4235,9 +4235,11 @@
     <!-- PRESET DROPDOWN -->
     <div style="margin-bottom:16px;">
       <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">CHOOSE AN ALTERNATIVE</div>
-      <select id="alt-dropdown" onchange="onAltDropdownChange()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Barlow Condensed',sans-serif; font-size:16px; padding:12px 14px; border-radius:10px; appearance:none; -webkit-appearance:none; background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22%23CC2027%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat:no-repeat; background-position:right 12px center;">
+      <!-- hidden select kept for value-tracking; JS still reads dropdown.value -->
+      <select id="alt-dropdown" style="display:none;">
         <option value="">Select an exercise</option>
       </select>
+      <div id="alt-custom-list"></div>
     </div>
 
     <!-- SELECTED ALT DETAILS -->
@@ -11438,6 +11440,7 @@ function openAltModal(ex) {
     dropdown.appendChild(progGrp);
   }
   dropdown.value = '';
+  _renderAltList();
 
   // Show right swap buttons
   if (pendingSwap && pendingSwap.sessionMode) {
@@ -11523,6 +11526,45 @@ function resetExerciseToDefault() {
   showToast(`↩ Restored to "${defaultEx.name}"`);
   if (activeSession) renderSession();
   else renderHome();
+}
+
+function _renderAltList() {
+  const dropdown = document.getElementById('alt-dropdown');
+  const container = document.getElementById('alt-custom-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const groups = Array.from(dropdown.children).filter(c => c.tagName === 'OPTGROUP');
+  if (!groups.length) { container.style.cssText = ''; return; }
+
+  container.style.cssText = 'border:1px solid var(--dark4); border-radius:10px; overflow:hidden; max-height:260px; overflow-y:auto; -webkit-overflow-scrolling:touch;';
+
+  groups.forEach((grp, gi) => {
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'padding:8px 14px 6px; font-family:\'Barlow Condensed\',sans-serif; font-size:11px; font-weight:700; color:var(--gray); letter-spacing:1.5px; background:var(--dark2);' + (gi > 0 ? 'border-top:1px solid var(--dark4);' : '');
+    hdr.textContent = grp.label;
+    container.appendChild(hdr);
+
+    Array.from(grp.children).forEach((opt, oi) => {
+      const isLast = gi === groups.length - 1 && oi === grp.children.length - 1;
+      const row = document.createElement('div');
+      row.dataset.value = opt.value;
+      row.style.cssText = 'padding:11px 14px; font-family:\'Barlow Condensed\',sans-serif; font-size:16px; color:var(--cream); background:var(--dark3); cursor:pointer; min-height:44px; display:flex; align-items:center; transition:background 0.15s;' + (!isLast ? 'border-bottom:1px solid rgba(255,255,255,0.05);' : '');
+      row.textContent = opt.textContent;
+      row.addEventListener('pointerdown', () => { row.style.background = 'rgba(204,32,39,0.18)'; });
+      row.addEventListener('pointerleave', () => { if (dropdown.value !== opt.value) row.style.background = 'var(--dark3)'; });
+      row.addEventListener('click', () => _selectAltItem(opt.value, row));
+      container.appendChild(row);
+    });
+  });
+}
+
+function _selectAltItem(val, el) {
+  const dropdown = document.getElementById('alt-dropdown');
+  document.querySelectorAll('#alt-custom-list [data-value]').forEach(r => { r.style.background = 'var(--dark3)'; });
+  el.style.background = 'rgba(204,32,39,0.12)';
+  dropdown.value = val;
+  onAltDropdownChange();
 }
 
 function onAltDropdownChange() {
@@ -17390,7 +17432,7 @@ function isWorkoutActive() {
 
 function showSWUpdateBanner() {
   if (document.getElementById('sw-update-banner')) return;
-  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v39')) return;
+  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v40')) return;
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
   const banner = document.createElement('div');
@@ -17418,7 +17460,7 @@ function applySWUpdate() {
 
 function dismissSWBanner(e) {
   e.stopPropagation();
-  sessionStorage.setItem('ts_muscle_sw_dismissed_v39', '1');
+  sessionStorage.setItem('ts_muscle_sw_dismissed_v40', '1');
   const b = document.getElementById('sw-update-banner');
   if (b) b.remove();
 }
@@ -17533,9 +17575,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.2';
 
 const APP_CHANGELOG = {
+  '1.6.2': [
+    'Fix: Swap exercise modal now shows "SUGGESTED" and "FROM YOUR PROGRAM" as proper styled section headers instead of a native OS dropdown.',
+  ],
   '1.6.1': [
     'Fix: Search icon on the home screen now shows in brand red.',
     'Fix: Exercise names on the active workout screen now wrap cleanly on all screen sizes.',
