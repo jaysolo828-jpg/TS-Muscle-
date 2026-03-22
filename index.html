@@ -6238,24 +6238,12 @@ async function _loadSupabaseConfig() {
   try {
     const res = await fetch('/supabase-config.js?t=' + Date.now(), { cache: 'no-store' });
     const js  = await res.text();
-    // Diagnostic: inject as script tag to avoid any eval/CSP issues
-    await new Promise(resolve => {
-      const blob = new Blob([js], { type: 'application/javascript' });
-      const url  = URL.createObjectURL(blob);
-      const s    = document.createElement('script');
-      s.src = url;
-      s.onload = s.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-      document.head.appendChild(s);
-    });
-    // Still not set? Log the raw response for diagnosis
-    if (!window.SUPABASE_URL) {
-      console.warn('[supabase-config] SUPABASE_URL still empty after eval. Response was:', js.slice(0, 300));
-      showToast('Config debug: ' + js.slice(0, 120));
-    }
-  } catch(e) {
-    console.error('[supabase-config] fetch error:', e);
-    showToast('Config fetch error: ' + e.message);
-  }
+    // Parse values directly — avoids any eval/new Function/CSP issues
+    const urlMatch = js.match(/window\.SUPABASE_URL\s*=\s*'([^']*)'/);
+    const keyMatch = js.match(/window\.SUPABASE_PUBLISHABLE_KEY\s*=\s*'([^']*)'/);
+    if (urlMatch?.[1]) window.SUPABASE_URL = urlMatch[1];
+    if (keyMatch?.[1]) window.SUPABASE_PUBLISHABLE_KEY = keyMatch[1];
+  } catch(e) {}
 }
 
 async function supabaseSignInGoogle() {
