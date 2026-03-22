@@ -11414,7 +11414,7 @@ function openAltModal(ex) {
   dropdown.innerHTML = '<option value="">Select an exercise</option>';
   if (ex.alts && ex.alts.length > 0) {
     const altGrp = document.createElement('optgroup');
-    altGrp.label = 'SUGGESTED';
+    altGrp.label = 'RECOMMENDED';
     ex.alts.forEach((alt, i) => {
       const opt = document.createElement('option');
       opt.value = i;
@@ -11434,7 +11434,7 @@ function openAltModal(ex) {
   }));
   if (_progExercises.length > 0) {
     const progGrp = document.createElement('optgroup');
-    progGrp.label = _exMuscle ? _exMuscle.toUpperCase() + ' EXERCISES' : 'FROM YOUR PROGRAM';
+    progGrp.label = 'MORE OPTIONS';
     _progExercises.sort().forEach(name => {
       const opt = document.createElement('option');
       opt.value = 'prog:' + name;
