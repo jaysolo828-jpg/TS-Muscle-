@@ -17463,7 +17463,7 @@ function isWorkoutActive() {
 
 function showSWUpdateBanner() {
   if (document.getElementById('sw-update-banner')) return;
-  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v44')) return;
+  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v45')) return;
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
   const banner = document.createElement('div');
@@ -17491,7 +17491,7 @@ function applySWUpdate() {
 
 function dismissSWBanner(e) {
   e.stopPropagation();
-  sessionStorage.setItem('ts_muscle_sw_dismissed_v44', '1');
+  sessionStorage.setItem('ts_muscle_sw_dismissed_v45', '1');
   const b = document.getElementById('sw-update-banner');
   if (b) b.remove();
 }
