@@ -4019,6 +4019,14 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
   </div>
 
+  <div class="settings-item" onclick="checkForAppUpdate()">
+    <div>
+      <div class="settings-label">Check for Updates</div>
+      <div class="settings-sub" id="update-check-sub">Tap to refresh to the latest version</div>
+    </div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div>
+  </div>
+
   <div class="settings-item" onclick="showChangelogModal()">
     <div>
       <div class="settings-label">What's New</div>
@@ -17379,7 +17387,7 @@ function isWorkoutActive() {
 
 function showSWUpdateBanner() {
   if (document.getElementById('sw-update-banner')) return;
-  if (sessionStorage.getItem('ts_muscle_sw_dismissed')) return;
+  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v38')) return;
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
   const banner = document.createElement('div');
@@ -17407,7 +17415,7 @@ function applySWUpdate() {
 
 function dismissSWBanner(e) {
   e.stopPropagation();
-  sessionStorage.setItem('ts_muscle_sw_dismissed', '1');
+  sessionStorage.setItem('ts_muscle_sw_dismissed_v38', '1');
   const b = document.getElementById('sw-update-banner');
   if (b) b.remove();
 }
@@ -17417,6 +17425,50 @@ function checkDeferredSWUpdate() {
     _pendingSWUpdate = false;
     showSWUpdateBanner();
   }
+}
+
+function checkForAppUpdate() {
+  const sub = document.getElementById('update-check-sub');
+  if (sub) sub.textContent = 'Checking\u2026';
+
+  if (_waitingSW) {
+    // A new SW is already waiting — apply it immediately
+    if (sub) sub.textContent = 'Update ready! Reloading\u2026';
+    setTimeout(function() { applySWUpdate(); }, 600);
+    return;
+  }
+
+  if (!('serviceWorker' in navigator)) {
+    if (sub) sub.textContent = 'Tap to refresh to the latest version';
+    showToast('Refresh the page to update', 'info');
+    return;
+  }
+
+  navigator.serviceWorker.getRegistration().then(function(reg) {
+    if (!reg) {
+      if (sub) sub.textContent = 'Tap to refresh to the latest version';
+      showToast('No service worker found — try a hard refresh', 'info');
+      return;
+    }
+    reg.update().then(function() {
+      // Give the update check a moment to resolve
+      setTimeout(function() {
+        if (_waitingSW) {
+          if (sub) sub.textContent = 'Update ready! Reloading\u2026';
+          setTimeout(function() { applySWUpdate(); }, 600);
+        } else {
+          if (sub) sub.textContent = 'Tap to refresh to the latest version';
+          showToast('You\u2019re up to date \u2713', 'success');
+        }
+      }, 1500);
+    }).catch(function() {
+      if (sub) sub.textContent = 'Tap to refresh to the latest version';
+      showToast('Could not check — make sure you\u2019re online', 'error');
+    });
+  }).catch(function() {
+    if (sub) sub.textContent = 'Tap to refresh to the latest version';
+    showToast('Update check failed', 'error');
+  });
 }
 
 // Track waiting SW from a registration
@@ -17478,9 +17530,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 
 const APP_CHANGELOG = {
+  '1.6.0': [
+    'New: Exercise Library. Tap the 🔍 icon in the header or tap any exercise name to browse 257 exercises across 10 muscle groups. Filter by muscle, search by name, expand cards for 4 evidence-based form cues, save favourites, watch YouTube demos, and swap exercises directly into your active session or program.',
+  ],
   '1.5.0': [
     'New: Experience level now drives your training. Volume targets, weight progression, and coaching cues all adjust based on whether you\'re a beginner, intermediate, or advanced lifter. Check your level in Settings and update it anytime.',
   ],
