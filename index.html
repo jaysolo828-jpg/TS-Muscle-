@@ -2493,6 +2493,10 @@
     <button class="icon-btn" id="lib-open-btn" onclick="openExerciseLibrary(null)" aria-label="Exercise Library" title="Exercise Library">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--red)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.24" y2="14.24"/></svg>
     </button>
+    <button class="icon-btn" id="social-open-btn" onclick="openSocialModal()" aria-label="Friends" title="Friends" style="position:relative;">
+      <span id="social-notify-dot" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--black);pointer-events:none;z-index:1;" aria-hidden="true"></span>
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </button>
     <button class="icon-btn" onclick="exportData()" aria-label="Export Data" title="Export Data">
   <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
 </button>
@@ -4070,12 +4074,6 @@
     <div class="settings-arrow">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="#CC2027" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
     </div>
-  </div>
-
-  <!-- FRIENDS -->
-  <div class="section-title" style="margin-top:8px;">FRIENDS</div>
-  <div id="friends-section-content">
-    <!-- Populated by _renderFriendsSection() when settings screen is shown -->
   </div>
 
   <!-- Contact / Feedback -->
@@ -6297,6 +6295,7 @@ async function _onSupabaseSignIn(user) {
     _showUsernameSheet(user.id, rawName);
   } else {
     _updateSupabaseAuthCard();
+    _updateSocialNotifyDot();
     showToast("You're connected. Find friends in Settings.");
   }
 }
@@ -6340,6 +6339,7 @@ async function _saveUsername(userId) {
   const sheet = document.getElementById('username-setup-sheet');
   if (sheet) sheet.remove();
   _updateSupabaseAuthCard();
+  _updateSocialNotifyDot();
   showToast("You're connected. Find friends in Settings.");
 }
 
@@ -6356,6 +6356,7 @@ async function _checkSupabaseSession() {
       state.supabaseUserId = session.user.id;
       _updateSupabaseAuthCard();
     }
+    _updateSocialNotifyDot();
   } catch(e) {}
 }
 
@@ -6367,7 +6368,7 @@ const _friendCache = {};       // userId -> { display_name, username, last_activ
 let _friendSearchTimer = null; // debounce handle for username search
 
 async function _renderFriendsSection() {
-  const container = document.getElementById('friends-section-content');
+  const container = document.getElementById('social-modal-content');
   if (!container) return;
 
   if (!state.supabaseUserId) {
@@ -6703,6 +6704,59 @@ function inviteFriend() {
   }
 }
 
+function openSocialModal() {
+  // Mark reactions/requests as seen so the dot clears
+  state.socialLastSeen = new Date().toISOString();
+  saveState();
+  const overlay = document.getElementById('social-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      overlay.classList.add('lib-open');
+    });
+  });
+  _renderFriendsSection();
+  // Dot clears immediately when modal opens
+  const dot = document.getElementById('social-notify-dot');
+  if (dot) dot.style.display = 'none';
+}
+
+function closeSocialModal() {
+  const overlay = document.getElementById('social-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('lib-open');
+  setTimeout(function() {
+    overlay.style.display = 'none';
+  }, 320);
+  // Re-evaluate dot after closing in case new activity arrived
+  _updateSocialNotifyDot();
+}
+
+async function _updateSocialNotifyDot() {
+  const dot = document.getElementById('social-notify-dot');
+  if (!dot) return;
+  if (!state.supabaseUserId) { dot.style.display = 'none'; return; }
+  const sb = _getSupabaseClient();
+  if (!sb) { dot.style.display = 'none'; return; }
+  try {
+    const lastSeen = state.socialLastSeen || '1970-01-01T00:00:00.000Z';
+    const [{ count: pendingCount }, { count: rxnCount }] = await Promise.all([
+      sb.from('friendships')
+        .select('id', { count: 'exact', head: true })
+        .eq('addressee_id', state.supabaseUserId)
+        .eq('status', 'pending'),
+      sb.from('reactions')
+        .select('id', { count: 'exact', head: true })
+        .eq('to_user_id', state.supabaseUserId)
+        .gt('created_at', lastSeen)
+    ]);
+    dot.style.display = ((pendingCount || 0) + (rxnCount || 0)) > 0 ? 'block' : 'none';
+  } catch (e) {
+    dot.style.display = 'none';
+  }
+}
+
 // ============================================================
 // UTILITIES
 // ============================================================
@@ -6754,7 +6808,6 @@ function showScreen(name, el) {
     const bwSub = document.getElementById('bw-settings-sub');
     if (bwSub && state.profile?.bodyweight) bwSub.textContent = `${state.profile.bodyweight} lbs`;
     updateProfileNotifyDot();
-    _renderFriendsSection();
   }
 }
 
@@ -18605,6 +18658,8 @@ try {
   state.supabaseDismissed = false;
   // Check Supabase session (handles OAuth redirect and restores auth state)
   _checkSupabaseSession();
+  // Update social notification dot (friend requests, new reactions)
+  _updateSocialNotifyDot();
   // Hide install row if already running as installed PWA
   if (_isInstalled) {
     const row = document.getElementById('install-app-row');
@@ -23226,6 +23281,19 @@ function _escHtml(str) {
 </div>
 
 <!-- ── EXERCISE LIBRARY OVERLAY ─────────────────────────────────────────── -->
+<!-- SOCIAL / FRIENDS MODAL — same animation pattern as exercise library -->
+<div id="social-overlay" class="lib-overlay" onclick="if(event.target===this)closeSocialModal()">
+  <div class="lib-modal">
+    <div class="lib-header">
+      <div class="lib-header-top">
+        <div class="lib-title">FRIENDS</div>
+        <button class="lib-close-btn" onclick="closeSocialModal()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="lib-list" id="social-modal-content"></div>
+  </div>
+</div>
+
 <div id="lib-overlay" class="lib-overlay" onclick="if(event.target===this)closeExerciseLibrary()">
   <div class="lib-modal">
     <div class="lib-header">
