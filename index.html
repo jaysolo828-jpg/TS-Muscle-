@@ -2458,7 +2458,9 @@
 </style>
 <script src="config.js?v=20260318"></script>
 <script src="supabase-config.js?v=20260322"></script>
+<script src="onesignal-config.js?v=20260322"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 <body>
 <!-- SPLASH SCREEN -->
@@ -6296,6 +6298,8 @@ async function _onSupabaseSignIn(user) {
   } else {
     _updateSupabaseAuthCard();
     _updateSocialNotifyDot();
+    _swStoreUserId(user.id);
+    _requestNotificationPermission();
     showToast("You're connected. Find friends in Settings.");
   }
 }
@@ -6340,6 +6344,8 @@ async function _saveUsername(userId) {
   if (sheet) sheet.remove();
   _updateSupabaseAuthCard();
   _updateSocialNotifyDot();
+  _swStoreUserId(state.supabaseUserId);
+  _requestNotificationPermission();
   showToast("You're connected. Find friends in Settings.");
 }
 
@@ -6355,6 +6361,8 @@ async function _checkSupabaseSession() {
       // Already have user ID, just update auth card visibility
       state.supabaseUserId = session.user.id;
       _updateSupabaseAuthCard();
+      // Ensure SW has the userId for notification action handling
+      _swStoreUserId(session.user.id);
     }
     _updateSocialNotifyDot();
   } catch(e) {}
@@ -6366,6 +6374,7 @@ async function _checkSupabaseSession() {
 
 const _friendCache = {};       // userId -> { display_name, username, last_active }
 let _friendSearchTimer = null; // debounce handle for username search
+let _currentSignalId   = null; // UUID of the active workout signal row in Supabase
 
 async function _renderFriendsSection() {
   const container = document.getElementById('social-modal-content');
@@ -6620,7 +6629,7 @@ async function _openFriendActivity(userId) {
     return;
   }
 
-  const RXNS = [{ t: 'fist_bump', e: '\ud83d\udc4a' }, { t: 'fire', e: '\ud83d\udd25' }, { t: 'checkmark', e: '\u2713' }];
+  const RXNS = [{ t: 'thumbs_up', e: '\ud83d\udc4d' }, { t: 'fist_bump', e: '\ud83d\udc4a' }, { t: 'fire', e: '\ud83d\udd25' }, { t: 'checkmark', e: '\u2713' }];
   const signalLabels = { started: 'Started', completed: 'Completed', pr: 'Hit a PR', hard_day: 'Hard day' };
 
   sigEl.innerHTML = signals.map(s => {
@@ -6679,7 +6688,13 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
       fetch('/send-notification', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ player_id: sub.onesignal_player_id, from_name: fromName })
+        const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
+      const _emoji = _rxnEmoji[reactionType] || reactionType;
+      body: JSON.stringify({
+          player_ids: [sub.onesignal_player_id],
+          title: fromName + ' reacted to your workout',
+          body:  'They gave you a ' + _emoji
+        })
       }).catch(() => {});
     }
   } catch (e) {}
@@ -6702,6 +6717,161 @@ function inviteFriend() {
   } else {
     navigator.clipboard?.writeText(text).then(() => showToast('Invite link copied!')).catch(() => {});
   }
+}
+
+// ── Workout Signals ────────────────────────────────────────────────────────
+
+// Called at the start of a fresh session — inserts a signal row and notifies friends.
+async function _sendWorkoutSignal(dayName) {
+  if (!state.supabaseUserId) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  const displayName = state.supabaseDisplayName || state.displayName || 'Someone';
+  try {
+    const { data, error } = await sb.from('workout_signals').insert({
+      user_id:      state.supabaseUserId,
+      workout_name: dayName,
+      started_at:   new Date().toISOString(),
+      signal_type:  'started'
+    }).select('id').single();
+    if (error || !data) return;
+    _currentSignalId = data.id;
+    _notifyFriends(
+      displayName + ' is training',
+      'They just started a workout. Go show up.',
+      _currentSignalId
+    );
+  } catch(e) {}
+}
+
+// Called when a session is saved — updates the signal row and notifies friends.
+async function _completeWorkoutSignal() {
+  const signalId = _currentSignalId;
+  _currentSignalId = null;
+  if (!signalId || !state.supabaseUserId) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  const displayName = state.supabaseDisplayName || state.displayName || 'Someone';
+  try {
+    await sb.from('workout_signals').update({
+      completed_at: new Date().toISOString(),
+      signal_type:  'completed'
+    }).eq('id', signalId).eq('user_id', state.supabaseUserId);
+    _notifyFriends(
+      displayName + ' finished training',
+      'They finished their workout. Go show up.',
+      signalId
+    );
+  } catch(e) {}
+}
+
+// Sends a push notification to all accepted friends via the Netlify edge function.
+// signalId is included so friends' notifications carry an action button that can
+// send a reaction back without opening the app (handled in sw.js).
+async function _notifyFriends(title, body, signalId) {
+  if (!state.supabaseUserId) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  try {
+    const { data: friendships } = await sb.from('friendships')
+      .select('requester_id, addressee_id')
+      .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
+      .eq('status', 'accepted');
+    if (!friendships?.length) return;
+
+    const friendIds = friendships.map(f =>
+      f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id
+    );
+
+    const { data: subs } = await sb.from('onesignal_subscriptions')
+      .select('onesignal_player_id')
+      .in('user_id', friendIds);
+    if (!subs?.length) return;
+
+    const playerIds = subs.map(s => s.onesignal_player_id);
+    const payload = { player_ids: playerIds, title, body };
+
+    // Include 👍 action button so friends can react from the lock screen.
+    // The service worker reads their userId from IndexedDB and POSTs to /record-reaction.
+    if (signalId) {
+      payload.buttons = [{ id: 'thumbs_up', text: '👍 Nice work' }];
+      payload.data    = { signal_id: signalId, to_user_id: state.supabaseUserId };
+    }
+
+    fetch('/send-notification', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+  } catch(e) {}
+}
+
+// ── OneSignal / Push Permission ────────────────────────────────────────────
+
+// Initialise OneSignal with our app ID (served via Netlify edge function at runtime).
+// Called once during app startup.
+function _initOneSignal() {
+  if (!window.ONESIGNAL_APP_ID) return;
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(function(OneSignal) {
+    OneSignal.init({
+      appId: window.ONESIGNAL_APP_ID,
+      // Point OneSignal at our existing service worker so its push subscription
+      // management coexists with our caching and notification-click handlers.
+      serviceWorkerPath: '/sw.js',
+      serviceWorkerParam: { scope: '/' },
+      // Don't auto-prompt — we prompt after sign-in via _requestNotificationPermission()
+      autoResubscribe: true,
+      notifyButton: { enable: false }
+    });
+  });
+}
+
+// Ask for push notification permission immediately after the user signs in.
+// Only asked once; if denied, social features continue without push.
+async function _requestNotificationPermission() {
+  if (state.notificationPermissionAsked) return;
+  if (!window.ONESIGNAL_APP_ID) return;
+  state.notificationPermissionAsked = true;
+  saveState();
+
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      const granted = await OneSignal.Notifications.requestPermission();
+      if (!granted || !state.supabaseUserId) return;
+
+      // Brief wait for the push subscription to register
+      await new Promise(function(r) { setTimeout(r, 1500); });
+
+      const playerId = OneSignal.User.PushSubscription.id;
+      if (!playerId) return;
+
+      const sb = _getSupabaseClient();
+      if (!sb) return;
+
+      const ua = (navigator.userAgent || '').toLowerCase();
+      const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
+
+      await sb.from('onesignal_subscriptions').upsert(
+        { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
+        { onConflict: 'user_id,platform' }
+      );
+    } catch(e) {}
+  });
+}
+
+// Store the signed-in user's Supabase ID in IndexedDB so the service worker
+// can read it when handling notification action button taps without opening the app.
+function _swStoreUserId(userId) {
+  try {
+    var req = indexedDB.open('ts-muscle-sw', 1);
+    req.onupgradeneeded = function(e) { e.target.result.createObjectStore('meta'); };
+    req.onsuccess = function(e) {
+      var db = e.target.result;
+      db.transaction('meta', 'readwrite').objectStore('meta').put(userId || null, 'userId');
+    };
+  } catch(e) {}
 }
 
 function openSocialModal() {
@@ -9292,6 +9462,8 @@ function startSession(dayId) {
   // Delay insights fetch by 4 s so it doesn't collide with the first exercise's
   // coaching cue API call in the same rate-limit window.
   setTimeout(_fetchLastSessionInsights, 4000);
+  // Send workout-start signal to Supabase and notify friends (fire-and-forget)
+  _sendWorkoutSignal(activeSession.dayName || activeSession.dayFocus || 'Workout');
 }
 
 // ============================================================
@@ -13109,6 +13281,8 @@ function finalizeEndSession(save) {
 
     if (!state.history) state.history = [];
     state.history.push(entry);
+    // Update workout signal to 'completed' and notify friends (fire-and-forget)
+    _completeWorkoutSignal();
     state.totalSessions++;
     state.inactivityPromptShown = false;
     state.gapReturnShown = false;
@@ -18656,6 +18830,8 @@ try {
   showInstallWelcome();
   // Reset supabaseDismissed each app load (it's session-scoped only)
   state.supabaseDismissed = false;
+  // Initialise OneSignal push SDK (app ID loaded from onesignal-config.js edge function)
+  _initOneSignal();
   // Check Supabase session (handles OAuth redirect and restores auth state)
   _checkSupabaseSession();
   // Update social notification dot (friend requests, new reactions)

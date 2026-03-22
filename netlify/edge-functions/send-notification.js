@@ -11,10 +11,20 @@ export default async function handler(req) {
   }
 
   try {
-    const { player_id, from_name } = await req.json();
-    if (!player_id) return new Response('Missing player_id', { status: 400 });
+    const { player_ids, title, body, buttons, data: notifData } = await req.json();
+    if (!player_ids?.length) return new Response('Missing player_ids', { status: 400 });
 
-    const fromName = (from_name || 'Someone').slice(0, 60);
+    const payload = {
+      app_id: appId,
+      include_player_ids: player_ids,
+      headings: { en: (title || 'T&S Muscle').slice(0, 80) },
+      contents: { en: (body || '').slice(0, 160) },
+    };
+
+    // Action buttons (e.g. 👍 Nice work on workout notifications)
+    if (buttons?.length) payload.buttons = buttons;
+    // Custom data passed through to the notification (e.g. signal_id, to_user_id)
+    if (notifData) payload.data = notifData;
 
     const resp = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
@@ -22,16 +32,11 @@ export default async function handler(req) {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${apiKey}`,
       },
-      body: JSON.stringify({
-        app_id: appId,
-        include_player_ids: [player_id],
-        headings: { en: 'T&S Muscle' },
-        contents: { en: `${fromName} reacted to your workout` },
-      }),
+      body: JSON.stringify(payload),
     });
 
-    const data = await resp.json();
-    return new Response(JSON.stringify(data), {
+    const result = await resp.json();
+    return new Response(JSON.stringify(result), {
       status: resp.ok ? 200 : 500,
       headers: { 'content-type': 'application/json' },
     });
