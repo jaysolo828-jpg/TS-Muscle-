@@ -11423,16 +11423,18 @@ function openAltModal(ex) {
     });
     dropdown.appendChild(altGrp);
   }
-  // Also show every exercise in the program so the user can swap to anything
+  // Also show exercises in the same muscle group so the user can swap to something relevant
+  const _exMuscle = MUSCLE_MAP[ex.id];
   const _seenNames = new Set([(ex.alts || []).map(a => a.name.toLowerCase()), ex.name.toLowerCase()].flat());
   const _progExercises = [];
   state.program.forEach(d => d.exercises.forEach(e => {
+    if (_exMuscle && MUSCLE_MAP[e.id] !== _exMuscle) return;
     const lc = e.name.toLowerCase();
     if (!_seenNames.has(lc)) { _seenNames.add(lc); _progExercises.push(e.name); }
   }));
   if (_progExercises.length > 0) {
     const progGrp = document.createElement('optgroup');
-    progGrp.label = 'FROM YOUR PROGRAM';
+    progGrp.label = _exMuscle ? _exMuscle.toUpperCase() + ' EXERCISES' : 'FROM YOUR PROGRAM';
     _progExercises.sort().forEach(name => {
       const opt = document.createElement('option');
       opt.value = 'prog:' + name;
