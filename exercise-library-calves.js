@@ -343,7 +343,7 @@ const CALF_EXERCISE_LIBRARY = [
       'Hold the top for one second and lower slowly — the band provides progressive resistance that peaks at your strongest point'
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
-    goldStar: true,
+    goldStar: false,
     similarityGroup: 'single-leg-calf-raise',
     alsoInProgram: false
   }
