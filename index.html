@@ -11525,6 +11525,7 @@ function resetExerciseToDefault() {
   else renderHome();
 }
 
+
 function onAltDropdownChange() {
   const dropdown = document.getElementById('alt-dropdown');
   const idx = dropdown.value;
@@ -17390,7 +17391,7 @@ function isWorkoutActive() {
 
 function showSWUpdateBanner() {
   if (document.getElementById('sw-update-banner')) return;
-  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v39')) return;
+  if (sessionStorage.getItem('ts_muscle_sw_dismissed_v41')) return;
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
   const banner = document.createElement('div');
@@ -17418,7 +17419,7 @@ function applySWUpdate() {
 
 function dismissSWBanner(e) {
   e.stopPropagation();
-  sessionStorage.setItem('ts_muscle_sw_dismissed_v39', '1');
+  sessionStorage.setItem('ts_muscle_sw_dismissed_v41', '1');
   const b = document.getElementById('sw-update-banner');
   if (b) b.remove();
 }
@@ -17533,9 +17534,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.3';
 
 const APP_CHANGELOG = {
+  '1.6.3': [
+    'Fix: "RECOMMENDED" and "FROM YOUR PROGRAM" headers in the swap modal now display as proper section headers with the app\'s red accent bar styling.',
+  ],
   '1.6.1': [
     'Fix: Search icon on the home screen now shows in brand red.',
     'Fix: Exercise names on the active workout screen now wrap cleanly on all screen sizes.',
