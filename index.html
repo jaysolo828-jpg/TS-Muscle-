@@ -2457,7 +2457,7 @@
 
 </style>
 <script src="config.js?v=20260318"></script>
-<script src="supabase-config.js?v=20260322"></script>
+<script>window.SUPABASE_URL = 'https://idiaozmcnckopwfisdpu.supabase.co'; window.SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_c8-lPLNrgTCPbtSxWVh_Xw_ybZ3s8KG';</script>
 <script src="onesignal-config.js?v=20260322"></script>
 <script src="supabase.min.js"></script>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -6231,31 +6231,10 @@ function supabaseShowEmailForm() {
   if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
 }
 
-async function _loadSupabaseConfig() {
-  // Dynamically re-fetch supabase-config.js if env vars didn't load
-  // (can happen when SW update interrupts the initial script load)
-  if (window.SUPABASE_URL) return;
-  try {
-    const res = await fetch('/supabase-config.js?t=' + Date.now(), { cache: 'no-store' });
-    const js  = await res.text();
-    // Parse values directly — avoids any eval/new Function/CSP issues
-    const urlMatch = js.match(/window\.SUPABASE_URL\s*=\s*'([^']*)'/);
-    const keyMatch = js.match(/window\.SUPABASE_PUBLISHABLE_KEY\s*=\s*'([^']*)'/);
-    if (urlMatch?.[1]) window.SUPABASE_URL = urlMatch[1];
-    if (keyMatch?.[1]) window.SUPABASE_PUBLISHABLE_KEY = keyMatch[1];
-  } catch(e) {}
-}
 
 async function supabaseSignInGoogle() {
-  // Re-fetch config if it didn't load during page init
-  await _loadSupabaseConfig();
   const sb = _getSupabaseClient();
-  if (!sb) {
-    const noUrl = !window.SUPABASE_URL;
-    const noSdk = typeof window.supabase === 'undefined';
-    showToast(noUrl ? 'Config missing: SUPABASE_URL not loaded' : noSdk ? 'Supabase SDK not loaded' : 'Social features unavailable');
-    return;
-  }
+  if (!sb) { showToast('Social features unavailable. Please try again.'); return; }
   try {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
