@@ -6237,9 +6237,9 @@ async function supabaseSignInGoogle() {
   try {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.href }
+      options: { redirectTo: window.location.origin + '/' }
     });
-    if (error) showToast('Sign in failed. Please try again.');
+    if (error) showToast(error.message || 'Sign in failed. Please try again.');
   } catch(e) {
     showToast('Sign in failed. Please try again.');
   }
