@@ -2,7 +2,7 @@
 // can manage its own push subscription lifecycle.
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'ts-muscle-v50';
+const CACHE_NAME = 'ts-muscle-v51';
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './manifest.json'];
 
 // On install: precache all app assets so the app works fully offline.
@@ -20,25 +20,17 @@ self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// On activate: delete old caches, claim all clients, then force-reload any
-// open pages so they immediately pick up the new index.html.
-// Only reloads on updates (old caches existed), not on first install.
+// On activate: claim all clients and delete old caches.
+// skipWaiting() above makes the new SW take over immediately, which fires
+// the controllerchange event in the page — the page's controllerchange
+// handler calls window.location.reload() to pick up new assets cleanly.
 self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys => {
-      const oldCaches = keys.filter(k => k !== CACHE_NAME);
-      const isUpdate  = oldCaches.length > 0;
-      return Promise.all([
-        self.clients.claim(),
-        Promise.all(oldCaches.map(k => caches.delete(k)))
-      ]).then(() => {
-        if (!isUpdate) return;
-        return self.clients.matchAll({ type: 'window' }).then(cs =>
-          Promise.all(cs.map(c => { try { return c.navigate(c.url); } catch(e) {} }))
-        );
-      });
-    })
-  );
+  e.waitUntil(Promise.all([
+    self.clients.claim(),
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  ]));
 });
 
 // Handle notification action button taps.
