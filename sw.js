@@ -31,14 +31,18 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
-  // config.js: always network, never cache. If network fails return empty key as fallback.
+  // config.js / supabase-config.js: always network, never cache.
+  // These are Netlify Edge Functions that inject env vars at runtime.
   if (e.request.url.includes('config.js')) {
+    const isSupabase = e.request.url.includes('supabase-config.js');
     e.respondWith(
       fetch(new Request(e.request, { cache: 'no-store' }))
-        .catch(() => new Response("window.ANTHROPIC_API_KEY = '';", {
-          status: 200,
-          headers: { 'content-type': 'application/javascript' }
-        }))
+        .catch(() => new Response(
+          isSupabase
+            ? "window.SUPABASE_URL = ''; window.SUPABASE_PUBLISHABLE_KEY = '';"
+            : "window.ANTHROPIC_API_KEY = '';",
+          { status: 200, headers: { 'content-type': 'application/javascript' } }
+        ))
     );
     return;
   }

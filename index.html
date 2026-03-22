@@ -2457,6 +2457,8 @@
 
 </style>
 <script src="config.js?v=20260318"></script>
+<script src="supabase-config.js?v=20260322"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <!-- SPLASH SCREEN -->
@@ -2559,6 +2561,24 @@
   <div class="week-tracker">
     <div class="week-label" id="week-tracker-label">Program Weeks</div>
     <div class="week-dots" id="week-dots"></div>
+  </div>
+
+  <!-- SUPABASE SOCIAL SIGN-IN PROMPT (hidden by default, shown via JS) -->
+  <div id="supabase-auth-card" style="display:none; margin-bottom:16px; border-radius:14px; background:#161414; border-left:3px solid #C0392B; padding:16px 16px 12px;">
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; color:var(--cream); letter-spacing:0.3px; line-height:1.5; margin-bottom:14px;">Connect with friends and never lose your data. Takes 30 seconds.</div>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+      <button onclick="supabaseSignInGoogle()" style="flex:1; background:#C0392B; border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px 8px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">SIGN IN WITH GOOGLE</button>
+      <button onclick="supabaseShowEmailForm()" style="flex:1; background:transparent; border:1.5px solid #C0392B; color:#C0392B; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px 8px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">USE EMAIL</button>
+    </div>
+    <!-- Inline email form (hidden until USE EMAIL is tapped) -->
+    <div id="supabase-email-form" style="display:none; margin-bottom:10px;">
+      <input id="supabase-email-input" type="email" placeholder="Email" autocomplete="email" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
+      <input id="supabase-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
+      <button onclick="supabaseSignInEmail()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">SIGN IN / CREATE ACCOUNT</button>
+    </div>
+    <div style="text-align:center;">
+      <button onclick="supabaseDismiss()" style="background:none; border:none; color:#666; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1px; cursor:pointer; padding:4px 8px; -webkit-tap-highlight-color:transparent;">SKIP FOR NOW</button>
+    </div>
   </div>
 
   <div class="section-title">YOUR <span>PROGRAM</span><span id="home-split-badge" style="margin-left:auto; font-size:11px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); color:var(--red-text); padding:4px 10px; border-radius:20px; letter-spacing:1.5px; font-weight:700; font-family:'Barlow Condensed',sans-serif;"></span></div>
@@ -5955,6 +5975,7 @@ let state = {
 };
 
 let activeSession = null;
+let _supabaseClient = null;         // Supabase JS client (initialized after config loads)
 let _lastRenderedDate = null;       // tracks the date string when renderHome() last ran
 let _midnightCheckInterval = null;  // 60-second interval to detect midnight rollover
 let pendingSwap = null;
@@ -6163,6 +6184,173 @@ function saveState() {
       showToast('Storage full. Oldest history trimmed to save space.', 'error');
     }
   }
+}
+
+// ============================================================
+// SUPABASE — Social Layer (auth + social features only)
+// Training data stays in localStorage — Supabase only handles
+// user accounts, friends, notifications, reactions, challenges.
+// ============================================================
+
+function _getSupabaseClient() {
+  if (_supabaseClient) return _supabaseClient;
+  const url = window.SUPABASE_URL || '';
+  const key = window.SUPABASE_PUBLISHABLE_KEY || '';
+  if (!url || !key || typeof window.supabase === 'undefined') return null;
+  _supabaseClient = window.supabase.createClient(url, key);
+  return _supabaseClient;
+}
+
+// Show/hide the auth card on the home screen
+function _updateSupabaseAuthCard() {
+  const card = document.getElementById('supabase-auth-card');
+  if (!card) return;
+  // Never show during an active workout session
+  if (activeSession) { card.style.display = 'none'; return; }
+  // Hide if already signed in
+  if (state.supabaseUserId) { card.style.display = 'none'; return; }
+  // Hide if dismissed this session
+  if (state.supabaseDismissed) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+}
+
+function supabaseDismiss() {
+  state.supabaseDismissed = true;
+  // Not saved to localStorage — only lasts this session
+  _updateSupabaseAuthCard();
+}
+
+function supabaseShowEmailForm() {
+  const form = document.getElementById('supabase-email-form');
+  if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function supabaseSignInGoogle() {
+  const sb = _getSupabaseClient();
+  if (!sb) { showToast('Social features unavailable. Try again later.'); return; }
+  try {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+    if (error) showToast('Sign in failed. Please try again.');
+  } catch(e) {
+    showToast('Sign in failed. Please try again.');
+  }
+}
+
+async function supabaseSignInEmail() {
+  const sb = _getSupabaseClient();
+  if (!sb) { showToast('Social features unavailable. Try again later.'); return; }
+  const email = (document.getElementById('supabase-email-input')?.value || '').trim();
+  const password = (document.getElementById('supabase-password-input')?.value || '');
+  if (!email || !password) { showToast('Enter your email and password.'); return; }
+  try {
+    // Try sign-in first, then sign-up if user doesn't exist
+    let result = await sb.auth.signInWithPassword({ email, password });
+    if (result.error && result.error.message && result.error.message.toLowerCase().includes('invalid')) {
+      result = await sb.auth.signUp({ email, password });
+    }
+    if (result.error) { showToast(result.error.message || 'Sign in failed.'); return; }
+    if (result.data?.user) {
+      await _onSupabaseSignIn(result.data.user);
+    } else {
+      showToast('Check your email to confirm your account.');
+    }
+  } catch(e) {
+    showToast('Sign in failed. Please try again.');
+  }
+}
+
+async function _onSupabaseSignIn(user) {
+  const sb = _getSupabaseClient();
+  if (!sb || !user) return;
+
+  // Persist user ID and display name
+  state.supabaseUserId = user.id;
+  const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || '';
+  state.supabaseDisplayName = rawName;
+  state.supabaseDismissed = false;
+  saveState();
+
+  // Check if user already has a row in public.users
+  const { data: existingUser } = await sb.from('users').select('id, username').eq('id', user.id).single();
+
+  if (!existingUser) {
+    // New user — upsert their profile (username will be set in the bottom sheet)
+    const tempUsername = 'user_' + user.id.replace(/-/g, '').slice(0, 12);
+    await sb.from('users').upsert({
+      id: user.id,
+      display_name: rawName || tempUsername,
+      username: tempUsername,
+      avatar_color: '#C0392B'
+    });
+    // Show username setup bottom sheet
+    _showUsernameSheet(user.id, rawName);
+  } else if (!existingUser.username || existingUser.username.startsWith('user_')) {
+    _showUsernameSheet(user.id, rawName);
+  } else {
+    _updateSupabaseAuthCard();
+    showToast("You're connected. Find friends in Settings.");
+  }
+}
+
+function _showUsernameSheet(userId, displayName) {
+  // Remove any existing sheet
+  const existing = document.getElementById('username-setup-sheet');
+  if (existing) existing.remove();
+
+  const sheet = document.createElement('div');
+  sheet.id = 'username-setup-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #C0392B;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">CHOOSE YOUR USERNAME</div>
+      <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);margin-bottom:18px;line-height:1.5;">Lowercase, no spaces, max 20 characters.</div>
+      <input id="username-sheet-input" type="text" placeholder="yourusername" maxlength="20"
+        style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:16px;padding:13px 14px;border-radius:10px;margin-bottom:16px;outline:none;"
+        oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+      <button onclick="_saveUsername('${userId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LOOKS GOOD</button>
+    </div>`;
+  document.body.appendChild(sheet);
+  setTimeout(() => { document.getElementById('username-sheet-input')?.focus(); }, 100);
+}
+
+async function _saveUsername(userId) {
+  const input = document.getElementById('username-sheet-input');
+  const username = (input?.value || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (!username || username.length < 2) { showToast('Pick a username (at least 2 characters).'); return; }
+
+  const sb = _getSupabaseClient();
+  if (!sb) { showToast('Could not save username. Try again.'); return; }
+
+  const { error } = await sb.from('users').update({ username }).eq('id', userId);
+  if (error) {
+    if (error.code === '23505') { showToast('That username is taken. Try another.'); return; }
+    showToast('Could not save username. Try again.');
+    return;
+  }
+
+  const sheet = document.getElementById('username-setup-sheet');
+  if (sheet) sheet.remove();
+  _updateSupabaseAuthCard();
+  showToast("You're connected. Find friends in Settings.");
+}
+
+// Handle OAuth redirect on page load (Google OAuth returns here)
+async function _checkSupabaseSession() {
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user && !state.supabaseUserId) {
+      await _onSupabaseSignIn(session.user);
+    } else if (session?.user) {
+      // Already have user ID, just update auth card visibility
+      state.supabaseUserId = session.user.id;
+      _updateSupabaseAuthCard();
+    }
+  } catch(e) {}
 }
 
 // ============================================================
@@ -7134,6 +7322,9 @@ function renderHome() {
     `;
     container.appendChild(_wcMsg);
   }
+
+  // Social auth card visibility
+  _updateSupabaseAuthCard();
 
 }
 
@@ -18057,6 +18248,10 @@ try {
   }
   // Show the install welcome prompt to any non-installed visitor
   showInstallWelcome();
+  // Reset supabaseDismissed each app load (it's session-scoped only)
+  state.supabaseDismissed = false;
+  // Check Supabase session (handles OAuth redirect and restores auth state)
+  _checkSupabaseSession();
   // Hide install row if already running as installed PWA
   if (_isInstalled) {
     const row = document.getElementById('install-app-row');

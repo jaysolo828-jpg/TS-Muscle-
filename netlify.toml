@@ -4,3 +4,7 @@
 [[edge_functions]]
   function = "config"
   path = "/config.js"
+
+[[edge_functions]]
+  function = "supabase-config"
+  path = "/supabase-config.js"
