@@ -2579,7 +2579,10 @@
     <!-- Inline email form (hidden until USE EMAIL is tapped) -->
     <div id="supabase-email-form" style="display:none; margin-bottom:10px;">
       <input id="supabase-email-input" type="email" placeholder="Email" autocomplete="email" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
-      <input id="supabase-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
+      <div style="position:relative;">
+        <input id="supabase-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 44px 11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
+        <button type="button" onclick="var i=document.getElementById('supabase-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:10px;top:50%;transform:translateY(-60%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
+      </div>
       <button onclick="supabaseSignInEmail()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">SIGN IN / CREATE ACCOUNT</button>
       <button onclick="supabaseShowEmailForm()" style="width:100%; background:none; border:none; color:#666; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; padding:8px; margin-top:2px; cursor:pointer; -webkit-tap-highlight-color:transparent;">CANCEL</button>
     </div>
@@ -6268,7 +6271,10 @@ function _updateSettingsAccountSection() {
         </div>
         <div id="settings-email-form" style="display:none;margin-top:10px;">
           <input id="settings-email-input" type="email" placeholder="Email" autocomplete="email" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:14px;padding:11px 12px;border-radius:8px;margin-bottom:8px;outline:none;">
-          <input id="settings-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:14px;padding:11px 12px;border-radius:8px;margin-bottom:8px;outline:none;">
+          <div style="position:relative;">
+            <input id="settings-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:14px;padding:11px 44px 11px 12px;border-radius:8px;margin-bottom:8px;outline:none;">
+            <button type="button" onclick="var i=document.getElementById('settings-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:10px;top:50%;transform:translateY(-60%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
+          </div>
           <button onclick="supabaseSignInEmailFromSettings()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SIGN IN / CREATE ACCOUNT</button>
           <button onclick="supabaseShowEmailForm('settings')" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;padding:8px;margin-top:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
         </div>
