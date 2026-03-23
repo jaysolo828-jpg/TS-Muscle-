@@ -5212,6 +5212,11 @@ const UNILATERAL_EXERCISES = new Set([
 function getEffectiveExperienceLevel() {
   const raw = state.profile?.experience;
   const level = (raw === 'beginner' || raw === 'intermediate' || raw === 'advanced') ? raw : 'intermediate';
+  // Graceful rollout: existing advanced users who are mid-cycle get intermediate
+  // behavior until their next cycle starts (flag stamped at cycle rollover).
+  // Beginners get the new scaling immediately (no existing deep-cycle beginners).
+  // New users and users at a cycle boundary get full scaling via expScalingActive.
+  if (!state.expScalingActive && level === 'advanced') return 'intermediate';
   return level;
 }
 
@@ -7647,8 +7652,9 @@ function setExperienceLevel(level) {
   const isNewUser = _isNewUser();
   const isBetweenCycles = (state.weekCount || 1) === 1;
   if (isNewUser || isBetweenCycles) {
-    // Apply immediately
+    // Apply immediately — at a clean cycle boundary, full scaling is safe
     state.profile.experience = level;
+    state.expScalingActive = true;
     delete state.pendingExperienceLevel;
   } else {
     // Mid-cycle: store as pending, apply at next cycle rollover
@@ -14257,6 +14263,11 @@ function finalizeEndSession(save) {
           state.profile.experience = state.pendingExperienceLevel;
           delete state.pendingExperienceLevel;
         }
+        // ── Activate expanded experience-level scaling ───────────────
+        // Existing users get this flag at their first cycle rollover so the
+        // new beginner/advanced weighting kicks in on a clean cycle boundary,
+        // not mid-cycle with weights calibrated under the old rules.
+        if (!state.expScalingActive) state.expScalingActive = true;
         state.cycleCount = (state.cycleCount || 1) + 1;
         // Drop "this cycle" bonus exercises that have expired
         state.program.forEach(day => {
@@ -21499,6 +21510,7 @@ function buildOnboardingSummary() {
   const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body' };
 
   state.profile = { name, goal, experience: exp, bodyweight: parseFloat(document.getElementById('ob-bodyweight').value) || 0 };
+  state.expScalingActive = true; // new users get full experience-level scaling immediately
   state.trainingDaysPerWeek = trainingDays;
   state.splitType = splitType;
   state.testWeekComplete = false;
