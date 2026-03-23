@@ -6259,6 +6259,12 @@ function supabaseDismiss() {
   state.supabaseDismissed = true;
   // Not saved to localStorage — only lasts this session
   _updateSupabaseAuthCard();
+  const toast = document.getElementById('toast');
+  if (toast) {
+    toast.textContent = 'You can always join later — Settings → Account';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 4500);
+  }
 }
 
 function toggleSocialFeatures() {
@@ -18503,11 +18509,9 @@ function showSWUpdateBanner() {
   banner.id = 'sw-update-banner';
   banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:100000;animation:slideDownBanner 0.45s cubic-bezier(0.175,0.885,0.32,1.1);';
   banner.innerHTML = `
-    <div style="background:#1a1a1a;border-bottom:1px solid rgba(255,255,255,0.08);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-      <div onclick="applySWUpdate()" style="flex:1;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(255,255,255,0.85);letter-spacing:0.3px;">
-        A new update is available. <span style="text-decoration:underline;">Tap to refresh.</span>
-      </div>
-      <button onclick="dismissSWBanner(event)" aria-label="Dismiss" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;line-height:1;padding:4px 2px;cursor:pointer;">&times;</button>
+    <div onclick="applySWUpdate()" style="background:#C0392B;padding:16px;cursor:pointer;text-align:center;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:#fff;letter-spacing:2px;margin-bottom:2px;">NEW: CONNECT WITH FRIENDS</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(255,255,255,0.85);letter-spacing:0.5px;">See who's working out, hype each other up &mdash; <span style="text-decoration:underline;font-weight:700;">TAP TO UPDATE</span></div>
     </div>`;
   document.body.prepend(banner);
 }
