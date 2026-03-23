@@ -6661,7 +6661,7 @@ async function _renderFriendsSection() {
   }
 
   container.innerHTML = `
-    <input type="text" id="friend-search-input" placeholder="Search by username"
+    <input type="text" id="friend-search-input" placeholder="Search by username or name"
       style="width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:14px;outline:none;-webkit-appearance:none;margin-bottom:4px;"
       oninput="_friendsSearch(this.value)">
     <div id="friend-search-results" style="margin-bottom:12px;"></div>
@@ -6699,7 +6699,7 @@ async function _doFriendSearch(query) {
 
   const { data } = await sb.from('users')
     .select('id, display_name, username')
-    .ilike('username', '%' + query + '%')
+    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
     .neq('id', state.supabaseUserId)
     .limit(8);
 
