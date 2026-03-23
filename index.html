@@ -1358,7 +1358,7 @@
     -webkit-user-select: none;
     transition: border-color 0.15s, background 0.15s;
   }
-  .bonus-persist-btn:active { background: rgba(204,32,39,0.08); }
+  .bonus-persist-btn:active { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); transform: scale(0.98); }
   .bonus-persist-btn:last-child { margin-bottom: 0; }
 
   /* HISTORY SCREEN */
@@ -11025,6 +11025,7 @@ function renderBonusExercises() {
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;">${bonus.sets.length} set${bonus.sets.length !== 1 ? 's' : ''} · BONUS</div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0;">
+          ${bonus.sets.length > 1 ? `<button class="swap-btn" onclick="removeBonusSet('${bonus.id}')" title="Remove last set">− SET</button>` : ''}
           <button class="swap-btn" onclick="addBonusSet('${bonus.id}')">+ SET</button>
           <button class="swap-btn" onclick="removeBonusExercise('${bonus.id}')" style="color:#CC2027;border-color:rgba(204,32,39,0.4);" title="Remove this bonus exercise">✕</button>
         </div>
@@ -11062,6 +11063,15 @@ function addBonusSet(bonusId) {
   if (!bonus) return;
   bonus.sets.push({ weight: '', reps: '', rpe: '', done: false });
   renderBonusExercises();
+}
+
+function removeBonusSet(bonusId) {
+  if (!activeSession?.bonusExercises) return;
+  const bonus = activeSession.bonusExercises.find(b => b.id === bonusId);
+  if (!bonus || bonus.sets.length <= 1) return;
+  bonus.sets.pop();
+  renderBonusExercises();
+  updateSessionProgress();
 }
 
 function removeBonusExercise(bonusId) {
