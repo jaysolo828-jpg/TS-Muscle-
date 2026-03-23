@@ -6320,6 +6320,14 @@ function _updateSettingsAccountSection() {
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Change Username</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
+        <div class="settings-item" style="cursor:pointer;" onclick="document.getElementById('avatar-color-input').click()">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div id="avatar-color-preview" style="width:22px;height:22px;border-radius:50%;background:${state.supabaseAvatarColor||'#C0392B'};flex-shrink:0;border:2px solid #444;"></div>
+            <div class="settings-label" style="color:var(--gray);font-size:14px;">Profile Color</div>
+          </div>
+          <input id="avatar-color-input" type="color" value="${state.supabaseAvatarColor||'#C0392B'}" style="position:absolute;opacity:0;width:0;height:0;" oninput="_onAvatarColorChange(this.value)" onchange="_saveAvatarColor(this.value)">
+          <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
         <div class="settings-item" onclick="supabaseChangeEmail()">
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Change Email</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -6332,11 +6340,11 @@ function _updateSettingsAccountSection() {
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Sign Out</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
-      </div>
         <div class="settings-item" onclick="supabaseDeleteAccount()">
           <div><div class="settings-label" style="color:#e74c3c;font-size:14px;">Delete Account</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="#e74c3c" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
+      </div>
       </div>`;
   } else {
     el.innerHTML = `
@@ -6357,6 +6365,7 @@ async function supabaseSignOut() {
   if (sb) { try { await sb.auth.signOut(); } catch(e) {} }
   state.supabaseUserId = null;
   state.supabaseDisplayName = null;
+  state.supabaseAvatarColor = null;
   _supabaseClient = null;
   _cachedJwt = null;
   if (_socialPollInterval) { clearInterval(_socialPollInterval); _socialPollInterval = null; }
@@ -6534,6 +6543,7 @@ async function _onSupabaseSignIn(user) {
   state.supabaseUserId = user.id;
   const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || '';
   state.supabaseDisplayName = rawName;
+  if (!state.supabaseAvatarColor) state.supabaseAvatarColor = '#C0392B';
   state.supabaseDismissed = false;
 
   // If onboarding hasn't been completed in this browser context, skip it —
@@ -6549,7 +6559,8 @@ async function _onSupabaseSignIn(user) {
   saveState();
 
   // Check if user already has a row in public.users
-  const { data: existingUser } = await sb.from('users').select('id, username').eq('id', user.id).single();
+  const { data: existingUser } = await sb.from('users').select('id, username, avatar_color').eq('id', user.id).single();
+  if (existingUser?.avatar_color) { state.supabaseAvatarColor = existingUser.avatar_color; saveState(); }
 
   if (!existingUser) {
     // New user — upsert their profile (username will be set in the bottom sheet)
@@ -6766,6 +6777,23 @@ async function _getJwt() {
   return null;
 }
 
+// Live preview while dragging the color wheel
+function _onAvatarColorChange(hex) {
+  const preview = document.getElementById('avatar-color-preview');
+  if (preview) preview.style.background = hex;
+}
+
+// Persist chosen color to state + Supabase on final pick
+async function _saveAvatarColor(hex) {
+  state.supabaseAvatarColor = hex;
+  saveState();
+  const preview = document.getElementById('avatar-color-preview');
+  if (preview) preview.style.background = hex;
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  await sb.from('users').update({ avatar_color: hex }).eq('id', state.supabaseUserId);
+}
+
 function _showSocialSetupPrompt() {
   // Only show if: onboarding done, not signed in, social not disabled, not already dismissed this session
   if (!state.onboardingComplete) return;
@@ -6820,8 +6848,24 @@ function _socialSetupLater() {
 // FRIENDS — social friend system
 // ============================================================
 
-const _friendCache = {};       // userId -> { display_name, username, last_active }
+const _friendCache = {};       // userId -> { display_name, username, last_active, avatar_color }
 let _friendSearchTimer = null; // debounce handle for username search
+
+// Returns true if a hex color is light enough to need black text
+function _isLightColor(hex) {
+  const c = hex.replace('#','');
+  const r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
+  return (r*299 + g*587 + b*114) / 1000 > 128;
+}
+
+// Renders a 36px avatar circle with correct letter color
+function _avatarHtml(displayName, avatarColor, size) {
+  size = size || 36;
+  const color = avatarColor || '#C0392B';
+  const letter = (displayName || '?').charAt(0).toUpperCase();
+  const textColor = _isLightColor(color) ? '#111' : '#fff';
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:${Math.round(size*0.5)}px;color:${textColor};">${escapeHtml(letter)}</div>`;
+}
 let _currentSignalId   = null; // UUID of the active workout signal row in Supabase
 let _startNotifyTimer  = null; // handle for the 9-minute delayed start notification
 
@@ -6872,7 +6916,7 @@ async function _doFriendSearch(query) {
   if (!sb) { results.innerHTML = ''; return; }
 
   const { data, error } = await sb.from('users')
-    .select('id, display_name, username')
+    .select('id, display_name, username, avatar_color')
     .ilike('username', `%${query}%`)
     .neq('id', state.supabaseUserId)
     .limit(8);
@@ -6889,7 +6933,8 @@ async function _doFriendSearch(query) {
   data.forEach(u => { _friendCache[u.id] = u; });
   results.innerHTML = data.map(u =>
     `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;">
-      <div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${_avatarHtml(u.display_name, u.avatar_color, 32)}
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);">@${escapeHtml(u.username || u.display_name)}</div>
       </div>
       <button onclick="_sendFriendRequest('${u.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">ADD FRIEND</button>
@@ -6938,7 +6983,7 @@ async function _loadPendingRequests() {
   if (!rows || rows.length === 0) { section.style.display = 'none'; return; }
 
   const ids = rows.map(r => r.requester_id);
-  const { data: users } = await sb.from('users').select('id, display_name, username').in('id', ids);
+  const { data: users } = await sb.from('users').select('id, display_name, username, avatar_color').in('id', ids);
   const uMap = {};
   (users || []).forEach(u => { uMap[u.id] = u; });
 
@@ -6946,8 +6991,11 @@ async function _loadPendingRequests() {
   list.innerHTML = rows.map(f => {
     const u = uMap[f.requester_id] || {};
     return `<div class="friends-request-item" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;">
-        <div style="font-size:14px;color:var(--cream);">@${escapeHtml(u.username || u.display_name || 'Unknown')}</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${_avatarHtml(u.display_name, u.avatar_color, 32)}
+        <div style="font-family:'Barlow Condensed',sans-serif;">
+          <div style="font-size:14px;color:var(--cream);">@${escapeHtml(u.username || u.display_name || 'Unknown')}</div>
+        </div>
       </div>
       <div style="display:flex;gap:6px;">
         <button onclick="_acceptFriendRequest('${f.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 12px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:44px;">ACCEPT</button>
@@ -7017,7 +7065,7 @@ async function _loadFriendsList() {
   }
 
   const friendIds = rows.map(f => f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id);
-  const { data: users } = await sb.from('users').select('id, display_name, username, last_active').in('id', friendIds);
+  const { data: users } = await sb.from('users').select('id, display_name, username, last_active, avatar_color').in('id', friendIds);
 
   if (!users || users.length === 0) {
     list.innerHTML = '<div style="padding:8px 0;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);">No friends yet.</div>';
@@ -7031,12 +7079,11 @@ async function _loadFriendsList() {
     const lastTs = u.last_active ? new Date(u.last_active).getTime() : 0;
     const recentlyActive = lastTs > 0 && (now - lastTs) < 86400000;
     const lastText = lastTs ? _timeAgo(lastTs) : 'Not recently active';
-    const initial = (u.display_name || '?').charAt(0).toUpperCase();
     return `<div onclick="_openFriendActivity('${u.id}')"
       style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="position:relative;flex-shrink:0;">
-          <div style="width:36px;height:36px;border-radius:50%;background:#C0392B;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:18px;color:#fff;">${escapeHtml(initial)}</div>
+          ${_avatarHtml(u.display_name, u.avatar_color)}
           ${recentlyActive ? '<div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#2ecc71;border:2px solid #1a1a1a;"></div>' : ''}
         </div>
         <div>
