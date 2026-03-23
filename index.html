@@ -18919,6 +18919,11 @@ try {
   checkPauseAutoExpiry();
   updateStreak();
   renderHome();
+  // If this is an OAuth return (Google sign-in redirect), skip onboarding before it renders.
+  if (!state.onboardingComplete && window.location.hash && window.location.hash.includes('access_token')) {
+    state.onboardingComplete = true;
+    saveState();
+  }
   checkOnboarding();
   updatePauseSettingsLabel();
   updateGoalSettingsSub();
