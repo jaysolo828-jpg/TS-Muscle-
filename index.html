@@ -19106,9 +19106,15 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.6.9';
+const APP_VERSION = '1.7.0';
 
 const APP_CHANGELOG = {
+  '1.7.0': [
+    'New: Add Bonus Exercise now shows all 257 exercises from the full library, grouped by muscle group — not just 37',
+    'New: Green checkmark on exercises already in your program (library + bonus picker)',
+    'New: Superset pairs now stay together across sessions and can\'t be separated by reordering',
+    'Fix: Rep placeholders now match your previous session (consistent with PREV column)',
+  ],
   '1.6.9': [
     'Fix: Critical bug where the app appeared broken after the social features update — buttons unresponsive and history missing. All data is intact and fully restored.',
   ],
@@ -23727,6 +23733,7 @@ function closeExerciseLibrary() {
 // ── Render ────────────────────────────────────────────────────────────────
 function renderLibrary() {
   if (typeof EXERCISE_LIBRARY === 'undefined') return;
+  _libInProgramSet = null; // rebuild in-program cache each render
 
   // Render filter chips
   const chipsEl = document.getElementById('lib-chips');
@@ -23787,10 +23794,22 @@ function renderLibrary() {
   listEl.innerHTML = html;
 }
 
+// Cached set of exercise IDs in the user's program (rebuilt per render pass)
+var _libInProgramSet = null;
+function _libGetInProgramSet() {
+  if (_libInProgramSet) return _libInProgramSet;
+  _libInProgramSet = new Set();
+  (state.program || []).forEach(function(d) {
+    (d.exercises || []).forEach(function(e) { _libInProgramSet.add(e.id); });
+  });
+  return _libInProgramSet;
+}
+
 function renderLibCard(ex) {
   const isExpanded = libExpandedId === ex.id;
   const isFaved = !!(state.libFavorites && state.libFavorites[ex.id]);
   const color = LIB_MUSCLE_COLORS[ex.muscleGroup] || '#888';
+  const inProgram = _libGetInProgramSet().has(ex.id);
 
   // Determine action buttons
   const showSwapActive = !!(activeSession && libContextExId);
@@ -23837,7 +23856,7 @@ function renderLibCard(ex) {
   return '<div class="lib-card' + expandedClass + '" id="lib-card-' + ex.id + '">' +
     '<div class="lib-card-summary" onclick="toggleLibCard(\'' + ex.id + '\')">' +
       '<div class="lib-card-info">' +
-        '<div class="lib-card-name">' + _escHtml(ex.name) + (ex.goldStar ? ' <span class="lib-star-badge" title="Top pick">⭐</span>' : '') + '</div>' +
+        '<div class="lib-card-name">' + _escHtml(ex.name) + (ex.goldStar ? ' <span class="lib-star-badge" title="Top pick">⭐</span>' : '') + (inProgram ? ' <span style="color:#2ecc71;font-size:13px;" title="In your program">&#10003;</span>' : '') + '</div>' +
         '<div class="lib-card-meta">' +
           '<span class="lib-muscle-pill" style="color:' + color + ';border-color:' + color + '44;background:' + color + '18;">' + ex.muscleGroup.toUpperCase() + '</span>' +
           '<span class="lib-equip-pill">' + _escHtml(ex.equipment) + '</span>' +
