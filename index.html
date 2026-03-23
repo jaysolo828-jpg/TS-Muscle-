@@ -6565,16 +6565,25 @@ async function _saveUsername(userId) {
   const sb = _getSupabaseClient();
   if (!sb) { showToast('Could not save username. Try again.'); return; }
 
-  const { error } = await sb.from('users').update({ username }).eq('id', userId);
+  // Always use the live session user ID — never trust the passed parameter alone
+  const { data: { user } } = await sb.auth.getUser();
+  const liveId = user?.id || userId;
+  if (!liveId) { showToast('Not signed in. Please sign in again.'); return; }
+
+  const { error } = await sb.from('users').update({ username }).eq('id', liveId);
   if (error) {
     if (error.code === '23505') { showToast('That username is taken. Try another.'); return; }
     showToast('Error: ' + (error.message || error.code || 'Could not save username.'));
     return;
   }
 
+  // Verify it actually saved
+  const { data: check } = await sb.from('users').select('username').eq('id', liveId).single();
+  if (!check?.username) { showToast('Save failed. Please try again.'); return; }
+
   const sheet = document.getElementById('username-setup-sheet');
   if (sheet) sheet.remove();
-  _swStoreUserId(state.supabaseUserId);
+  _swStoreUserId(liveId);
   _requestNotificationPermission();
   showToast("You're all set! Welcome to the crew.");
   setTimeout(() => location.reload(), 1200);
