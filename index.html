@@ -11009,10 +11009,19 @@ function toggleSetDone(exId, setIndex) {
         }
         const _nextRepsInput = document.getElementById(`reps-input-${exId}-${_nextIdx}`);
         if (_nextRepsInput && !_nextSet.reps) {
-          const _nd = state.program.find(d => d.id === activeSession.dayId);
-          const _ne = _nd?.exercises.find(e => e.id === exId);
-          const _nTarget = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ne?.reps);
-          _nextRepsInput.placeholder = _nTarget.split(/[–\-]/)[0];
+          // Restore placeholder to previous session reps (consistent with PREV column)
+          const _prevData = getLastSetData(exId, _nextIdx);
+          if (_prevData?.reps) {
+            _nextRepsInput.placeholder = String(_prevData.reps);
+          } else {
+            const _nd = state.program.find(d => d.id === activeSession.dayId);
+            const _ne = _nd?.exercises.find(e => e.id === exId);
+            const _nTarget = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ne?.reps);
+            _nextRepsInput.placeholder = _nTarget.split(/[–\-]/)[0];
+          }
+          // Hide intel hint since suggestion was cleared
+          const _intelHint = document.getElementById(`intel-hint-${exId}-${_nextIdx}`);
+          if (_intelHint) _intelHint.style.display = 'none';
         }
       }
     }
