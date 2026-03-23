@@ -6323,6 +6323,7 @@ function _updateSettingsAccountSection() {
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Sign Out</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
+      </div>
         <div class="settings-item" onclick="supabaseDeleteAccount()">
           <div><div class="settings-label" style="color:#e74c3c;font-size:14px;">Delete Account</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="#e74c3c" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -6399,12 +6400,34 @@ async function _saveNewPassword() {
   showToast('Password updated.');
 }
 
-async function supabaseDeleteAccount() {
-  if (!confirm('Delete your T&S Muscle account? This removes your username and social profile. Your workout data stays on this device.')) return;
+function supabaseDeleteAccount() {
+  const existing = document.getElementById('delete-account-sheet');
+  if (existing) { existing.remove(); return; }
+  const sheet = document.createElement('div');
+  sheet.id = 'delete-account-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.7);';
+  sheet.innerHTML = `
+    <div style="width:100%;max-width:480px;background:#111;border-radius:20px 20px 0 0;padding:24px 20px 40px;position:relative;overflow:hidden;">
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,57,43,0.09) 0%,transparent 60%);pointer-events:none;"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.3);border-radius:10px;padding:8px;">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="#e74c3c" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:#e74c3c;">DELETE ACCOUNT</div>
+      </div>
+      <div style="font-family:'Barlow',sans-serif;font-size:14px;color:#aaa;line-height:1.6;margin-bottom:22px;">This removes your username and social profile. Your workout data stays on this device.</div>
+      <button onclick="_confirmDeleteAccount()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;padding:15px;border-radius:12px;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;">CONFIRM DELETE</button>
+      <button onclick="document.getElementById('delete-account-sheet')?.remove()" style="width:100%;background:transparent;border:1px solid #333;color:#888;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;padding:13px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
+    </div>`;
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+}
+
+async function _confirmDeleteAccount() {
+  document.getElementById('delete-account-sheet')?.remove();
   const sb = _getSupabaseClient();
   if (!sb) return;
   try {
-    // Delete profile row — auth account deletion requires server-side admin access
     await sb.from('users').delete().eq('id', state.supabaseUserId);
     await sb.auth.signOut();
     state.supabaseUserId = null;
@@ -6810,9 +6833,16 @@ async function _sendFriendRequest(addresseeId, btn) {
   const sb = _getSupabaseClient();
   if (!sb) return;
   if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  const myId = state.supabaseUserId;
+
+  // Remove any stale declined/pending row in either direction before inserting
+  await Promise.all([
+    sb.from('friendships').delete().eq('requester_id', myId).eq('addressee_id', addresseeId).neq('status', 'accepted'),
+    sb.from('friendships').delete().eq('requester_id', addresseeId).eq('addressee_id', myId).neq('status', 'accepted'),
+  ]);
 
   const { error } = await sb.from('friendships').insert({
-    requester_id: state.supabaseUserId,
+    requester_id: myId,
     addressee_id: addresseeId,
     status: 'pending'
   });
@@ -6869,10 +6899,24 @@ async function _acceptFriendRequest(friendshipId, btn) {
 }
 
 async function _declineFriendRequest(friendshipId, btn) {
-  const sb = _getSupabaseClient();
-  if (!sb) return;
   if (btn) btn.disabled = true;
-  await sb.from('friendships').delete().eq('id', friendshipId);
+  const supabaseUrl = window.SUPABASE_URL || '';
+  const anonKey    = window.SUPABASE_PUBLISHABLE_KEY || '';
+  let jwt = _cachedJwt || null;
+  if (!jwt) {
+    try { const s = await _getSupabaseClient()?.auth.getSession(); if (s?.data?.session?.access_token) jwt = s.data.session.access_token; } catch(_) {}
+  }
+  if (!jwt) {
+    try { for (const k of Object.keys(localStorage)) { if (k.startsWith('sb-') && k.endsWith('-auth-token')) { const d = JSON.parse(localStorage.getItem(k)||'{}'); if (d?.access_token) { jwt = d.access_token; break; } } } } catch(_) {}
+  }
+  if (jwt && supabaseUrl) {
+    await fetch(`${supabaseUrl}/rest/v1/friendships?id=eq.${friendshipId}`, {
+      method: 'DELETE',
+      headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' },
+    });
+  } else {
+    await _getSupabaseClient()?.from('friendships').delete().eq('id', friendshipId);
+  }
   const row = btn?.closest('.friends-request-item');
   if (row) row.remove();
   const list = document.getElementById('friends-pending-list');
