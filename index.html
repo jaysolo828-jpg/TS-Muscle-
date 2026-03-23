@@ -6599,7 +6599,7 @@ async function _saveUsername(userId) {
   // POST to Netlify edge function — uses service role key server-side, bypasses RLS entirely
   let resp;
   try {
-    resp = await fetch('/save-username', {
+    resp = await fetch('/.netlify/functions/save-username', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ username, jwt }),
