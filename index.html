@@ -2570,24 +2570,38 @@
   </div>
 
   <!-- SUPABASE SOCIAL SIGN-IN PROMPT (hidden by default, shown via JS) -->
-  <div id="supabase-auth-card" style="display:none; margin-bottom:16px; border-radius:14px; background:#161414; border-left:3px solid #C0392B; padding:16px 16px 12px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; color:var(--cream); letter-spacing:0.3px; line-height:1.5; margin-bottom:14px;">Connect with friends and never lose your data. Takes 30 seconds.</div>
-    <div style="display:flex; gap:10px; margin-bottom:10px;">
-      <button onclick="supabaseSignInGoogle()" style="flex:1; background:#C0392B; border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px 8px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">SIGN IN WITH GOOGLE</button>
-      <button onclick="supabaseShowEmailForm()" style="flex:1; background:transparent; border:1.5px solid #C0392B; color:#C0392B; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px 8px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">USE EMAIL</button>
+  <div id="supabase-auth-card" style="display:none; margin-bottom:20px; border-radius:16px; background:#161414; border:1px solid #2a2a2a; overflow:hidden;">
+    <!-- Header band -->
+    <div style="background:linear-gradient(135deg,#1a0a0a 0%,#2a0e0e 100%); border-bottom:1px solid #2a2a2a; padding:18px 18px 14px;">
+      <div style="font-family:'Bebas Neue',cursive; font-size:20px; color:#fff; letter-spacing:2.5px; margin-bottom:4px;">JOIN THE CREW</div>
+      <div style="font-family:'Barlow',sans-serif; font-size:13px; color:#aaa; line-height:1.5;">Create a free account to unlock social features and keep your data safe.</div>
     </div>
-    <!-- Inline email form (hidden until USE EMAIL is tapped) -->
-    <div id="supabase-email-form" style="display:none; margin-bottom:10px;">
-      <input id="supabase-email-input" type="email" placeholder="Email" autocomplete="email" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
-      <div style="position:relative;">
-        <input id="supabase-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 44px 11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
-        <button type="button" onclick="var i=document.getElementById('supabase-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:10px;top:50%;transform:translateY(-60%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
+    <!-- Benefits -->
+    <div style="display:flex; gap:0; border-bottom:1px solid #1e1e1e;">
+      <div style="flex:1; padding:12px 10px; text-align:center; border-right:1px solid #1e1e1e;">
+        <div style="font-size:18px; margin-bottom:3px;">🏋️</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#aaa; letter-spacing:0.5px; line-height:1.3;">See friends<br>working out</div>
       </div>
-      <button onclick="supabaseSignInEmail()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">SIGN IN / CREATE ACCOUNT</button>
-      <button onclick="supabaseShowEmailForm()" style="width:100%; background:none; border:none; color:#666; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; padding:8px; margin-top:2px; cursor:pointer; -webkit-tap-highlight-color:transparent;">CANCEL</button>
+      <div style="flex:1; padding:12px 10px; text-align:center; border-right:1px solid #1e1e1e;">
+        <div style="font-size:18px; margin-bottom:3px;">🔥</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#aaa; letter-spacing:0.5px; line-height:1.3;">Hype each<br>other up</div>
+      </div>
+      <div style="flex:1; padding:12px 10px; text-align:center;">
+        <div style="font-size:18px; margin-bottom:3px;">☁️</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#aaa; letter-spacing:0.5px; line-height:1.3;">Never lose<br>your data</div>
+      </div>
     </div>
-    <div style="text-align:center;">
-      <button onclick="supabaseDismiss()" style="background:none; border:none; color:#666; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1px; cursor:pointer; padding:4px 8px; -webkit-tap-highlight-color:transparent;">SKIP FOR NOW</button>
+    <!-- Form -->
+    <div style="padding:16px 18px 14px;">
+      <input id="supabase-email-input" type="email" placeholder="Email address" autocomplete="email" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #2e2e2e; color:var(--cream); font-family:'Barlow',sans-serif; font-size:15px; padding:13px 14px; border-radius:10px; margin-bottom:10px; outline:none;">
+      <div style="position:relative; margin-bottom:14px;">
+        <input id="supabase-password-input" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #2e2e2e; color:var(--cream); font-family:'Barlow',sans-serif; font-size:15px; padding:13px 48px 13px 14px; border-radius:10px; outline:none;">
+        <button type="button" onclick="var i=document.getElementById('supabase-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
+      </div>
+      <button onclick="supabaseSignInEmail()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; padding:14px; border-radius:12px; cursor:pointer; -webkit-tap-highlight-color:transparent;">CREATE ACCOUNT / SIGN IN</button>
+      <div style="text-align:center; margin-top:12px;">
+        <button onclick="supabaseDismiss()" style="background:none; border:none; color:#555; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; cursor:pointer; padding:4px 8px; -webkit-tap-highlight-color:transparent;">NOT RIGHT NOW</button>
+      </div>
     </div>
   </div>
 
@@ -6249,7 +6263,7 @@ function _updateSettingsAccountSection() {
         </div>
         <div class="settings-arrow" id="account-drawer-arrow" style="transition:transform 0.2s;"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
-      <div id="account-manage-drawer" style="display:none;border-left:2px solid #C0392B;margin:0 0 4px 16px;padding-left:4px;">
+      <div id="account-manage-drawer" style="display:none;border-left:2px solid #C0392B;margin:0 0 4px 0;padding-left:16px;">
         <div class="settings-item" onclick="_showUsernameSheet('${state.supabaseUserId}', '${(state.supabaseDisplayName||'').replace(/'/g,"\\'")}')">
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Change Username</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -6273,21 +6287,14 @@ function _updateSettingsAccountSection() {
       </div>`;
   } else {
     el.innerHTML = `
-      <div style="padding:4px 16px 14px;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);line-height:1.5;margin-bottom:12px;">Sign in to connect with friends and back up your data.</div>
-        <div style="display:flex;gap:10px;">
-          <button onclick="supabaseSignInGoogle()" style="flex:1;background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:12px 8px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SIGN IN WITH GOOGLE</button>
-          <button onclick="supabaseShowEmailForm('settings')" style="flex:1;background:transparent;border:1.5px solid #C0392B;color:#C0392B;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:12px 8px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">USE EMAIL</button>
+      <div style="padding:4px 16px 16px;">
+        <div style="font-family:'Barlow',sans-serif;font-size:13px;color:#888;line-height:1.6;margin-bottom:14px;">Sign in to see friends' workouts, hype each other up, and keep your data backed up.</div>
+        <input id="settings-email-input" type="email" placeholder="Email address" autocomplete="email" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #2e2e2e;color:var(--cream);font-family:'Barlow',sans-serif;font-size:15px;padding:13px 14px;border-radius:10px;margin-bottom:10px;outline:none;">
+        <div style="position:relative;margin-bottom:14px;">
+          <input id="settings-password-input" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #2e2e2e;color:var(--cream);font-family:'Barlow',sans-serif;font-size:15px;padding:13px 48px 13px 14px;border-radius:10px;outline:none;">
+          <button type="button" onclick="var i=document.getElementById('settings-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
         </div>
-        <div id="settings-email-form" style="display:none;margin-top:10px;">
-          <input id="settings-email-input" type="email" placeholder="Email" autocomplete="email" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:14px;padding:11px 12px;border-radius:8px;margin-bottom:8px;outline:none;">
-          <div style="position:relative;">
-            <input id="settings-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:14px;padding:11px 44px 11px 12px;border-radius:8px;margin-bottom:8px;outline:none;">
-            <button type="button" onclick="var i=document.getElementById('settings-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:10px;top:50%;transform:translateY(-60%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
-          </div>
-          <button onclick="supabaseSignInEmailFromSettings()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SIGN IN / CREATE ACCOUNT</button>
-          <button onclick="supabaseShowEmailForm('settings')" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;padding:8px;margin-top:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
-        </div>
+        <button onclick="supabaseSignInEmailFromSettings()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CREATE ACCOUNT / SIGN IN</button>
       </div>`;
   }
 }
@@ -6477,7 +6484,8 @@ async function _onSupabaseSignIn(user) {
     _updateSocialNotifyDot();
     _swStoreUserId(user.id);
     _requestNotificationPermission();
-    showToast("You're connected. Find friends in Settings.");
+    showToast("You're connected!");
+    setTimeout(() => location.reload(), 1200);
   }
 }
 
@@ -6520,11 +6528,10 @@ async function _saveUsername(userId) {
 
   const sheet = document.getElementById('username-setup-sheet');
   if (sheet) sheet.remove();
-  _updateSupabaseAuthCard();
-  _updateSocialNotifyDot();
   _swStoreUserId(state.supabaseUserId);
   _requestNotificationPermission();
-  showToast("You're connected. Find friends in Settings.");
+  showToast("You're all set! Welcome to the crew.");
+  setTimeout(() => location.reload(), 1200);
 }
 
 // Handle OAuth redirect on page load (Google OAuth returns here)
