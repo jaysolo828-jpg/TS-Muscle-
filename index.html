@@ -10603,31 +10603,38 @@ const BONUS_EXTRAS = [
 ];
 
 // Build the full bonus list from EXERCISE_LIBRARY + extras at render time.
-// Exercises already in today's session are excluded so users only see
-// what they can actually add.
+// Only exercises already in TODAY's day program are excluded.
+// Exercises in the user's overall program (other days) get a green check.
 function _buildBonusGroups() {
   const groups = {};
-  // Exercises already in today's session (main + already-added bonus)
-  const inSession = new Set();
+  // Exercises in today's day + already-added bonus (exclude these entirely)
+  const inToday = new Set();
+  // Exercises anywhere in the user's program (green check)
+  const inProgram = new Set();
   if (activeSession) {
     const day = state.program.find(d => d.id === activeSession.dayId);
-    if (day) day.exercises.forEach(e => inSession.add(e.id));
-    (activeSession.bonusExercises || []).forEach(b => inSession.add(b.id));
+    if (day) day.exercises.forEach(e => inToday.add(e.id));
+    (activeSession.bonusExercises || []).forEach(b => inToday.add(b.id));
   }
+  (state.program || []).forEach(d => {
+    (d.exercises || []).forEach(e => inProgram.add(e.id));
+  });
   // Pull from full library, grouped by muscle group
   if (typeof EXERCISE_LIBRARY !== 'undefined') {
     EXERCISE_LIBRARY.forEach(ex => {
-      if (inSession.has(ex.id)) return;
+      if (inToday.has(ex.id)) return;
       const g = (ex.muscleGroup || 'other').toUpperCase();
       if (!groups[g]) groups[g] = [];
-      groups[g].push(ex.name);
+      groups[g].push({ name: ex.name, inProgram: inProgram.has(ex.id) });
     });
   }
   // Append quick-access extras (only if not already listed)
   BONUS_EXTRAS.forEach(extra => {
     if (!groups[extra.group]) groups[extra.group] = [];
     extra.items.forEach(name => {
-      if (!groups[extra.group].includes(name)) groups[extra.group].push(name);
+      if (!groups[extra.group].some(e => e.name === name)) {
+        groups[extra.group].push({ name, inProgram: false });
+      }
     });
   });
   // Sort groups in a readable order
@@ -10673,6 +10680,14 @@ function filterBonusExercises(q) {
   renderBonusExerciseList(q);
 }
 
+function _bonusBtnHTML(item) {
+  const safe = item.name.replace(/'/g, "\\'");
+  const check = item.inProgram ? '<span style="color:#2ecc71;margin-left:6px;font-size:11px;">&#10003;</span>' : '';
+  return `<button class="bonus-ex-btn" onclick="showBonusPersistStep('${safe}')">
+    ${item.name}${check}
+  </button>`;
+}
+
 function renderBonusExerciseList(q) {
   const container = document.getElementById('bonus-exercise-list');
   if (!container) return;
@@ -10683,16 +10698,13 @@ function renderBonusExerciseList(q) {
   if (qLower) {
     const matches = [];
     allGroups.forEach(g => {
-      g.items.forEach(item => { if (item.toLowerCase().includes(qLower)) matches.push(item); });
+      g.items.forEach(item => { if (item.name.toLowerCase().includes(qLower)) matches.push(item); });
     });
     if (matches.length) {
-      html += matches.map(name =>
-        `<button class="bonus-ex-btn" onclick="showBonusPersistStep('${name.replace(/'/g, "\\'")}')">
-          ${name}
-        </button>`).join('');
+      html += matches.map(item => _bonusBtnHTML(item)).join('');
     }
     const customLabel = q.trim();
-    if (customLabel && !matches.some(m => m.toLowerCase() === customLabel.toLowerCase())) {
+    if (customLabel && !matches.some(m => m.name.toLowerCase() === customLabel.toLowerCase())) {
       html += `<button class="bonus-ex-btn" style="border-color:rgba(204,32,39,0.35);color:var(--gray-light);" onclick="showBonusPersistStep('${customLabel.replace(/'/g, "\\'")}')">
         <span style="color:var(--red-text);margin-right:6px;">+</span> Add "<strong style="color:var(--cream);">${customLabel}</strong>"
       </button>`;
@@ -10706,10 +10718,7 @@ function renderBonusExerciseList(q) {
   } else {
     allGroups.forEach(group => {
       html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--gray);letter-spacing:2px;margin:14px 0 8px;padding-left:2px;">${group.group}</div>`;
-      html += group.items.map(name =>
-        `<button class="bonus-ex-btn" onclick="showBonusPersistStep('${name.replace(/'/g, "\\'")}')">
-          ${name}
-        </button>`).join('');
+      html += group.items.map(item => _bonusBtnHTML(item)).join('');
     });
   }
   container.innerHTML = html;
