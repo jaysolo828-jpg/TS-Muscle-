@@ -6565,21 +6565,31 @@ async function _saveUsername(userId) {
   const sb = _getSupabaseClient();
   if (!sb) { showToast('Could not save username. Try again.'); return; }
 
-  // Always use the live session user ID — never trust the passed parameter alone
-  const { data: { user } } = await sb.auth.getUser();
-  const liveId = user?.id || userId;
-  if (!liveId) { showToast('Not signed in. Please sign in again.'); return; }
+  // Get live session — need JWT for server-side verification
+  const { data: { session } } = await sb.auth.getSession();
+  const jwt    = session?.access_token;
+  const liveId = session?.user?.id || userId;
+  if (!liveId || !jwt) { showToast('Not signed in. Please sign in again.'); return; }
 
-  const { error } = await sb.rpc('set_username', { new_username: username });
-  if (error) {
-    if (error.code === '23505') { showToast('That username is taken. Try another.'); return; }
-    showToast('Error: ' + (error.message || error.code || 'Could not save username.'));
+  // POST to Netlify edge function — uses service role key server-side, bypasses RLS entirely
+  let resp;
+  try {
+    resp = await fetch('/save-username', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, jwt }),
+    });
+  } catch (_) {
+    showToast('Network error. Please try again.');
     return;
   }
 
-  // Verify it actually saved
-  const { data: check } = await sb.from('users').select('username').eq('id', liveId).single();
-  if (!check?.username) { showToast('Save failed. Please try again.'); return; }
+  if (resp.status === 409) { showToast('That username is taken. Try another.'); return; }
+  if (!resp.ok) {
+    const txt = await resp.text().catch(() => '');
+    showToast('Could not save: ' + (txt || resp.status));
+    return;
+  }
 
   const sheet = document.getElementById('username-setup-sheet');
   if (sheet) sheet.remove();

@@ -20,3 +20,7 @@
 [[edge_functions]]
   function = "record-reaction"
   path = "/record-reaction"
+
+[[edge_functions]]
+  function = "save-username"
+  path = "/save-username"
