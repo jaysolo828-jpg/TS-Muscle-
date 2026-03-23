@@ -6405,7 +6405,7 @@ function _showUsernameSheet(userId, displayName) {
       <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);margin-bottom:18px;line-height:1.5;">Lowercase, no spaces, max 20 characters.</div>
       <input id="username-sheet-input" type="text" placeholder="yourusername" maxlength="20"
         style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:16px;padding:13px 14px;border-radius:10px;margin-bottom:16px;outline:none;"
-        oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+        oninput="this.value=this.value.replace(/[^a-zA-Z0-9_]/g,'')">
       <button onclick="_saveUsername('${userId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LOOKS GOOD</button>
     </div>`;
   document.body.appendChild(sheet);
@@ -6414,7 +6414,7 @@ function _showUsernameSheet(userId, displayName) {
 
 async function _saveUsername(userId) {
   const input = document.getElementById('username-sheet-input');
-  const username = (input?.value || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const username = (input?.value || '').trim().replace(/[^a-zA-Z0-9_]/g, '');
   if (!username || username.length < 2) { showToast('Pick a username (at least 2 characters).'); return; }
 
   const sb = _getSupabaseClient();
