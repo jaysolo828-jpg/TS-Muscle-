@@ -7031,12 +7031,31 @@ async function _confirmRemoveFriend(userId) {
   document.getElementById('remove-friend-confirm-sheet')?.remove();
   const sb = _getSupabaseClient();
   if (!sb) return;
-  await Promise.all([
-    sb.from('friendships').delete()
-      .eq('requester_id', state.supabaseUserId).eq('addressee_id', userId),
-    sb.from('friendships').delete()
-      .eq('requester_id', userId).eq('addressee_id', state.supabaseUserId),
-  ]);
+
+  const jwt = _cachedJwt;
+  const supabaseUrl = window.SUPABASE_URL || '';
+  const anonKey = window.SUPABASE_PUBLISHABLE_KEY || '';
+
+  if (jwt && supabaseUrl) {
+    // Use direct REST with JWT so RLS recognises auth.uid() for both directions
+    const myId = state.supabaseUserId;
+    await Promise.all([
+      fetch(`${supabaseUrl}/rest/v1/friendships?requester_id=eq.${myId}&addressee_id=eq.${userId}`, {
+        method: 'DELETE',
+        headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' },
+      }),
+      fetch(`${supabaseUrl}/rest/v1/friendships?requester_id=eq.${userId}&addressee_id=eq.${myId}`, {
+        method: 'DELETE',
+        headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' },
+      }),
+    ]);
+  } else {
+    await Promise.all([
+      sb.from('friendships').delete().eq('requester_id', state.supabaseUserId).eq('addressee_id', userId),
+      sb.from('friendships').delete().eq('requester_id', userId).eq('addressee_id', state.supabaseUserId),
+    ]);
+  }
+
   document.getElementById('friend-activity-sheet')?.remove();
   showToast('Friend removed.');
   _renderFriendsSection();
