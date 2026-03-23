@@ -6624,14 +6624,11 @@ async function _checkSupabaseSession() {
     }
     _updateSocialNotifyDot();
 
-    // After tapping the social update banner, route user into the right flow
+    // After tapping the social update banner — scroll to sign-in card for non-signed-in users
     if (sessionStorage.getItem('ts_show_social_after_update')) {
       sessionStorage.removeItem('ts_show_social_after_update');
-      setTimeout(() => {
-        showScreen('home');
-        if (state.supabaseUserId) {
-          openSocialModal();
-        } else {
+      if (!state.supabaseUserId) {
+        setTimeout(() => {
           const card = document.getElementById('supabase-auth-card');
           if (card) {
             card.style.display = 'block';
@@ -6639,8 +6636,8 @@ async function _checkSupabaseSession() {
             card.style.boxShadow = '0 0 0 2px #C0392B';
             setTimeout(() => { card.style.boxShadow = ''; }, 2500);
           }
-        }
-      }, 400);
+        }, 400);
+      }
     }
   } catch(e) {}
 }
@@ -18524,13 +18521,20 @@ function showSWUpdateBanner() {
   if (sessionStorage.getItem('ts_muscle_sw_dismissed_v46')) return;
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
+  const signedIn = !!state.supabaseUserId;
   const banner = document.createElement('div');
   banner.id = 'sw-update-banner';
   banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:100000;animation:slideDownBanner 0.45s cubic-bezier(0.175,0.885,0.32,1.1);';
-  banner.innerHTML = `
+  banner.innerHTML = signedIn ? `
+    <div style="background:#1a1a1a;border-bottom:1px solid #2a2a2a;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div onclick="applySWUpdate()" style="flex:1;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(255,255,255,0.85);">
+        App updated. <span style="text-decoration:underline;">Tap to refresh.</span>
+      </div>
+      <button onclick="dismissSWBanner(event)" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;line-height:1;padding:4px 2px;cursor:pointer;">&times;</button>
+    </div>` : `
     <div onclick="applySWUpdate()" style="background:#C0392B;padding:16px;cursor:pointer;text-align:center;">
       <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:#fff;letter-spacing:2px;margin-bottom:2px;">NEW: CONNECT WITH FRIENDS</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(255,255,255,0.85);letter-spacing:0.5px;">See who's working out, hype each other up &mdash; <span style="text-decoration:underline;font-weight:700;">TAP TO UPDATE</span></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(255,255,255,0.85);letter-spacing:0.5px;">See who's working out &amp; hype each other up &mdash; <span style="text-decoration:underline;font-weight:700;">TAP TO GET STARTED</span></div>
     </div>`;
   document.body.prepend(banner);
 }
