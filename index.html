@@ -6415,6 +6415,7 @@ function _showUsernameSheet(userId, displayName) {
         style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:16px;padding:13px 14px;border-radius:10px;margin-bottom:16px;outline:none;"
         oninput="this.value=this.value.replace(/[^a-zA-Z0-9_]/g,'')">
       <button onclick="_saveUsername('${userId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LOOKS GOOD</button>
+      <button onclick="document.getElementById('username-setup-sheet').remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;padding:10px;margin-top:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
     </div>`;
   document.body.appendChild(sheet);
   setTimeout(() => { document.getElementById('username-sheet-input')?.focus(); }, 100);
