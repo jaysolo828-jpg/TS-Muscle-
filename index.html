@@ -6255,11 +6255,30 @@ function _updateSettingsAccountSection() {
         </div>
         <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
+      <div class="settings-item" onclick="supabaseChangeEmail()">
+        <div>
+          <div class="settings-label" style="color:var(--gray);">Change Email</div>
+        </div>
+        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+      <div class="settings-item" onclick="supabaseChangePassword()">
+        <div>
+          <div class="settings-label" style="color:var(--gray);">Change Password</div>
+        </div>
+        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
       <div class="settings-item" onclick="supabaseSignOut()">
         <div>
           <div class="settings-label" style="color:var(--gray);">Sign Out</div>
         </div>
         <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+      <div class="settings-item" onclick="supabaseDeleteAccount()">
+        <div>
+          <div class="settings-label" style="color:#e74c3c;">Delete Account</div>
+          <div class="settings-sub">Permanently removes your social profile</div>
+        </div>
+        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#e74c3c" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>`;
   } else {
     el.innerHTML = `
@@ -6291,6 +6310,72 @@ async function supabaseSignOut() {
   _updateSupabaseAuthCard();
   _updateSettingsAccountSection();
   showToast('Signed out.');
+}
+
+function supabaseChangeEmail() {
+  const current = state.supabaseDisplayName || '';
+  const newEmail = prompt('Enter your new email address:');
+  if (!newEmail || !newEmail.includes('@')) { showToast('Enter a valid email.'); return; }
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  sb.auth.updateUser({ email: newEmail }).then(({ error }) => {
+    if (error) { showToast('Error: ' + (error.message || 'Could not update email.')); return; }
+    showToast('Check your new email for a confirmation link.');
+  });
+}
+
+function supabaseChangePassword() {
+  const sheet = document.createElement('div');
+  sheet.id = 'change-password-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #C0392B;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:16px;">CHANGE PASSWORD</div>
+      <div style="position:relative;margin-bottom:8px;">
+        <input id="cp-new" type="password" placeholder="New password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:16px;padding:13px 44px 13px 14px;border-radius:10px;outline:none;">
+        <button type="button" onclick="var i=document.getElementById('cp-new');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;">👁</button>
+      </div>
+      <div style="position:relative;margin-bottom:16px;">
+        <input id="cp-confirm" type="password" placeholder="Confirm new password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:16px;padding:13px 44px 13px 14px;border-radius:10px;outline:none;">
+        <button type="button" onclick="var i=document.getElementById('cp-confirm');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;">👁</button>
+      </div>
+      <button onclick="_saveNewPassword()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SAVE PASSWORD</button>
+      <button onclick="document.getElementById('change-password-sheet').remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;padding:10px;margin-top:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
+    </div>`;
+  document.body.appendChild(sheet);
+}
+
+async function _saveNewPassword() {
+  const p1 = document.getElementById('cp-new')?.value || '';
+  const p2 = document.getElementById('cp-confirm')?.value || '';
+  if (p1.length < 6) { showToast('Password must be at least 6 characters.'); return; }
+  if (p1 !== p2) { showToast('Passwords do not match.'); return; }
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  if (error) { showToast('Error: ' + (error.message || 'Could not update password.')); return; }
+  document.getElementById('change-password-sheet')?.remove();
+  showToast('Password updated.');
+}
+
+async function supabaseDeleteAccount() {
+  if (!confirm('Delete your T&S Muscle account? This removes your username and social profile. Your workout data stays on this device.')) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  try {
+    // Delete profile row — auth account deletion requires server-side admin access
+    await sb.from('users').delete().eq('id', state.supabaseUserId);
+    await sb.auth.signOut();
+    state.supabaseUserId = null;
+    state.supabaseDisplayName = null;
+    _supabaseClient = null;
+    saveState();
+    _updateSupabaseAuthCard();
+    _updateSettingsAccountSection();
+    showToast('Account deleted.');
+  } catch(e) {
+    showToast('Could not delete account. Please try again.');
+  }
 }
 
 function supabaseShowEmailForm(source) {
