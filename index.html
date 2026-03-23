@@ -6738,6 +6738,9 @@ async function _checkSupabaseSession() {
     }
     _updateSocialNotifyDot();
 
+    // Prompt non-signed-in users to set up their account (once per session)
+    if (!session?.user) setTimeout(_showSocialSetupPrompt, 1500);
+
     // After tapping the social update banner — scroll to sign-in card for non-signed-in users
     if (sessionStorage.getItem('ts_show_social_after_update')) {
       sessionStorage.removeItem('ts_show_social_after_update');
@@ -6754,6 +6757,56 @@ async function _checkSupabaseSession() {
       }
     }
   } catch(e) {}
+}
+
+function _showSocialSetupPrompt() {
+  // Only show if: onboarding done, not signed in, social not disabled, not already dismissed this session
+  if (!state.onboardingComplete) return;
+  if (state.supabaseUserId) return;
+  if (state.socialEnabled === false) return;
+  if (state.supabaseDismissed) return;
+  if (document.getElementById('social-setup-prompt')) return;
+
+  const sheet = document.createElement('div');
+  sheet.id = 'social-setup-prompt';
+  sheet.style.cssText = 'position:fixed;inset:0;z-index:9990;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.65);';
+  sheet.innerHTML = `
+    <div style="width:100%;max-width:480px;background:#111;border-radius:20px 20px 0 0;padding:28px 20px 44px;position:relative;overflow:hidden;">
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(204,32,39,0.07) 0%,transparent 60%);pointer-events:none;"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <img src="./icon.png" style="width:44px;height:44px;border-radius:12px;box-shadow:0 0 14px rgba(204,32,39,0.4);">
+        <div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);">SET UP YOUR ACCOUNT</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#888;letter-spacing:1px;">T&amp;S MUSCLE SOCIAL</div>
+        </div>
+      </div>
+      <div style="font-family:'Barlow',sans-serif;font-size:14px;color:#aaa;line-height:1.65;margin-bottom:24px;">
+        Connect with friends, see who's training, hype each other up, and keep your data backed up across devices.
+      </div>
+      <button onclick="_socialSetupNow()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;padding:15px;border-radius:12px;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;">SET UP NOW</button>
+      <button onclick="_socialSetupLater()" style="width:100%;background:transparent;border:1px solid #2a2a2a;color:#666;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;padding:13px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LATER — I'LL DO IT IN SETTINGS</button>
+    </div>`;
+  document.body.appendChild(sheet);
+}
+
+function _socialSetupNow() {
+  document.getElementById('social-setup-prompt')?.remove();
+  state.supabaseDismissed = true;
+  const card = document.getElementById('supabase-auth-card');
+  if (card) {
+    card.style.display = 'block';
+    setTimeout(() => {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.style.boxShadow = '0 0 0 2px #C0392B';
+      setTimeout(() => { card.style.boxShadow = ''; }, 2500);
+    }, 200);
+  }
+}
+
+function _socialSetupLater() {
+  document.getElementById('social-setup-prompt')?.remove();
+  state.supabaseDismissed = true;
+  showToast('Find it anytime in Settings → Account');
 }
 
 // ============================================================
@@ -7410,7 +7463,7 @@ async function _updateSocialNotifyDot() {
     const btn = document.getElementById('social-open-btn');
     if (btn) btn.style.color = hasAlert ? 'var(--red)' : '';
   } catch (e) {
-    dot.style.display = 'none';
+    // On error, leave the dot as-is — don't hide it due to a network hiccup
   }
 }
 
