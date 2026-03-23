@@ -6612,7 +6612,8 @@ async function _saveUsername(userId) {
   if (resp.status === 409) { showToast('That username is taken. Try another.'); return; }
   if (!resp.ok) {
     const txt = await resp.text().catch(() => '');
-    showToast('Could not save: ' + (txt || resp.status));
+    const msg = txt && !txt.trim().startsWith('<') ? txt : ('Server error ' + resp.status);
+    showToast('Could not save: ' + msg);
     return;
   }
 
