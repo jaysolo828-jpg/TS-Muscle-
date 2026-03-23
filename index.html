@@ -6263,7 +6263,7 @@ function _updateSettingsAccountSection() {
         </div>
         <div class="settings-arrow" id="account-drawer-arrow" style="transition:transform 0.2s;"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
-      <div id="account-manage-drawer" style="display:none;border-left:2px solid #C0392B;margin:0 0 4px 16px;padding-left:4px;">
+      <div id="account-manage-drawer" style="display:none;border-left:2px solid #C0392B;margin:0 0 4px 0;padding-left:16px;">
         <div class="settings-item" onclick="_showUsernameSheet('${state.supabaseUserId}', '${(state.supabaseDisplayName||'').replace(/'/g,"\\'")}')">
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Change Username</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
