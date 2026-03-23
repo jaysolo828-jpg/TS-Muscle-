@@ -6799,8 +6799,7 @@ async function _doFriendSearch(query) {
   results.innerHTML = data.map(u =>
     `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;">
       <div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);">${escapeHtml(u.display_name)}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">@${escapeHtml(u.username)}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);">@${escapeHtml(u.username || u.display_name)}</div>
       </div>
       <button onclick="_sendFriendRequest('${u.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">ADD FRIEND</button>
     </div>`
@@ -6850,8 +6849,7 @@ async function _loadPendingRequests() {
     const u = uMap[f.requester_id] || {};
     return `<div class="friends-request-item" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;">
       <div style="font-family:'Barlow Condensed',sans-serif;">
-        <div style="font-size:14px;color:var(--cream);">${escapeHtml(u.display_name || 'Unknown')}</div>
-        <div style="font-size:11px;color:var(--gray);">@${escapeHtml(u.username || '')}</div>
+        <div style="font-size:14px;color:var(--cream);">@${escapeHtml(u.username || u.display_name || 'Unknown')}</div>
       </div>
       <div style="display:flex;gap:6px;">
         <button onclick="_acceptFriendRequest('${f.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 12px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:44px;">ACCEPT</button>
@@ -6923,8 +6921,8 @@ async function _loadFriendsList() {
           ${recentlyActive ? '<div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#2ecc71;border:2px solid #1a1a1a;"></div>' : ''}
         </div>
         <div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);">${escapeHtml(u.display_name)}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">@${escapeHtml(u.username)} \u00b7 ${lastText}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);">@${escapeHtml(u.username || u.display_name)}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">${lastText}</div>
         </div>
       </div>
       <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -6957,8 +6955,7 @@ async function _openFriendActivity(userId) {
     <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 20px 40px;max-height:80vh;overflow-y:auto;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
         <div>
-          <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;">${escapeHtml(cached.display_name || 'Friend')}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);">@${escapeHtml(cached.username || '')}</div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;">@${escapeHtml(cached.username || cached.display_name || 'Friend')}</div>
         </div>
         <button onclick="document.getElementById('friend-activity-sheet').remove()" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>
       </div>
