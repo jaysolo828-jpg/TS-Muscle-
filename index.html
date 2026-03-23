@@ -6525,19 +6525,29 @@ async function _onSupabaseSignIn(user) {
   }
 }
 
-function _showUsernameSheet(userId, displayName) {
+async function _showUsernameSheet(userId, displayName) {
   // Remove any existing sheet
   const existing = document.getElementById('username-setup-sheet');
   if (existing) existing.remove();
+
+  // Fetch current username from Supabase to pre-fill
+  let currentUsername = '';
+  try {
+    const sb = _getSupabaseClient();
+    if (sb) {
+      const { data } = await sb.from('users').select('username').eq('id', userId).single();
+      if (data?.username && !data.username.startsWith('user_')) currentUsername = data.username;
+    }
+  } catch(e) {}
 
   const sheet = document.createElement('div');
   sheet.id = 'username-setup-sheet';
   sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
   sheet.innerHTML = `
     <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #C0392B;">
-      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">CHOOSE YOUR USERNAME</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">${currentUsername ? 'CHANGE USERNAME' : 'CHOOSE YOUR USERNAME'}</div>
       <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);margin-bottom:18px;line-height:1.5;">Letters, numbers, and underscores only. Max 20 characters.</div>
-      <input id="username-sheet-input" type="text" placeholder="yourusername" maxlength="20"
+      <input id="username-sheet-input" type="text" placeholder="yourusername" maxlength="20" value="${currentUsername}"
         style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:16px;padding:13px 14px;border-radius:10px;margin-bottom:16px;outline:none;"
         oninput="this.value=this.value.replace(/[^a-zA-Z0-9_]/g,'')">
       <button onclick="_saveUsername('${userId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LOOKS GOOD</button>
@@ -6700,7 +6710,8 @@ async function _doFriendSearch(query) {
   const { data, error } = await sb.from('users')
     .select('id, display_name, username')
     .ilike('username', `%${query}%`)
-    .limit(10);
+    .neq('id', state.supabaseUserId)
+    .limit(8);
 
   if (error) {
     results.innerHTML = `<div style="padding:6px 0;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#e74c3c;">Error: ${escapeHtml(error.message || error.code || 'unknown')}</div>`;
