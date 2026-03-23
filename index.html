@@ -5514,11 +5514,15 @@ function dismissSetReductionBanner(muscle) {
 function getMRVApproachingMuscles() {
   const weeklySets = getWeeklySetsByMuscle();
   const approaching = [];
+  // MRV proximity threshold scales by experience: beginners get flagged earlier
+  // (90% — more safety buffer), advanced can push closer (97%). Intermediate: 95%.
+  const _exp = getEffectiveExperienceLevel();
+  const _mrvThreshold = _exp === 'beginner' ? 0.90 : _exp === 'advanced' ? 0.97 : 0.95;
   Object.keys(VOLUME_LANDMARKS).forEach(muscle => {
     const scaled = getScaledVolumeLandmarks(muscle);
     if (!scaled) return;
     const actual = weeklySets[muscle] || 0;
-    if (actual > 0 && actual >= scaled.mrv * 0.95) {
+    if (actual > 0 && actual >= scaled.mrv * _mrvThreshold) {
       approaching.push({ muscle, actual, mrv: scaled.mrv });
     }
   });
@@ -8197,7 +8201,8 @@ function renderHome() {
   // limits there. Only Weeks 5-6 (weekCount 5 or 6) are valid windows.
   const _showMRVBanner = _mrvApproaching.length > 0 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !state.deloadPostponedToWeek && !_dismissedThisCycle && (state.weekCount || 1) >= 5 && !_mrvBannerDismissedThisLoad;
   const _showPlateauBanner = _plateau.stalled && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
-  const _showLongRunBanner = !_showPlateauBanner && !_showMRVBanner && _weeksSinceDeload >= 5 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
+  const _longRunBannerThreshold = (function() { const _e = getEffectiveExperienceLevel(); return _e === 'beginner' ? 6 : _e === 'advanced' ? 4 : 5; })();
+  const _showLongRunBanner = !_showPlateauBanner && !_showMRVBanner && _weeksSinceDeload >= _longRunBannerThreshold && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
   const _skipBtn = `<div style="margin-top:12px;"><button onclick="event.stopPropagation();dismissDeloadSuggestion(true);" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;padding:7px 16px;border-radius:8px;-webkit-tap-highlight-color:transparent;">NOT NOW. SKIP THIS CYCLE.</button></div>`;
 
   if (deloadBanner && state.isRestWeek) {
@@ -8225,7 +8230,7 @@ function renderHome() {
       _dSub   = `You've been training hard for ${state.weeksSinceDeload || 5}+ weeks without a break. Time to let it absorb.`;
     } else {
       _dTitle = 'DELOAD ACTIVE';
-      _dSub   = 'Planned lighter week. Weights are at 75%. They restore automatically when this week ends.';
+      _dSub   = 'Planned lighter week. Weights are at ' + Math.round((state.deloadReductionFactor || 0.75) * 100) + '%. They restore automatically when this week ends.';
     }
     // ── Session progress pips ────────────────────────────────────────────
     const _pips = [1,2,3,4].map(i =>
@@ -8254,7 +8259,7 @@ function renderHome() {
       deloadBanner.querySelector('.deload-banner').onclick = null;
     } else {
       deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK · WEEK 7';
-      deloadBanner.querySelector('.deload-text').innerHTML = 'Week 7. Your scheduled lighter week. Weights drop to 75% and restore automatically. Tap to choose how to handle it.' + _skipBtn;
+      deloadBanner.querySelector('.deload-text').innerHTML = 'Week 7. Your scheduled lighter week. Weights drop to ' + Math.round(((function(){ var _e = getEffectiveExperienceLevel(); return _e === 'beginner' ? 0.80 : _e === 'advanced' ? 0.70 : 0.75; })()) * 100) + '% and restore automatically. Tap to choose how to handle it.' + _skipBtn;
       deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
       deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
     }
@@ -9288,10 +9293,14 @@ function _detectDeloadReason() {
   const mrvHits = getMRVApproachingMuscles();
   const plateau = (typeof detectProgressionPlateau === 'function') ? detectProgressionPlateau() : { stalled: false };
   const isScheduled = week === 7 || (state.deloadPostponedToWeek && week === state.deloadPostponedToWeek);
+  // Long-run threshold scales by experience: beginners tolerate more weeks
+  // (lighter loads = less systemic fatigue), advanced need recovery sooner.
+  const _exp = getEffectiveExperienceLevel();
+  const _longRunThreshold = _exp === 'beginner' ? 6 : _exp === 'advanced' ? 4 : 5;
   if (isScheduled)             return 'scheduled';
   if (mrvHits.length > 0)      return 'mrv';
   if (plateau.stalled)         return 'plateau';
-  if ((state.weeksSinceDeload || 0) >= 5) return 'longrun';
+  if ((state.weeksSinceDeload || 0) >= _longRunThreshold) return 'longrun';
   return 'manual';
 }
 
@@ -9301,13 +9310,23 @@ function _detectDeloadReason() {
 // At 100%+ of MRV      → 35% reduction (factor 0.65).
 // For all other deload types, returns the standard 0.75 (25% reduction).
 function _computeDeloadFactor(reason) {
-  if (reason !== 'mrv') return 0.75;
+  // Base deload factor scales by experience:
+  // Beginner: 0.80 (20% cut — lighter loads, recovers faster, less deep cut needed)
+  // Intermediate: 0.75 (25% cut — standard)
+  // Advanced: 0.70 (30% cut — heavier absolute loads, deeper fatigue, needs more recovery)
+  const _exp = getEffectiveExperienceLevel();
+  const _baseFactor = _exp === 'beginner' ? 0.80 : _exp === 'advanced' ? 0.70 : 0.75;
+  if (reason !== 'mrv') return _baseFactor;
   const hitting = getMRVApproachingMuscles();
-  if (!hitting.length) return 0.75;
+  if (!hitting.length) return _baseFactor;
   let maxReduction = 0;
+  // MRV-triggered: scale the reduction range by experience too.
+  // Beginner: 10–25%, Intermediate: 15–35%, Advanced: 20–40%
+  const _mrvMinPct = _exp === 'beginner' ? 10 : _exp === 'advanced' ? 20 : 15;
+  const _mrvMaxPct = _exp === 'beginner' ? 25 : _exp === 'advanced' ? 40 : 35;
   hitting.forEach(({ actual, mrv }) => {
     const proximity = actual / mrv; // 0.9 to 1.0+
-    const reductionPct = Math.min(35, 15 + (proximity - 0.9) / 0.1 * 20);
+    const reductionPct = Math.min(_mrvMaxPct, _mrvMinPct + (proximity - 0.9) / 0.1 * (_mrvMaxPct - _mrvMinPct));
     if (reductionPct > maxReduction) maxReduction = reductionPct;
   });
   return +(1 - maxReduction / 100).toFixed(4);
@@ -9585,21 +9604,27 @@ function getProgressiveWeight(exId, dayId) {
   if (!_rawLastWeight) return '';
 
   // Long-gap return: if the most recent same-day session was more than 14 days
-  // ago, apply a conservative 10% reduction to the base weight before running
-  // the progressive overload calculation. This does not apply on the first-ever
+  // ago, apply a reduction to the base weight before running the progressive
+  // overload calculation. Beginners detrain faster (15%), advanced retain more
+  // fitness (7%), intermediate in between (10%). Does not apply on first-ever
   // session (already returned above when sameDaySessions is empty).
   const _daysSinceLast = sameDaySessions[0].date
     ? (Date.now() - new Date(sameDaySessions[0].date).getTime()) / 86400000
     : 0;
+  const _gapReduction = _expLevel === 'beginner' ? 0.85 : _expLevel === 'advanced' ? 0.93 : 0.9;
   const lastWeight = (_daysSinceLast > 14)
-    ? Math.max(5, Math.round(_rawLastWeight * 0.9 / 2.5) * 2.5)
+    ? Math.max(5, Math.round(_rawLastWeight * _gapReduction / 2.5) * 2.5)
     : _rawLastWeight;
 
   // Avg RPE across all sessions in window (only sets with RPE logged)
+  // Default when not logged: Beginners underestimate effort → 8.5 (more conservative,
+  // prevents premature increases). Advanced rarely skip RPE unless coasting → 7.5.
+  // Intermediate: 8 (baseline).
+  const _defaultRPE = _expLevel === 'beginner' ? 8.5 : _expLevel === 'advanced' ? 7.5 : 8;
   const rpeSets = allSets.filter(s => s.rpe);
   const avgRPE = rpeSets.length > 0
     ? rpeSets.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / rpeSets.length
-    : 8; // Default to RPE 8 (moderate-hard) when not logged — doesn't block progress
+    : _defaultRPE;
 
   // Avg reps across window — only count sets where reps were actually logged
   // (sets marked done without entering reps default to "" which would falsely drag the average to 0)
@@ -9647,10 +9672,13 @@ function getProgressiveWeight(exId, dayId) {
       || (exceededRange && (avgRPE === null || avgRPE <= _rpeThreshold))
     : true; // single session — use regular logic
 
-  // Flag for reduce signal: in trend mode require 2+ high RPE sessions
+  // Flag for reduce signal: in trend mode require 2+ high RPE sessions.
+  // Single-session mode (beginner): require RPE 10 (truly maximal) because
+  // beginners over-report RPE — a perceived 9.5 is often more like an 8.5.
+  const _reduceRpeThreshold = _expLevel === 'beginner' ? 10 : 9.5;
   const trendSignalsReduce = useTrend
     ? highRPESessionCount >= 2
-    : (avgRPE !== null && avgRPE >= 9.5);
+    : (avgRPE !== null && avgRPE >= _reduceRpeThreshold);
 
   let newWeight = lastWeight;
   let reason = '';
@@ -9745,33 +9773,36 @@ function getProgressiveWeight(exId, dayId) {
     }
   }
 
-  // Experience-level increment scaling: beginner × 1.25, advanced × 0.85
+  // Experience-level increment scaling
+  // Increases: beginner × 1.25 (faster early gains), advanced × 0.85 (more precise).
+  // Decreases: beginner × 0.75 (gentler — 5 lbs off 95 is a big %), advanced × 1.15 (can handle bigger drops).
   if (newWeight > lastWeight) {
     const _incr = newWeight - lastWeight;
     const _scale = _expLevel === 'beginner' ? 1.25 : _expLevel === 'advanced' ? 0.85 : 1;
     newWeight = lastWeight + _incr * _scale;
+  } else if (newWeight < lastWeight) {
+    const _decr = lastWeight - newWeight;
+    const _scale = _expLevel === 'beginner' ? 0.75 : _expLevel === 'advanced' ? 1.15 : 1;
+    newWeight = lastWeight - _decr * _scale;
   }
   // Round to nearest 2.5 lbs, never below 5
   newWeight = Math.max(5, Math.round(newWeight / 2.5) * 2.5);
 
   // Detect consecutive weight regressions across same-day sessions.
-  // Two drops in a row (w0 < w1 < w2) is a signal the body needs more than
-  // a small decrement — a proper deload is warranted.
+  // Counts how many consecutive drops occurred (w0 < w1 < w2 < w3 …).
+  // Beginners need 3 drops to signal deload (normal variance is wider),
+  // intermediate/advanced need 2.
   let consecutiveReductions = 0;
-  if (sameDaySessions.length >= 3) {
-    const _w = [0, 1, 2].map(i => {
-      const s = (sameDaySessions[i].sets[exId] || []).filter(s => s.done);
-      return parseFloat(s[s.length - 1]?.weight) || 0;
-    });
-    if (_w[0] > 0 && _w[1] > 0 && _w[2] > 0 && _w[0] < _w[1] && _w[1] < _w[2]) {
-      consecutiveReductions = 2;
-    } else if (_w[0] > 0 && _w[1] > 0 && _w[0] < _w[1]) {
-      consecutiveReductions = 1;
+  if (sameDaySessions.length >= 2) {
+    for (let _ri = 0; _ri < Math.min(sameDaySessions.length - 1, 3); _ri++) {
+      const _wCurr = (() => { const s = (sameDaySessions[_ri].sets[exId] || []).filter(s => s.done); return parseFloat(s[s.length - 1]?.weight) || 0; })();
+      const _wPrev = (() => { const s = (sameDaySessions[_ri + 1].sets[exId] || []).filter(s => s.done); return parseFloat(s[s.length - 1]?.weight) || 0; })();
+      if (_wCurr > 0 && _wPrev > 0 && _wCurr < _wPrev) {
+        consecutiveReductions++;
+      } else {
+        break;
+      }
     }
-  } else if (sameDaySessions.length >= 2) {
-    const _w0 = (() => { const s = (sameDaySessions[0].sets[exId] || []).filter(s => s.done); return parseFloat(s[s.length - 1]?.weight) || 0; })();
-    const _w1 = (() => { const s = (sameDaySessions[1].sets[exId] || []).filter(s => s.done); return parseFloat(s[s.length - 1]?.weight) || 0; })();
-    if (_w0 > 0 && _w1 > 0 && _w0 < _w1) consecutiveReductions = 1;
   }
 
   // ── Manual adjustment period ─────────────────────────────────────────────
@@ -9909,8 +9940,12 @@ function buildOverloadHint(exId) {
       ${_cardBody}
     </div>`;
   } else if (info.changed && info.newWeight < info.lastWeight) {
-    const deloadNudge = info.consecutiveReductions >= 2
-      ? `<div style="margin-top:6px; padding-left:23px; font-size:12px; color:#f39c12; line-height:1.5;">Weight has dropped 2 sessions in a row. <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:12px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
+    // Beginners: require 3 consecutive drops before nudging deload (2 drops is
+    // normal learning-curve variance). Intermediate/Advanced: 2 drops is meaningful.
+    const _regressThreshold = getEffectiveExperienceLevel() === 'beginner' ? 3 : 2;
+    const _regressLabel = _regressThreshold === 3 ? '3 sessions' : '2 sessions';
+    const deloadNudge = info.consecutiveReductions >= _regressThreshold
+      ? `<div style="margin-top:6px; padding-left:23px; font-size:12px; color:#f39c12; line-height:1.5;">Weight has dropped ${_regressLabel} in a row. <button onclick="openDeloadModal()" style="background:none;border:none;color:#f39c12;text-decoration:underline;cursor:pointer;font-size:12px;padding:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">a lighter week might help</button></div>`
       : '';
     return `<div style="background:rgba(243,156,18,0.14); border:1px solid rgba(243,156,18,0.45); border-radius:10px; padding:9px 12px; margin:8px 16px 8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
@@ -19862,7 +19897,12 @@ function updateWeightIncrementUI() {
 }
 
 function getWeightIncrement(goal) {
-  return getIncrement('small');
+  // Strength training uses heavier absolute loads → needs bigger jumps to signal progress.
+  // Size (hypertrophy) uses moderate loads with tighter rep ranges → smaller, precise jumps.
+  // Both/powerbuilding sits in the middle.
+  if (goal === 'strength') return getIncrement('medium');
+  if (goal === 'both')     return getIncrement('small');
+  return getIncrement('small'); // size (default)
 }
 
 // ============================================================
