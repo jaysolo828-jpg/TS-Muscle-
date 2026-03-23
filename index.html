@@ -6429,10 +6429,10 @@ async function _saveUsername(userId) {
   const sb = _getSupabaseClient();
   if (!sb) { showToast('Could not save username. Try again.'); return; }
 
-  const { error } = await sb.from('users').update({ username }).eq('id', userId);
+  const { error } = await sb.from('users').upsert({ id: userId, username }).eq('id', userId);
   if (error) {
     if (error.code === '23505') { showToast('That username is taken. Try another.'); return; }
-    showToast('Could not save username. Try again.');
+    showToast('Error: ' + (error.message || error.code || 'Could not save username.'));
     return;
   }
 
