@@ -10093,6 +10093,12 @@ function startSession(dayId) {
 
   _lastSessionInsights = {};
   _insightInteracted = {};
+
+  // Enforce adjacency for any permanently saved supersets loaded into this session.
+  // Without this, paired exercises could render in their default program order
+  // (not adjacent) even though the superset data is present.
+  _enforceAllSupersetAdjacency();
+
   renderSession();
   startSessionTimer();
   document.getElementById('workout-session').classList.add('active');
@@ -10168,6 +10174,19 @@ function startPairSelection(exId) {
   pairingSourceId = exId;
   renderSession();
   showToast('Tap another exercise to pair with it');
+}
+
+// Walk all active supersets and force each pair adjacent in exerciseOrder.
+// Called at session start (for permanent pairs) and after drag-reorder.
+function _enforceAllSupersetAdjacency() {
+  if (!activeSession?.supersets || !activeSession.exerciseOrder) return;
+  const seen = new Set();
+  for (const [idA, idB] of Object.entries(activeSession.supersets)) {
+    if (!idB || seen.has(idA) || seen.has(idB)) continue;
+    seen.add(idA);
+    seen.add(idB);
+    _ensureSupersetAdjacent(idA, idB);
+  }
 }
 
 function _ensureSupersetAdjacent(idA, idB) {
@@ -12759,6 +12778,8 @@ function _onDragPointerUp() {
   if (fromIndex !== toIndex) {
     order.splice(fromIndex, 1);
     order.splice(toIndex, 0, _drag.exId);
+    // Re-enforce superset adjacency so paired exercises can't be separated
+    _enforceAllSupersetAdjacency();
     renderSession();
   }
   _drag = null;
