@@ -18519,6 +18519,7 @@ function showSWUpdateBanner() {
 function applySWUpdate() {
   const btn = document.querySelector('#sw-update-banner div[onclick]');
   if (btn) { btn.textContent = 'Updating\u2026'; btn.style.opacity = '0.6'; }
+  sessionStorage.setItem('ts_show_social_after_update', '1');
   if (_waitingSW) {
     _waitingSW.postMessage({ type: 'SKIP_WAITING' });
   } else {
@@ -19117,6 +19118,23 @@ try {
   _applySocialToggleUI();
   // Check Supabase session (handles OAuth redirect and restores auth state)
   _checkSupabaseSession();
+  // After a social feature update: open friends panel if signed in, else scroll to sign-in card
+  if (sessionStorage.getItem('ts_show_social_after_update')) {
+    sessionStorage.removeItem('ts_show_social_after_update');
+    setTimeout(() => {
+      if (state.supabaseUserId) {
+        openSocialModal();
+      } else {
+        const card = document.getElementById('supabase-auth-card');
+        if (card) {
+          card.style.display = 'block';
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.style.boxShadow = '0 0 0 2px #C0392B';
+          setTimeout(() => { card.style.boxShadow = ''; }, 2500);
+        }
+      }
+    }, 800);
+  }
   // Update social notification dot (friend requests, new reactions)
   _updateSocialNotifyDot();
   // Hide install row if already running as installed PWA
