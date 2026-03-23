@@ -6699,16 +6699,15 @@ async function _doFriendSearch(query) {
 
   const { data, error } = await sb.from('users')
     .select('id, display_name, username')
-    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
-    .neq('id', state.supabaseUserId)
-    .limit(8);
+    .ilike('username', `%${query}%`)
+    .limit(10);
 
   if (error) {
     results.innerHTML = `<div style="padding:6px 0;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#e74c3c;">Error: ${escapeHtml(error.message || error.code || 'unknown')}</div>`;
     return;
   }
   if (!data || data.length === 0) {
-    results.innerHTML = '<div style="padding:6px 0;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);">No users found.</div>';
+    results.innerHTML = `<div style="padding:6px 0;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);">No users found for "${escapeHtml(query)}".</div>`;
     return;
   }
 
