@@ -7010,8 +7010,25 @@ async function _openFriendActivity(userId) {
   }).join('');
 }
 
-async function _removeFriend(userId) {
-  if (!confirm('Remove this friend?')) return;
+function _removeFriend(userId) {
+  const existing = document.getElementById('remove-friend-confirm-sheet');
+  if (existing) existing.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'remove-friend-confirm-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #333;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">REMOVE FRIEND?</div>
+      <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray);margin-bottom:24px;line-height:1.5;">They won't be able to see your workouts and you won't see theirs.</div>
+      <button onclick="_confirmRemoveFriend('${userId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px;">REMOVE</button>
+      <button onclick="document.getElementById('remove-friend-confirm-sheet').remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
+    </div>`;
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+}
+
+async function _confirmRemoveFriend(userId) {
+  document.getElementById('remove-friend-confirm-sheet')?.remove();
   const sb = _getSupabaseClient();
   if (!sb) return;
   await Promise.all([
