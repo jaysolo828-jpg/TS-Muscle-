@@ -1186,11 +1186,12 @@
 
   /* PR BADGE - animates into view */
   @keyframes notifyPulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.25; transform: scale(0.75); }
+    0%   { opacity: 1; transform: scale(1);    box-shadow: 0 0 0 0 rgba(204,32,39,0.8); }
+    50%  { opacity: 0.15; transform: scale(0.6); box-shadow: 0 0 0 6px rgba(204,32,39,0); }
+    100% { opacity: 1; transform: scale(1);    box-shadow: 0 0 0 0 rgba(204,32,39,0.8); }
   }
   .notify-dot-pulse {
-    animation: notifyPulse 1.2s ease-in-out infinite;
+    animation: notifyPulse 0.9s ease-in-out infinite;
   }
   @keyframes prPop {
     0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
