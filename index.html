@@ -6259,6 +6259,12 @@ function supabaseDismiss() {
   state.supabaseDismissed = true;
   // Not saved to localStorage — only lasts this session
   _updateSupabaseAuthCard();
+  const toast = document.getElementById('toast');
+  if (toast) {
+    toast.textContent = 'You can always join later — Settings → Account';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 4500);
+  }
 }
 
 function toggleSocialFeatures() {
