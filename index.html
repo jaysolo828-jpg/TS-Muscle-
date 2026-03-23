@@ -10406,9 +10406,10 @@ function renderSession() {
       if (_intelReps !== null && activeSession?.setIntel?.[ex.id]?.[si]) {
         activeSession.setIntel[ex.id][si].suggestedReps = _intelReps;
       }
-      const _repPlaceholder = _intelReps !== null
-        ? String(_intelReps)
-        : (repsPlaceholder || _goalReps.split(/[–\-]/)[0]);
+      // Always use previous session reps as placeholder (consistent with PREV column)
+      const _repPlaceholder = repsPlaceholder || _goalReps.split(/[–\-]/)[0];
+      // Show intel suggestion as a small hint when it differs from the placeholder
+      const _showIntelHint = _intelReps !== null && !set.done && String(_intelReps) !== String(_repPlaceholder);
 
       setsHTML += `
         <div class="set-row" id="set-row-${ex.id}-${si}">
@@ -10423,6 +10424,7 @@ function renderSession() {
               onchange="updateSet('${ex.id}',${si},'reps',this.value); updateRepIndicator('${ex.id}',${si},'${_goalReps}')"
               oninput="updateRepIndicator('${ex.id}',${si},'${_goalReps}')"/>
             <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
+            ${_showIntelHint ? `<div id="intel-hint-${ex.id}-${si}" class="intel-rep-hint" style="position:absolute;top:-10px;right:0;font-size:9px;color:#e74c3c;pointer-events:none;white-space:nowrap;">aim ${_intelReps}</div>` : `<div id="intel-hint-${ex.id}-${si}" class="intel-rep-hint" style="display:none;"></div>`}
           </div>
           <select class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'rpe',this.value);this.dataset.empty=this.value?'false':'true';">
             <option value="">RPE</option>
@@ -10953,11 +10955,25 @@ function toggleSetDone(exId, setIndex) {
         activeSession.setIntel[exId][_nextIdx].suggestedReps = _nextSuggestion;
         const _nextRepsInput = document.getElementById(`reps-input-${exId}-${_nextIdx}`);
         if (_nextRepsInput && !_nextSet.reps) {
-          const _nd = state.program.find(d => d.id === activeSession.dayId);
-          const _ne = _nd?.exercises.find(e => e.id === exId);
-          const _nTarget = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ne?.reps);
-          const _nStd = _nTarget.split(/[–\-]/)[0];
-          _nextRepsInput.placeholder = _nextSuggestion !== null ? String(_nextSuggestion) : _nStd;
+          // Keep placeholder as previous session reps (consistent with PREV column)
+          const _prevData = getLastSetData(exId, _nextIdx);
+          const _prevReps = _prevData ? String(_prevData.reps) : null;
+          if (!_prevReps) {
+            const _nd = state.program.find(d => d.id === activeSession.dayId);
+            const _ne = _nd?.exercises.find(e => e.id === exId);
+            const _nTarget = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ne?.reps);
+            _nextRepsInput.placeholder = _nTarget.split(/[–\-]/)[0];
+          }
+          // Show/update intel hint when suggestion differs from placeholder
+          const _intelHint = document.getElementById(`intel-hint-${exId}-${_nextIdx}`);
+          if (_intelHint) {
+            if (_nextSuggestion !== null && String(_nextSuggestion) !== _nextRepsInput.placeholder) {
+              _intelHint.textContent = 'aim ' + _nextSuggestion;
+              _intelHint.style.display = '';
+            } else {
+              _intelHint.style.display = 'none';
+            }
+          }
         }
       }
     }
@@ -10993,10 +11009,19 @@ function toggleSetDone(exId, setIndex) {
         }
         const _nextRepsInput = document.getElementById(`reps-input-${exId}-${_nextIdx}`);
         if (_nextRepsInput && !_nextSet.reps) {
-          const _nd = state.program.find(d => d.id === activeSession.dayId);
-          const _ne = _nd?.exercises.find(e => e.id === exId);
-          const _nTarget = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ne?.reps);
-          _nextRepsInput.placeholder = _nTarget.split(/[–\-]/)[0];
+          // Restore placeholder to previous session reps (consistent with PREV column)
+          const _prevData = getLastSetData(exId, _nextIdx);
+          if (_prevData?.reps) {
+            _nextRepsInput.placeholder = String(_prevData.reps);
+          } else {
+            const _nd = state.program.find(d => d.id === activeSession.dayId);
+            const _ne = _nd?.exercises.find(e => e.id === exId);
+            const _nTarget = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ne?.reps);
+            _nextRepsInput.placeholder = _nTarget.split(/[–\-]/)[0];
+          }
+          // Hide intel hint since suggestion was cleared
+          const _intelHint = document.getElementById(`intel-hint-${exId}-${_nextIdx}`);
+          if (_intelHint) _intelHint.style.display = 'none';
         }
       }
     }
@@ -12172,11 +12197,12 @@ function addDynamicSet(exId) {
     : (lastData?.reps ? String(lastData.reps) : String(getCycleWeekBandRepTarget(exId)));
 
   // Apply within-session intelligence if preceding sets qualify
+  // Intel suggestion is stored but NOT used as the placeholder (placeholder stays as prev session reps)
   const _intelReps = calcIntelSuggestedReps(exId, newSetIndex);
   if (_intelReps !== null && activeSession?.setIntel?.[exId]?.[newSetIndex]) {
     activeSession.setIntel[exId][newSetIndex].suggestedReps = _intelReps;
-    _repPlaceholder = String(_intelReps);
   }
+  const _showIntelHintDyn = _intelReps !== null && String(_intelReps) !== _repPlaceholder;
 
   // Weight placeholder: prefer previous session's per-set weight (matching renderSession),
   // fall back to current session's adjacent set weight.
@@ -12198,6 +12224,7 @@ function addDynamicSet(exId) {
         ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'reps\',this.value);updateRepIndicator(\'' + exId + '\',' + newSetIndex + ',\'' + _goalReps + '\')"' +
         ' oninput="updateRepIndicator(\'' + exId + '\',' + newSetIndex + ',\'' + _goalReps + '\')"/>' +
       '<div id="rep-indicator-' + exId + '-' + newSetIndex + '" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>' +
+      '<div id="intel-hint-' + exId + '-' + newSetIndex + '" class="intel-rep-hint" style="position:absolute;top:-10px;right:0;font-size:9px;color:#e74c3c;pointer-events:none;white-space:nowrap;' + (_showIntelHintDyn ? '' : 'display:none;') + '">' + (_showIntelHintDyn ? 'aim ' + _intelReps : '') + '</div>' +
     '</div>' +
     '<select class="rpe-select" data-empty="true"' +
       ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'rpe\',this.value);this.dataset.empty=this.value?\'false\':\'true\';">' +
