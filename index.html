@@ -2581,6 +2581,7 @@
       <input id="supabase-email-input" type="email" placeholder="Email" autocomplete="email" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
       <input id="supabase-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #333; color:var(--cream); font-family:'Barlow',sans-serif; font-size:14px; padding:11px 12px; border-radius:8px; margin-bottom:8px; outline:none;">
       <button onclick="supabaseSignInEmail()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; padding:12px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">SIGN IN / CREATE ACCOUNT</button>
+      <button onclick="supabaseShowEmailForm()" style="width:100%; background:none; border:none; color:#666; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; padding:8px; margin-top:2px; cursor:pointer; -webkit-tap-highlight-color:transparent;">CANCEL</button>
     </div>
     <div style="text-align:center;">
       <button onclick="supabaseDismiss()" style="background:none; border:none; color:#666; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:1px; cursor:pointer; padding:4px 8px; -webkit-tap-highlight-color:transparent;">SKIP FOR NOW</button>
@@ -6245,6 +6246,12 @@ function _updateSettingsAccountSection() {
         </div>
         <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       </div>
+      <div class="settings-item" onclick="_showUsernameSheet('${state.supabaseUserId}', '${(state.supabaseDisplayName||'').replace(/'/g,"\\'")}')">
+        <div>
+          <div class="settings-label" style="color:var(--gray);">Change Username</div>
+        </div>
+        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
       <div class="settings-item" onclick="supabaseSignOut()">
         <div>
           <div class="settings-label" style="color:var(--gray);">Sign Out</div>
@@ -6263,6 +6270,7 @@ function _updateSettingsAccountSection() {
           <input id="settings-email-input" type="email" placeholder="Email" autocomplete="email" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:14px;padding:11px 12px;border-radius:8px;margin-bottom:8px;outline:none;">
           <input id="settings-password-input" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:14px;padding:11px 12px;border-radius:8px;margin-bottom:8px;outline:none;">
           <button onclick="supabaseSignInEmailFromSettings()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SIGN IN / CREATE ACCOUNT</button>
+          <button onclick="supabaseShowEmailForm('settings')" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;padding:8px;margin-top:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
         </div>
       </div>`;
   }
@@ -6402,7 +6410,7 @@ function _showUsernameSheet(userId, displayName) {
   sheet.innerHTML = `
     <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #C0392B;">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">CHOOSE YOUR USERNAME</div>
-      <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);margin-bottom:18px;line-height:1.5;">Lowercase, no spaces, max 20 characters.</div>
+      <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);margin-bottom:18px;line-height:1.5;">Letters, numbers, and underscores only. Max 20 characters.</div>
       <input id="username-sheet-input" type="text" placeholder="yourusername" maxlength="20"
         style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:16px;padding:13px 14px;border-radius:10px;margin-bottom:16px;outline:none;"
         oninput="this.value=this.value.replace(/[^a-zA-Z0-9_]/g,'')">
