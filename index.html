@@ -6570,7 +6570,7 @@ async function _saveUsername(userId) {
   const liveId = user?.id || userId;
   if (!liveId) { showToast('Not signed in. Please sign in again.'); return; }
 
-  const { error } = await sb.from('users').update({ username }).eq('id', liveId);
+  const { error } = await sb.rpc('set_username', { new_username: username });
   if (error) {
     if (error.code === '23505') { showToast('That username is taken. Try another.'); return; }
     showToast('Error: ' + (error.message || error.code || 'Could not save username.'));
