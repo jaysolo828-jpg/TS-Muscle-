@@ -10607,25 +10607,30 @@ const BONUS_EXTRAS = [
 // Exercises in the user's overall program (other days) get a green check.
 function _buildBonusGroups() {
   const groups = {};
-  // Exercises in today's day + already-added bonus (exclude these entirely)
-  const inToday = new Set();
-  // Exercises anywhere in the user's program (green check)
-  const inProgram = new Set();
+  // Map program IDs to library IDs for today's exclusion + program check
+  const inTodayLib = new Set();
+  const inProgramLib = new Set();
   if (activeSession) {
     const day = state.program.find(d => d.id === activeSession.dayId);
-    if (day) day.exercises.forEach(e => inToday.add(e.id));
-    (activeSession.bonusExercises || []).forEach(b => inToday.add(b.id));
+    if (day) day.exercises.forEach(e => {
+      inTodayLib.add(e.id);
+      if (typeof PROGRAM_TO_LIB_ID !== 'undefined' && PROGRAM_TO_LIB_ID[e.id]) inTodayLib.add(PROGRAM_TO_LIB_ID[e.id]);
+    });
+    (activeSession.bonusExercises || []).forEach(b => inTodayLib.add(b.id));
   }
   (state.program || []).forEach(d => {
-    (d.exercises || []).forEach(e => inProgram.add(e.id));
+    (d.exercises || []).forEach(e => {
+      inProgramLib.add(e.id);
+      if (typeof PROGRAM_TO_LIB_ID !== 'undefined' && PROGRAM_TO_LIB_ID[e.id]) inProgramLib.add(PROGRAM_TO_LIB_ID[e.id]);
+    });
   });
   // Pull from full library, grouped by muscle group
   if (typeof EXERCISE_LIBRARY !== 'undefined') {
     EXERCISE_LIBRARY.forEach(ex => {
-      if (inToday.has(ex.id)) return;
+      if (inTodayLib.has(ex.id)) return;
       const g = (ex.muscleGroup || 'other').toUpperCase();
       if (!groups[g]) groups[g] = [];
-      groups[g].push({ name: ex.name, inProgram: inProgram.has(ex.id) });
+      groups[g].push({ name: ex.name, inProgram: inProgramLib.has(ex.id) });
     });
   }
   // Append quick-access extras (only if not already listed)
@@ -23794,13 +23799,19 @@ function renderLibrary() {
   listEl.innerHTML = html;
 }
 
-// Cached set of exercise IDs in the user's program (rebuilt per render pass)
+// Cached set of library exercise IDs that are in the user's program (rebuilt per render pass)
 var _libInProgramSet = null;
 function _libGetInProgramSet() {
   if (_libInProgramSet) return _libInProgramSet;
   _libInProgramSet = new Set();
   (state.program || []).forEach(function(d) {
-    (d.exercises || []).forEach(function(e) { _libInProgramSet.add(e.id); });
+    (d.exercises || []).forEach(function(e) {
+      // Map program ID to library ID
+      var libId = PROGRAM_TO_LIB_ID[e.id];
+      if (libId) _libInProgramSet.add(libId);
+      // Also add the raw program ID in case it matches directly
+      _libInProgramSet.add(e.id);
+    });
   });
   return _libInProgramSet;
 }
