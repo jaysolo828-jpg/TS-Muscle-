@@ -6032,6 +6032,7 @@ let state = {
 let activeSession = null;
 let _supabaseClient = null;         // Supabase JS client (initialized after config loads)
 let _cachedJwt = null;              // JWT cached at sign-in time for username save
+let _socialPollInterval = null;     // setInterval handle for notification dot polling
 let _lastRenderedDate = null;       // tracks the date string when renderHome() last ran
 let _midnightCheckInterval = null;  // 60-second interval to detect midnight rollover
 let pendingSwap = null;
@@ -6357,6 +6358,10 @@ async function supabaseSignOut() {
   state.supabaseUserId = null;
   state.supabaseDisplayName = null;
   _supabaseClient = null;
+  _cachedJwt = null;
+  if (_socialPollInterval) { clearInterval(_socialPollInterval); _socialPollInterval = null; }
+  if (_startNotifyTimer) { clearTimeout(_startNotifyTimer); _startNotifyTimer = null; }
+  saveState();
   _updateSupabaseAuthCard();
   _updateSettingsAccountSection();
   showToast('Signed out.');
@@ -6609,28 +6614,9 @@ async function _saveUsername(userId) {
   const sb = _getSupabaseClient();
   if (!sb) { showToast('Could not save username. Try again.'); return; }
 
-  // Get JWT — use cached value from sign-in, then getSession, then localStorage direct read
-  let jwt = _cachedJwt || null;
-  let liveId = userId || null;
-  if (!jwt) {
-    try {
-      const s1 = await sb.auth.getSession();
-      if (s1?.data?.session?.access_token) {
-        jwt    = s1.data.session.access_token;
-        liveId = s1.data.session.user?.id || liveId;
-      }
-    } catch (_) {}
-  }
-  if (!jwt) {
-    try {
-      for (const key of Object.keys(localStorage)) {
-        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-          const stored = JSON.parse(localStorage.getItem(key) || '{}');
-          if (stored?.access_token) { jwt = stored.access_token; liveId = stored.user?.id || liveId; break; }
-        }
-      }
-    } catch (_) {}
-  }
+  // Get JWT via unified helper
+  const jwt = await _getJwt();
+  const liveId = userId || state.supabaseUserId;
   if (!liveId || !jwt) { showToast('Not signed in. Please sign in again.'); return; }
 
   const supabaseUrl = window.SUPABASE_URL || '';
@@ -6757,6 +6743,27 @@ async function _checkSupabaseSession() {
       }
     }
   } catch(e) {}
+}
+
+// Unified JWT retrieval — cached → getSession → localStorage
+async function _getJwt() {
+  if (_cachedJwt) return _cachedJwt;
+  try {
+    const s = await _getSupabaseClient()?.auth.getSession();
+    if (s?.data?.session?.access_token) {
+      _cachedJwt = s.data.session.access_token;
+      return _cachedJwt;
+    }
+  } catch (_) {}
+  try {
+    for (const k of Object.keys(localStorage)) {
+      if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+        const d = JSON.parse(localStorage.getItem(k) || '{}');
+        if (d?.access_token) { _cachedJwt = d.access_token; return _cachedJwt; }
+      }
+    }
+  } catch (_) {}
+  return null;
 }
 
 function _showSocialSetupPrompt() {
@@ -6954,7 +6961,12 @@ async function _acceptFriendRequest(friendshipId, btn) {
   const sb = _getSupabaseClient();
   if (!sb) return;
   if (btn) btn.disabled = true;
-  await sb.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId);
+  const { error } = await sb.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId);
+  if (error) {
+    if (btn) btn.disabled = false;
+    showToast('Could not accept request. Try again.');
+    return;
+  }
   showToast("You're now connected");
   _renderFriendsSection();
   _updateSocialNotifyDot();
@@ -6964,20 +6976,20 @@ async function _declineFriendRequest(friendshipId, btn) {
   if (btn) btn.disabled = true;
   const supabaseUrl = window.SUPABASE_URL || '';
   const anonKey    = window.SUPABASE_PUBLISHABLE_KEY || '';
-  let jwt = _cachedJwt || null;
-  if (!jwt) {
-    try { const s = await _getSupabaseClient()?.auth.getSession(); if (s?.data?.session?.access_token) jwt = s.data.session.access_token; } catch(_) {}
+  const jwt = await _getJwt();
+  if (!jwt || !supabaseUrl) {
+    if (btn) btn.disabled = false;
+    showToast('Could not decline. Try again.');
+    return;
   }
-  if (!jwt) {
-    try { for (const k of Object.keys(localStorage)) { if (k.startsWith('sb-') && k.endsWith('-auth-token')) { const d = JSON.parse(localStorage.getItem(k)||'{}'); if (d?.access_token) { jwt = d.access_token; break; } } } } catch(_) {}
-  }
-  if (jwt && supabaseUrl) {
-    await fetch(`${supabaseUrl}/rest/v1/friendships?id=eq.${friendshipId}`, {
-      method: 'DELETE',
-      headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' },
-    });
-  } else {
-    await _getSupabaseClient()?.from('friendships').delete().eq('id', friendshipId);
+  const res = await fetch(`${supabaseUrl}/rest/v1/friendships?id=eq.${friendshipId}`, {
+    method: 'DELETE',
+    headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' },
+  });
+  if (!res.ok) {
+    if (btn) btn.disabled = false;
+    showToast('Could not decline. Try again.');
+    return;
   }
   const row = btn?.closest('.friends-request-item');
   if (row) row.remove();
@@ -7139,39 +7151,22 @@ async function _confirmRemoveFriend(userId) {
   const supabaseUrl = window.SUPABASE_URL || '';
   const anonKey    = window.SUPABASE_PUBLISHABLE_KEY || '';
   const myId       = state.supabaseUserId;
+  const jwt        = await _getJwt();
 
-  // Get JWT using same 3-fallback approach as username save
-  let jwt = _cachedJwt || null;
-  if (!jwt) {
-    try {
-      const sb = _getSupabaseClient();
-      const s1 = await sb?.auth.getSession();
-      if (s1?.data?.session?.access_token) jwt = s1.data.session.access_token;
-    } catch (_) {}
-  }
-  if (!jwt) {
-    try {
-      for (const key of Object.keys(localStorage)) {
-        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-          const stored = JSON.parse(localStorage.getItem(key) || '{}');
-          if (stored?.access_token) { jwt = stored.access_token; break; }
-        }
-      }
-    } catch (_) {}
-  }
+  if (!jwt || !supabaseUrl) { showToast('Could not remove friend. Try again.'); return; }
 
-  if (jwt && supabaseUrl) {
-    await Promise.all([
-      fetch(`${supabaseUrl}/rest/v1/friendships?requester_id=eq.${myId}&addressee_id=eq.${userId}`, {
-        method: 'DELETE',
-        headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' },
-      }),
-      fetch(`${supabaseUrl}/rest/v1/friendships?requester_id=eq.${userId}&addressee_id=eq.${myId}`, {
-        method: 'DELETE',
-        headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' },
-      }),
-    ]);
-  }
+  const [r1, r2] = await Promise.all([
+    fetch(`${supabaseUrl}/rest/v1/friendships?requester_id=eq.${myId}&addressee_id=eq.${userId}`, {
+      method: 'DELETE',
+      headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' },
+    }),
+    fetch(`${supabaseUrl}/rest/v1/friendships?requester_id=eq.${userId}&addressee_id=eq.${myId}`, {
+      method: 'DELETE',
+      headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' },
+    }),
+  ]);
+
+  if (!r1.ok && !r2.ok) { showToast('Could not remove friend. Try again.'); return; }
 
   document.getElementById('friend-activity-sheet')?.remove();
   showToast('Friend removed.');
@@ -7446,7 +7441,7 @@ async function _updateSocialNotifyDot() {
   if (!sb) { dot.style.display = 'none'; return; }
   try {
     const lastSeen = state.socialLastSeen || '1970-01-01T00:00:00.000Z';
-    const [{ count: pendingCount }, { count: rxnCount }] = await Promise.all([
+    const [pendingRes, rxnRes] = await Promise.all([
       sb.from('friendships')
         .select('id', { count: 'exact', head: true })
         .eq('addressee_id', state.supabaseUserId)
@@ -7456,7 +7451,9 @@ async function _updateSocialNotifyDot() {
         .eq('to_user_id', state.supabaseUserId)
         .gt('created_at', lastSeen)
     ]);
-    const hasAlert = ((pendingCount || 0) + (rxnCount || 0)) > 0;
+    // If either query errored, don't change dot state — leave as-is
+    if (pendingRes.error || rxnRes.error) return;
+    const hasAlert = ((pendingRes.count || 0) + (rxnRes.count || 0)) > 0;
     dot.style.display = hasAlert ? 'block' : 'none';
     if (hasAlert) dot.classList.add('notify-dot-pulse');
     else dot.classList.remove('notify-dot-pulse');
@@ -7468,7 +7465,7 @@ async function _updateSocialNotifyDot() {
 }
 
 // Poll for new friend requests / reactions every 60 seconds
-setInterval(() => { if (state.supabaseUserId) _updateSocialNotifyDot(); }, 60000);
+_socialPollInterval = setInterval(() => { if (state.supabaseUserId) _updateSocialNotifyDot(); }, 60000);
 
 // ============================================================
 // UTILITIES
