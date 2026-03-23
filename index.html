@@ -10597,13 +10597,53 @@ function getLastSetData(exId, setIndex) {
 // BONUS EXERCISE FEATURE
 // ============================================================
 
-const BONUS_EXERCISES = [
-  { group: 'ABS', items: ['Plank', 'Dead Bug', 'Hollow Hold', 'Ab Wheel Rollout', 'Cable Crunch', 'Hanging Leg Raise', 'Bicycle Crunches', 'Leg Raises', 'Russian Twist', 'Crunches', 'Sit-Ups'] },
-  { group: 'PUSH', items: ['Push-Ups', 'Dips', 'Diamond Push-Ups', 'Decline Push-Ups', 'Pike Push-Ups', 'Banded Push-Ups'] },
-  { group: 'PULL', items: ['Face Pulls', 'Band Pull-Aparts', 'Reverse Flyes', 'Shrugs', 'Upright Rows', 'Banded Rows'] },
-  { group: 'LEGS', items: ['Glute Bridge', 'Hip Thrust', 'Calf Raises', 'Nordic Curls', 'Lateral Band Walk', 'Donkey Kicks', 'Fire Hydrants', 'Goblet Squat'] },
+// Quick-access extras that don't appear in the main library (mobility, bodyweight, etc.)
+const BONUS_EXTRAS = [
   { group: 'MOBILITY', items: ['90/90 Hip Stretch', 'Couch Stretch', 'Wall Slides', 'Thoracic Rotation', 'Ankle Circles', 'Band Dislocates'] },
 ];
+
+// Build the full bonus list from EXERCISE_LIBRARY + extras at render time.
+// Only exercises already in TODAY's day program are excluded.
+// Exercises in the user's overall program (other days) get a green check.
+function _buildBonusGroups() {
+  const groups = {};
+  // Exercises in today's day + already-added bonus (exclude these entirely)
+  const inToday = new Set();
+  // Exercises anywhere in the user's program (green check)
+  const inProgram = new Set();
+  if (activeSession) {
+    const day = state.program.find(d => d.id === activeSession.dayId);
+    if (day) day.exercises.forEach(e => inToday.add(e.id));
+    (activeSession.bonusExercises || []).forEach(b => inToday.add(b.id));
+  }
+  (state.program || []).forEach(d => {
+    (d.exercises || []).forEach(e => inProgram.add(e.id));
+  });
+  // Pull from full library, grouped by muscle group
+  if (typeof EXERCISE_LIBRARY !== 'undefined') {
+    EXERCISE_LIBRARY.forEach(ex => {
+      if (inToday.has(ex.id)) return;
+      const g = (ex.muscleGroup || 'other').toUpperCase();
+      if (!groups[g]) groups[g] = [];
+      groups[g].push({ name: ex.name, inProgram: inProgram.has(ex.id) });
+    });
+  }
+  // Append quick-access extras (only if not already listed)
+  BONUS_EXTRAS.forEach(extra => {
+    if (!groups[extra.group]) groups[extra.group] = [];
+    extra.items.forEach(name => {
+      if (!groups[extra.group].some(e => e.name === name)) {
+        groups[extra.group].push({ name, inProgram: false });
+      }
+    });
+  });
+  // Sort groups in a readable order
+  const ORDER = ['CHEST', 'BACK', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'QUADS', 'HAMSTRINGS', 'GLUTES', 'CALVES', 'CORE', 'MOBILITY'];
+  return ORDER
+    .filter(g => groups[g]?.length)
+    .map(g => ({ group: g, items: groups[g] }))
+    .concat(Object.keys(groups).filter(g => !ORDER.includes(g)).map(g => ({ group: g, items: groups[g] })));
+}
 
 let _bonusSelectedName = null;
 
@@ -10640,25 +10680,31 @@ function filterBonusExercises(q) {
   renderBonusExerciseList(q);
 }
 
+function _bonusBtnHTML(item) {
+  const safe = item.name.replace(/'/g, "\\'");
+  const check = item.inProgram ? '<span style="color:#2ecc71;margin-left:6px;font-size:11px;">&#10003;</span>' : '';
+  return `<button class="bonus-ex-btn" onclick="showBonusPersistStep('${safe}')">
+    ${item.name}${check}
+  </button>`;
+}
+
 function renderBonusExerciseList(q) {
   const container = document.getElementById('bonus-exercise-list');
   if (!container) return;
   const qLower = (q || '').toLowerCase().trim();
+  const allGroups = _buildBonusGroups();
   let html = '';
 
   if (qLower) {
     const matches = [];
-    BONUS_EXERCISES.forEach(g => {
-      g.items.forEach(item => { if (item.toLowerCase().includes(qLower)) matches.push(item); });
+    allGroups.forEach(g => {
+      g.items.forEach(item => { if (item.name.toLowerCase().includes(qLower)) matches.push(item); });
     });
     if (matches.length) {
-      html += matches.map(name =>
-        `<button class="bonus-ex-btn" onclick="showBonusPersistStep('${name.replace(/'/g, "\\'")}')">
-          ${name}
-        </button>`).join('');
+      html += matches.map(item => _bonusBtnHTML(item)).join('');
     }
     const customLabel = q.trim();
-    if (customLabel && !matches.some(m => m.toLowerCase() === customLabel.toLowerCase())) {
+    if (customLabel && !matches.some(m => m.name.toLowerCase() === customLabel.toLowerCase())) {
       html += `<button class="bonus-ex-btn" style="border-color:rgba(204,32,39,0.35);color:var(--gray-light);" onclick="showBonusPersistStep('${customLabel.replace(/'/g, "\\'")}')">
         <span style="color:var(--red-text);margin-right:6px;">+</span> Add "<strong style="color:var(--cream);">${customLabel}</strong>"
       </button>`;
@@ -10670,12 +10716,9 @@ function renderBonusExerciseList(q) {
       </button>`;
     }
   } else {
-    BONUS_EXERCISES.forEach(group => {
+    allGroups.forEach(group => {
       html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--gray);letter-spacing:2px;margin:14px 0 8px;padding-left:2px;">${group.group}</div>`;
-      html += group.items.map(name =>
-        `<button class="bonus-ex-btn" onclick="showBonusPersistStep('${name.replace(/'/g, "\\'")}')">
-          ${name}
-        </button>`).join('');
+      html += group.items.map(item => _bonusBtnHTML(item)).join('');
     });
   }
   container.innerHTML = html;
