@@ -6872,7 +6872,7 @@ async function _declineFriendRequest(friendshipId, btn) {
   const sb = _getSupabaseClient();
   if (!sb) return;
   if (btn) btn.disabled = true;
-  await sb.from('friendships').update({ status: 'declined' }).eq('id', friendshipId);
+  await sb.from('friendships').delete().eq('id', friendshipId);
   const row = btn?.closest('.friends-request-item');
   if (row) row.remove();
   const list = document.getElementById('friends-pending-list');
