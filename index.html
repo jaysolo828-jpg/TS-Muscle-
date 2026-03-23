@@ -24074,7 +24074,7 @@ function renderLibCard(ex) {
   return '<div class="lib-card' + expandedClass + '" id="lib-card-' + ex.id + '">' +
     '<div class="lib-card-summary" onclick="toggleLibCard(\'' + ex.id + '\')">' +
       '<div class="lib-card-info">' +
-        '<div class="lib-card-name">' + _escHtml(ex.name) + (ex.goldStar ? ' <span class="lib-star-badge" title="Top pick">⭐</span>' : '') + (inProgram ? ' <span style="color:#2ecc71;font-size:13px;" title="In your program">&#10003;</span>' : '') + '</div>' +
+        '<div class="lib-card-name">' + _escHtml(ex.name) + (ex.goldStar ? ' <span class="lib-star-badge" title="Top pick">⭐</span>' : '') + (inProgram ? ' <span style="color:#2ecc71;font-size:12px;margin-left:6px;letter-spacing:0.3px;font-weight:600;" title="In your program">&#10003; in program</span>' : '') + '</div>' +
         '<div class="lib-card-meta">' +
           '<span class="lib-muscle-pill" style="color:' + color + ';border-color:' + color + '44;background:' + color + '18;">' + ex.muscleGroup.toUpperCase() + '</span>' +
           '<span class="lib-equip-pill">' + _escHtml(ex.equipment) + '</span>' +
