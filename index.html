@@ -6353,6 +6353,17 @@ async function _onSupabaseSignIn(user) {
   const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || '';
   state.supabaseDisplayName = rawName;
   state.supabaseDismissed = false;
+
+  // If onboarding hasn't been completed in this browser context, skip it —
+  // Google sign-in users are never fresh installs needing the full setup flow.
+  if (!state.onboardingComplete) {
+    state.onboardingComplete = true;
+    const modal = document.getElementById('onboarding-modal');
+    if (modal) modal.style.display = 'none';
+    const homeMain = document.getElementById('home-main-content');
+    if (homeMain) homeMain.style.display = '';
+  }
+
   saveState();
 
   // Check if user already has a row in public.users
