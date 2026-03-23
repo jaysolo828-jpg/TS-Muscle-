@@ -6624,14 +6624,11 @@ async function _checkSupabaseSession() {
     }
     _updateSocialNotifyDot();
 
-    // After tapping the social update banner, route user into the right flow
+    // After tapping the social update banner — scroll to sign-in card for non-signed-in users
     if (sessionStorage.getItem('ts_show_social_after_update')) {
       sessionStorage.removeItem('ts_show_social_after_update');
-      setTimeout(() => {
-        showScreen('home');
-        if (state.supabaseUserId) {
-          openSocialModal();
-        } else {
+      if (!state.supabaseUserId) {
+        setTimeout(() => {
           const card = document.getElementById('supabase-auth-card');
           if (card) {
             card.style.display = 'block';
@@ -6639,8 +6636,8 @@ async function _checkSupabaseSession() {
             card.style.boxShadow = '0 0 0 2px #C0392B';
             setTimeout(() => { card.style.boxShadow = ''; }, 2500);
           }
-        }
-      }, 400);
+        }, 400);
+      }
     }
   } catch(e) {}
 }
