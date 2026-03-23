@@ -1185,6 +1185,13 @@
   .notes-input::placeholder { color: #bbbbbb; }
 
   /* PR BADGE - animates into view */
+  @keyframes notifyPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.25; transform: scale(0.75); }
+  }
+  .notify-dot-pulse {
+    animation: notifyPulse 1.2s ease-in-out infinite;
+  }
   @keyframes prPop {
     0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
     60%  { transform: scale(1.15) rotate(3deg); opacity: 1; }
@@ -6896,6 +6903,7 @@ async function _acceptFriendRequest(friendshipId, btn) {
   await sb.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId);
   showToast("You're now connected");
   _renderFriendsSection();
+  _updateSocialNotifyDot();
 }
 
 async function _declineFriendRequest(friendshipId, btn) {
@@ -6924,6 +6932,7 @@ async function _declineFriendRequest(friendshipId, btn) {
     const sec = document.getElementById('friends-pending-section');
     if (sec) sec.style.display = 'none';
   }
+  _updateSocialNotifyDot();
 }
 
 async function _loadFriendsList() {
@@ -7360,11 +7369,8 @@ function openSocialModal() {
     });
   });
   _renderFriendsSection();
-  // Dot and icon color clear immediately when modal opens
-  const dot = document.getElementById('social-notify-dot');
-  if (dot) dot.style.display = 'none';
-  const btn = document.getElementById('social-open-btn');
-  if (btn) btn.style.color = '';
+  // Recheck real state — dot stays if pending requests still exist
+  _updateSocialNotifyDot();
 }
 
 function closeSocialModal() {
@@ -7398,12 +7404,17 @@ async function _updateSocialNotifyDot() {
     ]);
     const hasAlert = ((pendingCount || 0) + (rxnCount || 0)) > 0;
     dot.style.display = hasAlert ? 'block' : 'none';
+    if (hasAlert) dot.classList.add('notify-dot-pulse');
+    else dot.classList.remove('notify-dot-pulse');
     const btn = document.getElementById('social-open-btn');
     if (btn) btn.style.color = hasAlert ? 'var(--red)' : '';
   } catch (e) {
     dot.style.display = 'none';
   }
 }
+
+// Poll for new friend requests / reactions every 60 seconds
+setInterval(() => { if (state.supabaseUserId) _updateSocialNotifyDot(); }, 60000);
 
 // ============================================================
 // UTILITIES
