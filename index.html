@@ -6565,18 +6565,41 @@ async function _saveUsername(userId) {
   const sb = _getSupabaseClient();
   if (!sb) { showToast('Could not save username. Try again.'); return; }
 
-  // Get live session — try getSession first, fall back to refreshSession
-  let session;
+  // Get live session — try getSession, then refreshSession, then read directly from localStorage
+  // (on Android PWA, getSession() can return null even when a valid session exists in storage)
+  let jwt = null;
+  let liveId = userId || null;
   try {
     const s1 = await sb.auth.getSession();
-    session = s1?.data?.session;
-    if (!session?.access_token) {
-      const s2 = await sb.auth.refreshSession();
-      session = s2?.data?.session;
+    if (s1?.data?.session?.access_token) {
+      jwt    = s1.data.session.access_token;
+      liveId = s1.data.session.user?.id || liveId;
     }
   } catch (_) {}
-  const jwt    = session?.access_token;
-  const liveId = session?.user?.id || userId;
+  if (!jwt) {
+    try {
+      const s2 = await sb.auth.refreshSession();
+      if (s2?.data?.session?.access_token) {
+        jwt    = s2.data.session.access_token;
+        liveId = s2.data.session.user?.id || liveId;
+      }
+    } catch (_) {}
+  }
+  // Last resort: read Supabase session directly from localStorage
+  if (!jwt) {
+    try {
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          const stored = JSON.parse(localStorage.getItem(key) || '{}');
+          if (stored?.access_token) {
+            jwt    = stored.access_token;
+            liveId = stored.user?.id || liveId;
+            break;
+          }
+        }
+      }
+    } catch (_) {}
+  }
   if (!liveId || !jwt) { showToast('Not signed in. Please sign in again.'); return; }
 
   // POST to Netlify edge function — uses service role key server-side, bypasses RLS entirely
