@@ -2,7 +2,7 @@
 // Validates the caller's JWT, checks username uniqueness, then updates public.users.
 export default async function handler(req) {
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed: ' + req.method, { status: 405 });
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')              || '';
@@ -75,4 +75,3 @@ export default async function handler(req) {
   });
 }
 
-export const config = { path: '/save-username' };
