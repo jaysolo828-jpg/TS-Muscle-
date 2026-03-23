@@ -6435,6 +6435,11 @@ async function supabaseSignInEmailFromSettings() {
       ({ data, error } = await sb.auth.signUp({ email, password }));
     }
     if (error) { showToast(error.message || 'Sign in failed.'); return; }
+    // If signup returned a user but no session, email confirmation is required
+    if (data?.user && !data?.session) {
+      showToast('Check your email to confirm your account, then sign in here.');
+      return;
+    }
     if (data?.session?.access_token) _cachedJwt = data.session.access_token;
     if (data?.user) await _onSupabaseSignIn(data.user);
   } catch(e) { showToast(e.message || 'Sign in failed.'); }
