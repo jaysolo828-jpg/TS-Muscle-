@@ -6441,14 +6441,51 @@ async function _checkSupabaseSession() {
   const sb = _getSupabaseClient();
   if (!sb) return;
   try {
+    const isPWA = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    const hash = window.location.hash || '';
+
+    // ── Step 1: PWA opened with tokens passed from browser after OAuth ──
+    const tsAuthMatch = hash.match(/[#&]ts_auth=([^&]+)/);
+    if (isPWA && tsAuthMatch) {
+      try {
+        const { at, rt } = JSON.parse(atob(tsAuthMatch[1]));
+        if (at && rt) {
+          const { data: { session: s } } = await sb.auth.setSession({ access_token: at, refresh_token: rt });
+          // Clean the token from the URL so it doesn't persist
+          history.replaceState(null, '', window.location.pathname);
+          if (s?.user) { await _onSupabaseSignIn(s.user); return; }
+        }
+      } catch(e) {}
+    }
+
+    // ── Step 2: Browser (non-PWA) received the OAuth redirect from Google ──
+    if (!isPWA && hash.includes('access_token')) {
+      const { data: { session: s } } = await sb.auth.getSession();
+      if (s?.access_token && s?.refresh_token) {
+        const encoded = btoa(JSON.stringify({ at: s.access_token, rt: s.refresh_token }));
+        const returnUrl = window.location.origin + '/#ts_auth=' + encoded;
+        // Show a full-screen overlay prompting user to return to the PWA
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:#0a0a0a;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;font-family:"Barlow Condensed",sans-serif;';
+        overlay.innerHTML = `
+          <img src="icon-192.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:24px;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:#fff;letter-spacing:2px;margin-bottom:8px;text-align:center;">SIGN-IN COMPLETE</div>
+          <div style="color:#aaa;font-size:15px;text-align:center;margin-bottom:32px;line-height:1.5;">Tap the button below to return to<br>T&amp;S Muscle and finish signing in.</div>
+          <a href="${returnUrl}" style="display:block;width:100%;max-width:320px;background:#C0392B;color:#fff;font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;padding:18px;border-radius:14px;text-align:center;text-decoration:none;">RETURN TO APP</a>
+          <div style="color:#555;font-size:12px;margin-top:20px;text-align:center;">If the app doesn't open, find T&amp;S Muscle on your home screen.</div>`;
+        document.body.innerHTML = '';
+        document.body.appendChild(overlay);
+        return;
+      }
+    }
+
+    // ── Step 3: Normal session check (already signed in) ──
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user && !state.supabaseUserId) {
       await _onSupabaseSignIn(session.user);
     } else if (session?.user) {
-      // Already have user ID, just update auth card visibility
       state.supabaseUserId = session.user.id;
       _updateSupabaseAuthCard();
-      // Ensure SW has the userId for notification action handling
       _swStoreUserId(session.user.id);
     }
     _updateSocialNotifyDot();
