@@ -6750,11 +6750,11 @@ async function _renderFriendsSection() {
     <div id="friend-search-results" style="margin-bottom:12px;"></div>
 
     <div id="friends-pending-section" style="display:none;margin-bottom:14px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">PENDING REQUESTS</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">PENDING REQUESTS</div>
       <div id="friends-pending-list"></div>
     </div>
 
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">MY FRIENDS</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">MY FRIENDS</div>
     <div id="friends-list"></div>
 
     <button onclick="inviteFriend()" style="width:100%;margin-top:14px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:13px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">INVITE A FRIEND</button>
@@ -6920,7 +6920,7 @@ async function _loadFriendsList() {
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="position:relative;flex-shrink:0;">
           <div style="width:36px;height:36px;border-radius:50%;background:#C0392B;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:18px;color:#fff;">${escapeHtml(initial)}</div>
-          ${recentlyActive ? '<div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#C0392B;border:2px solid #1a1a1a;"></div>' : ''}
+          ${recentlyActive ? '<div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#2ecc71;border:2px solid #1a1a1a;"></div>' : ''}
         </div>
         <div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);">${escapeHtml(u.display_name)}</div>
@@ -6965,6 +6965,7 @@ async function _openFriendActivity(userId) {
       <div id="friend-activity-signals">
         <div style="text-align:center;padding:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);">Loading...</div>
       </div>
+      <button onclick="_removeFriend('${userId}')" style="width:100%;margin-top:18px;background:transparent;border:1px solid #333;color:#666;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">REMOVE FRIEND</button>
     </div>`;
   document.body.appendChild(sheet);
   sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
@@ -7010,6 +7011,20 @@ async function _openFriendActivity(userId) {
       + '<div style="display:flex;gap:8px;">' + btns + '</div>'
       + '</div>';
   }).join('');
+}
+
+async function _removeFriend(userId) {
+  if (!confirm('Remove this friend?')) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  await sb.from('friendships')
+    .delete()
+    .or(
+      `and(requester_id.eq.${state.supabaseUserId},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${state.supabaseUserId})`
+    );
+  document.getElementById('friend-activity-sheet')?.remove();
+  showToast('Friend removed.');
+  _renderFriendsSection();
 }
 
 async function _sendReaction(signalId, toUserId, reactionType, btn) {
@@ -7257,9 +7272,11 @@ function openSocialModal() {
     });
   });
   _renderFriendsSection();
-  // Dot clears immediately when modal opens
+  // Dot and icon color clear immediately when modal opens
   const dot = document.getElementById('social-notify-dot');
   if (dot) dot.style.display = 'none';
+  const btn = document.getElementById('social-open-btn');
+  if (btn) btn.style.color = '';
 }
 
 function closeSocialModal() {
@@ -7291,7 +7308,10 @@ async function _updateSocialNotifyDot() {
         .eq('to_user_id', state.supabaseUserId)
         .gt('created_at', lastSeen)
     ]);
-    dot.style.display = ((pendingCount || 0) + (rxnCount || 0)) > 0 ? 'block' : 'none';
+    const hasAlert = ((pendingCount || 0) + (rxnCount || 0)) > 0;
+    dot.style.display = hasAlert ? 'block' : 'none';
+    const btn = document.getElementById('social-open-btn');
+    if (btn) btn.style.color = hasAlert ? 'var(--red)' : '';
   } catch (e) {
     dot.style.display = 'none';
   }
