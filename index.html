@@ -6565,8 +6565,16 @@ async function _saveUsername(userId) {
   const sb = _getSupabaseClient();
   if (!sb) { showToast('Could not save username. Try again.'); return; }
 
-  // Get live session — need JWT for server-side verification
-  const { data: { session } } = await sb.auth.getSession();
+  // Get live session — try getSession first, fall back to refreshSession
+  let session;
+  try {
+    const s1 = await sb.auth.getSession();
+    session = s1?.data?.session;
+    if (!session?.access_token) {
+      const s2 = await sb.auth.refreshSession();
+      session = s2?.data?.session;
+    }
+  } catch (_) {}
   const jwt    = session?.access_token;
   const liveId = session?.user?.id || userId;
   if (!liveId || !jwt) { showToast('Not signed in. Please sign in again.'); return; }
