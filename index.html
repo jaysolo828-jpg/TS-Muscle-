@@ -6242,43 +6242,34 @@ function _updateSettingsAccountSection() {
   if (state.supabaseUserId) {
     const name = state.supabaseDisplayName || state.displayName || 'Connected';
     el.innerHTML = `
-      <div class="settings-item" style="cursor:default;">
+      <div class="settings-item" onclick="document.getElementById('account-manage-drawer').style.display=document.getElementById('account-manage-drawer').style.display==='none'?'block':'none';var a=document.getElementById('account-drawer-arrow');a.style.transform=a.style.transform?'':'rotate(90deg)';" style="cursor:pointer;">
         <div>
           <div class="settings-label">${name}</div>
-          <div class="settings-sub">Signed in &mdash; your data syncs across devices</div>
+          <div class="settings-sub">Signed in &mdash; tap to manage account</div>
         </div>
-        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="settings-arrow" id="account-drawer-arrow" style="transition:transform 0.2s;"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
-      <div class="settings-item" onclick="_showUsernameSheet('${state.supabaseUserId}', '${(state.supabaseDisplayName||'').replace(/'/g,"\\'")}')">
-        <div>
-          <div class="settings-label" style="color:var(--gray);">Change Username</div>
+      <div id="account-manage-drawer" style="display:none;border-left:2px solid #C0392B;margin:0 0 4px 16px;padding-left:4px;">
+        <div class="settings-item" onclick="_showUsernameSheet('${state.supabaseUserId}', '${(state.supabaseDisplayName||'').replace(/'/g,"\\'")}')">
+          <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Change Username</div></div>
+          <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
-        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
-      </div>
-      <div class="settings-item" onclick="supabaseChangeEmail()">
-        <div>
-          <div class="settings-label" style="color:var(--gray);">Change Email</div>
+        <div class="settings-item" onclick="supabaseChangeEmail()">
+          <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Change Email</div></div>
+          <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
-        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
-      </div>
-      <div class="settings-item" onclick="supabaseChangePassword()">
-        <div>
-          <div class="settings-label" style="color:var(--gray);">Change Password</div>
+        <div class="settings-item" onclick="supabaseChangePassword()">
+          <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Change Password</div></div>
+          <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
-        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
-      </div>
-      <div class="settings-item" onclick="supabaseSignOut()">
-        <div>
-          <div class="settings-label" style="color:var(--gray);">Sign Out</div>
+        <div class="settings-item" onclick="supabaseSignOut()">
+          <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Sign Out</div></div>
+          <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
-        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
-      </div>
-      <div class="settings-item" onclick="supabaseDeleteAccount()">
-        <div>
-          <div class="settings-label" style="color:#e74c3c;">Delete Account</div>
-          <div class="settings-sub">Permanently removes your social profile</div>
+        <div class="settings-item" onclick="supabaseDeleteAccount()">
+          <div><div class="settings-label" style="color:#e74c3c;font-size:14px;">Delete Account</div></div>
+          <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="#e74c3c" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
-        <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#e74c3c" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>`;
   } else {
     el.innerHTML = `
