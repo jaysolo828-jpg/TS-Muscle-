@@ -6771,6 +6771,7 @@ async function _checkSupabaseSession() {
       state.supabaseUserId = session.user.id;
       _updateSupabaseAuthCard();
       _swStoreUserId(session.user.id);
+      _syncOneSignalPlayerId();
     }
     _updateSocialNotifyDot();
 
@@ -7488,6 +7489,29 @@ function _initOneSignal() {
       autoResubscribe: true,
       notifyButton: { enable: false }
     });
+  });
+}
+
+// Silently save the current OneSignal player ID for an already-signed-in user.
+// Called on every page load so a simple refresh registers their subscription
+// without requiring a sign-out / sign-in cycle.
+async function _syncOneSignalPlayerId() {
+  if (!state.supabaseUserId) return;
+  if (!window.ONESIGNAL_APP_ID) return;
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      const playerId = OneSignal.User.PushSubscription.id;
+      if (!playerId) return;
+      const sb = _getSupabaseClient();
+      if (!sb) return;
+      const ua = (navigator.userAgent || '').toLowerCase();
+      const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
+      await sb.from('onesignal_subscriptions').upsert(
+        { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
+        { onConflict: 'user_id,platform' }
+      );
+    } catch(e) {}
   });
 }
 
