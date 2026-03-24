@@ -5233,11 +5233,9 @@ const UNILATERAL_EXERCISES = new Set([
 function getEffectiveExperienceLevel() {
   const raw = state.profile?.experience;
   const level = (raw === 'beginner' || raw === 'intermediate' || raw === 'advanced') ? raw : 'intermediate';
-  // Graceful rollout: existing advanced users who are mid-cycle get intermediate
-  // behavior until their next cycle starts (flag stamped at cycle rollover).
-  // Beginners get the new scaling immediately (no existing deep-cycle beginners).
-  // New users and users at a cycle boundary get full scaling via expScalingActive.
-  if (!state.expScalingActive && level === 'advanced') return 'intermediate';
+  // Fix: existing advanced users who set their level before the rollout code
+  // was added never had expScalingActive stamped. Honour their selection.
+  if (!state.expScalingActive && raw) { state.expScalingActive = true; saveState(); }
   return level;
 }
 
@@ -15888,9 +15886,14 @@ function renderHistory() {
 
   // ── Experience level indicator ────────────────────────────
   const _expIndicator = document.createElement('div');
-  const _expLabel = getEffectiveExperienceLevel();
+  const _expEffective = getEffectiveExperienceLevel();
+  const _expPending = state.pendingExperienceLevel;
   _expIndicator.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;margin-bottom:12px;margin-top:-4px;';
-  _expIndicator.textContent = 'Training as: ' + _expLabel.charAt(0).toUpperCase() + _expLabel.slice(1);
+  let _expText = 'Training as: ' + _expEffective.charAt(0).toUpperCase() + _expEffective.slice(1);
+  if (_expPending && _expPending !== _expEffective) {
+    _expText += '  ·  ' + _expPending.charAt(0).toUpperCase() + _expPending.slice(1) + ' starts next cycle';
+  }
+  _expIndicator.textContent = _expText;
   container.appendChild(_expIndicator);
 
   // ── Helpers ──────────────────────────────────────────────
