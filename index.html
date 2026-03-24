@@ -651,11 +651,12 @@
   .workout-session.active { display: block; }
 
   @keyframes sessionExpand {
-    from { transform: scale(0); }
-    to   { transform: scale(1); }
+    from { clip-path: circle(0px at var(--cx, 50%) var(--cy, 80%)); }
+    to   { clip-path: circle(200vmax at var(--cx, 50%) var(--cy, 80%)); }
   }
   .workout-session.is-launching {
-    animation: sessionExpand 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    overflow: hidden; /* clip-path requires overflow:hidden to render correctly */
+    animation: sessionExpand 0.45s cubic-bezier(0.2, 0, 0.2, 1) forwards;
   }
 
   .session-sticky-header {
@@ -10205,19 +10206,22 @@ function _autoregDismiss(exId) {
 function _launchSessionFromEl(triggerEl) {
   const ws = document.getElementById('workout-session');
 
-  // Set transform-origin to the button's center so scale(0→1) expands from there
+  // Pin the clip-path circle origin to the button's center
   if (triggerEl) {
     const r = triggerEl.getBoundingClientRect();
-    ws.style.transformOrigin = (r.left + r.width / 2) + 'px ' + (r.top + r.height / 2) + 'px';
+    ws.style.setProperty('--cx', (r.left + r.width  / 2) + 'px');
+    ws.style.setProperty('--cy', (r.top  + r.height / 2) + 'px');
   } else {
-    ws.style.transformOrigin = '50% 80%';
+    ws.style.setProperty('--cx', '50%');
+    ws.style.setProperty('--cy', '80%');
   }
 
   ws.classList.add('active', 'is-launching');
   setTimeout(() => {
     ws.classList.remove('is-launching');
-    ws.style.transformOrigin = '';
-  }, 500);
+    ws.style.removeProperty('--cx');
+    ws.style.removeProperty('--cy');
+  }, 550);
 }
 
 function startSession(dayId, triggerEl) {
