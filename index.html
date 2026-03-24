@@ -1360,6 +1360,12 @@
   }
   .bonus-persist-btn:active { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); transform: scale(0.98); }
   .bonus-persist-btn:last-child { margin-bottom: 0; }
+  .bonus-persist-btn.bp-selected { transform: scale(0.98); pointer-events: none; transition: all 0.1s; }
+  .bonus-persist-btn.bp-selected-today    { border-color: rgba(136,136,136,0.7); background: rgba(136,136,136,0.13); box-shadow: 0 0 0 1px rgba(136,136,136,0.25) inset; }
+  .bonus-persist-btn.bp-selected-cycle    { border-color: rgba(74,138,245,0.7);  background: rgba(74,138,245,0.13);  box-shadow: 0 0 0 1px rgba(74,138,245,0.25) inset; }
+  .bonus-persist-btn.bp-selected-permanent{ border-color: rgba(46,204,113,0.7);  background: rgba(46,204,113,0.13);  box-shadow: 0 0 0 1px rgba(46,204,113,0.25) inset; }
+  /* Generic confirming state for all other action buttons */
+  .btn-confirming { transform: scale(0.96) !important; opacity: 0.55 !important; pointer-events: none !important; transition: transform 0.08s, opacity 0.08s !important; }
 
   /* HISTORY SCREEN */
   .history-item {
@@ -3066,7 +3072,7 @@
       Muscles adapt to the same movements over time. Swapping an exercise every cycle (same muscle group, different angle) keeps the stimulus fresh and growth coming.
     </div>
     <div id="rotation-exercise-list" style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;"></div>
-    <button id="rotation-confirm-btn" class="swap-perm-btn" style="width:100%;margin-bottom:10px;" onclick="confirmRotationSwaps()">SAVE CHANGES</button>
+    <button id="rotation-confirm-btn" class="swap-perm-btn" style="width:100%;margin-bottom:10px;" onclick="this.classList.add('btn-confirming');confirmRotationSwaps()">SAVE CHANGES</button>
     <button id="rotation-cancel-btn" class="modal-cancel" onclick="closeRotationModal()">KEEP EVERYTHING</button>
   </div>
 </div>
@@ -3740,7 +3746,7 @@
     <!-- Footer buttons -->
     <div style="padding:0 24px 24px; display:flex; gap:10px; margin-top:4px;">
       <button onclick="document.getElementById('pause-program-modal').style.display='none'" style="flex:1; background:var(--dark3); border:1px solid #444; color:var(--gray); padding:13px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
-      <button id="pause-confirm-btn" onclick="confirmPauseProgram()" disabled style="flex:2; background:#2e2e2e; border:1px solid #3a3a3a; color:#999; padding:13px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:not-allowed;">PAUSE PROGRAM</button>
+      <button id="pause-confirm-btn" onclick="this.classList.add('btn-confirming');confirmPauseProgram()" disabled style="flex:2; background:#2e2e2e; border:1px solid #3a3a3a; color:#999; padding:13px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:not-allowed;">PAUSE PROGRAM</button>
     </div>
   </div>
 </div>
@@ -4250,7 +4256,7 @@
       </div>
 
       <!-- Just Today -->
-      <button onclick="confirmAddBonus('today')" class="bonus-persist-btn">
+      <button onclick="this.classList.add('bp-selected','bp-selected-today');confirmAddBonus('today')" class="bonus-persist-btn">
         <div style="display:flex;align-items:flex-start;gap:14px;">
           <div style="width:42px;height:42px;border-radius:10px;background:rgba(120,120,120,0.15);border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
             <svg viewBox="0 0 24 24" width="18" height="18" stroke="#999" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -4263,7 +4269,7 @@
       </button>
 
       <!-- This Cycle -->
-      <button onclick="confirmAddBonus('cycle')" class="bonus-persist-btn">
+      <button onclick="this.classList.add('bp-selected','bp-selected-cycle');confirmAddBonus('cycle')" class="bonus-persist-btn">
         <div style="display:flex;align-items:flex-start;gap:14px;">
           <div style="width:42px;height:42px;border-radius:10px;background:rgba(74,138,245,0.1);border:1px solid rgba(74,138,245,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
             <svg viewBox="0 0 24 24" width="18" height="18" stroke="#4a8af5" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -4276,7 +4282,7 @@
       </button>
 
       <!-- Keep It -->
-      <button onclick="confirmAddBonus('permanent')" class="bonus-persist-btn">
+      <button onclick="this.classList.add('bp-selected','bp-selected-permanent');confirmAddBonus('permanent')" class="bonus-persist-btn">
         <div style="display:flex;align-items:flex-start;gap:14px;">
           <div style="width:42px;height:42px;border-radius:10px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
             <svg viewBox="0 0 24 24" width="18" height="18" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -6462,7 +6468,7 @@ function supabaseDeleteAccount() {
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:#e74c3c;">DELETE ACCOUNT</div>
       </div>
       <div style="font-family:'Barlow',sans-serif;font-size:14px;color:#aaa;line-height:1.6;margin-bottom:22px;">This removes your username and social profile. Your workout data stays on this device.</div>
-      <button onclick="_confirmDeleteAccount()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;padding:15px;border-radius:12px;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;">CONFIRM DELETE</button>
+      <button onclick="this.classList.add('btn-confirming');_confirmDeleteAccount()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;padding:15px;border-radius:12px;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;">CONFIRM DELETE</button>
       <button onclick="document.getElementById('delete-account-sheet')?.remove()" style="width:100%;background:transparent;border:1px solid #333;color:#888;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;padding:13px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
     </div>`;
   sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
@@ -6470,7 +6476,7 @@ function supabaseDeleteAccount() {
 }
 
 async function _confirmDeleteAccount() {
-  document.getElementById('delete-account-sheet')?.remove();
+  setTimeout(() => document.getElementById('delete-account-sheet')?.remove(), 150);
   const sb = _getSupabaseClient();
   if (!sb) return;
   try {
@@ -6830,7 +6836,7 @@ function _showColorPickerSheet() {
       </div>
       <button onclick="document.getElementById('color-custom-input').click()" style="width:100%;background:#1e1c1c;border:1px solid #333;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:13px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:12px;">CUSTOM COLOR</button>
       <input id="color-custom-input" type="color" value="${current}" style="position:absolute;opacity:0;width:0;height:0;" oninput="_selectSheetColor(this.value)" onchange="_selectSheetColor(this.value)">
-      <button onclick="_confirmAvatarColor()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SAVE</button>
+      <button onclick="this.classList.add('btn-confirming');_confirmAvatarColor()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SAVE</button>
       <button onclick="document.getElementById('color-picker-sheet').remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;padding:10px;margin-top:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
     </div>`;
   document.body.appendChild(sheet);
@@ -6855,7 +6861,7 @@ function _selectSheetColor(hex) {
 async function _confirmAvatarColor() {
   const sheet = document.getElementById('color-picker-sheet');
   const hex = sheet?._pendingColor || state.supabaseAvatarColor || '#C0392B';
-  sheet?.remove();
+  setTimeout(() => sheet?.remove(), 150);
   state.supabaseAvatarColor = hex;
   saveState();
   // Update the settings dot immediately
@@ -7257,7 +7263,7 @@ function _removeFriend(userId) {
     <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #333;">
       <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">REMOVE FRIEND?</div>
       <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray);margin-bottom:24px;line-height:1.5;">You won't see each other's activity or be able to react to workouts.</div>
-      <button onclick="_confirmRemoveFriend('${userId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px;">REMOVE</button>
+      <button onclick="this.classList.add('btn-confirming');_confirmRemoveFriend('${userId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px;">REMOVE</button>
       <button onclick="document.getElementById('remove-friend-confirm-sheet').remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
     </div>`;
   sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
@@ -7265,7 +7271,7 @@ function _removeFriend(userId) {
 }
 
 async function _confirmRemoveFriend(userId) {
-  document.getElementById('remove-friend-confirm-sheet')?.remove();
+  setTimeout(() => document.getElementById('remove-friend-confirm-sheet')?.remove(), 150);
   const supabaseUrl = window.SUPABASE_URL || '';
   const anonKey    = window.SUPABASE_PUBLISHABLE_KEY || '';
   const myId       = state.supabaseUserId;
@@ -7835,15 +7841,16 @@ function confirmPauseProgram() {
   state.pauseStreak = state.streak;       // freeze streak
   saveState();
 
-  document.getElementById('pause-program-modal').style.display = 'none';
-  renderHome();
-  updatePauseSettingsLabel();
-  // Update bodyweight sub label
-  const bwSub = document.getElementById('bw-settings-sub');
-  if (bwSub && state.profile?.bodyweight) bwSub.textContent = `Current: ${state.profile.bodyweight} lbs`;
-
-  const reasonLabels = { illness: 'illness 🤒', injury: 'injury 🩹', emergency: 'an emergency 🏠', travel: 'travel ✈️' };
-  showToast(`Program paused for ${reasonLabels[reason] || 'recovery'}. Rest up.`);
+  setTimeout(() => {
+    document.getElementById('pause-program-modal').style.display = 'none';
+    renderHome();
+    updatePauseSettingsLabel();
+    // Update bodyweight sub label
+    const bwSub = document.getElementById('bw-settings-sub');
+    if (bwSub && state.profile?.bodyweight) bwSub.textContent = `Current: ${state.profile.bodyweight} lbs`;
+    const reasonLabels = { illness: 'illness 🤒', injury: 'injury 🩹', emergency: 'an emergency 🏠', travel: 'travel ✈️' };
+    showToast(`Program paused for ${reasonLabels[reason] || 'recovery'}. Rest up.`);
+  }, 150);
 }
 
 function showResumeProgramModal() {
@@ -8015,8 +8022,8 @@ function _renderExpLevelConfirmBanner() {
   banner.innerHTML = `
     <div style="font-size:13px;color:rgba(235,230,222,0.92);line-height:1.5;margin-bottom:10px;">Experience level now drives your training volume and progression. Yours is set to <strong style="color:var(--cream);">${levelLabel}</strong>. Tap to confirm or update in Settings.</div>
     <div style="display:flex;gap:10px;">
-      <button onclick="state.experienceLevelConfirmed=true;saveState();document.getElementById('exp-level-confirm-banner').style.display='none';" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:var(--cream);padding:10px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">LOOKS RIGHT</button>
-      <button onclick="state.experienceLevelConfirmed=true;saveState();document.getElementById('exp-level-confirm-banner').style.display='none';showScreen('settings',document.querySelector('[onclick*=settings]'));" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:var(--gray-light);padding:10px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">UPDATE IN SETTINGS</button>
+      <button onclick="_confirmTap(this,function(){state.experienceLevelConfirmed=true;saveState();document.getElementById('exp-level-confirm-banner').style.display='none';})" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:var(--cream);padding:10px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">LOOKS RIGHT</button>
+      <button onclick="_confirmTap(this,function(){state.experienceLevelConfirmed=true;saveState();document.getElementById('exp-level-confirm-banner').style.display='none';showScreen('settings',document.querySelector('[onclick*=settings]'));})" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:var(--gray-light);padding:10px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;">UPDATE IN SETTINGS</button>
     </div>`;
   banner.style.display = 'block';
 }
@@ -10912,6 +10919,11 @@ function renderBonusExerciseList(q) {
   container.innerHTML = html;
 }
 
+function _confirmTap(el, fn) {
+  if (el) el.classList.add('btn-confirming');
+  setTimeout(fn, 150);
+}
+
 function confirmAddBonus(persistence) {
   if (!_bonusSelectedName || !activeSession) return;
   if (!activeSession.bonusExercises) activeSession.bonusExercises = [];
@@ -13699,7 +13711,7 @@ function showDiscardConfirm() {
       <div style="font-size:36px;margin-bottom:12px;">🗑</div>
       <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">DISCARD WORKOUT?</div>
       <div style="font-size:14px;color:var(--gray);line-height:1.5;margin-bottom:24px;">All logged sets will be permanently lost.<br>This cannot be undone.</div>
-      <button onclick="discardSession();document.getElementById('discard-confirm-modal').remove();"
+      <button onclick="_confirmTap(this,function(){discardSession();document.getElementById('discard-confirm-modal').remove();})"
         style="width:100%;background:#8b0000;border:none;color:var(--cream);padding:16px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;margin-bottom:10px;">
         YES, DISCARD
       </button>
@@ -14905,15 +14917,17 @@ function confirmRotationSwaps() {
     saveState();
     checkRotationBanner();
   }
-  closeRotationModal();
-  if (swapCount > 0) {
-    showToast(_rotationOnboardMode
-      ? `${swapCount} exercise${swapCount > 1 ? 's' : ''} updated ✓`
-      : (swapCount === 1 ? '1 exercise rotated ✓' : `${swapCount} exercises rotated ✓`)
-    );
-  } else {
-    showToast('Keeping your current exercises ✓');
-  }
+  setTimeout(() => {
+    closeRotationModal();
+    if (swapCount > 0) {
+      showToast(_rotationOnboardMode
+        ? `${swapCount} exercise${swapCount > 1 ? 's' : ''} updated ✓`
+        : (swapCount === 1 ? '1 exercise rotated ✓' : `${swapCount} exercises rotated ✓`)
+      );
+    } else {
+      showToast('Keeping your current exercises ✓');
+    }
+  }, 150);
 }
 
 function closeRotationModal() {
@@ -15762,7 +15776,7 @@ function confirmDeleteSession(entryId) {
       </div>
       <div style="display:flex;gap:10px;">
         <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
-        <button onclick="this.closest('[style*=fixed]').remove();deleteHistoryEntry('${entryId}')" style="flex:1;background:#8b0000;border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">DELETE</button>
+        <button onclick="var m=this.closest('[style*=fixed]');_confirmTap(this,function(){m.remove();deleteHistoryEntry('${entryId}')})" style="flex:1;background:#8b0000;border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">DELETE</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -19154,7 +19168,7 @@ function restoreDefaults() {
   if (modal) modal.style.display = 'flex';
 }
 function confirmRestoreDefaults() {
-  document.getElementById('restore-defaults-modal').style.display = 'none';
+  setTimeout(() => document.getElementById('restore-defaults-modal').style.display = 'none', 150);
   // Use the defaults for the user's current split, not always the base Upper/Lower default.
   // This ensures a PPL or Full Body user gets their own split's original exercises back.
   state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[state.splitType] || DEFAULT_PROGRAM));
@@ -21820,8 +21834,8 @@ function completeOnboarding() {
             You can always change a weight mid-workout. These are just your starting point.
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;">
-            <button onclick="confirmAutoPopulate(true, this.closest('div').parentElement.parentElement)" style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">YES, PRE-FILL MY WEIGHTS</button>
-            <button onclick="confirmAutoPopulate(false, this.closest('div').parentElement.parentElement)" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">NO, I'LL ENTER THEM MANUALLY</button>
+            <button onclick="this.classList.add('btn-confirming');confirmAutoPopulate(true, this.closest('div').parentElement.parentElement)" style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">YES, PRE-FILL MY WEIGHTS</button>
+            <button onclick="this.classList.add('btn-confirming');confirmAutoPopulate(false, this.closest('div').parentElement.parentElement)" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">NO, I'LL ENTER THEM MANUALLY</button>
           </div>
         </div>`;
       document.body.appendChild(modal);
@@ -21845,7 +21859,7 @@ function completeOnboarding() {
 function confirmAutoPopulate(yes, modal) {
   state.autoPopulateWeights = yes;
   saveState();
-  modal.remove();
+  setTimeout(() => modal.remove(), 150);
   const name = state.profile?.name || 'champ';
   showToast(yes ? `Weights locked in, ${name}! 💪` : `Got it. Enter weights as you go!`);
 
@@ -23324,7 +23338,7 @@ function _showUnilateralAuditPrompt(exercises) {
       </div>
       <div style="font-size:13px;color:var(--gray-light);line-height:1.5;margin-bottom:18px;">Tap to mark them. Unilateral exercises count as 2 sets toward your weekly volume.</div>
       <div>${rows}</div>
-      <button onclick="_confirmUnilateralAudit()" style="width:100%;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;margin-top:8px;">DONE →</button>
+      <button onclick="this.classList.add('btn-confirming');_confirmUnilateralAudit()" style="width:100%;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;margin-top:8px;">DONE →</button>
     </div>`;
   window._uniAuditOverlay = overlay;
   document.body.appendChild(overlay);
@@ -23360,10 +23374,7 @@ function _confirmUnilateralAudit() {
   });
   state.unilateralAuditShown = true;
   saveState();
-  if (window._uniAuditOverlay) window._uniAuditOverlay.remove();
-  delete window._uniAuditSelected;
-  delete window._uniAuditOverlay;
-  delete window._uniAuditExercises;
+  setTimeout(() => { if (window._uniAuditOverlay) window._uniAuditOverlay.remove(); delete window._uniAuditSelected; delete window._uniAuditOverlay; delete window._uniAuditExercises; }, 150);
 }
 
 function _dismissUnilateralAudit() {
@@ -23716,7 +23727,7 @@ function confirmDeleteCardioSession(sessionId) {
       <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">${typeLabel} — ${entry.duration} min<br><span style="color:var(--gray);">${dateStr}</span></div>
       <div style="display:flex;gap:10px;">
         <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
-        <button onclick="this.closest('[style*=fixed]').remove();deleteCardioSession('${sessionId}')" style="flex:1;background:#8b0000;border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">DELETE</button>
+        <button onclick="var m=this.closest('[style*=fixed]');_confirmTap(this,function(){m.remove();deleteCardioSession('${sessionId}')})" style="flex:1;background:#8b0000;border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">DELETE</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -24253,7 +24264,7 @@ function openLibSwapProgram(libExId) {
     '</div>' +
     (slots.length > 1 ? '<div class="lib-section-label" style="margin-top:0;">REPLACE WHICH EXERCISE?</div>' : '') +
     optionsHtml +
-    '<button class="lib-swap-confirm-btn" id="lib-swap-confirm" onclick="confirmLibSwapProgram()">CONFIRM SWAP</button>' +
+    '<button class="lib-swap-confirm-btn" id="lib-swap-confirm" onclick="this.classList.add(\'btn-confirming\');confirmLibSwapProgram()">CONFIRM SWAP</button>' +
     '<button class="lib-swap-cancel-btn" onclick="closeLibSwapSheet()">CANCEL</button>';
 
   sheet.classList.add('open');
@@ -24301,10 +24312,7 @@ function confirmLibSwapProgram() {
     state.libProgramSwaps = state.libProgramSwaps || {};
     state.libProgramSwaps[progId] = libEx.id;
     saveState();
-    closeLibSwapSheet();
-    closeExerciseLibrary();
-    renderHome();
-    showToast(libEx.name + ' added to your program', 'success');
+    setTimeout(() => { closeLibSwapSheet(); closeExerciseLibrary(); renderHome(); showToast(libEx.name + ' added to your program', 'success'); }, 150);
   }
 }
 
@@ -24440,7 +24448,7 @@ function _escHtml(str) {
     </div>
     <div style="display:flex; gap:10px;">
       <button onclick="cancelRestoreDefaults()" style="flex:1; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:14px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
-      <button onclick="confirmRestoreDefaults()" style="flex:1; background:rgba(204,32,39,0.2); border:1px solid var(--red); color:var(--red-text); padding:14px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer;">RESTORE</button>
+      <button onclick="this.classList.add('btn-confirming');confirmRestoreDefaults()" style="flex:1; background:rgba(204,32,39,0.2); border:1px solid var(--red); color:var(--red-text); padding:14px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer;">RESTORE</button>
     </div>
   </div>
 </div>
