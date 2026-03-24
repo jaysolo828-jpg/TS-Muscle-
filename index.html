@@ -2497,6 +2497,18 @@
   cursor: pointer;
 }
 
+  /* Visually hidden but accessible to screen readers */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 </style>
 <script src="config.js?v=20260318"></script>
 <script>window.SUPABASE_URL = 'https://idiaozmcnckopwfisdpu.supabase.co'; window.SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_c8-lPLNrgTCPbtSxWVh_Xw_ybZ3s8KG';</script>
@@ -2641,10 +2653,12 @@
     </div>
     <!-- Form -->
     <div style="padding:16px 18px 14px;">
+      <label for="supabase-email-input" class="sr-only">Email address</label>
       <input id="supabase-email-input" type="email" placeholder="Email address" autocomplete="email" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #2e2e2e; color:var(--cream); font-family:'Barlow',sans-serif; font-size:15px; padding:13px 14px; border-radius:10px; margin-bottom:10px; outline:none;">
       <div style="position:relative; margin-bottom:14px;">
+        <label for="supabase-password-input" class="sr-only">Password</label>
         <input id="supabase-password-input" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #2e2e2e; color:var(--cream); font-family:'Barlow',sans-serif; font-size:15px; padding:13px 48px 13px 14px; border-radius:10px; outline:none;">
-        <button type="button" onclick="var i=document.getElementById('supabase-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
+        <button type="button" aria-label="Toggle password visibility" onclick="var i=document.getElementById('supabase-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
       </div>
       <button onclick="supabaseSignInEmail()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; padding:14px; border-radius:12px; cursor:pointer; -webkit-tap-highlight-color:transparent;">CREATE ACCOUNT / SIGN IN</button>
       <div style="text-align:center; margin-top:12px;">
@@ -2669,6 +2683,7 @@
 
   <!-- Progress chart block — moved into lifts section by renderHistory() -->
   <div id="progress-section" style="display:none; margin-top:8px;">
+    <label for="exercise-picker" class="sr-only">Select exercise for progress chart</label>
     <select class="exercise-picker" id="exercise-picker" onchange="renderProgressChart(); _statsProgInfo()"></select>
     <!-- Chart mode toggle -->
     <div style="display:flex; gap:8px; margin-bottom:12px;">
@@ -2727,11 +2742,13 @@
     </div>
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:12px;">
       <div style="text-align:center;">
+        <label for="timer-mins" class="sr-only">Timer minutes</label>
         <input type="number" id="timer-mins" value="30" min="0" max="999" style="width:64px; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Bebas Neue',cursive; font-size:36px; text-align:center; border-radius:10px; padding:8px 4px;" inputmode="decimal"/>
         <div style="font-size:12px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">MIN</div>
       </div>
       <div style="font-family:'Bebas Neue',cursive; font-size:36px; color:var(--red-text); padding-top:8px;">:</div>
       <div style="text-align:center;">
+        <label for="timer-secs" class="sr-only">Timer seconds</label>
         <input type="number" id="timer-secs" value="00" min="0" max="59" style="width:64px; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Bebas Neue',cursive; font-size:36px; text-align:center; border-radius:10px; padding:8px 4px;" inputmode="decimal"/>
         <div style="font-size:12px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">SEC</div>
       </div>
@@ -2750,27 +2767,28 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">SPEED (MPH)</div>
-        <input type="number" id="tm-speed" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
+        <input type="number" id="tm-speed" aria-label="Speed in miles per hour" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">INCLINE (%)</div>
-        <input type="number" id="tm-incline" placeholder="0" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
+        <input type="number" id="tm-incline" aria-label="Incline percentage" placeholder="0" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
-        <input type="number" id="tm-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
+        <input type="number" id="tm-distance" aria-label="Distance in miles" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
-        <input type="number" id="tm-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcTMCalories()" inputmode="decimal"/>
+        <input type="number" id="tm-weight" aria-label="Body weight in pounds" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcTMCalories()" inputmode="decimal"/>
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="tm-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
+        <input type="number" id="tm-calories" aria-label="Estimated calories burned" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
       <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <label for="tm-notes" class="sr-only">Treadmill session notes</label>
       <textarea id="tm-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -2781,15 +2799,15 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
-        <input type="number" id="od-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
+        <input type="number" id="od-distance" aria-label="Outdoor distance in miles" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
-        <input type="number" id="od-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcODCalories()" inputmode="decimal"/>
+        <input type="number" id="od-weight" aria-label="Body weight in pounds" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcODCalories()" inputmode="decimal"/>
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="od-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
+        <input type="number" id="od-calories" aria-label="Estimated calories burned" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div id="pace-display" style="margin-top:10px; background:var(--dark3); border-radius:10px; padding:10px 14px; display:none;">
@@ -2798,6 +2816,7 @@
     </div>
     <div style="margin-top:10px;">
       <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">ROUTE NOTES</div>
+      <label for="od-notes" class="sr-only">Outdoor session notes</label>
       <textarea id="od-notes" class="notes-input" placeholder="Route, conditions, how it felt..." style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -2809,19 +2828,20 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
-        <input type="number" id="wk-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
+        <input type="number" id="wk-distance" aria-label="Walk distance in miles" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
-        <input type="number" id="wk-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('walk')" inputmode="decimal"/>
+        <input type="number" id="wk-weight" aria-label="Body weight in pounds" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('walk')" inputmode="decimal"/>
       </div>
       <div style="grid-column:1/-1;">
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="wk-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
+        <input type="number" id="wk-calories" aria-label="Estimated calories burned" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
       <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <label for="wk-notes" class="sr-only">Walk session notes</label>
       <textarea id="wk-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -2833,19 +2853,20 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
-        <input type="number" id="bw-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
+        <input type="number" id="bw-distance" aria-label="Brisk walk distance in miles" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
-        <input type="number" id="bw-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('briskwalk')" inputmode="decimal"/>
+        <input type="number" id="bw-weight" aria-label="Body weight in pounds" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('briskwalk')" inputmode="decimal"/>
       </div>
       <div style="grid-column:1/-1;">
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="bw-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
+        <input type="number" id="bw-calories" aria-label="Estimated calories burned" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
       <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <label for="bw-notes" class="sr-only">Brisk walk session notes</label>
       <textarea id="bw-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -2857,19 +2878,20 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
-        <input type="number" id="jg-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
+        <input type="number" id="jg-distance" aria-label="Jog distance in miles" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
-        <input type="number" id="jg-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('jog')" inputmode="decimal"/>
+        <input type="number" id="jg-weight" aria-label="Body weight in pounds" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('jog')" inputmode="decimal"/>
       </div>
       <div style="grid-column:1/-1;">
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
-        <input type="number" id="jg-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
+        <input type="number" id="jg-calories" aria-label="Estimated calories burned" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
       <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <label for="jg-notes" class="sr-only">Jog session notes</label>
       <textarea id="jg-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -2924,25 +2946,25 @@
 
     <div style="font-size:12px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">HOW ARE YOU FEELING?</div>
     <div style="display:flex; justify-content:space-between; gap:6px; margin-bottom:16px;" id="mood-scale">
-      <button class="mood-btn" onclick="selectMood(1, this)" data-value="1">
+      <button class="mood-btn" onclick="selectMood(1, this)" data-value="1" aria-label="Distressed">
         <div style="font-size:28px;">😞</div>
-        <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Distressed</div>
+        <div style="font-size:11px; color:#bbbbbb; margin-top:4px;">Distressed</div>
       </button>
-      <button class="mood-btn" onclick="selectMood(2, this)" data-value="2">
+      <button class="mood-btn" onclick="selectMood(2, this)" data-value="2" aria-label="Low">
         <div style="font-size:28px;">😔</div>
-        <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Low</div>
+        <div style="font-size:11px; color:#bbbbbb; margin-top:4px;">Low</div>
       </button>
-      <button class="mood-btn" onclick="selectMood(3, this)" data-value="3">
+      <button class="mood-btn" onclick="selectMood(3, this)" data-value="3" aria-label="Neutral">
         <div style="font-size:28px;">😐</div>
-        <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Neutral</div>
+        <div style="font-size:11px; color:#bbbbbb; margin-top:4px;">Neutral</div>
       </button>
-      <button class="mood-btn" onclick="selectMood(4, this)" data-value="4">
+      <button class="mood-btn" onclick="selectMood(4, this)" data-value="4" aria-label="Good">
         <div style="font-size:28px;">🙂</div>
-        <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Good</div>
+        <div style="font-size:11px; color:#bbbbbb; margin-top:4px;">Good</div>
       </button>
-      <button class="mood-btn" onclick="selectMood(5, this)" data-value="5">
+      <button class="mood-btn" onclick="selectMood(5, this)" data-value="5" aria-label="Energized">
         <div style="font-size:28px;">🔥</div>
-        <div style="font-size:11px; color:var(--gray-light); margin-top:4px;">Energized</div>
+        <div style="font-size:11px; color:#bbbbbb; margin-top:4px;">Energized</div>
       </button>
     </div>
     <input type="hidden" id="mood-value" value=""/>
@@ -2953,6 +2975,7 @@
     </button>
     <div id="mood-note-wrap" style="display:none; margin-bottom:14px;">
       <div id="mood-note-prompt" style="font-size:13px; color:var(--gray-light); margin-bottom:6px;"></div>
+      <label for="mood-note" class="sr-only">Mood journal note</label>
       <textarea id="mood-note" class="notes-input" placeholder="Anything on your mind?" style="min-height:50px;"></textarea>
     </div>
 
@@ -3010,7 +3033,7 @@
 <!-- ============================================================
      DELOAD / REST WEEK MODAL
      ============================================================ -->
-<div id="deload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
+<div id="deload-modal" role="dialog" aria-modal="true" aria-label="Deload recovery options" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(243,156,18,0.4); overflow:hidden; box-shadow:0 8px 40px rgba(243,156,18,0.12);">
     <div style="height:4px; background:linear-gradient(90deg,transparent,var(--warning),transparent);"></div>
     <div style="padding:24px;">
@@ -3051,7 +3074,7 @@
 <!-- ============================================================
      GAP RETURN MODAL — shown when user returns after 10+ day absence
      ============================================================ -->
-<div id="gap-return-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
+<div id="gap-return-modal" role="dialog" aria-modal="true" aria-label="Welcome back" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(204,32,39,0.3); overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,0.4);">
     <div style="height:4px; background:linear-gradient(90deg,transparent,var(--red),transparent);"></div>
     <div style="padding:24px;">
@@ -3071,7 +3094,7 @@
 <!-- ============================================================
      ROTATION MODAL
      ============================================================ -->
-<div class="modal-overlay" id="rotation-modal" onclick="if(event.target===this)closeRotationModal()">
+<div class="modal-overlay" id="rotation-modal" role="dialog" aria-modal="true" aria-label="Exercise rotation options" onclick="if(event.target===this)closeRotationModal()">
   <div class="modal" style="max-height:88vh;max-height:88dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
       <div class="modal-title" style="margin-bottom:0;">MIX IT UP</div>
@@ -3089,7 +3112,7 @@
 <!-- ============================================================
      PR CELEBRATION MODAL
      ============================================================ -->
-<div id="pr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99995; align-items:center; justify-content:center; padding:24px; pointer-events:none;">
+<div id="pr-modal" role="dialog" aria-modal="true" aria-label="Personal record celebration" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99995; align-items:center; justify-content:center; padding:24px; pointer-events:none;">
   <div id="pr-modal-inner" style="background:linear-gradient(135deg,#1a1200,#2d2000); border:2px solid var(--gold); border-radius:20px; padding:24px; width:100%; max-width:420px; text-align:center; pointer-events:auto; box-shadow:0 0 40px rgba(196,125,0,0.4); position:relative;">
     <button onclick="document.getElementById('pr-modal').style.display='none'" aria-label="Close" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--gray);font-size:20px;cursor:pointer;line-height:1;padding:4px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">✕</button>
     <div style="margin-bottom:12px;"><svg viewBox="0 0 24 24" width="56" height="56" stroke="var(--gold)" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H2V5h4M18 9h4V5h-4M8 21h8M12 17v4"/><path d="M6 5h12v8a6 6 0 01-12 0V5z"/></svg></div>
@@ -3110,7 +3133,7 @@
 <!-- ============================================================
      TRAINING DAYS MODAL
      ============================================================ -->
-<div id="training-days-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
+<div id="training-days-modal" role="dialog" aria-modal="true" aria-label="Choose training days" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid var(--dark3);">
     <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TRAINING DAYS</div>
     <div style="font-size:13px; color:var(--gray); margin-bottom:16px; line-height:1.6;">Choose how many days per week you want to train.</div>
@@ -3170,7 +3193,7 @@
 <!-- ============================================================
      SPLIT TYPE MODAL
      ============================================================ -->
-<div id="split-type-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
+<div id="split-type-modal" role="dialog" aria-modal="true" aria-label="Choose training split" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid var(--dark3);">
     <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">SPLIT TYPE</div>
     <div style="font-size:13px; color:var(--gray); margin-bottom:16px; line-height:1.6;">Your workout days will be restructured. Your history and weights are preserved. Any custom exercise swaps will reset.</div>
@@ -3218,7 +3241,7 @@
 <!-- ============================================================
      ONBOARDING MODAL
      ============================================================ -->
-<div id="onboarding-modal" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:9900; overflow-y:auto;">
+<div id="onboarding-modal" role="dialog" aria-modal="true" aria-label="Program setup" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:9900; overflow-y:auto;">
   <!-- Exit bar: visible only when entering via Settings → Redo Initial Setup -->
   <div id="ob-exit-bar" style="display:none; position:sticky; top:0; z-index:1; background:#0a0a0a; padding:14px 20px 0; text-align:right;">
     <button onclick="closeOnboardingModal()" style="background:none; border:none; color:var(--red-text); font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; padding:4px 0;">← BACK TO SETTINGS</button>
@@ -3341,11 +3364,13 @@
 
       <div style="margin-bottom:16px;">
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">YOUR NAME</div>
+        <label for="ob-name" class="sr-only">Your name</label>
         <input type="text" id="ob-name" class="set-input" placeholder="e.g. Marcus" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
       <div style="margin-bottom:16px;">
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">BODYWEIGHT (LBS)</div>
         <div style="font-size:13px; color:var(--gray-light); margin-bottom:6px;">Used to suggest starting weights for isolation exercises</div>
+        <label for="ob-bodyweight" class="sr-only">Bodyweight in pounds</label>
         <input type="number" id="ob-bodyweight" class="set-input" inputmode="decimal" placeholder="e.g. 185" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
       <div style="margin-bottom:24px;">
@@ -3379,6 +3404,7 @@
 
       <div style="margin-bottom:20px;">
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">AGE (YEARS)</div>
+        <label for="ob-age" class="sr-only">Age in years</label>
         <input type="number" id="ob-age" class="set-input" inputmode="numeric" placeholder="e.g. 28" min="13" max="100" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
 
@@ -3631,10 +3657,12 @@
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
           <div>
             <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
+            <label for="onerm-weight" class="sr-only">Weight used</label>
             <input type="number" id="onerm-weight" class="set-input" placeholder="e.g. 135" inputmode="decimal" style="width:100%; padding:10px 12px; text-align:left;"/>
           </div>
           <div>
             <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">REPS COMPLETED</div>
+            <label for="onerm-reps" class="sr-only">Reps completed</label>
             <input type="number" id="onerm-reps" class="set-input" placeholder="e.g. 8" inputmode="numeric" style="width:100%; padding:10px 12px; text-align:left;"/>
           </div>
         </div>
@@ -3704,7 +3732,7 @@
 </div>
 
 <!-- PAUSE PROGRAM MODAL -->
-<div id="pause-program-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
+<div id="pause-program-modal" role="dialog" aria-modal="true" aria-label="Pause program" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(204,32,39,0.3); overflow:hidden; box-shadow:0 8px 40px rgba(204,32,39,0.1);">
     <div style="height:4px; background:linear-gradient(90deg,transparent,var(--red),transparent);"></div>
 
@@ -3762,9 +3790,9 @@
 
 <!-- SELF-COMPASSION MODAL -->
 <!-- Based on Kristin Neff's 3-component model: Mindfulness, Common Humanity, Self-Kindness -->
-<div id="self-compassion-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9700; align-items:flex-start; justify-content:center; padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); overflow-y:auto;">
+<div id="self-compassion-modal" role="dialog" aria-modal="true" aria-label="Self-compassion exercise" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9700; align-items:flex-start; justify-content:center; padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); overflow-y:auto;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid #333; margin:auto; position:relative;">
-    <button onclick="closeSelfCompassionModal()" style="position:absolute; top:14px; right:16px; background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:44px; height:44px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">✕</button>
+    <button onclick="closeSelfCompassionModal()" aria-label="Close" style="position:absolute; top:14px; right:16px; background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:44px; height:44px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;">✕</button>
 
     <!-- Step 1: Acknowledge -->
     <div id="sc-step-1">
@@ -3777,6 +3805,7 @@
         <div style="font-size:13px; color:var(--gray-light); line-height:1.7; border-left:2px solid var(--red); padding-left:12px;">"This is a moment of struggle. Struggle is part of the human experience. I don't have to pretend it's not there."</div>
       </div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:20px;">What's actually going on for you right now?</div>
+      <label for="sc-feeling" class="sr-only">How you are feeling right now</label>
       <textarea id="sc-feeling" class="notes-input" placeholder="Write anything: tired, overwhelmed, frustrated, burnt out... no wrong answers." style="min-height:80px; margin-bottom:20px;"></textarea>
       <button onclick="scNext(2)" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; min-height:44px;">I'VE ACKNOWLEDGED IT</button>
     </div>
@@ -3792,6 +3821,7 @@
         <div style="font-size:13px; color:var(--gray-light); line-height:1.7; border-left:2px solid var(--red); padding-left:12px;">"Missing sessions doesn't mean I'm failing. It means I'm human. The people I look up to have been exactly here."</div>
       </div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:16px;">What would you say to a friend going through the exact same thing?</div>
+      <label for="sc-friend" class="sr-only">What you would say to a friend</label>
       <textarea id="sc-friend" class="notes-input" placeholder="Talk to yourself the way you'd talk to someone you care about..." style="min-height:80px; margin-bottom:20px;"></textarea>
       <button onclick="scNext(3)" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; min-height:44px;">THAT MAKES SENSE</button>
     </div>
@@ -3811,6 +3841,7 @@
         <div id="sc-values-text" style="font-size:13px; color:var(--gray-light); line-height:1.6; font-style:italic;"></div>
       </div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:6px;">When will you train next?</div>
+      <label for="sc-plan" class="sr-only">When you will train next</label>
       <input type="text" id="sc-plan" class="notes-input" placeholder="e.g. Tomorrow morning before work, or Thursday at 6pm" style="min-height:44px; margin-bottom:20px; resize:none;"/>
       <button onclick="saveSelfCompassionEntry()" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; margin-bottom:10px; min-height:44px;">SAVE & CLOSE</button>
       <button onclick="closeSelfCompassionModal()" style="width:100%; background:transparent; border:none; color:var(--gray); padding:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; cursor:pointer; min-height:44px;">CLOSE WITHOUT SAVING</button>
@@ -3820,7 +3851,7 @@
 </div>
 
 <!-- CBT MODAL -->
-<div id="cbt-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9800; align-items:center; justify-content:center; padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); overflow-y:auto;">
+<div id="cbt-modal" role="dialog" aria-modal="true" aria-label="Reframe your thinking" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9800; align-items:center; justify-content:center; padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); overflow-y:auto;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid var(--dark3); position:relative;">
     <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">REFRAME YOUR THINKING</div>
     <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">LET'S WORK THROUGH IT</div>
@@ -3853,6 +3884,7 @@
         <button class="cbt-barrier-btn" onclick="selectBarrier('other')">💬 Something else</button>
       </div>
       <div id="barrier-other-input" style="display:none; margin-top:12px;">
+        <label for="barrier-other-text" class="sr-only">Describe what got in the way</label>
         <input id="barrier-other-text" type="text" class="notes-input" placeholder="Briefly describe what got in the way..." style="width:100%; padding:12px; border-radius:10px; box-sizing:border-box; margin-bottom:10px; font-size:16px;"/>
         <button onclick="proceedFromOtherBarrier()" style="width:100%; background:var(--red); border:none; color:white; padding:12px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">CONTINUE</button>
       </div>
@@ -3864,6 +3896,7 @@
       <div style="font-size:15px; color:var(--cream); margin-bottom:6px; line-height:1.5;">What's one small thing you could do instead, or next time?</div>
       <div style="font-size:12px; color:var(--gray); margin-bottom:12px;">Even 10 minutes counts. Be honest with yourself.</div>
       <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;" id="cbt-suggestions"></div>
+      <label for="cbt-own-response" class="sr-only">Write your own reframe</label>
       <textarea id="cbt-own-response" class="notes-input" placeholder="Or write your own..." style="min-height:70px; margin-bottom:16px;"></textarea>
       <button onclick="saveCBTEntry()" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">SAVE MY REFRAME</button>
     </div>
@@ -4034,6 +4067,7 @@
   <!-- Display Name -->
   <div style="padding:0 16px 12px;">
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Display Name</div>
+    <label for="display-name-input" class="sr-only">Display name</label>
     <input type="text" id="display-name-input" placeholder="Your name or handle" maxlength="24"
       style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
       oninput="setDisplayName(this.value)"
@@ -4043,6 +4077,7 @@
   <!-- Age -->
   <div style="padding:0 16px 12px;">
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Age</div>
+    <label for="profile-age-input" class="sr-only">Age</label>
     <input type="number" id="profile-age-input" inputmode="numeric" placeholder="e.g. 28" min="13" max="100"
       style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
       oninput="setProfileAge(this.value)"
@@ -4226,6 +4261,7 @@
         <div class="notes-label" style="margin:0;">SESSION NOTES</div>
         <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#aaaaaa;letter-spacing:0.5px;margin-left:auto;">OPTIONAL</span>
       </div>
+      <label for="session-notes" class="sr-only">Session notes</label>
       <textarea class="notes-input" id="session-notes" placeholder="Form cues, how it felt, anything to remember for next time..." style="border-color:var(--dark4);"></textarea>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#aaaaaa;letter-spacing:0.3px;margin-top:8px;">You can also add notes in the session summary before saving.</div>
     </div>
@@ -4237,16 +4273,17 @@
 </div>
 
 <!-- BONUS EXERCISE MODAL -->
-<div class="modal-overlay" id="bonus-modal" onclick="if(event.target===this)closeBonusModal()">
+<div class="modal-overlay" id="bonus-modal" role="dialog" aria-modal="true" aria-label="Add bonus exercise" onclick="if(event.target===this)closeBonusModal()">
   <div class="modal" style="max-height:92vh;max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(48px + env(safe-area-inset-bottom,0px));">
 
     <!-- Step 1: Pick exercise -->
     <div id="bonus-step-pick">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <div class="modal-title" style="margin-bottom:0;">ADD BONUS EXERCISE</div>
-        <button onclick="closeBonusModal()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--cream);font-size:18px;cursor:pointer;padding:6px 12px;line-height:1;border-radius:8px;font-weight:600;">✕</button>
+        <button onclick="closeBonusModal()" aria-label="Close" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--cream);font-size:18px;cursor:pointer;padding:6px 12px;line-height:1;border-radius:8px;font-weight:600;">✕</button>
       </div>
       <div class="modal-sub" style="margin-bottom:16px;">Throw in an extra movement: abs, push-ups, whatever you need</div>
+      <label for="bonus-search" class="sr-only">Search for a bonus exercise</label>
       <input id="bonus-search" type="text" placeholder="Search or type a custom exercise name…"
         style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:14px;line-height:1.4;box-sizing:border-box;margin-bottom:16px;outline:none;-webkit-appearance:none;"
         oninput="filterBonusExercises(this.value)">
@@ -4256,12 +4293,12 @@
     <!-- Step 2: Pick persistence -->
     <div id="bonus-step-persist" style="display:none;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
-        <button onclick="showBonusPickStep()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--cream);font-size:20px;cursor:pointer;padding:6px 12px;line-height:1;border-radius:8px;font-weight:600;">‹</button>
+        <button onclick="showBonusPickStep()" aria-label="Back" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--cream);font-size:20px;cursor:pointer;padding:6px 12px;line-height:1;border-radius:8px;font-weight:600;">‹</button>
         <div style="flex:1;">
           <div class="modal-title" style="margin-bottom:0;" id="bonus-persist-title">ADD EXERCISE</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:0.5px;margin-top:3px;">How long do you want to keep it?</div>
         </div>
-        <button onclick="closeBonusModal()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--cream);font-size:18px;cursor:pointer;padding:6px 12px;line-height:1;border-radius:8px;font-weight:600;">✕</button>
+        <button onclick="closeBonusModal()" aria-label="Close" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--cream);font-size:18px;cursor:pointer;padding:6px 12px;line-height:1;border-radius:8px;font-weight:600;">✕</button>
       </div>
 
       <!-- Just Today -->
@@ -4309,11 +4346,11 @@
 </div>
 
 <!-- ALTERNATE EXERCISE MODAL -->
-<div class="modal-overlay" id="alt-modal" onclick="if(event.target===this)closeAltModal()">
+<div class="modal-overlay" id="alt-modal" role="dialog" aria-modal="true" aria-label="Swap exercise" onclick="if(event.target===this)closeAltModal()">
   <div class="modal" style="max-height:85vh; max-height:85dvh; overflow-y:auto; -webkit-overflow-scrolling:touch;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
       <div class="modal-title" style="margin-bottom:0;">SWAP EXERCISE</div>
-      <button onclick="closeAltModal()" style="background:none; border:none; color:var(--gray); font-size:22px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
+      <button onclick="closeAltModal()" aria-label="Close" style="background:none; border:none; color:var(--gray); font-size:22px; cursor:pointer; padding:4px 8px; line-height:1;">✕</button>
     </div>
     <div class="modal-sub" id="alt-modal-sub">Choose an alternate</div>
 
@@ -4338,6 +4375,7 @@
         <button onclick="editYtLink('current')" style="background:var(--dark4); border:1px solid var(--dark4); color:var(--gray-light); border-radius:8px; padding:8px 10px; font-size:14px; cursor:pointer;">✏️</button>
       </div>
       <div id="edit-yt-current" style="display:none; margin-top:8px;">
+        <label for="yt-link-input-current" class="sr-only">YouTube link for current exercise</label>
         <input type="url" id="yt-link-input-current" placeholder="Paste YouTube link..." class="set-input" style="width:100%; text-align:left; padding:8px 12px; font-size:16px; margin-bottom:6px;"/>
         <button onclick="saveYtLink('current')" style="width:100%; background:var(--red); border:none; color:white; border-radius:8px; padding:8px; font-family:'Bebas Neue',cursive; font-size:15px; letter-spacing:1px; cursor:pointer;">SAVE LINK</button>
       </div>
@@ -4367,6 +4405,7 @@
         <button onclick="editYtLink('alt')" style="background:var(--dark4); border:1px solid var(--dark4); color:var(--gray-light); border-radius:8px; padding:8px 10px; font-size:14px; cursor:pointer;">✏️</button>
       </div>
       <div id="edit-yt-alt" style="display:none; margin-bottom:10px;">
+        <label for="yt-link-input-alt" class="sr-only">YouTube link for alternate exercise</label>
         <input type="url" id="yt-link-input-alt" placeholder="Paste YouTube link..." class="set-input" style="width:100%; text-align:left; padding:8px 12px; font-size:16px; margin-bottom:6px;"/>
         <button onclick="saveYtLink('alt')" style="width:100%; background:var(--red); border:none; color:white; border-radius:8px; padding:8px; font-family:'Bebas Neue',cursive; font-size:15px; letter-spacing:1px; cursor:pointer;">SAVE LINK</button>
       </div>
@@ -4382,6 +4421,7 @@
     <!-- WRITE YOUR OWN -->
     <div style="border-top:1px solid var(--dark3); padding-top:14px; margin-bottom:4px;">
       <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">✍️ WRITE YOUR OWN</div>
+      <label for="custom-exercise-input" class="sr-only">Custom exercise name</label>
       <input type="text" id="custom-exercise-input" class="set-input" placeholder="e.g. Hammer Curl, Box Jump..." style="width:100%; text-align:left; padding:10px 14px; margin-bottom:6px;" oninput="checkCustomExerciseMuscle(this.value)"/>
       <div id="custom-muscle-warning" style="display:none; font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#f39c12; letter-spacing:0.5px; margin-bottom:8px; padding:0 2px;">⚠️ This looks like a <span id="custom-muscle-warning-type"></span> exercise. You're swapping a <span id="custom-muscle-warning-cur"></span> exercise. That's fine, just double-check!</div>
       <div id="custom-unilateral-toggle-row" style="display:none; align-items:center; justify-content:space-between; padding:4px 0 8px; gap:10px;">
@@ -4406,7 +4446,7 @@
 </div>
 
 <!-- EXERCISE INFO MODAL -->
-<div class="modal-overlay" id="ex-info-modal" onclick="if(event.target===this)closeExInfoModal()">
+<div class="modal-overlay" id="ex-info-modal" role="dialog" aria-modal="true" aria-label="Exercise information" onclick="if(event.target===this)closeExInfoModal()">
   <div class="modal" style="max-height:calc(100vh - env(safe-area-inset-bottom) - 80px); margin-bottom:calc(env(safe-area-inset-bottom) + 65px); overflow:hidden; padding:0; border-radius:24px 24px 0 0; display:flex; flex-direction:column;">
 
     <!-- Fixed top: drag pill + close -->
@@ -4449,6 +4489,7 @@
         <button id="ex-info-edit-link-btn" onclick="toggleExInfoLinkEdit()" title="Edit YouTube link" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); border-radius:12px; padding:0 14px; font-size:18px; cursor:pointer; flex-shrink:0;">✏️</button>
       </div>
       <div id="ex-info-link-edit" style="display:none; margin-top:6px;">
+        <label for="ex-info-link-input" class="sr-only">YouTube link</label>
         <input type="url" id="ex-info-link-input" placeholder="Paste a YouTube link…" class="set-input" style="width:100%; text-align:left; padding:10px 12px; font-size:16px; border-radius:10px; margin-bottom:8px;"/>
         <button onclick="saveExInfoLink()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:11px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; cursor:pointer;">SAVE LINK</button>
       </div>
@@ -4457,6 +4498,7 @@
       <div id="ex-info-weight-section" style="display:none; margin-top:12px; border-top:1px solid var(--dark3); padding-top:12px;">
         <div style="font-size:11px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2px; color:var(--gray); margin-bottom:8px;">ADJUST STARTING WEIGHT</div>
         <div style="display:flex; gap:8px; align-items:center;">
+          <label for="ex-info-weight-input" class="sr-only">Starting weight in pounds</label>
           <input type="number" id="ex-info-weight-input" inputmode="decimal" placeholder="lbs" class="set-input" style="flex:1; text-align:left; padding:10px 12px;"/>
           <button onclick="saveExInfoWeight()" style="background:var(--dark3); border:1px solid #555; color:var(--cream); border-radius:10px; padding:10px 16px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; cursor:pointer; white-space:nowrap; min-height:44px;">SET WEIGHT</button>
         </div>
@@ -4474,7 +4516,7 @@
      is not trapped inside that stacking context (z-index:1), which
      would let the bottom nav (z-index:100) paint over it.
      ============================================================ -->
-<div id="tutorial-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:99998; overflow:hidden; flex-direction:column;">
+<div id="tutorial-modal" role="dialog" aria-modal="true" aria-label="App tutorial" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:99998; overflow:hidden; flex-direction:column;">
   <div style="flex:1; min-height:0; display:flex; flex-direction:column; max-width:480px; width:100%; margin:0 auto;">
 
     <!-- Top bar -->
@@ -6389,8 +6431,10 @@ function _updateSettingsAccountSection() {
     el.innerHTML = `
       <div style="padding:4px 16px 16px;">
         <div style="font-family:'Barlow',sans-serif;font-size:13px;color:#888;line-height:1.6;margin-bottom:14px;">Sign in to see when friends are training, hype each other up, and keep your data backed up.</div>
+        <label for="settings-email-input" class="sr-only">Email address</label>
         <input id="settings-email-input" type="email" placeholder="Email address" autocomplete="email" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #2e2e2e;color:var(--cream);font-family:'Barlow',sans-serif;font-size:15px;padding:13px 14px;border-radius:10px;margin-bottom:10px;outline:none;">
         <div style="position:relative;margin-bottom:14px;">
+          <label for="settings-password-input" class="sr-only">Password</label>
           <input id="settings-password-input" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #2e2e2e;color:var(--cream);font-family:'Barlow',sans-serif;font-size:15px;padding:13px 48px 13px 14px;border-radius:10px;outline:none;">
           <button type="button" onclick="var i=document.getElementById('settings-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
         </div>
@@ -6435,10 +6479,12 @@ function supabaseChangePassword() {
     <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #C0392B;">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:16px;">CHANGE PASSWORD</div>
       <div style="position:relative;margin-bottom:8px;">
+        <label for="cp-new" class="sr-only">New password</label>
         <input id="cp-new" type="password" placeholder="New password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:16px;padding:13px 44px 13px 14px;border-radius:10px;outline:none;">
         <button type="button" onclick="var i=document.getElementById('cp-new');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;">👁</button>
       </div>
       <div style="position:relative;margin-bottom:16px;">
+        <label for="cp-confirm" class="sr-only">Confirm new password</label>
         <input id="cp-confirm" type="password" placeholder="Confirm new password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:'Barlow',sans-serif;font-size:16px;padding:13px 44px 13px 14px;border-radius:10px;outline:none;">
         <button type="button" onclick="var i=document.getElementById('cp-confirm');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;">👁</button>
       </div>
@@ -6965,6 +7011,7 @@ async function _renderFriendsSection() {
   }
 
   container.innerHTML = `
+    <label for="friend-search-input" class="sr-only">Search friends by username or name</label>
     <input type="text" id="friend-search-input" placeholder="Search by username or name"
       style="width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:14px;outline:none;-webkit-appearance:none;margin-bottom:4px;"
       oninput="_friendsSearch(this.value)">
@@ -10665,7 +10712,7 @@ function renderSession() {
             <option value="">RPE</option>
             ${[6,6.5,7,7.5,8,8.5,9,9.5,10].map(r => `<option value="${r}" ${set.rpe == r ? 'selected' : ''}>${r}</option>`).join('')}
           </select>
-          <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleSetDone('${ex.id}',${si})"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+          <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleSetDone('${ex.id}',${si})" aria-label="Mark set ${si + 1} ${set.done ? 'incomplete' : 'complete'}"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
       `;
     });
@@ -11055,7 +11102,7 @@ function renderBonusExercises() {
             <option value="">RPE</option>
             ${[6,6.5,7,7.5,8,8.5,9,9.5,10].map(r => `<option value="${r}" ${set.rpe == r ? 'selected' : ''}>${r}</option>`).join('')}
           </select>
-          <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleBonusSetDone('${bonus.id}',${si})">
+          <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleBonusSetDone('${bonus.id}',${si})" aria-label="Mark bonus set ${si + 1} ${set.done ? 'incomplete' : 'complete'}">
             <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
         </div>`;
@@ -12557,7 +12604,7 @@ function addDynamicSet(exId) {
       '<option value="">RPE</option>' +
       [6,6.5,7,7.5,8,8.5,9,9.5,10].map(function(r){ return '<option value="' + r + '">' + r + '</option>'; }).join('') +
     '</select>' +
-    '<button class="set-done-btn" onclick="toggleSetDone(\'' + exId + '\',' + newSetIndex + ')">' +
+    '<button class="set-done-btn" aria-label="Mark set complete" onclick="toggleSetDone(\'' + exId + '\',' + newSetIndex + ')">' +
       '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
     '</button>';
 
@@ -22114,6 +22161,7 @@ function renderValuesCard() {
     card.innerHTML = `
       <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WHY I TRAIN</div>
       <div style="font-size:13px; color:var(--gray-light); line-height:1.6; margin-bottom:14px;">When it's hard to show up, your reason pulls you through. What does training make possible for you?</div>
+      <label for="values-input" class="sr-only">Why you train</label>
       <textarea id="values-input" class="notes-input" placeholder="e.g. To manage my anxiety. To have energy for my kids. To feel at home in my body..." style="min-height:70px; margin-bottom:12px;"></textarea>
       <button onclick="saveTrainingValues()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:12px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SAVE MY WHY</button>`;
   }
@@ -24376,7 +24424,7 @@ function _escHtml(str) {
 </script>
 
 <!-- EXIT SESSION MODAL -->
-<div id="exit-session-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:600; align-items:flex-end; justify-content:center;">
+<div id="exit-session-modal" role="dialog" aria-modal="true" aria-label="Leave workout" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:600; align-items:flex-end; justify-content:center;">
   <div style="background:var(--dark2); border:1px solid var(--dark3); border-radius:20px 20px 0 0; padding:28px 24px calc(env(safe-area-inset-bottom) + 24px); width:100%; animation: slideUp 0.3s ease;">
     <div style="font-family:'Bebas Neue',cursive; font-size:24px; letter-spacing:2px; color:var(--cream); margin-bottom:6px;">LEAVE WORKOUT?</div>
     <div style="font-size:13px; color:var(--gray-light); margin-bottom:24px;">What would you like to do?</div>
@@ -24392,13 +24440,14 @@ function _escHtml(str) {
     </button>
   </div>
 </div>
-<div class="modal-overlay" id="edit-day-modal">
+<div class="modal-overlay" id="edit-day-modal" role="dialog" aria-modal="true" aria-label="Rename training day">
   <div class="modal">
     <div class="modal-title">RENAME DAY</div>
     <div class="modal-sub">What day will you do this session?</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;" id="day-options-grid"></div>
     <div style="margin-bottom:12px;">
       <div class="notes-label" style="margin-bottom:6px;">CUSTOM DAY</div>
+      <label for="custom-day-input" class="sr-only">Custom day name</label>
       <input type="text" id="custom-day-input" class="set-input" placeholder="e.g. Any Day" style="width:100%; text-align:left; padding:10px 14px;"/>
     </div>
     <button class="swap-perm-btn" style="width:100%; padding:14px; font-size:16px; letter-spacing:1px;" onclick="saveDayLabel()">SAVE</button>
@@ -24408,7 +24457,7 @@ function _escHtml(str) {
 
 
 <!-- INSTALL INSTRUCTIONS MODAL -->
-<div id="install-instructions" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:600; align-items:flex-end; justify-content:center;">
+<div id="install-instructions" role="dialog" aria-modal="true" aria-label="Install app instructions" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:600; align-items:flex-end; justify-content:center;">
   <div style="background:var(--dark2); border:1px solid var(--dark3); border-radius:20px 20px 0 0; padding:28px 24px calc(env(safe-area-inset-bottom) + 24px); width:100%; animation: slideUp 0.3s ease;">
     <div style="font-family:'Bebas Neue',cursive; font-size:24px; letter-spacing:2px; color:var(--cream); margin-bottom:6px;">INSTALL T&S MUSCLE</div>
     <div style="font-size:13px; color:var(--gray); margin-bottom:22px;">Follow these steps to add to your home screen:</div>
@@ -24460,7 +24509,7 @@ function _escHtml(str) {
 </div>
 
 <!-- RESTORE DEFAULTS CONFIRM MODAL -->
-<div id="restore-defaults-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
+<div id="restore-defaults-modal" role="dialog" aria-modal="true" aria-label="Confirm restore defaults" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid #553333;">
     <div style="text-align:center; margin-bottom:20px;">
       <div style="font-size:32px; margin-bottom:12px;">⚠️</div>
@@ -24476,14 +24525,14 @@ function _escHtml(str) {
 
 <!-- Rep Range bottom sheet -->
 <div id="rep-range-overlay" onclick="closeRepRangeSheet()" style="display:none;position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,0.65);"></div>
-<div id="rep-range-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99991;background:var(--dark2);border-radius:20px 20px 0 0;box-shadow:0 -4px 30px rgba(0,0,0,0.7);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1);max-height:82vh;max-height:82dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+<div id="rep-range-sheet" role="dialog" aria-modal="true" aria-label="Rep range options" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99991;background:var(--dark2);border-radius:20px 20px 0 0;box-shadow:0 -4px 30px rgba(0,0,0,0.7);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1);max-height:82vh;max-height:82dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
   <div style="width:36px;height:4px;background:var(--dark4);border-radius:2px;margin:12px auto 0;flex-shrink:0;"></div>
   <div id="rep-range-sheet-body" style="padding:18px 20px calc(32px + env(safe-area-inset-bottom));"></div>
 </div>
 
 <!-- RPE info bottom sheet -->
 <div id="rpe-sheet-overlay" onclick="toggleRpeSheet()" style="display:none; position:fixed; inset:0; z-index:99990; background:rgba(0,0,0,0.5);"></div>
-<div id="rpe-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99991; background:var(--dark2); border-radius:20px 20px 0 0; padding:24px 20px calc(40px + env(safe-area-inset-bottom)); box-shadow:0 -4px 30px rgba(0,0,0,0.6); transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1); overflow-y:auto; -webkit-overflow-scrolling:touch;">
+<div id="rpe-sheet" role="dialog" aria-modal="true" aria-label="What is RPE" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99991; background:var(--dark2); border-radius:20px 20px 0 0; padding:24px 20px calc(40px + env(safe-area-inset-bottom)); box-shadow:0 -4px 30px rgba(0,0,0,0.6); transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1); overflow-y:auto; -webkit-overflow-scrolling:touch;">
   <div style="width:36px; height:4px; background:var(--dark4); border-radius:2px; margin:0 auto 20px;"></div>
   <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:var(--gray); letter-spacing:2px; margin-bottom:10px;">WHAT IS RPE?</div>
   <div style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:16px;">
@@ -24509,29 +24558,30 @@ function _escHtml(str) {
 
 <!-- ── EXERCISE LIBRARY OVERLAY ─────────────────────────────────────────── -->
 <!-- SOCIAL / FRIENDS MODAL — same animation pattern as exercise library -->
-<div id="social-overlay" class="lib-overlay" onclick="if(event.target===this)closeSocialModal()">
+<div id="social-overlay" class="lib-overlay" role="dialog" aria-modal="true" aria-label="Friends" onclick="if(event.target===this)closeSocialModal()">
   <div class="lib-modal">
     <div class="lib-header">
       <div class="lib-header-top">
         <div class="lib-title">FRIENDS</div>
-        <button class="lib-close-btn" onclick="closeSocialModal()">&#x2715;</button>
+        <button class="lib-close-btn" onclick="closeSocialModal()" aria-label="Close friends panel">&#x2715;</button>
       </div>
     </div>
     <div class="lib-list" id="social-modal-content"></div>
   </div>
 </div>
 
-<div id="lib-overlay" class="lib-overlay" onclick="if(event.target===this)closeExerciseLibrary()">
+<div id="lib-overlay" class="lib-overlay" role="dialog" aria-modal="true" aria-label="Exercise library" onclick="if(event.target===this)closeExerciseLibrary()">
   <div class="lib-modal">
     <div class="lib-header">
       <div class="lib-header-top">
         <div class="lib-title">EXERCISE LIBRARY</div>
-        <button class="lib-close-btn" onclick="closeExerciseLibrary()">✕</button>
+        <button class="lib-close-btn" onclick="closeExerciseLibrary()" aria-label="Close exercise library">✕</button>
       </div>
       <div class="lib-search-wrap">
         <span class="lib-search-icon">
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </span>
+        <label for="lib-search" class="sr-only">Search exercises</label>
         <input class="lib-search-bar" id="lib-search" type="search" placeholder="Search exercises…" oninput="libSearchQuery=this.value;renderLibrary()">
       </div>
       <div class="lib-filter-chips" id="lib-chips"></div>
