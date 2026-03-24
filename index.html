@@ -13945,7 +13945,7 @@ function showSessionWrapUp() {
       totalSets++;
       if (r > maxReps)              { exceededSets++; return { icon:'▲', color:'#2ecc71', reps:r }; }
       else if (r >= weekBandTarget) { hitSets++;      return { icon:'✓', color:'#2ecc71', reps:r }; }
-      else                          { missedSets++;   return { icon:'▼', color:'#CC2027', reps:r }; }
+      else                          { missedSets++;   return { icon:'▼', color:'#e74c3c', reps:r }; }
     });
 
     // Overall exercise signal
@@ -14101,7 +14101,7 @@ function showSessionWrapUp() {
       <div style="display:flex;gap:20px;align-items:center;margin-top:4px;margin-bottom:28px;padding:14px 16px;background:var(--dark3);border-radius:10px;">
         <div style="font-size:14px;color:#2ecc71;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">▲ Exceeded</div>
         <div style="font-size:14px;color:#2ecc71;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">✓ Hit range</div>
-        <div style="font-size:14px;color:#CC2027;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">▼ Below target</div>
+        <div style="font-size:14px;color:#e74c3c;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">▼ Below target</div>
       </div>
       <!-- Upgrade prompt for today-only bonuses -->
       ${upgradePromptHTML}
