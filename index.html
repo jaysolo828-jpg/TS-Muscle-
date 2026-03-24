@@ -652,11 +652,11 @@
 
   @keyframes sessionExpand {
     from { clip-path: circle(0px at var(--expand-x, 50%) var(--expand-y, 80%)); }
-    to   { clip-path: circle(200vmax at var(--expand-x, 50%) var(--expand-y, 80%)); }
+    to   { clip-path: circle(9999px at var(--expand-x, 50%) var(--expand-y, 80%)); }
   }
   .workout-session.is-launching {
     will-change: clip-path;
-    animation: sessionExpand 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: sessionExpand 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
   .session-sticky-header {
@@ -10205,20 +10205,27 @@ function _autoregDismiss(exId) {
 // ============================================================
 function _launchSessionFromEl(triggerEl) {
   const ws = document.getElementById('workout-session');
+  let cx = '50%', cy = '80%';
   if (triggerEl) {
     const r = triggerEl.getBoundingClientRect();
-    ws.style.setProperty('--expand-x', (r.left + r.width / 2) + 'px');
-    ws.style.setProperty('--expand-y', (r.top  + r.height / 2) + 'px');
-  } else {
-    ws.style.setProperty('--expand-x', '50%');
-    ws.style.setProperty('--expand-y', '80%');
+    cx = (r.left + r.width / 2) + 'px';
+    cy = (r.top  + r.height / 2) + 'px';
   }
-  ws.classList.add('active', 'is-launching');
-  setTimeout(() => {
-    ws.classList.remove('is-launching');
-    ws.style.removeProperty('--expand-x');
-    ws.style.removeProperty('--expand-y');
-  }, 600);
+  ws.style.setProperty('--expand-x', cx);
+  ws.style.setProperty('--expand-y', cy);
+  // Pin at 0 before the element becomes visible so there's no flash
+  ws.style.clipPath = 'circle(0px at ' + cx + ' ' + cy + ')';
+  ws.classList.add('active');
+  // Double rAF: first frame commits display:block, second frame triggers animation
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ws.style.clipPath = '';
+    ws.classList.add('is-launching');
+    setTimeout(() => {
+      ws.classList.remove('is-launching');
+      ws.style.removeProperty('--expand-x');
+      ws.style.removeProperty('--expand-y');
+    }, 650);
+  }));
 }
 
 function startSession(dayId, triggerEl) {
@@ -10884,6 +10891,9 @@ function closeBonusModal() {
 function showBonusPickStep() {
   document.getElementById('bonus-step-pick').style.display = '';
   document.getElementById('bonus-step-persist').style.display = 'none';
+  document.querySelectorAll('.bonus-persist-btn').forEach(b =>
+    b.classList.remove('bp-selected', 'bp-selected-today', 'bp-selected-cycle', 'bp-selected-permanent')
+  );
 }
 
 function showBonusPersistStep(name) {
