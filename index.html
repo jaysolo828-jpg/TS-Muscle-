@@ -10658,7 +10658,7 @@ function renderSession() {
               onchange="updateSet('${ex.id}',${si},'reps',this.value); updateRepIndicator('${ex.id}',${si},'${_goalReps}')"
               oninput="updateRepIndicator('${ex.id}',${si},'${_goalReps}')"/>
             <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
-            ${_showIntelHint ? `<div id="intel-hint-${ex.id}-${si}" class="intel-rep-hint" style="position:absolute;top:-10px;right:0;font-size:9px;color:#e74c3c;pointer-events:none;white-space:nowrap;">aim ${_intelReps}</div>` : `<div id="intel-hint-${ex.id}-${si}" class="intel-rep-hint" style="display:none;"></div>`}
+            <div id="intel-hint-${ex.id}-${si}" class="intel-rep-hint" style="display:none;"></div>
           </div>
           <select class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'rpe',this.value);this.dataset.empty=this.value?'false':'true';">
             <option value="">RPE</option>
@@ -11297,16 +11297,7 @@ function toggleSetDone(exId, setIndex) {
             const _nTarget = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ne?.reps);
             _nextRepsInput.placeholder = _nTarget.split(/[–\-]/)[0];
           }
-          // Show/update intel hint when suggestion differs from placeholder
-          const _intelHint = document.getElementById(`intel-hint-${exId}-${_nextIdx}`);
-          if (_intelHint) {
-            if (_nextSuggestion !== null && String(_nextSuggestion) !== _nextRepsInput.placeholder) {
-              _intelHint.textContent = 'aim ' + _nextSuggestion;
-              _intelHint.style.display = '';
-            } else {
-              _intelHint.style.display = 'none';
-            }
-          }
+          // Intel hint disabled — suggestions still stored internally but not shown to user
         }
       }
     }
