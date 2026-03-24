@@ -5233,20 +5233,9 @@ const UNILATERAL_EXERCISES = new Set([
 function getEffectiveExperienceLevel() {
   const raw = state.profile?.experience;
   const level = (raw === 'beginner' || raw === 'intermediate' || raw === 'advanced') ? raw : 'intermediate';
-  // Graceful rollout for existing users who never had expScalingActive stamped:
-  // wait until their next cycle boundary so volume doesn't jump mid-cycle.
-  // But if a pending level matches the stored level, or there is no pending
-  // change, the user already chose this level before the rollout code existed
-  // — honour it immediately.
-  if (!state.expScalingActive) {
-    if (!state.pendingExperienceLevel || state.pendingExperienceLevel === level) {
-      state.expScalingActive = true;
-      saveState();
-    } else {
-      // A pending change exists — keep training at the stored level until rollover
-      return level;
-    }
-  }
+  // Fix: existing advanced users who set their level before the rollout code
+  // was added never had expScalingActive stamped. Honour their selection.
+  if (!state.expScalingActive && raw) { state.expScalingActive = true; saveState(); }
   return level;
 }
 
