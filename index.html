@@ -7392,11 +7392,12 @@ async function _sendWorkoutSignal(dayName) {
     }).select('id').single();
     if (error || !data) return;
     _currentSignalId = data.id;
-    // Schedule the "is training" notification for 9 minutes from now via
+    // Schedule the "is training" notification for 1 minute from now via
     // OneSignal's server-side send_after — this fires reliably even when
     // the phone screen is locked or the browser is backgrounded.
+    // TODO: change back to 9 minutes before release.
     const signalId   = data.id;
-    const sendAfterTs = new Date(Date.now() + 9 * 60 * 1000).toISOString();
+    const sendAfterTs = new Date(Date.now() + 1 * 60 * 1000).toISOString();
     _notifyFriends(
       displayName + ' is training',
       'They just started a workout. Go show up.',
