@@ -6771,6 +6771,7 @@ async function _checkSupabaseSession() {
       _updateSupabaseAuthCard();
       _swStoreUserId(session.user.id);
       _syncOneSignalPlayerId();
+      _requestNotificationPermission(); // prompt if browser hasn't decided yet
     }
     _updateSocialNotifyDot();
 
@@ -7391,11 +7392,12 @@ async function _sendWorkoutSignal(dayName) {
     }).select('id').single();
     if (error || !data) return;
     _currentSignalId = data.id;
-    // Schedule the "is training" notification for 9 minutes from now via
+    // Schedule the "is training" notification for 1 minute from now via
     // OneSignal's server-side send_after — this fires reliably even when
     // the phone screen is locked or the browser is backgrounded.
+    // TODO: change back to 9 minutes before release.
     const signalId   = data.id;
-    const sendAfterTs = new Date(Date.now() + 9 * 60 * 1000).toISOString();
+    const sendAfterTs = new Date(Date.now() + 1 * 60 * 1000).toISOString();
     _notifyFriends(
       displayName + ' is training',
       'They just started a workout. Go show up.',
@@ -7520,14 +7522,30 @@ async function _syncOneSignalPlayerId() {
 // Ask for push notification permission immediately after the user signs in.
 // Only asked once; if denied, social features continue without push.
 async function _requestNotificationPermission() {
-  if (state.notificationPermissionAsked) return;
   if (!window.ONESIGNAL_APP_ID) return;
-  state.notificationPermissionAsked = true;
-  saveState();
+
+  // Never re-prompt if the browser has already made a decision
+  const browserPerm = ('Notification' in window) ? Notification.permission : 'default';
+  if (browserPerm === 'denied') return;
+  if (browserPerm === 'granted') {
+    // Already have permission — just make sure the player ID is saved
+    _syncOneSignalPlayerId();
+    return;
+  }
+
+  // 'default' = not yet asked. Only prompt once (flag guards against double-prompting
+  // within the same session; browser ensures it only ever asks once across sessions).
+  if (state.notificationPermissionAsked) return;
+  // NOTE: we set the flag AFTER the deferred callback runs, not before, so a page
+  // reload during the 1200ms sign-in wait doesn't permanently skip the prompt.
 
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   window.OneSignalDeferred.push(async function(OneSignal) {
     try {
+      // Mark asked now (inside deferred) so concurrent calls don't double-prompt
+      state.notificationPermissionAsked = true;
+      saveState();
+
       const granted = await OneSignal.Notifications.requestPermission();
       if (!granted || !state.supabaseUserId) return;
 
