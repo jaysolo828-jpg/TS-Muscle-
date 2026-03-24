@@ -24419,10 +24419,24 @@ function _escHtml(str) {
 </script>
 
 <!-- YOUTUBE IN-APP PLAYER MODAL -->
-<div id="yt-player-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:100001; align-items:center; justify-content:center; flex-direction:column;" onclick="closeYtModal(event)">
-  <div style="width:100%; max-width:560px; padding:0 16px; position:relative;" onclick="event.stopPropagation()">
-    <button onclick="closeYtModal()" style="position:absolute; top:-44px; right:16px; background:none; border:none; color:white; font-size:32px; cursor:pointer; line-height:1; padding:4px 8px;">&#x2715;</button>
-    <div style="position:relative; width:100%; padding-top:56.25%; border-radius:12px; overflow:hidden; background:#000;">
+<div id="yt-player-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:100001; align-items:flex-end; justify-content:center; flex-direction:column;" onclick="closeYtModal(event)">
+  <div style="width:100%; max-width:640px; background:var(--dark2); border-radius:24px 24px 0 0; border-top:3px solid var(--red); padding-bottom:calc(env(safe-area-inset-bottom) + 16px); overflow:hidden;" onclick="event.stopPropagation()">
+
+    <!-- drag pill + close -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px 0;">
+      <div style="width:36px;"></div>
+      <div style="width:36px; height:4px; background:var(--dark4); border-radius:2px;"></div>
+      <button onclick="closeYtModal()" aria-label="Close" style="width:36px; height:36px; border-radius:50%; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); font-size:14px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+    </div>
+
+    <!-- label -->
+    <div style="padding:10px 20px 12px; display:flex; align-items:center; gap:8px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--red)"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.010-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+      <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:2px; color:var(--gray);">WATCH &amp; LEARN</span>
+    </div>
+
+    <!-- video -->
+    <div style="position:relative; width:100%; padding-top:56.25%; background:#000;">
       <iframe id="yt-player-iframe"
         src=""
         style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;"
@@ -24430,9 +24444,14 @@ function _escHtml(str) {
         allowfullscreen>
       </iframe>
     </div>
-    <button onclick="closeYtModal()" style="margin-top:16px; width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">
-      CLOSE
-    </button>
+
+    <!-- close button -->
+    <div style="padding:14px 20px 0;">
+      <button onclick="closeYtModal()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">
+        CLOSE VIDEO
+      </button>
+    </div>
+
   </div>
 </div>
 
