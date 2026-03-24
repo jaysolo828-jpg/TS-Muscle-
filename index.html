@@ -4442,7 +4442,7 @@
     <div style="flex-shrink:0; border-top:1px solid var(--dark3); padding:12px 20px 16px;">
       <div style="font-size:11px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2px; color:var(--gray); margin-bottom:10px;">WATCH & LEARN</div>
       <div style="display:flex; gap:8px;">
-        <a id="ex-info-yt-btn" href="#" target="_blank" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:#CC0000; color:white; border-radius:12px; padding:13px; font-family:'Bebas Neue',cursive; font-size:17px; letter-spacing:2px; text-decoration:none; transition:opacity 0.2s;" onclick="if(!this.href||this.href==='#'){event.preventDefault();openExInfoSearch();}">
+        <a id="ex-info-yt-btn" href="#" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:#CC0000; color:white; border-radius:12px; padding:13px; font-family:'Bebas Neue',cursive; font-size:17px; letter-spacing:2px; text-decoration:none; transition:opacity 0.2s;" onclick="event.preventDefault();var h=this.getAttribute('href');if(!h||h==='#'){openExInfoSearch();}else{_safeOpenYtLink(h);}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.010-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
           <span id="ex-info-yt-label">WATCH ON YOUTUBE</span>
         </a>
@@ -6408,7 +6408,6 @@ async function supabaseSignOut() {
   _supabaseClient = null;
   _cachedJwt = null;
   if (_socialPollInterval) { clearInterval(_socialPollInterval); _socialPollInterval = null; }
-  if (_startNotifyTimer) { clearTimeout(_startNotifyTimer); _startNotifyTimer = null; }
   saveState();
   _updateSupabaseAuthCard();
   _updateSettingsAccountSection();
@@ -6954,7 +6953,6 @@ function _avatarHtml(displayName, avatarColor, size) {
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:${Math.round(size*0.5)}px;color:${textColor};">${escapeHtml(letter)}</div>`;
 }
 let _currentSignalId   = null; // UUID of the active workout signal row in Supabase
-let _startNotifyTimer  = null; // handle for the 9-minute delayed start notification
 
 async function _renderFriendsSection() {
   const container = document.getElementById('social-modal-content');
@@ -7393,19 +7391,17 @@ async function _sendWorkoutSignal(dayName) {
     }).select('id').single();
     if (error || !data) return;
     _currentSignalId = data.id;
-    // Delay the "is training" notification by 9 minutes so quick sessions
-    // or false starts don't spam friends. Cancel if the session ends first.
-    const signalId = data.id;
-    _startNotifyTimer = setTimeout(function() {
-      _startNotifyTimer = null;
-      // Only send if the session is still active (not saved or discarded)
-      if (!activeSession) return;
-      _notifyFriends(
-        displayName + ' is training',
-        'They just started a workout. Go show up.',
-        signalId
-      );
-    }, 9 * 60 * 1000);
+    // Schedule the "is training" notification for 9 minutes from now via
+    // OneSignal's server-side send_after — this fires reliably even when
+    // the phone screen is locked or the browser is backgrounded.
+    const signalId   = data.id;
+    const sendAfterTs = new Date(Date.now() + 9 * 60 * 1000).toISOString();
+    _notifyFriends(
+      displayName + ' is training',
+      'They just started a workout. Go show up.',
+      signalId,
+      sendAfterTs
+    );
   } catch(e) {}
 }
 
@@ -7433,7 +7429,9 @@ async function _completeWorkoutSignal() {
 // Sends a push notification to all accepted friends via the Netlify edge function.
 // signalId is included so friends' notifications carry an action button that can
 // send a reaction back without opening the app (handled in sw.js).
-async function _notifyFriends(title, body, signalId) {
+// sendAfter is an optional ISO 8601 string; when provided OneSignal holds the
+// notification and delivers it at that time (reliable even when screen is locked).
+async function _notifyFriends(title, body, signalId, sendAfter) {
   if (!state.supabaseUserId) return;
   const sb = _getSupabaseClient();
   if (!sb) return;
@@ -7462,6 +7460,10 @@ async function _notifyFriends(title, body, signalId) {
       payload.buttons = [{ id: 'thumbs_up', text: '👍 Nice work' }];
       payload.data    = { signal_id: signalId, to_user_id: state.supabaseUserId };
     }
+
+    // Schedule server-side delivery so the notification fires even if the
+    // client browser is backgrounded or the phone screen is locked.
+    if (sendAfter) payload.send_after = sendAfter;
 
     fetch('/send-notification', {
       method: 'POST',
@@ -14238,8 +14240,6 @@ function _upgradeBonus(bonusId, persistence) {
 function finalizeEndSession(save) {
   // Cancel any in-flight coaching cue API call
   _cancelCoachingCue();
-  // Cancel the delayed "is training" start notification — session is ending regardless
-  if (_startNotifyTimer) { clearTimeout(_startNotifyTimer); _startNotifyTimer = null; }
   // Always clear the crash-recovery snapshot — session is now fully completed or discarded
   _lsRemove('ts-muscle-paused');
   _idbSet('ts-muscle-paused', null);

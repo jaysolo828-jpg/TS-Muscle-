@@ -11,7 +11,7 @@ export default async function handler(req) {
   }
 
   try {
-    const { player_ids, title, body, buttons, data: notifData } = await req.json();
+    const { player_ids, title, body, buttons, data: notifData, send_after } = await req.json();
     if (!player_ids?.length) return new Response('Missing player_ids', { status: 400 });
 
     const payload = {
@@ -25,6 +25,9 @@ export default async function handler(req) {
     if (buttons?.length) payload.buttons = buttons;
     // Custom data passed through to the notification (e.g. signal_id, to_user_id)
     if (notifData) payload.data = notifData;
+    // Schedule delivery at a future time (ISO 8601) so notifications fire
+    // even when the client browser is backgrounded or the screen is locked.
+    if (send_after) payload.send_after = send_after;
 
     const resp = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
