@@ -4168,7 +4168,7 @@
     <a id="contact-email-link" style="font-family:'Barlow Condensed',sans-serif; font-size:14px; color:var(--gray-light); letter-spacing:0; text-decoration:none; cursor:pointer; padding:8px 0; min-height:44px; display:flex; align-items:center;"></a>
     <script>(function(){ var u='Jay@'+'therapyandsneakers'+'.org'; var a=document.getElementById('contact-email-link'); if(a){a.textContent=u;a.href='mailto:'+u;} })();</script>
   </div>
-  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#777; letter-spacing:2px;">T&S MUSCLE v1.7.0 · THERAPY & SNEAKERS</div>
+  <div id="footer-version" style="text-align:center; margin-top:16px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#777; letter-spacing:2px;">T&S MUSCLE v1.7.2 · THERAPY & SNEAKERS</div>
 
   <div style="text-align:center; margin-top:30px; color: var(--gray); font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;">
     T&S MUSCLE · WHERE CULTURE AND PURPOSE COLLIDE
@@ -19406,9 +19406,12 @@ if ('serviceWorker' in navigator) {
 // ============================================================
 // APP VERSION — bump version string + add entry to CHANGELOG on every push
 // ============================================================
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.7.2';
 
 const APP_CHANGELOG = {
+  '1.7.2': [
+    'Fix: Push notifications now deliver reliably to all users.',
+  ],
   '1.7.1': [
     'Improved: Deload and recovery systems now adjust to your experience level',
     'New: Post-recovery check-in — the app asks how you\'re feeling after a lighter week and can adjust weights if needed',
