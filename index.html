@@ -7533,9 +7533,13 @@ async function _requestNotificationPermission() {
     return;
   }
 
-  // 'default' = not yet asked. Only prompt once (flag guards against double-prompting
-  // within the same session; browser ensures it only ever asks once across sessions).
-  if (state.notificationPermissionAsked) return;
+  // 'default' = browser has never shown the dialog. The browser is the real source
+  // of truth — if it's still 'default', always proceed regardless of any saved flag
+  // (the flag may have been set erroneously before the dialog ever appeared).
+  if (state.notificationPermissionAsked) {
+    state.notificationPermissionAsked = false;
+    saveState();
+  }
   // NOTE: we set the flag AFTER the deferred callback runs, not before, so a page
   // reload during the 1200ms sign-in wait doesn't permanently skip the prompt.
 
