@@ -650,6 +650,15 @@
 
   .workout-session.active { display: block; }
 
+  @keyframes sessionExpand {
+    from { clip-path: circle(0px at var(--expand-x, 50%) var(--expand-y, 80%)); }
+    to   { clip-path: circle(200vmax at var(--expand-x, 50%) var(--expand-y, 80%)); }
+  }
+  .workout-session.is-launching {
+    will-change: clip-path;
+    animation: sessionExpand 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
   .session-sticky-header {
     position: sticky;
     top: 0;
@@ -8534,7 +8543,7 @@ function renderHome() {
             </div>` : ''}
           </div>
         </div>
-        <button class="start-btn${doneThisWeek ? ' done-today' : ''}" onclick="event.stopPropagation(); startSession('${day.id}')" style="${doneThisWeek ? 'background:#27ae60;' : isResuming ? 'background:var(--warning);' : ''}">
+        <button class="start-btn${doneThisWeek ? ' done-today' : ''}" onclick="event.stopPropagation(); startSession('${day.id}', this)" style="${doneThisWeek ? 'background:#27ae60;' : isResuming ? 'background:var(--warning);' : ''}">
           ${doneThisWeek
             ? `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> DONE`
             : isResuming
@@ -10194,7 +10203,25 @@ function _autoregDismiss(exId) {
 // ============================================================
 // SESSION
 // ============================================================
-function startSession(dayId) {
+function _launchSessionFromEl(triggerEl) {
+  const ws = document.getElementById('workout-session');
+  if (triggerEl) {
+    const r = triggerEl.getBoundingClientRect();
+    ws.style.setProperty('--expand-x', (r.left + r.width / 2) + 'px');
+    ws.style.setProperty('--expand-y', (r.top  + r.height / 2) + 'px');
+  } else {
+    ws.style.setProperty('--expand-x', '50%');
+    ws.style.setProperty('--expand-y', '80%');
+  }
+  ws.classList.add('active', 'is-launching');
+  setTimeout(() => {
+    ws.classList.remove('is-launching');
+    ws.style.removeProperty('--expand-x');
+    ws.style.removeProperty('--expand-y');
+  }, 600);
+}
+
+function startSession(dayId, triggerEl) {
   // Check for a paused session for this day
   const paused = localStorage.getItem('ts-muscle-paused');
   if (paused) {
@@ -10227,7 +10254,7 @@ function startSession(dayId) {
         _insightInteracted = {};
         renderSession();
         startSessionTimer();
-        document.getElementById('workout-session').classList.add('active');
+        _launchSessionFromEl(triggerEl);
         showToast('Workout resumed 💪');
         _fetchLastSessionInsights();
       };
@@ -10279,7 +10306,7 @@ function startSession(dayId) {
 
   renderSession();
   startSessionTimer();
-  document.getElementById('workout-session').classList.add('active');
+  _launchSessionFromEl(triggerEl);
   // Delay insights fetch by 4 s so it doesn't collide with the first exercise's
   // coaching cue API call in the same rate-limit window.
   setTimeout(_fetchLastSessionInsights, 4000);
