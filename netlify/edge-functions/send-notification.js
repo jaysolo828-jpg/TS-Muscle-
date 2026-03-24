@@ -16,7 +16,7 @@ export default async function handler(req) {
 
     const payload = {
       app_id: appId,
-      include_player_ids: player_ids,
+      include_subscription_ids: player_ids,
       headings: { en: (title || 'T&S Muscle').slice(0, 80) },
       contents: { en: (body || '').slice(0, 160) },
     };
