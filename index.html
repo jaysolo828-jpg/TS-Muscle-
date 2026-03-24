@@ -10891,6 +10891,9 @@ function closeBonusModal() {
 function showBonusPickStep() {
   document.getElementById('bonus-step-pick').style.display = '';
   document.getElementById('bonus-step-persist').style.display = 'none';
+  document.querySelectorAll('.bonus-persist-btn').forEach(b =>
+    b.classList.remove('bp-selected', 'bp-selected-today', 'bp-selected-cycle', 'bp-selected-permanent')
+  );
 }
 
 function showBonusPersistStep(name) {
