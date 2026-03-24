@@ -650,16 +650,7 @@
 
   .workout-session.active { display: block; }
 
-  @keyframes sessionExpand {
-    from { transform: scale(0.04); opacity: 0; }
-    12%  { opacity: 1; }
-    to   { transform: scale(1);    opacity: 1; }
-  }
-  .workout-session.is-launching {
-    will-change: transform, opacity;
-    transform-origin: var(--expand-x, 50%) var(--expand-y, 80%);
-    animation: sessionExpand 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  }
+  /* Ink ripple used by _launchSessionFromEl — no .workout-session styles needed */
 
   .session-sticky-header {
     position: sticky;
@@ -10207,20 +10198,50 @@ function _autoregDismiss(exId) {
 // ============================================================
 function _launchSessionFromEl(triggerEl) {
   const ws = document.getElementById('workout-session');
+  let cx = window.innerWidth / 2;
+  let cy = window.innerHeight * 0.8;
+
   if (triggerEl) {
     const r = triggerEl.getBoundingClientRect();
-    ws.style.setProperty('--expand-x', (r.left + r.width / 2) + 'px');
-    ws.style.setProperty('--expand-y', (r.top  + r.height / 2) + 'px');
-  } else {
-    ws.style.setProperty('--expand-x', '50%');
-    ws.style.setProperty('--expand-y', '80%');
+    cx = r.left + r.width / 2;
+    cy = r.top  + r.height / 2;
   }
-  ws.classList.add('active', 'is-launching');
+
+  // Radius needed to cover every corner of the viewport from cx,cy
+  const radius = Math.ceil(Math.hypot(
+    Math.max(cx, window.innerWidth  - cx),
+    Math.max(cy, window.innerHeight - cy)
+  ));
+
+  // Ink ripple: dark circle that grows from the START button to fill the screen
+  const ink = document.createElement('div');
+  Object.assign(ink.style, {
+    position:      'fixed',
+    left:          cx + 'px',
+    top:           cy + 'px',
+    width:         '0px',
+    height:        '0px',
+    transform:     'translate(-50%, -50%)',
+    borderRadius:  '50%',
+    background:    '#0a0a0a',
+    pointerEvents: 'none',
+    zIndex:        '199',
+    willChange:    'width, height',
+  });
+  document.body.appendChild(ink);
+
+  // Double RAF so the browser renders width:0 before the transition fires
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ink.style.transition = 'width 0.42s cubic-bezier(0.22,1,0.36,1), height 0.42s cubic-bezier(0.22,1,0.36,1)';
+    ink.style.width  = (radius * 2) + 'px';
+    ink.style.height = (radius * 2) + 'px';
+  }));
+
+  // Once ink covers the screen, show the workout session (same bg = seamless)
   setTimeout(() => {
-    ws.classList.remove('is-launching');
-    ws.style.removeProperty('--expand-x');
-    ws.style.removeProperty('--expand-y');
-  }, 550);
+    ws.classList.add('active');
+    setTimeout(() => ink.remove(), 60);
+  }, 420);
 }
 
 function startSession(dayId, triggerEl) {
