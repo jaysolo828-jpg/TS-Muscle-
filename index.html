@@ -10964,17 +10964,19 @@ function confirmAddBonus(persistence) {
   });
 
   setTimeout(() => {
-    closeBonusModal();
+    const stillExists = activeSession?.bonusExercises?.some(b => b.id === bonusId);
+    if (stillExists) closeBonusModal();
     renderBonusExercises();
     updateSessionProgress();
 
-    setTimeout(() => {
-      const el = document.getElementById('bonus-ex-' + bonusId);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 120);
-
-    if (persistence === 'cycle' || persistence === 'permanent') {
-      _applyBonusPersistence(bonusId, persistence);
+    if (stillExists) {
+      setTimeout(() => {
+        const el = document.getElementById('bonus-ex-' + bonusId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 120);
+      if (persistence === 'cycle' || persistence === 'permanent') {
+        _applyBonusPersistence(bonusId, persistence);
+      }
     }
   }, 150);
 }
