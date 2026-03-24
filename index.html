@@ -10670,6 +10670,7 @@ function renderSession() {
             ${isPaired ? 'PAIRED ✕' : isSource ? 'CANCEL' : 'PAIR'}
           </button>
           <button class="swap-btn" id="skip-btn-${ex.id}" onclick="toggleSkipExercise('${ex.id}')" style="background:transparent;">SKIP</button>
+          ${ex.isBonusAdded ? `<button class="swap-btn" onclick="removePermanentBonus('${ex.id}')" style="color:#CC2027;border-color:rgba(204,32,39,0.4);" title="Remove this bonus exercise">✕</button>` : ''}
         </div>
       </div>
       ${_coachNote ? `<div class="coach-note-gold" style="font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.3;padding:4px 16px 0 16px;">${_coachNote}</div>` : ''}
@@ -11074,9 +11075,34 @@ function removeBonusSet(bonusId) {
 
 function removeBonusExercise(bonusId) {
   if (!activeSession?.bonusExercises) return;
+  const bonus = activeSession.bonusExercises.find(b => b.id === bonusId);
+  if (bonus?.programExId) {
+    const day = state.program.find(d => d.id === activeSession.dayId);
+    if (day) {
+      day.exercises = day.exercises.filter(e => e.id !== bonus.programExId);
+      activeSession.exerciseOrder = (activeSession.exerciseOrder || []).filter(id => id !== bonus.programExId);
+      const pairedWith = activeSession.supersets?.[bonus.programExId];
+      if (pairedWith) { delete activeSession.supersets[bonus.programExId]; delete activeSession.supersets[pairedWith]; }
+      delete activeSession.sets[bonus.programExId];
+      saveState();
+    }
+  }
   activeSession.bonusExercises = activeSession.bonusExercises.filter(b => b.id !== bonusId);
   renderBonusExercises();
   updateSessionProgress();
+}
+
+function removePermanentBonus(exId) {
+  if (!activeSession) return;
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  if (!day) return;
+  day.exercises = day.exercises.filter(e => e.id !== exId);
+  activeSession.exerciseOrder = (activeSession.exerciseOrder || []).filter(id => id !== exId);
+  const pairedWith = activeSession.supersets?.[exId];
+  if (pairedWith) { delete activeSession.supersets[exId]; delete activeSession.supersets[pairedWith]; }
+  delete activeSession.sets[exId];
+  saveState();
+  renderSession();
 }
 
 function updateSet(exId, setIndex, field, value) {
