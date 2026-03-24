@@ -13698,14 +13698,30 @@ function saveExInfoLink() {
   showToast('Video link saved ✓');
 }
 
-// Safe YouTube link opener — shows a T&S-voice message instead of navigating
-// to a broken/undefined URL when the link is missing or malformed.
+// Safe YouTube link opener — plays video in-app via modal iframe.
 function _safeOpenYtLink(url) {
   if (!url || typeof url !== 'string' || !url.match(/^https?:\/\//)) {
     showToast('Video link unavailable. You can add your own in Settings → Exercise Links.');
     return;
   }
-  window.open(url, '_blank');
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (!match) {
+    window.open(url, '_blank');
+    return;
+  }
+  const videoId = match[1];
+  const iframe = document.getElementById('yt-player-iframe');
+  iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&rel=0';
+  const modal = document.getElementById('yt-player-modal');
+  modal.style.display = 'flex';
+}
+
+function closeYtModal(e) {
+  if (e && e.target !== document.getElementById('yt-player-modal') && e.type !== 'click') return;
+  const modal = document.getElementById('yt-player-modal');
+  modal.style.display = 'none';
+  const iframe = document.getElementById('yt-player-iframe');
+  iframe.src = ''; // stop video playback
 }
 
 function openExInfoSearch() {
@@ -24401,6 +24417,24 @@ function _escHtml(str) {
 })();
 
 </script>
+
+<!-- YOUTUBE IN-APP PLAYER MODAL -->
+<div id="yt-player-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:900; align-items:center; justify-content:center; flex-direction:column;" onclick="closeYtModal(event)">
+  <div style="width:100%; max-width:560px; padding:0 16px; position:relative;" onclick="event.stopPropagation()">
+    <button onclick="closeYtModal()" style="position:absolute; top:-44px; right:16px; background:none; border:none; color:white; font-size:32px; cursor:pointer; line-height:1; padding:4px 8px;">&#x2715;</button>
+    <div style="position:relative; width:100%; padding-top:56.25%; border-radius:12px; overflow:hidden; background:#000;">
+      <iframe id="yt-player-iframe"
+        src=""
+        style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+    </div>
+    <button onclick="closeYtModal()" style="margin-top:16px; width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">
+      CLOSE
+    </button>
+  </div>
+</div>
 
 <!-- EXIT SESSION MODAL -->
 <div id="exit-session-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:600; align-items:flex-end; justify-content:center;">
