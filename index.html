@@ -9862,7 +9862,7 @@ function getProgressiveWeight(exId, dayId) {
     } else if (exceededRange && avgRPE <= 7 && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('large');
       reason = `▲ ${Math.round(avgReps)} reps at RPE ${avgRPE.toFixed(1)} (${modeLabel}). Big jump.`;
-    } else if (avgRPE <= 7 && !missedRange && allSetsCompleted && trendReadyToIncrease) {
+    } else if (avgRPE <= 7 && hitRepRangeTop && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('small');
       reason = `RPE ${avgRPE.toFixed(1)} avg (${modeLabel}). Felt easy.`;
     } else if (avgRPE <= 8 && hitRepRangeTop && allSetsCompleted && trendReadyToIncrease) {
@@ -9892,10 +9892,10 @@ function getProgressiveWeight(exId, dayId) {
     } else if (exceededRange && avgRPE <= 7 && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('large');
       reason = `▲ ${Math.round(avgReps)} reps at RPE ${avgRPE.toFixed(1)} (${modeLabel})`;
-    } else if (avgRPE <= 7 && !missedRange && allSetsCompleted && trendReadyToIncrease) {
+    } else if (avgRPE <= 7 && hitRepRangeTop && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('medium');
       reason = `RPE ${avgRPE.toFixed(1)} (${modeLabel}). Add load.`;
-    } else if (avgRPE <= 8 && !missedRange && allSetsCompleted && trendReadyToIncrease) {
+    } else if (avgRPE <= 8 && hitRepRangeTop && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('small');
       reason = `RPE ${avgRPE.toFixed(1)} (${modeLabel}). Small increase.`;
     } else {
@@ -9916,7 +9916,7 @@ function getProgressiveWeight(exId, dayId) {
     } else if (exceededRange && avgRPE <= 7 && trendReadyToIncrease) {
       newWeight = lastWeight + Math.round(getWeightIncrement(goal) * 1.5 / 2.5) * 2.5;
       reason = `▲ ${Math.round(avgReps)} reps at RPE ${avgRPE.toFixed(1)} (${modeLabel})`;
-    } else if (avgRPE <= 7 && !missedRange && allSetsCompleted && trendReadyToIncrease) {
+    } else if (avgRPE <= 7 && hitRepRangeTop && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getWeightIncrement(goal);
       reason = `RPE ${avgRPE.toFixed(1)} (${modeLabel}). Ready to progress.`;
     } else if (avgRPE <= 8 && hitRepRangeTop && allSetsCompleted && trendReadyToIncrease) {
