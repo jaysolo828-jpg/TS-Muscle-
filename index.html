@@ -7522,10 +7522,11 @@ async function _syncOneSignalPlayerId() {
 // Ask for push notification permission immediately after the user signs in.
 // Only asked once; if denied, social features continue without push.
 async function _requestNotificationPermission() {
-  if (!window.ONESIGNAL_APP_ID) return;
+  if (!window.ONESIGNAL_APP_ID) { showToast('DEBUG: no ONESIGNAL_APP_ID'); return; }
 
   // Never re-prompt if the browser has already made a decision
   const browserPerm = ('Notification' in window) ? Notification.permission : 'default';
+  showToast('DEBUG: browser perm = ' + browserPerm);
   if (browserPerm === 'denied') return;
   if (browserPerm === 'granted') {
     // Already have permission — just make sure the player ID is saved
@@ -7550,13 +7551,16 @@ async function _requestNotificationPermission() {
       state.notificationPermissionAsked = true;
       saveState();
 
+      showToast('DEBUG: calling OneSignal.requestPermission…');
       const granted = await OneSignal.Notifications.requestPermission();
+      showToast('DEBUG: granted = ' + granted);
       if (!granted || !state.supabaseUserId) return;
 
       // Brief wait for the push subscription to register
       await new Promise(function(r) { setTimeout(r, 1500); });
 
       const playerId = OneSignal.User.PushSubscription.id;
+      showToast('DEBUG: playerId = ' + (playerId ? playerId.slice(0,8) + '…' : 'null'));
       if (!playerId) return;
 
       const sb = _getSupabaseClient();
@@ -7569,7 +7573,8 @@ async function _requestNotificationPermission() {
         { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
         { onConflict: 'user_id,platform' }
       );
-    } catch(e) {}
+      showToast('DEBUG: player ID saved ✓');
+    } catch(e) { showToast('DEBUG: error — ' + e.message); }
   });
 }
 
