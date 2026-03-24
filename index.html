@@ -15888,7 +15888,7 @@ function renderHistory() {
 
   // ── Experience level indicator ────────────────────────────
   const _expIndicator = document.createElement('div');
-  const _expLabel = getEffectiveExperienceLevel();
+  const _expLabel = state.profile?.experience || 'intermediate';
   _expIndicator.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;margin-bottom:12px;margin-top:-4px;';
   _expIndicator.textContent = 'Training as: ' + _expLabel.charAt(0).toUpperCase() + _expLabel.slice(1);
   container.appendChild(_expIndicator);
