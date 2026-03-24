@@ -656,7 +656,7 @@
   }
   .workout-session.is-launching {
     overflow: hidden; /* clip-path requires overflow:hidden to render correctly */
-    animation: sessionExpand 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: sessionExpand 0.85s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
   .session-sticky-header {
@@ -10221,7 +10221,7 @@ function _launchSessionFromEl(triggerEl) {
     ws.classList.remove('is-launching');
     ws.style.removeProperty('--cx');
     ws.style.removeProperty('--cy');
-  }, 800);
+  }, 950);
 }
 
 function startSession(dayId, triggerEl) {
