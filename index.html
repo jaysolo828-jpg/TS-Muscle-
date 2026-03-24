@@ -11559,6 +11559,7 @@ function _evalCoachingCueTriggers(exId, setIndex) {
   var repParts = repStr.split(/[–\-]/);
   var repMin = parseInt(repParts[0]) || 8;
   var repMax = parseInt(repParts[1]) || repMin;
+  var weekBandTarget = (typeof getCycleWeekBandRepTarget === 'function') ? (getCycleWeekBandRepTarget(exId) || repMin) : repMin;
 
   var currentReps = parseInt(currentSet.reps) || 0;
   // Use null (not 0) for unlogged RPE so trigger guards (`rpe > 0`, `rpe >= 9`) naturally
@@ -11576,9 +11577,9 @@ function _evalCoachingCueTriggers(exId, setIndex) {
     var highRpeLowRepCount = doneSets.filter(function(s) {
       var r = parseInt(s.reps) || 0;
       var rpe = parseFloat(s.rpe) || null;
-      return rpe >= 9 && r < repMin - 1;
+      return rpe >= 9 && r < weekBandTarget - 1;
     }).length;
-    if (highRpeLowRepCount >= 2 || (currentRpe >= 9.5 && currentReps > 0 && currentReps <= repMin - 2)) {
+    if (highRpeLowRepCount >= 2 || (currentRpe >= 9.5 && currentReps > 0 && currentReps <= weekBandTarget - 2)) {
       return { trigger: 1, data: { reps: currentReps, rpe: currentRpe, repMin: repMin, repMax: repMax } };
     }
   }
@@ -11586,7 +11587,7 @@ function _evalCoachingCueTriggers(exId, setIndex) {
   // Trigger 2: Reps at/above top of range for 2+ consecutive sets (strength milestone)
   if (allowedTriggers[2]) {
     var doneSets2 = sets.filter(function(s, i) { return i <= setIndex; });
-    var topSetsCount = doneSets2.filter(function(s) { return (parseInt(s.reps) || 0) >= repMax; }).length;
+    var topSetsCount = doneSets2.filter(function(s) { return (parseInt(s.reps) || 0) >= weekBandTarget; }).length;
     if (topSetsCount >= 2) {
       return { trigger: 2, data: { reps: currentReps, rpe: currentRpe, repMin: repMin, repMax: repMax, topSetsCount: topSetsCount } };
     }
