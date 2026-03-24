@@ -5233,9 +5233,20 @@ const UNILATERAL_EXERCISES = new Set([
 function getEffectiveExperienceLevel() {
   const raw = state.profile?.experience;
   const level = (raw === 'beginner' || raw === 'intermediate' || raw === 'advanced') ? raw : 'intermediate';
-  // Stamp expScalingActive for any existing user who has an explicit level set.
-  // The mid-cycle rollout guard is no longer needed — honour the user's selection.
-  if (!state.expScalingActive && raw) { state.expScalingActive = true; saveState(); }
+  // Graceful rollout for existing users who never had expScalingActive stamped:
+  // wait until their next cycle boundary so volume doesn't jump mid-cycle.
+  // But if a pending level matches the stored level, or there is no pending
+  // change, the user already chose this level before the rollout code existed
+  // — honour it immediately.
+  if (!state.expScalingActive) {
+    if (!state.pendingExperienceLevel || state.pendingExperienceLevel === level) {
+      state.expScalingActive = true;
+      saveState();
+    } else {
+      // A pending change exists — keep training at the stored level until rollover
+      return level;
+    }
+  }
   return level;
 }
 
@@ -15886,9 +15897,14 @@ function renderHistory() {
 
   // ── Experience level indicator ────────────────────────────
   const _expIndicator = document.createElement('div');
-  const _expLabel = state.profile?.experience || 'intermediate';
+  const _expEffective = getEffectiveExperienceLevel();
+  const _expPending = state.pendingExperienceLevel;
   _expIndicator.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;margin-bottom:12px;margin-top:-4px;';
-  _expIndicator.textContent = 'Training as: ' + _expLabel.charAt(0).toUpperCase() + _expLabel.slice(1);
+  let _expText = 'Training as: ' + _expEffective.charAt(0).toUpperCase() + _expEffective.slice(1);
+  if (_expPending && _expPending !== _expEffective) {
+    _expText += '  ·  ' + _expPending.charAt(0).toUpperCase() + _expPending.slice(1) + ' starts next cycle';
+  }
+  _expIndicator.textContent = _expText;
   container.appendChild(_expIndicator);
 
   // ── Helpers ──────────────────────────────────────────────
