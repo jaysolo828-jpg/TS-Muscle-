@@ -10924,18 +10924,20 @@ function confirmAddBonus(persistence) {
     sets: [{ weight: '', reps: '', rpe: '', done: false }]
   });
 
-  closeBonusModal();
-  renderBonusExercises();
-  updateSessionProgress();
-
   setTimeout(() => {
-    const el = document.getElementById('bonus-ex-' + bonusId);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 120);
+    closeBonusModal();
+    renderBonusExercises();
+    updateSessionProgress();
 
-  if (persistence === 'cycle' || persistence === 'permanent') {
-    _applyBonusPersistence(bonusId, persistence);
-  }
+    setTimeout(() => {
+      const el = document.getElementById('bonus-ex-' + bonusId);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 120);
+
+    if (persistence === 'cycle' || persistence === 'permanent') {
+      _applyBonusPersistence(bonusId, persistence);
+    }
+  }, 150);
 }
 
 function _applyBonusPersistence(bonusId, persistence) {
