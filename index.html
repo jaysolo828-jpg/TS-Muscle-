@@ -9022,15 +9022,16 @@ function openRepRangeSheet(exId) {
     const avgRpe = rpeEntries.length ? (rpeEntries.reduce((s, d) => s + (parseFloat(d.rpe) || 0), 0) / rpeEntries.length).toFixed(1) : null;
     const parts = currentRange.split(/[–\-]/);
     const minR = parseInt(parts[0]) || 0, maxR = parseInt(parts[1]) || minR;
-    const missed = avgReps < minR, exceeded = avgReps > maxR;
+    const bandFloor = getCycleWeekBandRepTarget(exId) || minR;
+    const missed = avgReps < bandFloor, exceeded = avgReps > maxR;
     const statusColor = missed ? 'var(--red)' : '#4ade80';
     const statusNote = missed
-      ? `↓ ${avgReps} avg reps. Below your ${currentRange} target. Reduce weight until you can hit the full range.`
+      ? `↓ ${avgReps} avg reps. Below your current target. Hit ${bandFloor}+ reps before adding weight.`
       : exceeded
       ? `↑ ${avgReps} avg reps. Above ${currentRange}. Progressive overload will increase weight next session.`
       : avgReps >= maxR
       ? `✓ ${avgReps} avg reps. At the top of your range. Weight goes up next session.`
-      : `✓ ${avgReps} avg reps. Successful set. Build to ${maxR} reps to trigger weight increase.`;
+      : `✓ ${avgReps} avg reps. On target. Build to ${maxR} reps to trigger weight increase.`;
     recentHTML = `
       <div style="background:var(--dark3);border-radius:10px;padding:11px 14px;margin-bottom:18px;">
         <div style="font-size:11px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:5px;">LAST SESSION</div>
