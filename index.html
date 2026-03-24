@@ -5233,11 +5233,9 @@ const UNILATERAL_EXERCISES = new Set([
 function getEffectiveExperienceLevel() {
   const raw = state.profile?.experience;
   const level = (raw === 'beginner' || raw === 'intermediate' || raw === 'advanced') ? raw : 'intermediate';
-  // Graceful rollout: existing advanced users who are mid-cycle get intermediate
-  // behavior until their next cycle starts (flag stamped at cycle rollover).
-  // Beginners get the new scaling immediately (no existing deep-cycle beginners).
-  // New users and users at a cycle boundary get full scaling via expScalingActive.
-  if (!state.expScalingActive && level === 'advanced') return 'intermediate';
+  // Stamp expScalingActive for any existing user who has an explicit level set.
+  // The mid-cycle rollout guard is no longer needed — honour the user's selection.
+  if (!state.expScalingActive && raw) { state.expScalingActive = true; saveState(); }
   return level;
 }
 
