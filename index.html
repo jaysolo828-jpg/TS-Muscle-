@@ -6355,27 +6355,22 @@ function _applyNotifToggleUI() {
   if (sub) sub.textContent = granted ? 'Notifications enabled' : 'Tap to enable workout alerts from friends';
 }
 
-function _onNotifSettingsTap() {
+async function _onNotifSettingsTap() {
   showToast('DEBUG: perm=' + (('Notification' in window) ? Notification.permission : 'unsupported'));
   if (!('Notification' in window)) { showToast('Notifications not supported on this device'); return; }
   if (Notification.permission === 'denied') { showToast('Notifications blocked — enable them in your Android settings'); return; }
-  if (Notification.permission === 'granted') {
-    _registerOneSignalPlayerId();
-    return;
-  }
-  // 'default' — call requestPermission directly from this tap (user gesture)
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  window.OneSignalDeferred.push(async function(OneSignal) {
+  // Call native Notification.requestPermission() directly from the tap —
+  // this preserves the user gesture context on Android.
+  if (Notification.permission !== 'granted') {
     try {
-      showToast('DEBUG: requesting permission…');
-      const granted = await OneSignal.Notifications.requestPermission();
-      showToast('DEBUG: granted=' + granted);
-      if (!granted) return;
-      _applyNotifToggleUI();
-      await new Promise(function(r) { setTimeout(r, 1500); });
-      _registerOneSignalPlayerId();
-    } catch(e) { showToast('DEBUG: error ' + e.message); }
-  });
+      showToast('DEBUG: calling native requestPermission…');
+      const result = await Notification.requestPermission();
+      showToast('DEBUG: native result=' + result);
+      if (result !== 'granted') return;
+    } catch(e) { showToast('DEBUG: native error ' + e.message); return; }
+  }
+  _applyNotifToggleUI();
+  _registerOneSignalPlayerId();
 }
 
 function _applySocialToggleUI() {
