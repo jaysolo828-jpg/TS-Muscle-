@@ -7586,28 +7586,27 @@ async function _requestNotificationPermission() {
 async function _registerOneSignalPlayerId() {
   if (!state.supabaseUserId) { showToast('DEBUG: no supabaseUserId'); return; }
   try {
-    // Clear OneSignal's stale cached config so it re-fetches VAPID key
-    try {
-      Object.keys(localStorage).filter(function(k){ return k.startsWith('os.'); }).forEach(function(k){ localStorage.removeItem(k); });
-    } catch(e) {}
-    // Force the waiting service worker to activate — old SW lacks OneSignal import
-    // which causes optIn() to hang forever waiting for SW message response.
-    try {
-      const reg = await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise(function(_, rej){setTimeout(function(){rej(new Error('timeout'));},3000);})
-      ]);
-      if (reg.waiting) {
-        showToast('DEBUG: activating new SW…');
-        reg.waiting.postMessage({type: 'SKIP_WAITING'});
-        await new Promise(function(r){setTimeout(r,1500);});
-      } else {
-        showToast('DEBUG: SW state=' + (reg.active ? reg.active.state : 'none'));
-      }
-    } catch(e) { showToast('DEBUG: sw=' + e.message); }
     const OS = window.OneSignal;
-    showToast('DEBUG: OS.User=' + (OS && OS.User ? 'ok' : 'missing'));
     if (!OS || !OS.User) return;
+    // If already opted in, skip straight to saving the player ID
+    if (OS.User.PushSubscription.optedIn) {
+      showToast('DEBUG: already optedIn, saving ID…');
+    } else {
+      // OneSignal was initialized before web push platform was configured so it
+      // has a stale config with no VAPID key. Wipe its cache and reload so it
+      // re-initializes clean — autoResubscribe:true will subscribe on the fresh load.
+      showToast('DEBUG: clearing OneSignal cache and reloading…');
+      try { indexedDB.deleteDatabase('ONE_SIGNAL_SDK_DB'); } catch(e) {}
+      try {
+        Object.keys(localStorage)
+          .filter(function(k){ return k.startsWith('os.') || k.startsWith('onesignal'); })
+          .forEach(function(k){ localStorage.removeItem(k); });
+      } catch(e) {}
+      // Set a flag so we save the player ID after the reload
+      sessionStorage.setItem('ts-save-player-id', '1');
+      setTimeout(function(){ location.reload(); }, 800);
+      return;
+    }
     showToast('DEBUG: optedIn=' + OS.User.PushSubscription.optedIn);
     try {
       const optInResult = await Promise.race([
@@ -19991,6 +19990,15 @@ try {
   _applyNotifToggleUI();
   // Check Supabase session (handles OAuth redirect and restores auth state)
   _checkSupabaseSession();
+  // After a OneSignal cache-clear reload, save the player ID once OneSignal is ready
+  if (sessionStorage.getItem('ts-save-player-id')) {
+    sessionStorage.removeItem('ts-save-player-id');
+    if (_oneSignalInitPromise) {
+      _oneSignalInitPromise.then(function() {
+        setTimeout(_registerOneSignalPlayerId, 2000);
+      });
+    }
+  }
   // Update social notification dot (friend requests, new reactions)
   _updateSocialNotifyDot();
   // Hide install row if already running as installed PWA
