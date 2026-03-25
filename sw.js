@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v159';
+const CACHE_NAME = 'ts-muscle-v160';
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './manifest.json'];
 
 // On install: precache assets and immediately take over so users always get
