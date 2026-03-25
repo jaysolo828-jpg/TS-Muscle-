@@ -7530,8 +7530,27 @@ async function _requestNotificationPermission() {
   showToast('DEBUG: browser perm = ' + browserPerm);
   if (browserPerm === 'denied') return;
   if (browserPerm === 'granted') {
-    // Already have permission — just make sure the player ID is saved
-    _syncOneSignalPlayerId();
+    // Permission already granted — run through OneSignal to ensure a player ID
+    // is registered (first-time users with pre-granted permission never got one).
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      try {
+        await OneSignal.Notifications.requestPermission();
+        await new Promise(function(r) { setTimeout(r, 1500); });
+        const playerId = OneSignal.User.PushSubscription.id;
+        showToast('DEBUG: playerId = ' + (playerId ? playerId.slice(0,8) + '…' : 'null'));
+        if (!playerId || !state.supabaseUserId) return;
+        const sb = _getSupabaseClient();
+        if (!sb) return;
+        const ua = (navigator.userAgent || '').toLowerCase();
+        const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
+        await sb.from('onesignal_subscriptions').upsert(
+          { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
+          { onConflict: 'user_id,platform' }
+        );
+        showToast('DEBUG: player ID saved ✓');
+      } catch(e) { showToast('DEBUG: error — ' + e.message); }
+    });
     return;
   }
 
