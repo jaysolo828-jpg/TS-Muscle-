@@ -7465,9 +7465,40 @@ async function _completeWorkoutSignal() {
   } catch(e) {}
 }
 
-// Sends a push notification to all accepted friends via the Supabase Edge Function.
-// signalId is included so friends' notifications carry an action button that can
-// send a reaction back without opening the app (handled in sw.js).
+// ── Push Notification Architecture ────────────────────────────────────────────
+// Push notifications are sent via a Supabase Edge Function called "smooth-service".
+//
+// WHY SUPABASE AND NOT NETLIFY:
+//   Netlify Edge Functions and Node.js Functions both returned 404/405 for this
+//   site despite being deployed. The root cause was never fully identified but
+//   removing edge functions from netlify.toml did not fix it either. Supabase
+//   Edge Functions work reliably since the Supabase project is already active.
+//
+// HOW IT WORKS:
+//   1. User starts a workout → _sendWorkoutSignal() inserts a row in workout_signals
+//   2. _notifyFriends() POSTs to the Supabase Edge Function with { uid, title, body }
+//   3. The function (supabase/functions/send-push/index.ts) looks up the sender's
+//      accepted friends, fetches their push subscriptions from onesignal_subscriptions,
+//      then encrypts and sends a Web Push (RFC 8291 / VAPID) to each subscription.
+//   4. The browser's push service delivers it to the recipient's device even when
+//      the app is closed. sw.js handles the 'push' event to display the notification.
+//
+// AUTH:
+//   The function has JWT verification DISABLED in the Supabase dashboard
+//   (Edge Functions → smooth-service → Configuration → Verify JWT = OFF).
+//   We send the apikey header with SUPABASE_PUBLISHABLE_KEY instead of a JWT,
+//   because Supabase's new publishable key format is not a valid JWT for Edge
+//   Function Bearer auth.
+//
+// VAPID KEYS:
+//   Stored in both Netlify environment variables AND Supabase Edge Function secrets
+//   (Project Settings → Edge Functions → Secrets). The function reads them via
+//   Deno.env.get('VAPID_PUBLIC_KEY') / VAPID_PRIVATE_KEY / VAPID_SUBJECT.
+//
+// DISPLAY NAME:
+//   Uses state.supabaseDisplayName which is populated from the 'username' column
+//   in the public.users table on sign-in (not user.email — that was the original bug).
+// ──────────────────────────────────────────────────────────────────────────────
 async function _notifyFriends(title, body, signalId) {
   if (!state.supabaseUserId) return;
   try {
