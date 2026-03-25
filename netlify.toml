@@ -15,32 +15,3 @@
   [headers.values]
     Cache-Control = "no-cache"
 
-[[edge_functions]]
-  function = "config"
-  path = "/config.js"
-
-[[edge_functions]]
-  function = "supabase-config"
-  path = "/supabase-config.js"
-
-[[edge_functions]]
-  function = "onesignal-config"
-  path = "/onesignal-config.js"
-
-
-[[edge_functions]]
-  function = "record-reaction"
-  path = "/record-reaction"
-
-[[edge_functions]]
-  function = "save-username"
-  path = "/save-username"
-
-[[edge_functions]]
-  function = "register-player"
-  path = "/register-player"
-
-[[edge_functions]]
-  function = "get-vapid-key"
-  path = "/get-vapid-key"
-
