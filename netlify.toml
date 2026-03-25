@@ -44,10 +44,3 @@
   function = "get-vapid-key"
   path = "/get-vapid-key"
 
-[[edge_functions]]
-  function = "send-notification"
-  path = "/send-notification"
-
-[[edge_functions]]
-  function = "npush"
-  path = "/npush"
