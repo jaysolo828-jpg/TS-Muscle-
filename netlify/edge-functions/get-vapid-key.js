@@ -90,7 +90,7 @@ export default async function handler(req) {
   try {
     return await _handle(req);
   } catch(e) {
-    return new Response(JSON.stringify({ error: 'handler crash: ' + e.message }), {
+    return new Response(JSON.stringify({ error: 'crash: ' + e.message }), {
       status: 200, headers: { 'content-type': 'application/json' },
     });
   }
@@ -98,13 +98,20 @@ export default async function handler(req) {
 
 async function _handle(req) {
   const url = new URL(req.url);
-  const d   = url.searchParams.get('d');
 
-  const pubKey  = Deno.env.get('VAPID_PUBLIC_KEY')  || '';
-  const privKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
-  const subject = Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@therapyandsneakers.org';
+  const pubKey     = Deno.env.get('VAPID_PUBLIC_KEY')       || '';
+  const privKey    = Deno.env.get('VAPID_PRIVATE_KEY')      || '';
+  const subject    = Deno.env.get('VAPID_SUBJECT')          || 'mailto:admin@therapyandsneakers.org';
+  const sbUrl      = Deno.env.get('SUPABASE_URL')           || '';
+  const sbKey      = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
-  if (!d) {
+  // No params — serve VAPID public key
+  const uid   = url.searchParams.get('uid');
+  const title = url.searchParams.get('title') || 'T&S Muscle';
+  const body  = url.searchParams.get('body')  || '';
+  const sid   = url.searchParams.get('sid')   || '';
+
+  if (!uid) {
     if (!pubKey) {
       return new Response(JSON.stringify({ vapid_public_key: null, error: 'VAPID_PUBLIC_KEY not set' }), {
         status: 503, headers: { 'content-type': 'application/json' },
@@ -117,46 +124,70 @@ async function _handle(req) {
 
   if (!pubKey || !privKey) {
     return new Response(JSON.stringify({ error: 'VAPID keys not configured' }), {
-      status: 503, headers: { 'content-type': 'application/json' },
+      status: 200, headers: { 'content-type': 'application/json' },
     });
   }
-
-  let parsed;
-  try {
-    parsed = JSON.parse(new TextDecoder().decode(fromb64u(d)));
-  } catch(e) {
-    return new Response(JSON.stringify({ error: 'Invalid payload: ' + e.message }), {
-      status: 400, headers: { 'content-type': 'application/json' },
-    });
-  }
-
-  const { subscriptions, title, body, data: notifData } = parsed;
-  if (!subscriptions?.length) {
-    return new Response(JSON.stringify({ error: 'No subscriptions' }), {
+  if (!sbUrl || !sbKey) {
+    return new Response(JSON.stringify({ error: 'Supabase not configured' }), {
       status: 200, headers: { 'content-type': 'application/json' },
     });
   }
 
-  const payload = JSON.stringify({
-    title: title || 'T&S Muscle', body: body || '', data: notifData || {},
-  });
+  // Fetch accepted friend IDs
+  const frResp = await fetch(
+    `${sbUrl}/rest/v1/friendships?select=requester_id,addressee_id&status=eq.accepted&or=(requester_id.eq.${uid},addressee_id.eq.${uid})`,
+    { headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey } }
+  );
+  if (!frResp.ok) {
+    return new Response(JSON.stringify({ error: 'friendships query failed: ' + frResp.status }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  }
+  const friendships = await frResp.json();
+  if (!friendships?.length) {
+    return new Response(JSON.stringify({ sent: 0, info: 'no friends' }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  }
 
-  const results = await Promise.allSettled(subscriptions.map(async (sub, i) => {
-    if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) {
+  const friendIds = friendships.map(f => f.requester_id === uid ? f.addressee_id : f.requester_id);
+
+  // Fetch push subscriptions for friends
+  const subsResp = await fetch(
+    `${sbUrl}/rest/v1/onesignal_subscriptions?select=push_endpoint,push_p256dh,push_auth&user_id=in.(${friendIds.join(',')})&push_endpoint=not.is.null`,
+    { headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey } }
+  );
+  if (!subsResp.ok) {
+    return new Response(JSON.stringify({ error: 'subs query failed: ' + subsResp.status }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  }
+  const subs = await subsResp.json();
+  if (!subs?.length) {
+    return new Response(JSON.stringify({ sent: 0, info: 'no subs for ' + friendIds.length + ' friend(s)' }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  }
+
+  const notifData = sid ? { signal_id: sid, to_user_id: uid } : {};
+  const payload = JSON.stringify({ title, body, data: notifData });
+
+  const results = await Promise.allSettled(subs.map(async (sub, i) => {
+    if (!sub.push_endpoint || !sub.push_p256dh || !sub.push_auth) {
       throw new Error(`sub[${i}] missing fields`);
     }
     let encrypted, auth;
     try {
-      encrypted = await encryptWebPush(sub.keys.p256dh, sub.keys.auth, payload);
+      encrypted = await encryptWebPush(sub.push_p256dh, sub.push_auth, payload);
     } catch(e) {
       throw new Error(`encrypt[${i}]: ${e.message}`);
     }
     try {
-      auth = await vapidAuth(sub.endpoint, privKey, pubKey, subject);
+      auth = await vapidAuth(sub.push_endpoint, privKey, pubKey, subject);
     } catch(e) {
       throw new Error(`vapid[${i}]: ${e.message}`);
     }
-    const resp = await fetch(sub.endpoint, {
+    const resp = await fetch(sub.push_endpoint, {
       method: 'POST',
       headers: {
         'Authorization': auth,
@@ -174,9 +205,7 @@ async function _handle(req) {
   }));
 
   const sent   = results.filter(r => r.status === 'fulfilled').length;
-  const errors = results
-    .filter(r => r.status === 'rejected')
-    .map(r => r.reason?.message || String(r.reason));
+  const errors = results.filter(r => r.status === 'rejected').map(r => r.reason?.message || String(r.reason));
 
   return new Response(JSON.stringify({ sent, errors }), {
     status: 200, headers: { 'content-type': 'application/json' },
