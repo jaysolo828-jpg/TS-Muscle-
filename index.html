@@ -7582,25 +7582,25 @@ async function _requestNotificationPermission() {
 // can send notifications to this device.
 async function _registerOneSignalPlayerId() {
   if (!state.supabaseUserId) { showToast('DEBUG: no supabaseUserId'); return; }
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  window.OneSignalDeferred.push(async function(OneSignal) {
-    try {
-      await OneSignal.User.PushSubscription.optIn();
-      await new Promise(function(r) { setTimeout(r, 2000); });
-      const playerId = OneSignal.User.PushSubscription.id;
-      showToast('DEBUG: playerId=' + (playerId ? playerId.slice(0,8) + '…' : 'null'));
-      if (!playerId) return;
-      const sb = _getSupabaseClient();
-      if (!sb) { showToast('DEBUG: no supabase client'); return; }
-      const ua = (navigator.userAgent || '').toLowerCase();
-      const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
-      await sb.from('onesignal_subscriptions').upsert(
-        { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
-        { onConflict: 'user_id,platform' }
-      );
-      showToast('DEBUG: player ID saved ✓');
-    } catch(e) { showToast('DEBUG: error ' + e.message); }
-  });
+  try {
+    const OS = window.OneSignal;
+    showToast('DEBUG: OS.User=' + (OS && OS.User ? 'ok' : 'missing'));
+    if (!OS || !OS.User) return;
+    await OS.User.PushSubscription.optIn();
+    await new Promise(function(r) { setTimeout(r, 2000); });
+    const playerId = OS.User.PushSubscription.id;
+    showToast('DEBUG: playerId=' + (playerId ? playerId.slice(0,8) + '…' : 'null'));
+    if (!playerId) return;
+    const sb = _getSupabaseClient();
+    if (!sb) { showToast('DEBUG: no supabase client'); return; }
+    const ua = (navigator.userAgent || '').toLowerCase();
+    const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
+    await sb.from('onesignal_subscriptions').upsert(
+      { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
+      { onConflict: 'user_id,platform' }
+    );
+    showToast('DEBUG: player ID saved ✓');
+  } catch(e) { showToast('DEBUG: error ' + e.message); }
 }
 
 // Store the signed-in user's Supabase ID in IndexedDB so the service worker
