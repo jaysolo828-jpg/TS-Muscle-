@@ -7590,11 +7590,21 @@ async function _registerOneSignalPlayerId() {
     try {
       Object.keys(localStorage).filter(function(k){ return k.startsWith('os.'); }).forEach(function(k){ localStorage.removeItem(k); });
     } catch(e) {}
-    // Re-initialize OneSignal fresh to pick up the new web push platform config
-    _oneSignalInitPromise = null;
-    window.OneSignalDeferred = [];
-    _initOneSignal();
-    await Promise.race([_oneSignalInitPromise || Promise.resolve(), new Promise(function(r){setTimeout(r,5000);})]);
+    // Force the waiting service worker to activate — old SW lacks OneSignal import
+    // which causes optIn() to hang forever waiting for SW message response.
+    try {
+      const reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise(function(_, rej){setTimeout(function(){rej(new Error('timeout'));},3000);})
+      ]);
+      if (reg.waiting) {
+        showToast('DEBUG: activating new SW…');
+        reg.waiting.postMessage({type: 'SKIP_WAITING'});
+        await new Promise(function(r){setTimeout(r,1500);});
+      } else {
+        showToast('DEBUG: SW state=' + (reg.active ? reg.active.state : 'none'));
+      }
+    } catch(e) { showToast('DEBUG: sw=' + e.message); }
     const OS = window.OneSignal;
     showToast('DEBUG: OS.User=' + (OS && OS.User ? 'ok' : 'missing'));
     if (!OS || !OS.User) return;
