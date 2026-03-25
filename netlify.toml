@@ -34,3 +34,7 @@
 [[edge_functions]]
   function = "register-player"
   path = "/register-player"
+
+[[edge_functions]]
+  function = "get-vapid-key"
+  path = "/get-vapid-key"
