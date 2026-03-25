@@ -102,6 +102,12 @@ export default async function handler(req) {
   const body  = url.searchParams.get('body')  || '';
   const sid   = url.searchParams.get('sid')   || '';
 
+  if (uid) {
+    return new Response(JSON.stringify({ smoke: true, uid: uid.slice(0, 8) }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  }
+
   if (!uid) {
     if (!pubKey) {
       return new Response(JSON.stringify({ vapid_public_key: null, error: 'VAPID_PUBLIC_KEY not set' }), {
