@@ -7446,7 +7446,7 @@ async function _sendWorkoutSignal(dayName) {
     const sendAfterTs = new Date(Date.now() + 1 * 60 * 1000).toISOString();
     _notifyFriends(
       displayName + ' is training',
-      'They just started a workout. Go show up.',
+      'They\'re in the gym right now. Go hype them up.',
       signalId,
       sendAfterTs
     );
@@ -7468,7 +7468,7 @@ async function _completeWorkoutSignal() {
     }).eq('id', signalId).eq('user_id', state.supabaseUserId);
     _notifyFriends(
       displayName + ' finished training',
-      'They finished their workout. Go show up.',
+      'They just finished. Let them know you saw it.',
       signalId
     );
   } catch(e) {}
