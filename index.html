@@ -6633,6 +6633,10 @@ async function _onSupabaseSignIn(user) {
   // Check if user already has a row in public.users
   const { data: existingUser } = await sb.from('users').select('id, username, avatar_color').eq('id', user.id).single();
   if (existingUser?.avatar_color) { state.supabaseAvatarColor = existingUser.avatar_color; saveState(); }
+  if (existingUser?.username && !existingUser.username.startsWith('user_')) {
+    state.supabaseDisplayName = existingUser.username;
+    saveState();
+  }
 
   if (!existingUser) {
     // New user — upsert their profile (username will be set in the bottom sheet)
@@ -7416,20 +7420,18 @@ function inviteFriend() {
 
 // Called at the start of a fresh session — inserts a signal row and notifies friends.
 async function _sendWorkoutSignal(dayName) {
-  if (!state.supabaseUserId) { showToast('Signal: no user'); return; }
+  if (!state.supabaseUserId) return;
   const sb = _getSupabaseClient();
-  if (!sb) { showToast('Signal: no sb'); return; }
+  if (!sb) return;
   const displayName = state.supabaseDisplayName || state.displayName || 'Someone';
   try {
-    showToast('Signal: inserting...');
     const { data, error } = await sb.from('workout_signals').insert({
       user_id:      state.supabaseUserId,
       workout_name: dayName,
       started_at:   new Date().toISOString(),
       signal_type:  'started'
     }).select('id').single();
-    if (error || !data) { showToast('Signal insert failed: ' + (error?.message || 'no data')); return; }
-    showToast('Signal: inserted ok');
+    if (error || !data) return;
     _currentSignalId = data.id;
     const signalId   = data.id;
     const sendAfterTs = new Date(Date.now() + 1 * 60 * 1000).toISOString();
@@ -7467,30 +7469,16 @@ async function _completeWorkoutSignal() {
 // signalId is included so friends' notifications carry an action button that can
 // send a reaction back without opening the app (handled in sw.js).
 async function _notifyFriends(title, body, signalId) {
-  if (!state.supabaseUserId) { showToast('Push: no user id'); return; }
+  if (!state.supabaseUserId) return;
   try {
     var _p = { uid: state.supabaseUserId, title: title, body: body };
     if (signalId) _p.sid = signalId;
-    showToast('Sending push...');
-    var _timeout = setTimeout(function() { showToast('PUSH TIMED OUT'); }, 15000);
     fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/smooth-service', {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'apikey': window.SUPABASE_PUBLISHABLE_KEY || '',
-      },
+      headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
       body: JSON.stringify(_p),
-    }).then(function(r) {
-      clearTimeout(_timeout);
-      var status = r.status;
-      return r.text().then(function(t) {
-        showToast('PUSH ' + status + ': ' + t.slice(0, 80));
-      });
-    }).catch(function(err) {
-      clearTimeout(_timeout);
-      showToast('PUSH ERR: ' + err.message);
-    });
-  } catch(e) { showToast('Push exception: ' + e.message); }
+    }).catch(function() {});
+  } catch(e) {}
 }
 
 // ── Push Notifications (direct web push, no third-party SDK) ───────────────
@@ -19936,7 +19924,7 @@ try {
 }
 
 // Version toast
-setTimeout(function() { showToast('App v167 loaded'); }, 1000);
+setTimeout(function() { showToast('App v168 loaded'); }, 1000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
 if (navigator.storage && navigator.storage.persist) {
