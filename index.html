@@ -7572,7 +7572,12 @@ async function _requestNotificationPermission() {
       saveState();
 
       showToast('DEBUG: calling OneSignal.requestPermission…');
-      const granted = await OneSignal.Notifications.requestPermission();
+      // Race against a 6s timeout — Chrome Android quiet notifications can
+      // block the prompt silently, leaving the promise hanging forever.
+      const granted = await Promise.race([
+        OneSignal.Notifications.requestPermission(),
+        new Promise(function(r) { setTimeout(function() { r(Notification.permission === 'granted'); }, 6000); })
+      ]);
       showToast('DEBUG: granted = ' + granted);
       if (!granted || !state.supabaseUserId) return;
 
