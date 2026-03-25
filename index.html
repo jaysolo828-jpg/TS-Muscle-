@@ -7599,8 +7599,10 @@ async function _registerOneSignalPlayerId() {
       await existing.unsubscribe();
     }
 
-    // Fetch VAPID key server-side (avoids CORS; uses ONESIGNAL_VAPID_PUBLIC_KEY env var if set)
-    const vapidResp = await fetch('/get-vapid-key');
+    // Fetch VAPID key server-side. Cache-bust with timestamp so the service worker
+    // cannot serve a stale cached HTML response (Netlify may have cached index.html
+    // for this path before the edge function was deployed).
+    const vapidResp = await fetch('/get-vapid-key?_=' + Date.now());
     const vapidData = await vapidResp.json();
     const vapidKey = vapidData.vapid_public_key;
     if (!vapidKey) {
