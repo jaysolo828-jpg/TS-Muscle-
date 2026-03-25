@@ -7385,7 +7385,7 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
       const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
       const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
       const _emoji = _rxnEmoji[reactionType] || reactionType;
-      fetch('/.netlify/functions/push', {
+      fetch('/push-send', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -7505,7 +7505,7 @@ async function _notifyFriends(title, body, signalId, sendAfter) {
       payload.data = { signal_id: signalId, to_user_id: state.supabaseUserId };
     }
 
-    fetch('/.netlify/functions/push', {
+    fetch('/push-send', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload)
@@ -19946,7 +19946,7 @@ try {
 
 // Test push function reachability on load — shows toast so result is visible on phone
 setTimeout(function() {
-  fetch('/.netlify/functions/push', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"test":1}' })
+  fetch('/push-send', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"test":1}' })
     .then(function(r) { r.text().then(function(t) { showToast('Push fn: ' + r.status + ' ' + t.slice(0, 40)); }); })
     .catch(function(e) { showToast('Push fn err: ' + e.message); });
 }, 3000);
