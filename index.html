@@ -7586,27 +7586,18 @@ async function _requestNotificationPermission() {
 async function _registerOneSignalPlayerId() {
   if (!state.supabaseUserId) { showToast('DEBUG: no supabaseUserId'); return; }
   try {
-    let OS = window.OneSignal;
-    // If User isn't ready yet, wait up to 5s for init to complete
-    if (!OS || !OS.User) {
-      showToast('DEBUG: waiting for OneSignal…');
-      for (let i = 0; i < 10; i++) {
-        await new Promise(function(r) { setTimeout(r, 500); });
-        OS = window.OneSignal;
-        if (OS && OS.User) break;
-      }
-    }
+    // Clear OneSignal's stale cached config so it re-fetches VAPID key
+    try {
+      Object.keys(localStorage).filter(function(k){ return k.startsWith('os.'); }).forEach(function(k){ localStorage.removeItem(k); });
+    } catch(e) {}
+    // Re-initialize OneSignal fresh to pick up the new web push platform config
+    _oneSignalInitPromise = null;
+    window.OneSignalDeferred = [];
+    _initOneSignal();
+    await Promise.race([_oneSignalInitPromise || Promise.resolve(), new Promise(function(r){setTimeout(r,5000);})]);
+    const OS = window.OneSignal;
     showToast('DEBUG: OS.User=' + (OS && OS.User ? 'ok' : 'missing'));
     if (!OS || !OS.User) return;
-    // Test native push layer directly before calling OneSignal optIn
-    try {
-      const swReg = await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise(function(_, rej){setTimeout(function(){rej(new Error('sw timeout'));},3000);})
-      ]);
-      const existingSub = await swReg.pushManager.getSubscription();
-      showToast('DEBUG: existingSub=' + (existingSub ? 'yes' : 'no') + ' pushManager=ok');
-    } catch(e) { showToast('DEBUG: native push error=' + e.message); }
     showToast('DEBUG: optedIn=' + OS.User.PushSubscription.optedIn);
     try {
       const optInResult = await Promise.race([
