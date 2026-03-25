@@ -7594,6 +7594,8 @@ async function _registerOneSignalPlayerId() {
             id = OneSignal.User.PushSubscription.id;
             if (!id) await new Promise(function(r) { setTimeout(r, 500); });
           }
+          var optedIn = OneSignal.User.PushSubscription.optedIn;
+          showToast('opted:' + optedIn + ' id:' + (id ? id.slice(0,8) : 'null'));
           if (id) {
             await _savePushPlayerId(id);
             if (!settled) { settled = true; clearTimeout(t); resolve(true); }
