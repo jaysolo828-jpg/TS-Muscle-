@@ -7415,11 +7415,12 @@ function inviteFriend() {
 
 // Called at the start of a fresh session — inserts a signal row and notifies friends.
 async function _sendWorkoutSignal(dayName) {
-  if (!state.supabaseUserId) return;
+  if (!state.supabaseUserId) { showToast('Signal: no user'); return; }
   const sb = _getSupabaseClient();
-  if (!sb) return;
+  if (!sb) { showToast('Signal: no sb'); return; }
   const displayName = state.supabaseDisplayName || state.displayName || 'Someone';
   try {
+    showToast('Signal: inserting...');
     const { data, error } = await sb.from('workout_signals').insert({
       user_id:      state.supabaseUserId,
       workout_name: dayName,
@@ -7427,11 +7428,8 @@ async function _sendWorkoutSignal(dayName) {
       signal_type:  'started'
     }).select('id').single();
     if (error || !data) { showToast('Signal insert failed: ' + (error?.message || 'no data')); return; }
+    showToast('Signal: inserted ok');
     _currentSignalId = data.id;
-    // Schedule the "is training" notification for 1 minute from now via
-    // OneSignal's server-side send_after — this fires reliably even when
-    // the phone screen is locked or the browser is backgrounded.
-    // TODO: change back to 9 minutes before release.
     const signalId   = data.id;
     const sendAfterTs = new Date(Date.now() + 1 * 60 * 1000).toISOString();
     _notifyFriends(
@@ -7440,7 +7438,7 @@ async function _sendWorkoutSignal(dayName) {
       signalId,
       sendAfterTs
     );
-  } catch(e) {}
+  } catch(e) { showToast('Signal exception: ' + e.message); }
 }
 
 // Called when a session is saved — updates the signal row and notifies friends.
@@ -19938,7 +19936,7 @@ try {
 
 // Version + push test toast — fires on load so user can confirm latest code is running
 setTimeout(function() {
-  showToast('App v141 loaded');
+  showToast('App v142 loaded');
   setTimeout(function() {
     fetch('/get-vapid-key?d=' + btoa('{"test":1}'))
       .then(function(r) { r.text().then(function(t) { showToast('Push: ' + r.status + ' ' + t.slice(0, 50)); }); })
