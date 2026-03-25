@@ -6356,19 +6356,25 @@ function _applyNotifToggleUI() {
 }
 
 function _onNotifSettingsTap() {
+  showToast('DEBUG: perm=' + (('Notification' in window) ? Notification.permission : 'unsupported'));
   if (!('Notification' in window)) { showToast('Notifications not supported on this device'); return; }
   if (Notification.permission === 'denied') { showToast('Notifications blocked — enable them in your Android settings'); return; }
-  if (Notification.permission === 'granted') { showToast('Notifications already enabled'); return; }
+  if (Notification.permission === 'granted') {
+    _registerOneSignalPlayerId();
+    return;
+  }
   // 'default' — call requestPermission directly from this tap (user gesture)
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   window.OneSignalDeferred.push(async function(OneSignal) {
     try {
+      showToast('DEBUG: requesting permission…');
       const granted = await OneSignal.Notifications.requestPermission();
+      showToast('DEBUG: granted=' + granted);
       if (!granted) return;
       _applyNotifToggleUI();
       await new Promise(function(r) { setTimeout(r, 1500); });
       _registerOneSignalPlayerId();
-    } catch(e) {}
+    } catch(e) { showToast('DEBUG: error ' + e.message); }
   });
 }
 
@@ -7580,23 +7586,25 @@ async function _requestNotificationPermission() {
 // Save the OneSignal push subscription player ID to Supabase so the server
 // can send notifications to this device.
 async function _registerOneSignalPlayerId() {
-  if (!state.supabaseUserId) return;
+  if (!state.supabaseUserId) { showToast('DEBUG: no supabaseUserId'); return; }
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   window.OneSignalDeferred.push(async function(OneSignal) {
     try {
       await OneSignal.Notifications.requestPermission();
       await new Promise(function(r) { setTimeout(r, 1500); });
       const playerId = OneSignal.User.PushSubscription.id;
+      showToast('DEBUG: playerId=' + (playerId ? playerId.slice(0,8) + '…' : 'null'));
       if (!playerId) return;
       const sb = _getSupabaseClient();
-      if (!sb) return;
+      if (!sb) { showToast('DEBUG: no supabase client'); return; }
       const ua = (navigator.userAgent || '').toLowerCase();
       const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
       await sb.from('onesignal_subscriptions').upsert(
         { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
         { onConflict: 'user_id,platform' }
       );
-    } catch(e) {}
+      showToast('DEBUG: player ID saved ✓');
+    } catch(e) { showToast('DEBUG: error ' + e.message); }
   });
 }
 
