@@ -7385,7 +7385,9 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
           title: fromName + ' reacted to your workout',
           body:  'They gave you a ' + _emoji
         })
-      }).catch(() => {});
+      }).then(function(r) {
+        if (!r.ok) r.text().then(function(t) { console.error('reaction notif error', r.status, t); });
+      }).catch(function(err) { console.error('reaction notif fetch failed', err); });
     }
   } catch (e) {}
 }
@@ -7499,8 +7501,10 @@ async function _notifyFriends(title, body, signalId, sendAfter) {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload)
-    }).catch(() => {});
-  } catch(e) {}
+    }).then(function(r) {
+      if (!r.ok) r.text().then(function(t) { console.error('send-notification error', r.status, t); showToast('Notif error ' + r.status + ': ' + t.slice(0,60)); });
+    }).catch(function(err) { console.error('send-notification fetch failed', err); showToast('Notif fetch failed: ' + err.message); });
+  } catch(e) { console.error('_notifyFriends error', e); }
 }
 
 // ── Push Notifications (direct web push, no third-party SDK) ───────────────
