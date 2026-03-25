@@ -7583,7 +7583,16 @@ async function _requestNotificationPermission() {
 async function _registerOneSignalPlayerId() {
   if (!state.supabaseUserId) { showToast('DEBUG: no supabaseUserId'); return; }
   try {
-    const OS = window.OneSignal;
+    let OS = window.OneSignal;
+    // If User isn't ready yet, wait up to 5s for init to complete
+    if (!OS || !OS.User) {
+      showToast('DEBUG: waiting for OneSignal…');
+      for (let i = 0; i < 10; i++) {
+        await new Promise(function(r) { setTimeout(r, 500); });
+        OS = window.OneSignal;
+        if (OS && OS.User) break;
+      }
+    }
     showToast('DEBUG: OS.User=' + (OS && OS.User ? 'ok' : 'missing'));
     if (!OS || !OS.User) return;
     await OS.User.PushSubscription.optIn();
