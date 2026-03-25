@@ -7597,10 +7597,12 @@ async function _registerOneSignalPlayerId() {
     let sub = await reg.pushManager.getSubscription();
     showToast('DEBUG: existing sub=' + (sub ? 'yes' : 'no'));
     if (!sub) {
-      // Fetch VAPID key from OneSignal's public app config
-      const appResp = await fetch('https://api.onesignal.com/apps/' + window.ONESIGNAL_APP_ID);
-      const appData = await appResp.json();
-      const vapidKey = appData.vapid_public_key;
+      // Fetch VAPID key from OneSignal via our edge function (avoids CORS)
+      const vapidResp = await fetch('/get-vapid-key');
+      const vapidText = await vapidResp.text();
+      showToast('DEBUG: vapid resp=' + vapidResp.status + ' ' + vapidText.slice(0,30));
+      const vapidData = JSON.parse(vapidText);
+      const vapidKey = vapidData.vapid_public_key;
       showToast('DEBUG: vapid=' + (vapidKey ? 'ok' : 'missing'));
       if (!vapidKey) return;
       sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
