@@ -94,10 +94,6 @@ async function vapidAuth(endpoint, privB64u, pubB64u, subject) {
 }
 
 export default async function handler(req) {
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-
   const pubKey  = Deno.env.get('VAPID_PUBLIC_KEY')  || '';
   const privKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
   const subject = Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@therapyandsneakers.org';
@@ -106,9 +102,20 @@ export default async function handler(req) {
     return new Response('VAPID keys not configured', { status: 503 });
   }
 
+  // Accept GET with ?d=<base64url-encoded-JSON> or POST with JSON body
   let parsed;
-  try { parsed = await req.json(); }
-  catch(e) { return new Response('Invalid JSON', { status: 400 }); }
+  try {
+    if (req.method === 'GET' || req.method === 'HEAD') {
+      const url = new URL(req.url);
+      const d = url.searchParams.get('d');
+      if (!d) return new Response('Missing d param', { status: 400 });
+      parsed = JSON.parse(new TextDecoder().decode(
+        Uint8Array.from(atob(d.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0))
+      ));
+    } else {
+      parsed = await req.json();
+    }
+  } catch(e) { return new Response('Invalid payload', { status: 400 }); }
 
   const { subscriptions, title, body, data: notifData } = parsed;
   if (!subscriptions?.length) return new Response('Missing subscriptions', { status: 400 });
