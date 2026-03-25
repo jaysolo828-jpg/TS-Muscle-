@@ -7475,7 +7475,7 @@ async function _notifyFriends(title, body, signalId, sendAfter) {
     var _d = btoa(JSON.stringify(_p)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
     showToast('Sending push...');
     var _timeout = setTimeout(function() { showToast('PUSH TIMED OUT'); }, 15000);
-    fetch('/get-vapid-key?d=' + _d).then(function(r) {
+    fetch('/.netlify/functions/push?d=' + _d).then(function(r) {
       clearTimeout(_timeout);
       var status = r.status;
       return r.text().then(function(t) {
@@ -19931,7 +19931,7 @@ try {
 }
 
 // Version toast
-setTimeout(function() { showToast('App v150 loaded'); }, 1000);
+setTimeout(function() { showToast('App v151 loaded'); }, 1000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
 if (navigator.storage && navigator.storage.persist) {
