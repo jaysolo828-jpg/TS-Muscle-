@@ -22,11 +22,14 @@ async function makeVapidJwt(audience, subject, publicKeyB64, privateKeyB64) {
   })));
   const sigInput = header + '.' + payload;
 
-  const privKeyBytes = base64UrlDecode(privateKeyB64);
-  // Import as raw EC private key (PKCS8 with prime256v1)
+  // Derive x,y from the raw 65-byte public key so we can import via JWK
+  const pubRaw = base64UrlDecode(publicKeyB64);
+  const x = base64UrlEncode(pubRaw.slice(1, 33));
+  const y = base64UrlEncode(pubRaw.slice(33, 65));
+
   const privKey = await crypto.subtle.importKey(
-    'pkcs8',
-    buildPkcs8(privKeyBytes),
+    'jwk',
+    { kty: 'EC', crv: 'P-256', d: privateKeyB64, x, y, key_ops: ['sign'], ext: true },
     { name: 'ECDSA', namedCurve: 'P-256' },
     false,
     ['sign']
@@ -37,26 +40,6 @@ async function makeVapidJwt(audience, subject, publicKeyB64, privateKeyB64) {
     new TextEncoder().encode(sigInput)
   );
   return sigInput + '.' + base64UrlEncode(sig);
-}
-
-// Build a minimal PKCS8 wrapper around a raw 32-byte EC private key scalar
-function buildPkcs8(rawKey) {
-  // DER sequence for EC private key (prime256v1) in PKCS8 format
-  const oid = new Uint8Array([
-    0x30, 0x41,
-      0x02, 0x01, 0x00,
-      0x30, 0x13,
-        0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
-        0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
-      0x04, 0x27,
-        0x30, 0x25,
-          0x02, 0x01, 0x01,
-          0x04, 0x20,
-  ]);
-  const result = new Uint8Array(oid.length + rawKey.length);
-  result.set(oid);
-  result.set(rawKey, oid.length);
-  return result.buffer;
 }
 
 async function encryptPayload(subscription, payload) {

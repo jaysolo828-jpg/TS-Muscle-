@@ -1,27 +1,26 @@
 // Run once with: node generate-vapid-keys.js
 // Then add the output values to Netlify environment variables.
-const crypto = require('crypto');
-
-function toBase64Url(buf) {
-  return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
+const { webcrypto } = require('crypto');
+const { subtle } = webcrypto;
 
 async function generate() {
-  const { privateKey, publicKey } = crypto.generateKeyPairSync('ec', {
-    namedCurve: 'prime256v1',
-    publicKeyEncoding:  { type: 'spki',  format: 'der' },
-    privateKeyEncoding: { type: 'pkcs8', format: 'der' },
-  });
+  const keyPair = await subtle.generateKey(
+    { name: 'ECDH', namedCurve: 'P-256' },
+    true,
+    ['deriveKey', 'deriveBits']
+  );
 
-  // Web push expects the raw 65-byte uncompressed public key
-  const pubRaw = publicKey.slice(-65);
-  // Web push expects the raw 32-byte private key scalar
-  const privRaw = privateKey.slice(-32);
+  // Export public key as raw 65-byte uncompressed point, then base64url-encode
+  const publicKeyRaw = await subtle.exportKey('raw', keyPair.publicKey);
+  const pubB64 = Buffer.from(publicKeyRaw).toString('base64url');
+
+  // Export private key as JWK — the 'd' field is the raw scalar in base64url
+  const privateKeyJwk = await subtle.exportKey('jwk', keyPair.privateKey);
+  const privB64 = privateKeyJwk.d;
 
   console.log('\nAdd these to Netlify → Site configuration → Environment variables:\n');
-  console.log('VAPID_PUBLIC_KEY=' + toBase64Url(pubRaw));
-  console.log('VAPID_PRIVATE_KEY=' + toBase64Url(privRaw));
-  console.log('\nAlso add:');
+  console.log('VAPID_PUBLIC_KEY=' + pubB64);
+  console.log('VAPID_PRIVATE_KEY=' + privB64);
   console.log('VAPID_SUBJECT=mailto:admin@therapyandsneakers.org');
 }
 
