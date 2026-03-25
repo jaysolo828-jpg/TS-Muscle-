@@ -2,17 +2,16 @@
 // can manage its own push subscription lifecycle.
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'ts-muscle-v117';
+const CACHE_NAME = 'ts-muscle-v118';
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './manifest.json'];
 
-// On install: precache all app assets so the app works fully offline.
-// skipWaiting() makes the new SW take over immediately rather than waiting
-// for all tabs to close — this unblocks users stuck on a broken cached page.
+// On install: precache assets and immediately take over so users always get
+// the latest code without needing to tap an update banner.
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).catch(() => {})
   );
-  // Do NOT call skipWaiting() here — let the banner prompt the user to refresh
+  self.skipWaiting();
 });
 
 // Allow the page to trigger skipWaiting when the user taps the update banner
