@@ -2503,7 +2503,6 @@
 <script src="onesignal-config.js?v=20260325"></script>
 <script>if(!window.ONESIGNAL_APP_ID)window.ONESIGNAL_APP_ID='61c3ab18-e00b-499b-8a18-12ca1b30790a';</script>
 <script src="supabase.min.js"></script>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 <body>
 <!-- SPLASH SCREEN -->
@@ -6365,7 +6364,6 @@ async function _onNotifSettingsTap() {
     } catch(e) { return; }
   }
   _applyNotifToggleUI();
-  showToast('registering…');
   _registerOneSignalPlayerId();
 }
 
@@ -7367,14 +7365,15 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
     btn.style.background = 'rgba(192,57,43,0.15)';
   }
 
-  // Send push notification via OneSignal edge function
+  // Send push notification
   try {
     const { data: sub } = await sb.from('onesignal_subscriptions')
-      .select('onesignal_player_id')
+      .select('push_endpoint, push_p256dh, push_auth')
       .eq('user_id', toUserId)
+      .not('push_endpoint', 'is', null)
       .limit(1)
       .single();
-    if (sub?.onesignal_player_id) {
+    if (sub?.push_endpoint) {
       const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
       const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
       const _emoji = _rxnEmoji[reactionType] || reactionType;
@@ -7382,7 +7381,7 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          player_ids: [sub.onesignal_player_id],
+          subscriptions: [{ endpoint: sub.push_endpoint, keys: { p256dh: sub.push_p256dh, auth: sub.push_auth } }],
           title: fromName + ' reacted to your workout',
           body:  'They gave you a ' + _emoji
         })
@@ -7484,23 +7483,17 @@ async function _notifyFriends(title, body, signalId, sendAfter) {
     );
 
     const { data: subs } = await sb.from('onesignal_subscriptions')
-      .select('onesignal_player_id')
-      .in('user_id', friendIds);
+      .select('push_endpoint, push_p256dh, push_auth')
+      .in('user_id', friendIds)
+      .not('push_endpoint', 'is', null);
     if (!subs?.length) return;
 
-    const playerIds = subs.map(s => s.onesignal_player_id);
-    const payload = { player_ids: playerIds, title, body };
+    const subscriptions = subs.map(s => ({ endpoint: s.push_endpoint, keys: { p256dh: s.push_p256dh, auth: s.push_auth } }));
+    const payload = { subscriptions, title, body };
 
-    // Include 👍 action button so friends can react from the lock screen.
-    // The service worker reads their userId from IndexedDB and POSTs to /record-reaction.
     if (signalId) {
-      payload.buttons = [{ id: 'thumbs_up', text: '👍 Nice work' }];
-      payload.data    = { signal_id: signalId, to_user_id: state.supabaseUserId };
+      payload.data = { signal_id: signalId, to_user_id: state.supabaseUserId };
     }
-
-    // Schedule server-side delivery so the notification fires even if the
-    // client browser is backgrounded or the phone screen is locked.
-    if (sendAfter) payload.send_after = sendAfter;
 
     fetch('/send-notification', {
       method: 'POST',
@@ -7510,148 +7503,60 @@ async function _notifyFriends(title, body, signalId, sendAfter) {
   } catch(e) {}
 }
 
-// ── OneSignal / Push Permission ────────────────────────────────────────────
+// ── Push Notifications (direct web push, no third-party SDK) ───────────────
 
-// Initialise OneSignal with our app ID (served via Netlify edge function at runtime).
-// Called once during app startup.
-var _oneSignalInitPromise = null;
-function _initOneSignal() {
-  if (!window.ONESIGNAL_APP_ID) return;
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  _oneSignalInitPromise = new Promise(function(resolve) {
-    window.OneSignalDeferred.push(async function(OneSignal) {
-      try {
-        await Promise.race([
-          OneSignal.init({
-            appId: window.ONESIGNAL_APP_ID,
-            serviceWorkerPath: 'sw.js',
-            serviceWorkerParam: { scope: '/' },
-            autoResubscribe: true,
-            notifyButton: { enable: false }
-          }),
-          new Promise(function(r) { setTimeout(r, 5000); })
-        ]);
-      } catch(e) {}
-      resolve();
-    });
-  });
-}
-
-// Silently save the current OneSignal player ID for an already-signed-in user.
-// Called on every page load so a simple refresh registers their subscription
-// without requiring a sign-out / sign-in cycle.
-async function _syncOneSignalPlayerId() {
-  if (!state.supabaseUserId) return;
-  if (!window.ONESIGNAL_APP_ID) return;
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  window.OneSignalDeferred.push(async function(OneSignal) {
-    try {
-      const playerId = OneSignal.User.PushSubscription.id;
-      if (!playerId) return;
-      const sb = _getSupabaseClient();
-      if (!sb) return;
-      const ua = (navigator.userAgent || '').toLowerCase();
-      const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
-      await sb.from('onesignal_subscriptions').upsert(
-        { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
-        { onConflict: 'user_id,platform' }
-      );
-    } catch(e) {}
-  });
-}
-
-// Ask for push notification permission immediately after the user signs in.
-// Only asked once; if denied, social features continue without push.
-// On Android PWA, requestPermission() must be called from a direct user tap —
-// calling it from an async callback silently fails. So we show a banner that
-// the user taps, and the tap handler calls the permission API directly.
+// Called on sign-in if permission already granted, to refresh the subscription.
 async function _requestNotificationPermission() {
-  if (!window.ONESIGNAL_APP_ID) return;
-  if (!('Notification' in window)) return;
+  if (!('Notification' in window) || !('PushManager' in window)) return;
   if (Notification.permission === 'denied') return;
-
-  // If already granted, just make sure the player ID is registered with OneSignal.
   if (Notification.permission === 'granted') {
     _registerOneSignalPlayerId();
-    return;
   }
-
-  // permission is 'default' — user needs to tap the Push Notifications toggle
-  // in Settings. requestPermission() requires a direct user gesture on Android PWA.
+  // permission is 'default' — user taps the toggle in Settings to prompt
 }
 
-// Register push subscription with OneSignal and save the player ID to Supabase.
+// Register a native PushManager subscription and save endpoint + keys to Supabase.
 async function _registerOneSignalPlayerId() {
-  if (!state.supabaseUserId) { showToast('no user id — sign in first'); return; }
+  if (!state.supabaseUserId) return;
   try {
-    // Path 1: use OneSignal SDK (handles VAPID key internally after init)
-    const sdkDone = await new Promise(function(resolve) {
-      if (!window.OneSignalDeferred) { resolve(false); return; }
-      var settled = false;
-      var t = setTimeout(function() { if (!settled) { settled = true; showToast('sdk timeout — not loaded'); resolve(false); } }, 10000);
-      window.OneSignalDeferred.push(async function(OneSignal) {
-        try {
-          await OneSignal.User.PushSubscription.optIn();
-          // id is set asynchronously after server registration — poll up to 6 s
-          var id = null;
-          for (var _i = 0; _i < 12 && !id; _i++) {
-            id = OneSignal.User.PushSubscription.id;
-            if (!id) await new Promise(function(r) { setTimeout(r, 500); });
-          }
-          var optedIn = OneSignal.User.PushSubscription.optedIn;
-          showToast('opted:' + optedIn + ' id:' + (id ? id.slice(0,8) : 'null'));
-          if (id) {
-            await _savePushPlayerId(id);
-            if (!settled) { settled = true; clearTimeout(t); resolve(true); }
-          } else {
-            if (!settled) { settled = true; clearTimeout(t); resolve(false); }
-          }
-        } catch(e) {
-          showToast('sdk err: ' + (e && e.message ? e.message.slice(0,40) : 'unknown'));
-          if (!settled) { settled = true; clearTimeout(t); resolve(false); }
-        }
-      });
-    });
-    if (sdkDone) { showToast('Notifications enabled'); _applyNotifToggleUI(); return; }
-
-    // Path 2: native PushManager + server-side VAPID key lookup
     var reg = await Promise.race([
       navigator.serviceWorker.ready,
-      new Promise(function(_, rej) { setTimeout(function() { rej(new Error('sw timeout')); }, 5000); })
+      new Promise(function(_, rej) { setTimeout(function() { rej(new Error('sw timeout')); }, 8000); })
     ]);
+
+    var vapidResp = await fetch('/get-vapid-key?_=' + Date.now());
+    if (!vapidResp.ok) { showToast('Push config unavailable — try again later'); return; }
+    var vapidData = await vapidResp.json().catch(function() { return {}; });
+    var vapidKey = vapidData.vapid_public_key;
+    if (!vapidKey) { showToast('Push not configured — contact support'); return; }
+
     var existing = await reg.pushManager.getSubscription();
     if (existing) await existing.unsubscribe();
 
-    var vapidResp = await fetch('/get-vapid-key?_=' + Date.now());
-    if (!vapidResp.ok) return;
-    var vapidData = await vapidResp.json().catch(function() { return {}; });
-    var vapidKey = vapidData.vapid_public_key;
-    if (!vapidKey) return;
-
     var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
-    var regResp = await fetch('/register-player', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ endpoint: sub.endpoint, keys: sub.toJSON().keys, user_id: state.supabaseUserId })
-    });
-    var result = await regResp.json().catch(function() { return {}; });
-    if (!result.id) return;
-
-    await _savePushPlayerId(result.id);
+    var subJson = sub.toJSON();
+    await _savePushSubscription(sub.endpoint, subJson.keys);
     showToast('Notifications enabled');
     _applyNotifToggleUI();
-  } catch(_) {
+  } catch(e) {
     showToast('Could not enable notifications — try again');
   }
 }
 
-async function _savePushPlayerId(playerId) {
+async function _savePushSubscription(endpoint, keys) {
   var sb = _getSupabaseClient();
   if (!sb) return;
   var ua = (navigator.userAgent || '').toLowerCase();
   var platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
   await sb.from('onesignal_subscriptions').upsert(
-    { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
+    {
+      user_id: state.supabaseUserId,
+      onesignal_player_id: endpoint,
+      push_endpoint: endpoint,
+      push_p256dh: keys.p256dh,
+      push_auth: keys.auth,
+      platform
+    },
     { onConflict: 'user_id,platform' }
   );
 }
@@ -20009,7 +19914,6 @@ try {
   // Reset supabaseDismissed each app load (it's session-scoped only)
   state.supabaseDismissed = false;
   // Initialise OneSignal push SDK (app ID loaded from onesignal-config.js edge function)
-  _initOneSignal();
   // Apply social features toggle state
   _applySocialToggleUI();
   _applyNotifToggleUI();
