@@ -7469,39 +7469,15 @@ async function _completeWorkoutSignal() {
 // notification and delivers it at that time (reliable even when screen is locked).
 async function _notifyFriends(title, body, signalId, sendAfter) {
   if (!state.supabaseUserId) { showToast('Push: no user id'); return; }
-  const sb = _getSupabaseClient();
-  if (!sb) { showToast('Push: no sb client'); return; }
   try {
-    const { data: friendships, error: fErr } = await sb.from('friendships')
-      .select('requester_id, addressee_id')
-      .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
-      .eq('status', 'accepted');
-    if (fErr) { showToast('Push: friends err ' + fErr.message); return; }
-    if (!friendships?.length) { showToast('Push: no friends'); return; }
-
-    const friendIds = friendships.map(f =>
-      f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id
-    );
-
-    const { data: subs, error: sErr } = await sb.from('onesignal_subscriptions')
-      .select('push_endpoint, push_p256dh, push_auth')
-      .in('user_id', friendIds)
-      .not('push_endpoint', 'is', null);
-    if (sErr) { showToast('Push: subs err ' + sErr.message); return; }
-    if (!subs?.length) { showToast('Push: no subs for ' + friendIds.length + ' friend(s)'); return; }
-
-    const subscriptions = subs.map(s => ({ endpoint: s.push_endpoint, keys: { p256dh: s.push_p256dh, auth: s.push_auth } }));
-    const payload = { subscriptions, title, body };
-
-    if (signalId) {
-      payload.data = { signal_id: signalId, to_user_id: state.supabaseUserId };
-    }
-
-    var _enc = btoa(JSON.stringify(payload)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-    showToast('Sending to ' + subscriptions.length + ' sub(s)');
-    fetch('/get-vapid-key?d=' + _enc).then(function(r) {
+    var params = '?uid=' + encodeURIComponent(state.supabaseUserId)
+      + '&title=' + encodeURIComponent(title)
+      + '&body='  + encodeURIComponent(body);
+    if (signalId) params += '&sid=' + encodeURIComponent(signalId);
+    showToast('Sending push...');
+    fetch('/get-vapid-key' + params).then(function(r) {
       r.text().then(function(t) { showToast('Push ' + r.status + ': ' + t.slice(0, 70)); });
-    }).catch(function(err) { showToast('Notif fetch failed: ' + err.message); });
+    }).catch(function(err) { showToast('Push fetch err: ' + err.message); });
   } catch(e) { showToast('Push exception: ' + e.message); }
 }
 
@@ -19948,7 +19924,7 @@ try {
 }
 
 // Version toast
-setTimeout(function() { showToast('App v145 loaded'); }, 1000);
+setTimeout(function() { showToast('App v146 loaded'); }, 1000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
 if (navigator.storage && navigator.storage.persist) {
