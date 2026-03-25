@@ -2,7 +2,7 @@
 // can manage its own push subscription lifecycle.
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'ts-muscle-v118';
+const CACHE_NAME = 'ts-muscle-v119';
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './manifest.json'];
 
 // On install: precache assets and immediately take over so users always get
@@ -107,9 +107,21 @@ self.addEventListener('fetch', e => {
     return;
   }
 
+  const url = new URL(e.request.url);
   const isHTML = e.request.destination === 'document' ||
-    e.request.url.endsWith('.html') ||
-    new URL(e.request.url).pathname === '/';
+    url.pathname.endsWith('.html') ||
+    url.pathname === '/';
+
+  // API endpoints (no file extension) are never cached — only serve from network.
+  // This prevents stale HTML from being cached if an edge function didn't exist yet.
+  const hasExtension = /\.[a-zA-Z0-9]+(\?|$)/.test(url.pathname);
+  if (!hasExtension && !isHTML) {
+    e.respondWith(
+      fetch(e.request).catch(() => new Response('', { status: 503 }))
+    );
+    return;
+  }
+
   const req = isHTML ? new Request(e.request, { cache: 'no-store' }) : e.request;
   e.respondWith(
     fetch(req).then(response => {
