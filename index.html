@@ -7468,7 +7468,7 @@ async function _completeWorkoutSignal() {
     }).eq('id', signalId).eq('user_id', state.supabaseUserId);
     _notifyFriends(
       displayName + ' finished training',
-      'They showed up. Give them their props.',
+      'They showed up. Drop a reaction.',
       signalId
     );
   } catch(e) {}
