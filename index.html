@@ -7583,76 +7583,52 @@ async function _requestNotificationPermission() {
 
 // Save the OneSignal push subscription player ID to Supabase so the server
 // can send notifications to this device.
-async function _saveOneSignalPlayerIdDirect() {
+async function _registerOneSignalPlayerId() {
   if (!state.supabaseUserId) return;
+  // Clear any stuck flag from previous attempts
+  localStorage.removeItem('ts-os-cleared');
   try {
-    const OS = window.OneSignal;
-    if (!OS || !OS.User) { showToast('DEBUG: OS not ready after reload'); return; }
-    showToast('DEBUG: optedIn after reload=' + OS.User.PushSubscription.optedIn);
-    const playerId = OS.User.PushSubscription.id;
-    showToast('DEBUG: playerId=' + (playerId ? playerId.slice(0,8) + '…' : 'null'));
-    if (!playerId) return;
+    showToast('DEBUG: getting push sub…');
+    const reg = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise(function(_, rej){setTimeout(function(){rej(new Error('sw timeout'));},5000);})
+    ]);
+    // Get or create push subscription using OneSignal's VAPID key
+    let sub = await reg.pushManager.getSubscription();
+    showToast('DEBUG: existing sub=' + (sub ? 'yes' : 'no'));
+    if (!sub) {
+      // Fetch VAPID key from OneSignal's public app config
+      const appResp = await fetch('https://api.onesignal.com/apps/' + window.ONESIGNAL_APP_ID);
+      const appData = await appResp.json();
+      const vapidKey = appData.vapid_public_key;
+      showToast('DEBUG: vapid=' + (vapidKey ? 'ok' : 'missing'));
+      if (!vapidKey) return;
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
+    }
+    showToast('DEBUG: sub ok, registering…');
+    // Register subscription with OneSignal via edge function
+    const resp = await fetch('/register-player', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({
+        endpoint: sub.endpoint,
+        keys: sub.toJSON().keys,
+        user_id: state.supabaseUserId
+      })
+    });
+    const result = await resp.json();
+    showToast('DEBUG: player_id=' + (result.id ? result.id.slice(0,8) + '…' : 'null'));
+    if (!result.id) return;
     const sb = _getSupabaseClient();
     if (!sb) return;
     const ua = (navigator.userAgent || '').toLowerCase();
     const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
     await sb.from('onesignal_subscriptions').upsert(
-      { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
+      { user_id: state.supabaseUserId, onesignal_player_id: result.id, platform },
       { onConflict: 'user_id,platform' }
     );
-    localStorage.removeItem('ts-os-cleared');
     showToast('DEBUG: player ID saved ✓');
     _applyNotifToggleUI();
-  } catch(e) { showToast('DEBUG: error ' + e.message); }
-}
-
-async function _registerOneSignalPlayerId() {
-  if (!state.supabaseUserId) { showToast('DEBUG: no supabaseUserId'); return; }
-  try {
-    const OS = window.OneSignal;
-    if (!OS || !OS.User) return;
-    // If already opted in, skip straight to saving the player ID
-    if (OS.User.PushSubscription.optedIn) {
-      showToast('DEBUG: already optedIn, saving ID…');
-    } else {
-      // If we already cleared cache recently, don't loop — just bail out
-      if (localStorage.getItem('ts-os-cleared')) return;
-      // OneSignal was initialized before web push platform was configured so it
-      // has a stale config with no VAPID key. Wipe its cache and reload so it
-      // re-initializes clean — autoResubscribe:true will subscribe on the fresh load.
-      showToast('DEBUG: clearing OneSignal cache and reloading…');
-      localStorage.setItem('ts-os-cleared', '1');
-      try { indexedDB.deleteDatabase('ONE_SIGNAL_SDK_DB'); } catch(e) {}
-      try {
-        Object.keys(localStorage)
-          .filter(function(k){ return k.startsWith('os.') || k.startsWith('onesignal'); })
-          .forEach(function(k){ localStorage.removeItem(k); });
-      } catch(e) {}
-      sessionStorage.setItem('ts-save-player-id', '1');
-      setTimeout(function(){ location.reload(); }, 800);
-      return;
-    }
-    showToast('DEBUG: optedIn=' + OS.User.PushSubscription.optedIn);
-    try {
-      const optInResult = await Promise.race([
-        OS.User.PushSubscription.optIn().then(function() { return 'done'; }),
-        new Promise(function(r) { setTimeout(function() { r('timeout'); }, 6000); })
-      ]);
-      showToast('DEBUG: optIn result=' + optInResult);
-    } catch(optInErr) { showToast('DEBUG: optIn error=' + optInErr.message); }
-    await new Promise(function(r) { setTimeout(r, 4000); });
-    const playerId = OS.User.PushSubscription.id;
-    showToast('DEBUG: playerId=' + (playerId ? playerId.slice(0,8) + '…' : 'null'));
-    if (!playerId) return;
-    const sb = _getSupabaseClient();
-    if (!sb) { showToast('DEBUG: no supabase client'); return; }
-    const ua = (navigator.userAgent || '').toLowerCase();
-    const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
-    await sb.from('onesignal_subscriptions').upsert(
-      { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
-      { onConflict: 'user_id,platform' }
-    );
-    showToast('DEBUG: player ID saved ✓');
   } catch(e) { showToast('DEBUG: error ' + e.message); }
 }
 
@@ -20015,11 +19991,6 @@ try {
   _applyNotifToggleUI();
   // Check Supabase session (handles OAuth redirect and restores auth state)
   _checkSupabaseSession();
-  // After a OneSignal cache-clear reload, save the player ID once OneSignal is ready
-  if (sessionStorage.getItem('ts-save-player-id')) {
-    sessionStorage.removeItem('ts-save-player-id');
-    setTimeout(_saveOneSignalPlayerIdDirect, 3000);
-  }
   // Update social notification dot (friend requests, new reactions)
   _updateSocialNotifyDot();
   // Hide install row if already running as installed PWA
