@@ -44,7 +44,6 @@
   function = "get-vapid-key"
   path = "/get-vapid-key"
 
-[[redirects]]
-  from = "/send-notification"
-  to = "/.netlify/functions/send-notification"
-  status = 200
+[[edge_functions]]
+  function = "send-notification"
+  path = "/send-notification"
