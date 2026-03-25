@@ -7473,12 +7473,17 @@ async function _notifyFriends(title, body, signalId) {
     if (signalId) _p.sid = signalId;
     showToast('Sending push...');
     var _timeout = setTimeout(function() { showToast('PUSH TIMED OUT'); }, 15000);
-    var _sb = _getSupabaseClient();
-    _sb.functions.invoke('smooth-service', { body: _p }).then(function(result) {
+    var _anonKey = window.SUPABASE_PUBLISHABLE_KEY || '';
+    fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/smooth-service', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + _anonKey },
+      body: JSON.stringify(_p),
+    }).then(function(r) {
       clearTimeout(_timeout);
-      if (result.error) { showToast('PUSH ERR: ' + result.error.message); return; }
-      var d = result.data;
-      showToast('PUSH OK: sent=' + (d && d.sent != null ? d.sent : '?'));
+      var status = r.status;
+      return r.text().then(function(t) {
+        showToast('PUSH ' + status + ': ' + t.slice(0, 80));
+      });
     }).catch(function(err) {
       clearTimeout(_timeout);
       showToast('PUSH ERR: ' + err.message);
@@ -19929,7 +19934,7 @@ try {
 }
 
 // Version toast
-setTimeout(function() { showToast('App v163 loaded'); }, 1000);
+setTimeout(function() { showToast('App v164 loaded'); }, 1000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
 if (navigator.storage && navigator.storage.persist) {
