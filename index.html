@@ -7585,7 +7585,6 @@ async function _registerOneSignalPlayerId() {
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   window.OneSignalDeferred.push(async function(OneSignal) {
     try {
-      await OneSignal.Notifications.requestPermission();
       await new Promise(function(r) { setTimeout(r, 1500); });
       const playerId = OneSignal.User.PushSubscription.id;
       showToast('DEBUG: playerId=' + (playerId ? playerId.slice(0,8) + '…' : 'null'));
