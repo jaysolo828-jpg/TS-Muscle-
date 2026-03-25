@@ -7,6 +7,13 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# sw.js must never be served from CDN cache — browsers need to detect
+# the latest version to trigger service worker updates.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 [[edge_functions]]
   function = "config"
   path = "/config.js"
