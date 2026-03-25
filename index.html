@@ -7270,7 +7270,7 @@ async function _openFriendActivity(userId) {
       .select('id, workout_name, started_at, signal_type')
       .eq('user_id', userId)
       .order('started_at', { ascending: false })
-      .limit(3),
+      .limit(1),
     sb.from('reactions')
       .select('signal_id, reaction_type')
       .eq('from_user_id', state.supabaseUserId)
@@ -7446,7 +7446,7 @@ async function _sendWorkoutSignal(dayName) {
     const sendAfterTs = new Date(Date.now() + 1 * 60 * 1000).toISOString();
     _notifyFriends(
       displayName + ' is training',
-      'They just started a workout. Go show up.',
+      'They\'re in the gym right now. Go hype them up.',
       signalId,
       sendAfterTs
     );
@@ -7468,7 +7468,7 @@ async function _completeWorkoutSignal() {
     }).eq('id', signalId).eq('user_id', state.supabaseUserId);
     _notifyFriends(
       displayName + ' finished training',
-      'They finished their workout. Go show up.',
+      displayName + ' put in the work. Go show love.',
       signalId
     );
   } catch(e) {}
