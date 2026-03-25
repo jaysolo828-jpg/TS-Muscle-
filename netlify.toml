@@ -48,4 +48,3 @@
   from = "/send-notification"
   to = "/.netlify/functions/send-notification"
   status = 200
-  force = true
