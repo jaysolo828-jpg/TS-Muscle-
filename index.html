@@ -7386,7 +7386,7 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
       const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
       const _emoji = _rxnEmoji[reactionType] || reactionType;
       var _rxnSb = _getSupabaseClient();
-      _rxnSb.functions.invoke('send-push', {
+      _rxnSb.functions.invoke('smooth-service', {
         body: { to_uid: toUserId, title: fromName + ' reacted to your workout', body: 'They gave you a ' + _emoji }
       }).catch(function() {});
     }
@@ -7474,7 +7474,7 @@ async function _notifyFriends(title, body, signalId) {
     showToast('Sending push...');
     var _timeout = setTimeout(function() { showToast('PUSH TIMED OUT'); }, 15000);
     var _sb = _getSupabaseClient();
-    _sb.functions.invoke('send-push', { body: _p }).then(function(result) {
+    _sb.functions.invoke('smooth-service', { body: _p }).then(function(result) {
       clearTimeout(_timeout);
       if (result.error) { showToast('PUSH ERR: ' + result.error.message); return; }
       var d = result.data;
