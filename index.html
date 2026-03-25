@@ -19932,9 +19932,9 @@ try {
 
 // Version toast + edge function health check
 setTimeout(function() {
-  showToast('App v156 loaded');
+  showToast('App v157 loaded');
   setTimeout(function() {
-    fetch('/send-notification')
+    fetch('/get-vapid-key')
       .then(function(r) { showToast('Edge functions: ' + r.status); })
       .catch(function(e) { showToast('Edge err: ' + e.message); });
   }, 1500);
