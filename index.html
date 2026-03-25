@@ -7598,7 +7598,14 @@ async function _registerOneSignalPlayerId() {
     }
     showToast('DEBUG: OS.User=' + (OS && OS.User ? 'ok' : 'missing'));
     if (!OS || !OS.User) return;
-    if (_oneSignalInitPromise) { showToast('DEBUG: waiting for init…'); await _oneSignalInitPromise; }
+    if (_oneSignalInitPromise) { await _oneSignalInitPromise; }
+    // Check if the browser/SW push stack is working before calling optIn
+    try {
+      const swReg = await navigator.serviceWorker.ready;
+      const hasPush = !!swReg.pushManager;
+      const swState = swReg.active ? swReg.active.state : 'none';
+      showToast('DEBUG: pushManager=' + hasPush + ' sw=' + swState);
+    } catch(e) { showToast('DEBUG: sw check error=' + e.message); }
     showToast('DEBUG: optedIn=' + OS.User.PushSubscription.optedIn);
     try {
       const optInResult = await Promise.race([
