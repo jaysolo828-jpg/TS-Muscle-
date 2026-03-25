@@ -7588,7 +7588,12 @@ async function _registerOneSignalPlayerId() {
       window.OneSignalDeferred.push(async function(OneSignal) {
         try {
           await OneSignal.User.PushSubscription.optIn();
-          var id = OneSignal.User.PushSubscription.id;
+          // id is set asynchronously after server registration — poll up to 6 s
+          var id = null;
+          for (var _i = 0; _i < 12 && !id; _i++) {
+            id = OneSignal.User.PushSubscription.id;
+            if (!id) await new Promise(function(r) { setTimeout(r, 500); });
+          }
           if (id) {
             await _savePushPlayerId(id);
             if (!settled) { settled = true; clearTimeout(t); resolve(true); }
@@ -7628,7 +7633,9 @@ async function _registerOneSignalPlayerId() {
     await _savePushPlayerId(result.id);
     showToast('Notifications enabled');
     _applyNotifToggleUI();
-  } catch(_) {}
+  } catch(_) {
+    showToast('Could not enable notifications — try again');
+  }
 }
 
 async function _savePushPlayerId(playerId) {
