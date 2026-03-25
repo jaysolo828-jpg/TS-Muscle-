@@ -6809,6 +6809,15 @@ async function _checkSupabaseSession() {
       _updateSupabaseAuthCard();
       _swStoreUserId(session.user.id);
       _requestNotificationPermission();
+      // Refresh display name from DB so notifications show username not email
+      sb.from('users').select('username').eq('id', session.user.id).single()
+        .then(function(res) {
+          var u = res.data?.username;
+          if (u && !u.startsWith('user_') && u !== state.supabaseDisplayName) {
+            state.supabaseDisplayName = u;
+            saveState();
+          }
+        }).catch(function() {});
     }
     _updateSocialNotifyDot();
 
