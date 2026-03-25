@@ -7585,42 +7585,47 @@ async function _requestNotificationPermission() {
 // can send notifications to this device.
 async function _registerOneSignalPlayerId() {
   if (!state.supabaseUserId) return;
-  // Clear any stuck flag from previous attempts
-  localStorage.removeItem('ts-os-cleared');
   try {
-    showToast('DEBUG: getting push sub…');
+    showToast('DEBUG: starting push setup…');
     const reg = await Promise.race([
       navigator.serviceWorker.ready,
-      new Promise(function(_, rej){setTimeout(function(){rej(new Error('sw timeout'));},5000);})
+      new Promise(function(_, rej){setTimeout(function(){rej(new Error('sw timeout'));},6000);})
     ]);
-    // Get or create push subscription using OneSignal's VAPID key
-    let sub = await reg.pushManager.getSubscription();
-    showToast('DEBUG: existing sub=' + (sub ? 'yes' : 'no'));
-    if (!sub) {
-      // Fetch VAPID key from OneSignal via our edge function (avoids CORS)
-      const vapidResp = await fetch('/get-vapid-key');
-      const vapidText = await vapidResp.text();
-      showToast('DEBUG: vapid resp=' + vapidResp.status + ' ' + vapidText.slice(0,30));
-      const vapidData = JSON.parse(vapidText);
-      const vapidKey = vapidData.vapid_public_key;
-      showToast('DEBUG: vapid=' + (vapidKey ? 'ok' : 'missing'));
-      if (!vapidKey) return;
-      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
+
+    // Always start fresh: unsubscribe any stale/mismatched push subscription
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) {
+      showToast('DEBUG: clearing old push sub…');
+      await existing.unsubscribe();
     }
-    showToast('DEBUG: sub ok, registering…');
-    // Register subscription with OneSignal via edge function
+
+    // Fetch VAPID key server-side (avoids CORS; uses ONESIGNAL_VAPID_PUBLIC_KEY env var if set)
+    const vapidResp = await fetch('/get-vapid-key');
+    const vapidData = await vapidResp.json();
+    const vapidKey = vapidData.vapid_public_key;
+    if (!vapidKey) {
+      const hint = vapidData.api_error ? ' api_err=' + vapidData.api_error.slice(0,60)
+                 : vapidData.error    ? ' err=' + vapidData.error.slice(0,60)
+                 : ' status=' + (vapidData.api_status || vapidResp.status);
+      showToast('Push setup failed: no VAPID key.' + hint);
+      return;
+    }
+    showToast('DEBUG: vapid ok, subscribing…');
+
+    // Create a fresh push subscription using OneSignal's VAPID key
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
+
+    showToast('DEBUG: subscribed, registering player…');
+    // Register with OneSignal via server-side edge function
     const resp = await fetch('/register-player', {
       method: 'POST',
       headers: {'content-type': 'application/json'},
-      body: JSON.stringify({
-        endpoint: sub.endpoint,
-        keys: sub.toJSON().keys,
-        user_id: state.supabaseUserId
-      })
+      body: JSON.stringify({ endpoint: sub.endpoint, keys: sub.toJSON().keys, user_id: state.supabaseUserId })
     });
     const result = await resp.json();
-    showToast('DEBUG: player_id=' + (result.id ? result.id.slice(0,8) + '…' : 'null'));
+    showToast('DEBUG: player_id=' + (result.id ? result.id.slice(0,8) + '…' : 'null err=' + JSON.stringify(result).slice(0,50)));
     if (!result.id) return;
+
     const sb = _getSupabaseClient();
     if (!sb) return;
     const ua = (navigator.userAgent || '').toLowerCase();
@@ -7629,7 +7634,7 @@ async function _registerOneSignalPlayerId() {
       { user_id: state.supabaseUserId, onesignal_player_id: result.id, platform },
       { onConflict: 'user_id,platform' }
     );
-    showToast('DEBUG: player ID saved ✓');
+    showToast('Notifications enabled ✓');
     _applyNotifToggleUI();
   } catch(e) { showToast('DEBUG: error ' + e.message); }
 }
