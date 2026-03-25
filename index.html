@@ -7600,6 +7600,7 @@ async function _saveOneSignalPlayerIdDirect() {
       { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
       { onConflict: 'user_id,platform' }
     );
+    localStorage.removeItem('ts-os-cleared');
     showToast('DEBUG: player ID saved ✓');
     _applyNotifToggleUI();
   } catch(e) { showToast('DEBUG: error ' + e.message); }
@@ -7614,17 +7615,19 @@ async function _registerOneSignalPlayerId() {
     if (OS.User.PushSubscription.optedIn) {
       showToast('DEBUG: already optedIn, saving ID…');
     } else {
+      // If we already cleared cache recently, don't loop — just bail out
+      if (localStorage.getItem('ts-os-cleared')) return;
       // OneSignal was initialized before web push platform was configured so it
       // has a stale config with no VAPID key. Wipe its cache and reload so it
       // re-initializes clean — autoResubscribe:true will subscribe on the fresh load.
       showToast('DEBUG: clearing OneSignal cache and reloading…');
+      localStorage.setItem('ts-os-cleared', '1');
       try { indexedDB.deleteDatabase('ONE_SIGNAL_SDK_DB'); } catch(e) {}
       try {
         Object.keys(localStorage)
           .filter(function(k){ return k.startsWith('os.') || k.startsWith('onesignal'); })
           .forEach(function(k){ localStorage.removeItem(k); });
       } catch(e) {}
-      // Set a flag so we save the player ID after the reload
       sessionStorage.setItem('ts-save-player-id', '1');
       setTimeout(function(){ location.reload(); }, 800);
       return;
