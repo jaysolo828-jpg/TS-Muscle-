@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v176';
+const CACHE_NAME = 'ts-muscle-v177';
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './manifest.json'];
 
 // On install: precache assets and immediately take over so users always get
@@ -36,7 +36,6 @@ self.addEventListener('push', function(event) {
   var title = data.title || 'T&S Muscle';
   var options = {
     body: data.body || '',
-    icon: '/icon-192.png',
     badge: '/icon-192.png',
     data: data.data || {},
     requireInteraction: false,
