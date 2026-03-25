@@ -96,25 +96,35 @@ export default async function handler(req) {
   const sbUrl      = Deno.env.get('SUPABASE_URL')           || '';
   const sbKey      = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
-  // No params — serve VAPID public key
-  const uid   = url.searchParams.get('uid');
-  const title = url.searchParams.get('title') || 'T&S Muscle';
-  const body  = url.searchParams.get('body')  || '';
-  const sid   = url.searchParams.get('sid')   || '';
+  // ?d= param: base64url-encoded JSON with {uid, title, body, sid}
+  const d = url.searchParams.get('d');
 
-  if (uid) {
-    return new Response(JSON.stringify({ smoke: true, uid: uid.slice(0, 8) }), {
-      status: 200, headers: { 'content-type': 'application/json' },
-    });
-  }
-
-  if (!uid) {
+  if (!d) {
     if (!pubKey) {
       return new Response(JSON.stringify({ vapid_public_key: null, error: 'VAPID_PUBLIC_KEY not set' }), {
         status: 503, headers: { 'content-type': 'application/json' },
       });
     }
     return new Response(JSON.stringify({ vapid_public_key: pubKey }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  }
+
+  // Decode d param
+  let uid, title, body, sid;
+  try {
+    const parsed = JSON.parse(new TextDecoder().decode(fromb64u(d)));
+    uid   = parsed.uid;
+    title = parsed.title || 'T&S Muscle';
+    body  = parsed.body  || '';
+    sid   = parsed.sid   || '';
+  } catch(e) {
+    return new Response(JSON.stringify({ error: 'bad d param: ' + e.message }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  }
+  if (!uid) {
+    return new Response(JSON.stringify({ error: 'missing uid' }), {
       status: 200, headers: { 'content-type': 'application/json' },
     });
   }

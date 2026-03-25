@@ -7470,13 +7470,12 @@ async function _completeWorkoutSignal() {
 async function _notifyFriends(title, body, signalId, sendAfter) {
   if (!state.supabaseUserId) { showToast('Push: no user id'); return; }
   try {
-    var params = '?uid=' + encodeURIComponent(state.supabaseUserId)
-      + '&title=' + encodeURIComponent(title)
-      + '&body='  + encodeURIComponent(body);
-    if (signalId) params += '&sid=' + encodeURIComponent(signalId);
+    var _p = { uid: state.supabaseUserId, title: title, body: body };
+    if (signalId) _p.sid = signalId;
+    var _d = btoa(JSON.stringify(_p)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
     showToast('Sending push...');
     var _timeout = setTimeout(function() { showToast('PUSH TIMED OUT'); }, 15000);
-    fetch('/get-vapid-key' + params).then(function(r) {
+    fetch('/get-vapid-key?d=' + _d).then(function(r) {
       clearTimeout(_timeout);
       var status = r.status;
       return r.text().then(function(t) {
@@ -19932,7 +19931,7 @@ try {
 }
 
 // Version toast
-setTimeout(function() { showToast('App v149 loaded'); }, 1000);
+setTimeout(function() { showToast('App v150 loaded'); }, 1000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
 if (navigator.storage && navigator.storage.persist) {
