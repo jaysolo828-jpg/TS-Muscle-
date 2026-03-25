@@ -7285,7 +7285,7 @@ async function _openFriendActivity(userId) {
       const isThis = reacted[s.id] === r.t;
       return '<button onclick="_sendReaction(\'' + s.id + '\',\'' + userId + '\',\'' + r.t + '\',this)"'
         + ' style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid ' + (isThis ? '#C0392B' : '#333') + ';background:' + (isThis ? 'rgba(192,57,43,0.15)' : 'transparent') + ';color:var(--cream);font-size:18px;cursor:pointer;-webkit-tap-highlight-color:transparent;"'
-        + (hasReacted ? ' disabled' : '') + '>' + r.e + '</button>';
+        + '>' + r.e + '</button>';
     }).join('');
     return '<div class="friend-signal-card" style="background:#1a1a1a;border-radius:12px;padding:14px;margin-bottom:10px;">'
       + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);margin-bottom:2px;">' + escapeHtml(s.workout_name || 'Workout') + '</div>'
@@ -7346,12 +7346,12 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
   if (btn) btn.disabled = true;
   if (card) card.querySelectorAll('button').forEach(b => { b.disabled = true; });
 
-  const { error } = await sb.from('reactions').insert({
+  const { error } = await sb.from('reactions').upsert({
     from_user_id: state.supabaseUserId,
     to_user_id: toUserId,
     signal_id: signalId,
     reaction_type: reactionType
-  });
+  }, { onConflict: 'from_user_id,signal_id' });
 
   if (error) {
     if (btn) btn.disabled = false;
@@ -7360,6 +7360,14 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
     return;
   }
 
+  // Re-enable all buttons and reset styles, then highlight the selected one
+  if (card) {
+    card.querySelectorAll('button').forEach(b => {
+      b.disabled = false;
+      b.style.borderColor = '#333';
+      b.style.background = 'transparent';
+    });
+  }
   if (btn) {
     btn.style.borderColor = '#C0392B';
     btn.style.background = 'rgba(192,57,43,0.15)';
