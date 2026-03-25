@@ -7583,6 +7583,28 @@ async function _requestNotificationPermission() {
 
 // Save the OneSignal push subscription player ID to Supabase so the server
 // can send notifications to this device.
+async function _saveOneSignalPlayerIdDirect() {
+  if (!state.supabaseUserId) return;
+  try {
+    const OS = window.OneSignal;
+    if (!OS || !OS.User) { showToast('DEBUG: OS not ready after reload'); return; }
+    showToast('DEBUG: optedIn after reload=' + OS.User.PushSubscription.optedIn);
+    const playerId = OS.User.PushSubscription.id;
+    showToast('DEBUG: playerId=' + (playerId ? playerId.slice(0,8) + '…' : 'null'));
+    if (!playerId) return;
+    const sb = _getSupabaseClient();
+    if (!sb) return;
+    const ua = (navigator.userAgent || '').toLowerCase();
+    const platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
+    await sb.from('onesignal_subscriptions').upsert(
+      { user_id: state.supabaseUserId, onesignal_player_id: playerId, platform },
+      { onConflict: 'user_id,platform' }
+    );
+    showToast('DEBUG: player ID saved ✓');
+    _applyNotifToggleUI();
+  } catch(e) { showToast('DEBUG: error ' + e.message); }
+}
+
 async function _registerOneSignalPlayerId() {
   if (!state.supabaseUserId) { showToast('DEBUG: no supabaseUserId'); return; }
   try {
@@ -19993,11 +20015,7 @@ try {
   // After a OneSignal cache-clear reload, save the player ID once OneSignal is ready
   if (sessionStorage.getItem('ts-save-player-id')) {
     sessionStorage.removeItem('ts-save-player-id');
-    if (_oneSignalInitPromise) {
-      _oneSignalInitPromise.then(function() {
-        setTimeout(_registerOneSignalPlayerId, 2000);
-      });
-    }
+    setTimeout(_saveOneSignalPlayerIdDirect, 3000);
   }
   // Update social notification dot (friend requests, new reactions)
   _updateSocialNotifyDot();
