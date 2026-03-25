@@ -7595,7 +7595,13 @@ async function _registerOneSignalPlayerId() {
     }
     showToast('DEBUG: OS.User=' + (OS && OS.User ? 'ok' : 'missing'));
     if (!OS || !OS.User) return;
-    await OS.User.PushSubscription.optIn();
+    showToast('DEBUG: optIn type=' + typeof OS.User.PushSubscription.optIn);
+    try {
+      await Promise.race([
+        OS.User.PushSubscription.optIn(),
+        new Promise(function(r) { setTimeout(function() { r('timeout'); }, 4000); })
+      ]);
+    } catch(optInErr) { showToast('DEBUG: optIn error=' + optInErr.message); }
     await new Promise(function(r) { setTimeout(r, 2000); });
     const playerId = OS.User.PushSubscription.id;
     showToast('DEBUG: playerId=' + (playerId ? playerId.slice(0,8) + '…' : 'null'));
