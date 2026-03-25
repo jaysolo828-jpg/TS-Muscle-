@@ -7500,7 +7500,7 @@ async function _notifyFriends(title, body, signalId, sendAfter) {
     var _enc = btoa(JSON.stringify(payload)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
     showToast('Sending to ' + subscriptions.length + ' sub(s)');
     fetch('/get-vapid-key?d=' + _enc).then(function(r) {
-      r.text().then(function(t) { showToast('Push result: ' + t.slice(0, 80)); });
+      r.text().then(function(t) { showToast('Push ' + r.status + ': ' + t.slice(0, 70)); });
     }).catch(function(err) { showToast('Notif fetch failed: ' + err.message); });
   } catch(e) { showToast('Push exception: ' + e.message); }
 }
@@ -19948,7 +19948,7 @@ try {
 }
 
 // Version toast
-setTimeout(function() { showToast('App v144 loaded'); }, 1000);
+setTimeout(function() { showToast('App v145 loaded'); }, 1000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
 if (navigator.storage && navigator.storage.persist) {

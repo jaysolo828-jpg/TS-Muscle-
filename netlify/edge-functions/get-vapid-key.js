@@ -87,6 +87,16 @@ async function vapidAuth(endpoint, privB64u, pubB64u, subject) {
 }
 
 export default async function handler(req) {
+  try {
+    return await _handle(req);
+  } catch(e) {
+    return new Response(JSON.stringify({ error: 'handler crash: ' + e.message }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  }
+}
+
+async function _handle(req) {
   const url = new URL(req.url);
   const d   = url.searchParams.get('d');
 
