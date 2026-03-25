@@ -6365,6 +6365,7 @@ async function _onNotifSettingsTap() {
     } catch(e) { return; }
   }
   _applyNotifToggleUI();
+  showToast('registering…');
   _registerOneSignalPlayerId();
 }
 
@@ -7578,7 +7579,7 @@ async function _requestNotificationPermission() {
 
 // Register push subscription with OneSignal and save the player ID to Supabase.
 async function _registerOneSignalPlayerId() {
-  if (!state.supabaseUserId) return;
+  if (!state.supabaseUserId) { showToast('no user id — sign in first'); return; }
   try {
     // Path 1: use OneSignal SDK (handles VAPID key internally after init)
     const sdkDone = await new Promise(function(resolve) {
