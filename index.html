@@ -19260,13 +19260,26 @@ function cancelRestoreDefaults() {
 // ============================================================
 // TOAST
 // ============================================================
+var _toastQueue = [];
+var _toastBusy = false;
 function showToast(msg, type) {
+  _toastQueue.push({ msg, type });
+  if (!_toastBusy) _drainToastQueue();
+}
+function _drainToastQueue() {
+  if (!_toastQueue.length) { _toastBusy = false; return; }
+  _toastBusy = true;
+  const { msg, type } = _toastQueue.shift();
   const toast = document.getElementById('toast');
   toast.textContent = msg;
   toast.classList.remove('error');
   if (type === 'error') toast.classList.add('error');
   toast.classList.add('show');
-  setTimeout(() => { toast.classList.remove('show'); toast.classList.remove('error'); }, 2500);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    toast.classList.remove('error');
+    setTimeout(_drainToastQueue, 300);
+  }, 3500);
 }
 
 
@@ -19935,7 +19948,7 @@ try {
 }
 
 // Version toast
-setTimeout(function() { showToast('App v143 loaded'); }, 1000);
+setTimeout(function() { showToast('App v144 loaded'); }, 1000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
 if (navigator.storage && navigator.storage.persist) {
