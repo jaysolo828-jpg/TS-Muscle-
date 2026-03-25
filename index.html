@@ -7385,9 +7385,11 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
       const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
       const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
       const _emoji = _rxnEmoji[reactionType] || reactionType;
-      var _rxnPayload = { subscriptions: [{ endpoint: sub.push_endpoint, keys: { p256dh: sub.push_p256dh, auth: sub.push_auth } }], title: fromName + ' reacted to your workout', body: 'They gave you a ' + _emoji };
-      var _rxnEnc = btoa(JSON.stringify(_rxnPayload)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-      fetch('/get-vapid-key?d=' + _rxnEnc).catch(function() {});
+      fetch('/.netlify/functions/push', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ to_uid: toUserId, title: fromName + ' reacted to your workout', body: 'They gave you a ' + _emoji }),
+      }).catch(function() {});
     }
   } catch (e) {}
 }
@@ -7462,20 +7464,21 @@ async function _completeWorkoutSignal() {
   } catch(e) {}
 }
 
-// Sends a push notification to all accepted friends via the Netlify edge function.
+// Sends a push notification to all accepted friends via the Netlify Node.js function.
 // signalId is included so friends' notifications carry an action button that can
 // send a reaction back without opening the app (handled in sw.js).
-// sendAfter is an optional ISO 8601 string; when provided OneSignal holds the
-// notification and delivers it at that time (reliable even when screen is locked).
-async function _notifyFriends(title, body, signalId, sendAfter) {
+async function _notifyFriends(title, body, signalId) {
   if (!state.supabaseUserId) { showToast('Push: no user id'); return; }
   try {
     var _p = { uid: state.supabaseUserId, title: title, body: body };
     if (signalId) _p.sid = signalId;
-    var _d = btoa(JSON.stringify(_p)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
     showToast('Sending push...');
     var _timeout = setTimeout(function() { showToast('PUSH TIMED OUT'); }, 15000);
-    fetch('/sn/' + _d).then(function(r) {
+    fetch('/.netlify/functions/push', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(_p),
+    }).then(function(r) {
       clearTimeout(_timeout);
       var status = r.status;
       return r.text().then(function(t) {
@@ -19930,13 +19933,13 @@ try {
   console.error('T&S Muscle init error:', e);
 }
 
-// Version toast + edge function health check
+// Version toast + function health check
 setTimeout(function() {
-  showToast('App v158 loaded');
+  showToast('App v159 loaded');
   setTimeout(function() {
-    fetch('/get-vapid-key', { cache: 'no-store' })
-      .then(function(r) { showToast('Edge functions: ' + r.status); })
-      .catch(function(e) { showToast('Edge err: ' + e.message); });
+    fetch('/.netlify/functions/push', { cache: 'no-store' })
+      .then(function(r) { showToast('Push fn: ' + r.status); })
+      .catch(function(e) { showToast('Push fn err: ' + e.message); });
   }, 1500);
 }, 1000);
 
