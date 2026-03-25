@@ -116,8 +116,9 @@ async function vapidAuth(endpoint, privB64u, pubB64u, subject) {
 }
 
 export default async function handler(req) {
+  // DIAGNOSTIC: confirm edge function is being reached and log actual method
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Edge fn reached but method=' + req.method, { status: 405 });
   }
 
   const pubKey  = Deno.env.get('VAPID_PUBLIC_KEY')  || '';
