@@ -88,15 +88,6 @@ async function vapidAuth(endpoint, privB64u, pubB64u, subject) {
 
 export default async function handler(req) {
   try {
-    return await _handle(req);
-  } catch(e) {
-    return new Response(JSON.stringify({ error: 'crash: ' + e.message }), {
-      status: 200, headers: { 'content-type': 'application/json' },
-    });
-  }
-}
-
-async function _handle(req) {
   const url = new URL(req.url);
 
   const pubKey     = Deno.env.get('VAPID_PUBLIC_KEY')       || '';
@@ -210,6 +201,11 @@ async function _handle(req) {
   return new Response(JSON.stringify({ sent, errors }), {
     status: 200, headers: { 'content-type': 'application/json' },
   });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: 'crash: ' + e.message }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  }
 }
 
 export const config = { path: '/get-vapid-key' };

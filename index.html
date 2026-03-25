@@ -7478,9 +7478,10 @@ async function _notifyFriends(title, body, signalId, sendAfter) {
     var _timeout = setTimeout(function() { showToast('PUSH TIMED OUT'); }, 15000);
     fetch('/get-vapid-key' + params).then(function(r) {
       clearTimeout(_timeout);
-      return r.text();
-    }).then(function(t) {
-      showToast('PUSH DONE: ' + t.slice(0, 70));
+      var status = r.status;
+      return r.text().then(function(t) {
+        showToast('PUSH ' + status + ': ' + t.slice(0, 65));
+      });
     }).catch(function(err) {
       clearTimeout(_timeout);
       showToast('PUSH ERR: ' + err.message);
@@ -19931,7 +19932,7 @@ try {
 }
 
 // Version toast
-setTimeout(function() { showToast('App v147 loaded'); }, 1000);
+setTimeout(function() { showToast('App v148 loaded'); }, 1000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
 if (navigator.storage && navigator.storage.persist) {
