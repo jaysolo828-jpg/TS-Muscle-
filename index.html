@@ -7270,7 +7270,7 @@ async function _openFriendActivity(userId) {
       .select('id, workout_name, started_at, signal_type')
       .eq('user_id', userId)
       .order('started_at', { ascending: false })
-      .limit(3),
+      .limit(1),
     sb.from('reactions')
       .select('signal_id, reaction_type')
       .eq('from_user_id', state.supabaseUserId)
