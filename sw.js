@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v157';
+const CACHE_NAME = 'ts-muscle-v158';
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './manifest.json'];
 
 // On install: precache assets and immediately take over so users always get
@@ -132,7 +132,8 @@ self.addEventListener('fetch', e => {
   const hasExtension = /\.[a-zA-Z0-9]+(\?|$)/.test(url.pathname);
   if (!hasExtension && !isHTML) {
     e.respondWith(
-      fetch(e.request).catch(() => new Response('', { status: 503 }))
+      fetch(new Request(e.request, { cache: 'no-store' }))
+        .catch(() => new Response('', { status: 503 }))
     );
     return;
   }
