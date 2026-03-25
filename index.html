@@ -6809,6 +6809,15 @@ async function _checkSupabaseSession() {
       _updateSupabaseAuthCard();
       _swStoreUserId(session.user.id);
       _requestNotificationPermission();
+      // Refresh display name from DB so notifications show username not email
+      sb.from('users').select('username').eq('id', session.user.id).single()
+        .then(function(res) {
+          var u = res.data?.username;
+          if (u && !u.startsWith('user_') && u !== state.supabaseDisplayName) {
+            state.supabaseDisplayName = u;
+            saveState();
+          }
+        }).catch(function() {});
     }
     _updateSocialNotifyDot();
 
@@ -7520,8 +7529,38 @@ async function _requestNotificationPermission() {
   if (Notification.permission === 'denied') return;
   if (Notification.permission === 'granted') {
     _registerOneSignalPlayerId();
+    return;
   }
-  // permission is 'default' — user taps the toggle in Settings to prompt
+  // permission is 'default' — show opt-in sheet once per session
+  _maybeShowNotifSheet();
+}
+
+function _maybeShowNotifSheet() {
+  if (Notification.permission !== 'default') return;
+  if (sessionStorage.getItem('notifSheetShown')) return;
+  sessionStorage.setItem('notifSheetShown', '1');
+  setTimeout(_showNotifSheet, 1500);
+}
+
+function _showNotifSheet() {
+  if (Notification.permission !== 'default') return;
+  if (document.getElementById('notif-prompt-sheet')) return;
+  const sheet = document.createElement('div');
+  sheet.id = 'notif-prompt-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99998;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">STAY IN THE LOOP</div>
+      <div style="font-family:'Barlow',sans-serif;font-size:15px;color:#ccc;line-height:1.6;margin-bottom:24px;">Get notified when your friends start training. No spam — just real accountability.</div>
+      <button onclick="_enableNotifFromSheet()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;margin-bottom:12px;-webkit-tap-highlight-color:transparent;">ENABLE NOTIFICATIONS</button>
+      <button onclick="document.getElementById('notif-prompt-sheet')?.remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">NOT NOW</button>
+    </div>`;
+  document.body.appendChild(sheet);
+}
+
+async function _enableNotifFromSheet() {
+  document.getElementById('notif-prompt-sheet')?.remove();
+  await _onNotifSettingsTap();
 }
 
 // Register a native PushManager subscription and save endpoint + keys to Supabase.
