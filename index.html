@@ -19935,11 +19935,11 @@ try {
 
 // Version toast + function health check
 setTimeout(function() {
-  showToast('App v160 loaded');
+  showToast('App v161 loaded');
   setTimeout(function() {
-    fetch('/.netlify/functions/push', { cache: 'no-store' })
-      .then(function(r) { showToast('Push fn: ' + r.status); })
-      .catch(function(e) { showToast('Push fn err: ' + e.message); });
+    fetch('/.netlify/functions/hello', { cache: 'no-store' })
+      .then(function(r) { showToast('hello fn: ' + r.status); })
+      .catch(function(e) { showToast('hello fn err: ' + e.message); });
   }, 1500);
 }, 1000);
 
