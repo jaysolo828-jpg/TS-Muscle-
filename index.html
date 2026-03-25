@@ -7521,13 +7521,16 @@ function _initOneSignal() {
   _oneSignalInitPromise = new Promise(function(resolve) {
     window.OneSignalDeferred.push(async function(OneSignal) {
       try {
-        await OneSignal.init({
-          appId: window.ONESIGNAL_APP_ID,
-          serviceWorkerPath: '/sw.js',
-          serviceWorkerParam: { scope: '/' },
-          autoResubscribe: true,
-          notifyButton: { enable: false }
-        });
+        await Promise.race([
+          OneSignal.init({
+            appId: window.ONESIGNAL_APP_ID,
+            serviceWorkerPath: 'sw.js',
+            serviceWorkerParam: { scope: '/' },
+            autoResubscribe: true,
+            notifyButton: { enable: false }
+          }),
+          new Promise(function(r) { setTimeout(r, 5000); })
+        ]);
       } catch(e) {}
       resolve();
     });
