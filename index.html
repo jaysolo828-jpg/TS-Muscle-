@@ -7377,7 +7377,7 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
       const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
       const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
       const _emoji = _rxnEmoji[reactionType] || reactionType;
-      fetch('/send-notification', {
+      fetch('/.netlify/functions/send-notification', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -7495,7 +7495,7 @@ async function _notifyFriends(title, body, signalId, sendAfter) {
       payload.data = { signal_id: signalId, to_user_id: state.supabaseUserId };
     }
 
-    fetch('/send-notification', {
+    fetch('/.netlify/functions/send-notification', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload)
