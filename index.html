@@ -6356,7 +6356,7 @@ function _applyNotifToggleUI() {
 }
 
 async function _onNotifSettingsTap() {
-  showToast('DEBUG: perm=' + (('Notification' in window) ? Notification.permission : 'unsupported'));
+  showToast('DEBUG: perm=' + (('Notification' in window) ? Notification.permission : 'unsupported') + ' OS=' + (typeof window.OneSignal));
   if (!('Notification' in window)) { showToast('Notifications not supported on this device'); return; }
   if (Notification.permission === 'denied') { showToast('Notifications blocked — enable them in your Android settings'); return; }
   // Call native Notification.requestPermission() directly from the tap —
