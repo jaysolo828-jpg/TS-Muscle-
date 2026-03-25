@@ -7518,19 +7518,22 @@ async function _notifyFriends(title, body, signalId, sendAfter) {
 
 // Initialise OneSignal with our app ID (served via Netlify edge function at runtime).
 // Called once during app startup.
+var _oneSignalInitPromise = null;
 function _initOneSignal() {
   if (!window.ONESIGNAL_APP_ID) return;
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  window.OneSignalDeferred.push(function(OneSignal) {
-    OneSignal.init({
-      appId: window.ONESIGNAL_APP_ID,
-      // Point OneSignal at our existing service worker so its push subscription
-      // management coexists with our caching and notification-click handlers.
-      serviceWorkerPath: '/sw.js',
-      serviceWorkerParam: { scope: '/' },
-      // Don't auto-prompt — we prompt after sign-in via _requestNotificationPermission()
-      autoResubscribe: true,
-      notifyButton: { enable: false }
+  _oneSignalInitPromise = new Promise(function(resolve) {
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      try {
+        await OneSignal.init({
+          appId: window.ONESIGNAL_APP_ID,
+          serviceWorkerPath: '/sw.js',
+          serviceWorkerParam: { scope: '/' },
+          autoResubscribe: true,
+          notifyButton: { enable: false }
+        });
+      } catch(e) {}
+      resolve();
     });
   });
 }
@@ -7595,6 +7598,7 @@ async function _registerOneSignalPlayerId() {
     }
     showToast('DEBUG: OS.User=' + (OS && OS.User ? 'ok' : 'missing'));
     if (!OS || !OS.User) return;
+    if (_oneSignalInitPromise) { showToast('DEBUG: waiting for init…'); await _oneSignalInitPromise; }
     showToast('DEBUG: optedIn=' + OS.User.PushSubscription.optedIn);
     try {
       const optInResult = await Promise.race([
