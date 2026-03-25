@@ -7387,7 +7387,7 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
       const _emoji = _rxnEmoji[reactionType] || reactionType;
       var _rxnPayload = { subscriptions: [{ endpoint: sub.push_endpoint, keys: { p256dh: sub.push_p256dh, auth: sub.push_auth } }], title: fromName + ' reacted to your workout', body: 'They gave you a ' + _emoji };
       var _rxnEnc = btoa(JSON.stringify(_rxnPayload)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-      fetch('/push-send?d=' + _rxnEnc).catch(function() {});
+      fetch('/npush?d=' + _rxnEnc).catch(function() {});
     }
   } catch (e) {}
 }
@@ -7498,8 +7498,8 @@ async function _notifyFriends(title, body, signalId, sendAfter) {
     }
 
     var _enc = btoa(JSON.stringify(payload)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-    fetch('/push-send?d=' + _enc).then(function(r) {
-      if (!r.ok) r.text().then(function(t) { console.error('push-send error', r.status, t); showToast('Notif error ' + r.status + ': ' + t.slice(0,60)); });
+    fetch('/npush?d=' + _enc).then(function(r) {
+      if (!r.ok) r.text().then(function(t) { console.error('npush error', r.status, t); showToast('Notif error ' + r.status + ': ' + t.slice(0,60)); });
     }).catch(function(err) { console.error('push-send fetch failed', err); showToast('Notif fetch failed: ' + err.message); });
   } catch(e) { console.error('_notifyFriends error', e); }
 }
@@ -19935,9 +19935,9 @@ try {
 
 // Version + push test toast — fires on load so user can confirm latest code is running
 setTimeout(function() {
-  showToast('App v131 loaded');
+  showToast('App v135 loaded');
   setTimeout(function() {
-    fetch('/push-send?d=' + btoa('{"test":1}'))
+    fetch('/npush?d=' + btoa('{"test":1}'))
       .then(function(r) { r.text().then(function(t) { showToast('Push: ' + r.status + ' ' + t.slice(0, 50)); }); })
       .catch(function(e) { showToast('Push err: ' + e.message); });
   }, 2000);
