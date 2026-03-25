@@ -19944,10 +19944,12 @@ try {
   console.error('T&S Muscle init error:', e);
 }
 
-// Test GET reachability of push function on load
-fetch('/.netlify/functions/push').then(function(r) {
-  r.text().then(function(t) { console.log('push fn GET test:', r.status, t); });
-}).catch(function(e) { console.log('push fn GET test failed:', e.message); });
+// Test push function reachability on load — shows toast so result is visible on phone
+setTimeout(function() {
+  fetch('/.netlify/functions/push', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"test":1}' })
+    .then(function(r) { r.text().then(function(t) { showToast('Push fn: ' + r.status + ' ' + t.slice(0, 40)); }); })
+    .catch(function(e) { showToast('Push fn err: ' + e.message); });
+}, 3000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
 if (navigator.storage && navigator.storage.persist) {
