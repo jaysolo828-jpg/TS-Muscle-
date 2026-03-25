@@ -26,9 +26,6 @@
   function = "onesignal-config"
   path = "/onesignal-config.js"
 
-[[edge_functions]]
-  function = "send-notification"
-  path = "/send-notification"
 
 [[edge_functions]]
   function = "record-reaction"
@@ -45,3 +42,9 @@
 [[edge_functions]]
   function = "get-vapid-key"
   path = "/get-vapid-key"
+
+[[redirects]]
+  from = "/send-notification"
+  to = "/.netlify/functions/send-notification"
+  status = 200
+  force = true
