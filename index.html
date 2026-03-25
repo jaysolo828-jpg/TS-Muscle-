@@ -7585,7 +7585,7 @@ async function _registerOneSignalPlayerId() {
     const sdkDone = await new Promise(function(resolve) {
       if (!window.OneSignalDeferred) { resolve(false); return; }
       var settled = false;
-      var t = setTimeout(function() { if (!settled) { settled = true; resolve(false); } }, 10000);
+      var t = setTimeout(function() { if (!settled) { settled = true; showToast('sdk timeout — not loaded'); resolve(false); } }, 10000);
       window.OneSignalDeferred.push(async function(OneSignal) {
         try {
           await OneSignal.User.PushSubscription.optIn();
@@ -7603,7 +7603,8 @@ async function _registerOneSignalPlayerId() {
           } else {
             if (!settled) { settled = true; clearTimeout(t); resolve(false); }
           }
-        } catch(_) {
+        } catch(e) {
+          showToast('sdk err: ' + (e && e.message ? e.message.slice(0,40) : 'unknown'));
           if (!settled) { settled = true; clearTimeout(t); resolve(false); }
         }
       });
