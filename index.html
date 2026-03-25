@@ -7524,10 +7524,7 @@ async function _registerOneSignalPlayerId() {
       new Promise(function(_, rej) { setTimeout(function() { rej(new Error('sw timeout')); }, 8000); })
     ]);
 
-    var vapidResp = await fetch('/get-vapid-key?_=' + Date.now());
-    if (!vapidResp.ok) { showToast('vapid status: ' + vapidResp.status); return; }
-    var vapidData = await vapidResp.json().catch(function() { return {}; });
-    var vapidKey = vapidData.vapid_public_key;
+    var vapidKey = window.VAPID_PUBLIC_KEY || '';
     if (!vapidKey) { showToast('Push not configured — contact support'); return; }
 
     var existing = await reg.pushManager.getSubscription();
