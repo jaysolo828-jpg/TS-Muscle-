@@ -7426,7 +7426,7 @@ async function _sendWorkoutSignal(dayName) {
       started_at:   new Date().toISOString(),
       signal_type:  'started'
     }).select('id').single();
-    if (error || !data) return;
+    if (error || !data) { showToast('Signal insert failed: ' + (error?.message || 'no data')); return; }
     _currentSignalId = data.id;
     // Schedule the "is training" notification for 1 minute from now via
     // OneSignal's server-side send_after — this fires reliably even when
@@ -19938,7 +19938,7 @@ try {
 
 // Version + push test toast — fires on load so user can confirm latest code is running
 setTimeout(function() {
-  showToast('App v140 loaded');
+  showToast('App v141 loaded');
   setTimeout(function() {
     fetch('/get-vapid-key?d=' + btoa('{"test":1}'))
       .then(function(r) { r.text().then(function(t) { showToast('Push: ' + r.status + ' ' + t.slice(0, 50)); }); })
