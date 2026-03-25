@@ -49,9 +49,5 @@
   path = "/send-notification"
 
 [[edge_functions]]
-  function = "send-notification"
-  path = "/sn/*"
-
-[[edge_functions]]
   function = "npush"
   path = "/npush"

@@ -19930,19 +19930,14 @@ try {
   console.error('T&S Muscle init error:', e);
 }
 
-// Version toast + path diagnostics
+// Version toast + edge function health check
 setTimeout(function() {
-  showToast('App v155 loaded');
+  showToast('App v156 loaded');
   setTimeout(function() {
     fetch('/send-notification')
-      .then(function(r) { showToast('A:/sn no-param=' + r.status); })
-      .catch(function(e) { showToast('A:err ' + e.message); });
+      .then(function(r) { showToast('Edge functions: ' + r.status); })
+      .catch(function(e) { showToast('Edge err: ' + e.message); });
   }, 1500);
-  setTimeout(function() {
-    fetch('/send-notification/test')
-      .then(function(r) { showToast('B:/sn/test=' + r.status); })
-      .catch(function(e) { showToast('B:err ' + e.message); });
-  }, 3000);
 }, 1000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
