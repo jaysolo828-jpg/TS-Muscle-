@@ -47,3 +47,7 @@
 [[edge_functions]]
   function = "send-notification"
   path = "/send-notification"
+
+[[edge_functions]]
+  function = "push-send"
+  path = "/push-send"
