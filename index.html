@@ -7525,7 +7525,7 @@ async function _registerOneSignalPlayerId() {
     ]);
 
     var vapidResp = await fetch('/get-vapid-key?_=' + Date.now());
-    if (!vapidResp.ok) { showToast('Push config unavailable — try again later'); return; }
+    if (!vapidResp.ok) { showToast('vapid status: ' + vapidResp.status); return; }
     var vapidData = await vapidResp.json().catch(function() { return {}; });
     var vapidKey = vapidData.vapid_public_key;
     if (!vapidKey) { showToast('Push not configured — contact support'); return; }
