@@ -7385,10 +7385,9 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
       const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
       const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
       const _emoji = _rxnEmoji[reactionType] || reactionType;
-      fetch('/.netlify/functions/push', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ to_uid: toUserId, title: fromName + ' reacted to your workout', body: 'They gave you a ' + _emoji }),
+      var _rxnSb = _getSupabaseClient();
+      _rxnSb.functions.invoke('send-push', {
+        body: { to_uid: toUserId, title: fromName + ' reacted to your workout', body: 'They gave you a ' + _emoji }
       }).catch(function() {});
     }
   } catch (e) {}
@@ -7464,7 +7463,7 @@ async function _completeWorkoutSignal() {
   } catch(e) {}
 }
 
-// Sends a push notification to all accepted friends via the Netlify Node.js function.
+// Sends a push notification to all accepted friends via the Supabase Edge Function.
 // signalId is included so friends' notifications carry an action button that can
 // send a reaction back without opening the app (handled in sw.js).
 async function _notifyFriends(title, body, signalId) {
@@ -7474,16 +7473,12 @@ async function _notifyFriends(title, body, signalId) {
     if (signalId) _p.sid = signalId;
     showToast('Sending push...');
     var _timeout = setTimeout(function() { showToast('PUSH TIMED OUT'); }, 15000);
-    fetch('/.netlify/functions/push', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(_p),
-    }).then(function(r) {
+    var _sb = _getSupabaseClient();
+    _sb.functions.invoke('send-push', { body: _p }).then(function(result) {
       clearTimeout(_timeout);
-      var status = r.status;
-      return r.text().then(function(t) {
-        showToast('PUSH ' + status + ': ' + t.slice(0, 65));
-      });
+      if (result.error) { showToast('PUSH ERR: ' + result.error.message); return; }
+      var d = result.data;
+      showToast('PUSH OK: sent=' + (d && d.sent != null ? d.sent : '?'));
     }).catch(function(err) {
       clearTimeout(_timeout);
       showToast('PUSH ERR: ' + err.message);
@@ -19933,15 +19928,8 @@ try {
   console.error('T&S Muscle init error:', e);
 }
 
-// Version toast + function health check
-setTimeout(function() {
-  showToast('App v162 loaded');
-  setTimeout(function() {
-    fetch('/.netlify/functions/hello', { cache: 'no-store' })
-      .then(function(r) { showToast('hello fn: ' + r.status); })
-      .catch(function(e) { showToast('hello fn err: ' + e.message); });
-  }, 1500);
-}, 1000);
+// Version toast
+setTimeout(function() { showToast('App v163 loaded'); }, 1000);
 
 // ── Request persistent storage so Android/Chrome won't wipe data on restart ──
 if (navigator.storage && navigator.storage.persist) {
