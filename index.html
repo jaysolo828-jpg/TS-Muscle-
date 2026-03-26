@@ -15445,9 +15445,9 @@ function calcVolumeTrend(currentEntry) {
   const diff = curr - last;
   const pct = Math.round(Math.abs(diff / last) * 100);
 
-  if (diff > last * 0.03) {
+  if (diff > last * 0.01) {
     return { trend: 'up', pct, message: 'Training volume increased.', sub: 'Progressive overload is building.' };
-  } else if (diff < -last * 0.03) {
+  } else if (diff < -last * 0.01) {
     return { trend: 'down', pct, message: 'Lighter session today.', sub: 'Recovery days support long-term strength.' };
   } else {
     return { trend: 'same', pct: 0, message: 'Volume maintained.', sub: 'Consistency keeps progress steady.' };
