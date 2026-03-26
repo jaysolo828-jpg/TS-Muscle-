@@ -1965,6 +1965,21 @@
   @keyframes rippleOut {
     to { transform: scale(5); opacity: 0; }
   }
+  @keyframes repGoalDotBlink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+  }
+  .rep-goal-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+    margin-left: 4px;
+    animation: repGoalDotBlink 1.2s ease-in-out infinite;
+  }
   .ripple {
     position: absolute;
     border-radius: 50%;
@@ -10700,7 +10715,7 @@ function renderSession() {
       <div class="set-labels">
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
-        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:${_goalColor};font-size:12px;font-weight:700;cursor:pointer;border-bottom:1px dashed ${_goalColor}70;padding-bottom:1px;display:inline-block;box-shadow:0 0 10px ${_goalColor}99,0 0 20px ${_goalColor}55;border-radius:3px;padding:1px 5px;" title="Tap to change · hit ${_repTop} reps to trigger weight increase">GOAL: ${_initRepDisplay}</span></div>
+        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" data-goal-color="${_goalColor}" style="color:${_goalColor};font-size:12px;font-weight:700;cursor:pointer;border-bottom:1px dashed ${_goalColor}70;padding-bottom:1px;" title="Tap to change · hit ${_repTop} reps to trigger weight increase">GOAL: ${_initRepDisplay}</span></div>
         <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red-text);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
         <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
       </div>
@@ -12782,10 +12797,40 @@ function getContextualRepTarget(exId) {
 function updateRepGoalLabel(exId) {
   const el = document.getElementById(`rep-goal-label-${exId}`);
   if (!el) return;
+
+  // Clear blinking dot — user just logged a set, dot is acknowledged
+  document.getElementById(`rep-goal-dot-${exId}`)?.remove();
+
   const result = getContextualRepTarget(exId);
   if (!result) return; // no data yet — keep static range as rendered
+
+  const oldLabel = el.textContent;
   el.textContent = result.label;
   el.title = result.title;
+
+  // Only trigger visual feedback when the label actually changed
+  if (result.label !== oldLabel) {
+    const color = el.dataset.goalColor || 'var(--red)';
+
+    // Glow: flash on then fade out over 3.5s via CSS transition
+    el.style.transition = 'none';
+    el.style.boxShadow = `0 0 8px ${color}cc, 0 0 18px ${color}66`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.transition = 'box-shadow 3.5s ease-out';
+      el.style.boxShadow = 'none';
+    }));
+    el.addEventListener('transitionend', () => {
+      el.style.transition = '';
+      el.style.boxShadow = '';
+    }, { once: true });
+
+    // Blinking dot — persists until next set is logged
+    const dot = document.createElement('span');
+    dot.id = `rep-goal-dot-${exId}`;
+    dot.className = 'rep-goal-dot';
+    dot.style.backgroundColor = color;
+    el.insertAdjacentElement('afterend', dot);
+  }
 }
 
 // ============================================================
