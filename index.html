@@ -5726,8 +5726,15 @@ function _updatePendingManualAdj(exId) {
   if (!refWeight) refWeight = _getLastLoggedWeight(exId, dayId);
   if (!refWeight) return;
 
-  // Use the LAST fully-complete set's weight as the representative weight
-  const usedWeight = parseFloat(fullySets[fullySets.length - 1].weight) || 0;
+  // Use the most frequently logged weight (mode) as the representative weight.
+  // This prevents a single outlier set from triggering the adj period when
+  // most sets were performed at the suggested weight.
+  // On a tie, the higher weight wins (more conservative signal).
+  const _wCounts = {};
+  fullySets.forEach(s => { const w = parseFloat(s.weight) || 0; if (w) _wCounts[w] = (_wCounts[w] || 0) + 1; });
+  const usedWeight = parseFloat(
+    Object.keys(_wCounts).sort((a, b) => _wCounts[b] - _wCounts[a] || b - a)[0]
+  ) || 0;
   if (!usedWeight) return;
 
   if (usedWeight === refWeight) {
@@ -12718,15 +12725,40 @@ function getContextualRepTarget(exId) {
     return `${Math.max(minReps, t - 1)}-${t}`;
   }
 
-  // Manual adjustment period → lower end range regardless of week band
-  const _hasStoredAdj = !!_getManualAdj(exId, activeSession.dayId);
-  const _hasPendingAdj = !!(activeSession.pendingManualAdj?.[exId]);
-  if (_hasStoredAdj || _hasPendingAdj) {
-    const adjRange = minReps < maxReps ? `${minReps}-${minReps + 1}` : `${Math.max(1, minReps - 1)}-${minReps}`;
-    return {
-      label: `GOAL: ${adjRange}`,
-      title: `Adapting to new weight. Build reps back up · hit ${maxReps} to trigger weight increase`
-    };
+  // Manual adjustment period — direction-aware range with early-exit on strong performance
+  const _storedAdj  = _getManualAdj(exId, activeSession.dayId);
+  const _pendingAdj = activeSession.pendingManualAdj?.[exId];
+  if (_storedAdj || _pendingAdj) {
+    const _adjDirection = (_storedAdj || _pendingAdj)?.direction;
+
+    // Early exit: if the user has logged 2+ sets with RPE ≤ 7 and reps on target,
+    // they're clearly adapting well — skip the restricted range and fall through to
+    // normal RPE-based logic so the label reflects actual performance.
+    const _doneSetsRpe = (activeSession.sets[exId] || [])
+      .filter(s => s.done && s.rpe != null && s.rpe !== '' && parseInt(s.reps) > 0);
+    const _adaptingWell = _doneSetsRpe.length >= 2 && (() => {
+      const recent = _doneSetsRpe.slice(-2);
+      const avgRpe = recent.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / 2;
+      const lastReps = parseInt(_doneSetsRpe[_doneSetsRpe.length - 1].reps) || 0;
+      return avgRpe <= 7 && lastReps >= bandTarget;
+    })();
+
+    if (!_adaptingWell) {
+      // 'down': user went lighter — full band range is appropriate, no further restriction
+      if (_adjDirection === 'down') {
+        return {
+          label: `GOAL: ${bandRange}`,
+          title: `Adapting to lighter weight · hit ${maxReps} to trigger weight increase`
+        };
+      }
+      // 'up' (or unknown): user went heavier — start at lower end and build reps back up
+      const adjRange = minReps < maxReps ? `${minReps}-${minReps + 1}` : `${Math.max(1, minReps - 1)}-${minReps}`;
+      return {
+        label: `GOAL: ${adjRange}`,
+        title: `Adapting to new weight. Build reps back up · hit ${maxReps} to trigger weight increase`
+      };
+    }
+    // Early exit: fall through to normal RPE-based logic below
   }
 
   // If the training goal was changed after this session started, discard any
@@ -13752,9 +13784,11 @@ function saveExInfoWeight() {
     .filter(d => d.exercises.some(e => e.id === exId))
     .map(d => d.id);
 
-  // Record old weight for direction comparison
+  // Record old weight for direction comparison.
+  // First-time weight set (oldW === 0) uses 'down' to suppress algorithm suggestions
+  // for 2 sessions while the user establishes their rep baseline at the new weight.
   const oldW = state.startingWeights?.[exId] || 0;
-  const direction = oldW > 0 ? (rounded > oldW ? 'up' : rounded < oldW ? 'down' : null) : null;
+  const direction = oldW > 0 ? (rounded > oldW ? 'up' : rounded < oldW ? 'down' : null) : 'down';
 
   // Update starting weight
   if (!state.startingWeights) state.startingWeights = {};
@@ -13900,6 +13934,16 @@ function discardSession() {
   });
   _lsRemove('ts-muscle-paused');
   _idbSet('ts-muscle-paused', null);
+  // Tick adjustment periods for any exercise where the user actually logged sets,
+  // even though the session is being discarded. Physical adaptation still occurred.
+  if (activeSession) {
+    const _workedExIds = Object.keys(activeSession.sets || {}).filter(exId =>
+      (activeSession.sets[exId] || []).some(s =>
+        s.done && parseFloat(s.weight) > 0 && parseInt(s.reps) > 0
+      )
+    );
+    if (_workedExIds.length) _tickManualAdjPeriods(activeSession.dayId, _workedExIds);
+  }
   activeSession = null;
   recalcPRsFromHistory();
   saveState();
