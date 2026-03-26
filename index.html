@@ -6611,10 +6611,9 @@ async function _onSupabaseSignIn(user) {
   const sb = _getSupabaseClient();
   if (!sb || !user) return;
 
-  // Persist user ID and display name
+  // Persist user ID — don't set supabaseDisplayName from email/metadata,
+  // only ever use the username from the DB (set below after the DB query).
   state.supabaseUserId = user.id;
-  const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || '';
-  state.supabaseDisplayName = rawName;
   if (!state.supabaseAvatarColor) state.supabaseAvatarColor = '#C0392B';
   state.supabaseDismissed = false;
 
@@ -7433,7 +7432,7 @@ async function _sendWorkoutSignal(dayName) {
   if (!state.supabaseUserId) return;
   const sb = _getSupabaseClient();
   if (!sb) return;
-  const displayName = state.supabaseDisplayName || state.displayName || 'Someone';
+  const displayName = state.supabaseDisplayName || 'Someone';
   try {
     const { data, error } = await sb.from('workout_signals').insert({
       user_id:      state.supabaseUserId,
@@ -7464,7 +7463,7 @@ async function _completeWorkoutSignal() {
   if (!signalId || !state.supabaseUserId) return;
   const sb = _getSupabaseClient();
   if (!sb) return;
-  const displayName = state.supabaseDisplayName || state.displayName || 'Someone';
+  const displayName = state.supabaseDisplayName || 'Someone';
   try {
     await sb.from('workout_signals').update({
       completed_at: new Date().toISOString(),
