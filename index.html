@@ -16606,7 +16606,7 @@ function renderHistory() {
     if (thisWk.length > 0 || lastWk.length > 0) {
       const thisSt = groupStats(thisWk);
       const lastSt = groupStats(lastWk);
-      const volDelta = lastSt.volume > 0 ? Math.round((thisSt.volume - lastSt.volume) / lastSt.volume * 100) : null;
+      const volDelta = lastSt.volume > 0 ? parseFloat(((thisSt.volume - lastSt.volume) / lastSt.volume * 100).toFixed(1)) : null;
       const deltaColor = volDelta !== null ? (volDelta >= 0 ? '#50c882' : '#ff6b6b') : 'var(--gray)';
       const fmtVol = v => v >= 1000 ? `${Math.round(v / 1000)}k` : v > 0 ? String(v) : '—';
 
