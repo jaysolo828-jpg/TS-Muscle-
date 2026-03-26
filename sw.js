@@ -1,4 +1,5 @@
-const CACHE_NAME = 'ts-muscle-v183';
+const CACHE_NAME = 'ts-muscle-v184';
+const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './notif-icon.png', './manifest.json'];
 
 // On install: precache assets and immediately take over so users always get
@@ -36,8 +37,8 @@ self.addEventListener('push', function(event) {
   var title = data.title || 'T&S Muscle';
   var options = {
     body: data.body || '',
-    icon: self.location.origin + '/notif-icon.png',
-    badge: self.location.origin + '/icon-192.png',
+    icon: _SW_BASE + 'notif-icon.png',
+    badge: _SW_BASE + 'icon-192.png',
     data: data.data || {},
     requireInteraction: false,
   };
