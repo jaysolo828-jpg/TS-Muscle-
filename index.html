@@ -10700,7 +10700,7 @@ function renderSession() {
       <div class="set-labels">
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
-        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:${_goalColor};font-size:12px;font-weight:700;cursor:pointer;border-bottom:1px dashed ${_goalColor}70;padding-bottom:1px;" title="Tap to change · hit ${_repTop} reps to trigger weight increase">GOAL: ${_initRepDisplay}</span></div>
+        <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" style="color:${_goalColor};font-size:12px;font-weight:700;cursor:pointer;border-bottom:1px dashed ${_goalColor}70;padding-bottom:1px;display:inline-block;box-shadow:0 0 10px ${_goalColor}99,0 0 20px ${_goalColor}55;border-radius:3px;padding:1px 5px;" title="Tap to change · hit ${_repTop} reps to trigger weight increase">GOAL: ${_initRepDisplay}</span></div>
         <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red-text);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
         <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
       </div>
