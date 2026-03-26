@@ -5979,6 +5979,10 @@ function getCycleWeekBandRepTarget(exId) {
   // Test week: no rep tightening — user is testing max effort, not following a band target.
   // Guard on week 1 so a dismissed review modal never permanently blocks week 2+.
   if (state.testWeekComplete === false && (state.weekCount || 1) <= 1) return minReps;
+  // Narrow ranges (span ≤ 1) have no room for week-band tightening — the formula
+  // would push the target straight to the top of the range, causing the bottom of
+  // a displayed "13-14" goal to always fail. Just use minReps.
+  if (span <= 1) return minReps;
   const thirdW = Math.floor(span / 3);
   if (band === '1-2') return minReps;
   if (band === '3-4') return minReps + thirdW + 1;
