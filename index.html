@@ -7000,6 +7000,7 @@ function _avatarHtml(displayName, avatarColor, size) {
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:${Math.round(size*0.5)}px;color:${textColor};">${escapeHtml(letter)}</div>`;
 }
 let _currentSignalId   = null; // UUID of the active workout signal row in Supabase
+let _notifyFriendsTimer = null; // setTimeout ID for the 5-min delayed start notification
 
 async function _renderFriendsSection() {
   const container = document.getElementById('social-modal-content');
@@ -7443,18 +7444,21 @@ async function _sendWorkoutSignal(dayName) {
     if (error || !data) return;
     _currentSignalId = data.id;
     const signalId   = data.id;
-    const sendAfterTs = new Date(Date.now() + 1 * 60 * 1000).toISOString();
-    _notifyFriends(
-      displayName + ' is training',
-      'They\'re in the gym right now. Go hype them up.',
-      signalId,
-      sendAfterTs
-    );
-  } catch(e) { showToast('Signal exception: ' + e.message); }
+    clearTimeout(_notifyFriendsTimer);
+    _notifyFriendsTimer = setTimeout(function() {
+      _notifyFriends(
+        displayName + ' is in the gym',
+        'They\'re in the gym right now. Go hype them up.',
+        signalId
+      );
+    }, 5 * 60 * 1000);
+  } catch(e) {}
 }
 
 // Called when a session is saved — updates the signal row and notifies friends.
 async function _completeWorkoutSignal() {
+  clearTimeout(_notifyFriendsTimer);
+  _notifyFriendsTimer = null;
   const signalId = _currentSignalId;
   _currentSignalId = null;
   if (!signalId || !state.supabaseUserId) return;
@@ -7467,7 +7471,7 @@ async function _completeWorkoutSignal() {
       signal_type:  'completed'
     }).eq('id', signalId).eq('user_id', state.supabaseUserId);
     _notifyFriends(
-      displayName + ' finished training',
+      displayName + ' finished',
       'They put in the work. Go show love.',
       signalId
     );
