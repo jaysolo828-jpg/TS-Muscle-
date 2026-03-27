@@ -6938,99 +6938,170 @@ async function _confirmAvatarColor() {
 
 // ── Profile Photo Upload ──────────────────────────────────────────────────────
 
+var _cropState = { img: null, panX: 0, panY: 0, scale: 1, minScale: 1, viewSize: 240, _t: null, _d: null, _s: null };
+
 function _showPhotoUploadSheet() {
   const existing = document.getElementById('photo-upload-sheet');
   if (existing) existing.remove();
+  _cropState.img = null;
 
   const hasPhoto = !!state.supabaseAvatarUrl;
-  const avatarPreview = hasPhoto
-    ? `<img id="photo-preview-img" src="${escapeHtml(state.supabaseAvatarUrl)}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #C0392B;">`
-    : `<div id="photo-preview-img" style="width:90px;height:90px;border-radius:50%;background:${state.supabaseAvatarColor||'#C0392B'};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:40px;color:#fff;">${escapeHtml((state.supabaseDisplayName||'?').charAt(0).toUpperCase())}</div>`;
-
   const sheet = document.createElement('div');
   sheet.id = 'photo-upload-sheet';
   sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
   sheet.innerHTML = `
-    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;">
-      <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:20px;">YOUR PHOTO</div>
-      <div style="display:flex;justify-content:center;margin-bottom:24px;">
-        ${avatarPreview}
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;border-top:2px solid #C0392B;">
+      <div id="photo-sheet-inner" style="padding:28px 24px calc(40px + env(safe-area-inset-bottom));">
+        <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:20px;">YOUR PHOTO</div>
+        <div style="display:flex;justify-content:center;margin-bottom:24px;">
+          ${hasPhoto
+            ? `<img src="${escapeHtml(state.supabaseAvatarUrl)}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #C0392B;">`
+            : `<div style="width:90px;height:90px;border-radius:50%;background:${state.supabaseAvatarColor||'#C0392B'};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:40px;color:#fff;">${escapeHtml((state.supabaseDisplayName||'?').charAt(0).toUpperCase())}</div>`}
+        </div>
+        <input type="file" id="photo-file-input" accept="image/*" style="display:none;" onchange="_onPhotoFileSelected(this)">
+        <button onclick="document.getElementById('photo-file-input').click()" style="width:100%;background:transparent;border:2px solid #C0392B;color:#C0392B;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;">CHOOSE PHOTO</button>
+        ${hasPhoto ? `<button onclick="_removeProfilePhoto()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:4px;">REMOVE PHOTO</button>` : ''}
+        <button onclick="document.getElementById('photo-upload-sheet')?.remove()" style="width:100%;background:none;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
       </div>
-      <input type="file" id="photo-file-input" accept="image/*" style="display:none;" onchange="_onPhotoFileSelected(this)">
-      <button onclick="document.getElementById('photo-file-input').click()" style="width:100%;background:transparent;border:2px solid #C0392B;color:#C0392B;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;">CHOOSE PHOTO</button>
-      <button id="photo-save-btn" onclick="_saveProfilePhoto()" style="display:none;width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;">SAVE PHOTO</button>
-      ${hasPhoto ? `<button onclick="_removeProfilePhoto()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:4px;">REMOVE PHOTO</button>` : ''}
-      <button onclick="document.getElementById('photo-upload-sheet')?.remove()" style="width:100%;background:none;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
     </div>`;
   document.body.appendChild(sheet);
   sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
 }
 
-let _pendingPhotoBlob = null;
-
 function _onPhotoFileSelected(input) {
   const file = input.files?.[0];
   if (!file) return;
-  _resizeImageToSquare(file, 512, 0.88).then(function(blob) {
-    _pendingPhotoBlob = blob;
-    const url = URL.createObjectURL(blob);
-    const preview = document.getElementById('photo-preview-img');
-    if (preview) {
-      const img = document.createElement('img');
-      img.id = 'photo-preview-img';
-      img.src = url;
-      img.style.cssText = 'width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #C0392B;';
-      preview.replaceWith(img);
+  const img = new Image();
+  const objUrl = URL.createObjectURL(file);
+  img.onload = function() {
+    const vs = _cropState.viewSize;
+    const minScale = vs / Math.min(img.naturalWidth, img.naturalHeight);
+    _cropState.img = img;
+    _cropState.scale = minScale;
+    _cropState.minScale = minScale;
+    _cropState.panX = 0;
+    _cropState.panY = 0;
+
+    const scaledW = img.naturalWidth * minScale;
+    const scaledH = img.naturalHeight * minScale;
+    const L = vs/2 - scaledW/2;
+    const T = vs/2 - scaledH/2;
+
+    const inner = document.getElementById('photo-sheet-inner');
+    if (!inner) return;
+    inner.innerHTML = `
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:4px;">DRAG TO REPOSITION</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;margin-bottom:16px;text-transform:uppercase;">Pinch to zoom</div>
+      <div style="display:flex;justify-content:center;margin-bottom:20px;">
+        <div id="crop-vp" style="width:${vs}px;height:${vs}px;border-radius:50%;overflow:hidden;position:relative;border:3px solid #C0392B;touch-action:none;flex-shrink:0;background:#000;">
+          <img id="crop-img" src="${objUrl}" style="position:absolute;width:${scaledW}px;height:${scaledH}px;left:${L}px;top:${T}px;touch-action:none;user-select:none;pointer-events:none;will-change:left,top,width,height;">
+        </div>
+      </div>
+      <input type="file" id="photo-file-input" accept="image/*" style="display:none;" onchange="_onPhotoFileSelected(this)">
+      <button id="crop-save-btn" onclick="_saveProfilePhoto()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;">SAVE PHOTO</button>
+      <button onclick="document.getElementById('photo-file-input').click()" style="width:100%;background:transparent;border:1px solid #333;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:12px;border-radius:12px;cursor:pointer;margin-bottom:8px;-webkit-tap-highlight-color:transparent;">CHOOSE DIFFERENT</button>
+      <button onclick="document.getElementById('photo-upload-sheet')?.remove()" style="width:100%;background:none;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
+    `;
+    inner.style.padding = '24px 24px calc(32px + env(safe-area-inset-bottom))';
+
+    const vp = document.getElementById('crop-vp');
+    if (vp) {
+      vp.addEventListener('touchstart',  _cropTS, { passive: false });
+      vp.addEventListener('touchmove',   _cropTM, { passive: false });
+      vp.addEventListener('touchend',    _cropTE, { passive: false });
     }
-    const saveBtn = document.getElementById('photo-save-btn');
-    if (saveBtn) saveBtn.style.display = '';
-  });
+  };
+  img.src = objUrl;
 }
 
-function _resizeImageToSquare(file, size, quality) {
-  return new Promise(function(resolve) {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      const srcSize = Math.min(img.width, img.height);
-      const sx = (img.width - srcSize) / 2;
-      const sy = (img.height - srcSize) / 2;
-      ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, size, size);
-      URL.revokeObjectURL(objectUrl);
-      canvas.toBlob(resolve, 'image/jpeg', quality);
-    };
-    img.src = objectUrl;
-  });
+function _cropTS(e) {
+  e.preventDefault();
+  if (e.touches.length === 1) {
+    _cropState._t = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    _cropState._d = null;
+  } else if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    _cropState._d = Math.sqrt(dx*dx + dy*dy);
+    _cropState._s = _cropState.scale;
+    _cropState._t = null;
+  }
+}
+
+function _cropTM(e) {
+  e.preventDefault();
+  if (e.touches.length === 1 && _cropState._t) {
+    _cropState.panX += e.touches[0].clientX - _cropState._t.x;
+    _cropState.panY += e.touches[0].clientY - _cropState._t.y;
+    _cropState._t = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    _clampCrop();
+    _drawCrop();
+  } else if (e.touches.length === 2 && _cropState._d !== null) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const nd = Math.sqrt(dx*dx + dy*dy);
+    _cropState.scale = Math.max(_cropState.minScale, Math.min(_cropState._s * (nd / _cropState._d), _cropState.minScale * 4));
+    _clampCrop();
+    _drawCrop();
+  }
+}
+
+function _cropTE(e) {
+  if (e.touches.length === 0) { _cropState._t = null; _cropState._d = null; }
+  else if (e.touches.length === 1) { _cropState._t = { x: e.touches[0].clientX, y: e.touches[0].clientY }; _cropState._d = null; }
+}
+
+function _clampCrop() {
+  const { img, scale, viewSize: vs } = _cropState;
+  if (!img) return;
+  const mX = Math.max(0, (img.naturalWidth  * scale - vs) / 2);
+  const mY = Math.max(0, (img.naturalHeight * scale - vs) / 2);
+  _cropState.panX = Math.max(-mX, Math.min(mX, _cropState.panX));
+  _cropState.panY = Math.max(-mY, Math.min(mY, _cropState.panY));
+}
+
+function _drawCrop() {
+  const el = document.getElementById('crop-img');
+  if (!el || !_cropState.img) return;
+  const { panX, panY, scale, viewSize: vs, img } = _cropState;
+  const sW = img.naturalWidth * scale, sH = img.naturalHeight * scale;
+  el.style.width  = sW + 'px';
+  el.style.height = sH + 'px';
+  el.style.left   = (vs/2 + panX - sW/2) + 'px';
+  el.style.top    = (vs/2 + panY - sH/2) + 'px';
 }
 
 async function _saveProfilePhoto() {
   const sb = _getSupabaseClient();
-  if (!sb || !state.supabaseUserId || !_pendingPhotoBlob) return;
-  const saveBtn = document.getElementById('photo-save-btn');
-  if (saveBtn) { saveBtn.textContent = 'SAVING...'; saveBtn.disabled = true; }
+  if (!sb || !state.supabaseUserId || !_cropState.img) return;
+  const btn = document.getElementById('crop-save-btn');
+  if (btn) { btn.textContent = 'SAVING...'; btn.disabled = true; }
   try {
+    const { img, panX, panY, scale, viewSize: vs } = _cropState;
+    const out = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = out; canvas.height = out;
+    const ctx = canvas.getContext('2d');
+    const sW = img.naturalWidth * scale, sH = img.naturalHeight * scale;
+    const L  = vs/2 + panX - sW/2, T = vs/2 + panY - sH/2;
+    ctx.drawImage(img, -L / scale, -T / scale, vs / scale, vs / scale, 0, 0, out, out);
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.88));
+
     const fileName = state.supabaseUserId + '.jpg';
-    const { error } = await sb.storage.from('avatars').upload(fileName, _pendingPhotoBlob, {
-      contentType: 'image/jpeg',
-      upsert: true,
-    });
-    if (error) { showToast('Upload failed. Try again.'); if (saveBtn) { saveBtn.textContent = 'SAVE PHOTO'; saveBtn.disabled = false; } return; }
+    const { error } = await sb.storage.from('avatars').upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
+    if (error) { showToast('Upload failed. Try again.'); if (btn) { btn.textContent = 'SAVE PHOTO'; btn.disabled = false; } return; }
     const { data: { publicUrl } } = sb.storage.from('avatars').getPublicUrl(fileName);
     const url = publicUrl + '?v=' + Date.now();
     state.supabaseAvatarUrl = url;
     saveState();
     await sb.from('users').update({ avatar_url: url }).eq('id', state.supabaseUserId);
-    _pendingPhotoBlob = null;
+    _cropState.img = null;
     document.getElementById('photo-upload-sheet')?.remove();
     _updateSettingsAccountSection();
     showToast('Photo saved.');
   } catch(e) {
     showToast('Upload failed. Try again.');
-    if (saveBtn) { saveBtn.textContent = 'SAVE PHOTO'; saveBtn.disabled = false; }
+    if (btn) { btn.textContent = 'SAVE PHOTO'; btn.disabled = false; }
   }
 }
 
@@ -7574,12 +7645,14 @@ async function _sendWorkoutSignal(dayName) {
     _currentSignalId = data.id;
     const signalId   = data.id;
     clearTimeout(_notifyFriendsTimer);
-    _notifyFriends(
-      displayName + ' is in the gym',
-      'They\'re in the gym right now. Go hype them up.',
-      signalId,
-      state.supabaseAvatarUrl || null
-    );
+    _notifyFriendsTimer = setTimeout(function() {
+      _notifyFriends(
+        displayName + ' is in the gym',
+        'They\'re in the gym right now. Go hype them up.',
+        signalId,
+        state.supabaseAvatarUrl || null
+      );
+    }, 5 * 60 * 1000); // 5-minute delay so casual check-ins don't spam friends
   } catch(e) {}
 }
 
