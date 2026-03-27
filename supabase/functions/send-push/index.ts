@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
   try { body = await req.json(); }
   catch (_) { return new Response('Invalid JSON', { status: 400, headers: CORS }); }
 
-  const { uid, to_uid, title, body: msgBody, sid } = body;
+  const { uid, to_uid, title, body: msgBody, sid, avatar_url } = body;
   if (!uid && !to_uid) return new Response('Missing uid or to_uid', { status: 400, headers: CORS });
 
   const h = { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' };
@@ -133,6 +133,7 @@ Deno.serve(async (req) => {
   const payload = JSON.stringify({
     title: title || 'T&S Muscle',
     body:  msgBody || '',
+    icon:  avatar_url || null,
     data:  sid ? { signal_id: sid, to_user_id: uid || to_uid } : {},
   });
 
