@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v188';
+const CACHE_NAME = 'ts-muscle-v189';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './notif-icon.png', './manifest.json'];
 
@@ -37,7 +37,7 @@ self.addEventListener('push', function(event) {
   var title = data.title || 'T&S Muscle';
   var options = {
     body: data.body || '',
-    icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGMUEhJiYGBgYmBgYGBgAAACsgA6ImFGjgAAAABJRU5ErkJggg==',
+    icon: data.icon || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGMUEhJiYGBgYmBgYGBgAAACsgA6ImFGjgAAAABJRU5ErkJggg==',
     badge: _SW_BASE + 'icon-192.png',
     data: data.data || {},
     requireInteraction: false,
