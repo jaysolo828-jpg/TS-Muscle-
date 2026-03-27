@@ -7088,7 +7088,9 @@ async function _saveProfilePhoto() {
     const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.88));
 
     const fileName = state.supabaseUserId + '.jpg';
-    const { error } = await sb.storage.from('avatars').upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
+    // Remove any existing file first so we don't need an UPDATE storage policy
+    await sb.storage.from('avatars').remove([fileName]).catch(() => {});
+    const { error } = await sb.storage.from('avatars').upload(fileName, blob, { contentType: 'image/jpeg' });
     if (error) { showToast('Upload failed. Try again.'); if (btn) { btn.textContent = 'SAVE PHOTO'; btn.disabled = false; } return; }
     const { data: { publicUrl } } = sb.storage.from('avatars').getPublicUrl(fileName);
     const url = publicUrl + '?v=' + Date.now();
