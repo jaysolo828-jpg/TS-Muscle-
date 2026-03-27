@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v201';
+const CACHE_NAME = 'ts-muscle-v202';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './badge-icon.png', './manifest.json'];
 
