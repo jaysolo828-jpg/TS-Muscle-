@@ -19648,6 +19648,7 @@ function isWorkoutActive() {
 function showSWUpdateBanner() {
   if (document.getElementById('sw-update-banner')) return;
   if (sessionStorage.getItem('ts_muscle_sw_dismissed_v46')) return;
+  if (sessionStorage.getItem('ts_sw_updating')) { sessionStorage.removeItem('ts_sw_updating'); return; }
   if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
 
   const signedIn = !!state.supabaseUserId;
@@ -19672,6 +19673,7 @@ function applySWUpdate() {
   const btn = document.querySelector('#sw-update-banner div[onclick]');
   if (btn) { btn.textContent = 'Updating\u2026'; btn.style.opacity = '0.6'; }
   sessionStorage.setItem('ts_show_social_after_update', '1');
+  sessionStorage.setItem('ts_sw_updating', '1');
   if (_waitingSW) {
     _waitingSW.postMessage({ type: 'SKIP_WAITING' });
   }
