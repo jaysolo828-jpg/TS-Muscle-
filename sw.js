@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v199';
+const CACHE_NAME = 'ts-muscle-v200';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './notif-ts-icon.png', './manifest.json'];
 
@@ -37,7 +37,7 @@ self.addEventListener('push', function(event) {
   var title = data.title || 'T&S Muscle';
   var options = {
     body: data.body || '',
-    icon: data.icon || 'https://idiaozmcnckopwfisdpu.supabase.co/storage/v1/object/public/avatars/notif-ts-icon.png',
+    icon: data.icon || undefined,
     badge: 'https://idiaozmcnckopwfisdpu.supabase.co/storage/v1/object/public/avatars/notif-ts-icon.png',
     data: data.data || {},
     requireInteraction: false,
