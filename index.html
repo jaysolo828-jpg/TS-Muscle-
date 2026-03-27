@@ -19674,9 +19674,10 @@ function applySWUpdate() {
   sessionStorage.setItem('ts_show_social_after_update', '1');
   if (_waitingSW) {
     _waitingSW.postMessage({ type: 'SKIP_WAITING' });
-  } else {
-    window.location.reload();
   }
+  // Fallback: if controllerchange never fires (SW already activated via skipWaiting
+  // during install before user tapped), reload anyway after 2s
+  setTimeout(() => window.location.reload(), 2000);
 }
 
 function dismissSWBanner(e) {
