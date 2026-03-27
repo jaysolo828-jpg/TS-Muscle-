@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v189';
+const CACHE_NAME = 'ts-muscle-v190';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './notif-icon.png', './manifest.json'];
 
@@ -93,7 +93,7 @@ self.addEventListener('notificationclick', function(event) {
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(cs) {
       var c = cs.find(function(x) { return 'focus' in x; });
       if (c) return c.focus();
-      return clients.openWindow('/');
+      return clients.openWindow(_SW_BASE);
     })
   );
 });
