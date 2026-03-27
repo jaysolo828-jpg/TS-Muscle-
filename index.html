@@ -7091,7 +7091,7 @@ async function _saveProfilePhoto() {
     // Remove any existing file first so we don't need an UPDATE storage policy
     await sb.storage.from('avatars').remove([fileName]).catch(() => {});
     const { error } = await sb.storage.from('avatars').upload(fileName, blob, { contentType: 'image/jpeg' });
-    if (error) { showToast('Upload failed. Try again.'); if (btn) { btn.textContent = 'SAVE PHOTO'; btn.disabled = false; } return; }
+    if (error) { showToast('Upload error: ' + (error.message || error.error || JSON.stringify(error))); console.error('Storage upload error:', error); if (btn) { btn.textContent = 'SAVE PHOTO'; btn.disabled = false; } return; }
     const { data: { publicUrl } } = sb.storage.from('avatars').getPublicUrl(fileName);
     const url = publicUrl + '?v=' + Date.now();
     state.supabaseAvatarUrl = url;
