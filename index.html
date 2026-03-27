@@ -7113,7 +7113,7 @@ async function _saveProfilePhoto() {
     ctx.drawImage(img, -L / scale, -T / scale, vs / scale, vs / scale, 0, 0, out, out);
     const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.88));
 
-    const fileName = state.supabaseUserId + '.jpg';
+    const fileName = state.supabaseUserId; // no extension so DELETE policy (auth.uid() = filename) matches
     // Remove any existing file first so we don't need an UPDATE storage policy
     await sb.storage.from('avatars').remove([fileName]).catch(() => {});
     const { error } = await sb.storage.from('avatars').upload(fileName, blob, { contentType: 'image/jpeg' });
@@ -7138,7 +7138,7 @@ async function _removeProfilePhoto() {
   if (!sb || !state.supabaseUserId) return;
   document.getElementById('photo-upload-sheet')?.remove();
   try {
-    await sb.storage.from('avatars').remove([state.supabaseUserId + '.jpg']);
+    await sb.storage.from('avatars').remove([state.supabaseUserId]);
     state.supabaseAvatarUrl = null;
     saveState();
     await sb.from('users').update({ avatar_url: null }).eq('id', state.supabaseUserId);
