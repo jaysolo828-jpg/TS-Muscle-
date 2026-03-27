@@ -6261,6 +6261,13 @@ function loadState() {
         delete state.deloadDismissedAtCycle;
         state.mrvBannerMigrated = true;
       }
+
+      // Migration: avatar URLs previously stored with .jpg extension no longer resolve
+      // (storage now uses extension-free filenames). Clear them so the fallback icon shows.
+      if (state.supabaseAvatarUrl && state.supabaseAvatarUrl.includes('/avatars/') && state.supabaseAvatarUrl.includes('.jpg')) {
+        state.supabaseAvatarUrl = null;
+        saveState();
+      }
     } catch(e) {}
   }
 }
