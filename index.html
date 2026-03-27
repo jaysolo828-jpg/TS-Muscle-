@@ -7110,7 +7110,6 @@ async function _saveProfilePhoto() {
 async function _removeProfilePhoto() {
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
-  document.getElementById('photo-upload-sheet')?.remove();
   try {
     await sb.storage.from('avatars').remove([state.supabaseUserId]);
     state.supabaseAvatarUrl = null;
@@ -7118,6 +7117,8 @@ async function _removeProfilePhoto() {
     await sb.from('users').update({ avatar_url: null }).eq('id', state.supabaseUserId);
     _updateSettingsAccountSection();
     showToast('Photo removed.');
+    // Stay in the sheet so user can immediately pick a new photo
+    _showPhotoUploadSheet();
   } catch(e) {
     showToast('Could not remove photo.');
   }
