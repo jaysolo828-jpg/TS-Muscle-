@@ -7645,14 +7645,12 @@ async function _sendWorkoutSignal(dayName) {
     _currentSignalId = data.id;
     const signalId   = data.id;
     clearTimeout(_notifyFriendsTimer);
-    _notifyFriendsTimer = setTimeout(function() {
-      _notifyFriends(
-        displayName + ' is in the gym',
-        'They\'re in the gym right now. Go hype them up.',
-        signalId,
-        state.supabaseAvatarUrl || null
-      );
-    }, 5 * 60 * 1000); // 5-minute delay so casual check-ins don't spam friends
+    _notifyFriends(
+      displayName + ' is in the gym',
+      'They\'re in the gym right now. Go hype them up.',
+      signalId,
+      state.supabaseAvatarUrl || null
+    );
   } catch(e) {}
 }
 
