@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v193';
+const CACHE_NAME = 'ts-muscle-v194';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './notif-ts-icon.png', './manifest.json'];
 
@@ -37,7 +37,7 @@ self.addEventListener('push', function(event) {
   var title = data.title || 'T&S Muscle';
   var options = {
     body: data.body || '',
-    icon: data.icon || (_SW_BASE + 'notif-ts-icon.png'),
+    icon: data.icon || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAADxElEQVR42u3d61EqQRSFUWIgDSMwezPTCKAUmZnu861TtX9eLLr34sI84HYzl879fv+2CmZMmc+K1TaJooNhFB4Io/BAGKWHwSg9DEbxQTBKD4NRfBCM4oNgFB8ExRcQFF9AUH6BQPEFBMUXEJRfIFB+gUDxBQTlFwiUXyBQfAFB+QUC5RcIlF8gUH6BQPkFAuUXCJRfIFB+gUD5BQLlFwiUXyBQfoFA+QUCAAQA5RcIbJJkEdgcSSOwMZIFYFMki8BmSBaBTZA0AhsgWQAWX9IILLxkAVh0ySKw2JJGYKElC8AiSxqBBZYsAIsraQQWVrIALKqkEVhQyQKwmJJGYCElC8AiShqBBRQARIoALJ6kEbz6x74+P5bKFQu+23OYvlenlH+14l8BYbfnUNorAIa8ik4v/1H7dSiA1RfzDAQADAEwcTGPBrDb86juFwAAAACAt0DVz2yHHvv3IRiA7Q+JWlCHQafv1eFnf50Iu+ZE2H8eo7RXy17+sHKhV3/l/+tj7LjGhwPYpURFAM+e+yv/tgzgIQIA9njb9+rfBQCAUQCOhAMAAOPOgwDwBMBOJQIAgLcjAAAAAADInAQEAIAMgHefNAMAgO0vKQAAgOXL/9/Hdg3QLwHsViSv+OdcOlGAAED0qtf6vRsAhD7wAgCAa+jdwQeA8gMAwEAA7uADIIvALawAZAF4SwdAFgDUAGQRTLocwYdgl0Jkyw/AwKNAR6KZeEEaAABmy78EgB3fStQATL4k2f8AAKSvywcAgPRNKQAAkC0/AGEAAgAAAgAAAAAAAAAAuB/AYVAAAHAmGAAA5v7CpcuhAViqHG6IAWCrwvh+IwAAAGDm1yMCoPyX/V6wowIAAABA6nyAL8VaEMCjzdn1OLZDnwDIxieiEh+AAZD0D2RAILUs+UPZIgCIACByAQAIJF1+AAQACyQAiEQBQCDp8gMgAFgoKQOAQNLlB0AAsGBSBgCBpMsPgOQBQCDp8gMgAFhAKQOAQNLlB0DyACCQdPkBkDwACCRdfgAkDwACSZcfAMkDgEDS5QdA8gAgkHT5IZB8+QGQPAAIJF1+ACQPAAJJlx8CyZcfAsmXHwDJA4BA0uWHQPLlh0Dy5QdA8gAgkHT5IZB8+SGQfPkhkHz5IZB8+SGQfPkhkHz5IZB8+SGQfPkhkHz5IZCbgUD5DQTKb0BQfAOB8hsIlN+AoPgGAuU3ECi/AUHxDQiKbyBQfgOC4hsQFN+AoPgGBMU3ICi+gUHpDQiKb2BQegOD0psuCLtnUiDsjknAsNrvmR99ZMDfK65frQAAAABJRU5ErkJggg==',
     badge: _SW_BASE + 'icon-192.png',
     data: data.data || {},
     requireInteraction: false,
