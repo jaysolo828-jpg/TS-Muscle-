@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ts-muscle-v200';
+const CACHE_NAME = 'ts-muscle-v201';
 const _SW_BASE = new URL('./', self.location.href).href;
-const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './notif-ts-icon.png', './manifest.json'];
+const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './badge-icon.png', './manifest.json'];
 
 // On install: precache assets and immediately take over so users always get
 // the latest code without needing to tap an update banner.
@@ -38,7 +38,7 @@ self.addEventListener('push', function(event) {
   var options = {
     body: data.body || '',
     icon: data.icon || undefined,
-    badge: 'https://idiaozmcnckopwfisdpu.supabase.co/storage/v1/object/public/avatars/notif-ts-icon.png',
+    badge: _SW_BASE + 'badge-icon.png',
     data: data.data || {},
     requireInteraction: false,
   };
