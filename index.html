@@ -8524,18 +8524,33 @@ const _FOCUS_CONTEXT = {
 };
 // Score the user's profile into one of three word lanes: new → build → edge.
 // Factors: experience level (primary), goal, streak, total sessions, age.
+// Gender does not influence lane — the word pools are intentionally ungendered.
 function getPersonaLane() {
   const exp      = getEffectiveExperienceLevel(); // 'beginner' | 'intermediate' | 'advanced'
   const goal     = state.profile?.goal || 'both';
   const age      = state.profile?.age  || null;
   const streak   = state.streak        || 0;
   const sessions = state.totalSessions || 0;
+
   let score = exp === 'advanced' ? 2 : exp === 'intermediate' ? 1 : 0;
-  if (goal === 'strength')          score = Math.min(score + 1, 2); // strength athletes skew harder
-  if (streak   >= 8)                score = Math.min(score + 1, 2); // long streak earns the edge lane
-  if (sessions >= 100)              score = Math.min(score + 1, 2); // 100+ sessions → veteran voice
-  if (age !== null && age <  25)    score = Math.min(score + 1, 2); // younger — more intensity
-  if (age !== null && age >= 50)    score = Math.max(score - 1, 0); // older   — steadier voice
+
+  // Training intent
+  if (goal === 'strength') score = Math.min(score + 1, 2); // strength athletes skew harder
+
+  // Consistency signals
+  if (streak   >= 8)   score = Math.min(score + 1, 2); // long streak earns the edge lane
+  if (sessions >= 100) score = Math.min(score + 1, 2); // 100+ sessions → veteran voice
+
+  // Age brackets — full range 13 through 65+
+  if (age !== null) {
+    if      (age <= 17) score = Math.min(score, 1);    // 13-17: teens cap at 'build', never 'edge'
+    else if (age <= 24) score = Math.min(score + 1, 2); // 18-24: high-energy years, boost intensity
+    else if (age <= 44) { /* 25-44: prime years, no modifier */ }
+    else if (age <= 54) score = Math.max(score - 1, 0); // 45-54: recovery awareness, steadier voice
+    else if (age <= 64) score = Math.max(score - 1, 0); // 55-64: longevity focus
+    else                score = 0;                       // 65+: always 'new' lane — longevity voice
+  }
+
   return ['new', 'build', 'edge'][score];
 }
 function getContextWord() {
