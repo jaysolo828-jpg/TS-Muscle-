@@ -727,6 +727,8 @@
   }
 
   .session-exercise.completed { border-color: var(--success); opacity: 0.75; }
+  .session-exercise.travel-sub { border-color: rgba(74,158,219,0.4); }
+  .session-exercise.travel-needs-sub { border-color: rgba(243,156,18,0.4); }
 
   @keyframes supersetPulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
@@ -1647,6 +1649,16 @@
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
   }
+@keyframes travelModeIn {
+  0%   { opacity:0; transform:scale(0.88); }
+  40%  { opacity:1; transform:scale(1.03); }
+  65%  { transform:scale(0.98); }
+  100% { opacity:1; transform:scale(1); }
+}
+@keyframes travelModeOut {
+  0%   { opacity:1; transform:scale(1); }
+  100% { opacity:0; transform:scale(1.08); }
+}
 
   .modal-title {
     font-family: 'Bebas Neue', cursive;
@@ -2549,6 +2561,9 @@
     </div>
   </div>
   <div class="header-right">
+    <button class="icon-btn" id="travel-mode-btn" onclick="openTravelModeSheet()" aria-label="Travel Mode" title="Travel Mode" style="position:relative;">
+      <svg id="travel-mode-icon" viewBox="0 0 24 24" width="20" height="20" stroke="var(--text-muted,#666)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+    </button>
     <button class="icon-btn" id="lib-open-btn" onclick="openExerciseLibrary(null)" aria-label="Exercise Library" title="Exercise Library">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--red)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.24" y2="14.24"/></svg>
     </button>
@@ -2556,9 +2571,6 @@
       <span id="social-notify-dot" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--black);pointer-events:none;z-index:1;" aria-hidden="true"></span>
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     </button>
-    <button class="icon-btn" onclick="exportData()" aria-label="Export Data" title="Export Data">
-  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
-</button>
   </div>
 </header>
 
@@ -3757,7 +3769,7 @@
           <span style="font-size:18px;">✈️</span>
           <div>
             <div style="font-weight:700; font-size:14px; color:var(--cream);">Unavoidable Travel</div>
-            <div style="font-size:12px; color:var(--gray);">No access to equipment</div>
+            <div style="font-size:12px; color:var(--gray);">No gym at all · <span onclick="event.stopPropagation();document.getElementById('pause-program-modal').style.display='none';openTravelModeSheet();" style="color:#4A9EDB;text-decoration:underline;cursor:pointer;">Have a hotel gym? Use Travel Mode ✈</span></div>
           </div>
         </button>
       </div>
@@ -4158,6 +4170,9 @@
       <div class="progress-bar-fill" id="session-progress-bar" style="width:0%"></div>
     </div>
   </div>
+
+  <!-- TRAVEL MODE BANNER — shown when travel mode is active during a session -->
+  <div id="travel-mode-banner" style="display:none;align-items:center;gap:8px;background:rgba(74,158,219,0.12);border:1px solid rgba(74,158,219,0.3);border-radius:10px;padding:8px 14px;margin:0 0 10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;color:#4A9EDB;cursor:pointer;" onclick="openTravelModeSheet()"></div>
 
   <!-- STICKY REST TIMER — appears when any timer is running -->
   <div id="sticky-rest-timer">
@@ -5156,6 +5171,148 @@ const GLUTE_PROGRAM = [
 
 const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBODY_PROGRAM, bro: BRO_PROGRAM, glute: GLUTE_PROGRAM };
 
+// ── TRAVEL MODE EQUIPMENT TAGS ─────────────────────────────────
+// Applied immediately after all program data is defined.
+// Adds equipment property to exercises + alts so _getTravelExercise()
+// can find valid substitutions per equipment tier.
+(function _tagEquipment() {
+  const _exEq = {
+    'bench':'barbell','incline':'dumbbell','flye':'cable','pushdown':'cable',
+    'overhead-tri':'cable','ohp':'barbell','lateral':'cable',
+    'legpress-a':'machine','rdl':'barbell','leg-ext-a':'machine',
+    'ham-curl-a':'machine','hip-thrust-a':'barbell','calf-a':'machine',
+    'chest-row':'machine','pulldown':'cable','db-row':'dumbbell',
+    'ez-curl':'barbell','preacher':'barbell','rear-delt':'machine',
+    'legpress-b':'machine','single-legpress':'machine','leg-ext-b':'machine',
+    'ham-curl-b':'bodyweight','pull-through':'cable','calf-b':'machine',
+    'bss':'dumbbell','hip-abduction':'machine','donkey-kick':'cable','glute-iso':'machine',
+  };
+  const _altEq = {
+    // chest
+    'DB Bench Press':'dumbbell','Cable Chest Press':'cable','Weighted Push-Up':'bodyweight',
+    'Smith Machine Bench':'smith','Chest Dips':'bodyweight','Machine Chest Press':'machine',
+    'Floor Press':'barbell','Decline Barbell Press':'barbell',
+    // incline
+    'Incline Barbell Press':'barbell','Incline Machine Press':'machine',
+    'Cable Incline Press':'cable','Incline Hammer Press':'dumbbell',
+    'Decline DB Press':'dumbbell','Low-to-High Cable Press':'cable',
+    'Smith Machine Incline':'smith','Landmine Press':'barbell',
+    'Incline DB Press':'dumbbell',
+    // flye
+    'Pec Deck Flye':'machine','DB Flye':'dumbbell','Low Cable Crossover':'cable',
+    'High Cable Crossover':'cable','Resistance Band Flye':'bands','Decline Cable Flye':'cable',
+    // pushdown / tricep
+    'Rope Pushdown':'cable','Machine Tricep Extension':'machine',
+    'Single Arm Pushdown':'cable','Band Pushdown':'bands','Reverse Grip Pushdown':'cable',
+    'DB Kickback':'dumbbell','Skull Crushers (EZ Bar)':'barbell',
+    'Cable Overhead Extension':'cable','DB Overhead Extension (one arm)':'dumbbell',
+    'Overhead Rope Extension':'cable','Close Grip Bench Press':'barbell',
+    // shoulders
+    'DB Shoulder Press':'dumbbell','Machine Shoulder Press':'machine',
+    'Smith Machine OHP':'smith','Arnold Press':'dumbbell',
+    'Cable Shoulder Press':'cable','Push Press':'barbell',
+    'Machine Lateral Raise':'machine','DB Lateral Raise':'dumbbell',
+    'Leaning DB Lateral Raise':'dumbbell','Upright Row':'barbell',
+    'Band Lateral Raise':'bands','Overhead DB Press':'dumbbell',
+    'Face Pull':'cable','Smith Machine Shoulder Press':'smith',
+    // lower A
+    'Hack Squat Machine':'machine','Bulgarian Split Squat':'dumbbell',
+    'Goblet Squat':'dumbbell','Front Squat':'barbell','Dumbbell Squat':'dumbbell',
+    'Box Squat':'barbell','Smith Machine Squat':'smith',
+    'Single Leg RDL':'dumbbell','Cable Pull-Through':'cable',
+    'DB Romanian Deadlift':'dumbbell','Good Mornings':'barbell',
+    'Sumo Deadlift':'barbell','Smith Machine RDL':'smith',
+    'Wall Sit':'bodyweight','Step-Up (DB)':'dumbbell','Sissy Squat':'bodyweight',
+    'Terminal Knee Extension (Band)':'bands','Spanish Squat (Band)':'bands',
+    'Seated Hamstring Curl':'machine','Nordic Curl':'bodyweight',
+    'Stability Ball Curl':'bodyweight','DB Hamstring Curl (Prone)':'dumbbell',
+    'Single Leg Lying Curl':'machine','Banded Hamstring Curl':'bands',
+    'Glute-Ham Raise':'machine',
+    'Machine Hip Thrust':'machine','Glute Bridge (Floor)':'dumbbell',
+    'Smith Machine Hip Thrust':'smith','Donkey Kick (Cable)':'cable',
+    'Single Leg Hip Thrust':'bodyweight','Banded Hip Thrust':'bands',
+    'DB Hip Thrust':'dumbbell',
+    'Leg Press Calf Raise':'machine','Single Leg Calf Raise (Standing)':'bodyweight',
+    'Seated Calf Raise':'machine','Smith Machine Calf Raise':'smith',
+    'DB Standing Calf Raise':'dumbbell',
+    // upper B
+    'Cable Row (Seated)':'cable','T-Bar Row':'barbell','Pendlay Row':'barbell',
+    'Barbell Bent Over Row':'barbell','Inverted Row':'bodyweight',
+    'Seal Row':'barbell','Underhand Barbell Row':'barbell',
+    'Wide Grip Cable Row':'cable','Smith Machine Row':'smith',
+    'DB Chest-Supported Row':'dumbbell',
+    'Wide Grip Pulldown':'cable','Neutral Grip Pulldown':'cable',
+    'Single Arm Pulldown':'cable','Straight Arm Pulldown':'cable',
+    'Pull-Up / Assisted Pull-Up':'bodyweight','Weighted Pull-Up':'bodyweight',
+    'Close Grip Pulldown':'cable','Banded Pulldown':'bands','DB Pullover':'dumbbell',
+    'Single Arm Cable Row':'cable','Chest-Supported DB Row':'dumbbell','Renegade Row':'dumbbell',
+    'Barbell Curl':'barbell','DB Curl':'dumbbell','Cable Curl':'cable',
+    'Hammer Curl':'dumbbell','Incline DB Curl':'dumbbell','Reverse Curl':'barbell',
+    'DB Preacher Curl':'dumbbell','Machine Preacher Curl':'machine',
+    'Concentration Curl':'dumbbell','Cable Preacher Curl':'cable',
+    'Spider Curl':'dumbbell','Drag Curl':'dumbbell',
+    'Rear Delt Cable Flye':'cable','Bent Over DB Rear Delt Raise':'dumbbell',
+    'Machine Rear Delt Flye':'machine','Face Pull (Cable)':'cable','Band Pull Apart':'bands',
+    // lower B
+    'Hack Squat':'machine','Sumo Squat (DB)':'dumbbell','Belt Squat':'machine',
+    'Wide Stance Barbell Squat':'barbell','Good Morning':'barbell',
+    'Stiff-Leg Deadlift':'barbell','Bilateral Leg Press (narrow)':'machine',
+    'Reverse Lunge (DB)':'dumbbell','Forward Lunge (DB)':'dumbbell',
+    'Pistol Squat (Assisted)':'bodyweight','Lateral Lunge (DB)':'dumbbell',
+    'Lying Hamstring Curl':'machine','Swiss Ball Leg Curl':'bodyweight','Banded Nordic Curl':'bands',
+    'Single Leg RDL':'dumbbell',
+    'Hip Thrust (Barbell)':'barbell','Glute Bridge':'dumbbell',
+    'Kettlebell Swing':'dumbbell','Romanian Deadlift':'dumbbell','Banded Kickback':'bands',
+    'Standing Calf Raise Machine':'machine','Jump Rope Calf Finisher':'bodyweight',
+    'Jump Rope (Calf Finisher)':'bodyweight',
+    // glute program
+    'Cable Hip Abduction (Standing)':'cable','Banded Clamshell':'bands',
+    'Side-Lying Hip Abduction':'bodyweight','Banded Lateral Walk':'bands',
+    'Glute Isolator Machine':'machine',
+    'Hip Thrust (Barbell)':'barbell','Cable Pull-Through':'cable',
+    'Glute Bridge (Floor)':'dumbbell',
+    'Reverse Lunge (DB)':'dumbbell','Forward Lunge (DB)':'dumbbell',
+    'Leg Press (Single Leg)':'machine','Goblet Squat':'dumbbell',
+    'Pistol Squat (Assisted)':'bodyweight',
+  };
+
+  // Tag every exercise in every program
+  Object.values(SPLIT_PROGRAMS).forEach(prog => {
+    prog.forEach(day => {
+      day.exercises.forEach(ex => {
+        if (!ex.equipment && _exEq[ex.id]) ex.equipment = _exEq[ex.id];
+        (ex.alts || []).forEach(alt => {
+          if (!alt.equipment && _altEq[alt.name]) alt.equipment = _altEq[alt.name];
+        });
+      });
+    });
+  });
+  // Also tag standalone glute exercises
+  [BSS_EXERCISE, HIP_ABDUCTION_EXERCISE, DONKEY_KICK_EXERCISE, GLUTE_ISO_EXERCISE].forEach(ex => {
+    if (!ex.equipment && _exEq[ex.id]) ex.equipment = _exEq[ex.id];
+    (ex.alts || []).forEach(alt => {
+      if (!alt.equipment && _altEq[alt.name]) alt.equipment = _altEq[alt.name];
+    });
+  });
+
+  // Inject missing travel-friendly alts (only once, guarded by name check)
+  const _findEx = (prog, id) => prog.flatMap(d => d.exercises).find(e => e.id === id);
+  const _addAlt = (ex, alt) => { if (ex && !ex.alts.find(a => a.name === alt.name)) ex.alts.unshift(alt); };
+
+  _addAlt(_findEx(DEFAULT_PROGRAM, 'pushdown'),
+    { name:'DB Kickback', note:'One arm at a time, elbow pinned to side', ytLink:'https://youtu.be/JPmbMOu4IYw', equipment:'dumbbell' });
+  _addAlt(_findEx(DEFAULT_PROGRAM, 'hip-thrust-a'),
+    { name:'DB Hip Thrust', note:'Dumbbell on hips, upper back on bench', ytLink:'https://youtu.be/0od5lwWMGV8', equipment:'dumbbell' });
+  _addAlt(_findEx(DEFAULT_PROGRAM, 'calf-a'),
+    { name:'DB Standing Calf Raise', note:'Holding dumbbells, perform on a step for full ROM', ytLink:'https://youtu.be/lUeI-IwVXFM', equipment:'dumbbell' });
+  _addAlt(_findEx(DEFAULT_PROGRAM, 'chest-row'),
+    { name:'DB Chest-Supported Row', note:'Incline bench, eliminates momentum', ytLink:'https://youtu.be/Nx0TzjgsI-0', equipment:'dumbbell' });
+  _addAlt(_findEx(DEFAULT_PROGRAM, 'pulldown'),
+    { name:'DB Pullover', note:'Flat bench, lat stretch and contraction', ytLink:'https://youtu.be/5YStMv6m2g8', equipment:'dumbbell' });
+  _addAlt(_findEx(DEFAULT_PROGRAM, 'calf-b'),
+    { name:'DB Standing Calf Raise', note:'Holding dumbbells, perform on a step for full ROM', ytLink:'https://youtu.be/lUeI-IwVXFM', equipment:'dumbbell' });
+})();
+
 const MUSCLE_MAP = {
   bench: 'CHEST', incline: 'CHEST', flye: 'CHEST',
   pushdown: 'TRICEPS', 'overhead-tri': 'TRICEPS',
@@ -6038,7 +6195,9 @@ let state = {
   totalSessions: 0,
   weightIncrement: 'medium',  // 'small'=2.5lb | 'medium'=5lb | 'large'=10lb
   startingWeights: {},
-  rotationDismissedAtCycle: null  // suppresses rotation banner for the rest of the cycle
+  rotationDismissedAtCycle: null,  // suppresses rotation banner for the rest of the cycle
+  travelMode: null,           // { tier, startDate, endDate } when active, else null
+  travelWeights: {},           // keyed by alt exercise name → last logged weight
 };
 
 let activeSession = null;
@@ -8319,6 +8478,7 @@ function getDayStats(dayId) {
     hasData: lastVol > 0,
     songTitle:  last.songTitle  || null,
     songArtist: last.songArtist || null,
+    isTravel: !!last.travelMode,
   };
 }
 
@@ -8538,6 +8698,35 @@ function renderHome() {
       <svg viewBox="0 0 24 24" width="18" height="18" stroke="${urgency ? '#ff6b6b' : 'var(--gray)'}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
   } else {
     pauseBanner.style.display = 'none';
+  }
+
+  // Travel mode banner on home screen
+  let _travelHomeBanner = document.getElementById('travel-home-banner');
+  if (!_travelHomeBanner) {
+    _travelHomeBanner = document.createElement('div');
+    _travelHomeBanner.id = 'travel-home-banner';
+    const _deloadBannerEl = document.getElementById('deload-banner');
+    _deloadBannerEl.parentNode.insertBefore(_travelHomeBanner, _deloadBannerEl);
+  }
+  if (state.travelMode) {
+    _checkTravelModeExpiry();
+    const _tmTierLabel = { 'dumbbells':'Dumbbells Only', 'dumbbells-cable':'Dumbbells + Cable' }[state.travelMode.tier] || state.travelMode.tier;
+    const _tmDaysLeft = state.travelMode.endDate
+      ? Math.max(0, Math.ceil((new Date(state.travelMode.endDate) - new Date()) / 86400000))
+      : null;
+    const _tmExpired = _tmDaysLeft !== null && _tmDaysLeft === 0;
+    _travelHomeBanner.style.cssText = 'margin-bottom:12px;background:rgba(74,158,219,0.08);border:1px solid rgba(74,158,219,0.35);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;';
+    _travelHomeBanner.onclick = () => openTravelModeSheet();
+    _travelHomeBanner.innerHTML = `
+      <svg viewBox="0 0 24 24" width="22" height="22" stroke="#4A9EDB" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:#4A9EDB;letter-spacing:1px;">TRAVEL MODE · ${_tmTierLabel.toUpperCase()}</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:2px;">${_tmExpired ? '⚠ Trip ended — still away? Tap to extend or end.' : _tmDaysLeft !== null ? `${_tmDaysLeft} day${_tmDaysLeft !== 1 ? 's' : ''} left · Workouts auto-adjusted` : 'Workouts auto-adjusted'}</div>
+      </div>
+      <button onclick="event.stopPropagation();_deactivateTravelMode();" style="flex-shrink:0;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.35);color:var(--red-text);padding:6px 11px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">END</button>`;
+    _travelHomeBanner.style.display = 'flex';
+  } else {
+    _travelHomeBanner.style.display = 'none';
   }
 
   // Rest week banner (separate from deload banner) — show day countdown
@@ -8846,6 +9035,7 @@ function renderHome() {
               <div style="display:flex;align-items:center;gap:0;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:0.4px;line-height:1.3;">
                 ${_stats.prCount > 0 ? `<span style="color:#f39c12;font-weight:700;">🏆 ${_stats.prCount} PR${_stats.prCount > 1 ? 's' : ''}</span><span style="color:var(--dark4);margin:0 7px;">|</span>` : ''}
                 ${_stats.duration ? `<span style="color:var(--gray-light);">${_stats.duration} min</span><span style="color:var(--dark4);margin:0 7px;">|</span>` : ''}
+                ${_stats.isTravel ? `<span style="color:#4A9EDB;font-weight:700;">✈</span><span style="color:var(--dark4);margin:0 7px;">|</span>` : ''}
                 <span style="color:var(--gray);">${_stats.lastDoneLabel}</span>
               </div>
               <button onclick="event.stopPropagation();shareHistoryEntry('${_stats.lastId}')" style="background:none;border:none;color:${_dayColor};opacity:0.6;cursor:pointer;padding:2px 0 2px 8px;display:flex;align-items:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;" title="Share">
@@ -10003,7 +10193,7 @@ function getProgressiveWeight(exId, dayId) {
   // Collect up to last 3 sessions for this same day
   const sameDaySessions = [...(state.history || [])]
     .reverse()
-    .filter(h => h.dayId === dayId && h.sets?.[exId] && !h.isDeload);
+    .filter(h => h.dayId === dayId && h.sets?.[exId] && !h.isDeload && !h.travelMode);
 
   if (sameDaySessions.length === 0) {
     if (state.autoPopulateWeights !== false && state.startingWeights?.[exId]) {
@@ -10636,6 +10826,36 @@ function _proceedWithSession(dayId, triggerEl, carrying) {
     activeSession.setIntel[ex.id] = activeSession.sets[ex.id].map(() => ({ suggestedReps: null, wasManualOverride: false }));
   });
 
+  // ── Travel Mode: substitute exercises for available equipment ──
+  if (state.travelMode) {
+    const _tier = state.travelMode.tier;
+    day.exercises.forEach(ex => {
+      // Skip exercises already swapped by the user this session
+      if (activeSession.swaps[ex.id]) return;
+      const _sub = _getTravelExercise(ex, _tier);
+      if (_sub) {
+        // Pre-populate swap with travel sub; isTravelSub marks it for weight isolation
+        activeSession.swaps[ex.id] = { name: _sub.name, note: _sub.note, ytLink: _sub.ytLink, isTravelSub: true };
+        // Suggest weight from last travel session for this sub exercise
+        const _tw = state.travelWeights?.[_sub.name];
+        if (_tw) {
+          activeSession.suggestedWeights[ex.id] = String(_tw);
+          activeSession.sets[ex.id].forEach(s => { s.weight = String(_tw); });
+        } else {
+          // Clear normal suggested weight — travel weight is unknown, let user fill in
+          activeSession.suggestedWeights[ex.id] = '';
+          activeSession.sets[ex.id].forEach(s => { s.weight = ''; });
+        }
+      }
+      // If no sub found and exercise needs incompatible equipment, flag for manual pick
+      else if (ex.equipment && !_getTravelTierEquipment(_tier).includes(ex.equipment)) {
+        activeSession.travelNeedsSub = activeSession.travelNeedsSub || [];
+        if (!activeSession.travelNeedsSub.includes(ex.id)) activeSession.travelNeedsSub.push(ex.id);
+      }
+    });
+  }
+  // ── End Travel Mode session init ──
+
   _lastSessionInsights = {};
   _insightInteracted = {};
 
@@ -10655,6 +10875,276 @@ function _proceedWithSession(dayId, triggerEl, carrying) {
 }
 
 // ============================================================
+// ============================================================
+// TRAVEL MODE
+// ============================================================
+
+const _TRAVEL_TIERS = {
+  'dumbbells': {
+    label: 'Dumbbells Only',
+    desc: 'Dumbbells + bodyweight. Standard hotel gym minimum.',
+    equipment: ['dumbbell', 'bodyweight', 'bands'],
+  },
+  'dumbbells-cable': {
+    label: 'Dumbbells + Cable Machine',
+    desc: 'Dumbbells, cable/functional trainer, bodyweight.',
+    equipment: ['dumbbell', 'cable', 'bodyweight', 'bands'],
+  },
+};
+
+function _getTravelTierEquipment(tier) {
+  return _TRAVEL_TIERS[tier]?.equipment || [];
+}
+
+function _getTravelExercise(exercise, tier) {
+  const validEquip = _getTravelTierEquipment(tier);
+  // Primary exercise is already compatible — no sub needed
+  if (exercise.equipment && validEquip.includes(exercise.equipment)) return null;
+  // Collect all valid alts, then rank by equipment preference:
+  // weighted (dumbbell/cable/machine/smith) > bands > bodyweight
+  // This ensures loaded exercises always beat bodyweight regardless of array order.
+  const _priority = { dumbbell: 0, cable: 0, machine: 0, smith: 0, bands: 1, bodyweight: 2 };
+  const validAlts = (exercise.alts || []).filter(a => a.equipment && validEquip.includes(a.equipment));
+  if (!validAlts.length) return null;
+  validAlts.sort((a, b) => (_priority[a.equipment] ?? 99) - (_priority[b.equipment] ?? 99));
+  return validAlts[0];
+}
+
+function _applyTravelMode(tier, days) {
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + days);
+  state.travelMode = { tier, startDate: new Date().toISOString(), endDate: endDate.toISOString() };
+  saveState();
+  _renderTravelModeHeaderIcon();
+  renderHome();
+  // Activation transition splash
+  const _splash = document.createElement('div');
+  _splash.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#0e2a40 0%,#071520 100%);pointer-events:none;';
+  _splash.innerHTML = `
+    <div style="animation:travelModeIn 0.55s cubic-bezier(0.34,1.56,0.64,1) both;text-align:center;">
+      <svg viewBox="0 0 24 24" width="64" height="64" stroke="#4A9EDB" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:18px;filter:drop-shadow(0 0 18px rgba(74,158,219,0.6));"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+      <div style="font-family:'Bebas Neue',cursive;font-size:32px;color:#4A9EDB;letter-spacing:3px;line-height:1;">TRAVEL MODE</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:rgba(74,158,219,0.7);letter-spacing:2px;margin-top:4px;">${(_TRAVEL_TIERS[tier]?.label || tier).toUpperCase()}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.45);margin-top:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${days} day${days !== 1 ? 's' : ''} · Workouts auto-adjusted</div>
+    </div>`;
+  document.body.appendChild(_splash);
+  setTimeout(() => {
+    _splash.style.animation = 'travelModeOut 0.4s ease forwards';
+    setTimeout(() => _splash.remove(), 420);
+  }, 1600);
+}
+
+function _deactivateTravelMode() {
+  state.travelMode = null;
+  saveState();
+  _renderTravelModeHeaderIcon();
+  renderHome();
+  showToast('Travel Mode ended. Back to full program.');
+}
+
+function _renderTravelModeHeaderIcon() {
+  const icon = document.getElementById('travel-mode-icon');
+  if (!icon) return;
+  if (state.travelMode) {
+    icon.setAttribute('stroke', '#4A9EDB');
+    icon.parentElement.title = 'Travel Mode Active — tap to manage';
+  } else {
+    icon.setAttribute('stroke', 'var(--text-muted,#666)');
+    icon.parentElement.title = 'Travel Mode';
+  }
+}
+
+function openTravelModeSheet() {
+  if (state.travelMode) {
+    _openTravelModeActiveSheet();
+    return;
+  }
+  _openTravelModeSetupSheet(1, {});
+}
+
+function _openTravelModeSetupSheet(step, data) {
+  const existing = document.getElementById('travel-setup-sheet');
+  if (existing) existing.remove();
+
+  const sheet = document.createElement('div');
+  sheet.id = 'travel-setup-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+
+  const _backBtn = step > 1 ? `<button onclick="_openTravelModeSetupSheet(${step-1}, window._travelSetupData || {})" style="background:none;border:1px solid #444;color:var(--gray-light);padding:7px 14px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:0.5px;cursor:pointer;">← Back</button>` : '';
+
+  let innerHTML = '';
+
+  if (step === 1) {
+    innerHTML = `
+      <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 24px;"></div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#4A9EDB;letter-spacing:1.5px;margin-bottom:4px;">✈ TRAVEL MODE</div>
+      <div style="font-size:14px;color:var(--gray-light);margin-bottom:20px;line-height:1.4;">What equipment does your hotel gym have?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
+        <button onclick="window._travelSetupData={tier:'dumbbells'};_openTravelModeSetupSheet(2,window._travelSetupData);"
+          style="background:rgba(74,158,219,0.08);border:1.5px solid rgba(74,158,219,0.3);border-radius:14px;padding:18px 12px;cursor:pointer;text-align:left;">
+          <div style="font-size:22px;margin-bottom:8px;">🏋️</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--cream);letter-spacing:0.3px;">Dumbbells Only</div>
+          <div style="font-size:11px;color:var(--gray-light);margin-top:4px;line-height:1.3;">Dumbbells + bodyweight</div>
+        </button>
+        <button onclick="window._travelSetupData={tier:'dumbbells-cable'};_openTravelModeSetupSheet(2,window._travelSetupData);"
+          style="background:rgba(74,158,219,0.08);border:1.5px solid rgba(74,158,219,0.3);border-radius:14px;padding:18px 12px;cursor:pointer;text-align:left;">
+          <div style="font-size:22px;margin-bottom:8px;">⚡</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--cream);letter-spacing:0.3px;">Dumbbells + Cable</div>
+          <div style="font-size:11px;color:var(--gray-light);margin-top:4px;line-height:1.3;">DB + functional trainer</div>
+        </button>
+      </div>
+      <div style="display:flex;justify-content:flex-end;">${_backBtn}</div>`;
+  } else if (step === 2) {
+    const _tier = data.tier || 'dumbbells';
+    const _tierLabel = _TRAVEL_TIERS[_tier]?.label || _tier;
+    innerHTML = `
+      <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 24px;"></div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#4A9EDB;letter-spacing:1.5px;margin-bottom:4px;">✈ ${_tierLabel.toUpperCase()}</div>
+      <div style="font-size:14px;color:var(--gray-light);margin-bottom:20px;line-height:1.4;">How long will you be away?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
+        ${[{label:'3 Days',days:3},{label:'1 Week',days:7},{label:'2 Weeks',days:14},{label:'3 Weeks',days:21}].map(opt => `
+          <button onclick="window._travelSetupData={...window._travelSetupData,days:${opt.days}};_openTravelModeSetupSheet(3,window._travelSetupData);"
+            style="background:rgba(74,158,219,0.08);border:1.5px solid rgba(74,158,219,0.3);border-radius:12px;padding:14px 10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--cream);letter-spacing:0.3px;">${opt.label}</button>`).join('')}
+      </div>
+      <div style="display:flex;justify-content:flex-end;">${_backBtn}</div>`;
+  } else if (step === 3) {
+    const _tier = data.tier || 'dumbbells';
+    const _days = data.days || 7;
+    const _tierLabel = _TRAVEL_TIERS[_tier]?.label || _tier;
+    const _validEquip = _getTravelTierEquipment(_tier);
+
+    // Build preview: show which exercises will be swapped for the actual next scheduled workout
+    const _nextDayIdx = ((state.totalSessions || 0) % ((state.trainingDaysPerWeek || state.program?.length || 4)));
+    const _nextDay = state.program ? (state.program[_nextDayIdx] || state.program[0]) : null;
+    let _previewHTML = '';
+    if (_nextDay) {
+      const _swaps = _nextDay.exercises.map(ex => {
+        const sub = _getTravelExercise(ex, _tier);
+        if (sub) return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="font-size:12px;color:var(--gray-light);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ex.name}</span>
+          <svg viewBox="0 0 24 24" width="10" height="10" stroke="#4A9EDB" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          <span style="font-size:12px;color:#4A9EDB;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${sub.name}</span>
+        </div>`;
+        if (ex.equipment && !_validEquip.includes(ex.equipment)) {
+          return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <span style="font-size:12px;color:var(--gray-light);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ex.name}</span>
+            <span style="font-size:11px;color:#f59e0b;letter-spacing:0.5px;">CHOOSE ON DAY</span>
+          </div>`;
+        }
+        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="font-size:12px;color:var(--gray-light);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ex.name}</span>
+          <span style="font-size:11px;color:var(--success);">✓ COMPATIBLE</span>
+        </div>`;
+      }).join('');
+      _previewHTML = `<div style="background:rgba(74,158,219,0.06);border:1px solid rgba(74,158,219,0.2);border-radius:10px;padding:10px 12px;margin-bottom:18px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;color:#4A9EDB;margin-bottom:8px;">NEXT WORKOUT PREVIEW · ${_nextDay.badge}</div>
+        ${_swaps}
+      </div>`;
+    }
+
+    innerHTML = `
+      <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 24px;"></div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#4A9EDB;letter-spacing:1.5px;margin-bottom:4px;">✈ CONFIRM TRAVEL MODE</div>
+      <div style="font-size:13px;color:var(--gray-light);margin-bottom:16px;">${_tierLabel} · ${_days} days</div>
+      ${_previewHTML}
+      <button onclick="_applyTravelMode('${_tier}',${_days});document.getElementById('travel-setup-sheet')?.remove();"
+        style="width:100%;background:#4A9EDB;border:none;color:white;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;cursor:pointer;margin-bottom:10px;">
+        ✈ ACTIVATE TRAVEL MODE
+      </button>
+      <div style="display:flex;justify-content:space-between;align-items:center;">${_backBtn}
+        <button onclick="document.getElementById('travel-setup-sheet').remove();" style="background:none;border:none;color:var(--gray-light);padding:7px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;">Cancel</button>
+      </div>`;
+  }
+
+  sheet.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:28px 20px calc(36px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);max-height:85vh;overflow-y:auto;">
+      ${innerHTML}
+    </div>`;
+
+  window._travelSetupData = data;
+  document.body.appendChild(sheet);
+}
+
+function _openTravelModeActiveSheet() {
+  const existing = document.getElementById('travel-active-sheet');
+  if (existing) existing.remove();
+
+  const sheet = document.createElement('div');
+  sheet.id = 'travel-active-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+
+  const _tm = state.travelMode;
+  const _tierLabel = _TRAVEL_TIERS[_tm.tier]?.label || _tm.tier;
+  const _daysLeft = _tm.endDate ? Math.max(0, Math.ceil((new Date(_tm.endDate) - new Date()) / 86400000)) : '?';
+  const _startStr = _tm.startDate ? new Date(_tm.startDate).toLocaleDateString(undefined, { month:'short', day:'numeric' }) : '';
+
+  sheet.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:28px 20px calc(36px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:2px solid rgba(74,158,219,0.4);animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);">
+      <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 24px;"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="#4A9EDB" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#4A9EDB;letter-spacing:1.5px;">TRAVEL MODE ACTIVE</div>
+      </div>
+      <div style="font-size:14px;color:var(--gray-light);margin-bottom:4px;">${_tierLabel}</div>
+      <div style="font-size:12px;color:var(--gray-light);margin-bottom:20px;opacity:0.7;">Since ${_startStr} · ${_daysLeft} day${_daysLeft === 1 ? '' : 's'} remaining</div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+        <button onclick="document.getElementById('travel-active-sheet').remove();_openTravelModeSetupSheet(1,{});"
+          style="background:rgba(74,158,219,0.1);border:1px solid rgba(74,158,219,0.3);color:#4A9EDB;padding:14px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.5px;cursor:pointer;text-align:left;">
+          ⚙ Change Equipment
+        </button>
+        <button onclick="_extendTravelTrip();document.getElementById('travel-active-sheet').remove();"
+          style="background:rgba(74,158,219,0.1);border:1px solid rgba(74,158,219,0.3);color:#4A9EDB;padding:14px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.5px;cursor:pointer;text-align:left;">
+          📅 Extend Trip (+7 Days)
+        </button>
+        <button onclick="_deactivateTravelMode();document.getElementById('travel-active-sheet').remove();"
+          style="background:rgba(220,38,38,0.12);border:2px solid rgba(220,38,38,0.4);color:var(--red-text);padding:16px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:0.5px;cursor:pointer;text-align:center;width:100%;">
+          ✕ End Travel Mode — I'm Back Home
+        </button>
+      </div>
+      <button onclick="document.getElementById('travel-active-sheet').remove();" style="width:100%;background:none;border:1px solid #444;color:var(--gray-light);padding:10px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;cursor:pointer;">Close</button>
+    </div>`;
+  document.body.appendChild(sheet);
+}
+
+function _extendTravelTrip() {
+  if (!state.travelMode) return;
+  const _cur = state.travelMode.endDate ? new Date(state.travelMode.endDate) : new Date();
+  _cur.setDate(_cur.getDate() + 7);
+  state.travelMode.endDate = _cur.toISOString();
+  saveState();
+  _renderTravelModeHeaderIcon();
+  showToast('Trip extended +7 days');
+}
+
+function _checkTravelModeExpiry() {
+  if (!state.travelMode || !state.travelMode.endDate) return;
+  const _now = new Date();
+  const _end = new Date(state.travelMode.endDate);
+  if (_now > _end) {
+    // Travel mode has expired — show a prompt on home screen
+    const _existing = document.getElementById('travel-expiry-banner');
+    if (_existing) return;
+    const _banner = document.createElement('div');
+    _banner.id = 'travel-expiry-banner';
+    _banner.style.cssText = 'background:rgba(74,158,219,0.1);border:1px solid rgba(74,158,219,0.3);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;';
+    _banner.innerHTML = `
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="#4A9EDB" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+      <div style="flex:1;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:#4A9EDB;letter-spacing:0.5px;">STILL TRAVELING?</div>
+        <div style="font-size:12px;color:var(--gray-light);margin-top:2px;">Your travel mode trip ended. Are you back home?</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="_extendTravelTrip();this.closest('#travel-expiry-banner').remove();" style="background:rgba(74,158,219,0.2);border:1px solid rgba(74,158,219,0.4);color:#4A9EDB;padding:6px 10px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">+7 Days</button>
+        <button onclick="_deactivateTravelMode();this.closest('#travel-expiry-banner').remove();" style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.25);color:var(--red-text);padding:6px 10px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">I'm Back</button>
+      </div>`;
+    const _homeScreen = document.getElementById('screen-home');
+    if (_homeScreen) _homeScreen.insertBefore(_banner, _homeScreen.firstChild);
+  }
+}
+
 // WHAT ARE YOU CARRYING — PRE-SESSION CHECK-IN
 // ============================================================
 var _CARRYING_OPTIONS = [
@@ -10939,6 +11429,21 @@ function renderSession() {
   document.getElementById('session-title').innerHTML = titleParts[0] + ' <span>' + titleParts.slice(1).join(' ') + '</span>';
   document.getElementById('session-subtitle').textContent = day.day + ' · ' + day.name;
 
+  // Travel mode banner
+  const _tmbEl = document.getElementById('travel-mode-banner');
+  if (_tmbEl) {
+    if (state.travelMode) {
+      const _tierLabel = { 'dumbbells':'Dumbbells Only', 'dumbbells-cable':'Dumbbells + Cable' }[state.travelMode.tier] || state.travelMode.tier;
+      const _daysLeft = state.travelMode.endDate
+        ? Math.max(0, Math.ceil((new Date(state.travelMode.endDate) - new Date()) / 86400000))
+        : null;
+      _tmbEl.style.display = 'flex';
+      _tmbEl.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="#4A9EDB" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg> TRAVEL MODE · ${_tierLabel}${_daysLeft !== null ? `<span style="margin-left:auto;opacity:0.7;font-weight:400;">${_daysLeft}d left</span>` : ''}`;
+    } else {
+      _tmbEl.style.display = 'none';
+    }
+  }
+
   const container = document.getElementById('session-exercises');
   container.innerHTML = '';
 
@@ -10964,6 +11469,8 @@ function renderSession() {
     const isCompleted = eligibleSets.length > 0 && doneSets === eligibleSets.length;
     const swappedName = activeSession.swaps[ex.id] ? activeSession.swaps[ex.id].name : null;
     const displayName = swappedName || ex.name;
+    const _isTravelSub = !!(activeSession.swaps[ex.id]?.isTravelSub);
+    const _needsTravelSub = !!(state.travelMode && activeSession.travelNeedsSub?.includes(ex.id));
 
     const isPaired = !!activeSession.supersets?.[ex.id];
     const isSource = pairingSourceId === ex.id;
@@ -10971,7 +11478,7 @@ function renderSession() {
     const supersetLabel = isPaired ? getSupersetLabel(ex.id) : '';
 
     const exEl = document.createElement('div');
-    exEl.className = 'session-exercise' + (isCompleted ? ' completed' : '');
+    exEl.className = 'session-exercise' + (isCompleted ? ' completed' : '') + (_isTravelSub ? ' travel-sub' : '') + (_needsTravelSub ? ' travel-needs-sub' : '');
     exEl.id = 'session-ex-' + ex.id;
     // In pairing mode, make non-source cards tappable to complete the pair
     if (isPairingMode) {
@@ -11108,6 +11615,8 @@ function renderSession() {
           </div>
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;background:${_mColor}18;">${_muscle}</span>` : ''}
+            ${_isTravelSub ? `<span style="font-size:11px;font-weight:700;color:#4A9EDB;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(74,158,219,0.12);border:1px solid rgba(74,158,219,0.3);padding:2px 7px;border-radius:4px;">✈ TRAVEL</span>` : ''}
+            ${_needsTravelSub ? `<span style="font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);padding:2px 7px;border-radius:4px;">⚠ SWAP NEEDED</span>` : ''}
             ${isSource ? `<span style="font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:3px 8px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
         </div>
@@ -12232,7 +12741,15 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
     _sessionRpeStr = 'Avg RPE across session so far: ' + _sessAvgRpe + ' (' + _allSessionSets.length + ' sets)';
   }
 
-  return 'You are a coach standing next to the user during their workout. Talk exactly like a real coach would — direct, plain language, no jargon, no fitness terminology. Never use the words RPE, MRV, MEV, week-band, periodization, mesocycle, or any technical training term in your response. The data informs what you say but never appears in your words.\n\nAdjust your coaching style based on experience level:\nBeginner: tell them what to do and keep it simple. Focus on consistency. More instructional.\nIntermediate: reference what\'s happening in the session and how it compares to last time. Trust they know what to do.\nAdvanced: trust them to act on the observation. Less instruction, more precise awareness. Short and sharp.\n\nAll three levels use the same direct coach voice — plain sentences, no jargon. The difference is how much context you explain, not how you talk.\n\nGood examples:\nBeginner: \'You hit your numbers on that set. Stay at this weight and focus on finishing the last two sets strong.\'\nIntermediate: \'One more rep than last session at the same effort. Set 3 is where you prove it.\'\nAdvanced: \'Working harder set to set. Two left — pace yourself.\'\n\nBad examples — never say these: \'Good control on that set.\' \'Great work today.\' \'You are doing amazing.\' \'Your RPE indicates accumulated fatigue.\'\n\nMaximum three sentences. Observational and instructional only. Never reference form, technique, or control — you cannot see these things. Only reference what is in the data.' + restRpeVoiceRule + '\n\nContext rules:\n- Use all available context to make the cue specific to this exact moment.\n- If weight increase is queued for next session: acknowledge the performance and encourage finishing the session strong.\n- If in manual adjustment period: reflect that weight was recently changed and the focus is on adapting to the new load.\n- NEVER assume or infer exercise position, session progress, or how many exercises remain. Use only the explicit values below.\n\nSession data:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Training goal: ' + trainingGoal + '\n- ' + _cycleWeekStr + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- Experience level: ' + _expLevelCtx + '\n- Training days per week: ' + _trainingDaysPerWeek + '\n- ' + setNumberStr + '\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Rep target: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Reps trending this session: ' + _repTrendStr + '\n- Rep target consistency (last 3 sessions): ' + _repConsistencyStr + '\n- Session RPE trend: ' + _sessionRpeStr + '\n- Superset: ' + supersetStr + '\n- Sets this session: ' + setsSummary + '\n- Previous set this session: ' + prevInSessionStr + '\n- Weight increase queued next session: ' + (weightIncreaseQueued ? 'Yes' : 'No') + '\n- Manual adjustment period: ' + manualAdjStr + '\n- Session duration: ' + sessionDurStr + '\n- Last session this exercise: ' + lastSessionExStr + '\n- ' + prevSetStr + '\n- Trigger: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + restRpeObservation + '\n\nWrite 1–3 sentences max. No greeting, no sign-off.';
+  // Travel mode: inject context only when active
+  var _travelCtx = '';
+  if (state.travelMode) {
+    var _tierLabel2 = { 'dumbbells':'dumbbells and bodyweight', 'dumbbells-cable':'dumbbells and a cable machine' }[state.travelMode.tier] || state.travelMode.tier;
+    var _isTravelSubEx = !!(activeSession.swaps && activeSession.swaps[exId] && activeSession.swaps[exId].isTravelSub);
+    _travelCtx = '\n\nTRAVEL MODE CONTEXT:\n- User is traveling. Available equipment: ' + _tierLabel2 + '.\n' + (_isTravelSubEx ? '- This is a substitute exercise for their normal program — they\'re using available equipment, not their usual setup.\n- Do not suggest weight increases that carry over to next session — travel weights are isolated and don\'t affect their normal program.\n- Keep cues grounded in the travel context: making the most of what\'s available, staying consistent, keeping intensity up despite the equipment change.' : '- This exercise is compatible with travel equipment — treat it as normal.\n- Do not reference their normal gym or suggest going back to standard equipment.') + '\n- Do not tell them to go find a barbell or machine. Work with what they have.';
+  }
+
+  return 'You are a coach standing next to the user during their workout. Talk exactly like a real coach would — direct, plain language, no jargon, no fitness terminology. Never use the words RPE, MRV, MEV, week-band, periodization, mesocycle, or any technical training term in your response. The data informs what you say but never appears in your words.\n\nAdjust your coaching style based on experience level:\nBeginner: tell them what to do and keep it simple. Focus on consistency. More instructional.\nIntermediate: reference what\'s happening in the session and how it compares to last time. Trust they know what to do.\nAdvanced: trust them to act on the observation. Less instruction, more precise awareness. Short and sharp.\n\nAll three levels use the same direct coach voice — plain sentences, no jargon. The difference is how much context you explain, not how you talk.\n\nGood examples:\nBeginner: \'You hit your numbers on that set. Stay at this weight and focus on finishing the last two sets strong.\'\nIntermediate: \'One more rep than last session at the same effort. Set 3 is where you prove it.\'\nAdvanced: \'Working harder set to set. Two left — pace yourself.\'\n\nBad examples — never say these: \'Good control on that set.\' \'Great work today.\' \'You are doing amazing.\' \'Your RPE indicates accumulated fatigue.\'\n\nMaximum three sentences. Observational and instructional only. Never reference form, technique, or control — you cannot see these things. Only reference what is in the data.' + restRpeVoiceRule + '\n\nContext rules:\n- Use all available context to make the cue specific to this exact moment.\n- If weight increase is queued for next session: acknowledge the performance and encourage finishing the session strong.\n- If in manual adjustment period: reflect that weight was recently changed and the focus is on adapting to the new load.\n- NEVER assume or infer exercise position, session progress, or how many exercises remain. Use only the explicit values below.\n\nSession data:\n- Exercise: ' + exName + ' (' + muscle + ')\n- Training goal: ' + trainingGoal + '\n- ' + _cycleWeekStr + ', Cycle ' + cycleNum + ' (band: ' + band + ')\n- Experience level: ' + _expLevelCtx + '\n- Training days per week: ' + _trainingDaysPerWeek + '\n- ' + setNumberStr + '\n- Session position: ' + exercisePositionStr + '\n- Same-muscle remaining: ' + muscleGroupStr + '\n- Rep target: ' + (triggerData.repMin || '?') + '–' + (triggerData.repMax || '?') + ' reps\n- Reps trending this session: ' + _repTrendStr + '\n- Rep target consistency (last 3 sessions): ' + _repConsistencyStr + '\n- Session RPE trend: ' + _sessionRpeStr + '\n- Superset: ' + supersetStr + '\n- Sets this session: ' + setsSummary + '\n- Previous set this session: ' + prevInSessionStr + '\n- Weight increase queued next session: ' + (weightIncreaseQueued ? 'Yes' : 'No') + '\n- Manual adjustment period: ' + manualAdjStr + '\n- Session duration: ' + sessionDurStr + '\n- Last session this exercise: ' + lastSessionExStr + '\n- ' + prevSetStr + '\n- Trigger: ' + (triggerDescriptions[triggerNum] || 'Performance note.') + restRpeObservation + _travelCtx + '\n\nWrite 1–3 sentences max. No greeting, no sign-off.';
 }
 
 async function _fetchCoachingCue(prompt) {
@@ -14858,7 +15375,23 @@ function finalizeEndSession(save) {
       // the trend window — sessions where the user deviated from the suggestion
       // reflect a different load and should not skew RPE/rep averages.
       suggestedWeights: activeSession.suggestedWeights ? { ...activeSession.suggestedWeights } : {},
+      // Travel mode tag: excludes this session from progressive overload calculations
+      // so barbell/machine weights aren't contaminated by lighter travel loads.
+      ...(state.travelMode ? { travelMode: state.travelMode.tier } : {}),
     };
+
+    // Persist travel sub weights so next travel session can suggest them
+    if (state.travelMode && activeSession.swaps) {
+      if (!state.travelWeights) state.travelWeights = {};
+      Object.entries(activeSession.swaps).forEach(([exId, swap]) => {
+        if (swap.isTravelSub) {
+          const doneSets = (activeSession.sets[exId] || []).filter(s => s.done && parseFloat(s.weight) > 0);
+          if (doneSets.length) {
+            state.travelWeights[swap.name] = parseFloat(doneSets[doneSets.length - 1].weight);
+          }
+        }
+      });
+    }
 
     if (!state.history) state.history = [];
     state.history.push(entry);
@@ -17619,14 +18152,15 @@ function renderProgressChart() {
     const rpeVals = doneSets.filter(s => s.rpe).map(s => parseFloat(s.rpe));
     const avgRPE = rpeVals.length ? (rpeVals.reduce((a, b) => a + b, 0) / rpeVals.length) : null;
     const maxReps = Math.max(...doneSets.map(s => parseInt(s.reps) || 0));
+    const isTravel = !!entry.travelMode;
 
     if (chartMode === 'volume') {
       const uniMult = (UNILATERAL_EXERCISES.has(exId) || state.customUnilateralExercises?.[exId]) ? 2 : 1;
       const volume = doneSets.filter(s => !s.coachRemoved).reduce((sum, s) => sum + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0), 0) * uniMult;
-      if (volume > 0) dataPoints.push({ date: new Date(entry.date), weight: volume, setsCount: doneSets.length, avgRPE, maxReps });
+      if (volume > 0) dataPoints.push({ date: new Date(entry.date), weight: volume, setsCount: doneSets.length, avgRPE, maxReps, isTravel });
     } else {
       const maxWeight = Math.max(...doneSets.map(s => parseFloat(s.weight) || 0));
-      if (maxWeight > 0) dataPoints.push({ date: new Date(entry.date), weight: maxWeight, setsCount: doneSets.length, avgRPE, maxReps });
+      if (maxWeight > 0) dataPoints.push({ date: new Date(entry.date), weight: maxWeight, setsCount: doneSets.length, avgRPE, maxReps, isTravel });
     }
   });
 
@@ -17701,23 +18235,32 @@ function renderProgressChart() {
   ctx.fillStyle = 'rgba(204,32,39,0.1)';
   ctx.fill();
 
-  // Dots
+  // Dots — travel sessions get steel blue dot + ✈ label
   dataPoints.forEach((pt, i) => {
     const x = pad.left + (i / (dataPoints.length - 1)) * w;
     const y = pad.top + h - ((pt.weight - minW) / (maxW - minW)) * h;
+    const dotColor = pt.isTravel ? '#4A9EDB' : '#CC2027';
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#CC2027';
+    ctx.fillStyle = dotColor;
     ctx.fill();
     ctx.beginPath();
     ctx.arc(x, y, 2, 0, Math.PI * 2);
     ctx.fillStyle = '#F5E6C8';
     ctx.fill();
+    if (pt.isTravel) {
+      ctx.fillStyle = '#4A9EDB';
+      ctx.font = '9px Barlow Condensed, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('✈', x, y - 7);
+    }
   });
 
-  // Overload recommendation
-  const last = dataPoints[dataPoints.length - 1];
-  const prev = dataPoints[dataPoints.length - 2];
+  // Overload recommendation — use last NON-travel session so travel weights
+  // don't trigger false progress or regression signals.
+  const _nonTravelPts = dataPoints.filter(p => !p.isTravel);
+  const last = _nonTravelPts.length > 0 ? _nonTravelPts[_nonTravelPts.length - 1] : dataPoints[dataPoints.length - 1];
+  const prev = _nonTravelPts.length > 1 ? _nonTravelPts[_nonTravelPts.length - 2] : dataPoints[dataPoints.length - 2];
   let recHTML = '';
 
   // Goal-aware targets for this exercise
@@ -17810,8 +18353,9 @@ function renderProgressChart() {
     const tags = [];
     if (pt.setsCount) tags.push(`${pt.setsCount} sets`);
     if (pt.avgRPE)    tags.push(`RPE ${pt.avgRPE.toFixed(1)}`);
+    if (pt.isTravel)  tags.push('✈ Travel');
     const tagsHTML = tags.map(t =>
-      `<span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:6px;">${t}</span>`
+      `<span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:${t.includes('✈') ? '#4A9EDB' : 'var(--gray)'};background:${t.includes('✈') ? 'rgba(74,158,219,0.1)' : 'rgba(255,255,255,0.05)'};border:1px solid ${t.includes('✈') ? 'rgba(74,158,219,0.3)' : 'rgba(255,255,255,0.1)'};padding:2px 8px;border-radius:6px;">${t}</span>`
     ).join('');
     tableHTML += `
       <div class="history-item" style="cursor:default;padding:12px 14px;">
@@ -18315,6 +18859,7 @@ function shareHistoryEntry(entryId) {
     weekLabel: dateStr,
     dayIndex: di < 0 ? 0 : di,
     isDeload: !!(entry.isDeload),
+    isTravel: !!(entry.travelMode),
     stats,
     songTitle:  entry.songTitle  || null,
     songArtist: entry.songArtist || null,
@@ -18645,6 +19190,7 @@ const CARD_DAY_PALETTES = [
 ];
 const CARD_PR_THEME           = { hi: '#c07800', lo: '#7a4e00', line: 'rgba(210,160,0,0.75)' };
 const CARD_DELOAD_THEME       = { hi: '#1a3050', lo: '#0a1826', line: 'rgba(80,140,220,0.7)' };
+const CARD_TRAVEL_THEME       = { hi: '#1a3d58', lo: '#0a1e2d', line: 'rgba(74,158,219,0.7)' };
 const CARD_MOOD_THEME         = { hi: '#1a1f4e', lo: '#07091c', line: 'rgba(120,130,220,0.45)' };
 const CARD_CYCLE_REVIEW_THEME = { hi: '#2e060a', lo: '#0e0001', line: 'rgba(204,32,39,0.45)' };
 const CARD_MILESTONE_SESSIONS = new Set([10, 25, 50, 100, 200, 365, 500, 1000]);
@@ -18716,13 +19262,15 @@ async function generateAndShareCard(type, data) {
   // ── Theme & layout ────────────────────────────────────────
   const _isPR      = type === 'pr';
   const _isDeload  = !!(data.isDeload);
+  const _isTravel  = !!(data.isTravel);
   const _isMilestone = CARD_MILESTONE_SESSIONS.has(state.totalSessions ?? -1);
   // 20% chance of flipping the layout (dark top, colored bottom) for regular cards
-  const _isFlipped = !_isPR && !_isDeload && type !== 'mood' && type !== 'showing_up_anyway' && Math.random() < 0.20;
+  const _isFlipped = !_isPR && !_isDeload && !_isTravel && type !== 'mood' && type !== 'showing_up_anyway' && Math.random() < 0.20;
 
   let _theme;
   if (_isPR)                        _theme = CARD_PR_THEME;
   else if (_isDeload)               _theme = CARD_DELOAD_THEME;
+  else if (_isTravel)               _theme = CARD_TRAVEL_THEME;
   else if (type === 'mood' || type === 'mood_lift_stats' || type === 'showing_up_anyway') _theme = CARD_MOOD_THEME;
   else if (type === 'cycle_review') _theme = CARD_CYCLE_REVIEW_THEME;
   else                              _theme = CARD_DAY_PALETTES[(data.dayIndex ?? 0) % CARD_DAY_PALETTES.length];
@@ -18823,17 +19371,41 @@ async function generateAndShareCard(type, data) {
     const dayY   = Math.round(SPLIT * 0.74);
     const weekY  = Math.round(SPLIT * 0.89);
 
-    ctx.font = `${Math.round(90 * S)}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('✅', W / 2, emojiY);
+    if (_isTravel) {
+      // Travel mode card: steel blue glow + plane icon treatment
+      const tGlow = ctx.createRadialGradient(W / 2, SPLIT * 0.4, 0, W / 2, SPLIT * 0.55, W * 0.65);
+      tGlow.addColorStop(0,   'rgba(74,158,219,0.22)');
+      tGlow.addColorStop(0.6, 'rgba(30,80,130,0.08)');
+      tGlow.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = tGlow;
+      ctx.fillRect(0, 0, W, SPLIT);
 
-    drawText('DONE', W / 2, doneY,
-      bebas(200), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 22 });
-    drawText((data.dayName || 'WORKOUT').toUpperCase(), W / 2, dayY,
-      barlow(700, 54), 'rgba(255,255,255,0.9)', MAX_TW);
-    drawText(data.weekLabel || `WEEK ${data.week || 1}`, W / 2, weekY,
-      barlow(500, 38), 'rgba(255,255,255,0.75)', MAX_TW);
+      ctx.font = `${Math.round(90 * S)}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✈', W / 2, emojiY);
+
+      drawText('TRAVELED.', W / 2, Math.round(SPLIT * 0.42),
+        bebas(160), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 22 });
+      drawText('TRAINED.', W / 2, Math.round(SPLIT * 0.60),
+        bebas(160), 'rgba(74,158,219,0.9)', MAX_TW, { color: 'rgba(74,158,219,0.4)', blur: 18 });
+      drawText((data.dayName || 'WORKOUT').toUpperCase(), W / 2, dayY,
+        barlow(700, 54), 'rgba(255,255,255,0.9)', MAX_TW);
+      drawText(data.weekLabel || `WEEK ${data.week || 1}`, W / 2, weekY,
+        barlow(500, 38), 'rgba(180,210,240,0.75)', MAX_TW);
+    } else {
+      ctx.font = `${Math.round(90 * S)}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✅', W / 2, emojiY);
+
+      drawText('DONE', W / 2, doneY,
+        bebas(200), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 22 });
+      drawText((data.dayName || 'WORKOUT').toUpperCase(), W / 2, dayY,
+        barlow(700, 54), 'rgba(255,255,255,0.9)', MAX_TW);
+      drawText(data.weekLabel || `WEEK ${data.week || 1}`, W / 2, weekY,
+        barlow(500, 38), 'rgba(255,255,255,0.75)', MAX_TW);
+    }
 
   } else if (type === 'weekly') {
     const emojiY    = Math.round(SPLIT * 0.19);
@@ -20500,6 +21072,8 @@ try {
   migrateSessionCount();
   migratePeriodizationState();
   checkPauseAutoExpiry();
+  _renderTravelModeHeaderIcon();
+  _checkTravelModeExpiry();
   updateStreak();
   renderHome();
   // If this is an OAuth return (Google sign-in redirect), skip onboarding before it renders.
