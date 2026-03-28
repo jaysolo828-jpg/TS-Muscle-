@@ -926,7 +926,7 @@
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: 1.5px;
+    letter-spacing: 0.5px;
     padding: 4px 0;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
@@ -11787,7 +11787,7 @@ function renderSession() {
       return acc;
     }, []);
     const _prevBtnHTML = _lastSets.length
-      ? `<button class="prev-session-btn" onclick="togglePrevPanel('${ex.id}')">PREV <span id="prev-arrow-${ex.id}">▾</span></button>`
+      ? `<button class="prev-session-btn" onclick="togglePrevPanel('${ex.id}')">LAST SESSION <span id="prev-arrow-${ex.id}">▾</span></button>`
       : '';
     const _prevPanelHTML = _lastSets.length ? `
       <div class="prev-session-panel" id="prev-panel-${ex.id}" style="display:none;">
@@ -11800,12 +11800,13 @@ function renderSession() {
       </div>` : '';
 
     let setsHTML = `
+      ${_lastSets.length ? `<div style="text-align:right; padding: 2px 16px 4px;">${_prevBtnHTML}</div>` : ''}
       <div class="set-labels">
         <div class="set-label">#</div>
         <div class="set-label">Weight (lbs)</div>
         <div class="set-label">Reps <span id="rep-goal-label-${ex.id}" onclick="openRepRangeSheet('${ex.id}')" data-goal-color="${_goalColor}" style="color:${_goalColor};font-size:12px;font-weight:700;cursor:pointer;border-bottom:1px dashed ${_goalColor}70;padding-bottom:1px;" title="Tap to change · hit ${_repTop} reps to trigger weight increase">GOAL: ${_initRepDisplay}</span></div>
         <div class="set-label"><button class="rpe-info-btn" onclick="toggleRpeSheet()" aria-label="What is RPE?">RPE <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; color:var(--red-text);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="3"/></svg></button></div>
-        <div class="set-label" style="text-align:right;">${_prevBtnHTML}</div>
+        <div class="set-label"></div>
       </div>
       ${_prevPanelHTML}
     `;
@@ -11817,8 +11818,8 @@ function renderSession() {
       if (set.coachRemoved) return;
       // Pre-fill with last session data if available
       const lastData = getLastSetData(ex.id, si);
-      const weightPlaceholder = lastData ? lastData.weight : '';
-      const repsPlaceholder = lastData ? lastData.reps : '';
+      const weightValue = set.weight || (lastData ? lastData.weight : '');
+      const repsValue   = set.reps   || (lastData ? lastData.reps   : '');
 
       // In-session rep intelligence: compute adaptive suggestion for sets after the first.
       // Only applies when the set hasn't been completed yet and setIntel is initialized.
@@ -11828,20 +11829,20 @@ function renderSession() {
       if (_intelReps !== null && activeSession?.setIntel?.[ex.id]?.[si]) {
         activeSession.setIntel[ex.id][si].suggestedReps = _intelReps;
       }
-      // Always use previous session reps as placeholder (consistent with PREV column)
-      const _repPlaceholder = repsPlaceholder || _goalReps.split(/[–\-]/)[0];
-      // Show intel suggestion as a small hint when it differs from the placeholder
-      const _showIntelHint = _intelReps !== null && !set.done && String(_intelReps) !== String(_repPlaceholder);
+      // Placeholder is goal rep start; last session data pre-fills the value directly
+      const _repPlaceholder = _goalReps.split(/[–\-]/)[0];
+      // Show intel suggestion as a small hint when it differs from the pre-filled reps value
+      const _showIntelHint = _intelReps !== null && !set.done && String(_intelReps) !== String(repsValue || _repPlaceholder);
 
       setsHTML += `
         <div class="set-row" id="set-row-${ex.id}-${si}">
           <div class="set-num">${si + 1}</div>
-          <input type="number" inputmode="decimal" class="set-input" placeholder="${weightPlaceholder || '0'}"
-            value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
+          <input type="number" inputmode="decimal" class="set-input" placeholder="0"
+            value="${weightValue}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
           <div style="position:relative;">
             <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
               placeholder="${_repPlaceholder}"
-              value="${set.reps}" style="padding-right:22px;"
+              value="${repsValue}" style="padding-right:22px;"
               ${set.done ? 'disabled' : ''}
               onchange="updateSet('${ex.id}',${si},'reps',this.value); updateRepIndicator('${ex.id}',${si},'${_goalReps}')"
               oninput="updateRepIndicator('${ex.id}',${si},'${_goalReps}')"/>
