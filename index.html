@@ -2920,19 +2920,25 @@
 
 <div id="screen-mindset" class="screen">
   <div class="section-title">MINDSET <span>CHECK-IN</span></div>
-  <div style="font-size:13px; color:var(--gray-light); line-height:1.6; margin-bottom:16px;">Track your mood, work through setbacks, and stay kind to yourself.</div>
+  <div style="font-size:13px; color:var(--gray-light); line-height:1.6; margin-bottom:16px;">Log what you carry in. Track how you feel after. Honor the days you showed up anyway.</div>
 
   <!-- Why I Train Values Card -->
   <div id="values-card" class="card" style="margin-bottom:14px;"></div>
 
+  <!-- Hard Day Collection -->
+  <div class="section-title">YOUR <span>COLLECTION</span></div>
+  <div id="hard-day-collection" style="margin-bottom:16px;">
+    <div class="empty-state"><div class="empty-state-icon">🪨</div><div class="empty-state-text">No hard days claimed yet. Your collection builds when you show up carrying something heavy.</div></div>
+  </div>
+
   <!-- Mood Check-In Card -->
-  <div id="mood-checkin-card" class="card" style="margin-bottom:16px;" data-timing="pre">
+  <div class="section-title">POST-WORKOUT <span>MOOD</span></div>
+  <div id="mood-checkin-card" class="card" style="margin-bottom:16px;" data-timing="post">
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;" id="mood-checkin-label">MOOD CHECK-IN</div>
     <div style="font-size:13px; color:var(--gray-light); margin-bottom:16px;">Log how you're feeling after your workout.</div>
 
     <input type="hidden" id="mood-timing" value="post"/>
 
-    <div style="font-size:12px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">HOW ARE YOU FEELING?</div>
     <div style="display:flex; justify-content:space-between; gap:6px; margin-bottom:16px;" id="mood-scale">
       <button class="mood-btn" onclick="selectMood(1, this)" data-value="1">
         <div style="font-size:28px;">😞</div>
@@ -2981,13 +2987,7 @@
   <!-- Mood History -->
   <div class="section-title">MOOD <span>LOG</span></div>
   <div id="mood-history-list" style="margin-bottom:16px;">
-    <div class="empty-state"><div class="empty-state-icon">💭</div><div class="empty-state-text">No mood entries yet. Log one before or after your next session.</div></div>
-  </div>
-
-  <!-- Hard Day Collection -->
-  <div class="section-title">YOUR <span>COLLECTION</span></div>
-  <div id="hard-day-collection" style="margin-bottom:16px;">
-    <div class="empty-state"><div class="empty-state-icon">🪨</div><div class="empty-state-text">No hard days claimed yet. Your collection builds when you show up carrying something heavy.</div></div>
+    <div class="empty-state"><div class="empty-state-icon">💭</div><div class="empty-state-text">No mood entries yet. Log one after your next session.</div></div>
   </div>
 
   <!-- Support Tools — combined card -->
