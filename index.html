@@ -1161,6 +1161,28 @@
     box-shadow: 0 0 10px rgba(204,32,39,0.55);
   }
 
+  /* ── Travel mode session overrides ── */
+  .workout-session.travel-mode {
+    background: #080c12;
+  }
+  .workout-session.travel-mode .session-header {
+    border-bottom-color: #4A9EDB;
+  }
+  .workout-session.travel-mode .session-sticky-header {
+    background: #0b1018;
+  }
+  .workout-session.travel-mode .progress-bar-fill {
+    background: linear-gradient(90deg, #2d7cb8 0%, #4A9EDB 60%, #6bb8f0 100%);
+    box-shadow: 0 0 10px rgba(74,158,219,0.55);
+  }
+  .workout-session.travel-mode .set-num {
+    color: #4A9EDB;
+  }
+  #sticky-rest-timer.travel-mode {
+    border-color: #4A9EDB;
+    box-shadow: 0 4px 24px rgba(74,158,219,0.35);
+  }
+
   /* NOTES */
   .notes-area {
     padding: 14px 16px;
@@ -11661,6 +11683,17 @@ function renderSession() {
   const titleParts = day.badge.split(' ');
   document.getElementById('session-title').innerHTML = titleParts[0] + ' <span>' + titleParts.slice(1).join(' ') + '</span>';
   document.getElementById('session-subtitle').textContent = day.day + ' · ' + day.name;
+
+  // Travel mode — apply/remove overall visual theme
+  const _wsEl = document.getElementById('workout-session');
+  const _srtEl = document.getElementById('sticky-rest-timer');
+  if (state.travelMode) {
+    _wsEl?.classList.add('travel-mode');
+    _srtEl?.classList.add('travel-mode');
+  } else {
+    _wsEl?.classList.remove('travel-mode');
+    _srtEl?.classList.remove('travel-mode');
+  }
 
   // Travel mode banner
   const _tmbEl = document.getElementById('travel-mode-banner');
