@@ -2619,9 +2619,9 @@
       <div class="stat-num" id="stat-sessions">0</div>
       <div class="stat-label">Sessions</div>
     </div>
-    <div class="stat-box" onclick="showStatInfo('week')" style="cursor:pointer;">
-      <div class="stat-num" id="stat-week">1</div>
-      <div class="stat-label">Current Week</div>
+    <div class="stat-box" onclick="showStatInfo('consistency')" style="cursor:pointer;">
+      <div class="stat-num" id="stat-consistency">--</div>
+      <div class="stat-label">Consistency</div>
     </div>
     <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;">
       <button onclick="event.stopPropagation();shareStreakCard()" aria-label="Share Streak" title="Share streak" style="position:absolute;top:4px;right:4px;background:rgba(204,32,39,0.12);border:none;border-radius:8px;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
@@ -8409,6 +8409,33 @@ function checkPauseAutoExpiry() {
   }
 }
 
+function calcConsistencyRate() {
+  const history = state.history || [];
+  if (history.length === 0) return null;
+  const daysPerWeek = state.trainingDaysPerWeek || 4;
+  const now = new Date();
+  const todaySunday = new Date(now);
+  todaySunday.setHours(0, 0, 0, 0);
+  todaySunday.setDate(todaySunday.getDate() - todaySunday.getDay());
+  const firstDate = new Date(Math.min(...history.map(e => new Date(e.date).getTime())));
+  const WINDOW = 8;
+  let scheduled = 0, completed = 0;
+  for (let w = 1; w <= WINDOW; w++) {
+    const wSun = new Date(todaySunday);
+    wSun.setDate(wSun.getDate() - w * 7);
+    const wEnd = new Date(wSun);
+    wEnd.setDate(wEnd.getDate() + 7);
+    if (wEnd.getTime() <= firstDate.getTime()) break; // before program started
+    const count = history.filter(e => {
+      const d = new Date(e.date).getTime();
+      return d >= wSun.getTime() && d < wEnd.getTime();
+    }).length;
+    scheduled += daysPerWeek;
+    completed += Math.min(count, daysPerWeek);
+  }
+  return scheduled === 0 ? null : Math.round((completed / scheduled) * 100);
+}
+
 function showStatInfo(type) {
   const days = state.trainingDaysPerWeek || 4;
   const threshold = Math.ceil(days * 0.75);
@@ -8424,11 +8451,11 @@ function showStatInfo(type) {
       body: `You've completed <strong style="color:var(--cream);">${sessions} workout${sessions !== 1 ? 's' : ''}</strong> total.`,
       sub: 'Every session counts. This number never resets.'
     },
-    week: {
-      title: 'PROGRAM WEEK',
-      icon: '📅',
-      body: `You're on <strong style="color:var(--cream);">Week ${week} of 8</strong> in Cycle ${cycle}.`,
-      sub: `Week advances every 4 sessions, so your program always reflects your actual training volume, not the calendar. Week 7 triggers your recovery option. Week 8 completes the cycle.`
+    consistency: {
+      title: 'CONSISTENCY RATE',
+      icon: '🎯',
+      body: `You've hit <strong style="color:var(--cream);">${calcConsistencyRate() !== null ? calcConsistencyRate() + '%' : '--'}</strong> of your scheduled sessions over the last 8 weeks.`,
+      sub: `Based on ${days} scheduled days per week. Only complete Sun–Sat weeks count — the current week never works against you.`
     },
     streak: {
       title: 'WEEK STREAK',
@@ -8659,25 +8686,26 @@ function renderHome() {
     }
   }
 
-  // Show paused state on week and streak cards
+  // Show paused state on consistency and streak cards
   const isPaused = state.programPaused;
-  const weekEl = document.getElementById('stat-week');
+  const consistencyEl = document.getElementById('stat-consistency');
   const streakEl = document.getElementById('stat-streak');
-  const weekLabelEl = weekEl?.nextElementSibling;
+  const consistencyLabelEl = consistencyEl?.nextElementSibling;
   const streakLabelEl = streakEl?.nextElementSibling;
 
-  weekEl.textContent = state.weekCount;
+  const _consistencyRate = calcConsistencyRate();
+  consistencyEl.textContent = _consistencyRate !== null ? _consistencyRate + '%' : '--';
   streakEl.textContent = state.streak || 0;
 
   if (isPaused) {
-    weekEl.style.color = 'var(--warning)';
+    consistencyEl.style.color = 'var(--warning)';
     streakEl.style.color = 'var(--warning)';
-    if (weekLabelEl) { weekLabelEl.textContent = '⏸ WEEK PAUSED'; weekLabelEl.style.color = 'var(--warning)'; }
+    if (consistencyLabelEl) { consistencyLabelEl.textContent = '⏸ PAUSED'; consistencyLabelEl.style.color = 'var(--warning)'; }
     if (streakLabelEl) { streakLabelEl.textContent = '⏸ STREAK PAUSED'; streakLabelEl.style.color = 'var(--warning)'; }
   } else {
-    weekEl.style.color = 'var(--cream)';
+    consistencyEl.style.color = 'var(--cream)';
     streakEl.style.color = 'var(--cream)';
-    if (weekLabelEl) { weekLabelEl.textContent = 'Current Week'; weekLabelEl.style.color = ''; }
+    if (consistencyLabelEl) { consistencyLabelEl.textContent = 'Consistency'; consistencyLabelEl.style.color = ''; }
     if (streakLabelEl) { streakLabelEl.textContent = 'Week Streak'; streakLabelEl.style.color = ''; }
   }
   let pausedSession = null;
