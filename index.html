@@ -728,6 +728,7 @@
 
   .session-exercise.completed { border-color: var(--success); opacity: 0.75; }
   .session-exercise.travel-sub { border-color: rgba(74,158,219,0.4); }
+  .session-exercise.travel-needs-sub { border-color: rgba(243,156,18,0.4); }
 
   @keyframes supersetPulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
@@ -3758,7 +3759,7 @@
           <span style="font-size:18px;">✈️</span>
           <div>
             <div style="font-weight:700; font-size:14px; color:var(--cream);">Unavoidable Travel</div>
-            <div style="font-size:12px; color:var(--gray);">No access to equipment</div>
+            <div style="font-size:12px; color:var(--gray);">No gym at all · <span onclick="event.stopPropagation();document.getElementById('pause-program-modal').style.display='none';openTravelModeSheet();" style="color:#4A9EDB;text-decoration:underline;cursor:pointer;">Have a hotel gym? Use Travel Mode ✈</span></div>
           </div>
         </button>
       </div>
@@ -8465,6 +8466,7 @@ function getDayStats(dayId) {
     hasData: lastVol > 0,
     songTitle:  last.songTitle  || null,
     songArtist: last.songArtist || null,
+    isTravel: !!last.travelMode,
   };
 }
 
@@ -8684,6 +8686,35 @@ function renderHome() {
       <svg viewBox="0 0 24 24" width="18" height="18" stroke="${urgency ? '#ff6b6b' : 'var(--gray)'}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
   } else {
     pauseBanner.style.display = 'none';
+  }
+
+  // Travel mode banner on home screen
+  let _travelHomeBanner = document.getElementById('travel-home-banner');
+  if (!_travelHomeBanner) {
+    _travelHomeBanner = document.createElement('div');
+    _travelHomeBanner.id = 'travel-home-banner';
+    const _deloadBannerEl = document.getElementById('deload-banner');
+    _deloadBannerEl.parentNode.insertBefore(_travelHomeBanner, _deloadBannerEl);
+  }
+  if (state.travelMode) {
+    _checkTravelModeExpiry();
+    const _tmTierLabel = { 'dumbbells':'Dumbbells Only', 'dumbbells-cable':'Dumbbells + Cable' }[state.travelMode.tier] || state.travelMode.tier;
+    const _tmDaysLeft = state.travelMode.endDate
+      ? Math.max(0, Math.ceil((new Date(state.travelMode.endDate) - new Date()) / 86400000))
+      : null;
+    const _tmExpired = _tmDaysLeft !== null && _tmDaysLeft === 0;
+    _travelHomeBanner.style.cssText = 'margin-bottom:12px;background:rgba(74,158,219,0.08);border:1px solid rgba(74,158,219,0.35);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;';
+    _travelHomeBanner.onclick = () => openTravelModeSheet();
+    _travelHomeBanner.innerHTML = `
+      <svg viewBox="0 0 24 24" width="22" height="22" stroke="#4A9EDB" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+      <div style="flex:1;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:#4A9EDB;letter-spacing:1px;">TRAVEL MODE · ${_tmTierLabel.toUpperCase()}</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:2px;">${_tmExpired ? '⚠ Trip ended — still away? Tap to extend or end.' : _tmDaysLeft !== null ? `${_tmDaysLeft} day${_tmDaysLeft !== 1 ? 's' : ''} left · Workouts using travel substitutions` : 'Workouts using travel substitutions'}</div>
+      </div>
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="#4A9EDB" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+    _travelHomeBanner.style.display = 'flex';
+  } else {
+    _travelHomeBanner.style.display = 'none';
   }
 
   // Rest week banner (separate from deload banner) — show day countdown
@@ -8992,6 +9023,7 @@ function renderHome() {
               <div style="display:flex;align-items:center;gap:0;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:0.4px;line-height:1.3;">
                 ${_stats.prCount > 0 ? `<span style="color:#f39c12;font-weight:700;">🏆 ${_stats.prCount} PR${_stats.prCount > 1 ? 's' : ''}</span><span style="color:var(--dark4);margin:0 7px;">|</span>` : ''}
                 ${_stats.duration ? `<span style="color:var(--gray-light);">${_stats.duration} min</span><span style="color:var(--dark4);margin:0 7px;">|</span>` : ''}
+                ${_stats.isTravel ? `<span style="color:#4A9EDB;font-weight:700;">✈</span><span style="color:var(--dark4);margin:0 7px;">|</span>` : ''}
                 <span style="color:var(--gray);">${_stats.lastDoneLabel}</span>
               </div>
               <button onclick="event.stopPropagation();shareHistoryEntry('${_stats.lastId}')" style="background:none;border:none;color:${_dayColor};opacity:0.6;cursor:pointer;padding:2px 0 2px 8px;display:flex;align-items:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;" title="Share">
@@ -10956,8 +10988,9 @@ function _openTravelModeSetupSheet(step, data) {
     const _tierLabel = _TRAVEL_TIERS[_tier]?.label || _tier;
     const _validEquip = _getTravelTierEquipment(_tier);
 
-    // Build preview: show which exercises will be swapped for today's upcoming workout
-    const _nextDay = state.program ? state.program[0] : null;
+    // Build preview: show which exercises will be swapped for the actual next scheduled workout
+    const _nextDayIdx = ((state.totalSessions || 0) % ((state.trainingDaysPerWeek || state.program?.length || 4)));
+    const _nextDay = state.program ? (state.program[_nextDayIdx] || state.program[0]) : null;
     let _previewHTML = '';
     if (_nextDay) {
       const _swaps = _nextDay.exercises.map(ex => {
@@ -11411,6 +11444,7 @@ function renderSession() {
     const swappedName = activeSession.swaps[ex.id] ? activeSession.swaps[ex.id].name : null;
     const displayName = swappedName || ex.name;
     const _isTravelSub = !!(activeSession.swaps[ex.id]?.isTravelSub);
+    const _needsTravelSub = !!(state.travelMode && activeSession.travelNeedsSub?.includes(ex.id));
 
     const isPaired = !!activeSession.supersets?.[ex.id];
     const isSource = pairingSourceId === ex.id;
@@ -11418,7 +11452,7 @@ function renderSession() {
     const supersetLabel = isPaired ? getSupersetLabel(ex.id) : '';
 
     const exEl = document.createElement('div');
-    exEl.className = 'session-exercise' + (isCompleted ? ' completed' : '') + (_isTravelSub ? ' travel-sub' : '');
+    exEl.className = 'session-exercise' + (isCompleted ? ' completed' : '') + (_isTravelSub ? ' travel-sub' : '') + (_needsTravelSub ? ' travel-needs-sub' : '');
     exEl.id = 'session-ex-' + ex.id;
     // In pairing mode, make non-source cards tappable to complete the pair
     if (isPairingMode) {
@@ -11556,6 +11590,7 @@ function renderSession() {
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;background:${_mColor}18;">${_muscle}</span>` : ''}
             ${_isTravelSub ? `<span style="font-size:11px;font-weight:700;color:#4A9EDB;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(74,158,219,0.12);border:1px solid rgba(74,158,219,0.3);padding:2px 7px;border-radius:4px;">✈ TRAVEL</span>` : ''}
+            ${_needsTravelSub ? `<span style="font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);padding:2px 7px;border-radius:4px;">⚠ SWAP NEEDED</span>` : ''}
             ${isSource ? `<span style="font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:3px 8px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
         </div>
