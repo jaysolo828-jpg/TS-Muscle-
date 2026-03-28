@@ -2562,7 +2562,7 @@
   </div>
   <div class="header-right">
     <button class="icon-btn" id="travel-mode-btn" onclick="openTravelModeSheet()" aria-label="Travel Mode" title="Travel Mode" style="position:relative;">
-      <span id="travel-mode-icon" style="font-size:22px;line-height:1;color:#999;display:block;">✈</span>
+      <span id="travel-mode-icon" style="font-size:28px;line-height:1;color:#999;display:block;">✈</span>
     </button>
     <button class="icon-btn" id="lib-open-btn" onclick="openExerciseLibrary(null)" aria-label="Exercise Library" title="Exercise Library">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--red)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.24" y2="14.24"/></svg>
@@ -6213,6 +6213,7 @@ let state = {
   rotationDismissedAtCycle: null,  // suppresses rotation banner for the rest of the cycle
   travelMode: null,           // { tier, startDate, endDate } when active, else null
   travelWeights: {},           // keyed by alt exercise name → last logged weight
+  travelSubPrefs: {},          // keyed by exercise id → chosen alt name (persists per trip)
 };
 
 let activeSession = null;
@@ -9098,13 +9099,14 @@ function renderHome() {
                 <div class="exercise-name" onclick="openExerciseLibraryByName('${_sub.name.replace(/'/g,"\\'")}')"; style="cursor:pointer;color:#4A9EDB;">${_sub.name}</div>
                 <div class="exercise-meta">${getGoalSets(ex.id, ex.sets)} sets × ${getGoalReps(ex.id, ex.reps)}${ex.rest ? ' · ⏱ rest' : ''}${_sub.note ? ' · <span style="color:var(--gray-light);">' + _sub.note + '</span>' : ''}</div>
               </div>
+              <button onclick="openTravelSubPicker('${ex.id}')" style="flex-shrink:0;padding:4px 10px;background:rgba(74,158,219,0.12);border:1px solid rgba(74,158,219,0.3);border-radius:6px;color:#4A9EDB;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.5px;white-space:nowrap;">CHANGE</button>
             </div>`;
           }
           if (_noSub) {
             return `<div class="exercise-item" style="border-left:2px solid rgba(243,156,18,0.4);padding-left:8px;">
               <div style="flex:1;min-width:0;">
                 <div class="exercise-name" style="color:var(--gray-light);">${ex.name}</div>
-                <div class="exercise-meta" style="color:rgba(243,156,18,0.8);">⚠ No sub available — swap manually on day</div>
+                <div class="exercise-meta" style="color:rgba(243,156,18,0.8);">⚠ No compatible sub for your tier</div>
               </div>
             </div>`;
           }
@@ -10943,14 +10945,90 @@ function _getTravelExercise(exercise, tier) {
   const validEquip = _getTravelTierEquipment(tier);
   // Primary exercise is already compatible — no sub needed
   if (exercise.equipment && validEquip.includes(exercise.equipment)) return null;
+  // Check user's saved sub preference first
+  const prefName = state.travelSubPrefs && state.travelSubPrefs[exercise.id];
+  if (prefName === '__none__') return null; // user chose to keep original
+  const allAlts = (exercise.alts || []);
+  if (prefName) {
+    const prefAlt = allAlts.find(a => a.name === prefName);
+    if (prefAlt) return prefAlt;
+  }
   // Collect all valid alts, then rank by equipment preference:
   // weighted (dumbbell/cable/machine/smith) > bands > bodyweight
-  // This ensures loaded exercises always beat bodyweight regardless of array order.
   const _priority = { dumbbell: 0, cable: 0, machine: 0, smith: 0, bands: 1, bodyweight: 2 };
-  const validAlts = (exercise.alts || []).filter(a => a.equipment && validEquip.includes(a.equipment));
+  const validAlts = allAlts.filter(a => a.equipment && validEquip.includes(a.equipment));
   if (!validAlts.length) return null;
   validAlts.sort((a, b) => (_priority[a.equipment] ?? 99) - (_priority[b.equipment] ?? 99));
   return validAlts[0];
+}
+
+function openTravelSubPicker(exId) {
+  if (!state.travelMode) return;
+  const tier = state.travelMode.tier;
+  const validEquip = _getTravelTierEquipment(tier);
+  let exercise = null;
+  for (const day of (state.program || [])) {
+    exercise = (day.exercises || []).find(e => e.id === exId);
+    if (exercise) break;
+  }
+  if (!exercise) return;
+  const currentPref = state.travelSubPrefs?.[exId];
+  const _priority = { dumbbell: 0, cable: 0, machine: 0, smith: 0, bands: 1, bodyweight: 2 };
+  const _sortedAlts = (exercise.alts || []).filter(a => a.equipment && validEquip.includes(a.equipment));
+  _sortedAlts.sort((a, b) => (_priority[a.equipment] ?? 99) - (_priority[b.equipment] ?? 99));
+  const autoAlt = _sortedAlts[0] || null;
+  const allCompatibleAlts = _sortedAlts;
+  const canKeepOriginal = exercise.equipment && validEquip.includes(exercise.equipment);
+
+  const existing = document.getElementById('_tvl-sub-picker-sheet');
+  if (existing) existing.remove();
+
+  const isSelected = (name) => {
+    if (currentPref) return currentPref === name;
+    return autoAlt ? autoAlt.name === name : false;
+  };
+
+  let optionsHtml = '';
+  if (canKeepOriginal) {
+    const sel = currentPref === '__none__';
+    optionsHtml += `<button onclick="window._tvlPickSub('${exId}','__none__')" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 18px;background:${sel?'rgba(74,158,219,0.15)':'rgba(255,255,255,0.04)'};border:1px solid ${sel?'rgba(74,158,219,0.55)':'rgba(255,255,255,0.1)'};border-radius:10px;color:${sel?'#4A9EDB':'var(--gray-light)'};font-size:15px;font-weight:${sel?700:400};cursor:pointer;text-align:left;margin-bottom:8px;">
+      <span style="font-size:20px;width:24px;text-align:center;">${sel?'✓':'○'}</span>
+      <span style="flex:1;">Keep Original — ${exercise.name}<br><span style="font-size:12px;opacity:0.6;">${exercise.equipment||'unknown'} · compatible with your tier</span></span>
+    </button>`;
+  }
+  allCompatibleAlts.forEach(alt => {
+    const sel = isSelected(alt.name);
+    const isAuto = !currentPref && autoAlt && autoAlt.name === alt.name;
+    optionsHtml += `<button onclick="window._tvlPickSub('${exId}',\`${alt.name}\`)" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 18px;background:${sel?'rgba(74,158,219,0.15)':'rgba(255,255,255,0.04)'};border:1px solid ${sel?'rgba(74,158,219,0.55)':'rgba(255,255,255,0.1)'};border-radius:10px;color:${sel?'#4A9EDB':'var(--gray-light)'};font-size:15px;font-weight:${sel?700:400};cursor:pointer;text-align:left;margin-bottom:8px;">
+      <span style="font-size:20px;width:24px;text-align:center;">${sel?'✓':'○'}</span>
+      <span style="flex:1;">${alt.name}${isAuto?' <span style="font-size:11px;background:rgba(74,158,219,0.2);color:#4A9EDB;padding:1px 5px;border-radius:4px;vertical-align:middle;">auto-picked</span>':''}<br><span style="font-size:12px;opacity:0.6;">${alt.equipment||''}</span></span>
+    </button>`;
+  });
+  if (!allCompatibleAlts.length && !canKeepOriginal) {
+    optionsHtml = '<p style="color:var(--gray-light);opacity:0.6;text-align:center;padding:20px 0;">No compatible substitutes for your travel tier.</p>';
+  }
+
+  const sheet = document.createElement('div');
+  sheet.id = '_tvl-sub-picker-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(0,0,0,0.6);';
+  sheet.onclick = e => { if (e.target === sheet) sheet.remove(); };
+  sheet.innerHTML = `<div style="background:#1a1a2e;border-radius:20px 20px 0 0;padding:24px 20px 40px;max-height:82vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <h3 style="color:#fff;font-size:17px;margin:0;">✈ Choose Substitute</h3>
+      <button onclick="document.getElementById('_tvl-sub-picker-sheet').remove()" style="background:none;border:none;color:var(--gray-light);font-size:26px;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+    </div>
+    <p style="color:var(--gray-light);opacity:0.65;font-size:13px;margin:0 0 18px;">Replacing: <strong style="color:#fff;opacity:1;">${exercise.name}</strong></p>
+    ${optionsHtml}
+  </div>`;
+  document.body.appendChild(sheet);
+
+  window._tvlPickSub = function(id, name) {
+    if (!state.travelSubPrefs) state.travelSubPrefs = {};
+    state.travelSubPrefs[id] = name;
+    saveState();
+    sheet.remove();
+    renderHome();
+  };
 }
 
 function _applyTravelMode(tier, days) {
@@ -10981,6 +11059,7 @@ function _applyTravelMode(tier, days) {
 
 function _deactivateTravelMode() {
   state.travelMode = null;
+  state.travelSubPrefs = {};
   saveState();
   _renderTravelModeHeaderIcon();
   renderHome();
