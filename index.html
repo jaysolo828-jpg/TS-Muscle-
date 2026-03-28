@@ -18795,6 +18795,7 @@ function shareHistoryEntry(entryId) {
     weekLabel: dateStr,
     dayIndex: di < 0 ? 0 : di,
     isDeload: !!(entry.isDeload),
+    isTravel: !!(entry.travelMode),
     stats,
     songTitle:  entry.songTitle  || null,
     songArtist: entry.songArtist || null,
@@ -19125,6 +19126,7 @@ const CARD_DAY_PALETTES = [
 ];
 const CARD_PR_THEME           = { hi: '#c07800', lo: '#7a4e00', line: 'rgba(210,160,0,0.75)' };
 const CARD_DELOAD_THEME       = { hi: '#1a3050', lo: '#0a1826', line: 'rgba(80,140,220,0.7)' };
+const CARD_TRAVEL_THEME       = { hi: '#1a3d58', lo: '#0a1e2d', line: 'rgba(74,158,219,0.7)' };
 const CARD_MOOD_THEME         = { hi: '#1a1f4e', lo: '#07091c', line: 'rgba(120,130,220,0.45)' };
 const CARD_CYCLE_REVIEW_THEME = { hi: '#2e060a', lo: '#0e0001', line: 'rgba(204,32,39,0.45)' };
 const CARD_MILESTONE_SESSIONS = new Set([10, 25, 50, 100, 200, 365, 500, 1000]);
@@ -19196,13 +19198,15 @@ async function generateAndShareCard(type, data) {
   // ── Theme & layout ────────────────────────────────────────
   const _isPR      = type === 'pr';
   const _isDeload  = !!(data.isDeload);
+  const _isTravel  = !!(data.isTravel);
   const _isMilestone = CARD_MILESTONE_SESSIONS.has(state.totalSessions ?? -1);
   // 20% chance of flipping the layout (dark top, colored bottom) for regular cards
-  const _isFlipped = !_isPR && !_isDeload && type !== 'mood' && type !== 'showing_up_anyway' && Math.random() < 0.20;
+  const _isFlipped = !_isPR && !_isDeload && !_isTravel && type !== 'mood' && type !== 'showing_up_anyway' && Math.random() < 0.20;
 
   let _theme;
   if (_isPR)                        _theme = CARD_PR_THEME;
   else if (_isDeload)               _theme = CARD_DELOAD_THEME;
+  else if (_isTravel)               _theme = CARD_TRAVEL_THEME;
   else if (type === 'mood' || type === 'mood_lift_stats' || type === 'showing_up_anyway') _theme = CARD_MOOD_THEME;
   else if (type === 'cycle_review') _theme = CARD_CYCLE_REVIEW_THEME;
   else                              _theme = CARD_DAY_PALETTES[(data.dayIndex ?? 0) % CARD_DAY_PALETTES.length];
@@ -19303,17 +19307,41 @@ async function generateAndShareCard(type, data) {
     const dayY   = Math.round(SPLIT * 0.74);
     const weekY  = Math.round(SPLIT * 0.89);
 
-    ctx.font = `${Math.round(90 * S)}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('✅', W / 2, emojiY);
+    if (_isTravel) {
+      // Travel mode card: steel blue glow + plane icon treatment
+      const tGlow = ctx.createRadialGradient(W / 2, SPLIT * 0.4, 0, W / 2, SPLIT * 0.55, W * 0.65);
+      tGlow.addColorStop(0,   'rgba(74,158,219,0.22)');
+      tGlow.addColorStop(0.6, 'rgba(30,80,130,0.08)');
+      tGlow.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = tGlow;
+      ctx.fillRect(0, 0, W, SPLIT);
 
-    drawText('DONE', W / 2, doneY,
-      bebas(200), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 22 });
-    drawText((data.dayName || 'WORKOUT').toUpperCase(), W / 2, dayY,
-      barlow(700, 54), 'rgba(255,255,255,0.9)', MAX_TW);
-    drawText(data.weekLabel || `WEEK ${data.week || 1}`, W / 2, weekY,
-      barlow(500, 38), 'rgba(255,255,255,0.75)', MAX_TW);
+      ctx.font = `${Math.round(90 * S)}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✈', W / 2, emojiY);
+
+      drawText('TRAVELED.', W / 2, Math.round(SPLIT * 0.42),
+        bebas(160), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 22 });
+      drawText('TRAINED.', W / 2, Math.round(SPLIT * 0.60),
+        bebas(160), 'rgba(74,158,219,0.9)', MAX_TW, { color: 'rgba(74,158,219,0.4)', blur: 18 });
+      drawText((data.dayName || 'WORKOUT').toUpperCase(), W / 2, dayY,
+        barlow(700, 54), 'rgba(255,255,255,0.9)', MAX_TW);
+      drawText(data.weekLabel || `WEEK ${data.week || 1}`, W / 2, weekY,
+        barlow(500, 38), 'rgba(180,210,240,0.75)', MAX_TW);
+    } else {
+      ctx.font = `${Math.round(90 * S)}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✅', W / 2, emojiY);
+
+      drawText('DONE', W / 2, doneY,
+        bebas(200), '#ffffff', MAX_TW, { color: 'rgba(0,0,0,0.35)', blur: 22 });
+      drawText((data.dayName || 'WORKOUT').toUpperCase(), W / 2, dayY,
+        barlow(700, 54), 'rgba(255,255,255,0.9)', MAX_TW);
+      drawText(data.weekLabel || `WEEK ${data.week || 1}`, W / 2, weekY,
+        barlow(500, 38), 'rgba(255,255,255,0.75)', MAX_TW);
+    }
 
   } else if (type === 'weekly') {
     const emojiY    = Math.round(SPLIT * 0.19);
