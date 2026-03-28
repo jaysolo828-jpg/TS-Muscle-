@@ -727,6 +727,17 @@
   }
 
   .session-exercise.completed { border-color: var(--success); opacity: 0.75; }
+  .session-exercise.sets-incomplete { border-color: var(--warning); }
+  .incomplete-data-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #1a1a1a;
+    background: var(--warning);
+    border-radius: 4px;
+    padding: 2px 7px;
+  }
   .session-exercise.travel-sub { border-color: rgba(74,158,219,0.4); }
   .session-exercise.travel-needs-sub { border-color: rgba(243,156,18,0.4); }
 
@@ -12500,8 +12511,25 @@ function toggleSetDone(exId, setIndex) {
   // the exercise from being considered complete when all eligible sets are done.
   const _eligibleSets = sets.filter(s => !s.coachRemoved);
   const allDone = _eligibleSets.length > 0 && _eligibleSets.every(s => s.done);
+  const allHaveReps = _eligibleSets.filter(s => s.done).every(s => s.reps !== '' && s.reps !== null && s.reps !== undefined);
   const exEl = document.getElementById('session-ex-' + exId);
-  if (exEl) exEl.classList.toggle('completed', allDone);
+  if (exEl) {
+    exEl.classList.toggle('completed', allDone && allHaveReps);
+    exEl.classList.toggle('sets-incomplete', allDone && !allHaveReps);
+    // Badge: show when all sets are checked but reps are missing
+    let _badge = exEl.querySelector('.incomplete-data-badge');
+    if (allDone && !allHaveReps) {
+      if (!_badge) {
+        _badge = document.createElement('span');
+        _badge.className = 'incomplete-data-badge';
+        _badge.textContent = '! MISSING REPS';
+        const _nameEl = exEl.querySelector('.session-ex-name');
+        if (_nameEl) _nameEl.insertAdjacentElement('afterend', _badge);
+      }
+    } else {
+      _badge?.remove();
+    }
+  }
 
   // When unchecking, remove any progress-signal badge so it can re-evaluate
   if (!set.done) {
