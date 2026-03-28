@@ -10857,10 +10857,9 @@ function _getTravelExercise(exercise, tier) {
   // Primary exercise is already compatible — no sub needed
   if (exercise.equipment && validEquip.includes(exercise.equipment)) return null;
   // Collect all valid alts, then rank by equipment preference:
-  // dumbbell > cable > bands > bodyweight
-  // This ensures e.g. Step-Up (DB) beats Sissy Squat even when bodyweight
-  // appears first in the alts array — without changing array order.
-  const _priority = { dumbbell: 0, cable: 1, bands: 2, bodyweight: 3 };
+  // weighted (dumbbell/cable/machine/smith) > bands > bodyweight
+  // This ensures loaded exercises always beat bodyweight regardless of array order.
+  const _priority = { dumbbell: 0, cable: 0, machine: 0, smith: 0, bands: 1, bodyweight: 2 };
   const validAlts = (exercise.alts || []).filter(a => a.equipment && validEquip.includes(a.equipment));
   if (!validAlts.length) return null;
   validAlts.sort((a, b) => (_priority[a.equipment] ?? 99) - (_priority[b.equipment] ?? 99));
