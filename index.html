@@ -17105,7 +17105,7 @@ function renderHistory() {
       const _bars = _recent.map(e => {
         const barH = Math.round((e.value / 5) * _MAX_H);
         const col  = e.value >= 4 ? '#50c882' : e.value === 3 ? 'rgba(255,255,255,0.2)' : 'var(--red-text)';
-        const lbl  = new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const lbl  = new Date(_localDateKey(e.date) + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         return `
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;min-width:0;">
             <div style="width:100%;height:${_MAX_H}px;display:flex;align-items:flex-end;justify-content:center;">
@@ -23182,7 +23182,7 @@ function renderMoodInsights() {
     const trendBars = recent.map(e => {
       const barH = Math.round((e.value / 5) * MAX_H);
       const col = e.value >= 4 ? '#4caf50' : e.value === 3 ? '#666' : 'var(--red)';
-      const lbl = new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const lbl = new Date(_localDateKey(e.date) + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       return `
         <div style="flex:1; display:flex; flex-direction:column; align-items:center; min-width:0;">
           <div style="width:100%; height:${MAX_H}px; display:flex; align-items:flex-end; justify-content:center;">
