@@ -5173,21 +5173,20 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
 
 // ── TRAVEL MODE EQUIPMENT TAGS ─────────────────────────────────
 // Applied immediately after all program data is defined.
-// Adds equipment property to exercises + alts so _getTravelExercise()
-// can find valid substitutions per equipment tier.
-(function _tagEquipment() {
-  const _exEq = {
-    'bench':'barbell','incline':'dumbbell','flye':'cable','pushdown':'cable',
-    'overhead-tri':'cable','ohp':'barbell','lateral':'cable',
-    'legpress-a':'machine','rdl':'barbell','leg-ext-a':'machine',
-    'ham-curl-a':'machine','hip-thrust-a':'barbell','calf-a':'machine',
-    'chest-row':'machine','pulldown':'cable','db-row':'dumbbell',
-    'ez-curl':'barbell','preacher':'barbell','rear-delt':'machine',
-    'legpress-b':'machine','single-legpress':'machine','leg-ext-b':'machine',
-    'ham-curl-b':'bodyweight','pull-through':'cable','calf-b':'machine',
-    'bss':'dumbbell','hip-abduction':'machine','donkey-kick':'cable','glute-iso':'machine',
-  };
-  const _altEq = {
+// Kept module-level so _migrateEquipmentTags() can re-apply them to
+// state.program after it's loaded from localStorage (old saves lack tags).
+var _TRAVEL_EX_EQ = {
+  'bench':'barbell','incline':'dumbbell','flye':'cable','pushdown':'cable',
+  'overhead-tri':'cable','ohp':'barbell','lateral':'cable',
+  'legpress-a':'machine','rdl':'barbell','leg-ext-a':'machine',
+  'ham-curl-a':'machine','hip-thrust-a':'barbell','calf-a':'machine',
+  'chest-row':'machine','pulldown':'cable','db-row':'dumbbell',
+  'ez-curl':'barbell','preacher':'barbell','rear-delt':'machine',
+  'legpress-b':'machine','single-legpress':'machine','leg-ext-b':'machine',
+  'ham-curl-b':'bodyweight','pull-through':'cable','calf-b':'machine',
+  'bss':'dumbbell','hip-abduction':'machine','donkey-kick':'cable','glute-iso':'machine',
+};
+var _TRAVEL_ALT_EQ = {
     // chest
     'DB Bench Press':'dumbbell','Cable Chest Press':'cable','Weighted Push-Up':'bodyweight',
     'Smith Machine Bench':'smith','Chest Dips':'bodyweight','Machine Chest Press':'machine',
@@ -5276,22 +5275,23 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
     'Pistol Squat (Assisted)':'bodyweight',
   };
 
-  // Tag every exercise in every program
+// Tag every exercise in every program (using module-level maps)
+(function _tagEquipment() {
   Object.values(SPLIT_PROGRAMS).forEach(prog => {
     prog.forEach(day => {
       day.exercises.forEach(ex => {
-        if (!ex.equipment && _exEq[ex.id]) ex.equipment = _exEq[ex.id];
+        if (!ex.equipment && _TRAVEL_EX_EQ[ex.id]) ex.equipment = _TRAVEL_EX_EQ[ex.id];
         (ex.alts || []).forEach(alt => {
-          if (!alt.equipment && _altEq[alt.name]) alt.equipment = _altEq[alt.name];
+          if (!alt.equipment && _TRAVEL_ALT_EQ[alt.name]) alt.equipment = _TRAVEL_ALT_EQ[alt.name];
         });
       });
     });
   });
   // Also tag standalone glute exercises
   [BSS_EXERCISE, HIP_ABDUCTION_EXERCISE, DONKEY_KICK_EXERCISE, GLUTE_ISO_EXERCISE].forEach(ex => {
-    if (!ex.equipment && _exEq[ex.id]) ex.equipment = _exEq[ex.id];
+    if (!ex.equipment && _TRAVEL_EX_EQ[ex.id]) ex.equipment = _TRAVEL_EX_EQ[ex.id];
     (ex.alts || []).forEach(alt => {
-      if (!alt.equipment && _altEq[alt.name]) alt.equipment = _altEq[alt.name];
+      if (!alt.equipment && _TRAVEL_ALT_EQ[alt.name]) alt.equipment = _TRAVEL_ALT_EQ[alt.name];
     });
   });
 
@@ -5312,6 +5312,21 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
   _addAlt(_findEx(DEFAULT_PROGRAM, 'calf-b'),
     { name:'Dumbbell Standing Calf Raise', note:'Holding dumbbells, perform on a step for full ROM', ytLink:'https://youtu.be/lUeI-IwVXFM', equipment:'dumbbell' });
 })();
+
+// Re-applies equipment tags to state.program after it's loaded from localStorage.
+// Old saves predate the tagging system — without this, travel substitution
+// and compatibility checks fail for every returning user.
+function _migrateEquipmentTags() {
+  const _applyTags = (exercises) => {
+    (exercises || []).forEach(ex => {
+      if (!ex.equipment && _TRAVEL_EX_EQ[ex.id]) ex.equipment = _TRAVEL_EX_EQ[ex.id];
+      (ex.alts || []).forEach(alt => {
+        if (!alt.equipment && _TRAVEL_ALT_EQ[alt.name]) alt.equipment = _TRAVEL_ALT_EQ[alt.name];
+      });
+    });
+  };
+  if (state.program) state.program.forEach(day => _applyTags(day.exercises));
+}
 
 const MUSCLE_MAP = {
   bench: 'CHEST', incline: 'CHEST', flye: 'CHEST',
@@ -9004,25 +9019,32 @@ function renderHome() {
     : (weekRemainder === 0 ? [] : realSessionsOrdered.slice(-weekRemainder));
   const completedThisWeekIds = new Set(sessionsThisWeek.map(e => e.dayId));
 
+  const _tmActive = !!state.travelMode;
+  const _tmTier = state.travelMode?.tier;
+  const _tmValidEquip = _tmActive ? _getTravelTierEquipment(_tmTier) : [];
+
   visibleDays.forEach((day, dayIdx) => {
     const doneThisWeek = completedThisWeekIds.has(day.id);
     const isResuming = pausedSession && pausedSession.dayId === day.id;
     const _dc = typeof CARD_DAY_PALETTES !== 'undefined' ? CARD_DAY_PALETTES[dayIdx % CARD_DAY_PALETTES.length] : null;
-    const _dayColor = _dc ? (_dc.ui || _dc.hi) : 'var(--red)';
+    const _dayColorBase = _dc ? (_dc.ui || _dc.hi) : 'var(--red)';
+    // Travel mode overrides accent color to steel blue
+    const _dayColor = _tmActive ? '#4A9EDB' : _dayColorBase;
     const _stats = doneThisWeek ? getDayStats(day.id) : null;
-    const _r = _dc ? parseInt(_dc.hi.slice(1,3),16) : 204;
-    const _g = _dc ? parseInt(_dc.hi.slice(3,5),16) : 32;
-    const _b = _dc ? parseInt(_dc.hi.slice(5,7),16) : 39;
+    const _r = _tmActive ? 74  : (_dc ? parseInt(_dc.hi.slice(1,3),16) : 204);
+    const _g = _tmActive ? 158 : (_dc ? parseInt(_dc.hi.slice(3,5),16) : 32);
+    const _b = _tmActive ? 219 : (_dc ? parseInt(_dc.hi.slice(5,7),16) : 39);
     const _statsBg     = `rgba(${_r},${_g},${_b},0.07)`;
     const _statsBorder = `rgba(${_r},${_g},${_b},0.18)`;
     const card = document.createElement('div');
     card.className = 'day-card';
+    if (_tmActive) card.style.borderColor = 'rgba(74,158,219,0.25)';
     card.innerHTML = `
       <div class="day-header" onclick="toggleDayCard('${day.id}')">
         <div class="day-info">
           <div class="day-accent" style="background:${_dayColor};"></div>
           <div class="day-text">
-            <div class="day-badge" style="color:${_dayColor};">${day.badge}</div>
+            <div class="day-badge" style="color:${_dayColor};">${_tmActive ? '✈ ' : ''}${day.badge}</div>
             <div class="day-name">
               ${day.day}
               <span onclick="event.stopPropagation(); openEditDay('${day.id}')" style="display:inline-flex;align-items:center;cursor:pointer;color:var(--gray);background:var(--dark3);border-radius:4px;padding:3px 6px;" title="Change day">
@@ -9055,24 +9077,45 @@ function renderHome() {
             </div>` : ''}
           </div>
         </div>
-        <button class="start-btn${doneThisWeek ? ' done-today' : ''}" onclick="event.stopPropagation(); startSession('${day.id}', this)" style="${doneThisWeek ? 'background:#27ae60;' : isResuming ? 'background:var(--warning);' : ''}">
+        <button class="start-btn${doneThisWeek ? ' done-today' : ''}" onclick="event.stopPropagation(); startSession('${day.id}', this)" style="${doneThisWeek ? 'background:#27ae60;' : isResuming ? 'background:var(--warning);' : _tmActive ? 'background:#4A9EDB;border-color:#4A9EDB;' : ''}">
           ${doneThisWeek
             ? `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> DONE`
             : isResuming
             ? `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="currentColor" stroke-width="0"><polygon points="5,3 19,12 5,21"/></svg> RESUME`
+            : _tmActive
+            ? `✈ START`
             : `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="currentColor" stroke-width="0"><polygon points="5,3 19,12 5,21"/></svg> START`}
         </button>
       </div>
       <div class="exercise-list" id="exercises-${day.id}" style="display:none">
-        ${day.exercises.map(ex => `
-          <div class="exercise-item">
+        ${day.exercises.map(ex => {
+          const _sub = _tmActive ? _getTravelExercise(ex, _tmTier) : null;
+          const _noSub = _tmActive && !_sub && ex.equipment && !_tmValidEquip.includes(ex.equipment);
+          if (_sub) {
+            return `<div class="exercise-item" style="border-left:2px solid rgba(74,158,219,0.4);padding-left:8px;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;color:var(--gray);text-decoration:line-through;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;line-height:1.2;">${ex.name}</div>
+                <div class="exercise-name" onclick="openExerciseLibraryByName('${_sub.name.replace(/'/g,"\\'")}')"; style="cursor:pointer;color:#4A9EDB;">${_sub.name}</div>
+                <div class="exercise-meta">${getGoalSets(ex.id, ex.sets)} sets × ${getGoalReps(ex.id, ex.reps)}${ex.rest ? ' · ⏱ rest' : ''}${_sub.note ? ' · <span style="color:var(--gray-light);">' + _sub.note + '</span>' : ''}</div>
+              </div>
+            </div>`;
+          }
+          if (_noSub) {
+            return `<div class="exercise-item" style="border-left:2px solid rgba(243,156,18,0.4);padding-left:8px;">
+              <div style="flex:1;min-width:0;">
+                <div class="exercise-name" style="color:var(--gray-light);">${ex.name}</div>
+                <div class="exercise-meta" style="color:rgba(243,156,18,0.8);">⚠ No sub available — swap manually on day</div>
+              </div>
+            </div>`;
+          }
+          return `<div class="exercise-item">
             <div>
-              <div class="exercise-name" onclick="openExerciseLibraryByName('${ex.name}')" style="cursor:pointer;">${ex.name}</div>
+              <div class="exercise-name" onclick="openExerciseLibraryByName('${ex.name.replace(/'/g,"\\'")}')"; style="cursor:pointer;">${ex.name}</div>
               <div class="exercise-meta">${getGoalSets(ex.id, ex.sets)} sets × ${getGoalReps(ex.id, ex.reps)}${ex.rest ? ' · ⏱ rest' : ''}${ex.note ? ' · <span style="color:var(--gray-light);">' + ex.note + '</span>' : ''}</div>
             </div>
             ${ex.alts && ex.alts.length ? `<button class="alt-btn" onclick="showAltsPreview('${day.id}','${ex.id}')">ALT</button>` : ''}
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
       </div>
     `;
     container.appendChild(card);
@@ -21124,6 +21167,7 @@ function migratePeriodizationState() {
 let _obScrollListenerReady = false;
 try {
   loadState();
+  _migrateEquipmentTags(); // ensure state.program has equipment tags even on old saves
   migrateSessionCount();
   migratePeriodizationState();
   checkPauseAutoExpiry();
