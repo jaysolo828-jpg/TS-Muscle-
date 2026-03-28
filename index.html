@@ -8478,56 +8478,107 @@ function calcConsistencyRate() {
 // Three lanes per phase — word selection is personalised to each user.
 // Lane is scored from: experience level, goal, age, streak, total sessions.
 // All words ≤ 7 characters (including spaces) to fit the stat box at 28px Bebas Neue.
-// 25 words per pool → ~3-4 weeks before any repeat within a phase.
-// Explanation variants rotate weekly (Math.floor(daySeed/7) % 2) so copy stays fresh too.
+// 40 words per pool → ~5-6 weeks before any repeat within a phase.
+// Explanation variants rotate weekly (Math.floor(daySeed/7) % 3) for 3 distinct reads per phase.
 const _FOCUS_POOLS = {
   early: {
-    new:   ['START','SHOW UP','STEP IN','DECIDE','COMMIT','BELIEVE','ARRIVE','GROUND','STEADY','TRY','SHOW','BEGIN','STAY IN','LEAN IN','FACE IT','FIND IT','HOLD ON','KEEP ON','JUST GO','ENTER','STAND','HERE','MOVE','FIRST','OPEN'],
-    build: ['PLANT','FORM','ROOTS','EARN IT','ANCHOR','INVEST','BUILD','PROVE','STACK','CRAFT','REPEAT','LOCK IN','WIRE IN','SET IT','LAYER','INGRAIN','LOAD UP','PATTERN','DETAIL','SYSTEM','TRACE','FOCUS','RETURN','LOCK ON','BASE IT'],
-    edge:  ['RESET','REBUILD','OWN IT','INSTALL','PRIME','MASTER','DEFINE','EXACT','DEMAND','RAISE','FORGE','SET','ZERO IN','LOCK IT','PRECISE','LEVEL','TEMPER','WIRE','FILTER','SHARPEN','ELEVATE','EXECUTE','ADVANCE','INGRAIN','CARVE']
+    new:   ['START','SHOW UP','STEP IN','DECIDE','COMMIT','BELIEVE','ARRIVE','GROUND','STEADY','TRY',
+            'SHOW','BEGIN','STAY IN','LEAN IN','FACE IT','FIND IT','HOLD ON','KEEP ON','JUST GO','ENTER',
+            'STAND','HERE','MOVE','FIRST','OPEN','TAKE IT','LACE UP','GO IN','TODAY','BE HERE',
+            'DO THIS','READY','PRESENT','CHOOSE','IN NOW','RISE UP','PAY IN','SEEK','SHOW IT','SET OUT'],
+    build: ['PLANT','FORM','ROOTS','EARN IT','ANCHOR','INVEST','BUILD','PROVE','STACK','CRAFT',
+            'REPEAT','LOCK IN','WIRE IN','SET IT','LAYER','INGRAIN','LOAD UP','PATTERN','DETAIL','SYSTEM',
+            'TRACE','FOCUS','RETURN','LOCK ON','BASE IT','SOLID','DEEP','STRONG','BUILT','EMBED',
+            'ALIGN','SEAL','FILL IN','PUT IN','FRAME','WIRE UP','CONNECT','STAKE','GROW','STEADY'],
+    edge:  ['RESET','REBUILD','OWN IT','INSTALL','PRIME','MASTER','DEFINE','EXACT','DEMAND','RAISE',
+            'FORGE','SET','ZERO IN','LOCK IT','PRECISE','LEVEL','TEMPER','WIRE','FILTER','SHARPEN',
+            'ELEVATE','EXECUTE','ADVANCE','INGRAIN','CARVE','INTEND','TARGET','ATTAIN','PURSUE','DRIVE',
+            'HONE','TUNE','ALIGN','SHAPE','CAST','LEAD','OWN','RESOLVE','INTENT','DEVOTE']
   },
   mid: {
-    new:   ['STICK','GROW','LEARN','BUILD','CLIMB','ADAPT','STAY','HOLD','EARN','RISE','KEEP','PRESS','PUSH ON','STAY ON','HOLD ON','MOVE ON','HANG IN','DAILY','AGAIN','GO ON','CARRY','GRIND','TRUST','LEAN','ENDURE'],
-    build: ['EXECUTE','GRIND','TRUST','DIAL IN','SHARPEN','STACK','FORGE','ADAPT','LOCK IN','REPEAT','MEASURE','PRESS','ADD UP','LAYER','ADVANCE','COMPILE','REFINE','DETAIL','CARVE','SCULPT','OUTPUT','FOCUS','HARDEN','TEMPER','SIGNAL'],
-    edge:  ['REFINE','PRECISE','HARDEN','TEMPER','CARVE','SCULPT','PERFECT','ELEVATE','DETAIL','EXACT','COMPILE','DEMAND','MASTER','EXCEED','ZERO IN','RAISE','FOCUS','CONTROL','CHANNEL','QUALITY','FILTER','EXECUTE','EXCEL','OUTPUT','SIGNAL']
+    new:   ['STICK','GROW','LEARN','BUILD','CLIMB','ADAPT','STAY','HOLD','EARN','RISE',
+            'KEEP','PRESS','PUSH ON','STAY ON','HOLD ON','MOVE ON','HANG IN','DAILY','AGAIN','GO ON',
+            'CARRY','GRIND','TRUST','LEAN','ENDURE','PUSH','DO IT','FIND IT','PERSIST','SUSTAIN',
+            'ADVANCE','DEVELOP','IMPROVE','PROCEED','JUST DO','WORK','ADD','MORE','NEXT','SHOW'],
+    build: ['EXECUTE','GRIND','TRUST','DIAL IN','SHARPEN','STACK','FORGE','ADAPT','LOCK IN','REPEAT',
+            'MEASURE','PRESS','ADD UP','LAYER','ADVANCE','COMPILE','REFINE','DETAIL','CARVE','SCULPT',
+            'OUTPUT','FOCUS','HARDEN','TEMPER','SIGNAL','DRIVE','PUSH','BUILD','STEP ON','WORK ON',
+            'DELIVER','PRODUCE','PERFORM','REACH','EXCEED','TRACK','PRECISE','MOVE ON','STEP UP','MONITOR'],
+    edge:  ['REFINE','PRECISE','HARDEN','TEMPER','CARVE','SCULPT','PERFECT','ELEVATE','DETAIL','EXACT',
+            'COMPILE','DEMAND','MASTER','EXCEED','ZERO IN','RAISE','FOCUS','CONTROL','CHANNEL','QUALITY',
+            'FILTER','EXECUTE','EXCEL','OUTPUT','SIGNAL','SHARPEN','ADVANCE','ALIGN','DELIVER','PERFORM',
+            'MEASURE','MONITOR','PRODUCE','TRACK','INTENT','DESIGN','EVOLVE','DEVELOP','IMPROVE','PUSH']
   },
   peak: {
-    new:   ['PUSH','TRY','RISE','MORE','DO IT','GIVE IT','STEP UP','BETTER','HARDER','REACH','CLIMB','LIFT','GO FOR','MAX OUT','ALL OUT','POUR','HIGHER','FURTHER','FIND IT','PEAK','NOW','FULL','SEND IT','TOP IT','GO ALL'],
-    build: ['PUSH','DRIVE','PEAK','CHARGE','IGNITE','SURGE','POWER','ALL IN','RISE','DEMAND','ASCEND','BREAK','FIRE IT','RELEASE','UNLEASH','DELIVER','COMMIT','HIGHER','EXPAND','FULL','GO NOW','OUTPUT','GIVE IT','PUSH ON','POUR IT'],
-    edge:  ['SOAR','APEX','BREAK','CEILING','MAX OUT','NOTHING','LEAD','REIGN','FIRE','LIMIT','OWN IT','EXCEL','SUMMIT','MAXIMUM','TOTAL','CONQUER','PREVAIL','CLAIM','ACHIEVE','PERFORM','DELIVER','ASCEND','EXCEED','RAISE','TOP']
+    new:   ['PUSH','TRY','RISE','MORE','DO IT','GIVE IT','STEP UP','BETTER','HARDER','REACH',
+            'CLIMB','LIFT','GO FOR','MAX OUT','ALL OUT','POUR','HIGHER','FURTHER','FIND IT','PEAK',
+            'NOW','FULL','SEND IT','TOP IT','GO ALL','BREAK','SURGE','DRIVE','CHARGE','IGNITE',
+            'EXPLODE','GO HARD','PUSH IT','STEP IT','GO BIG','AIM UP','RISE UP','EXPAND','POWER','ASCEND'],
+    build: ['PUSH','DRIVE','PEAK','CHARGE','IGNITE','SURGE','POWER','ALL IN','RISE','DEMAND',
+            'ASCEND','BREAK','FIRE IT','RELEASE','UNLEASH','DELIVER','COMMIT','HIGHER','EXPAND','FULL',
+            'GO NOW','OUTPUT','GIVE IT','PUSH ON','POUR IT','EXCEL','SOAR','PERFORM','ACHIEVE','PRODUCE',
+            'ELEVATE','RISE UP','PEAK IT','GO ALL','SEND IT','STEP UP','TOTAL','MAXIMUM','ALL OUT','MAX OUT'],
+    edge:  ['SOAR','APEX','BREAK','CEILING','MAX OUT','NOTHING','LEAD','REIGN','FIRE','LIMIT',
+            'OWN IT','EXCEL','SUMMIT','MAXIMUM','TOTAL','CONQUER','PREVAIL','CLAIM','ACHIEVE','PERFORM',
+            'DELIVER','ASCEND','EXCEED','RAISE','TOP','POWER','SURGE','DRIVE','IGNITE','PUSH',
+            'ALL IN','RISE','DEMAND','EXPAND','OUTPUT','PRODUCE','ELEVATE','COMMIT','PEAK','GO NOW']
   },
   finish: {
-    new:   ['FINISH','CLOSE','END IT','DONE','LAST','EMPTY','GIVE IT','ALL OUT','SPEND','LEAVE','FINAL','GO ALL','POUR','USE IT','GIVE','FULL','SEND IT','GO OUT','EARN IT','SEAL IT','LOCK IT','CASH IN','POUR IT','SEE IT','COMMIT'],
-    build: ['EMPTY','FINISH','CLOSE','CASH IN','GIVE IT','SPEND','ALL OUT','END IT','LEAVE','EARN IT','COLLECT','SEAL IT','LOCK IT','DELIVER','SEND IT','GO ALL','POUR','USE IT','FINAL','POUR IT','COMMIT','FULL','TOP IT','GIVE','LAST'],
-    edge:  ['EMPTY','POUR','CASH IN','ALL OUT','NOTHING','SPEND','CLOSE','FINISH','LAST','END IT','TOTAL','FULL','SEAL IT','LOCK IT','DELIVER','OWN IT','COLLECT','MAX OUT','EARN IT','CONQUER','EXCEL','ACHIEVE','SUMMIT','COMMIT','GIVE IT']
+    new:   ['FINISH','CLOSE','END IT','DONE','LAST','EMPTY','GIVE IT','ALL OUT','SPEND','LEAVE',
+            'FINAL','GO ALL','POUR','USE IT','GIVE','FULL','SEND IT','GO OUT','EARN IT','SEAL IT',
+            'LOCK IT','CASH IN','POUR IT','SEE IT','COMMIT','DONE IT','HOME','EARN','WIN','WRAP IT',
+            'SEAL','LOCK','LAND IT','NAIL IT','PUSH IN','SEE OUT','PULL IN','GET IT','STAY ON','DRIVE'],
+    build: ['EMPTY','FINISH','CLOSE','CASH IN','GIVE IT','SPEND','ALL OUT','END IT','LEAVE','EARN IT',
+            'COLLECT','SEAL IT','LOCK IT','DELIVER','SEND IT','GO ALL','POUR','USE IT','FINAL','POUR IT',
+            'COMMIT','FULL','TOP IT','GIVE','LAST','WIN','WRAP IT','LAND IT','NAIL IT','PUSH',
+            'ALL IN','RISE','PRESENT','SEAL UP','LOCK UP','BANK IT','CLAIM','SECURE','HOLD','DRIVE'],
+    edge:  ['EMPTY','POUR','CASH IN','ALL OUT','NOTHING','SPEND','CLOSE','FINISH','LAST','END IT',
+            'TOTAL','FULL','SEAL IT','LOCK IT','DELIVER','OWN IT','COLLECT','MAX OUT','EARN IT','CONQUER',
+            'EXCEL','ACHIEVE','SUMMIT','COMMIT','GIVE IT','WIN','WRAP IT','LAND IT','NAIL IT','PUSH',
+            'ALL IN','RISE','SECURE','CLAIM','BANK IT','LOCK UP','SEAL UP','OUTPUT','PEAK','BEYOND']
   },
   deload: {
-    new:   ['REST','SLEEP','EASY','BREATHE','FILL UP','HEAL','RECOVER','SOFTEN','ABSORB','CHILL','RELAX','RELOAD','UNWIND','LET GO','EASE','RESTORE','RESET','SLOW','GENTLE','LET IN','LAND','BE EASY','TAKE IT','OPEN','SETTLE'],
-    build: ['ABSORB','RECOVER','RESTORE','RELOAD','UNWIND','BREATHE','RESET','SOFTEN','REST UP','FILL UP','REBUILD','HEAL','RENEW','REVIVE','REFRESH','PREPARE','SETTLE','PROCESS','INGRAIN','RECEIVE','ALLOW','INSTALL','ADAPT','REVISE','REFUEL'],
-    edge:  ['ABSORB','RELOAD','RESTORE','REBUILD','RESET','REFUEL','HEAL','PRIME','RETURN','SHARPEN','CHARGE','REFIT','FOCUS','INSTALL','INGRAIN','PREPARE','READY','RENEW','REVIVE','LOAD UP','PROCESS','ADAPT','REFINE','RECEIVE','LEVEL']
+    new:   ['REST','SLEEP','EASY','BREATHE','FILL UP','HEAL','RECOVER','SOFTEN','ABSORB','CHILL',
+            'RELAX','RELOAD','UNWIND','LET GO','EASE','RESTORE','RESET','SLOW','GENTLE','LET IN',
+            'LAND','BE EASY','TAKE IT','OPEN','SETTLE','FLOW','FLOAT','DRIFT','STILL','QUIET',
+            'CALM','PEACE','SOFT','LET BE','EASE IN','EASE UP','COOL','DOWN','MEND','FILL'],
+    build: ['ABSORB','RECOVER','RESTORE','RELOAD','UNWIND','BREATHE','RESET','SOFTEN','REST UP','FILL UP',
+            'REBUILD','HEAL','RENEW','REVIVE','REFRESH','PREPARE','SETTLE','PROCESS','INGRAIN','RECEIVE',
+            'ALLOW','INSTALL','ADAPT','REVISE','REFUEL','REPAIR','REBOOT','RESTOCK','REGROUP','REFRAME',
+            'RECOUP','RELEARN','REWIRE','REST','RETURN','GROW','MEND','FILL','CALM','QUIET'],
+    edge:  ['ABSORB','RELOAD','RESTORE','REBUILD','RESET','REFUEL','HEAL','PRIME','RETURN','SHARPEN',
+            'CHARGE','REFIT','FOCUS','INSTALL','INGRAIN','PREPARE','READY','RENEW','REVIVE','LOAD UP',
+            'PROCESS','ADAPT','REFINE','RECEIVE','LEVEL','REBOOT','REGROUP','REPAIR','RECOUP','REWIRE',
+            'RELEARN','RESTOCK','REFRAME','RECLAIM','ALIGN','SETTLE','QUIET','STILL','MEND','RESOLVE']
   }
 };
 // Explanation variants rotate weekly so copy stays fresh even within a phase.
-// Two variants per lane per phase = 30 distinct mindset reads total.
+// Three variants per lane per phase = 45 distinct mindset reads total.
 const _FOCUS_CONTEXT = {
   early: { phase: 'FOUNDATION', icon: '🧱',
     new: [
       { body: `The first block is about showing up more than performing. Most people never make it past week two. You're here. That already is the work.`,
         sub:  `Don't measure yourself against where you want to be. The habit you're building right now is more valuable than the weight on the bar. Keep showing up.` },
       { body: `Nobody starts strong. The first block is about getting in the room, learning the movements, and making the decision to come back. That's it. That's the whole job.`,
-        sub:  `It feels slow. That's normal. Slow is how foundations get built. What you're doing right now is more important than it looks.` }
+        sub:  `It feels slow. That's normal. Slow is how foundations get built. What you're doing right now is more important than it looks.` },
+      { body: `You started. That's genuinely hard to do and most people never get there. Everything from here is built on the fact that you walked in the door.`,
+        sub:  `Be patient with yourself this week. You're not supposed to feel like a seasoned athlete yet. You're supposed to feel like someone who just started — because that's what you are. Keep going.` }
     ],
     build: [
       { body: `You've done a foundation block before. You know it doesn't feel like much at the time. That's the point — what you put in here is the ceiling you'll hit in the peak weeks.`,
         sub:  `Resist the urge to push harder than the program asks. The foundation is being built under everything right now. Let it.` },
       { body: `You know the drill. The early weeks feel like maintenance — that's because they are. You're laying the track. The train runs fast later because of what you do now.`,
-        sub:  `The temptation to add more is real. Don't. The program is smarter than the impulse. Trust the structure and execute it clean.` }
+        sub:  `The temptation to add more is real. Don't. The program is smarter than the impulse. Trust the structure and execute it clean.` },
+      { body: `Foundation work teaches you something every time you do it. The patience, the restraint, the willingness to do the boring things right — those qualities show up everywhere later.`,
+        sub:  `You're not just building physical capacity in these weeks. You're building the discipline that makes everything after this possible. Do it right.` }
     ],
     edge: [
       { body: `The athletes who get the most out of a peak are the ones who built it right, not the ones who burned it in week one. This block is asking you to be patient with that.`,
         sub:  `Your instinct is to push. Channel it into precision instead. Perfect reps now, maximum output later.` },
       { body: `You've been through enough blocks to know that the foundation weeks decide everything. The work you do now isn't visible yet. That's fine. You know it's there.`,
-        sub:  `Use this phase to ingrain what needs to be automatic in the peak. Technique, positioning, timing. Lock it in now so it's not a thought later.` }
+        sub:  `Use this phase to ingrain what needs to be automatic in the peak. Technique, positioning, timing. Lock it in now so it's not a thought later.` },
+      { body: `There's a version of you six weeks from now who either thanks you for this week or is held back by it. The foundation you lay right now is the upper limit of what peak week can produce.`,
+        sub:  `Lock in what needs to be automatic. Positions, timing, breathing patterns. The peak weeks don't give you time to think about these things. You need them wired in now.` }
     ]
   },
   mid: { phase: 'ADAPTATION', icon: '⚙️',
@@ -8535,19 +8586,25 @@ const _FOCUS_CONTEXT = {
       { body: `The middle of a program is where most people start skipping. Nothing feels new and the end feels far away. This is exactly where showing up matters most.`,
         sub:  `You don't have to love every session. You just have to finish it. That's what adaptation looks like from the inside.` },
       { body: `Three weeks in, the novelty is gone. That's not a bad sign — it means you're in it for real now. This is where the actual work happens.`,
-        sub:  `The people who finish blocks are the ones who show up in the middle when it stops being exciting. You're in that part now. Stay in it.` }
+        sub:  `The people who finish blocks are the ones who show up in the middle when it stops being exciting. You're in that part now. Stay in it.` },
+      { body: `Some days training feels like maintenance and that's okay. You're not supposed to feel amazing in the middle weeks. You're supposed to keep going. That's the entire point.`,
+        sub:  `Progress in the middle of a block is quiet. It doesn't announce itself. But it's happening — every session you complete is proof. Just show up and do the work.` }
     ],
     build: [
       { body: `No excitement of starting, no relief of finishing — just you, the program, and the decision to execute. This is the real work. Most people don't do it.`,
         sub:  `Your body is responding right now even if you can't feel it. Trust what you've put in and keep the standard you set in week one.` },
       { body: `The middle weeks don't feel like progress. They feel like repetition. That's exactly what adaptation requires — repetition done well, consistently, without shortcuts.`,
-        sub:  `Every session this week is adding to something that doesn't show up until later. Keep the standard. The results are being built right now.` }
+        sub:  `Every session this week is adding to something that doesn't show up until later. Keep the standard. The results are being built right now.` },
+      { body: `The middle weeks are where programs are won or lost. Not the big sessions, not the PRs — the ordinary session when you didn't feel like training and you did it anyway.`,
+        sub:  `Your adaptation is happening in the sessions that feel average. The days it feels like you're going through the motions are often the days your body is working hardest behind the scenes.` }
     ],
     edge: [
       { body: `The middle of a block is where character gets made. This is what separates athletes who perform sometimes from athletes who perform consistently.`,
         sub:  `Win here — when nobody's watching and nothing feels special — and the peak weeks take care of themselves. This is the investment that pays out.` },
       { body: `The middle is where most people negotiate with themselves. You don't do that. The program says what happens this week and you execute it. That's why the peak looks different for you.`,
-        sub:  `No variation, no shortcuts, no modifications. Clean execution through the middle is how you arrive at the peak with everything you need.` }
+        sub:  `No variation, no shortcuts, no modifications. Clean execution through the middle is how you arrive at the peak with everything you need.` },
+      { body: `Consistency through the middle is a skill. You've developed it. Most athletes haven't. The gap between you and people who perform inconsistently gets built right here, in these weeks.`,
+        sub:  `You don't need to feel motivated. You need to execute. The two aren't the same and you know that. Show up, do the work, maintain the standard. That's all there is.` }
     ]
   },
   peak: { phase: 'PEAK BLOCK', icon: '🔺',
@@ -8555,19 +8612,25 @@ const _FOCUS_CONTEXT = {
       { body: `The program has been building toward this. Your body is more capable than it was at the start and you're being asked to prove it. Give more than you think you have.`,
         sub:  `Don't play it safe this week. You've earned the right to find out what you're actually capable of right now. Show up and spend it.` },
       { body: `You've put in the weeks. The foundation is built. Now the program is asking you to use it. This is what you showed up for — give it everything.`,
-        sub:  `You might surprise yourself this week. Good. That's what the earlier work was for. Push past where you'd normally stop.` }
+        sub:  `You might surprise yourself this week. Good. That's what the earlier work was for. Push past where you'd normally stop.` },
+      { body: `The weeks of work you've put in created this moment. Your body has been adapting, building, preparing. Now you get to see what that preparation actually produced. Give it everything.`,
+        sub:  `It's okay if this is hard. It's supposed to be hard — that's the point of a peak week. Hard means the stimulus is right. Lean into it instead of backing off.` }
     ],
     build: [
       { body: `This is what the earlier weeks were for. Your body is primed and the program is asking everything of you. Answer it.`,
         sub:  `Everything you held back in the foundation and adaptation weeks is currency right now. This is when you spend it. Leave nothing on the table.` },
       { body: `Peak week isn't where fitness is built — it's where it's expressed. You've been building for weeks. Now show what it actually looks like.`,
-        sub:  `The only thing left to do is perform. You've prepared. You've adapted. Now deliver. Every rep this week is the return on everything you invested.` }
+        sub:  `The only thing left to do is perform. You've prepared. You've adapted. Now deliver. Every rep this week is the return on everything you invested.` },
+      { body: `Everything in the program has been building tension — the foundation, the grind of the middle, the adaptation. Peak week is where that tension releases. Show up and let it out.`,
+        sub:  `This is the week you find out exactly where you are. Push into the discomfort. Your body has been building capacity for weeks. Let it perform.` }
     ],
     edge: [
       { body: `Your body is ready, the work is done, and there's nothing left to prepare. This is the execution window. You know what it demands.`,
         sub:  `Stop managing effort. The standard you hold here is the one you carry into the next cycle. Set it high.` },
       { body: `High performers don't rise to the occasion — they fall to their preparation. You've prepared. Now there's nothing left to do but go.`,
-        sub:  `Every session this week is a statement. Make it one you're proud of. This is what the whole block was building toward.` }
+        sub:  `Every session this week is a statement. Make it one you're proud of. This is what the whole block was building toward.` },
+      { body: `The work is behind you. The preparation is done. What's in front of you now is just performance — and you know how to do that. Go.`,
+        sub:  `Don't hold anything back for the next session. Each one this week deserves everything. What you invest here is what you get out of the block.` }
     ]
   },
   finish: { phase: 'FINAL PUSH', icon: '🏁',
@@ -8575,19 +8638,25 @@ const _FOCUS_CONTEXT = {
       { body: `One week left. Everything you've put in over this block lands here. You don't need to feel good — you need to finish.`,
         sub:  `Most people save something. Don't. The rest is coming. Spend everything you have left and walk out of this week with nothing held back.` },
       { body: `This is the last week. It matters not just for your fitness but for what it says about you. Finish the way you started — with full commitment.`,
-        sub:  `You'll rest soon. You'll recover. But right now there's one more week to give everything you have. Use it.` }
+        sub:  `You'll rest soon. You'll recover. But right now there's one more week to give everything you have. Use it.` },
+      { body: `You're almost there. Not the time to slow down — the time to dig in and make these last sessions count. Everything you've built lands here.`,
+        sub:  `The way you finish something says as much about you as the way you started it. Close this block with full effort and carry that into the next one.` }
     ],
     build: [
       { body: `Everything you've put in over the last weeks is on the table right now. This is earned ground. Leave nothing unspent.`,
         sub:  `Most people save something for the walk to the car. Don't. You're about to rest — so finish with nothing left in the account. Empty is the right way to end a block.` },
       { body: `The final week is about closure. Not just physically — mentally. Close this block the way it deserves to be closed. Fully committed, nothing held back.`,
-        sub:  `The deload is coming. The recovery is coming. Right now there's just this week and what you put into it. Make it count.` }
+        sub:  `The deload is coming. The recovery is coming. Right now there's just this week and what you put into it. Make it count.` },
+      { body: `One final week. The body is tired, the mind is ready to be done. That tension is exactly what makes this week important. Train through it.`,
+        sub:  `You've built something over the last weeks that belongs to you. This week is about honoring that investment. Give it what it deserves — one more full week.` }
     ],
     edge: [
       { body: `The last week of a block is a test of will more than fitness. Your body has been here before. The only question is whether you show up to the standard you've held all block.`,
         sub:  `Close it out the same way you opened it — with intention. The way you finish this sets the standard you carry into the next one.` },
       { body: `You don't get to coast to the finish line. The last week either adds to the block or diminishes it. Show up like it matters — because it does.`,
-        sub:  `The reputation you build with yourself is made in moments like this. End the block with the same standard you held on day one.` }
+        sub:  `The reputation you build with yourself is made in moments like this. End the block with the same standard you held on day one.` },
+      { body: `Great athletes close hard. The last week of a block is where you separate yourself from everyone who started the same thing and faded. Don't fade.`,
+        sub:  `Every rep this week is a statement about who you are when it gets hard. Make the statement you want to make. This is the last chance to define this block on your terms.` }
     ]
   },
   deload: { phase: 'RECOVERY', icon: '🌊',
@@ -8595,19 +8664,25 @@ const _FOCUS_CONTEXT = {
       { body: `Lighter loads this week. This isn't a step back — it's how the body actually builds what you broke down in the harder weeks. Let it work.`,
         sub:  `Eat well, sleep more, and trust the process. The gains don't happen during the hard sessions. They happen right now, in the recovery.` },
       { body: `The hard weeks are done. Your body needs this week to process everything you put it through. Sleep, eat, move — but don't push. The work is complete.`,
-        sub:  `Recovery feels like doing nothing. It isn't. Every hour of sleep and every easy session this week is part of the program. It counts. Let it.` }
+        sub:  `Recovery feels like doing nothing. It isn't. Every hour of sleep and every easy session this week is part of the program. It counts. Let it.` },
+      { body: `The hard work is done. This week is part of the program — not a break from it. Moving lighter, sleeping more, letting your body recover is exactly what's supposed to happen.`,
+        sub:  `There's nothing to push through this week. The effort is in resting well — eating enough, sleeping enough, moving enough. Let your body do what it needs to do.` }
     ],
     build: [
       { body: `Recovery isn't passive — it's when your body actually builds what you broke down in the hard weeks. Eat, sleep, and let the adaptation happen.`,
         sub:  `Lighter loads aren't backing off — they're when your nervous system catches up to the work you already did. The gains are being locked in right now. Let them.` },
       { body: `You've earned this week. The program scheduled it because your body needs it — not as a reward but as a requirement. Treat it that way and you'll come back stronger.`,
-        sub:  `Resist the urge to add. The deload isn't a reduced week — it's a specific stimulus. Trust the structure. Your body knows what to do with the space you're giving it.` }
+        sub:  `Resist the urge to add. The deload isn't a reduced week — it's a specific stimulus. Trust the structure. Your body knows what to do with the space you're giving it.` },
+      { body: `Every block you complete and recover from properly makes the next one better. This week is an investment in the quality of everything that comes after it. Take it seriously.`,
+        sub:  `The adaptation from your hard weeks is being consolidated right now. Your nervous system, your muscles, your joints — they're all catching up. Give them the week they need.` }
     ],
     edge: [
       { body: `You've earned this week. The temptation to push is going to be there — ignore it. Every set you add to a deload is a set you're taking away from the next peak.`,
         sub:  `Trust the structure. Your body is recalibrating right now. Come back next block sharper than you left this one.` },
       { body: `The hardest part of a deload for a serious athlete isn't the light weights — it's the discipline not to push. That discipline is part of the training too.`,
-        sub:  `Your next block starts here, in how well you recover from this one. Protect the process. Sleep, eat, move easy, and let the adaptation from the last block complete itself.` }
+        sub:  `Your next block starts here, in how well you recover from this one. Protect the process. Sleep, eat, move easy, and let the adaptation from the last block complete itself.` },
+      { body: `The best athletes recover as intentionally as they train. This week is as important as any other in the program. Treat it that way — structured rest, proper nutrition, quality sleep.`,
+        sub:  `If you're serious about long-term performance, recovery weeks are sacred. They're not weakness — they're how you keep the ceiling rising. Protect this week and come back ready.` }
     ]
   }
 };
