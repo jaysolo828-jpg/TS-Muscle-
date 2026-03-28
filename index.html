@@ -2928,14 +2928,9 @@
   <!-- Mood Check-In Card -->
   <div id="mood-checkin-card" class="card" style="margin-bottom:16px;" data-timing="pre">
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;" id="mood-checkin-label">MOOD CHECK-IN</div>
-    <div style="font-size:13px; color:var(--gray-light); margin-bottom:16px;">Log how you're feeling before and after a workout. Takes 10 seconds.</div>
+    <div style="font-size:13px; color:var(--gray-light); margin-bottom:16px;">Log how you're feeling after your workout. Takes 10 seconds.</div>
 
-    <div style="font-size:12px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">BEFORE OR AFTER YOUR SESSION?</div>
-    <div style="display:flex; gap:8px; margin-bottom:16px;">
-      <button class="mood-timing-btn selected" onclick="selectMoodTiming('pre', this)">PRE-WORKOUT</button>
-      <button class="mood-timing-btn" onclick="selectMoodTiming('post', this)">POST-WORKOUT</button>
-    </div>
-    <input type="hidden" id="mood-timing" value="pre"/>
+    <input type="hidden" id="mood-timing" value="post"/>
 
     <div style="font-size:12px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">HOW ARE YOU FEELING?</div>
     <div style="display:flex; justify-content:space-between; gap:6px; margin-bottom:16px;" id="mood-scale">
@@ -22920,11 +22915,9 @@ function saveMoodEntry() {
   document.getElementById('mood-note-chevron').style.transform = '';
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
 
-  // After logging PRE, auto-advance to POST so users know to check in again after training
-  if (timing === 'pre') {
-    const postBtn = document.querySelector('.mood-timing-btn:last-child');
-    if (postBtn) selectMoodTiming('post', postBtn);
-  }
+  // Mood check-in is post-workout only; ensure hidden input stays 'post'
+  const moodTimingInput = document.getElementById('mood-timing');
+  if (moodTimingInput) moodTimingInput.value = 'post';
 
   showToast(`Mood logged: ${entry.emoji} ${entry.label}`);
   renderMoodHistory();
@@ -23091,8 +23084,9 @@ function updateMoodDots(scroller) {
 }
 
 function reselectMood(timing) {
-  const btn = document.querySelector(`.mood-timing-btn[onclick*="'${timing}'"]`);
-  if (btn) selectMoodTiming(timing, btn);
+  // Mood check-in is post-workout only; set hidden input directly
+  const moodTimingInput = document.getElementById('mood-timing');
+  if (moodTimingInput) moodTimingInput.value = 'post';
   const el = document.getElementById('mood-checkin-card');
   if (el) {
     const opts = { block: 'start' };
