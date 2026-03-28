@@ -3959,7 +3959,7 @@
     </div>
     <div onclick="toggleBetweenSetCoaching()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--dark3);cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <div style="min-width:0;flex:1;padding-right:12px;">
-        <div class="settings-label" style="margin-bottom:2px;">Between-Set Coaching</div>
+        <div class="settings-label" style="margin-bottom:2px;">Live Coaching Cues</div>
         <div id="between-set-coaching-sub" class="settings-sub" style="color:#2ecc71;">On. Live insights after certain sets.</div>
       </div>
       <div id="between-set-coaching-icon" style="width:44px;height:26px;border-radius:13px;background:#2ecc71;position:relative;transition:background 0.2s;flex-shrink:0;">
@@ -3968,7 +3968,7 @@
     </div>
     <div onclick="toggleCarryingFeature()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <div style="min-width:0;flex:1;padding-right:12px;">
-        <div class="settings-label" style="margin-bottom:2px;">What Are You Carrying</div>
+        <div class="settings-label" style="margin-bottom:2px;">Pre-Session Check-In</div>
         <div id="carrying-feature-sub" class="settings-sub" style="color:#2ecc71;">On. Pre-session check-in.</div>
       </div>
       <div id="carrying-feature-icon" style="width:44px;height:26px;border-radius:13px;background:#2ecc71;position:relative;transition:background 0.2s;flex-shrink:0;">
@@ -4031,7 +4031,7 @@
 
   <div class="settings-item" onclick="openMaintenanceSheet()">
     <div>
-      <div class="settings-label">Maintenance</div>
+      <div class="settings-label">Reset Options</div>
       <div class="settings-sub">Reset exercises, week counter, or initial setup</div>
     </div>
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
@@ -11879,7 +11879,7 @@ function toggleBetweenSetCoaching() {
   state.betweenSetCoaching = !(state.betweenSetCoaching !== false);
   saveState();
   updateBetweenSetCoachingUI();
-  showToast(state.betweenSetCoaching !== false ? 'Between-Set Coaching on' : 'Between-Set Coaching off');
+  showToast(state.betweenSetCoaching !== false ? 'Live Coaching Cues on' : 'Live Coaching Cues off');
 }
 
 function updateBetweenSetCoachingUI() {
@@ -11899,7 +11899,7 @@ function toggleCarryingFeature() {
   state.carryingFeatureEnabled = !(state.carryingFeatureEnabled !== false);
   saveState();
   updateCarryingFeatureUI();
-  showToast(state.carryingFeatureEnabled !== false ? 'What Are You Carrying on' : 'What Are You Carrying off');
+  showToast(state.carryingFeatureEnabled !== false ? 'Pre-Session Check-In on' : 'Pre-Session Check-In off');
 }
 
 function updateCarryingFeatureUI() {
