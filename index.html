@@ -1850,12 +1850,12 @@
     border: 1px solid var(--dark3);
     border-top: 2px solid var(--red);
     border-radius: 14px;
-    padding: 14px 12px;
+    padding: 18px 12px 14px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     transition: transform 0.12s;
     -webkit-tap-highlight-color: transparent;
   }
@@ -2661,7 +2661,7 @@
       <div class="stat-focus-word" id="stat-focus-word">--</div>
       <div class="stat-label" id="stat-focus-label">TODAY'S FOCUS</div>
     </div>
-    <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;padding-top:18px;">
+    <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;">
       <button onclick="event.stopPropagation();shareStreakCard()" aria-label="Share Streak" title="Share streak" style="position:absolute;top:4px;right:4px;background:rgba(204,32,39,0.12);border:none;border-radius:8px;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--red)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       </button>
@@ -8492,7 +8492,7 @@ const _FOCUS_POOLS = {
   peak: {
     new:   ['PUSH','TRY','RISE','MORE','DO IT','GIVE IT','STEP UP','BETTER','HARDER','REACH','CLIMB','LIFT'],
     build: ['PUSH','DRIVE','PEAK','CHARGE','IGNITE','SURGE','ATTACK','ALL IN','RISE','DEMAND','ASCEND','BREAK'],
-    edge:  ['WRECK','APEX','BREAK','CEILING','MAX OUT','NOTHING','LEAD','REIGN','FIRE','LIMIT','OWN IT','BLEED']
+    edge:  ['WRECK','APEX','BREAK','CEILING','MAX OUT','NOTHING','LEAD','REIGN','FIRE','LIMIT','OWN IT','CRUSH']
   },
   finish: {
     new:   ['FINISH','CLOSE','END IT','DONE','LAST','EMPTY','GIVE IT','ALL OUT','SPEND','LEAVE'],
