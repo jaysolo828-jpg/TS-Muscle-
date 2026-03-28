@@ -8468,7 +8468,7 @@ function showStatInfo(type) {
       title: 'WEEK STREAK',
       icon: '🔥',
       body: `<strong style="color:var(--cream);">${streak} consecutive week${streak !== 1 ? 's' : ''}</strong> hitting your training target.`,
-      sub: `You're set to ${days} days/week. Hit at least ${threshold} of those days in a calendar week (Mon–Sun) to keep your streak alive.`
+      sub: `You're set to ${days} days/week. Hit at least ${threshold} of those days in a calendar week (Sun–Sat) to keep your streak alive.`
     }
   };
 
@@ -23304,12 +23304,10 @@ function completeOnboarding() {
   // full training week.
   (function() {
     const _now = new Date();
-    const _dayOfWeek = _now.getDay(); // 0 = Sun, 1 = Mon, …, 6 = Sat
-    const _daysToMon = _dayOfWeek === 0 ? -6 : 1 - _dayOfWeek;
-    const _monday = new Date(_now);
-    _monday.setDate(_now.getDate() + _daysToMon);
-    _monday.setHours(0, 0, 0, 0);
-    state.weekStartTimestamp = _monday.getTime();
+    const _sunday = new Date(_now);
+    _sunday.setDate(_now.getDate() - _now.getDay());
+    _sunday.setHours(0, 0, 0, 0);
+    state.weekStartTimestamp = _sunday.getTime();
   })();
 
   saveState();
@@ -24701,12 +24699,12 @@ function resetCycleAfterGap() {
   state.cycleCount = (state.cycleCount || 1) + 1;
   state.isDeloadWeek = false;
   state.isRestWeek = false;
-  // Anchor the new cycle's week counter to Monday of the current calendar week
+  // Anchor the new cycle's week counter to Sunday of the current calendar week
   const _now = new Date();
-  const _mon = new Date(_now);
-  _mon.setDate(_now.getDate() - ((_now.getDay() + 6) % 7));
-  _mon.setHours(0, 0, 0, 0);
-  state.weekStartTimestamp = _mon.getTime();
+  const _sun = new Date(_now);
+  _sun.setDate(_now.getDate() - _now.getDay());
+  _sun.setHours(0, 0, 0, 0);
+  state.weekStartTimestamp = _sun.getTime();
   delete state.deloadReason;
   delete state.deloadWeekNum;
   delete state.deloadMRVMuscles;
