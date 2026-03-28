@@ -2562,7 +2562,7 @@
   </div>
   <div class="header-right">
     <button class="icon-btn" id="travel-mode-btn" onclick="openTravelModeSheet()" aria-label="Travel Mode" title="Travel Mode" style="position:relative;">
-      <svg id="travel-mode-icon" viewBox="0 0 24 24" width="20" height="20" stroke="var(--text-muted,#666)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+      <span id="travel-mode-icon" style="font-size:18px;line-height:1;color:var(--text-muted,#666);display:block;">✈</span>
     </button>
     <button class="icon-btn" id="lib-open-btn" onclick="openExerciseLibrary(null)" aria-label="Exercise Library" title="Exercise Library">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--red)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.24" y2="14.24"/></svg>
@@ -8715,13 +8715,13 @@ function renderHome() {
       ? Math.max(0, Math.ceil((new Date(state.travelMode.endDate) - new Date()) / 86400000))
       : null;
     const _tmExpired = _tmDaysLeft !== null && _tmDaysLeft === 0;
-    _travelHomeBanner.style.cssText = 'margin-bottom:12px;background:rgba(74,158,219,0.08);border:1px solid rgba(74,158,219,0.35);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;';
+    _travelHomeBanner.style.cssText = 'margin-bottom:12px;background:rgba(74,158,219,0.12);border:2px solid rgba(74,158,219,0.5);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;';
     _travelHomeBanner.onclick = () => openTravelModeSheet();
     _travelHomeBanner.innerHTML = `
       <div style="width:40px;height:40px;background:rgba(74,158,219,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;line-height:1;">✈</div>
       <div style="flex:1;min-width:0;">
         <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:#4A9EDB;letter-spacing:1px;">TRAVEL MODE · ${_tmTierLabel.toUpperCase()}</div>
-        <div style="font-size:12px;color:var(--gray);margin-top:2px;">${_tmExpired ? '⚠ Trip ended — still away? Tap to extend or end.' : _tmDaysLeft !== null ? `${_tmDaysLeft} day${_tmDaysLeft !== 1 ? 's' : ''} left · Workouts auto-adjusted` : 'Workouts auto-adjusted'}</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:2px;">${_tmExpired ? '⚠ Trip ended — tap to extend or end.' : _tmDaysLeft !== null ? `${_tmDaysLeft} day${_tmDaysLeft !== 1 ? 's' : ''} left · auto-adjusted` : 'Active · tap to manage or end'}</div>
       </div>
       <button onclick="event.stopPropagation();_deactivateTravelMode();" style="flex-shrink:0;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.35);color:var(--red-text);padding:6px 11px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">END</button>`;
     _travelHomeBanner.style.display = 'flex';
@@ -10911,21 +10911,23 @@ function _getTravelExercise(exercise, tier) {
 }
 
 function _applyTravelMode(tier, days) {
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + days);
-  state.travelMode = { tier, startDate: new Date().toISOString(), endDate: endDate.toISOString() };
+  const endDate = days ? new Date() : null;
+  if (endDate) endDate.setDate(endDate.getDate() + days);
+  state.travelMode = { tier, startDate: new Date().toISOString(), endDate: endDate ? endDate.toISOString() : null };
   saveState();
   _renderTravelModeHeaderIcon();
   renderHome();
+  // Navigate home so user sees the travel banner
+  showScreen('home', document.querySelector('.nav-item[onclick*="home"]'));
   // Activation transition splash
   const _splash = document.createElement('div');
   _splash.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#0e2a40 0%,#071520 100%);pointer-events:none;';
   _splash.innerHTML = `
     <div style="animation:travelModeIn 0.55s cubic-bezier(0.34,1.56,0.64,1) both;text-align:center;">
-      <svg viewBox="0 0 24 24" width="64" height="64" stroke="#4A9EDB" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:18px;filter:drop-shadow(0 0 18px rgba(74,158,219,0.6));"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+      <div style="font-size:72px;line-height:1;margin-bottom:18px;filter:drop-shadow(0 0 20px rgba(74,158,219,0.5));">✈</div>
       <div style="font-family:'Bebas Neue',cursive;font-size:32px;color:#4A9EDB;letter-spacing:3px;line-height:1;">TRAVEL MODE</div>
       <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:rgba(74,158,219,0.7);letter-spacing:2px;margin-top:4px;">${(_TRAVEL_TIERS[tier]?.label || tier).toUpperCase()}</div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.45);margin-top:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${days} day${days !== 1 ? 's' : ''} · Workouts auto-adjusted</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.45);margin-top:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${days !== null ? `${days} day${days !== 1 ? 's' : ''} · ` : ''}Workouts auto-adjusted</div>
     </div>`;
   document.body.appendChild(_splash);
   setTimeout(() => {
@@ -10946,10 +10948,10 @@ function _renderTravelModeHeaderIcon() {
   const icon = document.getElementById('travel-mode-icon');
   if (!icon) return;
   if (state.travelMode) {
-    icon.setAttribute('stroke', '#4A9EDB');
+    icon.style.color = '#4A9EDB';
     icon.parentElement.title = 'Travel Mode Active — tap to manage';
   } else {
-    icon.setAttribute('stroke', 'var(--text-muted,#666)');
+    icon.style.color = 'var(--text-muted,#666)';
     icon.parentElement.title = 'Travel Mode';
   }
 }
@@ -10960,6 +10962,35 @@ function openTravelModeSheet() {
     return;
   }
   _openTravelModeSetupSheet(1, {});
+}
+
+function _tvlSwitchUnit(unit) {
+  const inp = document.getElementById('_tvl-days-inp');
+  if (!inp) return;
+  const oldUnit = inp.dataset.unit || 'days';
+  const toDays = { days: 1, weeks: 7, months: 30 };
+  const maxMap = { days: 90, weeks: 13, months: 3 };
+  // Convert current value to days then to new unit
+  const currentDays = (parseFloat(inp.value) || 1) * toDays[oldUnit];
+  const newVal = Math.max(1, Math.round(currentDays / toDays[unit]));
+  inp.value = newVal;
+  inp.dataset.unit = unit;
+  inp.max = maxMap[unit];
+  // Update displayed unit label
+  const label = document.getElementById('_tvl-unit-label');
+  if (label) label.textContent = unit.toUpperCase();
+  // Highlight active unit button
+  ['days', 'weeks', 'months'].forEach(u => {
+    const btn = document.getElementById('_tvl-u-' + u);
+    if (!btn) return;
+    const active = u === unit;
+    btn.style.background = active ? 'rgba(74,158,219,0.2)' : 'rgba(74,158,219,0.06)';
+    btn.style.borderColor = active ? 'rgba(74,158,219,0.65)' : 'rgba(74,158,219,0.2)';
+    btn.style.color = active ? '#4A9EDB' : 'var(--gray-light)';
+    btn.style.fontWeight = active ? '700' : '400';
+  });
+  // Sync days into setup data
+  window._travelSetupData = { ...window._travelSetupData, days: Math.round(newVal * toDays[unit]) };
 }
 
 function _openTravelModeSetupSheet(step, data) {
@@ -10998,19 +11029,43 @@ function _openTravelModeSetupSheet(step, data) {
   } else if (step === 2) {
     const _tier = data.tier || 'dumbbells';
     const _tierLabel = _TRAVEL_TIERS[_tier]?.label || _tier;
+    const _initDays = data.days || 7;
     innerHTML = `
       <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 24px;"></div>
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#4A9EDB;letter-spacing:1.5px;margin-bottom:4px;">✈ ${_tierLabel.toUpperCase()}</div>
       <div style="font-size:14px;color:var(--gray-light);margin-bottom:20px;line-height:1.4;">How long will you be away?</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
-        ${[{label:'3 Days',days:3},{label:'1 Week',days:7},{label:'2 Weeks',days:14},{label:'3 Weeks',days:21}].map(opt => `
-          <button onclick="window._travelSetupData={...window._travelSetupData,days:${opt.days}};_openTravelModeSetupSheet(3,window._travelSetupData);"
-            style="background:rgba(74,158,219,0.08);border:1.5px solid rgba(74,158,219,0.3);border-radius:12px;padding:14px 10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--cream);letter-spacing:0.3px;">${opt.label}</button>`).join('')}
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:10px;">
+        <button onclick="var inp=document.getElementById('_tvl-days-inp');var u=inp.dataset.unit||'days';var toDays={days:1,weeks:7,months:30};inp.value=Math.max(1,parseInt(inp.value||1)-1);window._travelSetupData={...window._travelSetupData,days:Math.round((parseInt(inp.value)||1)*toDays[u])};"
+          style="width:44px;height:44px;background:rgba(74,158,219,0.1);border:1.5px solid rgba(74,158,219,0.3);border-radius:50%;color:#4A9EDB;font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">−</button>
+        <div style="text-align:center;min-width:80px;">
+          <input id="_tvl-days-inp" type="number" min="1" max="90" value="${_initDays}" data-unit="days"
+            oninput="var u=this.dataset.unit||'days';var mx={days:90,weeks:13,months:3}[u];var v=Math.max(1,Math.min(mx,parseInt(this.value)||1));this.value=v;var toDays={days:1,weeks:7,months:30};window._travelSetupData={...window._travelSetupData,days:Math.round(v*toDays[u])};"
+            style="width:80px;text-align:center;font-family:'Bebas Neue',cursive;font-size:48px;color:var(--cream);background:none;border:none;outline:none;padding:0;line-height:1;"/>
+          <div id="_tvl-unit-label" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1px;margin-top:2px;">DAYS</div>
+        </div>
+        <button onclick="var inp=document.getElementById('_tvl-days-inp');var u=inp.dataset.unit||'days';var mx={days:90,weeks:13,months:3}[u];var toDays={days:1,weeks:7,months:30};inp.value=Math.min(mx,parseInt(inp.value||1)+1);window._travelSetupData={...window._travelSetupData,days:Math.round((parseInt(inp.value)||1)*toDays[u])};"
+          style="width:44px;height:44px;background:rgba(74,158,219,0.1);border:1.5px solid rgba(74,158,219,0.3);border-radius:50%;color:#4A9EDB;font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">+</button>
       </div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:22px;">
+        <button id="_tvl-u-days" onclick="_tvlSwitchUnit('days')"
+          style="flex:1;max-width:90px;background:rgba(74,158,219,0.2);border:1.5px solid rgba(74,158,219,0.65);border-radius:20px;padding:7px 0;color:#4A9EDB;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;cursor:pointer;">Days</button>
+        <button id="_tvl-u-weeks" onclick="_tvlSwitchUnit('weeks')"
+          style="flex:1;max-width:90px;background:rgba(74,158,219,0.06);border:1.5px solid rgba(74,158,219,0.2);border-radius:20px;padding:7px 0;color:var(--gray-light);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:400;letter-spacing:0.5px;cursor:pointer;">Weeks</button>
+        <button id="_tvl-u-months" onclick="_tvlSwitchUnit('months')"
+          style="flex:1;max-width:90px;background:rgba(74,158,219,0.06);border:1.5px solid rgba(74,158,219,0.2);border-radius:20px;padding:7px 0;color:var(--gray-light);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:400;letter-spacing:0.5px;cursor:pointer;">Months</button>
+      </div>
+      <button onclick="var inp=document.getElementById('_tvl-days-inp');var u=inp.dataset.unit||'days';var toDays={days:1,weeks:7,months:30};var d=Math.round((parseInt(inp.value)||1)*toDays[u]);window._travelSetupData={...window._travelSetupData,days:d};_openTravelModeSetupSheet(3,window._travelSetupData);"
+        style="width:100%;background:rgba(74,158,219,0.1);border:1.5px solid rgba(74,158,219,0.3);border-radius:12px;padding:13px;color:#4A9EDB;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.5px;cursor:pointer;margin-bottom:10px;">
+        NEXT →
+      </button>
+      <button onclick="window._travelSetupData={...window._travelSetupData,days:null};_openTravelModeSetupSheet(3,window._travelSetupData);"
+        style="width:100%;background:none;border:1px solid #444;border-radius:12px;padding:11px;color:var(--gray-light);font-family:'Barlow Condensed',sans-serif;font-size:13px;cursor:pointer;margin-bottom:16px;">
+        I'll turn it off manually
+      </button>
       <div style="display:flex;justify-content:flex-end;">${_backBtn}</div>`;
   } else if (step === 3) {
     const _tier = data.tier || 'dumbbells';
-    const _days = data.days || 7;
+    const _days = data.days ?? null; // null = no end date (manual off)
     const _tierLabel = _TRAVEL_TIERS[_tier]?.label || _tier;
     const _validEquip = _getTravelTierEquipment(_tier);
 
@@ -11046,9 +11101,9 @@ function _openTravelModeSetupSheet(step, data) {
     innerHTML = `
       <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 24px;"></div>
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#4A9EDB;letter-spacing:1.5px;margin-bottom:4px;">✈ CONFIRM TRAVEL MODE</div>
-      <div style="font-size:13px;color:var(--gray-light);margin-bottom:16px;">${_tierLabel} · ${_days} days</div>
+      <div style="font-size:13px;color:var(--gray-light);margin-bottom:16px;">${_tierLabel} · ${_days !== null ? `${_days} days` : 'Until I turn it off'}</div>
       ${_previewHTML}
-      <button onclick="_applyTravelMode('${_tier}',${_days});document.getElementById('travel-setup-sheet')?.remove();"
+      <button onclick="_applyTravelMode('${_tier}',${JSON.stringify(_days)});document.getElementById('travel-setup-sheet')?.remove();"
         style="width:100%;background:#4A9EDB;border:none;color:white;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;cursor:pointer;margin-bottom:10px;">
         ✈ ACTIVATE TRAVEL MODE
       </button>
@@ -11077,18 +11132,18 @@ function _openTravelModeActiveSheet() {
 
   const _tm = state.travelMode;
   const _tierLabel = _TRAVEL_TIERS[_tm.tier]?.label || _tm.tier;
-  const _daysLeft = _tm.endDate ? Math.max(0, Math.ceil((new Date(_tm.endDate) - new Date()) / 86400000)) : '?';
+  const _daysLeft = _tm.endDate ? Math.max(0, Math.ceil((new Date(_tm.endDate) - new Date()) / 86400000)) : null;
   const _startStr = _tm.startDate ? new Date(_tm.startDate).toLocaleDateString(undefined, { month:'short', day:'numeric' }) : '';
 
   sheet.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:28px 20px calc(36px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:2px solid rgba(74,158,219,0.4);animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);">
       <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 24px;"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-        <svg viewBox="0 0 24 24" width="20" height="20" stroke="#4A9EDB" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+        <span style="font-size:22px;line-height:1;">✈</span>
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#4A9EDB;letter-spacing:1.5px;">TRAVEL MODE ACTIVE</div>
       </div>
       <div style="font-size:14px;color:var(--gray-light);margin-bottom:4px;">${_tierLabel}</div>
-      <div style="font-size:12px;color:var(--gray-light);margin-bottom:20px;opacity:0.7;">Since ${_startStr} · ${_daysLeft} day${_daysLeft === 1 ? '' : 's'} remaining</div>
+      <div style="font-size:12px;color:var(--gray-light);margin-bottom:20px;opacity:0.7;">Since ${_startStr}${_daysLeft !== null ? ` · ${_daysLeft} day${_daysLeft === 1 ? '' : 's'} remaining` : ' · No end date set'}</div>
 
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
         <button onclick="document.getElementById('travel-active-sheet').remove();_openTravelModeSetupSheet(1,{});"
@@ -11131,7 +11186,7 @@ function _checkTravelModeExpiry() {
     _banner.id = 'travel-expiry-banner';
     _banner.style.cssText = 'background:rgba(74,158,219,0.1);border:1px solid rgba(74,158,219,0.3);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;';
     _banner.innerHTML = `
-      <svg viewBox="0 0 24 24" width="16" height="16" stroke="#4A9EDB" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+      <span style="font-size:18px;line-height:1;flex-shrink:0;">✈</span>
       <div style="flex:1;">
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:#4A9EDB;letter-spacing:0.5px;">STILL TRAVELING?</div>
         <div style="font-size:12px;color:var(--gray-light);margin-top:2px;">Your travel mode trip ended. Are you back home?</div>
@@ -11438,7 +11493,7 @@ function renderSession() {
         ? Math.max(0, Math.ceil((new Date(state.travelMode.endDate) - new Date()) / 86400000))
         : null;
       _tmbEl.style.display = 'flex';
-      _tmbEl.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="#4A9EDB" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg> TRAVEL MODE · ${_tierLabel}${_daysLeft !== null ? `<span style="margin-left:auto;opacity:0.7;font-weight:400;">${_daysLeft}d left</span>` : ''}`;
+      _tmbEl.innerHTML = `✈ TRAVEL MODE · ${_tierLabel}${_daysLeft !== null ? `<span style="margin-left:auto;opacity:0.7;font-weight:400;">${_daysLeft}d left</span>` : ''}`;
     } else {
       _tmbEl.style.display = 'none';
     }
