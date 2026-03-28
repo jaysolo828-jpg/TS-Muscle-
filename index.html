@@ -1842,7 +1842,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 10px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
 
   .stat-box {
@@ -2660,7 +2660,7 @@
       <div class="stat-focus-word" id="stat-focus-word">--</div>
       <div class="stat-label" id="stat-focus-label">TODAY'S FOCUS</div>
     </div>
-    <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;">
+    <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;padding-top:18px;">
       <button onclick="event.stopPropagation();shareStreakCard()" aria-label="Share Streak" title="Share streak" style="position:absolute;top:4px;right:4px;background:rgba(204,32,39,0.12);border:none;border-radius:8px;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--red)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       </button>
@@ -8528,7 +8528,7 @@ function showStatInfo(type) {
       title: _fw.word + ' · ' + _fw.phase,
       icon: _fw.icon,
       body: _fw.body,
-      sub: _fw.sub + ` Word rotates daily from a pool matched to your current training phase.`
+      sub: _fw.sub
     },
     streak: {
       title: 'WEEK STREAK',
@@ -17593,6 +17593,51 @@ function renderHistory() {
     ));
   }
   container.appendChild(ageCard);
+
+  // ── 2c. CONSISTENCY ───────────────────────────────────────
+  {
+    container.appendChild(mkLabel('CONSISTENCY'));
+    const _cCard = mkCard();
+    const _cRate = calcConsistencyRate();
+    if (_cRate === null) {
+      _cCard.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px 4px;">
+          <svg width="130" height="130" viewBox="0 0 130 130" style="margin-bottom:18px;">
+            <circle cx="65" cy="65" r="52" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10" stroke-dasharray="6 5"/>
+            <text x="65" y="61" text-anchor="middle" font-family="'Bebas Neue',cursive" font-size="20" fill="rgba(255,255,255,0.2)" letter-spacing="2">YOUR</text>
+            <text x="65" y="81" text-anchor="middle" font-family="'Bebas Neue',cursive" font-size="20" fill="rgba(255,255,255,0.2)" letter-spacing="2">RATE</text>
+          </svg>
+          <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">BUILD YOUR RECORD</div>
+          <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);line-height:1.65;text-align:center;">This circle fills as you train. Finish your first complete week and consistency becomes a number you own — one that actually reflects how serious you are about this.</div>
+        </div>`;
+    } else {
+      const _r = 52;
+      const _circ = +(2 * Math.PI * _r).toFixed(1);
+      const _dash = +(_cRate / 100 * _circ).toFixed(1);
+      const _clr = _cRate >= 80 ? '#2ecc71' : _cRate >= 60 ? '#f39c12' : '#CC2027';
+      const _msg = _cRate >= 90 ? "You don't miss. That's the whole thing."
+                 : _cRate >= 80 ? "You show up when it matters. Keep the standard."
+                 : _cRate >= 70 ? "Solid. Keep stacking the weeks."
+                 : _cRate >= 60 ? "The bar is right in front of you. Clear it."
+                 : "Every session you log moves this circle.";
+      _cCard.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0 4px;">
+          <div style="position:relative;width:140px;height:140px;margin-bottom:18px;">
+            <svg width="140" height="140" viewBox="0 0 140 140" style="transform:rotate(-90deg);">
+              <circle cx="70" cy="70" r="${_r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
+              <circle cx="70" cy="70" r="${_r}" fill="none" stroke="${_clr}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${_dash} ${_circ}"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
+              <div style="font-family:'Bebas Neue',cursive;font-size:46px;color:var(--cream);line-height:1;letter-spacing:1px;">${_cRate}%</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--gray);">CONSISTENT</div>
+            </div>
+          </div>
+          <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.65;text-align:center;">${_msg}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:10px;letter-spacing:0.5px;">Last 8 complete weeks · ${state.trainingDaysPerWeek || 4} days/week</div>
+        </div>`;
+    }
+    container.appendChild(_cCard);
+  }
 
   // ── 2b. THIS CYCLE ────────────────────────────────────────
   {
