@@ -14978,21 +14978,18 @@ function finalizeEndSession(save) {
             if (_v > 0) _muscleVol[_m] = (_muscleVol[_m] || 0) + _v;
           });
         });
-        // Average mood lift during this cycle
+        // Average post-workout mood during this cycle
         const _cycleStart = _cycleEntries[0]?.date || '';
         const _cycleEnd   = _cycleEntries[_cycleEntries.length - 1]?.date || '';
-        const _cycleMoodLog = (state.moodLog || []).filter(m => m.date >= _cycleStart && m.date <= _cycleEnd);
+        const _cycleMoodLog = (state.moodLog || []).filter(m => m.timing === 'post' && m.date >= _cycleStart && m.date <= _cycleEnd);
         const _moodByDay = {};
         _cycleMoodLog.forEach(e => {
           const _day = e.date ? e.date.slice(0, 10) : '';
-          if (!_moodByDay[_day]) _moodByDay[_day] = {};
-          if (!_moodByDay[_day][e.timing]) _moodByDay[_day][e.timing] = e;
+          if (!_moodByDay[_day]) _moodByDay[_day] = e;
         });
-        const _cycleLifts = Object.values(_moodByDay)
-          .filter(d => d.pre && d.post)
-          .map(d => d.post.value - d.pre.value);
-        const _moodLiftAvg = _cycleLifts.length
-          ? Math.round((_cycleLifts.reduce((a, b) => a + b, 0) / _cycleLifts.length) * 10) / 10
+        const _cyclePostEntries = Object.values(_moodByDay);
+        const _moodLiftAvg = _cyclePostEntries.length
+          ? Math.round((_cyclePostEntries.reduce((a, e) => a + e.value, 0) / _cyclePostEntries.length) * 10) / 10
           : null;
         // ─────────────────────────────────────────────────────────
 
@@ -17059,101 +17056,83 @@ function renderHistory() {
     }
   }
 
-  // ── 5. MOOD LIFT ──────────────────────────────────────────
+  // ── 5. POST-WORKOUT MOOD ──────────────────────────────────────
   {
-    const _moodLog = state.moodLog || [];
-    // Build byDay — newest-first log, first entry per timing per day wins
+    const _moodLog = (state.moodLog || []).filter(e => e.timing === 'post');
+    // Deduplicate by day — newest-first log, first post entry per day wins
     const _byDay = {};
     _moodLog.forEach(e => {
       const day = _localDateKey(e.date);
-      if (!_byDay[day]) _byDay[day] = {};
-      if (!_byDay[day][e.timing]) _byDay[day][e.timing] = e;
+      if (!_byDay[day]) _byDay[day] = e;
     });
-    // Days with both pre + post, sorted oldest → newest
-    const _lifts = Object.entries(_byDay)
-      .filter(([, d]) => d.pre && d.post)
+    const _postEntries = Object.entries(_byDay)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([day, d]) => ({ day, lift: d.post.value - d.pre.value, pre: d.pre, post: d.post }));
-    const _avgLift = _lifts.length
-      ? _lifts.reduce((s, l) => s + l.lift, 0) / _lifts.length
+      .map(([, e]) => e);
+    const _avgPost = _postEntries.length
+      ? _postEntries.reduce((s, e) => s + e.value, 0) / _postEntries.length
       : null;
 
-    container.appendChild(mkLabel('MOOD LIFT'));
+    container.appendChild(mkLabel('POST-WORKOUT MOOD'));
     const _moodCard = mkCard();
 
-    if (_moodLog.length === 0) {
+    if (_postEntries.length === 0) {
       _moodCard.innerHTML = `
         <div style="display:flex;align-items:flex-start;gap:12px;">
           <div style="font-size:26px;flex-shrink:0;">🧠</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.55;">
-            Rate your mood before and after a session to see how training lifts you. Your average mood boost will appear here once you have a couple of check-ins.
+            Log your mood after a session to track how training affects how you feel over time.
           </div>
         </div>`;
-    } else if (_lifts.length < 2) {
+    } else if (_postEntries.length < 2) {
       _moodCard.innerHTML = `
         <div style="display:flex;align-items:flex-start;gap:12px;">
           <div style="font-size:26px;flex-shrink:0;">🧠</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.55;">
-            Log your mood before <em>and</em> after a couple of sessions to see how much training is shifting it.
-            ${_lifts.length === 1 ? `<br><br>You have 1 session so far. One more to go.` : ''}
+            One session logged. Log a couple more to see your mood trend over time.
           </div>
         </div>`;
-      } else {
-        const _avg  = parseFloat(_avgLift.toFixed(1));
-        const _col  = _avg > 0 ? '#50c882' : _avg < 0 ? 'var(--red-text)' : 'var(--gray)';
-        const _arr  = _avg > 0 ? '↑' : _avg < 0 ? '↓' : '→';
-        const _disp = _avg > 0 ? `+${_avg.toFixed(1)}` : `${_avg.toFixed(1)}`;
-        const _sub  = _avg > 0 ? 'avg mood boost per session'
-                    : _avg < 0 ? 'avg mood drop per session'
-                    : 'no average change';
-
-        // Bar chart — up to 8 most recent sessions
-        const _recent  = _lifts.slice(-8);
-        const _HALF    = 28;
-        const _PX      = _HALF / 4;
-        const _bars = _recent.map(s => {
-          const l    = s.lift;
-          const col  = l > 0 ? '#50c882' : l < 0 ? 'var(--red-text)' : 'var(--gray)';
-          const barH = Math.min(Math.abs(l) * _PX, _HALF);
-          const lbl  = new Date(s.day + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          return `
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;min-width:0;">
-              <div style="font-size:10px;color:${l > 0 ? col : 'transparent'};margin-bottom:2px;font-family:'Barlow Condensed',sans-serif;">${l > 0 ? '+' + l : '·'}</div>
-              <div style="width:100%;height:${_HALF}px;display:flex;align-items:flex-end;justify-content:center;">
-                ${l > 0 ? `<div style="width:55%;height:${barH}px;background:${col};border-radius:3px 3px 0 0;"></div>` : ''}
-              </div>
-              <div style="width:100%;height:1px;background:rgba(255,255,255,0.08);"></div>
-              <div style="width:100%;height:${_HALF}px;display:flex;align-items:flex-start;justify-content:center;">
-                ${l < 0 ? `<div style="width:55%;height:${barH}px;background:${col};border-radius:0 0 3px 3px;"></div>` : ''}
-              </div>
-              <div style="font-size:10px;color:${l < 0 ? col : 'transparent'};margin-top:2px;font-family:'Barlow Condensed',sans-serif;">${l < 0 ? l : '·'}</div>
-              <div style="font-size:10px;color:var(--gray);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;font-family:'Barlow Condensed',sans-serif;">${lbl}</div>
-            </div>`;
-        }).join('');
-
-        const _last = _lifts[_lifts.length - 1];
-        _moodCard.innerHTML = `
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
-            <div>
-              <div style="font-family:'Bebas Neue',cursive;font-size:40px;color:${_col};line-height:1;">${_arr} ${_disp}</div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;margin-top:3px;">${_sub}</div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:1px;">across ${_lifts.length} session${_lifts.length !== 1 ? 's' : ''} with pre + post logs</div>
+    } else {
+      const _avg  = parseFloat(_avgPost.toFixed(1));
+      const _col  = _avg >= 4 ? '#50c882' : _avg >= 3 ? 'var(--gray)' : 'var(--red-text)';
+      // Trend: first half vs second half of all entries
+      const _half = Math.floor(_postEntries.length / 2);
+      const _firstAvg = _postEntries.slice(0, _half).reduce((s, e) => s + e.value, 0) / _half;
+      const _secondAvg = _postEntries.slice(_half).reduce((s, e) => s + e.value, 0) / (_postEntries.length - _half);
+      const _trendDiff = _secondAvg - _firstAvg;
+      const _arr  = _trendDiff > 0.3 ? '↑' : _trendDiff < -0.3 ? '↓' : '→';
+      const _sub  = _trendDiff > 0.3 ? 'improving trend' : _trendDiff < -0.3 ? 'declining trend' : 'stable trend';
+      // Bar chart — up to 8 most recent
+      const _recent = _postEntries.slice(-8);
+      const _MAX_H  = 40;
+      const _bars = _recent.map(e => {
+        const barH = Math.round((e.value / 5) * _MAX_H);
+        const col  = e.value >= 4 ? '#50c882' : e.value === 3 ? 'rgba(255,255,255,0.2)' : 'var(--red-text)';
+        const lbl  = new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return `
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;min-width:0;">
+            <div style="width:100%;height:${_MAX_H}px;display:flex;align-items:flex-end;justify-content:center;">
+              <div style="width:55%;height:${barH}px;background:${col};border-radius:3px 3px 0 0;"></div>
             </div>
-            <div style="text-align:right;flex-shrink:0;margin-left:12px;">
-              <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:5px;">LAST SESSION</div>
-              <div style="font-size:24px;line-height:1;">${_last.pre.emoji} → ${_last.post.emoji}</div>
-              <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:${_last.lift > 0 ? '#50c882' : _last.lift < 0 ? 'var(--red-text)' : 'var(--gray)'};margin-top:2px;">${_last.lift > 0 ? '+' : ''}${_last.lift}</div>
-            </div>
+            <div style="width:100%;height:1px;background:rgba(255,255,255,0.08);"></div>
+            <div style="font-size:10px;color:var(--gray);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;font-family:'Barlow Condensed',sans-serif;">${lbl}</div>
+          </div>`;
+      }).join('');
+      const _last = _postEntries[_postEntries.length - 1];
+      _moodCard.innerHTML = `
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+          <div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:40px;color:${_col};line-height:1;">${_last.emoji} ${_avg.toFixed(1)}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;margin-top:3px;">${_sub}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:1px;">across ${_postEntries.length} session${_postEntries.length !== 1 ? 's' : ''}</div>
           </div>
-          <div style="font-size:11px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">SESSION LIFTS</div>
-          <div style="display:flex;gap:4px;">${_bars}</div>`;
-        _moodCard.appendChild(mkShareBtn('SHARE MOOD LIFT', () =>
-          generateAndShareCard('mood_lift_stats', {
-            avg: _avg, disp: _disp, sessions: _lifts.length,
-            lastPre: _last.pre.emoji, lastPost: _last.post.emoji, lastLift: _last.lift
-          })
-        ));
-      }
+          <div style="text-align:right;flex-shrink:0;margin-left:12px;">
+            <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:5px;">TREND</div>
+            <div style="font-family:'Bebas Neue',cursive;font-size:32px;color:${_trendDiff > 0.3 ? '#50c882' : _trendDiff < -0.3 ? 'var(--red-text)' : 'var(--gray)'};line-height:1;">${_arr}</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">RECENT SESSIONS</div>
+        <div style="display:flex;gap:4px;">${_bars}</div>`;
+    }
     container.appendChild(_moodCard);
   }
 
@@ -17212,8 +17191,8 @@ function renderHistory() {
 
         // Mood section
         const _hasMood = cyc.moodLiftAvg !== null && cyc.moodLiftAvg !== undefined;
-        const _moodCol  = _hasMood && cyc.moodLiftAvg > 0 ? '#50c882' : _hasMood && cyc.moodLiftAvg < 0 ? 'var(--red-text)' : 'var(--gray)';
-        const _moodDisp = _hasMood ? (cyc.moodLiftAvg > 0 ? `+${cyc.moodLiftAvg}` : `${cyc.moodLiftAvg}`) : null;
+        const _moodCol  = _hasMood && cyc.moodLiftAvg >= 4 ? '#50c882' : _hasMood && cyc.moodLiftAvg < 3 ? 'var(--red-text)' : 'var(--gray)';
+        const _moodDisp = _hasMood ? `${cyc.moodLiftAvg}` : null;
 
         const card = document.createElement('div');
         card.style.cssText = 'border-radius:16px;overflow:hidden;border:1px solid rgba(204,32,39,0.2);margin-bottom:8px;';
@@ -17299,8 +17278,8 @@ function renderHistory() {
               <div style="display:flex;align-items:center;gap:8px;">
                 <div style="font-size:18px;">🧠</div>
                 <div>
-                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:1px;">MOOD LIFT SCORE</div>
-                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);">avg boost per session</div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--gray);margin-bottom:1px;">AVG POST MOOD</div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);">after sessions this cycle</div>
                 </div>
               </div>
               <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:${_moodCol};line-height:1;">${_moodDisp}</div>
@@ -22947,15 +22926,11 @@ function _getTodayMoods() {
 function renderMoodCheckinLabel() {
   const el = document.getElementById('mood-checkin-label');
   if (!el) return;
-  const { deduped, pre, post } = _getTodayMoods();
-  if (!deduped.length) { el.textContent = 'MOOD CHECK-IN'; el.style.color = ''; return; }
-  const summary = deduped.map(e => `${e.emoji} ${e.timing === 'pre' ? 'Pre' : 'Post'}`).join(' · ');
-  const hasMoodLift = pre && post && post.value > pre.value;
+  const { deduped } = _getTodayMoods();
+  const postEntry = deduped.find(e => e.timing === 'post');
+  if (!postEntry) { el.textContent = 'MOOD CHECK-IN'; el.style.color = ''; return; }
   el.style.color = 'var(--success)';
-  el.innerHTML = `<span>MOOD CHECK-IN · ✓ ${summary}</span>${hasMoodLift ? `
-    <button onclick="shareMoodLift()" style="background:none;border:none;color:rgba(180,170,255,0.8);cursor:pointer;padding:0 0 0 10px;display:inline-flex;align-items:center;vertical-align:middle;-webkit-tap-highlight-color:transparent;" title="Share mood lift">
-      <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-    </button>` : ''}`;
+  el.innerHTML = `<span>MOOD CHECK-IN · ✓ ${postEntry.emoji} ${postEntry.label}</span>`;
 }
 
 function shareMoodLift() {
@@ -22972,7 +22947,7 @@ function renderMoodHistory(showAll = false) {
   if (!container) return;
   renderMoodCheckinLabel();
   if (!state.moodLog || state.moodLog.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">😐</div><div class="empty-state-text">No mood entries yet. Log one before or after your next session.</div></div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">😐</div><div class="empty-state-text">No mood entries yet. Log one after your next session.</div></div>';
     return;
   }
 
@@ -22994,64 +22969,28 @@ function renderMoodHistory(showAll = false) {
     const isToday = day === todayKey;
     const d = new Date(day + 'T12:00:00');
     const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-    // Mood lift badge
-    let liftHtml = '';
-    if (pre && post) {
-      const lift = post.entry.value - pre.entry.value;
-      if (lift > 0) liftHtml = `<span style="font-size:11px; color:var(--success); letter-spacing:1px;">+${lift} MOOD LIFT</span>`;
-      else if (lift < 0) liftHtml = `<span style="font-size:11px; color:#888; letter-spacing:1px;">${lift} MOOD DROP</span>`;
-      else liftHtml = `<span style="font-size:11px; color:var(--gray); letter-spacing:1px;">SAME MOOD</span>`;
-    }
-
-    // Pre side
-    const preSide = pre
-      ? `<div style="font-size:28px; line-height:1; margin-bottom:4px;">${pre.entry.emoji}</div>
-         <div style="font-size:12px; color:var(--cream);">${pre.entry.label}</div>`
-      : `<div style="font-size:22px; color:var(--dark3); line-height:1; margin-bottom:4px;">—</div>
-         <div style="font-size:11px; color:var(--gray);">Not logged</div>`;
-
-    // Post side
-    const postSide = post
-      ? `<div style="font-size:28px; line-height:1; margin-bottom:4px;">${post.entry.emoji}</div>
-         <div style="font-size:12px; color:var(--cream);">${post.entry.label}</div>`
-      : `<div style="font-size:22px; color:var(--dark3); line-height:1; margin-bottom:4px;">—</div>
-         <div style="font-size:11px; color:var(--gray);">Not logged</div>`;
-
-    // Notes (pre takes priority if both have notes)
-    const note = (pre && pre.entry.note) || (post && post.entry.note) || '';
-
-    // Delete buttons
-    const deleteButtons = [
-      pre ? `<button onclick="deleteMoodEntry(${pre.idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.6; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Delete pre entry">PRE ${trashIcon}</button>` : '',
-      post ? `<button onclick="deleteMoodEntry(${post.idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.6; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Delete post entry">POST ${trashIcon}</button>` : ''
-    ].join('');
+    const note = (post && post.entry.note) || (pre && pre.entry.note) || '';
 
     return `
       <div class="card" style="margin-bottom:10px; padding:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <div style="font-size:11px; color:var(--gray); letter-spacing:1px;">${dateStr}</div>
-          ${liftHtml}
+          ${post ? `<span style="font-size:11px; color:var(--success); letter-spacing:1px;">POST-WORKOUT</span>` : ''}
         </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
-            <div style="font-size:11px; color:#5b8dee; letter-spacing:1.5px; margin-bottom:8px;">PRE</div>
-            ${preSide}
+        ${post ? `
+        <div style="display:flex; align-items:center; gap:12px; ${note ? 'margin-bottom:10px;' : ''}">
+          <div style="font-size:36px; line-height:1; flex-shrink:0;">${post.entry.emoji}</div>
+          <div>
+            <div style="font-size:15px; color:var(--cream); font-family:'Barlow Condensed',sans-serif; font-weight:700;">${post.entry.label}</div>
+            ${pre ? `<div style="font-size:11px; color:var(--gray); margin-top:3px;">Came in: ${pre.entry.emoji} ${pre.entry.label}</div>` : ''}
           </div>
-          <div style="color:var(--gray); font-size:18px; flex-shrink:0; padding:0 2px;">→</div>
-          <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
-            <div style="font-size:11px; color:var(--success); letter-spacing:1.5px; margin-bottom:8px;">POST</div>
-            ${postSide}
-          </div>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid var(--dark3);">
-          <div style="font-size:12px; color:var(--gray); flex:1;">${note}</div>
-          <div style="display:flex; gap:4px; flex-shrink:0; margin-left:8px; align-items:center;">
-            ${isToday ? `
-              <button onclick="reselectMood('pre')" style="background:rgba(91,141,238,0.1); border:1px solid rgba(91,141,238,0.35); color:#5b8dee; cursor:pointer; padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Change pre-workout mood">PRE ${editIcon}</button>
-              <button onclick="reselectMood('post')" style="background:rgba(46,204,113,0.08); border:1px solid rgba(46,204,113,0.3); color:var(--success); cursor:pointer; padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Change post-workout mood">POST ${editIcon}</button>
-            ` : ''}
-            ${deleteButtons}
+        </div>` : ''}
+        ${note ? `<div style="font-size:12px; color:var(--gray);">${note}</div>` : ''}
+        <div style="display:flex; justify-content:flex-end; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid var(--dark3);">
+          <div style="display:flex; gap:4px; align-items:center;">
+            ${isToday ? `<button onclick="reselectMood('post')" style="background:rgba(46,204,113,0.08); border:1px solid rgba(46,204,113,0.3); color:var(--success); cursor:pointer; padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Update post-workout mood">EDIT ${editIcon}</button>` : ''}
+            ${post ? `<button onclick="deleteMoodEntry(${post.idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.6; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Delete entry">${trashIcon}</button>` : ''}
+            ${pre && !post ? `<button onclick="deleteMoodEntry(${pre.idx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.6; display:flex; align-items:center; gap:4px; font-size:11px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" title="Delete entry">${trashIcon}</button>` : ''}
           </div>
         </div>
       </div>`;
@@ -23115,40 +23054,20 @@ function renderMoodInsights() {
     if (!byDay[day][e.timing]) byDay[day][e.timing] = e;
   });
 
-  // Deduplicated pre/post (one per day per timing, most recent)
-  const dedupedPre  = Object.values(byDay).filter(d => d.pre).map(d => d.pre);
-  const dedupedPost = Object.values(byDay).filter(d => d.post).map(d => d.post);
-  const allDeduped  = [...dedupedPre, ...dedupedPost];
-  const avgPre  = dedupedPre.length  ? (dedupedPre.reduce((s, e)  => s + e.value, 0) / dedupedPre.length).toFixed(1)  : null;
-  const avgPost = dedupedPost.length ? (dedupedPost.reduce((s, e) => s + e.value, 0) / dedupedPost.length).toFixed(1) : null;
+  // Post entries (one per day) sorted oldest → newest
+  const dedupedPost = Object.entries(byDay)
+    .filter(([, d]) => d.post)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, d]) => d.post);
+  const allDeduped = Object.values(byDay).flatMap(d => [d.pre, d.post].filter(Boolean));
 
-  // Session lifts (days with both pre + post), sorted oldest → newest
-  const sessionDays = Object.entries(byDay)
-    .filter(([_, d]) => d.pre && d.post)
-    .sort(([a], [b]) => a.localeCompare(b));
-  const lifts = sessionDays.map(([day, d]) => ({
-    day,
-    lift: d.post.value - d.pre.value,
-    preEntry: d.pre,
-    postEntry: d.post
-  }));
-  const avgLift = lifts.length ? (lifts.reduce((s, l) => s + l.lift, 0) / lifts.length).toFixed(1) : null;
+  const avgPost = dedupedPost.length
+    ? (dedupedPost.reduce((s, e) => s + e.value, 0) / dedupedPost.length).toFixed(1)
+    : null;
 
-  // Best session (biggest single-day positive lift)
-  const bestSession = lifts.length ? lifts.reduce((best, l) => l.lift > best.lift ? l : best, lifts[0]) : null;
-
-  // Showed up anyway — pre mood ≤3 AND a completed workout session exists for that day
-  const _suaHistory = state.history || [];
-  const _suaSessionByDay = {};
-  _suaHistory.forEach(s => {
-    if (s && s.date) {
-      const day = _localDateKey(s.date);
-      if (!_suaSessionByDay[day]) _suaSessionByDay[day] = s;
-    }
-  });
-  const showedUpAnyway = Object.entries(byDay)
-    .filter(([day, d]) => d.pre && d.pre.value <= 3 && _suaSessionByDay[day])
-    .length;
+  // Showed up anyway — sessions with hard carrying state
+  const _HARD_CARRYING = ['heavy', 'anxious', 'empty'];
+  const showedUpAnyway = (state.history || []).filter(s => s.carrying && _HARD_CARRYING.includes(s.carrying)).length;
 
   // Check-in streak
   const logDays = new Set(log.map(e => _localDateKey(e.date)));
@@ -23162,20 +23081,15 @@ function renderMoodInsights() {
     else break;
   }
 
-  // This week (deduped)
+  // This week
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - ((today.getDay() + 6) % 7));
   weekStart.setHours(0, 0, 0, 0);
   const logsThisWeek = allDeduped.filter(e => new Date(e.date) >= weekStart).length;
 
-  // Most common pre mood
-  const preFreq = {};
-  dedupedPre.forEach(e => preFreq[e.label] = (preFreq[e.label] || 0) + 1);
-  const mostCommonPre = Object.entries(preFreq).sort((a, b) => b[1] - a[1])[0];
-
-  // Mood on workout days (deduped)
+  // Mood on workout days (post only)
   const workoutDates = new Set((state.history || []).map(h => h.date ? _localDateKey(h.date) : null).filter(Boolean));
-  const moodOnWorkoutDays = allDeduped.filter(e => workoutDates.has(_localDateKey(e.date)));
+  const moodOnWorkoutDays = dedupedPost.filter(e => workoutDates.has(_localDateKey(e.date)));
   const avgMoodWorkoutDay = moodOnWorkoutDays.length
     ? (moodOnWorkoutDays.reduce((s, e) => s + e.value, 0) / moodOnWorkoutDays.length).toFixed(1)
     : null;
@@ -23208,10 +23122,7 @@ function renderMoodInsights() {
     return;
   }
 
-  // ── Session-based consistency (this training week / last training week) ──
-  // Uses state.weekStartTimestamp — the same boundary the app uses for weekly
-  // set counts and volume tracking — so "this week" matches training week, not
-  // calendar week.
+  // ── Session-based consistency ────────────────────────────────
   const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
   const trainingWeekStart = state.weekStartTimestamp || 0;
   const trainingLastWeekStart = trainingWeekStart - WEEK_MS;
@@ -23225,7 +23136,7 @@ function renderMoodInsights() {
     return t >= trainingLastWeekStart && t < trainingWeekStart;
   }).length;
 
-  const moodDaysThisWeekSet = new Set(allDeduped
+  const moodDaysThisWeekSet = new Set(dedupedPost
     .filter(e => new Date(e.date).getTime() >= trainingWeekStart)
     .map(e => _localDateKey(e.date)));
   const sessionsWithMoodThisWeek = (state.history || []).filter(h =>
@@ -23233,7 +23144,7 @@ function renderMoodInsights() {
     moodDaysThisWeekSet.has(_localDateKey(h.date))
   ).length;
 
-  const moodDaysLastWeekSet = new Set(allDeduped.filter(e => {
+  const moodDaysLastWeekSet = new Set(dedupedPost.filter(e => {
     const t = new Date(e.date).getTime();
     return t >= trainingLastWeekStart && t < trainingWeekStart;
   }).map(e => _localDateKey(e.date)));
@@ -23247,7 +23158,7 @@ function renderMoodInsights() {
   // ── Build slides ─────────────────────────────────────────────
   const slides = [];
 
-  // Slide 0 — Overview (always)
+  // Slide 0 — Overview
   slides.push(`
     <div class="card" style="text-align:center; padding:14px;">
       <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">THIS WEEK</div>
@@ -23257,140 +23168,82 @@ function renderMoodInsights() {
       ${workoutsLastWeek > 0 ? `<div style="font-size:11px; color:var(--gray); margin-top:4px;">${sessionsWithMoodLastWeek} log${sessionsWithMoodLastWeek !== 1 ? 's' : ''} last week</div>` : ''}
     </div>`);
 
-  // Slide 1 — Mood Lift + narrative inline + bar chart
-  if (avgLift !== null) {
-    const liftNum     = parseFloat(avgLift);
-    const liftColor   = liftNum > 0 ? '#4caf50' : liftNum < 0 ? 'var(--red)' : 'var(--gray)';
-    const liftArrow   = liftNum > 0 ? '↑' : liftNum < 0 ? '↓' : '→';
-    const liftDisplay = liftNum > 0 ? `+${avgLift}` : `${avgLift}`;
-    const liftLabel   = liftNum > 0 ? 'AVG MOOD BOOST PER SESSION' : liftNum < 0 ? 'AVG MOOD DROP PER SESSION' : 'NO CHANGE ON AVERAGE';
-    const liftNarrative = lifts.length >= 3 ? (() => {
-      if (liftNum >= 1.5) return "Consistent, meaningful. Exercise is working as a mood regulator. Not because you're motivated to feel better, but because the body responds. This is behavioral activation.";
-      if (liftNum >= 0.5) return "A measurable lift every session. This data is your evidence. Not something to believe in, something you've actually measured about yourself.";
-      if (liftNum > 0)   return "Even a small consistent lift matters. You tend to feel better after training. That's real, and it's yours.";
-      if (liftNum === 0) return "Your mood stays stable across sessions. Consistent emotional regulation can itself be a sign that training is helping you stay even.";
-      return "Some sessions feel harder. That's normal. The goal isn't to always feel better. It's to keep showing up.";
-    })() : null;
-
-    // Bar chart
-    let barChartHtml = '';
-    if (lifts.length >= 2) {
-      const recent  = lifts.slice(-8);
-      const HALF_H  = 30;
-      const PX_UNIT = HALF_H / 4;
-      const bars = recent.map(s => {
-        const l    = s.lift;
-        const col  = l > 0 ? '#4caf50' : l < 0 ? 'var(--red)' : '#777';
-        const barH = Math.min(Math.abs(l) * PX_UNIT, HALF_H);
-        const d    = new Date(s.day + 'T12:00:00');
-        const lbl  = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        return `
-          <div style="flex:1; display:flex; flex-direction:column; align-items:center; min-width:0;">
-            <div style="font-size:10px; color:${l > 0 ? col : 'transparent'}; margin-bottom:2px; font-family:'Barlow Condensed',sans-serif;">${l > 0 ? '+' + l : '·'}</div>
-            <div style="width:100%; height:${HALF_H}px; display:flex; align-items:flex-end; justify-content:center;">
-              ${l > 0 ? `<div style="width:55%; height:${barH}px; background:${col}; border-radius:3px 3px 0 0;"></div>` : ''}
-            </div>
-            <div style="width:100%; height:1px; background:#444;"></div>
-            <div style="width:100%; height:${HALF_H}px; display:flex; align-items:flex-start; justify-content:center;">
-              ${l < 0 ? `<div style="width:55%; height:${barH}px; background:${col}; border-radius:0 0 3px 3px;"></div>` : ''}
-            </div>
-            <div style="font-size:10px; color:${l < 0 ? col : 'transparent'}; margin-top:2px; font-family:'Barlow Condensed',sans-serif;">${l < 0 ? l : '·'}</div>
-            <div style="font-size:10px; color:var(--gray); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; text-align:center; font-family:'Barlow Condensed',sans-serif;">${lbl}</div>
-          </div>`;
-      }).join('');
-      barChartHtml = `
-        <div style="margin-top:14px; text-align:left;">
-          <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">SESSION LIFTS</div>
-          <div style="display:flex; gap:4px;">${bars}</div>
+  // Slide 1 — Post-mood trend (replaces old Mood Lift slide)
+  if (dedupedPost.length >= 2) {
+    const recent = dedupedPost.slice(-8);
+    const avgRecent = (recent.reduce((s, e) => s + e.value, 0) / recent.length).toFixed(1);
+    // Trend: compare first half vs second half of recent entries
+    const half = Math.floor(recent.length / 2);
+    const firstHalfAvg = recent.slice(0, half).reduce((s, e) => s + e.value, 0) / half;
+    const secondHalfAvg = recent.slice(half).reduce((s, e) => s + e.value, 0) / (recent.length - half);
+    const trendDiff = secondHalfAvg - firstHalfAvg;
+    const trendColor = trendDiff > 0.3 ? '#4caf50' : trendDiff < -0.3 ? 'var(--red)' : 'var(--gray)';
+    const trendArrow = trendDiff > 0.3 ? '↑' : trendDiff < -0.3 ? '↓' : '→';
+    const trendLabel = trendDiff > 0.3 ? 'IMPROVING' : trendDiff < -0.3 ? 'DECLINING' : 'STABLE';
+    const MAX_H = 50;
+    const trendBars = recent.map(e => {
+      const barH = Math.round((e.value / 5) * MAX_H);
+      const col = e.value >= 4 ? '#4caf50' : e.value === 3 ? '#666' : 'var(--red)';
+      const lbl = new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return `
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; min-width:0;">
+          <div style="width:100%; height:${MAX_H}px; display:flex; align-items:flex-end; justify-content:center;">
+            <div style="width:55%; height:${barH}px; background:${col}; border-radius:3px 3px 0 0;"></div>
+          </div>
+          <div style="width:100%; height:1px; background:#444;"></div>
+          <div style="font-size:10px; color:var(--gray); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; text-align:center; font-family:'Barlow Condensed',sans-serif;">${lbl}</div>
         </div>`;
-    }
-
-    // Slide 1 — Best session + Showed up anyway
-    const statCards = [];
-    if (bestSession && bestSession.lift > 0) {
-      const bd    = new Date(bestSession.day + 'T12:00:00');
-      const bdStr = bd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      statCards.push(`
-        <div class="card" style="padding:14px;">
-          <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">BEST SESSION</div>
-          <div style="font-size:11px; color:var(--gray); margin-bottom:6px;">${bdStr}</div>
-          <div style="font-size:22px; margin-bottom:4px;">${bestSession.preEntry.emoji} → ${bestSession.postEntry.emoji}</div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:#4caf50;">+${bestSession.lift}</div>
-        </div>`);
-    }
-    if (showedUpAnyway > 0) {
-      statCards.push(`
-        <div class="card" style="padding:14px;">
-          <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">SHOWED UP ANYWAY</div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${showedUpAnyway}</div>
-          <div style="font-size:11px; color:var(--gray); line-height:1.5; margin-top:4px;">came in low,<br>still trained</div>
-        </div>`);
-    }
-    if (statCards.length === 2) {
-      slides.push(`<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">${statCards.join('')}</div>`);
-    } else if (statCards.length === 1) {
-      slides.push(statCards[0]);
-    }
-  }
-
-  // Slide 3 — All supporting data in one place (avg pre/post + trend + patterns)
-  let deepDataHtml = '';
-
-  if (avgPre || avgPost) {
-    const preSide = avgPre
-      ? `<div style="font-size:26px; margin-bottom:4px;">${MOOD_EMOJIS[Math.round(avgPre)]}</div>
-         <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgPre}</div>
-         <div style="font-size:11px; color:var(--gray);">${MOOD_LABELS[Math.round(avgPre)]}</div>`
-      : `<div style="font-size:20px; color:var(--gray); margin-bottom:4px;">—</div><div style="font-size:11px; color:var(--gray);">No data</div>`;
-    const postSide = avgPost
-      ? `<div style="font-size:26px; margin-bottom:4px;">${MOOD_EMOJIS[Math.round(avgPost)]}</div>
-         <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgPost}</div>
-         <div style="font-size:11px; color:var(--gray);">${MOOD_LABELS[Math.round(avgPost)]}</div>`
-      : `<div style="font-size:20px; color:var(--gray); margin-bottom:4px;">—</div><div style="font-size:11px; color:var(--gray);">No data</div>`;
-    deepDataHtml += `
-      <div class="card" style="padding:14px; margin-bottom:10px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:12px;">AVERAGE PRE vs POST</div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
-            <div style="font-size:11px; color:#5b8dee; letter-spacing:1.5px; margin-bottom:8px;">PRE</div>${preSide}
-          </div>
-          <div style="color:var(--gray); font-size:18px; flex-shrink:0; padding:0 2px;">→</div>
-          <div style="flex:1; background:var(--dark3); border-radius:10px; padding:12px; text-align:center;">
-            <div style="font-size:11px; color:var(--success); letter-spacing:1.5px; margin-bottom:8px;">POST</div>${postSide}
-          </div>
-        </div>
-      </div>`;
-  }
-
-  if (mostCommonPre) {
-    deepDataHtml += `
-      <div class="card" style="padding:14px; margin-bottom:10px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOST COMMON PRE-WORKOUT MOOD</div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="font-size:30px;">${MOOD_EMOJIS[Object.keys(MOOD_LABELS).find(k => MOOD_LABELS[k] === mostCommonPre[0])]}</div>
-          <div>
-            <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${mostCommonPre[0]}</div>
-            <div style="font-size:12px; color:var(--gray);">${mostCommonPre[1]} time${mostCommonPre[1] !== 1 ? 's' : ''} logged</div>
-          </div>
-        </div>
-      </div>`;
-  }
-
-  if (avgMoodWorkoutDay) {
-    deepDataHtml += `
+    }).join('');
+    const narrative = (() => {
+      const avg = parseFloat(avgRecent);
+      if (avg >= 4.5) return "You consistently finish strong. That's the behavioral activation loop working — your body knows what training does for you now.";
+      if (avg >= 3.5) return "You're leaving most sessions feeling better than average. That's real data about what training does for your mood.";
+      if (avg >= 2.5) return "Your post-workout mood varies. That's normal. What matters is you're tracking it — awareness is the first step.";
+      return "Some stretches are hard. Keep logging. The trend over time tells a more honest story than any single session.";
+    })();
+    slides.push(`
       <div class="card" style="padding:14px;">
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">MOOD ON WORKOUT DAYS</div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="font-size:30px;">${MOOD_EMOJIS[Math.round(avgMoodWorkoutDay)]}</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
           <div>
-            <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgMoodWorkoutDay} avg</div>
-            <div style="font-size:12px; color:var(--gray);">across ${moodOnWorkoutDays.length} log${moodOnWorkoutDays.length !== 1 ? 's' : ''} on training days</div>
+            <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">AVG POST MOOD</div>
+            <div style="font-family:'Bebas Neue',cursive; font-size:36px; color:var(--success); line-height:1;">${MOOD_EMOJIS[Math.round(parseFloat(avgRecent))]} ${avgRecent}</div>
+            <div style="font-size:11px; color:var(--gray); margin-top:2px;">across ${dedupedPost.length} session${dedupedPost.length !== 1 ? 's' : ''}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">TREND</div>
+            <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:${trendColor}; line-height:1;">${trendArrow}</div>
+            <div style="font-size:11px; color:${trendColor}; margin-top:2px;">${trendLabel}</div>
           </div>
         </div>
-      </div>`;
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">RECENT SESSIONS</div>
+        <div style="display:flex; gap:4px; margin-bottom:14px;">${trendBars}</div>
+        <div style="font-size:12px; color:var(--gray-light); line-height:1.6;">${narrative}</div>
+      </div>`);
   }
 
-  if (deepDataHtml) slides.push(`<div>${deepDataHtml}</div>`);
+  // Slide 2 — Showed up anyway + mood on workout days
+  const statCards2 = [];
+  if (showedUpAnyway > 0) {
+    statCards2.push(`
+      <div class="card" style="padding:14px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">SHOWED UP ANYWAY</div>
+        <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream);">${showedUpAnyway}</div>
+        <div style="font-size:11px; color:var(--gray); line-height:1.5; margin-top:4px;">sessions carrying<br>something heavy</div>
+      </div>`);
+  }
+  if (avgMoodWorkoutDay) {
+    statCards2.push(`
+      <div class="card" style="padding:14px;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">MOOD: WORKOUT DAYS</div>
+        <div style="font-size:28px; margin-bottom:4px;">${MOOD_EMOJIS[Math.round(avgMoodWorkoutDay)]}</div>
+        <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream);">${avgMoodWorkoutDay} avg</div>
+      </div>`);
+  }
+  if (statCards2.length === 2) {
+    slides.push(`<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">${statCards2.join('')}</div>`);
+  } else if (statCards2.length === 1) {
+    slides.push(statCards2[0]);
+  }
 
   // ── Assemble carousel ────────────────────────────────────────
   const showCarousel = slides.length > 1;
@@ -23408,8 +23261,6 @@ function renderMoodInsights() {
       ` : ''}
     </div>`;
 
-  // Set initial scroller height to match slide 0's content height
-  // Deferred so the browser has reflowed before we measure scrollHeight
   const sc = container.querySelector('#mood-insights-scroller');
   const s0 = sc && sc.querySelector('.mood-slide');
   if (sc && s0) requestAnimationFrame(() => { sc.style.height = s0.scrollHeight + 'px'; });
@@ -23424,80 +23275,49 @@ let _suaShareData = null;
 function renderShowingUpAnyway() {
   const container = document.getElementById('showing-up-anyway-panel');
   if (!container) return;
-  const log = state.moodLog || [];
+  const history = state.history || [];
+  const HARD_CARRYING = ['heavy', 'anxious', 'empty'];
 
-  // Build byDay — first-seen wins per timing per day (log is newest-first via unshift)
-  const byDay = {};
-  log.forEach(e => {
-    const day = _localDateKey(e.date);
-    if (!byDay[day]) byDay[day] = {};
-    if (!byDay[day][e.timing]) byDay[day][e.timing] = e;
-  });
+  // Sessions where the user came in carrying something hard
+  const hardSessions = history.filter(s => s.carrying && HARD_CARRYING.includes(s.carrying));
+  const THRESHOLD = 3;
 
-  // Days with a pre-workout mood logged (deduped)
-  const daysWithPre = Object.entries(byDay).filter(([_, d]) => d.pre);
-
-  // Need at least 5 pre-mood sessions before showing the card
-  const THRESHOLD = 5;
-  if (daysWithPre.length === 0) {
+  if (hardSessions.length === 0) {
     container.innerHTML = '';
     return;
   }
-  if (daysWithPre.length < THRESHOLD) {
-    const needed = THRESHOLD - daysWithPre.length;
+
+  if (hardSessions.length < THRESHOLD) {
+    const needed = THRESHOLD - hardSessions.length;
     container.innerHTML = `
       <div class="section-title">SHOWING UP <span>ANYWAY</span></div>
       <div class="card" style="padding:20px 20px 18px;">
-        <div style="font-size:14px; color:var(--gray-light); line-height:1.7;">Log your pre-workout mood before ${needed} more session${needed !== 1 ? 's' : ''} and we'll show you something interesting about how you perform on your hardest days.</div>
+        <div style="font-size:14px; color:var(--gray-light); line-height:1.7;">You've already shown up carrying something heavy ${hardSessions.length} time${hardSessions.length !== 1 ? 's' : ''}. ${needed} more and we'll show you something about how you perform on your hardest days.</div>
       </div>`;
     return;
   }
 
-  // Low-mood sessions: pre mood ≤ 3 (Neutral or below)
-  const lowMoodDays = daysWithPre.filter(([_, d]) => d.pre.value <= 3);
+  const totalHard = hardSessions.length;
+  const hardWithPR = hardSessions.filter(s => s.prs && s.prs.length > 0).length;
 
-  // Match mood days to workout history by local date
-  const history = state.history || [];
-  const sessionByDay = {};
-  history.forEach(s => {
-    if (s.date) {
-      const day = _localDateKey(s.date);
-      if (!sessionByDay[day]) sessionByDay[day] = s;
-    }
-  });
+  // Good-carrying sessions for the flip-side comparison
+  const goodSessions = history.filter(s => s.carrying === 'good');
+  const totalGood = goodSessions.length;
+  const goodNoPR = goodSessions.filter(s => !s.prs || s.prs.length === 0).length;
 
-  const lowMoodWorkouts = lowMoodDays
-    .map(([day, d]) => ({ day, pre: d.pre, session: sessionByDay[day] }))
-    .filter(x => x.session);
-  const totalLow = lowMoodWorkouts.length;
-  const lowWithPR = lowMoodWorkouts.filter(x => x.session.prs && x.session.prs.length > 0).length;
-
-  // High-mood sessions (pre ≥ 4) where no PRs were hit
-  const highMoodDays = daysWithPre.filter(([_, d]) => d.pre.value >= 4);
-  const highMoodWorkouts = highMoodDays
-    .map(([day, d]) => ({ day, pre: d.pre, session: sessionByDay[day] }))
-    .filter(x => x.session);
-  const totalHigh = highMoodWorkouts.length;
-  const highNoPR = highMoodWorkouts.filter(x => !x.session.prs || x.session.prs.length === 0).length;
-
-  // Determine primary insight and flip-side copy
   let primaryInsight, flipSide, shareInsight;
 
-  if (totalLow === 0) {
-    primaryInsight = `You've logged ${daysWithPre.length} pre-workout moods. Keep going. Once you train on a hard day, this card gets interesting.`;
-    flipSide = null;
-    shareInsight = 'Showing up is the whole thing.';
-  } else if (lowWithPR === 0) {
-    primaryInsight = `You trained through ${totalLow} low-mood session${totalLow !== 1 ? 's' : ''}. Every single one counts.`;
-    flipSide = (highNoPR > 0 && totalHigh > 0)
-      ? `${highNoPR} of your ${totalHigh} high-mood sessions didn't produce PRs either. Feeling ready doesn't guarantee anything.`
+  if (hardWithPR === 0) {
+    primaryInsight = `You trained through ${totalHard} hard day${totalHard !== 1 ? 's' : ''}. Every single one counts.`;
+    flipSide = (goodNoPR > 0 && totalGood > 0)
+      ? `${goodNoPR} of your ${totalGood} good-day session${totalGood !== 1 ? 's' : ''} didn't produce PRs either. Feeling ready doesn't guarantee anything.`
       : 'Showing up on a hard day is never nothing. The body keeps score.';
-    shareInsight = `${totalLow} low-mood session${totalLow !== 1 ? 's' : ''}. All of them count.`;
+    shareInsight = `${totalHard} hard day${totalHard !== 1 ? 's' : ''}. All of them count.`;
   } else {
-    primaryInsight = `You hit PR${lowWithPR !== 1 ? 's' : ''} in ${lowWithPR} of your ${totalLow} low-mood session${totalLow !== 1 ? 's' : ''}.`;
-    flipSide = (highNoPR > 0 && totalHigh > 0)
-      ? `For comparison: ${highNoPR} of your ${totalHigh} high-mood session${totalHigh !== 1 ? 's' : ''} didn't produce a PR. Mood is a bad predictor. Showing up isn't.`
-      : 'Mood predicted nothing. You showed up and your body responded.';
+    primaryInsight = `You hit PR${hardWithPR !== 1 ? 's' : ''} in ${hardWithPR} of your ${totalHard} hard day session${totalHard !== 1 ? 's' : ''}.`;
+    flipSide = (goodNoPR > 0 && totalGood > 0)
+      ? `For comparison: ${goodNoPR} of your ${totalGood} good-day session${totalGood !== 1 ? 's' : ''} didn't produce a PR. How you feel going in is a bad predictor. Showing up isn't.`
+      : 'How you feel going in predicted nothing. You showed up and your body responded.';
     shareInsight = primaryInsight;
   }
 
