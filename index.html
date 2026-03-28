@@ -9035,23 +9035,20 @@ function renderHome() {
   const realSessionsOrdered = (state.history || [])
     .filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done)))
     .sort((a, b) => new Date(a.date) - new Date(b.date));
-  const weekRemainder = (state.totalSessions || 0) % (state.trainingDaysPerWeek || state.program?.length || 4);
+  // Determine sessions done in the current Sun–Sat calendar week.
+  // Anchoring on Sunday means a week that starts Sunday and runs through
+  // Saturday — so moving any session to Saturday never crosses a week
+  // boundary and won't break streaks or completion display.
+  const _calNow = new Date();
+  const _calWeekSunday = new Date(_calNow);
+  _calWeekSunday.setDate(_calNow.getDate() - _calNow.getDay()); // getDay() 0=Sun…6=Sat
+  _calWeekSunday.setHours(0, 0, 0, 0);
 
-  // If the week rolled over today (session-based), keep the completed session cards
-  // visible until midnight — only the display is delayed, not the underlying state.
-  const _rolloverTs = state.weekRolledOverAt || 0;
-  const _todayMid = new Date(); _todayMid.setHours(0, 0, 0, 0);
-  const _rolloverMid = _rolloverTs ? new Date(_rolloverTs) : null;
-  if (_rolloverMid) _rolloverMid.setHours(0, 0, 0, 0);
-  const _showCompletedWeek = weekRemainder === 0
-    && _rolloverTs > 0
-    && _rolloverMid !== null
-    && _rolloverMid.getTime() === _todayMid.getTime();
-
-  const sessionsThisWeek = _showCompletedWeek
-    ? realSessionsOrdered.slice(-(state.trainingDaysPerWeek || state.program?.length || 4))
-    : (weekRemainder === 0 ? [] : realSessionsOrdered.slice(-weekRemainder));
+  const sessionsThisWeek = realSessionsOrdered.filter(
+    e => new Date(e.date).getTime() >= _calWeekSunday.getTime()
+  );
   const completedThisWeekIds = new Set(sessionsThisWeek.map(e => e.dayId));
+  const _weekFullyDone = sessionsThisWeek.length >= (state.trainingDaysPerWeek || state.program?.length || 4);
 
   const _tmActive = !!state.travelMode;
   const _tmTier = state.travelMode?.tier;
@@ -9167,8 +9164,8 @@ function renderHome() {
     container.appendChild(_emptyMsg);
   }
 
-  // Week-complete message — shown until midnight when the session-based rollover happened today
-  if (_showCompletedWeek && state.weekRolledOverPrevWeek) {
+  // Week-complete message — shown when all sessions for the week are done
+  if (_weekFullyDone && state.weekRolledOverPrevWeek) {
     const _wcMsg = document.createElement('div');
     const _nextWeek = state.weekRolledOverPrevWeek + 1;
     _wcMsg.style.cssText = 'text-align:center;padding:28px 20px 24px;border-top:1px solid #2a2a2a;margin-top:4px;';
@@ -9795,12 +9792,12 @@ function adjustPlateCalcWeight(exId, delta) {
 // STREAK TRACKER
 // ============================================================
 function updateStreak() {
-  // A "week" = Mon–Sun. If user logs at least (trainingDaysPerWeek) sessions in a calendar week
+  // A "week" = Sun–Sat. If user logs at least (trainingDaysPerWeek) sessions in a calendar week
   // streak increments. If they miss a full week, streak resets.
   const target = state.trainingDaysPerWeek || 4;
   const now = new Date();
 
-  // Group history by ISO week (Mon-based)
+  // Group history by Sun–Sat calendar week
   const weekCounts = {};
   (state.history || []).forEach(h => {
     const d = new Date(h.date);
@@ -9835,22 +9832,21 @@ function updateStreak() {
   state.streak = streak;
 }
 
+// Returns the date string (YYYY-MM-DD) of the Sunday that starts the Sun–Sat
+// calendar week containing `date`. Using Sunday as the anchor means any
+// session from Sunday through Saturday belongs to the same week — consistent
+// with the home-screen display and the calendar rollover logic.
 function getISOWeek(date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
-  const week1 = new Date(d.getFullYear(), 0, 4);
-  const weekNum = 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-  return `${d.getFullYear()}-W${String(weekNum).padStart(2,'0')}`;
+  d.setDate(d.getDate() - d.getDay()); // roll back to Sunday (getDay() 0=Sun)
+  return d.toISOString().slice(0, 10);
 }
 
 function prevISOWeek(weekStr) {
-  const [year, w] = weekStr.split('-W').map(Number);
-  if (w > 1) return `${year}-W${String(w-1).padStart(2,'0')}`;
-  // Get actual last ISO week of previous year (can be 52 or 53)
-  const dec28 = new Date(year - 1, 11, 28); // Dec 28 is always in last ISO week
-  const lastWeek = getISOWeek(dec28).split('-W')[1];
-  return `${year-1}-W${lastWeek}`;
+  const d = new Date(weekStr);
+  d.setDate(d.getDate() - 7);
+  return d.toISOString().slice(0, 10);
 }
 
 // ============================================================
@@ -15682,16 +15678,26 @@ function finalizeEndSession(save) {
 
     // Increment week every N sessions (N = training days/week) OR after 7 calendar days — whichever comes first.
     // This prevents low-frequency users from waiting a month to reach the next week.
-    if (!state.weekStartTimestamp) state.weekStartTimestamp = Date.now();
+    // Anchor weekStartTimestamp to Sunday midnight so it aligns with the
+    // Sun–Sat week used by the display and streak logic.
+    const _toSundayMidnight = ts => {
+      const _d = new Date(ts); _d.setDate(_d.getDate() - _d.getDay()); _d.setHours(0,0,0,0); return _d.getTime();
+    };
+    if (!state.weekStartTimestamp) state.weekStartTimestamp = _toSundayMidnight(Date.now());
     const _weekLen = state.trainingDaysPerWeek || state.program?.length || 4;
     const _sessionBased = (state.totalSessions || 0) % _weekLen === 0;
-    const _daysSinceWeekStart = (Date.now() - state.weekStartTimestamp) / 86400000;
+    // Calendar rollover: fires when the Sun–Sat boundary has been crossed since
+    // weekStartTimestamp was set — prevents premature mid-week rollovers that
+    // happened when the old "7 days since last rollover" check fired on Thursday
+    // if the previous week ended on Friday.
+    const _currentWeekSunday = _toSundayMidnight(Date.now());
+    const _startWeekSunday   = _toSundayMidnight(state.weekStartTimestamp);
     const _sessionsThisWeek = (state.history || [])
       .filter(h => new Date(h.date).getTime() >= (state.weekStartTimestamp || 0)).length;
-    const _calendarBased = _daysSinceWeekStart >= 7 && !_sessionBased && _sessionsThisWeek >= 1;
+    const _calendarBased = _currentWeekSunday > _startWeekSunday && !_sessionBased && _sessionsThisWeek >= 1;
     if (_sessionBased || _calendarBased) {
       if (_sessionBased) state.weekRolledOverAt = Date.now();
-      state.weekStartTimestamp = Date.now();
+      state.weekStartTimestamp = _currentWeekSunday;
       state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
       const prevWeek = state.weekCount || 1;
       if (_sessionBased) state.weekRolledOverPrevWeek = prevWeek;
