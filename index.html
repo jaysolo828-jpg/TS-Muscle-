@@ -5173,21 +5173,20 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
 
 // ── TRAVEL MODE EQUIPMENT TAGS ─────────────────────────────────
 // Applied immediately after all program data is defined.
-// Adds equipment property to exercises + alts so _getTravelExercise()
-// can find valid substitutions per equipment tier.
-(function _tagEquipment() {
-  const _exEq = {
-    'bench':'barbell','incline':'dumbbell','flye':'cable','pushdown':'cable',
-    'overhead-tri':'cable','ohp':'barbell','lateral':'cable',
-    'legpress-a':'machine','rdl':'barbell','leg-ext-a':'machine',
-    'ham-curl-a':'machine','hip-thrust-a':'barbell','calf-a':'machine',
-    'chest-row':'machine','pulldown':'cable','db-row':'dumbbell',
-    'ez-curl':'barbell','preacher':'barbell','rear-delt':'machine',
-    'legpress-b':'machine','single-legpress':'machine','leg-ext-b':'machine',
-    'ham-curl-b':'bodyweight','pull-through':'cable','calf-b':'machine',
-    'bss':'dumbbell','hip-abduction':'machine','donkey-kick':'cable','glute-iso':'machine',
-  };
-  const _altEq = {
+// Kept module-level so _migrateEquipmentTags() can re-apply them to
+// state.program after it's loaded from localStorage (old saves lack tags).
+var _TRAVEL_EX_EQ = {
+  'bench':'barbell','incline':'dumbbell','flye':'cable','pushdown':'cable',
+  'overhead-tri':'cable','ohp':'barbell','lateral':'cable',
+  'legpress-a':'machine','rdl':'barbell','leg-ext-a':'machine',
+  'ham-curl-a':'machine','hip-thrust-a':'barbell','calf-a':'machine',
+  'chest-row':'machine','pulldown':'cable','db-row':'dumbbell',
+  'ez-curl':'barbell','preacher':'barbell','rear-delt':'machine',
+  'legpress-b':'machine','single-legpress':'machine','leg-ext-b':'machine',
+  'ham-curl-b':'bodyweight','pull-through':'cable','calf-b':'machine',
+  'bss':'dumbbell','hip-abduction':'machine','donkey-kick':'cable','glute-iso':'machine',
+};
+var _TRAVEL_ALT_EQ = {
     // chest
     'DB Bench Press':'dumbbell','Cable Chest Press':'cable','Weighted Push-Up':'bodyweight',
     'Smith Machine Bench':'smith','Chest Dips':'bodyweight','Machine Chest Press':'machine',
@@ -5276,22 +5275,23 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
     'Pistol Squat (Assisted)':'bodyweight',
   };
 
-  // Tag every exercise in every program
+// Tag every exercise in every program (using module-level maps)
+(function _tagEquipment() {
   Object.values(SPLIT_PROGRAMS).forEach(prog => {
     prog.forEach(day => {
       day.exercises.forEach(ex => {
-        if (!ex.equipment && _exEq[ex.id]) ex.equipment = _exEq[ex.id];
+        if (!ex.equipment && _TRAVEL_EX_EQ[ex.id]) ex.equipment = _TRAVEL_EX_EQ[ex.id];
         (ex.alts || []).forEach(alt => {
-          if (!alt.equipment && _altEq[alt.name]) alt.equipment = _altEq[alt.name];
+          if (!alt.equipment && _TRAVEL_ALT_EQ[alt.name]) alt.equipment = _TRAVEL_ALT_EQ[alt.name];
         });
       });
     });
   });
   // Also tag standalone glute exercises
   [BSS_EXERCISE, HIP_ABDUCTION_EXERCISE, DONKEY_KICK_EXERCISE, GLUTE_ISO_EXERCISE].forEach(ex => {
-    if (!ex.equipment && _exEq[ex.id]) ex.equipment = _exEq[ex.id];
+    if (!ex.equipment && _TRAVEL_EX_EQ[ex.id]) ex.equipment = _TRAVEL_EX_EQ[ex.id];
     (ex.alts || []).forEach(alt => {
-      if (!alt.equipment && _altEq[alt.name]) alt.equipment = _altEq[alt.name];
+      if (!alt.equipment && _TRAVEL_ALT_EQ[alt.name]) alt.equipment = _TRAVEL_ALT_EQ[alt.name];
     });
   });
 
@@ -5312,6 +5312,21 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
   _addAlt(_findEx(DEFAULT_PROGRAM, 'calf-b'),
     { name:'Dumbbell Standing Calf Raise', note:'Holding dumbbells, perform on a step for full ROM', ytLink:'https://youtu.be/lUeI-IwVXFM', equipment:'dumbbell' });
 })();
+
+// Re-applies equipment tags to state.program after it's loaded from localStorage.
+// Old saves predate the tagging system — without this, travel substitution
+// and compatibility checks fail for every returning user.
+function _migrateEquipmentTags() {
+  const _applyTags = (exercises) => {
+    (exercises || []).forEach(ex => {
+      if (!ex.equipment && _TRAVEL_EX_EQ[ex.id]) ex.equipment = _TRAVEL_EX_EQ[ex.id];
+      (ex.alts || []).forEach(alt => {
+        if (!alt.equipment && _TRAVEL_ALT_EQ[alt.name]) alt.equipment = _TRAVEL_ALT_EQ[alt.name];
+      });
+    });
+  };
+  if (state.program) state.program.forEach(day => _applyTags(day.exercises));
+}
 
 const MUSCLE_MAP = {
   bench: 'CHEST', incline: 'CHEST', flye: 'CHEST',
@@ -21150,6 +21165,7 @@ function migratePeriodizationState() {
 let _obScrollListenerReady = false;
 try {
   loadState();
+  _migrateEquipmentTags(); // ensure state.program has equipment tags even on old saves
   migrateSessionCount();
   migratePeriodizationState();
   checkPauseAutoExpiry();
