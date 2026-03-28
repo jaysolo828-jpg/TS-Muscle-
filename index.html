@@ -1856,6 +1856,26 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    transition: transform 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stat-box:active { transform: scale(0.95); }
+  .stat-focus-word {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 24px;
+    color: var(--cream);
+    line-height: 1;
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+  .stat-tap-hint {
+    position: absolute;
+    top: 7px; right: 9px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.18);
+    font-family: 'Barlow Condensed', sans-serif;
+    pointer-events: none;
+    letter-spacing: 0;
   }
 
   .stat-num {
@@ -2630,13 +2650,15 @@
 
   <div id="home-main-content">
   <div class="stat-grid">
-    <div class="stat-box" onclick="showStatInfo('sessions')" style="cursor:pointer;">
+    <div class="stat-box" onclick="showStatInfo('sessions')" style="cursor:pointer;position:relative;">
+      <div class="stat-tap-hint">ⓘ</div>
       <div class="stat-num" id="stat-sessions">0</div>
       <div class="stat-label">Sessions</div>
     </div>
-    <div class="stat-box" onclick="showStatInfo('consistency')" style="cursor:pointer;">
-      <div class="stat-num" id="stat-consistency">--</div>
-      <div class="stat-label">Consistency</div>
+    <div class="stat-box" onclick="showStatInfo('focus')" style="cursor:pointer;position:relative;">
+      <div class="stat-tap-hint">ⓘ</div>
+      <div class="stat-focus-word" id="stat-focus-word">--</div>
+      <div class="stat-label" id="stat-focus-label">TODAY'S FOCUS</div>
     </div>
     <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;">
       <button onclick="event.stopPropagation();shareStreakCard()" aria-label="Share Streak" title="Share streak" style="position:absolute;top:4px;right:4px;background:rgba(204,32,39,0.12);border:none;border-radius:8px;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
@@ -8451,6 +8473,40 @@ function calcConsistencyRate() {
   return scheduled === 0 ? null : Math.round((completed / scheduled) * 100);
 }
 
+// ── DAILY FOCUS WORD ──────────────────────────────────────────────────────────
+const _FOCUS_POOLS = {
+  early:  ['SHOW UP','BUILD','COMMIT','ROOTS','EARN IT','ANCHOR','BEGIN','PLANT'],
+  mid:    ['EXECUTE','GRIND','TRUST','DIAL IN','SHARPEN','STACK','FORGE','ADAPT'],
+  peak:   ['PUSH','DRIVE','PEAK','HUNT','IGNITE','SURGE','ATTACK','ALL IN'],
+  finish: ['EMPTY','FINISH','CLOSE','CASH IN','GIVE IT','SPEND','POUR OUT'],
+  deload: ['ABSORB','RECOVER','RESTORE','RELOAD','UNWIND','BREATHE','RESET','SOFTEN']
+};
+const _FOCUS_CONTEXT = {
+  early:  { phase: 'FOUNDATION', icon: '🧱',
+    body: `You're building something that doesn't show up right away. Show up anyway. The work you put in now is what your future self cashes out on.`,
+    sub:  `Weeks 1–2. The pattern you set here is the one that carries you through.` },
+  mid:    { phase: 'ADAPTATION', icon: '⚙️',
+    body: `The middle of a block is where character gets made. No peak hype, no deload relief — just you and the work. That's the real stuff.`,
+    sub:  `Weeks 3–4. Your body is adapting. Trust the process and stack the reps.` },
+  peak:   { phase: 'PEAK BLOCK', icon: '🔺',
+    body: `This is what the earlier weeks were for. Your body is primed and the program is asking everything of you. Answer it.`,
+    sub:  `Weeks 5–6. High effort, high return. Leave nothing in the tank.` },
+  finish: { phase: 'FINAL PUSH', icon: '🏁',
+    body: `Everything you've put in over the last weeks is on the table right now. This is earned ground. Leave nothing unspent.`,
+    sub:  `Week 7. The hardest and most important week of the block.` },
+  deload: { phase: 'RECOVERY', icon: '🌊',
+    body: `Recovery isn't passive — it's when your body actually builds what you broke down in the hard weeks. Eat, sleep, and let the adaptation happen.`,
+    sub:  `Deload week. The gains are being locked in right now.` }
+};
+function getContextWord() {
+  const week = state.weekCount || 1;
+  const isDeload = state.isDeloadWeek || state.isRestWeek;
+  let phase = isDeload ? 'deload' : week >= 7 ? 'finish' : week >= 5 ? 'peak' : week >= 3 ? 'mid' : 'early';
+  const pool = _FOCUS_POOLS[phase];
+  const daySeed = Math.floor(Date.now() / 86400000);
+  return { word: pool[daySeed % pool.length], ..._FOCUS_CONTEXT[phase] };
+}
+
 function showStatInfo(type) {
   const days = state.trainingDaysPerWeek || 4;
   const threshold = Math.ceil(days * 0.75);
@@ -8459,24 +8515,25 @@ function showStatInfo(type) {
   const streak = state.streak || 0;
   const cycle = state.cycleCount || 1;
 
+  const _fw = getContextWord();
   const info = {
     sessions: {
       title: 'TOTAL SESSIONS',
       icon: '🏋️',
-      body: `You've completed <strong style="color:var(--cream);">${sessions} workout${sessions !== 1 ? 's' : ''}</strong> total.`,
-      sub: 'Every session counts. This number never resets.'
+      body: `<strong style="color:var(--cream);">${sessions} session${sessions !== 1 ? 's' : ''}</strong> completed. That's real time, real energy, real sacrifice — and it's yours.`,
+      sub: `This number is permanent. It never resets, never lies, and never stops building.`
     },
-    consistency: {
-      title: 'CONSISTENCY RATE',
-      icon: '🎯',
-      body: `You've hit <strong style="color:var(--cream);">${calcConsistencyRate() !== null ? calcConsistencyRate() + '%' : '--'}</strong> of your scheduled sessions over the last 8 weeks.`,
-      sub: `Based on ${days} scheduled days per week. Only complete Sun–Sat weeks count — the current week never works against you.`
+    focus: {
+      title: _fw.word + ' · ' + _fw.phase,
+      icon: _fw.icon,
+      body: _fw.body,
+      sub: _fw.sub + ` Word rotates daily from a pool matched to your current training phase.`
     },
     streak: {
       title: 'WEEK STREAK',
       icon: '🔥',
-      body: `<strong style="color:var(--cream);">${streak} consecutive week${streak !== 1 ? 's' : ''}</strong> hitting your training target.`,
-      sub: `You're set to ${days} days/week. Hit at least ${threshold} of those days in a calendar week (Sun–Sat) to keep your streak alive.`
+      body: `<strong style="color:var(--cream);">${streak} week${streak !== 1 ? 's' : ''}</strong> straight. ${streak >= 4 ? "That's a habit, not a hobby." : streak >= 1 ? "Keep showing up." : "Start the streak this week."}`,
+      sub: `You train ${days} days/week. Hit at least ${threshold} of them in a Sun–Sat week to keep it alive. One missed week resets it — so protect it.`
     }
   };
 
@@ -8701,26 +8758,26 @@ function renderHome() {
     }
   }
 
-  // Show paused state on consistency and streak cards
+  // Show paused state on focus and streak cards
   const isPaused = state.programPaused;
-  const consistencyEl = document.getElementById('stat-consistency');
-  const streakEl = document.getElementById('stat-streak');
-  const consistencyLabelEl = consistencyEl?.nextElementSibling;
+  const focusWordEl   = document.getElementById('stat-focus-word');
+  const focusLabelEl  = document.getElementById('stat-focus-label');
+  const streakEl      = document.getElementById('stat-streak');
   const streakLabelEl = streakEl?.nextElementSibling;
 
-  const _consistencyRate = calcConsistencyRate();
-  consistencyEl.textContent = _consistencyRate !== null ? _consistencyRate + '%' : '--';
+  const _fw = getContextWord();
+  if (focusWordEl) focusWordEl.textContent = _fw.word;
   streakEl.textContent = state.streak || 0;
 
   if (isPaused) {
-    consistencyEl.style.color = 'var(--warning)';
+    if (focusWordEl) focusWordEl.style.color = 'var(--warning)';
     streakEl.style.color = 'var(--warning)';
-    if (consistencyLabelEl) { consistencyLabelEl.textContent = '⏸ PAUSED'; consistencyLabelEl.style.color = 'var(--warning)'; }
+    if (focusLabelEl) { focusLabelEl.textContent = '⏸ PAUSED'; focusLabelEl.style.color = 'var(--warning)'; }
     if (streakLabelEl) { streakLabelEl.textContent = '⏸ STREAK PAUSED'; streakLabelEl.style.color = 'var(--warning)'; }
   } else {
-    consistencyEl.style.color = 'var(--cream)';
+    if (focusWordEl) focusWordEl.style.color = 'var(--cream)';
     streakEl.style.color = 'var(--cream)';
-    if (consistencyLabelEl) { consistencyLabelEl.textContent = 'Consistency'; consistencyLabelEl.style.color = ''; }
+    if (focusLabelEl) { focusLabelEl.textContent = "TODAY'S FOCUS"; focusLabelEl.style.color = ''; }
     if (streakLabelEl) { streakLabelEl.textContent = 'Week Streak'; streakLabelEl.style.color = ''; }
   }
   let pausedSession = null;
