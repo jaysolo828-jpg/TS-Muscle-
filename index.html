@@ -8475,12 +8475,35 @@ function calcConsistencyRate() {
 }
 
 // ── DAILY FOCUS WORD ──────────────────────────────────────────────────────────
+// Three lanes per phase — word selection is personalised to each user.
+// Lane is scored from: experience level, goal, age, streak, total sessions.
+// All words ≤ 7 characters (including spaces) to fit the stat box at 28px Bebas Neue.
 const _FOCUS_POOLS = {
-  early:  ['SHOW UP','BUILD','COMMIT','ROOTS','EARN IT','ANCHOR','BEGIN','PLANT','INVEST','DECIDE','PROVE','FORM'],
-  mid:    ['EXECUTE','GRIND','TRUST','DIAL IN','SHARPEN','STACK','FORGE','ADAPT','LOCK IN','REPEAT','MEASURE','PRESS'],
-  peak:   ['PUSH','DRIVE','PEAK','CHARGE','IGNITE','SURGE','ATTACK','ALL IN','RISE','DEMAND','ASCEND','BREAK'],
-  finish: ['EMPTY','FINISH','CLOSE','CASH IN','GIVE IT','SPEND','ALL OUT','END IT','LEAVE','EARN IT'],
-  deload: ['ABSORB','RECOVER','RESTORE','RELOAD','UNWIND','BREATHE','RESET','SOFTEN','REST UP','FILL UP','REBUILD','HEAL']
+  early: {
+    new:   ['START','SHOW UP','STEP IN','DECIDE','COMMIT','BELIEVE','ARRIVE','GROUND','STEADY','TRY','SHOW','BEGIN'],
+    build: ['PLANT','FORM','ROOTS','EARN IT','ANCHOR','INVEST','BUILD','PROVE','STACK','CRAFT','REPEAT','LOCK IN'],
+    edge:  ['RESET','REBUILD','OWN IT','INSTALL','PRIME','MASTER','DEFINE','EXACT','DEMAND','RAISE','FORGE','SET']
+  },
+  mid: {
+    new:   ['STICK','GROW','LEARN','BUILD','CLIMB','ADAPT','STAY','HOLD','EARN','RISE','KEEP','PRESS'],
+    build: ['EXECUTE','GRIND','TRUST','DIAL IN','SHARPEN','STACK','FORGE','ADAPT','LOCK IN','REPEAT','MEASURE','PRESS'],
+    edge:  ['REFINE','PRECISE','HARDEN','TEMPER','CARVE','SCULPT','PERFECT','ELEVATE','DETAIL','EXACT','COMPILE','DEMAND']
+  },
+  peak: {
+    new:   ['PUSH','TRY','RISE','MORE','DO IT','GIVE IT','STEP UP','BETTER','HARDER','REACH','CLIMB','LIFT'],
+    build: ['PUSH','DRIVE','PEAK','CHARGE','IGNITE','SURGE','ATTACK','ALL IN','RISE','DEMAND','ASCEND','BREAK'],
+    edge:  ['WRECK','APEX','BREAK','CEILING','MAX OUT','NOTHING','LEAD','REIGN','FIRE','LIMIT','OWN IT','BLEED']
+  },
+  finish: {
+    new:   ['FINISH','CLOSE','END IT','DONE','LAST','EMPTY','GIVE IT','ALL OUT','SPEND','LEAVE'],
+    build: ['EMPTY','FINISH','CLOSE','CASH IN','GIVE IT','SPEND','ALL OUT','END IT','LEAVE','EARN IT'],
+    edge:  ['EMPTY','WRECK','CASH IN','ALL OUT','NOTHING','SPEND','CLOSE','FINISH','LAST','END IT']
+  },
+  deload: {
+    new:   ['REST','SLEEP','EASY','BREATHE','FILL UP','HEAL','RECOVER','SOFTEN','ABSORB','CHILL','RELAX','RELOAD'],
+    build: ['ABSORB','RECOVER','RESTORE','RELOAD','UNWIND','BREATHE','RESET','SOFTEN','REST UP','FILL UP','REBUILD','HEAL'],
+    edge:  ['ABSORB','RELOAD','RESTORE','REBUILD','RESET','REFUEL','HEAL','PRIME','RETURN','SHARPEN','CHARGE','REFIT']
+  }
 };
 const _FOCUS_CONTEXT = {
   early:  { phase: 'FOUNDATION', icon: '🧱',
@@ -8499,12 +8522,29 @@ const _FOCUS_CONTEXT = {
     body: `Recovery isn't passive — it's when your body actually builds what you broke down in the hard weeks. Eat, sleep, and let the adaptation happen.`,
     sub:  `Lighter loads aren't backing off — they're when your nervous system catches up to the work you already did. The gains from your hard weeks are being locked in right now. Let them.` }
 };
+// Score the user's profile into one of three word lanes: new → build → edge.
+// Factors: experience level (primary), goal, streak, total sessions, age.
+function getPersonaLane() {
+  const exp      = getEffectiveExperienceLevel(); // 'beginner' | 'intermediate' | 'advanced'
+  const goal     = state.profile?.goal || 'both';
+  const age      = state.profile?.age  || null;
+  const streak   = state.streak        || 0;
+  const sessions = state.totalSessions || 0;
+  let score = exp === 'advanced' ? 2 : exp === 'intermediate' ? 1 : 0;
+  if (goal === 'strength')          score = Math.min(score + 1, 2); // strength athletes skew harder
+  if (streak   >= 8)                score = Math.min(score + 1, 2); // long streak earns the edge lane
+  if (sessions >= 100)              score = Math.min(score + 1, 2); // 100+ sessions → veteran voice
+  if (age !== null && age <  25)    score = Math.min(score + 1, 2); // younger — more intensity
+  if (age !== null && age >= 50)    score = Math.max(score - 1, 0); // older   — steadier voice
+  return ['new', 'build', 'edge'][score];
+}
 function getContextWord() {
   const week = state.weekCount || 1;
   const isDeload = state.isDeloadWeek || state.isRestWeek;
   let phase = isDeload ? 'deload' : week >= 7 ? 'finish' : week >= 5 ? 'peak' : week >= 3 ? 'mid' : 'early';
-  const pool = _FOCUS_POOLS[phase];
-  const daySeed = Math.floor(Date.now() / 86400000);
+  const lane = getPersonaLane();
+  const pool = _FOCUS_POOLS[phase][lane];
+  const daySeed    = Math.floor(Date.now() / 86400000);
   const cycleOffset = ((state.cycleCount || 1) - 1) * 11; // prime offset shifts starting position each cycle
   return { word: pool[(daySeed + cycleOffset) % pool.length], ..._FOCUS_CONTEXT[phase] };
 }
