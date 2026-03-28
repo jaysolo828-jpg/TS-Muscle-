@@ -11824,8 +11824,7 @@ function renderSession() {
       if (_intelReps !== null && activeSession?.setIntel?.[ex.id]?.[si]) {
         activeSession.setIntel[ex.id][si].suggestedReps = _intelReps;
       }
-      const _repPlaceholder = _goalReps.split(/[–\-]/)[0];
-      const _showIntelHint = _intelReps !== null && !set.done && String(_intelReps) !== String(_repPlaceholder);
+      const _showIntelHint = _intelReps !== null && !set.done;
 
       setsHTML += `
         <div class="set-row" id="set-row-${ex.id}-${si}">
@@ -11834,7 +11833,7 @@ function renderSession() {
             value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
           <div style="position:relative;">
             <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
-              placeholder="${_repPlaceholder}"
+              placeholder=""
               value="${set.reps}" style="padding-right:22px;"
               ${set.done ? 'disabled' : ''}
               onchange="updateSet('${ex.id}',${si},'reps',this.value); updateRepIndicator('${ex.id}',${si},'${_goalReps}')"
