@@ -8506,21 +8506,46 @@ const _FOCUS_POOLS = {
   }
 };
 const _FOCUS_CONTEXT = {
-  early:  { phase: 'FOUNDATION', icon: '🧱',
-    body: `You're building something that doesn't show up right away. Show up anyway. The work you put in now is what your future self cashes out on.`,
-    sub:  `Most people quit here because it doesn't feel like progress yet. That's the filter. The ones who stay in the gym when nothing feels dramatic are the ones who end up with something real.` },
-  mid:    { phase: 'ADAPTATION', icon: '⚙️',
-    body: `The middle of a block is where character gets made. No peak hype, no deload relief — just you and the work. That's the real stuff.`,
-    sub:  `The middle is where the mental game lives. Win here — when nobody's watching and nothing feels special — and you can win anywhere.` },
-  peak:   { phase: 'PEAK BLOCK', icon: '🔺',
-    body: `This is what the earlier weeks were for. Your body is primed and the program is asking everything of you. Answer it.`,
-    sub:  `Your body is primed from weeks of work you already put in. This isn't the time to manage effort — it's the time to spend it. Everything you held back earlier is currency right now.` },
+  early: { phase: 'FOUNDATION', icon: '🧱',
+    new:   { body: `The first block is about showing up more than performing. Most people never make it past week two. You're here. That already is the work.`,
+             sub:  `Don't measure yourself against where you want to be. The habit you're building right now is more valuable than the weight on the bar. Keep showing up.` },
+    build: { body: `You've done a foundation block before. You know it doesn't feel like much at the time. That's the point — what you put in here is the ceiling you'll hit in the peak weeks.`,
+             sub:  `Resist the urge to push harder than the program asks. The foundation is being built under everything right now. Let it.` },
+    edge:  { body: `The athletes who get the most out of a peak are the ones who built it right, not the ones who burned it in week one. This block is asking you to be patient with that.`,
+             sub:  `Your instinct is to push. Channel it into precision instead. Perfect reps now, maximum output later.` }
+  },
+  mid: { phase: 'ADAPTATION', icon: '⚙️',
+    new:   { body: `The middle of a program is where most people start skipping. Nothing feels new and the end feels far away. This is exactly where showing up matters most.`,
+             sub:  `You don't have to love every session. You just have to finish it. That's what adaptation looks like from the inside.` },
+    build: { body: `No excitement of starting, no relief of finishing — just you, the program, and the decision to execute. This is the real work. Most people don't do it.`,
+             sub:  `Your body is responding right now even if you can't feel it. Trust what you've put in and keep the standard you set in week one.` },
+    edge:  { body: `The middle of a block is where character gets made. This is what separates athletes who perform sometimes from athletes who perform consistently.`,
+             sub:  `Win here — when nobody's watching and nothing feels special — and the peak weeks take care of themselves. This is the investment that pays out.` }
+  },
+  peak: { phase: 'PEAK BLOCK', icon: '🔺',
+    new:   { body: `The program has been building toward this. Your body is more capable than it was at the start and you're being asked to prove it. Give more than you think you have.`,
+             sub:  `Don't play it safe this week. You've earned the right to find out what you're actually capable of right now. Show up and spend it.` },
+    build: { body: `This is what the earlier weeks were for. Your body is primed and the program is asking everything of you. Answer it.`,
+             sub:  `Everything you held back in the foundation and adaptation weeks is currency right now. This is when you spend it. Leave nothing on the table.` },
+    edge:  { body: `Your body is ready, the work is done, and there's nothing left to prepare. This is the execution window. You know what it demands.`,
+             sub:  `Stop managing effort. The standard you hold here is the one you carry into the next cycle. Set it high.` }
+  },
   finish: { phase: 'FINAL PUSH', icon: '🏁',
-    body: `Everything you've put in over the last weeks is on the table right now. This is earned ground. Leave nothing unspent.`,
-    sub:  `Most people save something for the walk to the car. Don't. You're about to rest — so finish with nothing left in the account. Empty is the right way to end a block.` },
+    new:   { body: `One week left. Everything you've put in over this block lands here. You don't need to feel good — you need to finish.`,
+             sub:  `Most people save something. Don't. The rest is coming. Spend everything you have left and walk out of this week with nothing held back.` },
+    build: { body: `Everything you've put in over the last weeks is on the table right now. This is earned ground. Leave nothing unspent.`,
+             sub:  `Most people save something for the walk to the car. Don't. You're about to rest — so finish with nothing left in the account. Empty is the right way to end a block.` },
+    edge:  { body: `The last week of a block is a test of will more than fitness. Your body has been here before. The only question is whether you show up to the standard you've held all block.`,
+             sub:  `Close it out the same way you opened it — with intention. The way you finish this sets the standard you carry into the next one.` }
+  },
   deload: { phase: 'RECOVERY', icon: '🌊',
-    body: `Recovery isn't passive — it's when your body actually builds what you broke down in the hard weeks. Eat, sleep, and let the adaptation happen.`,
-    sub:  `Lighter loads aren't backing off — they're when your nervous system catches up to the work you already did. The gains from your hard weeks are being locked in right now. Let them.` }
+    new:   { body: `Lighter loads this week. This isn't a step back — it's how the body actually builds what you broke down in the harder weeks. Let it work.`,
+             sub:  `Eat well, sleep more, and trust the process. The gains don't happen during the hard sessions. They happen right now, in the recovery.` },
+    build: { body: `Recovery isn't passive — it's when your body actually builds what you broke down in the hard weeks. Eat, sleep, and let the adaptation happen.`,
+             sub:  `Lighter loads aren't backing off — they're when your nervous system catches up to the work you already did. The gains are being locked in right now. Let them.` },
+    edge:  { body: `You've earned this week. The temptation to push is going to be there — ignore it. Every set you add to a deload is a set you're taking away from the next peak.`,
+             sub:  `Trust the structure. Your body is recalibrating right now. Come back next block sharper than you left this one.` }
+  }
 };
 // Score the user's profile into one of three word lanes: new → build → edge.
 // Factors: experience level (primary), goal, streak, total sessions, age.
@@ -8559,9 +8584,10 @@ function getContextWord() {
   let phase = isDeload ? 'deload' : week >= 7 ? 'finish' : week >= 5 ? 'peak' : week >= 3 ? 'mid' : 'early';
   const lane = getPersonaLane();
   const pool = _FOCUS_POOLS[phase][lane];
-  const daySeed    = Math.floor(Date.now() / 86400000);
+  const daySeed     = Math.floor(Date.now() / 86400000);
   const cycleOffset = ((state.cycleCount || 1) - 1) * 11; // prime offset shifts starting position each cycle
-  return { word: pool[(daySeed + cycleOffset) % pool.length], ..._FOCUS_CONTEXT[phase] };
+  const { phase: phaseName, icon, [lane]: laneCtx } = _FOCUS_CONTEXT[phase];
+  return { word: pool[(daySeed + cycleOffset) % pool.length], phase: phaseName, icon, ...laneCtx };
 }
 
 function showStatInfo(type) {
