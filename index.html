@@ -17601,17 +17601,21 @@ function renderHistory() {
     const _cRate = calcConsistencyRate();
     if (_cRate === null) {
       _cCard.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px 4px;">
-          <svg width="130" height="130" viewBox="0 0 130 130" style="margin-bottom:18px;">
-            <circle cx="65" cy="65" r="52" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10" stroke-dasharray="6 5"/>
-            <text x="65" y="61" text-anchor="middle" font-family="'Bebas Neue',cursive" font-size="20" fill="rgba(255,255,255,0.2)" letter-spacing="2">YOUR</text>
-            <text x="65" y="81" text-anchor="middle" font-family="'Bebas Neue',cursive" font-size="20" fill="rgba(255,255,255,0.2)" letter-spacing="2">RATE</text>
-          </svg>
+        <div style="display:flex;flex-direction:column;align-items:center;padding:12px 8px 8px;">
+          <div style="position:relative;width:160px;height:160px;margin-bottom:20px;">
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="62" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8" stroke-dasharray="7 5"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+              <div style="font-family:'Bebas Neue',cursive;font-size:32px;color:rgba(255,255,255,0.3);line-height:1;letter-spacing:2px;">--</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.25);">NO DATA YET</div>
+            </div>
+          </div>
           <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">BUILD YOUR RECORD</div>
-          <div style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--gray);line-height:1.65;text-align:center;">This circle fills as you train. Finish your first complete week and consistency becomes a number you own — one that actually reflects how serious you are about this.</div>
+          <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.65;text-align:center;">This circle fills as you train. Finish your first complete week and consistency becomes a number you own — one that actually reflects how serious you are about this.</div>
         </div>`;
     } else {
-      const _r = 52;
+      const _r = 62;
       const _circ = +(2 * Math.PI * _r).toFixed(1);
       const _dash = +(_cRate / 100 * _circ).toFixed(1);
       const _clr = _cRate >= 80 ? '#2ecc71' : _cRate >= 60 ? '#f39c12' : '#CC2027';
@@ -17621,19 +17625,19 @@ function renderHistory() {
                  : _cRate >= 60 ? "The bar is right in front of you. Clear it."
                  : "Every session you log moves this circle.";
       _cCard.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0 4px;">
-          <div style="position:relative;width:140px;height:140px;margin-bottom:18px;">
-            <svg width="140" height="140" viewBox="0 0 140 140" style="transform:rotate(-90deg);">
-              <circle cx="70" cy="70" r="${_r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
-              <circle cx="70" cy="70" r="${_r}" fill="none" stroke="${_clr}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${_dash} ${_circ}"/>
+        <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0 8px;">
+          <div style="position:relative;width:160px;height:160px;margin-bottom:20px;">
+            <svg width="160" height="160" viewBox="0 0 160 160" style="transform:rotate(-90deg);">
+              <circle cx="80" cy="80" r="${_r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
+              <circle cx="80" cy="80" r="${_r}" fill="none" stroke="${_clr}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${_dash} ${_circ}"/>
             </svg>
-            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
-              <div style="font-family:'Bebas Neue',cursive;font-size:46px;color:var(--cream);line-height:1;letter-spacing:1px;">${_cRate}%</div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--gray);">CONSISTENT</div>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+              <div style="font-family:'Bebas Neue',cursive;font-size:40px;color:var(--cream);line-height:1;letter-spacing:1px;">${_cRate}%</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--gray-light);">CONSISTENT</div>
             </div>
           </div>
-          <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.65;text-align:center;">${_msg}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:10px;letter-spacing:0.5px;">Last 8 complete weeks · ${state.trainingDaysPerWeek || 4} days/week</div>
+          <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.7;text-align:center;">${_msg}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);margin-top:12px;letter-spacing:0.8px;">Last 8 complete weeks · ${state.trainingDaysPerWeek || 4} days/week</div>
         </div>`;
     }
     container.appendChild(_cCard);
