@@ -5885,18 +5885,16 @@ function _updatePendingManualAdj(exId) {
 }
 // ── END MANUAL WEIGHT ADJUSTMENT PERIOD ──────────────────────────────────────
 
-// Returns weekly set counts per muscle group based on sessions since the start of
-// the current training week (state.weekStartTimestamp) plus any active session.
+// Returns weekly set counts per muscle group based on sessions in the current
+// Sun–Sat calendar week — consistent with the home screen display and streak.
 function getWeeklySetsByMuscle() {
   const counts = {};
   Object.keys(VOLUME_LANDMARKS).forEach(m => counts[m] = 0);
 
-  // If weekStartTimestamp is missing or older than 8 days, the week boundary is
-  // unknown — return zero counts rather than scanning stale history. This prevents
-  // false MRV positives for existing users on first load after the periodization
-  // update. The timestamp is properly set by finalizeEndSession() on the next session.
-  const weekStart = state.weekStartTimestamp;
-  if (!weekStart || (Date.now() - weekStart) > 8 * 24 * 60 * 60 * 1000) return counts;
+  // Compute Sunday midnight of the current calendar week (same anchor used
+  // everywhere else in the app).
+  const _wd = new Date(); _wd.setDate(_wd.getDate() - _wd.getDay()); _wd.setHours(0, 0, 0, 0);
+  const weekStart = _wd.getTime();
 
   const weekSessions = (state.history || []).filter(e => new Date(e.date).getTime() >= weekStart);
 
@@ -17578,8 +17576,6 @@ function renderHistory() {
 
     if (_progMuscles.size > 0) {
       const _wsets = getWeeklySetsByMuscle();
-      const _hasWeekBoundary = !!(state.weekStartTimestamp &&
-        (Date.now() - state.weekStartTimestamp) <= 8 * 24 * 60 * 60 * 1000);
       const _anyActual = Object.values(_wsets).some(v => v > 0);
 
       const _muscleOrder = ['CHEST','BACK','SHOULDERS','BICEPS','TRICEPS','QUADS','HAMSTRINGS','GLUTES','CALVES'];
@@ -17621,7 +17617,7 @@ function renderHistory() {
         ? 'Volume is building week over week toward its peak.'
         : 'Approaching peak volume. Recovery week is coming.';
 
-      const _footNote = (!_hasWeekBoundary || !_anyActual)
+      const _footNote = !_anyActual
         ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(195,190,182,0.85);letter-spacing:0.2px;margin-top:12px;line-height:1.5;">Complete a session this week to see your sets tracked here.</div>`
         : '';
 
