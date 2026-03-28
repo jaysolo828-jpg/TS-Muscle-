@@ -11024,7 +11024,7 @@ function openTravelSubPicker(exId, _overrideTier) {
       ? `<a href="${_ytUrl}" onclick="event.preventDefault();event.stopPropagation();_safeOpenYtLink('${_ytUrl}');" style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:rgba(204,0,0,0.12);border:1px solid rgba(204,0,0,0.3);display:flex;align-items:center;justify-content:center;text-decoration:none;color:#ff4444;" title="Watch on YouTube"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6a3 3 0 0 0-2.1 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg></a>`
       : '';
     optionsHtml += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-      <button onclick="window._tvlPickSub('${exId}',\`${alt.name}\`)" style="display:flex;align-items:center;gap:12px;flex:1;padding:14px 16px;background:${sel?'rgba(74,158,219,0.15)':'rgba(255,255,255,0.04)'};border:1px solid ${sel?'rgba(74,158,219,0.55)':'rgba(255,255,255,0.1)'};border-radius:10px;color:${sel?'#4A9EDB':'var(--gray-light)'};font-size:15px;font-weight:${sel?700:400};cursor:pointer;text-align:left;">
+      <button onclick="window._tvlPickSub('${exId}','${alt.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:12px;flex:1;padding:14px 16px;background:${sel?'rgba(74,158,219,0.15)':'rgba(255,255,255,0.04)'};border:1px solid ${sel?'rgba(74,158,219,0.55)':'rgba(255,255,255,0.1)'};border-radius:10px;color:${sel?'#4A9EDB':'var(--gray-light)'};font-size:15px;font-weight:${sel?700:400};cursor:pointer;text-align:left;">
         <span style="font-size:20px;width:24px;text-align:center;flex-shrink:0;">${sel?'✓':'○'}</span>
         <span style="flex:1;min-width:0;">${alt.name}${isAuto?' <span style="font-size:11px;background:rgba(74,158,219,0.2);color:#4A9EDB;padding:1px 5px;border-radius:4px;vertical-align:middle;">auto</span>':''}<br><span style="font-size:12px;opacity:0.6;">${alt.equipment||''}</span></span>
       </button>
@@ -11054,12 +11054,13 @@ function openTravelSubPicker(exId, _overrideTier) {
     state.travelSubPrefs[id] = name;
     saveState();
     sheet.remove();
-    // Refresh setup sheet preview if open, otherwise refresh home
+    // Refresh setup sheet preview if open, otherwise refresh home + session if active
     const _setupSheet = document.getElementById('travel-setup-sheet');
     if (_setupSheet && window._travelSetupData) {
       _openTravelModeSetupSheet(3, window._travelSetupData);
     } else {
       renderHome();
+      if (activeSession) renderSession();
     }
   };
 }
@@ -11096,6 +11097,7 @@ function _deactivateTravelMode() {
   saveState();
   _renderTravelModeHeaderIcon();
   renderHome();
+  if (activeSession) renderSession();
   showToast('Travel Mode ended. Back to full program.');
 }
 
@@ -11371,6 +11373,7 @@ function _extendTravelTrip() {
   state.travelMode.endDate = _cur.toISOString();
   saveState();
   _renderTravelModeHeaderIcon();
+  if (activeSession) renderSession();
   showToast('Trip extended +7 days');
 }
 
