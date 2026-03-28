@@ -8475,11 +8475,11 @@ function calcConsistencyRate() {
 
 // ── DAILY FOCUS WORD ──────────────────────────────────────────────────────────
 const _FOCUS_POOLS = {
-  early:  ['SHOW UP','BUILD','COMMIT','ROOTS','EARN IT','ANCHOR','BEGIN','PLANT'],
-  mid:    ['EXECUTE','GRIND','TRUST','DIAL IN','SHARPEN','STACK','FORGE','ADAPT'],
-  peak:   ['PUSH','DRIVE','PEAK','HUNT','IGNITE','SURGE','ATTACK','ALL IN'],
-  finish: ['EMPTY','FINISH','CLOSE','CASH IN','GIVE IT','SPEND','POUR OUT'],
-  deload: ['ABSORB','RECOVER','RESTORE','RELOAD','UNWIND','BREATHE','RESET','SOFTEN']
+  early:  ['SHOW UP','BUILD','COMMIT','ROOTS','EARN IT','ANCHOR','BEGIN','PLANT','INVEST','DECIDE','PROVE','FORM'],
+  mid:    ['EXECUTE','GRIND','TRUST','DIAL IN','SHARPEN','STACK','FORGE','ADAPT','LOCK IN','REPEAT','MEASURE','PRESS'],
+  peak:   ['PUSH','DRIVE','PEAK','HUNT','IGNITE','SURGE','ATTACK','ALL IN','RISE','DEMAND','ASCEND','POUR'],
+  finish: ['EMPTY','FINISH','CLOSE','CASH IN','GIVE IT','SPEND','ALL OUT','END IT','LEAVE','EARN IT'],
+  deload: ['ABSORB','RECOVER','RESTORE','RELOAD','UNWIND','BREATHE','RESET','SOFTEN','REST UP','FILL UP','REBUILD','HEAL']
 };
 const _FOCUS_CONTEXT = {
   early:  { phase: 'FOUNDATION', icon: '🧱',
@@ -8504,7 +8504,8 @@ function getContextWord() {
   let phase = isDeload ? 'deload' : week >= 7 ? 'finish' : week >= 5 ? 'peak' : week >= 3 ? 'mid' : 'early';
   const pool = _FOCUS_POOLS[phase];
   const daySeed = Math.floor(Date.now() / 86400000);
-  return { word: pool[daySeed % pool.length], ..._FOCUS_CONTEXT[phase] };
+  const cycleOffset = ((state.cycleCount || 1) - 1) * 11; // prime offset shifts starting position each cycle
+  return { word: pool[(daySeed + cycleOffset) % pool.length], ..._FOCUS_CONTEXT[phase] };
 }
 
 function showStatInfo(type) {
