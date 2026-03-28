@@ -7695,12 +7695,14 @@ async function _sendWorkoutSignal(dayName) {
     _currentSignalId = data.id;
     const signalId   = data.id;
     clearTimeout(_notifyFriendsTimer);
-    _notifyFriends(
-      displayName + ' is in the gym',
-      'They\'re in the gym right now. Go hype them up.',
-      signalId,
-      state.supabaseAvatarUrl || null
-    );
+    _notifyFriendsTimer = setTimeout(function() {
+      _notifyFriends(
+        displayName + ' is in the gym',
+        'Go show some love.',
+        signalId,
+        state.supabaseAvatarUrl || null
+      );
+    }, 5 * 60 * 1000);
   } catch(e) {}
 }
 

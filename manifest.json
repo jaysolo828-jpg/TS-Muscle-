@@ -2,7 +2,7 @@
   "name": "T&S Muscle",
   "short_name": "T&S Muscle",
   "description": "Hypertrophy training tracker by Therapy & Sneakers.",
-  "id": "/TS-Muscle-/",
+  "id": "/",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
