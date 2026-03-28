@@ -5204,7 +5204,7 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
     // pushdown / tricep
     'Rope Pushdown':'cable','Machine Tricep Extension':'machine',
     'Single Arm Pushdown':'cable','Band Pushdown':'bands','Reverse Grip Pushdown':'cable',
-    'DB Kickback':'dumbbell','Skull Crushers (EZ Bar)':'barbell',
+    'DB Kickback':'dumbbell','Dumbbell Kickback':'dumbbell','Skull Crushers (EZ Bar)':'barbell',
     'Cable Overhead Extension':'cable','DB Overhead Extension (one arm)':'dumbbell',
     'Overhead Rope Extension':'cable','Close Grip Bench Press':'barbell',
     // shoulders
@@ -5231,20 +5231,20 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
     'Machine Hip Thrust':'machine','Glute Bridge (Floor)':'dumbbell',
     'Smith Machine Hip Thrust':'smith','Donkey Kick (Cable)':'cable',
     'Single Leg Hip Thrust':'bodyweight','Banded Hip Thrust':'bands',
-    'DB Hip Thrust':'dumbbell',
+    'DB Hip Thrust':'dumbbell','Dumbbell Hip Thrust':'dumbbell',
     'Leg Press Calf Raise':'machine','Single Leg Calf Raise (Standing)':'bodyweight',
     'Seated Calf Raise':'machine','Smith Machine Calf Raise':'smith',
-    'DB Standing Calf Raise':'dumbbell',
+    'DB Standing Calf Raise':'dumbbell','Dumbbell Standing Calf Raise':'dumbbell',
     // upper B
     'Cable Row (Seated)':'cable','T-Bar Row':'barbell','Pendlay Row':'barbell',
     'Barbell Bent Over Row':'barbell','Inverted Row':'bodyweight',
     'Seal Row':'barbell','Underhand Barbell Row':'barbell',
     'Wide Grip Cable Row':'cable','Smith Machine Row':'smith',
-    'DB Chest-Supported Row':'dumbbell',
+    'DB Chest-Supported Row':'dumbbell','Chest-Supported Dumbbell Row':'dumbbell',
     'Wide Grip Pulldown':'cable','Neutral Grip Pulldown':'cable',
     'Single Arm Pulldown':'cable','Straight Arm Pulldown':'cable',
     'Pull-Up / Assisted Pull-Up':'bodyweight','Weighted Pull-Up':'bodyweight',
-    'Close Grip Pulldown':'cable','Banded Pulldown':'bands','DB Pullover':'dumbbell',
+    'Close Grip Pulldown':'cable','Banded Pulldown':'bands','DB Pullover':'dumbbell','Dumbbell Pullover (Lat Focus)':'dumbbell',
     'Single Arm Cable Row':'cable','Chest-Supported DB Row':'dumbbell','Renegade Row':'dumbbell',
     'Barbell Curl':'barbell','DB Curl':'dumbbell','Cable Curl':'cable',
     'Hammer Curl':'dumbbell','Incline DB Curl':'dumbbell','Reverse Curl':'barbell',
@@ -5300,17 +5300,17 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
   const _addAlt = (ex, alt) => { if (ex && !ex.alts.find(a => a.name === alt.name)) ex.alts.unshift(alt); };
 
   _addAlt(_findEx(DEFAULT_PROGRAM, 'pushdown'),
-    { name:'DB Kickback', note:'One arm at a time, elbow pinned to side', ytLink:'https://youtu.be/JPmbMOu4IYw', equipment:'dumbbell' });
+    { name:'Dumbbell Kickback', note:'One arm at a time, elbow pinned to side', ytLink:'https://youtu.be/JPmbMOu4IYw', equipment:'dumbbell' });
   _addAlt(_findEx(DEFAULT_PROGRAM, 'hip-thrust-a'),
-    { name:'DB Hip Thrust', note:'Dumbbell on hips, upper back on bench', ytLink:'https://youtu.be/0od5lwWMGV8', equipment:'dumbbell' });
+    { name:'Dumbbell Hip Thrust', note:'Dumbbell on hips, upper back on bench', ytLink:'https://youtu.be/0od5lwWMGV8', equipment:'dumbbell' });
   _addAlt(_findEx(DEFAULT_PROGRAM, 'calf-a'),
-    { name:'DB Standing Calf Raise', note:'Holding dumbbells, perform on a step for full ROM', ytLink:'https://youtu.be/lUeI-IwVXFM', equipment:'dumbbell' });
+    { name:'Dumbbell Standing Calf Raise', note:'Holding dumbbells, perform on a step for full ROM', ytLink:'https://youtu.be/lUeI-IwVXFM', equipment:'dumbbell' });
   _addAlt(_findEx(DEFAULT_PROGRAM, 'chest-row'),
-    { name:'DB Chest-Supported Row', note:'Incline bench, eliminates momentum', ytLink:'https://youtu.be/Nx0TzjgsI-0', equipment:'dumbbell' });
+    { name:'Chest-Supported Dumbbell Row', note:'Incline bench, eliminates momentum', ytLink:'https://youtu.be/Nx0TzjgsI-0', equipment:'dumbbell' });
   _addAlt(_findEx(DEFAULT_PROGRAM, 'pulldown'),
-    { name:'DB Pullover', note:'Flat bench, lat stretch and contraction', ytLink:'https://youtu.be/5YStMv6m2g8', equipment:'dumbbell' });
+    { name:'Dumbbell Pullover (Lat Focus)', note:'Flat bench, lat stretch and contraction', ytLink:'https://youtu.be/5YStMv6m2g8', equipment:'dumbbell' });
   _addAlt(_findEx(DEFAULT_PROGRAM, 'calf-b'),
-    { name:'DB Standing Calf Raise', note:'Holding dumbbells, perform on a step for full ROM', ytLink:'https://youtu.be/lUeI-IwVXFM', equipment:'dumbbell' });
+    { name:'Dumbbell Standing Calf Raise', note:'Holding dumbbells, perform on a step for full ROM', ytLink:'https://youtu.be/lUeI-IwVXFM', equipment:'dumbbell' });
 })();
 
 const MUSCLE_MAP = {
@@ -8716,7 +8716,7 @@ function renderHome() {
     _travelHomeBanner.style.cssText = 'margin-bottom:12px;background:rgba(74,158,219,0.08);border:1px solid rgba(74,158,219,0.35);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;';
     _travelHomeBanner.onclick = () => openTravelModeSheet();
     _travelHomeBanner.innerHTML = `
-      <svg viewBox="0 0 24 24" width="22" height="22" stroke="#4A9EDB" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2l-2 2 2.8 2.2-2.1 2.1L1 10l-1 2 3.5 1L5 16l2 .5 1-3.5 2.5 2.5-1 2.5h2l.8-2.5 2.8-1.3 1.2 4.5z"/></svg>
+      <div style="width:40px;height:40px;background:rgba(74,158,219,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;line-height:1;">✈</div>
       <div style="flex:1;min-width:0;">
         <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:#4A9EDB;letter-spacing:1px;">TRAVEL MODE · ${_tmTierLabel.toUpperCase()}</div>
         <div style="font-size:12px;color:var(--gray);margin-top:2px;">${_tmExpired ? '⚠ Trip ended — still away? Tap to extend or end.' : _tmDaysLeft !== null ? `${_tmDaysLeft} day${_tmDaysLeft !== 1 ? 's' : ''} left · Workouts auto-adjusted` : 'Workouts auto-adjusted'}</div>
@@ -11608,7 +11608,7 @@ function renderSession() {
         </div>
         <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; margin:0 10px;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0;">
-            <div class="session-ex-name" onclick="openExerciseLibrary('${ex.id}')" style="cursor:pointer;">${displayName}</div>
+            <div class="session-ex-name" onclick="${swappedName ? `openExerciseLibraryByName('${swappedName.replace(/'/g,"\\'")}')` : `openExerciseLibrary('${ex.id}')`}" style="cursor:pointer;">${displayName}</div>
             ${state.prs?.[ex.id] && !state.prs[ex.id].isBaseline ? `<span id="pr-badge-${ex.id}" style="font-size:12px; background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.4); color:#ffd700; padding:3px 8px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.5px; display:none;">🏆 PR</span>` : ''}
           </div>
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
