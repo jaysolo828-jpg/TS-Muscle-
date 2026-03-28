@@ -3946,28 +3946,35 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="8" y="14" width="3" height="3" rx="0.5"/></svg></div>
   </div>
 
-  <div class="settings-item" onclick="toggleProgressiveOverload()">
-    <div>
-      <div class="settings-label">Progressive Overload</div>
-      <div id="progressive-overload-sub" class="settings-sub" style="color:#2ecc71;">On. Weights suggested automatically each session.</div>
+  <!-- Compact feature toggles card -->
+  <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:14px;overflow:hidden;margin-bottom:2px;">
+    <div onclick="toggleProgressiveOverload()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--dark3);cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <div style="min-width:0;flex:1;padding-right:12px;">
+        <div class="settings-label" style="margin-bottom:2px;">Progressive Overload</div>
+        <div id="progressive-overload-sub" class="settings-sub" style="color:#2ecc71;">On. Weights suggested automatically.</div>
+      </div>
+      <div id="progressive-overload-icon" style="width:44px;height:26px;border-radius:13px;background:#2ecc71;position:relative;transition:background 0.2s;flex-shrink:0;">
+        <div id="progressive-overload-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(18px);"></div>
+      </div>
     </div>
-    <div class="settings-arrow" id="progressive-overload-icon"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
-  </div>
-
-  <div class="settings-item" onclick="toggleBetweenSetCoaching()">
-    <div>
-      <div class="settings-label">Between-Set Coaching</div>
-      <div id="between-set-coaching-sub" class="settings-sub" style="color:#2ecc71;">On. Live insights after certain sets.</div>
+    <div onclick="toggleBetweenSetCoaching()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--dark3);cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <div style="min-width:0;flex:1;padding-right:12px;">
+        <div class="settings-label" style="margin-bottom:2px;">Between-Set Coaching</div>
+        <div id="between-set-coaching-sub" class="settings-sub" style="color:#2ecc71;">On. Live insights after certain sets.</div>
+      </div>
+      <div id="between-set-coaching-icon" style="width:44px;height:26px;border-radius:13px;background:#2ecc71;position:relative;transition:background 0.2s;flex-shrink:0;">
+        <div id="between-set-coaching-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(18px);"></div>
+      </div>
     </div>
-    <div class="settings-arrow" id="between-set-coaching-icon"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-  </div>
-
-  <div class="settings-item" onclick="toggleCarryingFeature()">
-    <div>
-      <div class="settings-label">What Are You Carrying</div>
-      <div id="carrying-feature-sub" class="settings-sub" style="color:#2ecc71;">On. Pre-session check-in before each workout.</div>
+    <div onclick="toggleCarryingFeature()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <div style="min-width:0;flex:1;padding-right:12px;">
+        <div class="settings-label" style="margin-bottom:2px;">What Are You Carrying</div>
+        <div id="carrying-feature-sub" class="settings-sub" style="color:#2ecc71;">On. Pre-session check-in.</div>
+      </div>
+      <div id="carrying-feature-icon" style="width:44px;height:26px;border-radius:13px;background:#2ecc71;position:relative;transition:background 0.2s;flex-shrink:0;">
+        <div id="carrying-feature-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(18px);"></div>
+      </div>
     </div>
-    <div class="settings-arrow" id="carrying-feature-icon"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
   </div>
 
   <!-- WEIGHT INCREMENT SETTING -->
@@ -4017,26 +4024,10 @@
     <div class="settings-arrow" id="pause-settings-icon"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></div>
   </div>
 
-  <div class="settings-item" onclick="restoreDefaults()">
+  <div class="settings-item" onclick="openMaintenanceSheet()">
     <div>
-      <div class="settings-label">Restore Default Exercises</div>
-      <div class="settings-sub">Undo all permanent exercise swaps</div>
-    </div>
-    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></div>
-  </div>
-
-  <div class="settings-item" onclick="resetWeeks()">
-    <div>
-      <div class="settings-label">Reset Week Counter</div>
-      <div class="settings-sub">Start program from Week 1</div>
-    </div>
-    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></div>
-  </div>
-
-  <div class="settings-item" onclick="resetOnboarding()">
-    <div>
-      <div class="settings-label">Redo Initial Setup</div>
-      <div class="settings-sub">Reset your profile, goal, and starting weights</div>
+      <div class="settings-label">Maintenance</div>
+      <div class="settings-sub">Reset exercises, week counter, or initial setup</div>
     </div>
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
   </div>
@@ -4070,61 +4061,21 @@
     </div>
   </div>
 
-  <div class="section-title" style="margin-top:8px;">PROFILE</div>
-  <!-- Display Name -->
-  <div style="padding:0 16px 12px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Display Name</div>
-    <input type="text" id="display-name-input" placeholder="Your name or handle" maxlength="24"
-      style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
-      oninput="setDisplayName(this.value)"
-    />
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Shown on your shareable cards</div>
-  </div>
-  <!-- Age -->
-  <div style="padding:0 16px 12px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Age</div>
-    <input type="number" id="profile-age-input" inputmode="numeric" placeholder="e.g. 28" min="13" max="100"
-      style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
-      oninput="setProfileAge(this.value)"
-    />
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Used to personalize your T&amp;S Strength Score</div>
-  </div>
-  <!-- Biological Sex -->
-  <div style="padding:0 16px 12px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Biological Sex</div>
-    <div style="display:flex;gap:10px;">
-      <button id="profile-sex-male" class="profile-sex-btn" onclick="setProfileSex('male')">Male</button>
-      <button id="profile-sex-female" class="profile-sex-btn" onclick="setProfileSex('female')">Female</button>
-    </div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:8px;letter-spacing:0.5px;">Used to personalize your T&amp;S Strength Score</div>
-  </div>
-  <!-- Bodyweight -->
-  <div class="settings-item" onclick="openBodyweightModal()">
+  <!-- Training Reminders -->
+  <div class="settings-item" onclick="toggleTrainingReminders()" style="margin-top:2px;">
     <div>
-      <div class="settings-label">Update Bodyweight</div>
-      <div class="settings-sub" id="bw-settings-sub">Used for strength benchmarks and cardio calories</div>
+      <div class="settings-label">Training Reminders</div>
+      <div class="settings-sub" id="notifications-sub">Off. Tap to enable nudges on training days.</div>
     </div>
-    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
-  </div>
-  <!-- Experience Level -->
-  <div style="padding:0 16px 12px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Experience Level</div>
-    <div style="display:flex;gap:8px;" id="settings-exp-btns">
-      <button class="profile-sex-btn" id="settings-exp-beginner" onclick="setExperienceLevel('beginner')" style="flex:1;">Beginner</button>
-      <button class="profile-sex-btn" id="settings-exp-intermediate" onclick="setExperienceLevel('intermediate')" style="flex:1;">Intermediate</button>
-      <button class="profile-sex-btn" id="settings-exp-advanced" onclick="setExperienceLevel('advanced')" style="flex:1;">Advanced</button>
+    <div class="settings-arrow" id="notifications-icon">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
     </div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Affects your weekly volume targets, weight progression, and coaching style.</div>
-    <div id="settings-exp-pending-msg" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--warning);margin-top:6px;letter-spacing:0.3px;line-height:1.4;">This will take effect at the start of your next cycle.</div>
   </div>
-
-  <!-- DATA -->
-  <div class="section-title" style="margin-top:8px;">DATA</div>
 
   <div class="settings-item" onclick="exportData()">
     <div>
       <div class="settings-label">Back Up My Data</div>
-      <div class="settings-sub">Save a backup file, then send it to yourself via email or Nearby Share to transfer to a new phone</div>
+      <div class="settings-sub">Save a backup file to transfer or restore later</div>
     </div>
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
   </div>
@@ -4137,54 +4088,32 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.11"/></svg></div>
   </div>
 
-  <!-- APP -->
-  <div class="section-title" style="margin-top:8px;">APP</div>
-
   <div id="install-app-row" class="settings-item" onclick="doInstall()">
     <div>
       <div class="settings-label">Install App to Home Screen</div>
-      <div class="settings-sub" id="install-app-sub">Install T&amp;S Muscle as a full-screen app. Works offline, lives in your app drawer.</div>
+      <div class="settings-sub" id="install-app-sub">Install T&amp;S Muscle as a full-screen app. Works offline.</div>
     </div>
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg></div>
   </div>
 
-  <!-- NOTIFICATIONS -->
-  <div class="section-title" style="margin-top:8px;">NOTIFICATIONS</div>
-  <div class="settings-item" onclick="toggleTrainingReminders()">
+  <div class="section-title" style="margin-top:8px;">PROFILE</div>
+  <div class="settings-item" onclick="openProfileModal()">
     <div>
-      <div class="settings-label">Training Reminders</div>
-      <div class="settings-sub" id="notifications-sub">Off. Tap to enable nudges on training days.</div>
+      <div class="settings-label">Edit Profile</div>
+      <div class="settings-sub" id="profile-settings-sub">Name, age, sex, bodyweight, experience level</div>
     </div>
-    <div class="settings-arrow" id="notifications-icon">
-      <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-    </div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
   </div>
 
   <!-- HELP -->
   <div class="section-title" style="margin-top:8px;">HELP</div>
 
-  <div class="settings-item" onclick="openTutorial()">
+  <div class="settings-item" onclick="openHelpSheet()">
     <div>
-      <div class="settings-label">App Tutorial</div>
-      <div class="settings-sub">A walkthrough of every feature</div>
+      <div class="settings-label">Help &amp; Updates</div>
+      <div class="settings-sub" id="whats-new-sub">Tutorial, updates, version history</div>
     </div>
-    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
-  </div>
-
-  <div class="settings-item" onclick="checkForSWUpdate()">
-    <div>
-      <div class="settings-label">Check for Updates</div>
-      <div class="settings-sub" id="update-check-sub">Tap to refresh to the latest version</div>
-    </div>
-    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div>
-  </div>
-
-  <div class="settings-item" onclick="showChangelogModal()">
-    <div>
-      <div class="settings-label">What's New</div>
-      <div class="settings-sub" id="whats-new-sub">Version history &amp; updates</div>
-    </div>
-    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2"/></svg></div>
   </div>
 
   <input type="file" id="import-file" accept="*/*" style="display:none" onchange="handleImport(event)"/>
@@ -8056,6 +7985,72 @@ function selectObSex(val) {
   document.getElementById('ob-sex-female-btn')?.classList.toggle('selected', val === 'female');
 }
 
+function openProfileModal() {
+  const p = state.profile || {};
+  const sex = p.sex || null;
+  const exp = p.experience || 'intermediate';
+  const pending = state.pendingExperienceLevel;
+  const modal = document.createElement('div');
+  modal.id = 'profile-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;">EDIT PROFILE</div>
+        <button onclick="document.getElementById('profile-modal').remove()" style="background:var(--dark3);border:1px solid #444;color:var(--gray-light);width:36px;height:36px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+      <!-- Display Name -->
+      <div style="margin-bottom:18px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Display Name</div>
+        <input type="text" id="display-name-input" placeholder="Your name or handle" maxlength="24" value="${state.displayName || state.profile?.name || ''}"
+          style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
+          oninput="setDisplayName(this.value)"
+        />
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Shown on your shareable cards</div>
+      </div>
+      <!-- Age -->
+      <div style="margin-bottom:18px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Age</div>
+        <input type="number" id="profile-age-input" inputmode="numeric" placeholder="e.g. 28" min="13" max="100" value="${p.age || ''}"
+          style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
+          oninput="setProfileAge(this.value)"
+        />
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Used to personalize your T&S Strength Score</div>
+      </div>
+      <!-- Biological Sex -->
+      <div style="margin-bottom:18px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Biological Sex</div>
+        <div style="display:flex;gap:10px;">
+          <button id="profile-sex-male" class="profile-sex-btn ${sex === 'male' ? 'selected' : ''}" onclick="setProfileSex('male')">Male</button>
+          <button id="profile-sex-female" class="profile-sex-btn ${sex === 'female' ? 'selected' : ''}" onclick="setProfileSex('female')">Female</button>
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:8px;letter-spacing:0.5px;">Used to personalize your T&S Strength Score</div>
+      </div>
+      <!-- Bodyweight -->
+      <div style="margin-bottom:18px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Bodyweight</div>
+        <div onclick="openBodyweightModal()" style="background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+          <div id="bw-settings-sub" style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:var(--cream);">${state.profile?.bodyweight ? state.profile.bodyweight + ' lbs' : 'Not set'}</div>
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Used for strength benchmarks and cardio calories</div>
+      </div>
+      <!-- Experience Level -->
+      <div style="margin-bottom:8px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Experience Level</div>
+        <div style="display:flex;gap:8px;" id="settings-exp-btns">
+          <button class="profile-sex-btn ${exp === 'beginner' ? 'selected' : ''}" id="settings-exp-beginner" onclick="setExperienceLevel('beginner')" style="flex:1;">Beginner</button>
+          <button class="profile-sex-btn ${exp === 'intermediate' ? 'selected' : ''}" id="settings-exp-intermediate" onclick="setExperienceLevel('intermediate')" style="flex:1;">Intermediate</button>
+          <button class="profile-sex-btn ${exp === 'advanced' ? 'selected' : ''}" id="settings-exp-advanced" onclick="setExperienceLevel('advanced')" style="flex:1;">Advanced</button>
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Affects weekly volume targets, weight progression, and coaching style.</div>
+        <div id="settings-exp-pending-msg" style="display:${pending && pending !== exp ? 'block' : 'none'};font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--warning);margin-top:6px;letter-spacing:0.3px;line-height:1.4;">This will take effect at the start of your next cycle.</div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
 // Show/hide the red dot on the Settings nav icon.
 function updateProfileNotifyDot() {
   const hasBoth = !!(state.profile?.age && state.profile?.sex);
@@ -11894,17 +11889,16 @@ function toggleBetweenSetCoaching() {
 }
 
 function updateBetweenSetCoachingUI() {
-  var sub = document.getElementById('between-set-coaching-sub');
-  var icon = document.getElementById('between-set-coaching-icon');
   var on = state.betweenSetCoaching !== false;
+  var sub = document.getElementById('between-set-coaching-sub');
+  var track = document.getElementById('between-set-coaching-icon');
+  var knob = document.getElementById('between-set-coaching-knob');
   if (sub) {
     sub.textContent = on ? 'On. Live insights after certain sets.' : 'Off';
     sub.style.color = on ? '#2ecc71' : 'var(--gray)';
   }
-  if (icon) {
-    var stroke = on ? '#2ecc71' : 'var(--gray)';
-    icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="' + stroke + '" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-  }
+  if (track) track.style.background = on ? '#2ecc71' : '#444';
+  if (knob) knob.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
 }
 
 function toggleCarryingFeature() {
@@ -11915,17 +11909,16 @@ function toggleCarryingFeature() {
 }
 
 function updateCarryingFeatureUI() {
-  var sub = document.getElementById('carrying-feature-sub');
-  var icon = document.getElementById('carrying-feature-icon');
   var on = state.carryingFeatureEnabled !== false;
+  var sub = document.getElementById('carrying-feature-sub');
+  var track = document.getElementById('carrying-feature-icon');
+  var knob = document.getElementById('carrying-feature-knob');
   if (sub) {
-    sub.textContent = on ? 'On. Pre-session check-in before each workout.' : 'Off';
+    sub.textContent = on ? 'On. Pre-session check-in.' : 'Off';
     sub.style.color = on ? '#2ecc71' : 'var(--gray)';
   }
-  if (icon) {
-    var stroke = on ? '#2ecc71' : 'var(--gray)';
-    icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="' + stroke + '" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>';
-  }
+  if (track) track.style.background = on ? '#2ecc71' : '#444';
+  if (knob) knob.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
 }
 
 function _cancelCoachingCue() {
@@ -19788,6 +19781,70 @@ function showImportSuccessModal({ name, sessionCount, cardioCount, backupDate })
   document.body.appendChild(modal);
 }
 
+function openMaintenanceSheet() {
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  sheet.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(36px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);">
+      <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 22px;"></div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">MAINTENANCE</div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;font-family:'Barlow',sans-serif;line-height:1.5;">Infrequent actions — read each description before tapping.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button onclick="this.closest('[style*=fixed]').remove();restoreDefaults();" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:16px 18px;border-radius:14px;cursor:pointer;text-align:left;font-family:'Barlow Condensed',sans-serif;-webkit-tap-highlight-color:transparent;">
+          <div style="font-size:16px;font-weight:700;letter-spacing:0.5px;margin-bottom:3px;">Restore Default Exercises</div>
+          <div style="font-size:12px;color:var(--gray);font-weight:400;">Undo all permanent exercise swaps</div>
+        </button>
+        <button onclick="this.closest('[style*=fixed]').remove();resetWeeks();" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:16px 18px;border-radius:14px;cursor:pointer;text-align:left;font-family:'Barlow Condensed',sans-serif;-webkit-tap-highlight-color:transparent;">
+          <div style="font-size:16px;font-weight:700;letter-spacing:0.5px;margin-bottom:3px;">Reset Week Counter</div>
+          <div style="font-size:12px;color:var(--gray);font-weight:400;">Start program from Week 1</div>
+        </button>
+        <button onclick="this.closest('[style*=fixed]').remove();resetOnboarding();" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:16px 18px;border-radius:14px;cursor:pointer;text-align:left;font-family:'Barlow Condensed',sans-serif;-webkit-tap-highlight-color:transparent;">
+          <div style="font-size:16px;font-weight:700;letter-spacing:0.5px;margin-bottom:3px;">Redo Initial Setup</div>
+          <div style="font-size:12px;color:var(--gray);font-weight:400;">Reset your profile, goal, and starting weights</div>
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(sheet);
+}
+
+function openHelpSheet() {
+  const versionSub = document.getElementById('whats-new-sub');
+  const verText = versionSub?.textContent || 'Version history & updates';
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  sheet.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(36px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);">
+      <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 22px;"></div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:20px;">HELP &amp; UPDATES</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button onclick="this.closest('[style*=fixed]').remove();openTutorial();" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:16px 18px;border-radius:14px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;font-family:'Barlow Condensed',sans-serif;-webkit-tap-highlight-color:transparent;">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+          <div>
+            <div style="font-size:16px;font-weight:700;letter-spacing:0.5px;margin-bottom:3px;">App Tutorial</div>
+            <div style="font-size:12px;color:var(--gray);font-weight:400;">A walkthrough of every feature</div>
+          </div>
+        </button>
+        <button onclick="this.closest('[style*=fixed]').remove();checkForSWUpdate();" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:16px 18px;border-radius:14px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;font-family:'Barlow Condensed',sans-serif;-webkit-tap-highlight-color:transparent;">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <div>
+            <div style="font-size:16px;font-weight:700;letter-spacing:0.5px;margin-bottom:3px;">Check for Updates</div>
+            <div id="update-check-sub" style="font-size:12px;color:var(--gray);font-weight:400;">Tap to refresh to the latest version</div>
+          </div>
+        </button>
+        <button onclick="this.closest('[style*=fixed]').remove();showChangelogModal();" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:16px 18px;border-radius:14px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;font-family:'Barlow Condensed',sans-serif;-webkit-tap-highlight-color:transparent;">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div>
+            <div style="font-size:16px;font-weight:700;letter-spacing:0.5px;margin-bottom:3px;">What's New</div>
+            <div style="font-size:12px;color:var(--gray);font-weight:400;">${verText}</div>
+          </div>
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(sheet);
+}
+
 function resetWeeks() {
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -21101,18 +21158,14 @@ function toggleProgressiveOverload() {
 function updateProgressiveOverloadUI() {
   const on = state.progressiveOverload !== false;
   const sub = document.getElementById('progressive-overload-sub');
-  const icon = document.getElementById('progressive-overload-icon');
-  const item = icon?.closest('.settings-item');
-
+  const track = document.getElementById('progressive-overload-icon');
+  const knob = document.getElementById('progressive-overload-knob');
   if (sub) {
-    sub.textContent = on
-      ? 'On. Weights suggested automatically each session.'
-      : 'Off. Enter weights manually each session';
+    sub.textContent = on ? 'On. Weights suggested automatically.' : 'Off. Enter weights manually.';
     sub.style.color = on ? '#2ecc71' : 'var(--gray)';
   }
-  if (icon) icon.innerHTML = on
-    ? '<svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>'
-    : '<svg viewBox="0 0 24 24" width="20" height="20" stroke="#555" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
+  if (track) track.style.background = on ? '#2ecc71' : '#444';
+  if (knob) knob.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
 }
 
 function updateTrainingDaysSub() {
