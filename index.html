@@ -3978,40 +3978,45 @@
   </div>
 
   <!-- WEIGHT INCREMENT SETTING -->
-  <div class="settings-item" style="cursor:default;">
+  <div class="settings-item" onclick="toggleIncrementExpand()" style="cursor:pointer;">
     <div style="flex:1;">
       <div class="settings-label">Weight Increment Size</div>
-      <div class="settings-sub" id="increment-sub">Controls how much weight the app adds when you progress.</div>
+      <div class="settings-sub" id="increment-sub">5 LB — Medium</div>
+    </div>
+    <div class="settings-arrow" id="increment-chevron" style="transition:transform 0.2s;">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
   </div>
-  <div style="display:flex;gap:8px;padding:0 16px 16px;margin-top:-8px;">
-    <button onclick="setWeightIncrement('small')" id="inc-btn-small" style="
-      flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid #333;
-      background:#1a1a1a;color:var(--cream);cursor:pointer;
-      font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.5px;
-      transition:all 0.15s;
-    ">
-      <div style="font-size:16px;margin-bottom:2px;">2.5 LB</div>
-      <div style="font-size:11px;color:var(--gray);letter-spacing:1px;">SMALL</div>
-    </button>
-    <button onclick="setWeightIncrement('medium')" id="inc-btn-medium" style="
-      flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid var(--red);
-      background:rgba(204,32,39,0.1);color:var(--cream);cursor:pointer;
-      font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.5px;
-      transition:all 0.15s;
-    ">
-      <div style="font-size:16px;margin-bottom:2px;">5 LB</div>
-      <div style="font-size:11px;color:var(--gray);letter-spacing:1px;">MEDIUM</div>
-    </button>
-    <button onclick="setWeightIncrement('large')" id="inc-btn-large" style="
-      flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid #333;
-      background:#1a1a1a;color:var(--cream);cursor:pointer;
-      font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.5px;
-      transition:all 0.15s;
-    ">
-      <div style="font-size:16px;margin-bottom:2px;">10 LB</div>
-      <div style="font-size:11px;color:var(--gray);letter-spacing:1px;">LARGE</div>
-    </button>
+  <div id="increment-buttons" style="display:none;padding:0 16px 14px;margin-top:-4px;">
+    <div style="display:flex;gap:8px;">
+      <button onclick="setWeightIncrement('small')" id="inc-btn-small" style="
+        flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid #333;
+        background:#1a1a1a;color:var(--cream);cursor:pointer;
+        font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.5px;
+        transition:all 0.15s;
+      ">
+        <div style="font-size:16px;margin-bottom:2px;">2.5 LB</div>
+        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;">SMALL</div>
+      </button>
+      <button onclick="setWeightIncrement('medium')" id="inc-btn-medium" style="
+        flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid var(--red);
+        background:rgba(204,32,39,0.1);color:var(--cream);cursor:pointer;
+        font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.5px;
+        transition:all 0.15s;
+      ">
+        <div style="font-size:16px;margin-bottom:2px;">5 LB</div>
+        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;">MEDIUM</div>
+      </button>
+      <button onclick="setWeightIncrement('large')" id="inc-btn-large" style="
+        flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid #333;
+        background:#1a1a1a;color:var(--cream);cursor:pointer;
+        font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.5px;
+        transition:all 0.15s;
+      ">
+        <div style="font-size:16px;margin-bottom:2px;">10 LB</div>
+        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;">LARGE</div>
+      </button>
+    </div>
   </div>
 
   <!-- Bodyweight moved to PROFILE section below -->
@@ -21086,9 +21091,19 @@ function setWeightIncrement(size) {
   showToast(labels[size] + ' set');
 }
 
+function toggleIncrementExpand() {
+  const panel = document.getElementById('increment-buttons');
+  const chevron = document.getElementById('increment-chevron');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (chevron) chevron.style.transform = open ? '' : 'rotate(90deg)';
+}
+
 function updateIncrementUI() {
   const current = state.weightIncrement || 'medium';
   const lbs = { small: '2.5', medium: '5', large: '10' };
+  const labels = { small: 'Small', medium: 'Medium', large: 'Large' };
   ['small','medium','large'].forEach(s => {
     const btn = document.getElementById('inc-btn-' + s);
     if (!btn) return;
@@ -21098,7 +21113,7 @@ function updateIncrementUI() {
     btn.style.color       = active ? 'var(--cream)' : 'var(--gray)';
   });
   const sub = document.getElementById('increment-sub');
-  if (sub) sub.textContent = 'In-session progressive overload: ' + lbs[current] + ' lb steps when you hit your rep target. (Cycle-to-cycle baseline bump always uses a fixed 2.5 lb conservative increment.)';
+  if (sub) sub.textContent = lbs[current] + ' LB — ' + labels[current];
 }
 
 async function toggleTrainingReminders() {
