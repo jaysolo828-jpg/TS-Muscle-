@@ -10856,11 +10856,15 @@ function _getTravelExercise(exercise, tier) {
   const validEquip = _getTravelTierEquipment(tier);
   // Primary exercise is already compatible — no sub needed
   if (exercise.equipment && validEquip.includes(exercise.equipment)) return null;
-  // Walk alts for first equipment-compatible match
-  for (const alt of (exercise.alts || [])) {
-    if (alt.equipment && validEquip.includes(alt.equipment)) return alt;
-  }
-  return null;
+  // Collect all valid alts, then rank by equipment preference:
+  // dumbbell > cable > bands > bodyweight
+  // This ensures e.g. Step-Up (DB) beats Sissy Squat even when bodyweight
+  // appears first in the alts array — without changing array order.
+  const _priority = { dumbbell: 0, cable: 1, bands: 2, bodyweight: 3 };
+  const validAlts = (exercise.alts || []).filter(a => a.equipment && validEquip.includes(a.equipment));
+  if (!validAlts.length) return null;
+  validAlts.sort((a, b) => (_priority[a.equipment] ?? 99) - (_priority[b.equipment] ?? 99));
+  return validAlts[0];
 }
 
 function _applyTravelMode(tier, days) {
