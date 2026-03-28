@@ -1836,12 +1836,12 @@
     border: 1px solid var(--dark3);
     border-top: 2px solid var(--red);
     border-radius: 14px;
-    padding: 14px 12px;
+    padding: 18px 12px 14px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     transition: transform 0.12s;
     -webkit-tap-highlight-color: transparent;
   }
@@ -2647,7 +2647,7 @@
       <div class="stat-focus-word" id="stat-focus-word">--</div>
       <div class="stat-label" id="stat-focus-label">TODAY'S FOCUS</div>
     </div>
-    <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;padding-top:18px;">
+    <div class="stat-box" onclick="showStatInfo('streak')" style="cursor:pointer;position:relative;">
       <button onclick="event.stopPropagation();shareStreakCard()" aria-label="Share Streak" title="Share streak" style="position:absolute;top:4px;right:4px;background:rgba(204,32,39,0.12);border:none;border-radius:8px;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--red)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       </button>
@@ -8461,12 +8461,35 @@ function calcConsistencyRate() {
 }
 
 // ── DAILY FOCUS WORD ──────────────────────────────────────────────────────────
+// Three lanes per phase — word selection is personalised to each user.
+// Lane is scored from: experience level, goal, age, streak, total sessions.
+// All words ≤ 7 characters (including spaces) to fit the stat box at 28px Bebas Neue.
 const _FOCUS_POOLS = {
-  early:  ['SHOW UP','BUILD','COMMIT','ROOTS','EARN IT','ANCHOR','BEGIN','PLANT','INVEST','DECIDE','PROVE','FORM'],
-  mid:    ['EXECUTE','GRIND','TRUST','DIAL IN','SHARPEN','STACK','FORGE','ADAPT','LOCK IN','REPEAT','MEASURE','PRESS'],
-  peak:   ['PUSH','DRIVE','PEAK','CHARGE','IGNITE','SURGE','ATTACK','ALL IN','RISE','DEMAND','ASCEND','BREAK'],
-  finish: ['EMPTY','FINISH','CLOSE','CASH IN','GIVE IT','SPEND','ALL OUT','END IT','LEAVE','EARN IT'],
-  deload: ['ABSORB','RECOVER','RESTORE','RELOAD','UNWIND','BREATHE','RESET','SOFTEN','REST UP','FILL UP','REBUILD','HEAL']
+  early: {
+    new:   ['START','SHOW UP','STEP IN','DECIDE','COMMIT','BELIEVE','ARRIVE','GROUND','STEADY','TRY','SHOW','BEGIN'],
+    build: ['PLANT','FORM','ROOTS','EARN IT','ANCHOR','INVEST','BUILD','PROVE','STACK','CRAFT','REPEAT','LOCK IN'],
+    edge:  ['RESET','REBUILD','OWN IT','INSTALL','PRIME','MASTER','DEFINE','EXACT','DEMAND','RAISE','FORGE','SET']
+  },
+  mid: {
+    new:   ['STICK','GROW','LEARN','BUILD','CLIMB','ADAPT','STAY','HOLD','EARN','RISE','KEEP','PRESS'],
+    build: ['EXECUTE','GRIND','TRUST','DIAL IN','SHARPEN','STACK','FORGE','ADAPT','LOCK IN','REPEAT','MEASURE','PRESS'],
+    edge:  ['REFINE','PRECISE','HARDEN','TEMPER','CARVE','SCULPT','PERFECT','ELEVATE','DETAIL','EXACT','COMPILE','DEMAND']
+  },
+  peak: {
+    new:   ['PUSH','TRY','RISE','MORE','DO IT','GIVE IT','STEP UP','BETTER','HARDER','REACH','CLIMB','LIFT'],
+    build: ['PUSH','DRIVE','PEAK','CHARGE','IGNITE','SURGE','ATTACK','ALL IN','RISE','DEMAND','ASCEND','BREAK'],
+    edge:  ['WRECK','APEX','BREAK','CEILING','MAX OUT','NOTHING','LEAD','REIGN','FIRE','LIMIT','OWN IT','CRUSH']
+  },
+  finish: {
+    new:   ['FINISH','CLOSE','END IT','DONE','LAST','EMPTY','GIVE IT','ALL OUT','SPEND','LEAVE'],
+    build: ['EMPTY','FINISH','CLOSE','CASH IN','GIVE IT','SPEND','ALL OUT','END IT','LEAVE','EARN IT'],
+    edge:  ['EMPTY','WRECK','CASH IN','ALL OUT','NOTHING','SPEND','CLOSE','FINISH','LAST','END IT']
+  },
+  deload: {
+    new:   ['REST','SLEEP','EASY','BREATHE','FILL UP','HEAL','RECOVER','SOFTEN','ABSORB','CHILL','RELAX','RELOAD'],
+    build: ['ABSORB','RECOVER','RESTORE','RELOAD','UNWIND','BREATHE','RESET','SOFTEN','REST UP','FILL UP','REBUILD','HEAL'],
+    edge:  ['ABSORB','RELOAD','RESTORE','REBUILD','RESET','REFUEL','HEAL','PRIME','RETURN','SHARPEN','CHARGE','REFIT']
+  }
 };
 const _FOCUS_CONTEXT = {
   early:  { phase: 'FOUNDATION', icon: '🧱',
@@ -8485,12 +8508,44 @@ const _FOCUS_CONTEXT = {
     body: `Recovery isn't passive — it's when your body actually builds what you broke down in the hard weeks. Eat, sleep, and let the adaptation happen.`,
     sub:  `Lighter loads aren't backing off — they're when your nervous system catches up to the work you already did. The gains from your hard weeks are being locked in right now. Let them.` }
 };
+// Score the user's profile into one of three word lanes: new → build → edge.
+// Factors: experience level (primary), goal, streak, total sessions, age.
+// Gender does not influence lane — the word pools are intentionally ungendered.
+function getPersonaLane() {
+  const exp      = getEffectiveExperienceLevel(); // 'beginner' | 'intermediate' | 'advanced'
+  const goal     = state.profile?.goal || 'both';
+  const age      = state.profile?.age  || null;
+  const streak   = state.streak        || 0;
+  const sessions = state.totalSessions || 0;
+
+  let score = exp === 'advanced' ? 2 : exp === 'intermediate' ? 1 : 0;
+
+  // Training intent
+  if (goal === 'strength') score = Math.min(score + 1, 2); // strength athletes skew harder
+
+  // Consistency signals
+  if (streak   >= 8)   score = Math.min(score + 1, 2); // long streak earns the edge lane
+  if (sessions >= 100) score = Math.min(score + 1, 2); // 100+ sessions → veteran voice
+
+  // Age brackets — full range 13 through 65+
+  if (age !== null) {
+    if      (age <= 17) score = Math.min(score, 1);    // 13-17: teens cap at 'build', never 'edge'
+    else if (age <= 24) score = Math.min(score + 1, 2); // 18-24: high-energy years, boost intensity
+    else if (age <= 44) { /* 25-44: prime years, no modifier */ }
+    else if (age <= 54) score = Math.max(score - 1, 0); // 45-54: recovery awareness, steadier voice
+    else if (age <= 64) score = Math.max(score - 1, 0); // 55-64: longevity focus
+    else                score = 0;                       // 65+: always 'new' lane — longevity voice
+  }
+
+  return ['new', 'build', 'edge'][score];
+}
 function getContextWord() {
   const week = state.weekCount || 1;
   const isDeload = state.isDeloadWeek || state.isRestWeek;
   let phase = isDeload ? 'deload' : week >= 7 ? 'finish' : week >= 5 ? 'peak' : week >= 3 ? 'mid' : 'early';
-  const pool = _FOCUS_POOLS[phase];
-  const daySeed = Math.floor(Date.now() / 86400000);
+  const lane = getPersonaLane();
+  const pool = _FOCUS_POOLS[phase][lane];
+  const daySeed    = Math.floor(Date.now() / 86400000);
   const cycleOffset = ((state.cycleCount || 1) - 1) * 11; // prime offset shifts starting position each cycle
   return { word: pool[(daySeed + cycleOffset) % pool.length], ..._FOCUS_CONTEXT[phase] };
 }
