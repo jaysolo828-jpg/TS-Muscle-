@@ -25387,12 +25387,12 @@ const PROGRAM_TO_LIB_ID = {
 // Muscle group display colors (lowercase keys to match library muscleGroup field)
 const LIB_MUSCLE_COLORS = {
   chest:      '#5b9cf6',
-  back:       '#3bbfb8',
-  shoulders:  '#6ab8e0',
-  biceps:     '#6b9fd4',
+  back:       '#2ec4a0',
+  shoulders:  '#f0a500',
+  biceps:     '#e05cb8',
   triceps:    '#9d84d4',
   quads:      '#e07b54',
-  hamstrings: '#e07070',
+  hamstrings: '#e04040',
   glutes:     '#c97dae',
   calves:     '#78aa6a',
   core:       '#a0a0a0',
@@ -25613,7 +25613,7 @@ function renderLibCard(ex) {
       '<div class="lib-card-info">' +
         '<div class="lib-card-name">' + _escHtml(ex.name) + (ex.goldStar ? ' <span class="lib-star-badge" title="Top pick">⭐</span>' : '') + (inProgram ? ' <span style="color:#2ecc71;font-size:12px;margin-left:6px;letter-spacing:0.3px;font-weight:600;" title="In your program">&#10003; in program</span>' : '') + '</div>' +
         '<div class="lib-card-meta">' +
-          '<span class="lib-muscle-pill" style="color:' + color + ';border-color:' + color + '44;background:' + color + '18;">' + ex.muscleGroup.toUpperCase() + '</span>' +
+          '<span class="lib-muscle-pill" style="color:' + color + ';border-color:' + color + ';background:' + color + '28;">' + ex.muscleGroup.toUpperCase() + '</span>' +
           '<span class="lib-equip-pill">' + _escHtml(ex.equipment) + '</span>' +
         '</div>' +
         '<div class="lib-card-snapshot">' + _escHtml(ex.snapshot) + '</div>' +
