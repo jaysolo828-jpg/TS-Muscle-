@@ -2989,6 +2989,12 @@
     <div class="empty-state"><div class="empty-state-icon">💭</div><div class="empty-state-text">No mood entries yet. Log one before or after your next session.</div></div>
   </div>
 
+  <!-- Hard Day Collection -->
+  <div class="section-title">HARD <span>DAYS</span></div>
+  <div id="hard-day-collection" style="margin-bottom:16px;">
+    <div class="empty-state"><div class="empty-state-icon">🪨</div><div class="empty-state-text">No hard days claimed yet. Your collection builds when you show up carrying something heavy.</div></div>
+  </div>
+
   <!-- Support Tools — combined card -->
   <div class="section-title">TOOLS FOR <span>HARD DAYS</span></div>
   <div class="card" style="margin-bottom:16px; padding:16px;">
@@ -3954,6 +3960,14 @@
       <div id="between-set-coaching-sub" class="settings-sub" style="color:#2ecc71;">On. Live insights after certain sets.</div>
     </div>
     <div class="settings-arrow" id="between-set-coaching-icon"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+  </div>
+
+  <div class="settings-item" onclick="toggleCarryingFeature()">
+    <div>
+      <div class="settings-label">What Are You Carrying</div>
+      <div id="carrying-feature-sub" class="settings-sub" style="color:#2ecc71;">On. Pre-session check-in before each workout.</div>
+    </div>
+    <div class="settings-arrow" id="carrying-feature-icon"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
   </div>
 
   <!-- WEIGHT INCREMENT SETTING -->
@@ -7961,7 +7975,7 @@ function showScreen(name, el) {
   if (name === 'history') { renderHistory(); renderProgress(); renderProgressChart(); }
 
   if (name === 'cardio') renderCardioHistory();
-  if (name === 'mindset') { renderValuesCard(); renderBarrierHistory(); renderMoodHistory(); renderMoodInsights(); renderShowingUpAnyway(); renderSelfCompassionLog(); }
+  if (name === 'mindset') { renderValuesCard(); renderBarrierHistory(); renderMoodHistory(); renderMoodInsights(); renderShowingUpAnyway(); renderSelfCompassionLog(); renderHardDayCollection(); }
 
   if (name === 'settings') {
     const nameInput = document.getElementById('display-name-input');
@@ -10589,6 +10603,19 @@ function startSession(dayId, triggerEl) {
     } catch(e) {}
   }
 
+  // Show "What Are You Carrying" sheet before session starts (if enabled)
+  if (state.carryingFeatureEnabled !== false) {
+    _carryingSheetTriggerEl = triggerEl;
+    showCarryingSheet(dayId);
+    return;
+  }
+  _proceedWithSession(dayId, triggerEl, null);
+}
+
+// Module-level var to carry triggerEl through the sheet
+var _carryingSheetTriggerEl = null;
+
+function _proceedWithSession(dayId, triggerEl, carrying) {
   pairingSourceId = null;
   _stopMidnightCheckInterval(); // stop midnight check during active workout
   const day = state.program.find(d => d.id === dayId);
@@ -10609,6 +10636,7 @@ function startSession(dayId, triggerEl) {
     // Snapshot the active goal so getContextualRepTarget can detect a mid-session
     // goal switch and discard RPE intel logged under the previous goal's rep ranges.
     goalAtStart: state.profile?.goal || 'both',
+    carrying: carrying || null,
   };
   activeSession.suggestedWeights = {};
   activeSession.setIntel = {};
@@ -10638,6 +10666,82 @@ function startSession(dayId, triggerEl) {
   setTimeout(_fetchLastSessionInsights, 4000);
   // Send workout-start signal to Supabase and notify friends (fire-and-forget)
   _sendWorkoutSignal(activeSession.dayName || activeSession.dayFocus || 'Workout');
+}
+
+// ============================================================
+// WHAT ARE YOU CARRYING — PRE-SESSION CHECK-IN
+// ============================================================
+var _CARRYING_OPTIONS = [
+  { value: 'heavy',   icon: '🪨', label: 'Something heavy',     sub: 'Weight, grief, life stuff' },
+  { value: 'anxious', icon: '⚡', label: 'Anxious or wired',    sub: 'Activated, unsettled, can\'t land' },
+  { value: 'empty',   icon: '🫙', label: 'Running on empty',    sub: 'Flat, depleted, nothing left' },
+  { value: 'good',    icon: '✦',  label: 'I\'m good',           sub: 'No friction today' },
+  { value: 'unsure',  icon: '〰️', label: 'Not sure',            sub: 'Can\'t name it right now' },
+];
+
+function showCarryingSheet(dayId) {
+  const sheet = document.createElement('div');
+  sheet.id = 'carrying-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.addEventListener('click', e => { if (e.target === sheet) _skipCarrying(dayId); });
+  const optionsHTML = _CARRYING_OPTIONS.map(opt => `
+    <button
+      onclick="selectCarrying('${opt.value}','${dayId}')"
+      style="
+        width:100%;background:var(--dark3);border:1px solid var(--dark4);
+        color:var(--cream);padding:16px 18px;border-radius:14px;cursor:pointer;
+        text-align:left;display:flex;align-items:center;gap:16px;
+        font-family:'Barlow Condensed',sans-serif;
+        -webkit-tap-highlight-color:transparent;
+        transition:background 0.1s, border-color 0.1s;
+      "
+      ontouchstart="this.style.background='var(--dark4)';this.style.borderColor='#555';"
+      ontouchend="this.style.background='var(--dark3)';this.style.borderColor='var(--dark4)';"
+    >
+      <span style="font-size:22px;flex-shrink:0;width:28px;text-align:center;">${opt.icon}</span>
+      <div style="min-width:0;">
+        <div style="font-size:17px;font-weight:700;letter-spacing:0.5px;line-height:1.2;">${opt.label}</div>
+        <div style="font-size:12px;color:var(--gray);font-weight:400;letter-spacing:0;margin-top:3px;">${opt.sub}</div>
+      </div>
+    </button>
+  `).join('');
+  sheet.innerHTML = `
+    <div style="
+      background:var(--dark2);border-radius:20px 20px 0 0;
+      padding:28px 20px calc(36px + env(safe-area-inset-bottom));
+      width:100%;max-width:480px;
+      border-top:1px solid var(--dark3);
+      animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);
+    ">
+      <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 26px;"></div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--cream);letter-spacing:2px;line-height:1;margin-bottom:6px;">WHAT ARE YOU CARRYING</div>
+      <div style="font-size:14px;color:var(--gray);margin-bottom:24px;font-family:'Barlow',sans-serif;line-height:1.5;">Into this session today?</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+        ${optionsHTML}
+      </div>
+      <button
+        onclick="_skipCarrying('${dayId}')"
+        style="
+          width:100%;background:none;border:none;color:var(--gray);
+          padding:14px;font-family:'Barlow Condensed',sans-serif;
+          font-size:14px;letter-spacing:1px;cursor:pointer;
+          -webkit-tap-highlight-color:transparent;
+        "
+      >Skip</button>
+    </div>`;
+  document.body.appendChild(sheet);
+}
+
+function selectCarrying(value, dayId) {
+  const sheet = document.getElementById('carrying-sheet');
+  if (sheet) sheet.remove();
+  _proceedWithSession(dayId, _carryingSheetTriggerEl, value);
+}
+
+function _skipCarrying(dayId) {
+  const sheet = document.getElementById('carrying-sheet');
+  if (sheet) sheet.remove();
+  _proceedWithSession(dayId, _carryingSheetTriggerEl, null);
 }
 
 // ============================================================
@@ -11800,6 +11904,27 @@ function updateBetweenSetCoachingUI() {
   if (icon) {
     var stroke = on ? '#2ecc71' : 'var(--gray)';
     icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="' + stroke + '" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+  }
+}
+
+function toggleCarryingFeature() {
+  state.carryingFeatureEnabled = !(state.carryingFeatureEnabled !== false);
+  saveState();
+  updateCarryingFeatureUI();
+  showToast(state.carryingFeatureEnabled !== false ? 'What Are You Carrying on' : 'What Are You Carrying off');
+}
+
+function updateCarryingFeatureUI() {
+  var sub = document.getElementById('carrying-feature-sub');
+  var icon = document.getElementById('carrying-feature-icon');
+  var on = state.carryingFeatureEnabled !== false;
+  if (sub) {
+    sub.textContent = on ? 'On. Pre-session check-in before each workout.' : 'Off';
+    sub.style.color = on ? '#2ecc71' : 'var(--gray)';
+  }
+  if (icon) {
+    var stroke = on ? '#2ecc71' : 'var(--gray)';
+    icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="' + stroke + '" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>';
   }
 }
 
@@ -14527,6 +14652,45 @@ function showSessionWrapUp() {
           box-sizing:border-box;
         " placeholder="Form cues, how it felt, anything to remember..."></textarea>
       </div>
+      ${(()=>{
+        const _hardCarrying = ['heavy','anxious','empty'];
+        if (!activeSession.carrying || !_hardCarrying.includes(activeSession.carrying)) return '';
+        const _carryLabel = { heavy: 'something heavy', anxious: 'anxious and wired', empty: 'running on empty' }[activeSession.carrying];
+        return `
+        <div id="hard-day-claim-card" style="
+          background:linear-gradient(135deg,rgba(204,32,39,0.08),rgba(204,32,39,0.04));
+          border:1px solid rgba(204,32,39,0.35);
+          border-radius:14px;padding:18px 18px 16px;margin-bottom:16px;
+        ">
+          <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.2;margin-bottom:6px;">
+            You showed up on a hard day.
+          </div>
+          <div style="font-size:13px;color:var(--gray-light);font-family:'Barlow',sans-serif;line-height:1.5;margin-bottom:16px;">
+            You came in ${_carryLabel}. That's not nothing.
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button
+              onclick="_claimHardDay()"
+              id="claim-hard-day-btn"
+              style="
+                flex:1;background:var(--red);border:none;color:white;
+                padding:13px;border-radius:11px;
+                font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1.5px;
+                cursor:pointer;-webkit-tap-highlight-color:transparent;
+              "
+            >KEEP THIS MOMENT</button>
+            <button
+              onclick="_skipHardDayClaim()"
+              style="
+                flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray);
+                padding:13px;border-radius:11px;
+                font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;
+                cursor:pointer;-webkit-tap-highlight-color:transparent;
+              "
+            >Skip</button>
+          </div>
+        </div>`;
+      })()}
       <button onclick="saveWrapupNotesAndFinish()"
         style="width:100%;background:#FFD700;border:none;color:#0a0a0a;padding:16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:1.5px;cursor:pointer;box-shadow:0 4px 16px rgba(255,215,0,0.3);">
         SAVE &amp; FINISH ✓
@@ -14565,6 +14729,56 @@ function showSessionWrapUp() {
       }, i * 200);
     });
   })();
+}
+
+function _claimHardDay() {
+  if (!activeSession?.carrying) return;
+  // Calculate total session volume
+  let sessionVolume = 0;
+  Object.values(activeSession.sets || {}).forEach(sets => {
+    sets.forEach(s => {
+      if (s.done && s.reps && s.weight) {
+        sessionVolume += parseFloat(s.reps) * parseFloat(s.weight);
+      }
+    });
+  });
+  const entry = {
+    id: Date.now(),
+    date: new Date().toISOString(),
+    sessionName: activeSession.dayName || activeSession.dayFocus || 'Session',
+    carrying: activeSession.carrying,
+    sessionVolume: Math.round(sessionVolume),
+    claimedAt: new Date().toISOString(),
+  };
+  if (!state.hardDayCollection) state.hardDayCollection = [];
+  state.hardDayCollection.unshift(entry);
+  // Cap at 200 entries
+  if (state.hardDayCollection.length > 200) state.hardDayCollection = state.hardDayCollection.slice(0, 200);
+  saveState();
+  // Update the claim card to confirmed state
+  const card = document.getElementById('hard-day-claim-card');
+  if (card) {
+    card.style.background = 'linear-gradient(135deg,rgba(46,204,113,0.08),rgba(46,204,113,0.04))';
+    card.style.borderColor = 'rgba(46,204,113,0.35)';
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:1.5px;">Saved to your collection</div>
+          <div style="font-size:12px;color:var(--gray);font-family:'Barlow',sans-serif;margin-top:2px;">Find it in the Mindset tab → Hard Days</div>
+        </div>
+      </div>`;
+  }
+  // Milestone check — surface a pattern after 5, 10, 20 hard days
+  const count = state.hardDayCollection.length;
+  if (count === 5 || count === 10 || count === 20) {
+    _fetchHardDayMilestone(count);
+  }
+}
+
+function _skipHardDayClaim() {
+  const card = document.getElementById('hard-day-claim-card');
+  if (card) card.remove();
 }
 
 function saveWrapupNotesAndFinish() {
@@ -19531,6 +19745,8 @@ function handleImport(e) {
       // Gracefully handle missing fields when restoring older backups:
       // betweenSetCoaching: default on (existing check is `!== false`, so undefined = on)
       if (state.betweenSetCoaching === undefined) state.betweenSetCoaching = true;
+      if (!state.hardDayCollection) state.hardDayCollection = [];
+      if (state.carryingFeatureEnabled === undefined) state.carryingFeatureEnabled = true;
       // customUnilateralExercises: introduced with unilateral tracking — default empty object
       if (!state.customUnilateralExercises) state.customUnilateralExercises = {};
       // weekCount: if missing from an old backup, derive from session history as a fallback
@@ -23586,6 +23802,133 @@ function deleteSelfCompassionEntry(idx) {
 }
 
 // ============================================================
+// HARD DAY COLLECTION — RENDER + MILESTONE
+// ============================================================
+var _CARRYING_LABELS = {
+  heavy:   { label: 'Something heavy',   icon: '🪨', color: 'rgba(204,32,39,0.35)'  },
+  anxious: { label: 'Anxious or wired',  icon: '⚡', color: 'rgba(243,156,18,0.35)' },
+  empty:   { label: 'Running on empty',  icon: '🫙', color: 'rgba(74,138,245,0.35)' },
+};
+
+function renderHardDayCollection(showAll = false) {
+  const container = document.getElementById('hard-day-collection');
+  if (!container) return;
+  const collection = state.hardDayCollection || [];
+  if (collection.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🪨</div><div class="empty-state-text">No hard days claimed yet. Your collection builds when you show up carrying something heavy.</div></div>';
+    return;
+  }
+  const total = collection.length;
+  const shown = showAll ? collection : collection.slice(0, 5);
+  // Summary banner
+  const summaryHTML = `
+    <div style="
+      background:linear-gradient(135deg,rgba(204,32,39,0.08),rgba(204,32,39,0.04));
+      border:1px solid rgba(204,32,39,0.3);border-radius:14px;
+      padding:16px 18px;margin-bottom:12px;
+      display:flex;align-items:center;justify-content:space-between;
+    ">
+      <div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:32px;color:var(--cream);letter-spacing:2px;line-height:1;">${total}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1px;margin-top:2px;">${total === 1 ? 'HARD DAY CLAIMED' : 'HARD DAYS CLAIMED'}</div>
+      </div>
+      <div style="font-size:28px;">🪨</div>
+    </div>`;
+  const entriesHTML = shown.map((entry, idx) => {
+    const meta = _CARRYING_LABELS[entry.carrying] || { label: entry.carrying, icon: '●', color: 'rgba(255,255,255,0.1)' };
+    const d = new Date(entry.date);
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const volumeStr = entry.sessionVolume > 0 ? `${entry.sessionVolume.toLocaleString()} lbs moved` : null;
+    return `
+      <div style="
+        background:var(--dark2);border:1px solid var(--dark3);border-radius:14px;
+        padding:14px 16px;margin-bottom:8px;
+        display:flex;align-items:center;gap:14px;
+      ">
+        <div style="
+          width:40px;height:40px;border-radius:10px;flex-shrink:0;
+          background:${meta.color.replace('0.35','0.12')};
+          border:1px solid ${meta.color};
+          display:flex;align-items:center;justify-content:center;
+          font-size:18px;
+        ">${meta.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--cream);letter-spacing:0.5px;line-height:1.2;">${entry.sessionName}</div>
+          <div style="font-size:12px;color:var(--gray);margin-top:3px;">${meta.label}${volumeStr ? ' · ' + volumeStr : ''}</div>
+        </div>
+        <div style="font-size:11px;color:var(--gray);flex-shrink:0;text-align:right;">${dateStr}</div>
+      </div>`;
+  }).join('');
+  let html = summaryHTML + entriesHTML;
+  if (!showAll && collection.length > 5) {
+    html += `<button onclick="renderHardDayCollection(true)" style="width:100%;background:none;border:1px solid var(--dark3);color:var(--gray);padding:12px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;margin-top:4px;">SHOW ALL ${collection.length} HARD DAYS</button>`;
+  } else if (showAll && collection.length > 5) {
+    html += `<button onclick="renderHardDayCollection(false)" style="width:100%;background:none;border:1px solid var(--dark3);color:var(--gray);padding:12px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;margin-top:4px;">SHOW LESS</button>`;
+  }
+  container.innerHTML = html;
+}
+
+async function _fetchHardDayMilestone(count) {
+  const collection = state.hardDayCollection || [];
+  if (!collection.length) return;
+  const apiKey = _getCoachingApiKey();
+  if (!apiKey) return;
+  // Build a summary of what they've carried
+  const counts = {};
+  collection.forEach(e => { counts[e.carrying] = (counts[e.carrying] || 0) + 1; });
+  const carryingSummary = Object.entries(counts)
+    .map(([k, v]) => `${v}x ${_CARRYING_LABELS[k]?.label || k}`)
+    .join(', ');
+  const prompt = `You are writing a 2-sentence moment of acknowledgment for someone who has just claimed their ${count}th hard day in a fitness app. A "hard day" means they showed up to train while carrying something emotionally difficult — they logged ${carryingSummary} across their hard days. Write in the voice of a warm, direct LCSW — not motivational-poster language, not generic encouragement. Specific, honest, human. Reference what they've actually been carrying. Two sentences max. No quotes around the output.`;
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 120,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const text = data?.content?.[0]?.text?.trim();
+    if (!text) return;
+    // Show milestone toast/card
+    _showHardDayMilestoneToast(count, text);
+  } catch(e) {}
+}
+
+function _showHardDayMilestoneToast(count, text) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn 0.2s ease;';
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+  el.innerHTML = `
+    <div style="
+      background:var(--dark2);border-radius:20px;padding:28px 24px;
+      width:100%;max-width:420px;
+      border:1px solid rgba(204,32,39,0.4);
+      box-shadow:0 8px 40px rgba(204,32,39,0.12);
+      text-align:center;
+    ">
+      <div style="font-size:36px;margin-bottom:16px;">🪨</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--cream);letter-spacing:2px;margin-bottom:16px;">${count} HARD DAYS</div>
+      <div style="font-size:15px;color:var(--cream);font-family:'Barlow',sans-serif;line-height:1.7;margin-bottom:24px;">${text}</div>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="
+        width:100%;background:var(--red);border:none;color:white;
+        padding:14px;border-radius:12px;
+        font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:1.5px;cursor:pointer;
+      ">GOT IT</button>
+    </div>`;
+  document.body.appendChild(el);
+}
+
+// ============================================================
 // TRAINING REMINDER NOTIFICATIONS
 // ============================================================
 async function requestNotificationPermission() {
@@ -24222,6 +24565,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateSplitTypeSub();
   updateProgressiveOverloadUI();
   updateBetweenSetCoachingUI();
+  updateCarryingFeatureUI();
   updateIncrementUI();
   updateNotificationsUI();
   updateGoalSettingsSub();
