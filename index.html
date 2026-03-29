@@ -14406,9 +14406,23 @@ function updateRepIndicator(exId, setIndex, _ignored) {
   // Week-band tightened target — the minimum reps that count as a "hit" this week.
   // In Weeks 1-2 this is the lower third; in Weeks 5-6 near the top of the range.
   // Falls back to minReps when activeSession is not set or function unavailable.
-  const weekBandTarget = (activeSession && typeof getCycleWeekBandRepTarget === 'function')
+  let weekBandTarget = (activeSession && typeof getCycleWeekBandRepTarget === 'function')
     ? getCycleWeekBandRepTarget(exId)
     : minReps;
+
+  // When the contextual rep label adjusts the displayed goal (e.g. RPE-based pullback),
+  // the indicator must respect that adjusted range — otherwise the user sees "GOAL: 12-13"
+  // but logging 12 or 13 shows red because the raw band target is higher (e.g. 14).
+  if (activeSession && typeof getContextualRepTarget === 'function') {
+    const _ctx = getContextualRepTarget(exId);
+    if (_ctx) {
+      const _ctxMatch = _ctx.label.match(/GOAL:\s*(\d+)/);
+      if (_ctxMatch) {
+        const _ctxLo = parseInt(_ctxMatch[1]);
+        if (_ctxLo && _ctxLo < weekBandTarget) weekBandTarget = _ctxLo;
+      }
+    }
+  }
 
   if (logged > maxReps) {
     // Exceeded flat top — above the goal range entirely
@@ -15635,7 +15649,20 @@ function showSessionWrapUp() {
     const parts = repStr.split(/[–-]/);
     const minReps = parseInt(parts[0]) || 0;
     const maxReps = parseInt(parts[1]) || minReps;
-    const weekBandTarget = getCycleWeekBandRepTarget(ex.id) || minReps;
+    let weekBandTarget = getCycleWeekBandRepTarget(ex.id) || minReps;
+
+    // Respect contextual rep target (RPE-adjusted) so the wrapup matches the
+    // in-session display — prevents "GOAL: 12-13" showing 12 as missed.
+    if (typeof getContextualRepTarget === 'function') {
+      const _ctx = getContextualRepTarget(ex.id);
+      if (_ctx) {
+        const _ctxMatch = _ctx.label.match(/GOAL:\s*(\d+)/);
+        if (_ctxMatch) {
+          const _ctxLo = parseInt(_ctxMatch[1]);
+          if (_ctxLo && _ctxLo < weekBandTarget) weekBandTarget = _ctxLo;
+        }
+      }
+    }
 
     // Per-set outcomes
     const outcomes = sets.map(s => {
