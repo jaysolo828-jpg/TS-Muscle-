@@ -9806,19 +9806,23 @@ function renderHome() {
   // weekCount, which would fire a false long-run banner mid-cycle.
   const _weeksSinceDeload = state.weeksSinceDeload ?? 0;
   const _dismissedThisCycle = state.deloadDismissedAtCycle === (state.cycleCount || 1);
+  const _earlyDismissedThisCycle = state.earlyDeloadDismissedAtCycle === (state.cycleCount || 1);
   const _lastTrainedSession = state.history?.length ? state.history[state.history.length - 1] : null;
   const _daysSinceTraining = _lastTrainedSession
     ? (Date.now() - new Date(_lastTrainedSession.date).getTime()) / 86400000 : 0;
   const _isReturningUser = _daysSinceTraining >= 14 && !state.programPaused;
-  const _mrvApproaching = (!state.isDeloadWeek && !state.isRestWeek && !_dismissedThisCycle) ? getMRVApproachingMuscles() : [];
+  const _mrvApproaching = (!state.isDeloadWeek && !state.isRestWeek && !_earlyDismissedThisCycle) ? getMRVApproachingMuscles() : [];
   // Week gate: MRV early-recovery banner must never fire before Week 5.
   // Weeks 1-4 are the volume-building phase — set reduction handles any approaching
   // limits there. Only Weeks 5-6 (weekCount 5 or 6) are valid windows.
-  const _showMRVBanner = _mrvApproaching.length > 0 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !state.deloadPostponedToWeek && !_dismissedThisCycle && (state.weekCount || 1) >= 5 && !_mrvBannerDismissedThisLoad;
-  const _showPlateauBanner = _plateau.stalled && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
+  const _showMRVBanner = _mrvApproaching.length > 0 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !state.deloadPostponedToWeek && !_earlyDismissedThisCycle && (state.weekCount || 1) >= 5 && !_mrvBannerDismissedThisLoad;
+  const _showPlateauBanner = _plateau.stalled && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_earlyDismissedThisCycle;
   const _longRunBannerThreshold = (function() { const _e = getEffectiveExperienceLevel(); return _e === 'beginner' ? 6 : _e === 'advanced' ? 4 : 5; })();
-  const _showLongRunBanner = !_showPlateauBanner && !_showMRVBanner && _weeksSinceDeload >= _longRunBannerThreshold && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_dismissedThisCycle;
-  const _skipBtn = `<div style="margin-top:12px;"><button onclick="event.stopPropagation();dismissDeloadSuggestion(true);" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;padding:7px 16px;border-radius:8px;-webkit-tap-highlight-color:transparent;">NOT NOW. SKIP THIS CYCLE.</button></div>`;
+  const _showLongRunBanner = !_showPlateauBanner && !_showMRVBanner && _weeksSinceDeload >= _longRunBannerThreshold && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_earlyDismissedThisCycle;
+  // Skip button: text varies for scheduled (week 7/postponed) vs. early signal banners
+  const _isScheduledBannerContext = (state.weekCount === 7 && !state.deloadPostponedToWeek) || (state.deloadPostponedToWeek && state.weekCount === state.deloadPostponedToWeek);
+  const _skipBtnLabel = _isScheduledBannerContext ? 'NOT NOW. SKIP THIS CYCLE.' : 'NOT NOW';
+  const _skipBtn = `<div style="margin-top:12px;"><button onclick="event.stopPropagation();dismissDeloadSuggestion(true);" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;padding:7px 16px;border-radius:8px;-webkit-tap-highlight-color:transparent;">${_skipBtnLabel}</button></div>`;
 
   if (deloadBanner && state.isRestWeek) {
     deloadBanner.style.display = 'none';
@@ -11153,6 +11157,7 @@ function activateDeloadWeek() {
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
   delete state.deloadDismissedAtCycle;
+  delete state.earlyDeloadDismissedAtCycle;
   saveState();
   const m = document.getElementById('deload-suggest-modal');
   if (m) m.remove();
@@ -11167,6 +11172,7 @@ function activateDeloadRest() {
   state.isRestWeek    = true;
   state.weeksSinceDeload = 0;
   delete state.deloadDismissedAtCycle;
+  delete state.earlyDeloadDismissedAtCycle;
   saveState();
   const m = document.getElementById('deload-suggest-modal');
   if (m) m.remove();
@@ -11175,8 +11181,19 @@ function activateDeloadRest() {
 }
 
 function dismissDeloadSuggestion(fromBanner) {
-  state.deloadDismissedAtCycle = state.cycleCount || 1;
-  delete state.deloadPostponedToWeek;
+  // Determine if this is an early signal dismissal (MRV/plateau/long-run)
+  // vs. the scheduled Week 7 or postponed recovery week.
+  const _isScheduled = (state.weekCount === 7 && !state.deloadPostponedToWeek)
+    || (state.deloadPostponedToWeek && state.weekCount === state.deloadPostponedToWeek);
+  if (_isScheduled) {
+    // Dismissing the scheduled recovery — suppress all deload banners this cycle
+    state.deloadDismissedAtCycle = state.cycleCount || 1;
+    delete state.deloadPostponedToWeek;
+  } else {
+    // Dismissing an early signal — only suppress early signals, keep Week 7 intact
+    state.earlyDeloadDismissedAtCycle = state.cycleCount || 1;
+    delete state.deloadPostponedToWeek;
+  }
   saveState();
   // Close the signal-triggered modal
   document.getElementById('deload-suggest-modal')?.remove();
@@ -11184,7 +11201,11 @@ function dismissDeloadSuggestion(fromBanner) {
   document.querySelectorAll('body > div').forEach(el => {
     if (el.style && el.style.zIndex === '9000') el.remove();
   });
-  showToast("Got it. We'll suggest again next cycle 👍");
+  if (_isScheduled) {
+    showToast("Got it. We'll suggest again next cycle 👍");
+  } else {
+    showToast("Got it. Your Week 7 recovery is still on the schedule 👍");
+  }
   renderHome();
 }
 
@@ -17046,8 +17067,9 @@ function finalizeEndSession(save) {
     const weeksLogged = state.weekCount || 1;
     const _deloadDaysSince = (Date.now() - (state.lastDeloadPrompt || 0)) / (1000 * 60 * 60 * 24);
     const _deloadDismissedThisCycle = state.deloadDismissedAtCycle === (state.cycleCount || 1);
+    const _earlyDismissedThisCycle = state.earlyDeloadDismissedAtCycle === (state.cycleCount || 1);
     const _mrvAlreadyShowing = (typeof getMRVApproachingMuscles === 'function') && getMRVApproachingMuscles().length > 0 && (state.weekCount || 1) >= 5;
-    if (weeksLogged > 0 && weeksLogged % 5 === 0 && _deloadDaysSince >= 14 && !_deloadDismissedThisCycle && !_mrvAlreadyShowing && !state.postDeloadCheckIn) {
+    if (weeksLogged > 0 && weeksLogged % 5 === 0 && _deloadDaysSince >= 14 && !_deloadDismissedThisCycle && !_earlyDismissedThisCycle && !_mrvAlreadyShowing && !state.postDeloadCheckIn) {
       state.lastDeloadPrompt = Date.now();
       saveState();
       setTimeout(() => {
@@ -17089,7 +17111,7 @@ function finalizeEndSession(save) {
               width:100%;padding:11px;border-radius:12px;
               background:none;border:1px solid #333;color:var(--gray);
               font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;
-            ">SKIP THIS CYCLE</button>
+            ">NOT NOW</button>
           </div>`;
         document.body.appendChild(deloadModal);
       }, 1800);
@@ -17681,7 +17703,8 @@ function checkDeloadSuggestion() {
 
   if (!highRPETrend && !longRun && !progressionStall && !nearMRV) return;
 
-  // Don't show if user already dismissed this cycle
+  // Don't show if user already dismissed early signals this cycle
+  if (state.earlyDeloadDismissedAtCycle === (state.cycleCount || 1)) return;
   if (state.deloadDismissedAtCycle === (state.cycleCount || 1)) return;
 
   // Rate-limit: don't show more than once per 14 days
@@ -17730,7 +17753,7 @@ function checkDeloadSuggestion() {
       </div>
       <button onclick="dismissDeloadSuggestion();"
         style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);padding:11px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
-        SKIP THIS CYCLE
+        NOT NOW
       </button>
     </div>
   `;
