@@ -18604,8 +18604,8 @@ function renderHistory() {
       const w = i + 1;
       const _done = w < _wn, _cur = w === _wn, _dlot = w === _ds;
       const _earlyDl = _ds < 7;
-      const _dotColor = _earlyDl ? 'var(--red-text)' : 'var(--warning)';
-      const _dotColorRgb = _earlyDl ? '204,32,39' : '243,156,18';
+      const _dotColor = _earlyDl ? 'var(--red-text)' : '#7BA08C';
+      const _dotColorRgb = _earlyDl ? '204,32,39' : '123,160,140';
       if (_dlot && _cur) {
         return `<div style="width:28px;height:28px;border-radius:50%;background:${_isDL ? `rgba(${_dotColorRgb},0.2)` : `rgba(${_dotColorRgb},0.1)`};border:2px solid ${_dotColor};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:${_dotColor};flex-shrink:0;">R</div>`;
       } else if (_dlot && _done) {
