@@ -902,7 +902,7 @@
 .rpe-info-btn {
     background: none;
     border: none;
-    color: var(--cream);
+    color: var(--gray-light);
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 12px;
     font-weight: 700;
@@ -915,7 +915,7 @@
     gap: 3px;
     -webkit-tap-highlight-color: transparent;
   }
-  .rpe-info-btn:active { color: var(--red-text); }
+  .rpe-info-btn:active { color: var(--cream); }
   .prev-session-btn {
     background: none;
     border: none;
@@ -972,8 +972,8 @@
     max-height: 0;
     opacity: 0;
     transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.35s ease;
-    background: var(--dark2);
-    border-top: 1px solid rgba(204,32,39,0.15);
+    background: var(--dark3);
+    border-top: 1px solid var(--dark4);
     display: flex; align-items: center; gap: 6px;
     padding: 0 16px;
     flex-wrap: nowrap;
@@ -985,21 +985,21 @@
   }
   .rpe-nudge-label {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--red-text); white-space: nowrap; margin-right: 4px; flex-shrink: 0;
+    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gray-light); white-space: nowrap; margin-right: 4px; flex-shrink: 0;
   }
   .rpe-nudge-pills {
     display: flex; gap: 5px; flex-wrap: nowrap; overflow-x: auto; flex: 1;
   }
   .rpe-nudge-btn {
-    background: var(--dark4); border: 1px solid rgba(204,32,39,0.25);
-    color: var(--cream); border-radius: 8px;
-    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600;
-    padding: 5px 10px; cursor: pointer; transition: all 0.15s;
+    background: var(--dark4); border: 1px solid #3a3a3a;
+    color: var(--white); border-radius: 8px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600;
+    padding: 6px 12px; cursor: pointer; transition: all 0.15s;
     white-space: nowrap; flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  .rpe-nudge-btn:active { background: var(--red); border-color: var(--red-text); color: var(--cream); transform: scale(0.92); }
+  .rpe-nudge-btn:active { background: var(--red); border-color: var(--red-text); transform: scale(0.92); }
   .rpe-nudge-dismiss {
     flex-shrink: 0; background: none; border: none;
     color: var(--gray); font-size: 15px; cursor: pointer; padding: 4px 4px 4px 8px;
@@ -1069,28 +1069,25 @@
     background: var(--dark3);
     border: 1px solid var(--dark4);
     border-radius: 8px;
-    color: var(--cream);
+    color: var(--white);
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
-    padding: 6px 8px;
+    padding: 8px 10px;
     width: 100%;
     outline: none;
     cursor: pointer;
     text-align: center;
     text-align-last: center;
     transition: border-color 0.2s, color 0.2s;
-    -webkit-appearance: none;
-    appearance: none;
   }
   .rpe-select[data-empty="true"] {
-    color: var(--gray);
+    color: #888;
     border-color: var(--dark4);
   }
   .rpe-select[data-empty="false"] {
-    color: var(--red-text);
-    border-color: rgba(204,32,39,0.4);
-    background: rgba(204,32,39,0.08);
+    color: var(--white);
+    border-color: rgba(196,125,0,0.5);
   }
 
   /* Active nav dot */
@@ -27065,28 +27062,26 @@ function _escHtml(str) {
 
 <!-- RPE info bottom sheet -->
 <div id="rpe-sheet-overlay" onclick="toggleRpeSheet()" style="display:none; position:fixed; inset:0; z-index:99990; background:rgba(0,0,0,0.6);"></div>
-<div id="rpe-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99991; max-width:420px; margin:0 auto; background:var(--dark2); border-top:2px solid var(--red); border-radius:16px 16px 0 0; padding:16px 16px calc(20px + env(safe-area-inset-bottom)); box-shadow:0 -4px 24px rgba(0,0,0,0.7); transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1); overflow-y:auto; -webkit-overflow-scrolling:touch;">
-  <div style="width:32px; height:3px; background:var(--dark4); border-radius:2px; margin:0 auto 12px;"></div>
-  <div style="font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--red-text); letter-spacing:2px; margin-bottom:8px;">RPE SCALE</div>
-  <div style="font-family:'Barlow',sans-serif; font-size:13px; color:var(--cream); line-height:1.5; margin-bottom:12px; opacity:0.85;">
+<div id="rpe-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99991; max-width:400px; margin:0 auto; background:var(--dark); border-top:2px solid var(--red); border-radius:16px 16px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); box-shadow:0 -4px 24px rgba(0,0,0,0.7); transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1); overflow-y:auto; -webkit-overflow-scrolling:touch;">
+  <div style="width:32px; height:3px; background:var(--dark4); border-radius:2px; margin:0 auto 10px;"></div>
+  <div style="font-family:'Bebas Neue',cursive; font-size:20px; letter-spacing:2px; margin-bottom:6px;">T&S MUSCLE <span style="color:var(--red-text);">RPE GUIDE</span></div>
+  <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); line-height:1.4; margin-bottom:10px; letter-spacing:0.3px;">
     Rate of Perceived Exertion — how hard a set felt. Log it after every set to fine-tune your progression.
   </div>
-  <div style="display:grid; grid-template-columns:auto 1fr; gap:4px 10px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:0.3px; margin-bottom:12px; background:var(--dark3); border-radius:10px; padding:10px 12px;">
+  <div style="display:grid; grid-template-columns:auto 1fr; gap:3px 10px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:0.3px; margin-bottom:10px; background:var(--dark2); border:1px solid var(--dark4); border-radius:10px; padding:10px 12px;">
     <span style="color:var(--cream); font-weight:700;">6</span><span style="color:var(--gray-light);">4+ reps left</span>
     <span style="color:var(--cream); font-weight:700;">7</span><span style="color:var(--gray-light);">3 reps left</span>
     <span style="color:var(--cream); font-weight:700;">8</span><span style="color:var(--gray-light);">2 reps left</span>
     <span style="color:var(--cream); font-weight:700;">9</span><span style="color:var(--gray-light);">1 rep left</span>
     <span style="color:var(--red-text); font-weight:700;">10</span><span style="color:var(--red-text);">Absolute max</span>
   </div>
-  <div style="background:var(--red-glow); border:1px solid rgba(204,32,39,0.3); border-radius:10px; padding:10px 12px; margin-bottom:14px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:var(--red-text); letter-spacing:1.5px; margin-bottom:4px; font-weight:700;">HOW IT AFFECTS YOUR WEIGHTS</div>
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray-light); line-height:1.5; letter-spacing:0.3px;">
-      <strong style="color:var(--cream);">RPE 9–10</strong> → slows weight increases to keep you safe.<br>
-      <strong style="color:var(--cream);">RPE 6–7</strong> → pushes weight up faster.<br>
-      <strong style="color:var(--cream);">No RPE?</strong> → defaults to RPE 8.
+  <div style="background:rgba(204,32,39,0.06); border:1px solid rgba(204,32,39,0.2); border-radius:10px; padding:8px 12px; margin-bottom:12px;">
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:var(--red-text); letter-spacing:1.5px; margin-bottom:3px; font-weight:700;">HOW IT AFFECTS YOUR WEIGHTS</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray-light); line-height:1.45; letter-spacing:0.3px;">
+      <strong style="color:var(--cream);">RPE 9–10</strong> → slows weight increases &nbsp;·&nbsp; <strong style="color:var(--cream);">RPE 6–7</strong> → pushes weight up faster &nbsp;·&nbsp; <strong style="color:var(--cream);">No RPE?</strong> → defaults to 8
     </div>
   </div>
-  <button onclick="toggleRpeSheet()" style="width:100%; background:var(--red); border:none; border-radius:10px; padding:12px; color:var(--cream); font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1.5px; cursor:pointer;">GOT IT</button>
+  <button onclick="toggleRpeSheet()" style="width:100%; background:var(--red); border:none; border-radius:10px; padding:11px; color:var(--cream); font-family:'Bebas Neue',cursive; font-size:15px; letter-spacing:1.5px; cursor:pointer;">GOT IT</button>
 </div>
 
 <!-- ── EXERCISE LIBRARY OVERLAY ─────────────────────────────────────────── -->
