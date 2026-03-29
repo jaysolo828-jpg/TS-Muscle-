@@ -8488,7 +8488,7 @@ const _FOCUS_POOLS = {
             'DO THIS','READY','PRESENT','CHOOSE','IN NOW','RISE UP','PAY IN','SEEK','SHOW IT','SET OUT'],
     build: ['PLANT','FORM','ROOTS','EARN IT','ANCHOR','INVEST','BUILD','PROVE','STACK','CRAFT',
             'REPEAT','LOCK IN','WIRE IN','SET IT','LAYER','INGRAIN','LOAD UP','PATTERN','DETAIL','SYSTEM',
-            'TRACE','FOCUS','RETURN','LOCK ON','BASE IT','SOLID','DEEP','STRONG','BUILT','EMBED',
+            'TRACE','ATTEND','RETURN','LOCK ON','BASE IT','SOLID','DEEP','STRONG','BUILT','EMBED',
             'ALIGN','SEAL','FILL IN','PUT IN','FRAME','WIRE UP','CONNECT','STAKE','GROW','STEADY'],
     edge:  ['RESET','REBUILD','OWN IT','INSTALL','PRIME','MASTER','DEFINE','EXACT','DEMAND','RAISE',
             'FORGE','SET','ZERO IN','LOCK IT','PRECISE','LEVEL','TEMPER','WIRE','FILTER','SHARPEN',
@@ -8502,10 +8502,10 @@ const _FOCUS_POOLS = {
             'ADVANCE','DEVELOP','IMPROVE','PROCEED','JUST DO','WORK','ADD','MORE','NEXT','SHOW'],
     build: ['EXECUTE','GRIND','TRUST','DIAL IN','SHARPEN','STACK','FORGE','ADAPT','LOCK IN','REPEAT',
             'MEASURE','PRESS','ADD UP','LAYER','ADVANCE','COMPILE','REFINE','DETAIL','CARVE','SCULPT',
-            'OUTPUT','FOCUS','HARDEN','TEMPER','SIGNAL','DRIVE','PUSH','BUILD','STEP ON','WORK ON',
+            'OUTPUT','HONE','HARDEN','TEMPER','SIGNAL','DRIVE','PUSH','BUILD','STEP ON','WORK ON',
             'DELIVER','PRODUCE','PERFORM','REACH','EXCEED','TRACK','PRECISE','MOVE ON','STEP UP','MONITOR'],
     edge:  ['REFINE','PRECISE','HARDEN','TEMPER','CARVE','SCULPT','PERFECT','ELEVATE','DETAIL','EXACT',
-            'COMPILE','DEMAND','MASTER','EXCEED','ZERO IN','RAISE','FOCUS','CONTROL','CHANNEL','QUALITY',
+            'COMPILE','DEMAND','MASTER','EXCEED','ZERO IN','RAISE','INTEND','CONTROL','CHANNEL','QUALITY',
             'FILTER','EXECUTE','EXCEL','OUTPUT','SIGNAL','SHARPEN','ADVANCE','ALIGN','DELIVER','PERFORM',
             'MEASURE','MONITOR','PRODUCE','TRACK','INTENT','DESIGN','EVOLVE','DEVELOP','IMPROVE','PUSH']
   },
@@ -8547,13 +8547,13 @@ const _FOCUS_POOLS = {
             'ALLOW','INSTALL','ADAPT','REVISE','REFUEL','REPAIR','REBOOT','RESTOCK','REGROUP','REFRAME',
             'RECOUP','RELEARN','REWIRE','REST','RETURN','GROW','MEND','FILL','CALM','QUIET'],
     edge:  ['ABSORB','RELOAD','RESTORE','REBUILD','RESET','REFUEL','HEAL','PRIME','RETURN','SHARPEN',
-            'CHARGE','REFIT','FOCUS','INSTALL','INGRAIN','PREPARE','READY','RENEW','REVIVE','LOAD UP',
+            'CHARGE','REFIT','ATTUNE','INSTALL','INGRAIN','PREPARE','READY','RENEW','REVIVE','LOAD UP',
             'PROCESS','ADAPT','REFINE','RECEIVE','LEVEL','REBOOT','REGROUP','REPAIR','RECOUP','REWIRE',
             'RELEARN','RESTOCK','REFRAME','RECLAIM','ALIGN','SETTLE','QUIET','STILL','MEND','RESOLVE']
   }
 };
 // Explanation variants rotate weekly so copy stays fresh even within a phase.
-// Four variants per lane per phase = 60 distinct mindset reads total.
+// Eight variants per lane per phase = 120 distinct mindset reads total.
 const _FOCUS_CONTEXT = {
   early: { phase: 'FOUNDATION', icon: '🧱',
     new: [
@@ -8564,7 +8564,15 @@ const _FOCUS_CONTEXT = {
       { body: `You started. That's genuinely hard to do and most people never get there. Everything from here is built on the fact that you walked in the door.`,
         sub:  `Be patient with yourself this week. You're not supposed to feel like a seasoned athlete yet. You're supposed to feel like someone who just started — because that's what you are. Keep going.` },
       { body: `Starting is the hardest part and you're already past it. The gym asks one thing right now — show up. Not perfect, not strong, not confident. Just show up and do the work.`,
-        sub:  `Don't overthink what any session needs to look like. Just get through it. The habit you're building right now is worth more than the performance. Come back tomorrow.` }
+        sub:  `Don't overthink what any session needs to look like. Just get through it. The habit you're building right now is worth more than the performance. Come back tomorrow.` },
+      { body: `The gym is going to ask things of you that feel hard before they feel normal. That's how it works. Right now you're deciding whether you stick around long enough for normal to happen.`,
+        sub:  `You don't need to be good at this yet. You need to be consistent. Skill builds on top of showing up. Show up first and let everything else follow.` },
+      { body: `There's no shortcut through the beginning. Every athlete you've ever respected had a first block exactly like this one — uncertain, uncomfortable, and important. They kept going. So do you.`,
+        sub:  `The training you're doing right now is forming patterns in your body and your schedule. Both matter. Keep showing up at the same time, the same way, and let those patterns set.` },
+      { body: `You're in the part of training that most people never get past. Not because it's too hard — because it doesn't feel rewarding fast enough. Stay in it anyway. The reward is real and it's coming.`,
+        sub:  `Don't judge the process by how today's session felt. Judge it by whether you came back. That's the only metric that matters right now.` },
+      { body: `Every session you complete right now is a vote for who you're becoming. Not who you were, not who you want to be in six months — who you're actually choosing to be today.`,
+        sub:  `Keep it simple this week. Get to the gym, do the work, go home. Don't overcomplicate what's essentially just building a habit. That's the entire job right now.` }
     ],
     build: [
       { body: `You've done a foundation block before. You know it doesn't feel like much at the time. That's the point — what you put in here is the ceiling you'll hit in the peak weeks.`,
@@ -8574,7 +8582,15 @@ const _FOCUS_CONTEXT = {
       { body: `Foundation work teaches you something every time you do it. The patience, the restraint, the willingness to do the boring things right — those qualities show up everywhere later.`,
         sub:  `You're not just building physical capacity in these weeks. You're building the discipline that makes everything after this possible. Do it right.` },
       { body: `You've built foundations before. The difference between a good one and a great one is the details you don't skip — the reps you do right when nobody's counting, the sessions you don't talk yourself out of.`,
-        sub:  `The only way to waste a foundation block is to rush it or skip it. You're doing neither. Execute the program, trust what you know, and let it build what it's going to build.` }
+        sub:  `The only way to waste a foundation block is to rush it or skip it. You're doing neither. Execute the program, trust what you know, and let it build what it's going to build.` },
+      { body: `The foundation block rewards restraint. Not the restraint of someone who doesn't want to work — the restraint of someone who knows the early weeks set the ceiling for everything that follows.`,
+        sub:  `Execute the program as written. Not harder, not modified, not augmented. The prescription exists because it works. Trust it and let the results show up later.` },
+      { body: `You've seen what happens when you rush a foundation. You've also seen what happens when you build it right. You're in the second scenario. Keep it that way.`,
+        sub:  `The details matter this week. Technique, range of motion, rest periods. These aren't things to get right when you feel like it — they are the foundation. Do them right every time.` },
+      { body: `Foundation weeks feel slow because they are slow. That's not a design flaw — it's the design. The body adapts to gradual overload better than it adapts to anything else. Let the program be what it is.`,
+        sub:  `If something feels too easy, that's fine. It's preparing you for when it isn't. The progression is coming. Don't jump ahead of it.` },
+      { body: `The version of yourself that performs in peak week is being built right now. Not in the weights you're lifting — in the patterns you're reinforcing. Every rep done right is one more your body knows automatically.`,
+        sub:  `Approach this week with precision, not urgency. You have time. The program knows the pace. Your job is to execute it clean and let the block unfold the way it was designed to.` }
     ],
     edge: [
       { body: `The athletes who get the most out of a peak are the ones who built it right, not the ones who burned it in week one. This block is asking you to be patient with that.`,
@@ -8584,7 +8600,15 @@ const _FOCUS_CONTEXT = {
       { body: `There's a version of you six weeks from now who either thanks you for this week or is held back by it. The foundation you lay right now is the upper limit of what peak week can produce.`,
         sub:  `Lock in what needs to be automatic. Positions, timing, breathing patterns. The peak weeks don't give you time to think about these things. You need them wired in now.` },
       { body: `You've accumulated enough training history to know exactly what a properly built foundation produces. You also know what cutting corners here costs you in peak week. Do it right.`,
-        sub:  `Every cycle teaches you something. Bring that knowledge into these weeks. Foundation isn't just about building capacity — it's about installing the precision that peak intensity demands.` }
+        sub:  `Every cycle teaches you something. Bring that knowledge into these weeks. Foundation isn't just about building capacity — it's about installing the precision that peak intensity demands.` },
+      { body: `The urge to test your ceiling in the foundation weeks is strong and familiar. You've been here before. You know why you don't. Channel that energy into technical precision — it pays out more.`,
+        sub:  `Use these weeks to audit your movement. What needs cleaning up? What's been compensated around? The foundation is the right time to address it, before the load demands you rely on it.` },
+      { body: `Foundation work at your level isn't about fitness — it's about calibration. You're setting the baseline for everything the block will build. Take it seriously even when the weights don't demand it.`,
+        sub:  `There's a reason experienced athletes who train smart consistently outperform those who just train hard. This week is part of that reason. Do the work right.` },
+      { body: `You bring experience to this block that a beginner doesn't have. Use it — not to push harder, but to execute better. The technical quality you ingrain here is what holds up when the loads get heavy.`,
+        sub:  `Approach this week like a craftsman, not a competitor. Precision now, performance later. The two are connected and you've been around long enough to know it.` },
+      { body: `Every cycle teaches you something about what you need to build. Use that knowledge here — build what the next six weeks will demand, not what feels impressive right now.`,
+        sub:  `The foundation isn't below the work — it is the work. Everything that comes after runs on what you do in these weeks. That's worth taking seriously no matter how many times you've done it.` }
     ]
   },
   mid: { phase: 'ADAPTATION', icon: '📈',
@@ -8596,7 +8620,15 @@ const _FOCUS_CONTEXT = {
       { body: `Some days training feels like maintenance and that's okay. You're not supposed to feel amazing in the middle weeks. You're supposed to keep going. That's the entire point.`,
         sub:  `Progress in the middle of a block is quiet. It doesn't announce itself. But it's happening — every session you complete is proof. Just show up and do the work.` },
       { body: `Nobody tells you that the middle weeks feel like this — flat, repetitive, hard to get excited about. That's normal, and it's the part of training that actually builds you. Keep coming.`,
-        sub:  `Every session you finish right now is proof that you do what you said you'd do. That matters more than how good any individual session feels. Keep your word to yourself.` }
+        sub:  `Every session you finish right now is proof that you do what you said you'd do. That matters more than how good any individual session feels. Keep your word to yourself.` },
+      { body: `You're past the beginning and not yet at the end. That's exactly where progress lives — in the unremarkable middle sessions that most people talk themselves out of. You're here. That counts.`,
+        sub:  `Don't wait to feel ready or motivated. Do the session. Every time you train when you don't feel like it, you prove something to yourself that compounds over time.` },
+      { body: `The middle of a block isn't glamorous. Nobody celebrates their average Tuesday session. But the average Tuesday sessions are what every real result is actually made of. Show up for yours.`,
+        sub:  `Progress this week won't look like a breakthrough. It'll look like you showed up, did the work, and went home. Do that consistently and it adds up to something real.` },
+      { body: `You might not see the progress right now. You're in the part of training where it's happening inside — in your tendons, your nervous system, your recovery capacity. It's there. Keep going.`,
+        sub:  `Adaptation takes longer than motivation does. The feeling of improvement comes after the actual improvement, not before it. Stay with the program and let the biology do its job.` },
+      { body: `The best thing you can do this week is the most boring thing: show up, do exactly what's programmed, do it well. No more, no less. The consistency is the point.`,
+        sub:  `You're building a body of work, not a highlight reel. The middle sessions matter as much as the peak sessions — they just don't feel like it in the moment. Trust the cumulative effect.` }
     ],
     build: [
       { body: `No excitement of starting, no relief of finishing — just you, the program, and the decision to execute. This is the real work. Most people don't do it.`,
@@ -8606,7 +8638,15 @@ const _FOCUS_CONTEXT = {
       { body: `The middle weeks are where programs are won or lost. Not the big sessions, not the PRs — the ordinary session when you didn't feel like training and you did it anyway.`,
         sub:  `Your adaptation is happening in the sessions that feel average. The days it feels like you're going through the motions are often the days your body is working hardest behind the scenes.` },
       { body: `The training you're doing right now is becoming part of how your body works. Every session adds to the total. Consistency through the middle is what separates results from just trying.`,
-        sub:  `Showing up when it's not exciting and doing it well anyway — that's the skill this phase builds. It transfers to everything else. Keep the standard and trust what you're building.` }
+        sub:  `Showing up when it's not exciting and doing it well anyway — that's the skill this phase builds. It transfers to everything else. Keep the standard and trust what you're building.` },
+      { body: `The program isn't asking you for excitement this week. It's asking for execution. Two different things. Show up, do the work with precision, and let the results accumulate.`,
+        sub:  `Keep your training log honest this week. The data you collect in the middle weeks is how you know whether the peak weeks are actually improving on what came before.` },
+      { body: `You've done enough blocks to know that the sessions that feel forgettable often aren't. Your body doesn't distinguish between the sessions that feel significant and the ones that don't. It just adapts to the stimulus.`,
+        sub:  `Stay consistent with your recovery habits this week as much as your training. Sleep and nutrition in the middle weeks directly affect what peak week produces.` },
+      { body: `Somewhere in this block, without any announcement, your body crossed the threshold from adapting to being adapted. You can't feel it happen. You'll notice it when the weights feel different. Keep adding sessions.`,
+        sub:  `The middle weeks reward patience more than any other phase. Every session you complete without rushing the process is compounding. The block is working. Let it.` },
+      { body: `This week asks the same thing last week did: execute the program, maintain the standard, come back tomorrow. That's not a lack of progress — that's exactly what progress looks like from the inside.`,
+        sub:  `The athletes who consistently outperform their potential are almost always the ones who take the middle weeks seriously. You know this. Keep showing up and doing the work right.` }
     ],
     edge: [
       { body: `The middle of a block is where character gets made. This is what separates athletes who perform sometimes from athletes who perform consistently.`,
@@ -8628,7 +8668,15 @@ const _FOCUS_CONTEXT = {
       { body: `The weeks of work you've put in created this moment. Your body has been adapting, building, preparing. Now you get to see what that preparation actually produced. Give it everything.`,
         sub:  `It's okay if this is hard. It's supposed to be hard — that's the point of a peak week. Hard means the stimulus is right. Lean into it instead of backing off.` },
       { body: `You've put in more work over the last few weeks than a lot of people do in months. Your body has been responding the whole time. Now find out what it can actually do. Don't hold back.`,
-        sub:  `Push past where you'd normally stop this week. The foundation and adaptation work built the capacity — this is where you find out how much. Trust the work you've already done.` }
+        sub:  `Push past where you'd normally stop this week. The foundation and adaptation work built the capacity — this is where you find out how much. Trust the work you've already done.` },
+      { body: `There's a moment in most people's first real peak week where they realise they're stronger than they thought. You might be there already. Don't dismiss it — that's the whole point of the work you put in.`,
+        sub:  `The training you did in the earlier weeks wasn't just preparation. It was transformation. This week is where you start to feel that. Trust it and keep going.` },
+      { body: `Peak week is supposed to be hard. If it feels hard, that doesn't mean something is wrong — it means the program is doing exactly what it's supposed to do. Hard is correct here.`,
+        sub:  `Give yourself permission to work at the edge of what feels comfortable. That edge is exactly where the gains are. You're in the right place doing the right thing.` },
+      { body: `You've spent the early weeks of this block showing up. Now the program is asking you to perform. That's a different thing — and you're ready for it, even if it doesn't feel that way yet.`,
+        sub:  `This week your only job is to show up and give your current best effort. Not a future version of you — the version that showed up today. That version is enough. Use it.` },
+      { body: `You've never been exactly here before — this far into a block, this many sessions in. Everything you've done brought you to this week. Now go find out what it all built.`,
+        sub:  `This isn't familiar territory. That's fine. Stay in each session, trust what the program asks of you, and let the effort land where it lands. You've earned this week. Use it.` }
     ],
     build: [
       { body: `This is what the earlier weeks were for. Your body is primed and the program is asking everything of you. Answer it.`,
@@ -8638,7 +8686,15 @@ const _FOCUS_CONTEXT = {
       { body: `Everything in the program has been building tension — the foundation, the grind of the middle, the adaptation. Peak week is where that tension releases. Show up and let it out.`,
         sub:  `This is the week you find out exactly where you are. Push into the discomfort. Your body has been building capacity for weeks. Let it perform.` },
       { body: `Peak week separates the sessions you logged from the results you earned. You've put the work in. Now show what it built. Come to each session ready to spend everything.`,
-        sub:  `Your only job this week is to perform. Not plan, not manage, not measure. Show up and give it everything. You've already done everything else.` }
+        sub:  `Your only job this week is to perform. Not plan, not manage, not measure. Show up and give it everything. You've already done everything else.` },
+      { body: `You're at the inflection point. Everything the block built is available to you right now. What you do with it this week is entirely up to you.`,
+        sub:  `The body is primed. The program has done its job. Your job this week is simple: perform. Not plan, not manage — perform. Everything else is already handled.` },
+      { body: `Consistency bought you this week. Every session you showed up for, every rep you completed when you didn't want to — it all produced the readiness you're sitting on right now. Use it.`,
+        sub:  `Don't let the culmination of a well-built block pass by at half effort. You built something real. This week is when you find out what it looks like performed at full capacity.` },
+      { body: `The last thing standing between you and your best week of this block is the decision to commit to it fully. The physical preparation is done. The work is done. Now it comes down to showing up.`,
+        sub:  `Go into each session this week having already decided to leave everything in the room. The outcome takes care of itself. Your job is the commitment.` },
+      { body: `Peak week is where you make a definitive statement about what this block built. You've been consistent, you've done the work, you've adapted. Now make the statement. Make it a clear one.`,
+        sub:  `Don't hold back, don't manage effort, don't coast. Every rep this week is a piece of evidence about who you are right now. Make it the kind of evidence you want to carry into the next block.` }
     ],
     edge: [
       { body: `Your body is ready, the work is done, and there's nothing left to prepare. This is the execution window. You know what it demands.`,
@@ -8648,7 +8704,15 @@ const _FOCUS_CONTEXT = {
       { body: `The work is behind you. The preparation is done. What's in front of you now is just performance — and you know how to do that. Go.`,
         sub:  `Don't hold anything back for the next session. Each one this week deserves everything. What you invest here is what you get out of the block.` },
       { body: `You know what a properly built peak week feels like. You know the difference between hard because you're prepared and hard because you're not. This is the former. Trust it and go.`,
-        sub:  `Execute with the same precision you've held all block. High effort, clean technique, nothing held back. The athletes who get the most from a peak are the ones who commit to it fully.` }
+        sub:  `Execute with the same precision you've held all block. High effort, clean technique, nothing held back. The athletes who get the most from a peak are the ones who commit to it fully.` },
+      { body: `Executing well under accumulated fatigue is one of the most important skills in training. Your body is taxed. Your preparation is complete. Now the job is precise, full-effort performance despite all of that.`,
+        sub:  `This is where experience pays dividends. You know the difference between fatigue and limitation. Work through the fatigue. Respect the limitation. But know you're closer to the former than the latter.` },
+      { body: `Everything in the foundation and mid-block was compression. Peak week is release. Your body has been under progressive load for weeks and it's ready to express all of it. Let it.`,
+        sub:  `Don't try to manage the intensity this week. You've been managing it for weeks. Let go of that now. The preparation is done — your body knows what to do. Trust it and go.` },
+      { body: `The difference between a good peak week and a great one often comes down to effort quality in the moments when you have a choice. You always have a choice. Make the right one, rep by rep.`,
+        sub:  `This isn't about surviving the week — it's about executing it. Every session is a performance opportunity. Approach it with the precision and intent you've refined across the whole block.` },
+      { body: `What you do this week sets the benchmark for the next cycle. Your next block will be built off where you are right now. Make this the high-water mark that the next block has to rise to meet.`,
+        sub:  `Close this block by raising the ceiling. Full effort, quality execution, nothing left behind. The athlete who enters the next block is shaped by how you finish this one. Finish it right.` }
     ]
   },
   finish: { phase: 'FINAL PUSH', icon: '🏁',
@@ -8660,7 +8724,15 @@ const _FOCUS_CONTEXT = {
       { body: `You're almost there. Not the time to slow down — the time to dig in and make these last sessions count. Everything you've built lands here.`,
         sub:  `The way you finish something says as much about you as the way you started it. Close this block with full effort and carry that into the next one.` },
       { body: `One week and this block is done. You started something and you're about to finish it — that alone puts you ahead of most people. Don't ease up now. End it the way it deserves.`,
-        sub:  `You'll rest after this. You'll recover and come back. But that comes after. Right now there's just this week. Give it what it needs and close it out.` }
+        sub:  `You'll rest after this. You'll recover and come back. But that comes after. Right now there's just this week. Give it what it needs and close it out.` },
+      { body: `You're about to finish something. That means more than you probably know right now. Most people don't finish training blocks. They fade, they skip, they start something else. You're not doing that.`,
+        sub:  `Whatever these last few sessions feel like, you're already further than most people get. The only thing left to do is complete it. Show up, do the work, and close this chapter.` },
+      { body: `Everything you carry into the next block comes from how you close this one. The momentum, the confidence, the habit of finishing. This week builds all of that. Take it seriously.`,
+        sub:  `Coming back from a properly finished block feels different than coming back from one you drifted out of. You'll feel it the moment you start the next one. Give yourself that advantage now.` },
+      { body: `Tired at the end of a block isn't a warning sign — it's proof you trained it properly. The fatigue you're feeling is confirmation that you gave this block what it needed. Now give it one more week.`,
+        sub:  `Don't let fatigue make the decisions for you this week. The tiredness is real and it's earned. But finishing well matters more than feeling fresh. There's rest on the other side. Push through to it.` },
+      { body: `The last week of a block deserves the same respect as the first. You showed up on day one ready to commit. Show up the same way now. The effort you put in this week is the period at the end of the sentence.`,
+        sub:  `Make these final sessions count. Not because something is on the line — because it's how you want to do things. Close what you started. Do it properly.` }
     ],
     build: [
       { body: `Everything you've put in over the last weeks is on the table right now. This is earned ground. Leave nothing unspent.`,
@@ -8670,7 +8742,15 @@ const _FOCUS_CONTEXT = {
       { body: `One final week. The body is tired, the mind is ready to be done. That tension is exactly what makes this week important. Train through it.`,
         sub:  `You've built something over the last weeks that belongs to you. This week is about honoring that investment. Give it what it deserves — one more full week.` },
       { body: `You're close enough to the end that it's tempting to ease off. That's the trap. The last week of a block is when you prove the rest of it wasn't just when it was easy.`,
-        sub:  `Great training blocks are defined by how they end. You started this one right. Close it the same way — full commitment, nothing left behind, every session counted.` }
+        sub:  `Great training blocks are defined by how they end. You started this one right. Close it the same way — full commitment, nothing left behind, every session counted.` },
+      { body: `You're about to empty the tank on this block. Not because you have to — because that's what finishing properly means. Everything you've built gets spent in the final week and then you rest.`,
+        sub:  `Don't save anything for the next block. Come into it fresh from a proper deload, not from holding back this week. Spend it all now and let the recovery do its job.` },
+      { body: `Training blocks are remembered by how they finish. Not just in results — in the story you tell yourself about who you are when things get hard. Make this ending one worth telling.`,
+        sub:  `There will be a moment this week where you decide how much of yourself to invest. Invest everything. The deload is coming. There's no reason to hold back.` },
+      { body: `Fatigue doesn't get a vote this week. You've built too much to let the accumulated tiredness of a hard block determine how you close it. Train through it. That's what this week is for.`,
+        sub:  `The mind quits before the body does — and that's especially true at the end of a long block. You've got more left than it feels like right now. Show up and find out.` },
+      { body: `There's a specific kind of pride that comes from finishing a full block properly. You started something weeks ago, showed up consistently, and now you're one week from the finish line. Earn the ending.`,
+        sub:  `These final sessions are a test of character as much as fitness. Come back from this block with nothing left on the table and carry that standard into the next one.` }
     ],
     edge: [
       { body: `The last week of a block is a test of will more than fitness. Your body has been here before. The only question is whether you show up to the standard you've held all block.`,
@@ -8680,7 +8760,15 @@ const _FOCUS_CONTEXT = {
       { body: `Great athletes close hard. The last week of a block is where you separate yourself from everyone who started the same thing and faded. Don't fade.`,
         sub:  `Every rep this week is a statement about who you are when it gets hard. Make the statement you want to make. This is the last chance to define this block on your terms.` },
       { body: `The standard you've held all block gets tested one final time this week. Not by the weights — by whether you show up on day 49 the same way you showed up on day one.`,
-        sub:  `Close it the same way you ran it — with intention, with effort, with nothing left to question. The block deserves a proper ending. Give it one.` }
+        sub:  `Close it the same way you ran it — with intention, with effort, with nothing left to question. The block deserves a proper ending. Give it one.` },
+      { body: `Finishing a block under accumulated fatigue is a skill. The athletes who do it consistently — who don't fade, don't manage down, don't ease off — are the ones who progress over the long term.`,
+        sub:  `Close this with the same precision you ran it. Full effort where full effort was always the standard. The fatigue is a condition, not a limit. Train through it.` },
+      { body: `High performers don't save anything for the last week — they give the last week everything. The rest and recovery is planned. The work is now. Don't protect energy the program has already scheduled to be replenished.`,
+        sub:  `Finish the block the way it deserves. Not because something is watching — because that's who you are. You started this at full commitment. Finish it the same way.` },
+      { body: `What carries over into the next block isn't just fitness — it's the standard you proved you could hold at the hardest point. Close this block by holding it one more week.`,
+        sub:  `The athlete who opens the next block is shaped by how you finish this one. Make the final week a statement the next block has to live up to. Set the bar high going out.` },
+      { body: `Nothing about this week should be left unresolved. Every rep, every set, every session — closed with full effort and full intention. Go into recovery with no asterisks on this block.`,
+        sub:  `A properly closed block means nothing held back, nothing to wonder about. You'll come back from deload with cleaner energy if you leave this week with nothing left. Finish it all the way.` }
     ]
   },
   deload: { phase: 'RECOVERY', icon: '🌊',
@@ -8692,7 +8780,15 @@ const _FOCUS_CONTEXT = {
       { body: `Your body has been absorbing stress for weeks. This is the week it actually gets to respond to it. Don't interrupt that process — lighter work and more sleep is exactly the right thing right now.`,
         sub:  `There's nothing to push through this week. The effort is in resting well — eating enough, sleeping enough, moving enough. Let your body do what it needs to do.` },
       { body: `If you've been going hard, this week might feel wrong — like you should be doing more. That feeling is normal and it's also wrong. Your body needs this week. Give it to it.`,
-        sub:  `Use this week to take care of what gets neglected in hard training. Sleep more. Eat well. Move easy. Come back feeling like a different person — because you will.` }
+        sub:  `Use this week to take care of what gets neglected in hard training. Sleep more. Eat well. Move easy. Come back feeling like a different person — because you will.` },
+      { body: `If lighter training feels like going backward, that's a sign your mind hasn't caught up to how training actually works yet. The lighter loads this week are the program doing its job. Let it.`,
+        sub:  `Growth doesn't happen during the hard sessions — it happens between them. This week is where the adaptation from the last several weeks gets locked in. You're gaining right now, even if it doesn't feel like it.` },
+      { body: `This week, sleep and food matter as much as the sessions. Eat enough, sleep more than usual, and move easily. Those things aren't extras — they're the training this week.`,
+        sub:  `Your body built something during the hard weeks. This week it gets to consolidate it. Every hour of good sleep is part of the program. Every good meal is part of the program. Take them seriously.` },
+      { body: `Here's what's happening right now: the stress from your hard training weeks is being converted into actual adaptation. Your muscles are repairing. Your nervous system is resetting. Your joints are recovering. Let it happen.`,
+        sub:  `Lighter loads this week aren't doing nothing — they're keeping the blood moving while your body does the real work. Move, but don't grind. Trust the process.` },
+      { body: `The next block will feel different than this one because of how you handle this week. Athletes who protect their recovery consistently come back stronger and more ready. Be that athlete.`,
+        sub:  `Rest well. Eat well. Come back next block feeling like a different person. That's not a figure of speech — your body literally will be in a different state. Give it the week it needs to get there.` }
     ],
     build: [
       { body: `Recovery isn't passive — it's when your body actually builds what you broke down in the hard weeks. Eat, sleep, and let the adaptation happen.`,
@@ -8702,7 +8798,15 @@ const _FOCUS_CONTEXT = {
       { body: `Every block you complete and recover from properly makes the next one better. This week is an investment in the quality of everything that comes after it. Take it seriously.`,
         sub:  `The adaptation from your hard weeks is being consolidated right now. Your nervous system, your muscles, your joints — they're all catching up. Give them the week they need.` },
       { body: `You've done enough training cycles to know how you feel coming back from a well-executed deload versus a skipped one. There's no comparison. Protect this week the same way you protect a peak week.`,
-        sub:  `Deloads aren't just physical recovery — they're mental recovery too. The accumulated pressure of hard training weeks needs release. This week provides that. Let yourself step back fully.` }
+        sub:  `Deloads aren't just physical recovery — they're mental recovery too. The accumulated pressure of hard training weeks needs release. This week provides that. Let yourself step back fully.` },
+      { body: `There's a specific kind of mental exhale that comes with a properly taken deload. The pressure is off, the intensity is down, and you're allowed to just move and breathe. That's recovery doing its job.`,
+        sub:  `Let yourself step back this week without guilt. The hard work is done and your body is processing it right now. The best thing you can contribute is rest, food, and easy movement.` },
+      { body: `Lighter weeks have a way of showing you things. How your body actually feels when it's not under load. What's tight, what's loose, what needs attention. Pay attention this week.`,
+        sub:  `Use the reduced training demand to check in with your body. Mobility, soreness, sleep quality. This information is useful for the next block. Recover well and arrive back with some clarity about what to address.` },
+      { body: `The next block will be built off where you are coming out of this one. Every day this week is an investment in the quality of what comes next. Recover well, eat well, sleep well. Those are the inputs.`,
+        sub:  `The returns from a well-executed deload are real. You'll feel the difference on day one of the next block. Protect this week and give yourself the advantage of a full recovery.` },
+      { body: `Deload weeks are a good time to remember why you train. Not the goal — the reason. Reconnect with what brought you here and why you keep showing up. The next block will be better if you arrive to it reconnected.`,
+        sub:  `You don't always have time to reflect when you're in the middle of hard work. Use the mental space this week creates. The purpose behind the training matters. Remind yourself of it.` }
     ],
     edge: [
       { body: `You've earned this week. The temptation to push is going to be there — ignore it. Every set you add to a deload is a set you're taking away from the next peak.`,
@@ -8712,7 +8816,15 @@ const _FOCUS_CONTEXT = {
       { body: `The best athletes recover as intentionally as they train. This week is as important as any other in the program. Treat it that way — structured rest, proper nutrition, quality sleep.`,
         sub:  `If you're serious about long-term performance, recovery weeks are sacred. They're not weakness — they're how you keep the ceiling rising. Protect this week and come back ready.` },
       { body: `Smart programming includes this week for a reason. The athletes who skip or cut short their deloads consistently underperform in the block that follows. You know this. Protect the week.`,
-        sub:  `Active recovery, quality sleep, good nutrition. That's the program this week. Treat it with the same intention you bring to the hard weeks and you'll arrive at the next block in the best possible shape.` }
+        sub:  `Active recovery, quality sleep, good nutrition. That's the program this week. Treat it with the same intention you bring to the hard weeks and you'll arrive at the next block in the best possible shape.` },
+      { body: `An intentional deload is precise work. The load is calibrated, the intensity is controlled, and the recovery stimulus is specific. This isn't random lightness — it's structured recovery. Run it with the same intention you bring to hard weeks.`,
+        sub:  `Don't freelance the deload. Trust the reduced volume and intensity for exactly what it is: a stimulus your body needs. Give it what the program asks for, nothing more, nothing less.` },
+      { body: `Athletes who recover well consistently outperform athletes who don't over any meaningful time frame. You know this. Protect this week the same way you protect a peak week — because it matters just as much.`,
+        sub:  `The data on properly recovered athletes is unambiguous. You come back stronger, sharper, and more capable. That doesn't happen by accident. It happens because you took the recovery seriously. Do that now.` },
+      { body: `Use this week to audit what the block asked of you. What held up, what didn't. Where you're carrying unnecessary tension. What needs attention before the next block starts.`,
+        sub:  `Your body tells you things when it's not under load that it can't communicate when it is. Listen this week. That information shapes how you build the next block and what you bring to it.` },
+      { body: `You should arrive at the first session of the next block feeling like a sharper version of the athlete who finished this one. That version is built this week — in how you sleep, how you eat, how you move, how you rest.`,
+        sub:  `Protect the week. Keep the intensity down, the recovery up, and your focus on showing up to the next block fully recalibrated. What you invest in recovery returns in performance. Every time.` }
     ]
   }
 };
