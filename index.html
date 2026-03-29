@@ -8642,7 +8642,15 @@ const _FOCUS_CONTEXT = {
       { body: `Consistency through the middle is a skill. You've developed it. Most athletes haven't. The gap between you and people who perform inconsistently gets built right here, in these weeks.`,
         sub:  `You don't need to feel motivated. You need to execute. The two aren't the same and you know that. Show up, do the work, maintain the standard. That's all there is.` },
       { body: `You've logged enough sessions to know that peak performance isn't built in peak week — it's built in weeks like this one. Every rep you execute cleanly right now is an investment in what's coming.`,
-        sub:  `The middle is where most people negotiate with themselves. Keep the standard high and trust that the output will match the input. This is what separates athletes who perform sometimes from those who perform always.` }
+        sub:  `The middle is where most people negotiate with themselves. Keep the standard high and trust that the output will match the input. This is what separates athletes who perform sometimes from those who perform always.` },
+      { body: `The adaptation phase is where your precision compounds. Every detail you hold to this week multiplies across the sessions that follow. This is where athletes earn the quality their peak week demands.`,
+        sub:  `Treat each session this week like a rehearsal for peak intensity. The habits you reinforce now are the ones that show up under pressure. Make them worth relying on.` },
+      { body: `You're in the part of training where the difference between good and great is invisible to everyone but you. The extra focus on tempo, the attention to positioning — it all shows up later. Keep the standard.`,
+        sub:  `Nobody sees the work you're putting into the details right now. That's fine. You'll see it when peak week arrives and everything runs clean. The middle is where that gets built.` },
+      { body: `Adaptation at your level isn't about doing more — it's about doing better. Every session this week is a chance to refine what the peak weeks will demand at full intensity. Use them.`,
+        sub:  `The athletes who consistently outperform expectations are the ones who treat the middle weeks as preparation, not filler. You know the difference. Execute accordingly.` },
+      { body: `The gap between your current output and your ceiling is being closed right now, in these sessions. Not dramatically — methodically. That's how adaptation works at your level. Trust the process and keep executing.`,
+        sub:  `Stay locked in on the quality of each rep this week. The cumulative effect of precise mid-block training is what makes peak week feel like an expression instead of a test.` }
     ]
   },
   peak: { phase: 'PEAK BLOCK', icon: '🔺',
@@ -8851,7 +8859,8 @@ function getContextWord() {
   let phase = isDeload ? 'deload' : week >= 7 ? 'finish' : week >= 5 ? 'peak' : week >= 3 ? 'mid' : 'early';
   const lane = getPersonaLane();
   const pool = _FOCUS_POOLS[phase][lane];
-  const daySeed     = Math.floor(Date.now() / 86400000);
+  const now = new Date();
+  const daySeed     = Math.floor(new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 86400000);
   const cycleOffset = ((state.cycleCount || 1) - 1) * 11; // prime offset shifts word starting position each cycle
   const variants    = _FOCUS_CONTEXT[phase][lane];
   const expVariant  = Math.floor(daySeed / 7) % variants.length; // explanation rotates weekly
@@ -8862,7 +8871,9 @@ function getContextWord() {
 function showStatInfo(type) {
   const days = state.trainingDaysPerWeek || 4;
   const threshold = Math.ceil(days * 0.75);
-  const sessions = state.totalSessions;
+  const sessions = (state.history || []).filter(entry =>
+    Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
+  ).length;
   const week = state.weekCount;
   const streak = state.streak || 0;
   const cycle = state.cycleCount || 1;
@@ -9119,16 +9130,16 @@ function renderHome() {
 
   const _fw = getContextWord();
   if (focusWordEl) focusWordEl.textContent = _fw.word;
-  streakEl.textContent = state.streak || 0;
+  if (streakEl) streakEl.textContent = state.streak || 0;
 
   if (isPaused) {
     if (focusWordEl) focusWordEl.style.color = 'var(--warning)';
-    streakEl.style.color = 'var(--warning)';
+    if (streakEl) streakEl.style.color = 'var(--warning)';
     if (focusLabelEl) { focusLabelEl.textContent = '⏸ PAUSED'; focusLabelEl.style.color = 'var(--warning)'; }
     if (streakLabelEl) { streakLabelEl.textContent = '⏸ STREAK PAUSED'; streakLabelEl.style.color = 'var(--warning)'; }
   } else {
     if (focusWordEl) focusWordEl.style.color = 'var(--cream)';
-    streakEl.style.color = 'var(--cream)';
+    if (streakEl) streakEl.style.color = 'var(--cream)';
     if (focusLabelEl) { focusLabelEl.textContent = "TODAY'S FOCUS"; focusLabelEl.style.color = ''; }
     if (streakLabelEl) { streakLabelEl.textContent = 'Week Streak'; streakLabelEl.style.color = ''; }
   }
