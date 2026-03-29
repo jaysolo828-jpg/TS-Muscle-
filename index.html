@@ -902,7 +902,7 @@
 .rpe-info-btn {
     background: none;
     border: none;
-    color: var(--gray-light);
+    color: var(--cream);
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 12px;
     font-weight: 700;
@@ -915,7 +915,7 @@
     gap: 3px;
     -webkit-tap-highlight-color: transparent;
   }
-  .rpe-info-btn:active { color: var(--cream); }
+  .rpe-info-btn:active { color: var(--red-text); }
   .prev-session-btn {
     background: none;
     border: none;
@@ -972,8 +972,8 @@
     max-height: 0;
     opacity: 0;
     transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.35s ease;
-    background: var(--dark3);
-    border-top: 1px solid var(--dark4);
+    background: var(--dark2);
+    border-top: 1px solid rgba(204,32,39,0.15);
     display: flex; align-items: center; gap: 6px;
     padding: 0 16px;
     flex-wrap: nowrap;
@@ -985,21 +985,21 @@
   }
   .rpe-nudge-label {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--gray-light); white-space: nowrap; margin-right: 4px; flex-shrink: 0;
+    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--red-text); white-space: nowrap; margin-right: 4px; flex-shrink: 0;
   }
   .rpe-nudge-pills {
     display: flex; gap: 5px; flex-wrap: nowrap; overflow-x: auto; flex: 1;
   }
   .rpe-nudge-btn {
-    background: var(--dark4); border: 1px solid #3a3a3a;
-    color: var(--white); border-radius: 8px;
-    font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600;
-    padding: 6px 12px; cursor: pointer; transition: all 0.15s;
+    background: var(--dark4); border: 1px solid rgba(204,32,39,0.25);
+    color: var(--cream); border-radius: 8px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 5px 10px; cursor: pointer; transition: all 0.15s;
     white-space: nowrap; flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  .rpe-nudge-btn:active { background: var(--red); border-color: var(--red-text); transform: scale(0.92); }
+  .rpe-nudge-btn:active { background: var(--red); border-color: var(--red-text); color: var(--cream); transform: scale(0.92); }
   .rpe-nudge-dismiss {
     flex-shrink: 0; background: none; border: none;
     color: var(--gray); font-size: 15px; cursor: pointer; padding: 4px 4px 4px 8px;
@@ -1069,25 +1069,28 @@
     background: var(--dark3);
     border: 1px solid var(--dark4);
     border-radius: 8px;
-    color: var(--white);
+    color: var(--cream);
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    padding: 8px 10px;
+    padding: 6px 8px;
     width: 100%;
     outline: none;
     cursor: pointer;
     text-align: center;
     text-align-last: center;
     transition: border-color 0.2s, color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
   }
   .rpe-select[data-empty="true"] {
-    color: #888;
+    color: var(--gray);
     border-color: var(--dark4);
   }
   .rpe-select[data-empty="false"] {
-    color: var(--white);
-    border-color: rgba(196,125,0,0.5);
+    color: var(--red-text);
+    border-color: rgba(204,32,39,0.4);
+    background: rgba(204,32,39,0.08);
   }
 
   /* Active nav dot */
