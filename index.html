@@ -9642,7 +9642,9 @@ function renderHome() {
   const realSessions = (state.history || []).filter(entry =>
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
   ).length;
-  document.getElementById('stat-sessions').textContent = realSessions;
+  const sessionsEl = document.getElementById('stat-sessions');
+  sessionsEl.textContent = realSessions;
+  sessionsEl.style.fontSize = realSessions >= 1000 ? '26px' : '';
 
   // Profile completeness: notification dot
   updateProfileNotifyDot();
