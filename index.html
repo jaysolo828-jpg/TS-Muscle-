@@ -5550,7 +5550,7 @@ function getRPEAdjustedVolumeTarget(muscle, weekNum) {
 //   A. Avg session RPE >= 9 for 3 consecutive sessions targeting that muscle.
 //   B. Weekly sets for that muscle have reached 85%+ of MRV AND avg RPE this
 //      week is >= 9 for that muscle.
-// Suppressed during deload weeks, rest weeks, and the 2-session manual weight
+// Suppressed during deload weeks, rest weeks, and the manual weight
 // adjustment period. Only evaluates sessions logged after state.setReductionEnabledAt
 // so historical data from before this feature shipped is never analyzed.
 
@@ -10984,13 +10984,13 @@ function getProgressiveWeight(exId, dayId) {
       // (at a raised threshold — see checkAutoregulation call below).
       if (newWeight > lastWeight) {
         newWeight = lastWeight;
-        reason = `Adj period (${_manualAdj.sessionsLeft} session${_manualAdj.sessionsLeft !== 1 ? 's' : ''} left). Holding after manual increase.`;
+        reason = `Adj period — holding after manual increase. Can clear early with strong performance.`;
       }
     } else {
       // 'down': suppress BOTH increases and further decreases.
       if (newWeight !== lastWeight) {
         newWeight = lastWeight;
-        reason = `Adj period (${_manualAdj.sessionsLeft} session${_manualAdj.sessionsLeft !== 1 ? 's' : ''} left). Holding after manual decrease.`;
+        reason = `Adj period — holding after manual decrease. Can clear early with strong performance.`;
       }
     }
   }
@@ -11067,8 +11067,8 @@ function buildOverloadHint(exId) {
   if (info.inAdjustmentPeriod && !info.changed) {
     const { direction, sessionsLeft } = info.inAdjustmentPeriod;
     const _adjLabel = direction === 'up'
-      ? `You increased weight manually last session. Holding increase suggestions for ${sessionsLeft} more session${sessionsLeft !== 1 ? 's' : ''} while you adapt.`
-      : `You decreased weight manually last session. Holding all suggestions for ${sessionsLeft} more session${sessionsLeft !== 1 ? 's' : ''}. No further push up or down.`;
+      ? `You increased weight manually. Holding increase suggestions while you adapt — can clear early if reps and effort look good.`
+      : `You decreased weight manually. Holding all suggestions while you settle in — can clear early once you're hitting reps at low effort.`;
     const _adjIcon = direction === 'up'
       ? `<polyline points="18 15 12 9 6 15"/>`
       : `<polyline points="18 9 12 15 6 9"/>`;
@@ -13293,7 +13293,7 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
   // Manual adjustment period
   var manualAdj = _getManualAdj(exId, activeSession.dayId);
   var manualAdjStr = manualAdj
-    ? 'Yes — weight recently adjusted ' + manualAdj.direction + ' (' + manualAdj.sessionsLeft + ' adjustment session' + (manualAdj.sessionsLeft !== 1 ? 's' : '') + ' remaining)'
+    ? 'Yes — weight recently adjusted ' + manualAdj.direction + ' (can clear early if reps and effort look good)'
     : 'No';
 
   // Last session's full performance on this exercise
@@ -16077,7 +16077,7 @@ function finalizeEndSession(save) {
 
     // ── Manual weight adjustment period bookkeeping ───────────────────────
     // 1. Tick down any adjustment periods already in progress for this day's
-    //    exercises (this session counts against the 2-session window).
+    //    exercises (this session counts against the adjustment window).
     const _adjExIds = Object.keys(activeSession.sets || {});
     _tickManualAdjPeriods(activeSession.dayId, _adjExIds);
     // 2. Commit any new manual-adjustment signals detected during this session.
