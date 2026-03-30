@@ -11409,6 +11409,34 @@ function getIncrement(size) {
   return 5;
 }
 
+// Returns a multiplier (0.75 / 1.0 / 1.25) that scales the progression increment
+// based on how fast weight has actually been moving over the last ~2 mesocycles.
+// Stalled velocity → smaller jumps. Fast velocity → larger jumps OK.
+// Returns 1.0 (no change) when history is too shallow to judge.
+function _getProgressionVelocityMultiplier(exId, dayId) {
+  const sessions = [...(state.history || [])]
+    .reverse()
+    .filter(h => h.dayId === dayId && h.sets?.[exId] && !h.isDeload && !h.travelMode)
+    .slice(0, 8);
+  if (sessions.length < 4) return 1.0;
+
+  const weights = sessions.map(h => {
+    const sets = (h.sets[exId] || []).filter(s => s.done && !s.coachRemoved && parseFloat(s.weight) > 0);
+    return sets.length ? parseFloat(sets[sets.length - 1].weight) : null;
+  }).filter(w => w !== null);
+  if (weights.length < 4) return 1.0;
+
+  // Average session-to-session gain (array is newest-first)
+  const changes = [];
+  for (let i = 0; i < weights.length - 1; i++) changes.push(weights[i] - weights[i + 1]);
+  const avgChange = changes.reduce((a, b) => a + b, 0) / changes.length;
+
+  const nominalInc = getIncrement('medium');
+  if (avgChange <= 0)                return 0.75; // stalled — reduce jump size
+  if (avgChange >= nominalInc * 1.5) return 1.25; // fast mover — larger jumps OK
+  return 1.0;
+}
+
 function getProgressiveWeight(exId, dayId) {
   if (state.progressiveOverload === false) {
     if (state.autoPopulateWeights !== false && state.startingWeights?.[exId]) {
@@ -11685,6 +11713,16 @@ function getProgressiveWeight(exId, dayId) {
     const _decr = lastWeight - newWeight;
     const _scale = _expLevel === 'beginner' ? 0.75 : _expLevel === 'advanced' ? 1.15 : 1;
     newWeight = lastWeight - _decr * _scale;
+  }
+  // Velocity scaling — applies only to increases; decreases remain RPE-driven.
+  // Looks at actual weight movement over the last ~2 mesocycles and scales the
+  // increment smaller if gains have stalled, larger if the user is progressing fast.
+  if (newWeight > lastWeight) {
+    const _velMult = _getProgressionVelocityMultiplier(exId, dayId);
+    if (_velMult !== 1.0) {
+      const _velIncr = newWeight - lastWeight;
+      newWeight = lastWeight + _velIncr * _velMult;
+    }
   }
   // Round to nearest 2.5 lbs, never below 5
   newWeight = Math.max(5, Math.round(newWeight / 2.5) * 2.5);
@@ -17198,7 +17236,7 @@ function checkRotationBanner() {
   const dismissed = state.rotationDismissedAtCycle === currentCycle;
   const week = state.weekCount || 1;
   const eligible = getExercisesDueForRotation().length > 0;
-  const show = week >= 5 && !dismissed && eligible && !state.isDeloadWeek && !state.isRestWeek;
+  const show = !dismissed && eligible && !state.isDeloadWeek && !state.isRestWeek;
   banner.style.display = show ? 'block' : 'none';
 }
 
@@ -17230,7 +17268,20 @@ function _buildRotationCard(ex, dayName, cfg) {
   // Issue B: filter alts to those tagged for this muscle group (or untagged — pass-through).
   const filteredAlts = (ex.alts || []).filter(a => !a.muscle || a.muscle === parentMuscle);
   if (!filteredAlts.length) return null;
-  const suggestedAlt = filteredAlts[0];
+  // Prefer an alt that uses different equipment from the current exercise AND has a YouTube link.
+  // Falls back to different equipment (no link requirement), then first in list.
+  const _currentEquip = ex.equipment || '';
+  const suggestedAlt = (
+    filteredAlts.find(a => {
+      const eq = _TRAVEL_ALT_EQ[a.name] || '';
+      return eq && eq !== _currentEquip && a.ytLink;
+    }) ||
+    filteredAlts.find(a => {
+      const eq = _TRAVEL_ALT_EQ[a.name] || '';
+      return eq && eq !== _currentEquip;
+    }) ||
+    filteredAlts[0]
+  );
 
   const mColor = parentMuscle ? MUSCLE_COLORS[parentMuscle] : null;
   const musclePill = parentMuscle && mColor
@@ -17492,6 +17543,9 @@ function confirmRotationSwaps() {
       const ex = day.exercises.find(e => e.id === exId);
       if (ex) {
         ex.name = newName;
+        // Remove the newly selected exercise from its own alts pool so the
+        // next rotation cycle doesn't suggest the current exercise as a swap.
+        ex.alts = (ex.alts || []).filter(a => a.name !== newName);
         ex.cycleIntroduced = currentCycle;
         swapCount++;
         // Also write to _obSlots so selections survive completeOnboarding()'s program reset
