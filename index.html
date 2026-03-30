@@ -9822,7 +9822,8 @@ function renderHome() {
   // Skip button: text varies for scheduled (week 7/postponed) vs. early signal banners
   const _isScheduledBannerContext = (state.weekCount === 7 && !state.deloadPostponedToWeek) || (state.deloadPostponedToWeek && state.weekCount === state.deloadPostponedToWeek);
   const _skipBtnLabel = _isScheduledBannerContext ? 'NOT NOW. SKIP THIS CYCLE.' : 'NOT NOW';
-  const _skipBtn = `<div style="margin-top:12px;"><button onclick="event.stopPropagation();dismissDeloadSuggestion(true);" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;padding:7px 16px;border-radius:8px;-webkit-tap-highlight-color:transparent;">${_skipBtnLabel}</button></div>`;
+  const _reviewBtn = `<button onclick="event.stopPropagation();openDeloadModal();" style="background:linear-gradient(135deg,var(--dark3),#2a1f00);border:2px solid var(--warning);color:var(--warning);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;padding:7px 16px;border-radius:8px;-webkit-tap-highlight-color:transparent;">REVIEW OPTIONS</button>`;
+  const _skipBtn = `<div style="margin-top:12px;display:flex;gap:10px;align-items:center;justify-content:center;">${_reviewBtn}<button onclick="event.stopPropagation();dismissDeloadSuggestion(true);" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;padding:7px 16px;border-radius:8px;-webkit-tap-highlight-color:transparent;">${_skipBtnLabel}</button></div>`;
 
   if (deloadBanner && state.isRestWeek) {
     deloadBanner.style.display = 'none';
@@ -9878,7 +9879,7 @@ function renderHome() {
       deloadBanner.querySelector('.deload-banner').onclick = null;
     } else {
       deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK · WEEK 7';
-      deloadBanner.querySelector('.deload-text').innerHTML = 'Week 7. Your scheduled lighter week. Weights drop to ' + Math.round(((function(){ var _e = getEffectiveExperienceLevel(); return _e === 'beginner' ? 0.80 : _e === 'advanced' ? 0.70 : 0.75; })()) * 100) + '% and restore automatically. Tap to choose how to handle it.' + _skipBtn;
+      deloadBanner.querySelector('.deload-text').innerHTML = 'Week 7. Your scheduled lighter week. Weights drop to ' + Math.round(((function(){ var _e = getEffectiveExperienceLevel(); return _e === 'beginner' ? 0.80 : _e === 'advanced' ? 0.70 : 0.75; })()) * 100) + '% and restore automatically.' + _skipBtn;
       deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
       deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
     }
@@ -9891,7 +9892,7 @@ function renderHome() {
       deloadBanner.querySelector('.deload-banner').onclick = null;
     } else {
       deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY WEEK: NOW DUE';
-      deloadBanner.querySelector('.deload-text').innerHTML = 'You moved your recovery week here. Tap to choose how to handle it.' + _skipBtn;
+      deloadBanner.querySelector('.deload-text').innerHTML = 'You moved your recovery week here.' + _skipBtn;
       deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
       deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
     }
@@ -9914,13 +9915,13 @@ function renderHome() {
   } else if (deloadBanner && _showPlateauBanner) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'PROGRESSION PLATEAU';
-    deloadBanner.querySelector('.deload-text').innerHTML = `No weight increases across <strong>${_plateau.stalledCount} of ${_plateau.totalDays} training days</strong>. A lighter week clears the accumulated fatigue and gets things moving again. Tap to review.` + _skipBtn;
+    deloadBanner.querySelector('.deload-text').innerHTML = `No weight increases across <strong>${_plateau.stalledCount} of ${_plateau.totalDays} training days</strong>. A lighter week clears the accumulated fatigue and gets things moving again.` + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner && _showLongRunBanner) {
     deloadBanner.style.display = 'block';
     deloadBanner.querySelector('.deload-title').textContent = 'RECOVERY DUE SOON';
-    deloadBanner.querySelector('.deload-text').innerHTML = `${_weeksSinceDeload} weeks of solid training without a break. A lighter week now keeps the momentum going. Tap to review.` + _skipBtn;
+    deloadBanner.querySelector('.deload-text').innerHTML = `${_weeksSinceDeload} weeks of solid training without a break. A lighter week now keeps the momentum going.` + _skipBtn;
     deloadBanner.querySelector('.deload-icon').innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
     deloadBanner.querySelector('.deload-banner').onclick = openDeloadModal;
   } else if (deloadBanner) {
