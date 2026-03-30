@@ -4857,7 +4857,9 @@ const DEFAULT_PROGRAM = [
           { name: 'Single Leg Calf Raise (Standing)', note: 'Bodyweight on step', ytLink: 'https://youtu.be/lUeI-IwVXFM' },
           { name: 'Seated Calf Raise', note: 'Targets soleus more', ytLink: 'https://youtu.be/JbyjNymZOt0' },
           { name: 'Smith Machine Calf Raise', note: 'Loaded and stable', ytLink: 'https://youtu.be/lUeI-IwVXFM' },
-          { name: 'Jump Rope (Calf Finisher)', note: '2–3 min continuous', ytLink: 'https://youtu.be/FJmRQ5iTXKE' }
+          { name: 'Jump Rope (Calf Finisher)', note: '2–3 min continuous', ytLink: 'https://youtu.be/FJmRQ5iTXKE' },
+          { name: 'DB Standing Calf Raise', note: 'Dumbbells at sides, step optional for extra ROM', ytLink: 'https://youtu.be/lUeI-IwVXFM' },
+          { name: 'Cable Calf Raise', note: 'Belt attachment, constant tension through full ROM', ytLink: 'https://youtu.be/lUeI-IwVXFM' }
         ]
       }
     ]
@@ -4889,7 +4891,8 @@ const DEFAULT_PROGRAM = [
           { name: 'Pull-Up / Assisted Pull-Up', note: 'Bodyweight king of back', ytLink: 'https://youtu.be/GSYYXRjtkUQ' },
           { name: 'Weighted Pull-Up', note: 'Add belt or vest for overload', ytLink: 'https://youtu.be/XtwelwPhcaw' },
           { name: 'Close Grip Pulldown', note: 'Neutral grip, deeper lat contraction', ytLink: 'https://youtu.be/CAwf7n6Luuc' },
-          { name: 'Banded Pulldown', note: 'Home-friendly lat builder', ytLink: 'https://youtu.be/XB_7En-zf_M' }
+          { name: 'Banded Pulldown', note: 'Home-friendly lat builder', ytLink: 'https://youtu.be/XB_7En-zf_M' },
+          { name: 'Hammer Strength Pulldown', note: 'Plate-loaded machine, isolateral option available', ytLink: 'https://youtu.be/jDUibQcjOzI' }
         ]
       },
       { id: 'db-row', name: 'Single Arm DB Row', sets: 3, reps: '10–12', rest: '90 sec',
@@ -4966,7 +4969,9 @@ const DEFAULT_PROGRAM = [
           { name: 'Step-Up (DB)', note: 'Functional single leg press', ytLink: 'https://youtu.be/dQqApCGd5Ss' },
           { name: 'Pistol Squat (Assisted)', note: 'Advanced unilateral squat', ytLink: 'https://youtu.be/bH3mRwnAN88' },
           { name: 'Forward Lunge (DB)', note: 'Classic lunge for quad and glute balance', ytLink: 'https://youtu.be/D7KaRcUTQeE' },
-          { name: 'Lateral Lunge (DB)', note: 'Side lunge hits adductors and glutes', ytLink: 'https://youtu.be/R8jArZG2J6Q' }
+          { name: 'Lateral Lunge (DB)', note: 'Side lunge hits adductors and glutes', ytLink: 'https://youtu.be/R8jArZG2J6Q' },
+          { name: 'Smith Machine Split Squat', note: 'Rear foot elevated, fixed path reduces balance demand', ytLink: 'https://youtu.be/m2DiSYKPzqk' },
+          { name: 'Hack Squat Machine', note: 'Machine squat, excellent quad isolation', ytLink: 'https://youtu.be/m2DiSYKPzqk' }
         ]
       },
       { id: 'leg-ext-b', name: 'Leg Extension (Machine)', sets: 3, reps: '12–15', rest: '60 sec',
@@ -5013,7 +5018,9 @@ const DEFAULT_PROGRAM = [
           { name: 'Leg Press Calf Raise', note: 'Use bottom of leg press', ytLink: 'https://youtu.be/lUeI-IwVXFM' },
           { name: 'Single Leg Calf Raise', note: 'Bodyweight on step', ytLink: 'https://youtu.be/lUeI-IwVXFM' },
           { name: 'Smith Machine Calf Raise', note: 'Loaded and stable', ytLink: 'https://youtu.be/lUeI-IwVXFM' },
-          { name: 'Jump Rope Calf Finisher', note: '2–3 min continuous', ytLink: 'https://youtu.be/FJmRQ5iTXKE' }
+          { name: 'Jump Rope Calf Finisher', note: '2–3 min continuous', ytLink: 'https://youtu.be/FJmRQ5iTXKE' },
+          { name: 'DB Standing Calf Raise', note: 'Dumbbells at sides, step optional for extra ROM', ytLink: 'https://youtu.be/lUeI-IwVXFM' },
+          { name: 'Cable Calf Raise', note: 'Belt attachment, constant tension through full ROM', ytLink: 'https://youtu.be/lUeI-IwVXFM' }
         ]
       }
     ]
@@ -5136,6 +5143,8 @@ const BSS_EXERCISE = {
     { name: 'Goblet Squat',            note: 'Bilateral, beginner-friendly',                    ytLink: 'https://youtu.be/MeIiIdhvXT4' },
     { name: 'Pistol Squat (Assisted)', note: 'Advanced single-leg squat with support',          ytLink: 'https://youtu.be/bH3mRwnAN88' },
     { name: 'Glute Isolator Machine',       note: 'Precor kneeling machine. Switch to isolation if balance is limiting', ytLink: '' },
+    { name: 'Smith Machine Split Squat',   note: 'Rear foot elevated, fixed path reduces balance demand',              ytLink: 'https://youtu.be/m2DiSYKPzqk' },
+    { name: 'Hack Squat Machine',          note: 'Machine squat, excellent quad isolation',                             ytLink: 'https://youtu.be/m2DiSYKPzqk' },
   ]
 };
 const HIP_ABDUCTION_EXERCISE = {
@@ -5275,7 +5284,7 @@ var _TRAVEL_ALT_EQ = {
     'DB Hip Thrust':'dumbbell','Dumbbell Hip Thrust':'dumbbell',
     'Leg Press Calf Raise':'machine','Single Leg Calf Raise (Standing)':'bodyweight',
     'Seated Calf Raise':'machine','Smith Machine Calf Raise':'smith',
-    'DB Standing Calf Raise':'dumbbell','Dumbbell Standing Calf Raise':'dumbbell',
+    'DB Standing Calf Raise':'dumbbell','Dumbbell Standing Calf Raise':'dumbbell','Cable Calf Raise':'cable',
     // upper B
     'Cable Row (Seated)':'cable','T-Bar Row':'barbell','Pendlay Row':'barbell',
     'Barbell Bent Over Row':'barbell','Inverted Row':'bodyweight',
@@ -5285,7 +5294,7 @@ var _TRAVEL_ALT_EQ = {
     'Wide Grip Pulldown':'cable','Neutral Grip Pulldown':'cable',
     'Single Arm Pulldown':'cable','Straight Arm Pulldown':'cable',
     'Pull-Up / Assisted Pull-Up':'bodyweight','Weighted Pull-Up':'bodyweight',
-    'Close Grip Pulldown':'cable','Banded Pulldown':'bands','DB Pullover':'dumbbell','Dumbbell Pullover (Lat Focus)':'dumbbell',
+    'Close Grip Pulldown':'cable','Banded Pulldown':'bands','Hammer Strength Pulldown':'machine','DB Pullover':'dumbbell','Dumbbell Pullover (Lat Focus)':'dumbbell',
     'Single Arm Cable Row':'cable','Chest-Supported DB Row':'dumbbell','Renegade Row':'dumbbell',
     'Barbell Curl':'barbell','DB Curl':'dumbbell','Cable Curl':'cable',
     'Hammer Curl':'dumbbell','Incline DB Curl':'dumbbell','Reverse Curl':'barbell',
@@ -5299,7 +5308,7 @@ var _TRAVEL_ALT_EQ = {
     'Wide Stance Barbell Squat':'barbell','Good Morning':'barbell',
     'Stiff-Leg Deadlift':'barbell','Bilateral Leg Press (narrow)':'machine',
     'Reverse Lunge (DB)':'dumbbell','Forward Lunge (DB)':'dumbbell',
-    'Pistol Squat (Assisted)':'bodyweight','Lateral Lunge (DB)':'dumbbell',
+    'Pistol Squat (Assisted)':'bodyweight','Lateral Lunge (DB)':'dumbbell','Smith Machine Split Squat':'smith',
     'Lying Hamstring Curl':'machine','Swiss Ball Leg Curl':'bodyweight','Banded Nordic Curl':'bands',
     'Single Leg RDL':'dumbbell',
     'Hip Thrust (Barbell)':'barbell','Glute Bridge':'dumbbell',
