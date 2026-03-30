@@ -3247,8 +3247,8 @@
 <!-- ============================================================
      SPLIT TYPE MODAL
      ============================================================ -->
-<div id="split-type-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; overflow:hidden;">
-  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:460px; border:1px solid var(--dark3); max-height:100%; display:flex; flex-direction:column; overflow:hidden;">
+<div id="split-type-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:12px;">
+  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:460px; border:1px solid var(--dark3); display:flex; flex-direction:column; overflow:hidden;">
     <!-- Sticky header -->
     <div style="padding:20px 24px 12px; flex-shrink:0;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
@@ -23568,7 +23568,10 @@ function openSplitTypeModal() {
     activeBtn.classList.add('selected');
     applySplitButtonColor(activeBtn, pendingSplitType, false);
   }
-  document.getElementById('split-type-modal').style.display = 'flex';
+  const modal = document.getElementById('split-type-modal');
+  modal.style.display = 'flex';
+  const inner = modal.querySelector('div');
+  inner.style.maxHeight = (window.innerHeight - 24) + 'px';
 }
 
 function closeSplitTypeModal() {
