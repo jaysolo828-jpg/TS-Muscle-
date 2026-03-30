@@ -9828,9 +9828,11 @@ function renderHome() {
   // Weeks 1-4 are the volume-building phase — set reduction handles any approaching
   // limits there. Only Weeks 5-6 (weekCount 5 or 6) are valid windows.
   const _showMRVBanner = _mrvApproaching.length > 0 && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !state.deloadPostponedToWeek && !_earlyDismissedThisCycle && (state.weekCount || 1) >= 5 && !_mrvBannerDismissedThisLoad;
-  const _showPlateauBanner = _plateau.stalled && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_earlyDismissedThisCycle;
+  // Plateau and long-run banners gated to Week 5+ — earlier weeks are still
+  // building volume and calibrating weights, so stalls are normal, not signals.
+  const _showPlateauBanner = _plateau.stalled && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_earlyDismissedThisCycle && (state.weekCount || 1) >= 5;
   const _longRunBannerThreshold = (function() { const _e = getEffectiveExperienceLevel(); return _e === 'beginner' ? 6 : _e === 'advanced' ? 4 : 5; })();
-  const _showLongRunBanner = !_showPlateauBanner && !_showMRVBanner && _weeksSinceDeload >= _longRunBannerThreshold && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_earlyDismissedThisCycle;
+  const _showLongRunBanner = !_showPlateauBanner && !_showMRVBanner && _weeksSinceDeload >= _longRunBannerThreshold && !state.isDeloadWeek && !state.isRestWeek && state.weekCount !== 7 && !_earlyDismissedThisCycle && (state.weekCount || 1) >= 5;
   // Skip button: text varies for scheduled (week 7/postponed) vs. early signal banners
   const _isScheduledBannerContext = (state.weekCount === 7 && !state.deloadPostponedToWeek) || (state.deloadPostponedToWeek && state.weekCount === state.deloadPostponedToWeek);
   const _skipBtnLabel = _isScheduledBannerContext ? 'NOT NOW. SKIP THIS CYCLE.' : 'NOT NOW';
