@@ -3240,9 +3240,12 @@
 <!-- ============================================================
      SPLIT TYPE MODAL
      ============================================================ -->
-<div id="split-type-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid var(--dark3);">
-    <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">SPLIT TYPE</div>
+<div id="split-type-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; overflow-y:auto; padding:20px;">
+  <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; margin:0 auto; border:1px solid var(--dark3);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+      <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px;">SPLIT TYPE</div>
+      <button onclick="closeSplitTypeModal()" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:36px; height:36px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">✕</button>
+    </div>
     <div style="font-size:13px; color:var(--gray); margin-bottom:16px; line-height:1.6;">Your workout days will be restructured. Your history and weights are preserved. Any custom exercise swaps will reset.</div>
 
     <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
