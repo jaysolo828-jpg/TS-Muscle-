@@ -22512,6 +22512,42 @@ function migrateSessionCount() {
   localStorage.setItem('ts-session-count-migrated', '1');
 }
 
+// One-time migration: fix weekCount inflated by the Sat→Sun double-rollover bug.
+// A session-based rollover on Saturday followed by a calendar-based rollover on
+// Sunday caused weekCount to advance twice in 24 hours. Detect and correct by
+// deriving the expected weekCount from session history.
+function migrateDoubleRollover() {
+  if (localStorage.getItem('ts-double-rollover-fixed')) return;
+  if (!state.history || state.history.length < 4) {
+    localStorage.setItem('ts-double-rollover-fixed', '1');
+    return;
+  }
+
+  const _daysPerWeek = state.trainingDaysPerWeek || state.program?.length || 4;
+  const _cycle = state.cycleCount || 1;
+  // Count sessions in the current cycle only
+  const _cycleSessions = state.history.filter(e => e.cycleNum === _cycle || (!e.cycleNum && _cycle === 1)).length;
+  // Expected week = floor(sessions / daysPerWeek) + 1, capped at 8
+  const _expectedWeek = Math.max(1, Math.min(8, Math.floor(_cycleSessions / _daysPerWeek) + 1));
+
+  // Only correct if current weekCount is higher than expected (inflated)
+  if ((state.weekCount || 1) > _expectedWeek) {
+    const _was = state.weekCount;
+    state.weekCount = _expectedWeek;
+    // Also correct weeksSinceDeload if it was inflated
+    if (state.weeksSinceDeload > 0) {
+      state.weeksSinceDeload = Math.max(0, state.weeksSinceDeload - (_was - _expectedWeek));
+    }
+    // Clear any deload state that fired due to the false week 7
+    if (_was >= 7 && _expectedWeek < 7) {
+      delete state.deloadDismissedAtCycle;
+      delete state.earlyDeloadDismissedAtCycle;
+    }
+    saveState();
+  }
+  localStorage.setItem('ts-double-rollover-fixed', '1');
+}
+
 // One-time migration: seed periodization state fields for users who were already
 // using the app before the periodization update. Prevents false deload banners
 // on first load. Gates itself so it only runs once.
@@ -22553,6 +22589,7 @@ try {
   _migrateEquipmentTags(); // ensure state.program has equipment tags even on old saves
   migrateSessionCount();
   migratePeriodizationState();
+  migrateDoubleRollover();
   checkPauseAutoExpiry();
   _renderTravelModeHeaderIcon();
   _checkTravelModeExpiry();
