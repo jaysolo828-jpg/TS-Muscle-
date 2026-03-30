@@ -16865,7 +16865,12 @@ function finalizeEndSession(save) {
     const _startWeekSunday   = _toSundayMidnight(state.weekStartTimestamp);
     const _sessionsThisWeek = (state.history || [])
       .filter(h => new Date(h.date).getTime() >= (state.weekStartTimestamp || 0)).length;
-    const _calendarBased = _currentWeekSunday > _startWeekSunday && !_sessionBased && _sessionsThisWeek >= 1;
+    // Guard: if a session-based rollover happened within the last 3 days, suppress
+    // calendar-based rollover. This prevents Sat→Sun back-to-back sessions from
+    // triggering two rollovers in 24 hours (session-based on Saturday, then
+    // calendar-based on Sunday when the Sun–Sat boundary crosses).
+    const _recentSessionRollover = state.weekRolledOverAt && (Date.now() - state.weekRolledOverAt) / 86400000 < 3;
+    const _calendarBased = _currentWeekSunday > _startWeekSunday && !_sessionBased && !_recentSessionRollover && _sessionsThisWeek >= 1;
     if (_sessionBased || _calendarBased) {
       if (_sessionBased) state.weekRolledOverAt = Date.now();
       state.weekStartTimestamp = _currentWeekSunday;
