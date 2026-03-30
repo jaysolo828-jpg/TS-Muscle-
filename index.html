@@ -3276,6 +3276,36 @@
         </div>
         <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Two glute-focused sessions + one upper day. Hip thrusts, RDLs, and abduction.</div>
       </button>
+      <button class="settings-day-btn" id="stb-pp" onclick="selectSplitTypeSettings('pp', this)">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Push / Pull</span>
+        </div>
+        <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">4 days. Two push days and two pull days. Pressing and pulling muscles get dedicated sessions.</div>
+      </button>
+      <button class="settings-day-btn" id="stb-full3" onclick="selectSplitTypeSettings('full3', this)">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Full Body 3x</span>
+        </div>
+        <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Every major muscle worked each session, three times per week. Monday, Wednesday, Friday.</div>
+      </button>
+      <button class="settings-day-btn" id="stb-full2" onclick="selectSplitTypeSettings('full2', this)">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Full Body 2x</span>
+        </div>
+        <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">2 days. A and B sessions, each hitting every major muscle. Ideal for very busy schedules.</div>
+      </button>
+      <button class="settings-day-btn" id="stb-antagonist" onclick="selectSplitTypeSettings('antagonist', this)">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Antagonist Split</span>
+        </div>
+        <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">6 days. Chest with back, shoulders with arms, and a full leg day — repeated twice per week.</div>
+      </button>
+      <button class="settings-day-btn" id="stb-lul" onclick="selectSplitTypeSettings('lul', this)">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Lower / Upper / Lower</span>
+        </div>
+        <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Lower body gets two sessions per week. Upper gets one. Great for leg and glute focus.</div>
+      </button>
     </div>
 
     <div style="display:flex; gap:10px;">
@@ -3530,6 +3560,31 @@
           data-short="Two dedicated glute days plus one upper body day. Hip thrusts, RDLs, isolation work. 3 days.">
           <div style="font-weight:bold;">Glute Priority</div>
           <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Two dedicated glute days plus one upper body day. Hip thrusts, RDLs, isolation work. 3 days.</div>
+        </button>
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('pp', this)"
+          data-short="Two push days and two pull days per week. Pressing and pulling muscles get their own sessions. 4 days.">
+          <div style="font-weight:bold;">Push / Pull</div>
+          <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Two push days and two pull days per week. Pressing and pulling muscles get their own sessions. 4 days.</div>
+        </button>
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('full3', this)"
+          data-short="Every major muscle worked three times per week. Monday, Wednesday, Friday. 3 days.">
+          <div style="font-weight:bold;">Full Body 3x</div>
+          <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Every major muscle worked three times per week. Monday, Wednesday, Friday. 3 days.</div>
+        </button>
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('full2', this)"
+          data-short="Two full body sessions per week. A and B days, each hitting every major muscle. 2 days.">
+          <div style="font-weight:bold;">Full Body 2x</div>
+          <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Two full body sessions per week. A and B days, each hitting every major muscle. 2 days.</div>
+        </button>
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('antagonist', this)"
+          data-short="Chest with back, shoulders with arms, and legs — each pair trained twice per week. 6 days.">
+          <div style="font-weight:bold;">Antagonist Split</div>
+          <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Chest with back, shoulders with arms, and legs — each pair trained twice per week. 6 days.</div>
+        </button>
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('lul', this)"
+          data-short="Lower body twice, upper body once per week. Great for leg and glute development. 3 days.">
+          <div style="font-weight:bold;">Lower / Upper / Lower</div>
+          <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Lower body twice, upper body once per week. Great for leg and glute development. 3 days.</div>
         </button>
       </div>
 
@@ -5220,7 +5275,225 @@ const GLUTE_PROGRAM = [
   }
 ];
 
-const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBODY_PROGRAM, bro: BRO_PROGRAM, glute: GLUTE_PROGRAM };
+// ── PUSH / PULL 4-DAY ────────────────────────────────────────────
+const PP_PROGRAM = [
+  {
+    id: 'pp-push-a', day: 'Monday', badge: 'PUSH A', name: 'Chest, Shoulders, Triceps',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[0], // bench
+      DEFAULT_PROGRAM[0].exercises[1], // incline
+      DEFAULT_PROGRAM[0].exercises[5], // ohp
+      DEFAULT_PROGRAM[0].exercises[3], // pushdown
+      DEFAULT_PROGRAM[0].exercises[6], // lateral
+      DEFAULT_PROGRAM[1].exercises[0], // legpress-a
+    ]
+  },
+  {
+    id: 'pp-pull-a', day: 'Tuesday', badge: 'PULL A', name: 'Back, Biceps, Hamstrings',
+    exercises: [
+      DEFAULT_PROGRAM[2].exercises[0], // chest-row
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown
+      DEFAULT_PROGRAM[1].exercises[1], // rdl
+      DEFAULT_PROGRAM[2].exercises[2], // db-row
+      DEFAULT_PROGRAM[2].exercises[3], // ez-curl
+      DEFAULT_PROGRAM[1].exercises[3], // ham-curl-a
+    ]
+  },
+  {
+    id: 'pp-push-b', day: 'Thursday', badge: 'PUSH B', name: 'Chest, Shoulders, Triceps',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[0], // bench
+      DEFAULT_PROGRAM[0].exercises[2], // flye
+      DEFAULT_PROGRAM[0].exercises[5], // ohp
+      DEFAULT_PROGRAM[0].exercises[4], // overhead-tri
+      DEFAULT_PROGRAM[0].exercises[6], // lateral
+      DEFAULT_PROGRAM[1].exercises[2], // leg-ext-a
+    ]
+  },
+  {
+    id: 'pp-pull-b', day: 'Friday', badge: 'PULL B', name: 'Back, Biceps, Legs',
+    exercises: [
+      DEFAULT_PROGRAM[2].exercises[2], // db-row
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown
+      DEFAULT_PROGRAM[3].exercises[0], // legpress-b
+      DEFAULT_PROGRAM[2].exercises[4], // preacher
+      DEFAULT_PROGRAM[3].exercises[3], // ham-curl-b
+      DEFAULT_PROGRAM[2].exercises[5], // rear-delt
+    ]
+  },
+];
+
+// ── FULL BODY 3x (MWF) ───────────────────────────────────────────
+const FULL3_PROGRAM = [
+  {
+    id: 'fb3-a', day: 'Monday', badge: 'FULL BODY A', name: 'Compound Focus',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[0], // bench
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown
+      DEFAULT_PROGRAM[1].exercises[0], // legpress-a
+      DEFAULT_PROGRAM[1].exercises[1], // rdl
+      DEFAULT_PROGRAM[0].exercises[5], // ohp
+      DEFAULT_PROGRAM[2].exercises[3], // ez-curl
+    ]
+  },
+  {
+    id: 'fb3-b', day: 'Wednesday', badge: 'FULL BODY B', name: 'Volume Focus',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[1], // incline
+      DEFAULT_PROGRAM[2].exercises[0], // chest-row
+      DEFAULT_PROGRAM[1].exercises[3], // ham-curl-a
+      DEFAULT_PROGRAM[1].exercises[2], // leg-ext-a
+      DEFAULT_PROGRAM[0].exercises[6], // lateral
+      DEFAULT_PROGRAM[0].exercises[3], // pushdown
+    ]
+  },
+  {
+    id: 'fb3-c', day: 'Friday', badge: 'FULL BODY C', name: 'Posterior Chain Focus',
+    exercises: [
+      DEFAULT_PROGRAM[1].exercises[4], // hip-thrust-a
+      DEFAULT_PROGRAM[2].exercises[2], // db-row
+      DEFAULT_PROGRAM[3].exercises[0], // legpress-b
+      DEFAULT_PROGRAM[0].exercises[2], // flye
+      DEFAULT_PROGRAM[2].exercises[5], // rear-delt
+      DEFAULT_PROGRAM[1].exercises[5], // calf-a
+    ]
+  },
+];
+
+// ── FULL BODY 2-DAY ──────────────────────────────────────────────
+const FULL2_PROGRAM = [
+  {
+    id: 'fb2-a', day: 'Monday', badge: 'FULL BODY A', name: 'Compound Focus',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[0], // bench
+      DEFAULT_PROGRAM[2].exercises[0], // chest-row
+      DEFAULT_PROGRAM[1].exercises[0], // legpress-a
+      DEFAULT_PROGRAM[1].exercises[1], // rdl
+      DEFAULT_PROGRAM[0].exercises[5], // ohp
+      DEFAULT_PROGRAM[2].exercises[3], // ez-curl
+    ]
+  },
+  {
+    id: 'fb2-b', day: 'Thursday', badge: 'FULL BODY B', name: 'Volume Focus',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[1], // incline
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown
+      DEFAULT_PROGRAM[1].exercises[3], // ham-curl-a
+      DEFAULT_PROGRAM[1].exercises[4], // hip-thrust-a
+      DEFAULT_PROGRAM[0].exercises[3], // pushdown
+      DEFAULT_PROGRAM[0].exercises[6], // lateral
+    ]
+  },
+];
+
+// ── ANTAGONIST (CHEST+BACK / SHOULDERS+ARMS / LEGS) 6-DAY ───────
+const ANTAGONIST_PROGRAM = [
+  {
+    id: 'ant-cb-a', day: 'Monday', badge: 'CHEST + BACK A', name: 'Chest and Back',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[0], // bench
+      DEFAULT_PROGRAM[0].exercises[1], // incline
+      DEFAULT_PROGRAM[2].exercises[0], // chest-row
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown
+      DEFAULT_PROGRAM[2].exercises[2], // db-row
+      DEFAULT_PROGRAM[0].exercises[2], // flye
+    ]
+  },
+  {
+    id: 'ant-sa-a', day: 'Tuesday', badge: 'SHOULDERS + ARMS A', name: 'Shoulders and Arms',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[5], // ohp
+      DEFAULT_PROGRAM[0].exercises[6], // lateral
+      DEFAULT_PROGRAM[2].exercises[5], // rear-delt
+      DEFAULT_PROGRAM[2].exercises[3], // ez-curl
+      DEFAULT_PROGRAM[2].exercises[4], // preacher
+      DEFAULT_PROGRAM[0].exercises[3], // pushdown
+    ]
+  },
+  {
+    id: 'ant-legs-a', day: 'Wednesday', badge: 'LEGS A', name: 'Full Legs',
+    exercises: [
+      DEFAULT_PROGRAM[1].exercises[0], // legpress-a
+      DEFAULT_PROGRAM[1].exercises[1], // rdl
+      DEFAULT_PROGRAM[1].exercises[2], // leg-ext-a
+      DEFAULT_PROGRAM[1].exercises[3], // ham-curl-a
+      DEFAULT_PROGRAM[1].exercises[4], // hip-thrust-a
+      DEFAULT_PROGRAM[1].exercises[5], // calf-a
+    ]
+  },
+  {
+    id: 'ant-cb-b', day: 'Thursday', badge: 'CHEST + BACK B', name: 'Chest and Back',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[0], // bench
+      DEFAULT_PROGRAM[0].exercises[1], // incline
+      DEFAULT_PROGRAM[2].exercises[0], // chest-row
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown
+      DEFAULT_PROGRAM[2].exercises[2], // db-row
+      DEFAULT_PROGRAM[0].exercises[2], // flye
+    ]
+  },
+  {
+    id: 'ant-sa-b', day: 'Friday', badge: 'SHOULDERS + ARMS B', name: 'Shoulders and Arms',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[5], // ohp
+      DEFAULT_PROGRAM[0].exercises[6], // lateral
+      DEFAULT_PROGRAM[2].exercises[5], // rear-delt
+      DEFAULT_PROGRAM[2].exercises[3], // ez-curl
+      DEFAULT_PROGRAM[2].exercises[4], // preacher
+      DEFAULT_PROGRAM[0].exercises[4], // overhead-tri
+    ]
+  },
+  {
+    id: 'ant-legs-b', day: 'Saturday', badge: 'LEGS B', name: 'Full Legs',
+    exercises: [
+      DEFAULT_PROGRAM[3].exercises[0], // legpress-b
+      DEFAULT_PROGRAM[1].exercises[1], // rdl
+      DEFAULT_PROGRAM[3].exercises[2], // leg-ext-b
+      DEFAULT_PROGRAM[3].exercises[3], // ham-curl-b
+      DEFAULT_PROGRAM[3].exercises[4], // pull-through
+      DEFAULT_PROGRAM[3].exercises[5], // calf-b
+    ]
+  },
+];
+
+// ── LOWER / UPPER / LOWER 3-DAY ──────────────────────────────────
+const LUL_PROGRAM = [
+  {
+    id: 'lul-lower-a', day: 'Monday', badge: 'LOWER A', name: 'Legs and Glutes',
+    exercises: [
+      DEFAULT_PROGRAM[1].exercises[0], // legpress-a
+      DEFAULT_PROGRAM[1].exercises[4], // hip-thrust-a
+      DEFAULT_PROGRAM[1].exercises[1], // rdl
+      DEFAULT_PROGRAM[1].exercises[2], // leg-ext-a
+      DEFAULT_PROGRAM[1].exercises[3], // ham-curl-a
+      DEFAULT_PROGRAM[1].exercises[5], // calf-a
+    ]
+  },
+  {
+    id: 'lul-upper', day: 'Wednesday', badge: 'UPPER', name: 'Upper Body',
+    exercises: [
+      DEFAULT_PROGRAM[0].exercises[0], // bench
+      DEFAULT_PROGRAM[2].exercises[0], // chest-row
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown
+      DEFAULT_PROGRAM[0].exercises[5], // ohp
+      DEFAULT_PROGRAM[0].exercises[6], // lateral
+      DEFAULT_PROGRAM[2].exercises[5], // rear-delt
+    ]
+  },
+  {
+    id: 'lul-lower-b', day: 'Friday', badge: 'LOWER B', name: 'Legs and Glutes',
+    exercises: [
+      DEFAULT_PROGRAM[3].exercises[0], // legpress-b
+      DEFAULT_PROGRAM[1].exercises[4], // hip-thrust-a
+      DEFAULT_PROGRAM[3].exercises[3], // ham-curl-b
+      DEFAULT_PROGRAM[3].exercises[4], // pull-through
+      HIP_ABDUCTION_EXERCISE,
+      DEFAULT_PROGRAM[3].exercises[5], // calf-b
+    ]
+  },
+];
+
+const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBODY_PROGRAM, bro: BRO_PROGRAM, glute: GLUTE_PROGRAM, pp: PP_PROGRAM, full3: FULL3_PROGRAM, full2: FULL2_PROGRAM, antagonist: ANTAGONIST_PROGRAM, lul: LUL_PROGRAM };
 
 // ── TRAVEL MODE EQUIPMENT TAGS ─────────────────────────────────
 // Applied immediately after all program data is defined.
@@ -5944,11 +6217,16 @@ function getWeeklySetsByMuscle() {
 
 // Per-split accent colors — used in modals, onboarding, and home badge
 const SPLIT_COLORS = {
-  ul:       { hex: '#5b8dee', bg: 'rgba(91,141,238,0.12)',  border: 'rgba(91,141,238,0.45)'  },
-  ppl:      { hex: '#CC2027', bg: 'rgba(204,32,39,0.12)',   border: 'rgba(204,32,39,0.4)'    },
-  fullbody: { hex: '#2d6a4f', bg: 'rgba(45,106,79,0.13)',   border: 'rgba(45,106,79,0.55)'   },
-  bro:      { hex: '#d4870f', bg: 'rgba(212,135,15,0.12)',  border: 'rgba(212,135,15,0.45)'  },
-  glute:    { hex: '#d63384', bg: 'rgba(214,51,132,0.12)',  border: 'rgba(214,51,132,0.45)'  },
+  ul:         { hex: '#5b8dee', bg: 'rgba(91,141,238,0.12)',  border: 'rgba(91,141,238,0.45)'  },
+  ppl:        { hex: '#CC2027', bg: 'rgba(204,32,39,0.12)',   border: 'rgba(204,32,39,0.4)'    },
+  fullbody:   { hex: '#2d6a4f', bg: 'rgba(45,106,79,0.13)',   border: 'rgba(45,106,79,0.55)'   },
+  bro:        { hex: '#d4870f', bg: 'rgba(212,135,15,0.12)',  border: 'rgba(212,135,15,0.45)'  },
+  glute:      { hex: '#d63384', bg: 'rgba(214,51,132,0.12)',  border: 'rgba(214,51,132,0.45)'  },
+  pp:         { hex: '#0891b2', bg: 'rgba(8,145,178,0.12)',   border: 'rgba(8,145,178,0.45)'   },
+  full3:      { hex: '#65a30d', bg: 'rgba(101,163,13,0.12)',  border: 'rgba(101,163,13,0.45)'  },
+  full2:      { hex: '#7c3aed', bg: 'rgba(124,58,237,0.12)',  border: 'rgba(124,58,237,0.45)'  },
+  antagonist: { hex: '#1e40af', bg: 'rgba(30,64,175,0.12)',   border: 'rgba(30,64,175,0.45)'   },
+  lul:        { hex: '#be185d', bg: 'rgba(190,24,93,0.12)',   border: 'rgba(190,24,93,0.45)'   },
 };
 
 const DAY_COLORS = {
@@ -9699,7 +9977,7 @@ function renderHome() {
   // Update split type badge next to "YOUR PROGRAM"
   const splitBadge = document.getElementById('home-split-badge');
   if (splitBadge) {
-    const splitLabels = { ul: 'UPPER / LOWER', ppl: 'PUSH / PULL / LEGS', fullbody: 'FULL BODY', bro: 'BRO SPLIT', glute: 'GLUTE PRIORITY' };
+    const splitLabels = { ul: 'UPPER / LOWER', ppl: 'PUSH / PULL / LEGS', fullbody: 'FULL BODY', bro: 'BRO SPLIT', glute: 'GLUTE PRIORITY', pp: 'PUSH / PULL', full3: 'FULL BODY 3x', full2: 'FULL BODY 2x', antagonist: 'ANTAGONIST SPLIT', lul: 'LOWER / UPPER / LOWER' };
     const sType = state.splitType || 'ul';
     splitBadge.textContent = splitLabels[sType] || 'UPPER / LOWER';
     const sc = SPLIT_COLORS[sType];
@@ -23206,7 +23484,7 @@ function applySplitType() {
   updateSplitTypeSub();
   updateTrainingDaysSub();
   renderHome();
-  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority' };
+  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull', full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist Split', lul: 'Lower / Upper / Lower' };
   showToast(`Split changed to ${splitLabels[pendingSplitType] || pendingSplitType} ✓`);
   // Let the toast settle, then offer exercise customization
   setTimeout(() => openPostSplitRotationReview(), 700);
@@ -23215,7 +23493,7 @@ function applySplitType() {
 function updateSplitTypeSub() {
   const el = document.getElementById('split-type-sub');
   if (!el) return;
-  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority' };
+  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull', full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist Split', lul: 'Lower / Upper / Lower' };
   el.textContent = 'Currently: ' + (splitLabels[state.splitType] || 'Upper / Lower');
 }
 
@@ -23952,6 +24230,46 @@ function getSplitAwareDayExplanation(n) {
       5: '5 days/week: Very high frequency. Sleep and protein intake become essential.',
       6: '6 days/week: Near-daily training. Advanced only. Monitor recovery carefully.',
     },
+    pp: {
+      1: '1 day/week: One session. Not enough for balanced development.',
+      2: '2 days/week: One push day and one pull day. A useful starting point.',
+      3: '3 days/week: Two of one pattern, one of the other. Uneven but workable.',
+      4: '4 days/week: The full program. Two push days and two pull days. Optimal.',
+      5: '5 days/week: Full program + one extra. One pattern gets triple frequency.',
+      6: '6 days/week: Very high volume. Recovery and sleep become the bottleneck.',
+    },
+    full3: {
+      1: '1 day/week: One full body session. Maintenance level.',
+      2: '2 days/week: Full Body A + B. Every muscle covered twice per week.',
+      3: '3 days/week: The complete program. A, B, and C sessions. Optimal frequency.',
+      4: '4 days/week: A fourth session added. Very high frequency. Keep volume manageable.',
+      5: '5 days/week: Near-daily training. Only sustainable with very low per-session volume.',
+      6: '6 days/week: Elite level recovery required. Not recommended for most people.',
+    },
+    full2: {
+      1: '1 day/week: One full body session. More maintenance than progress.',
+      2: '2 days/week: The complete program. Full Body A and B. Optimal for this split.',
+      3: '3 days/week: One extra session added. Higher frequency than the base plan.',
+      4: '4 days/week: Full Body x4. Very high frequency. Sleep and protein are critical.',
+      5: '5 days/week: Near-daily full body. Not recommended. Recovery breaks down quickly.',
+      6: '6 days/week: Not suitable for this split. Overtraining risk is high.',
+    },
+    antagonist: {
+      1: '1 day/week: One paired session. Far too little volume for any split.',
+      2: '2 days/week: Two of the three session types. Legs or one pairing gets skipped.',
+      3: '3 days/week: One full antagonist cycle. Every muscle worked once.',
+      4: '4 days/week: Full cycle + one repeat. One pairing gets extra frequency.',
+      5: '5 days/week: Almost the full 6-day cycle. One session still missed.',
+      6: '6 days/week: The full program. All three pairings twice per week. Optimal.',
+    },
+    lul: {
+      1: '1 day/week: One lower or upper session. Not enough for regular progress.',
+      2: '2 days/week: One lower day + one upper day. Reduced from the full plan.',
+      3: '3 days/week: The complete program. Lower A, Upper, Lower B. Optimal.',
+      4: '4 days/week: Full program + one repeat. Extra session targets a weak point.',
+      5: '5 days/week: Very high frequency. Legs worked three or more times per week.',
+      6: '6 days/week: Near-daily training. Recovery becomes the limiting factor.',
+    },
   };
   return tables[split]?.[n] || tables.ul[n] || '';
 }
@@ -23978,6 +24296,11 @@ function selectSplitOnboard(type, btn) {
     fullbody: 'Full Body training maximizes frequency. Every muscle gets stimulated in every session. Perfect for 2–3 days per week.',
     bro: 'Bro Split dedicates each day to one muscle group: Chest, Back, Legs, Shoulders, Arms. High volume per session, 5 days per week.',
     glute: 'Glute Priority targets glutes twice per week with hip thrusts, RDLs, and isolation work, plus one balanced upper body day.',
+    pp: 'Push/Pull runs two push days and two pull days per week. Your chest, shoulders, and triceps get their own sessions separate from your back and biceps.',
+    full3: 'Full Body 3x hits every muscle three times per week. Lower overall volume per session, but high weekly frequency drives steady progress.',
+    full2: 'Full Body 2x is two sessions per week, each covering your whole body. The most efficient option if your schedule is tight.',
+    antagonist: 'Antagonist Split pairs muscles that work against each other — chest with back, shoulders with arms, and a dedicated leg day — twice per week.',
+    lul: 'Lower/Upper/Lower gives your legs and glutes two sessions per week while your upper body gets one. Popular with people who want stronger legs without going to the gym more than 3 days.',
   };
   // Expand the tip inline inside the selected button; reset all others to their short text
   const allBtnsForTip = btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn');
@@ -24000,11 +24323,16 @@ function selectSplitOnboard(type, btn) {
   const pickPreview = document.getElementById('ob-pick-for-me-preview');
   if (pickPreview) {
     const previews = {
-      ul:       'Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift',
-      ppl:      'Bench &nbsp;·&nbsp; Lateral Raise &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift',
-      fullbody: 'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Hip Thrust',
-      bro:      'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; EZ Bar Curl &nbsp;·&nbsp; Leg Press',
-      glute:    'Hip Thrust &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Bulgarian Split Squat &nbsp;·&nbsp; Hip Abduction &nbsp;·&nbsp; Bench',
+      ul:         'Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift',
+      ppl:        'Bench &nbsp;·&nbsp; Lateral Raise &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift',
+      fullbody:   'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Hip Thrust',
+      bro:        'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; EZ Bar Curl &nbsp;·&nbsp; Leg Press',
+      glute:      'Hip Thrust &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Bulgarian Split Squat &nbsp;·&nbsp; Hip Abduction &nbsp;·&nbsp; Bench',
+      pp:         'Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Lateral Raise &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; EZ Bar Curl',
+      full3:      'Bench &nbsp;·&nbsp; Pulldown &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Overhead Press',
+      full2:      'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Overhead Press',
+      antagonist: 'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; EZ Bar Curl &nbsp;·&nbsp; Leg Press',
+      lul:        'Leg Press &nbsp;·&nbsp; Hip Thrust &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Bench &nbsp;·&nbsp; Machine Row',
     };
     pickPreview.innerHTML = previews[type] || previews.ul;
   }
@@ -24306,6 +24634,37 @@ function updateDayButtonsForSplit(type) {
       4: 'Full program + one repeat. Extra frequency for priority muscles.',
       5: 'Very high frequency glute work. Recovery and nutrition are essential.',
     },
+    pp: {
+      2: 'One push day + one pull day. Good starting point, but legs get limited work.',
+      3: 'Two push days + one pull day, or the reverse. One pattern gets extra frequency.',
+      4: 'The full program. Two push days and two pull days. Optimal for this split.',
+      5: 'Full program + one extra session. Strong recovery needed.',
+    },
+    full3: {
+      2: 'Full Body A + B. Every muscle trained twice per week.',
+      3: 'Full Body A, B, C. The complete program. Three sessions covers all the variation.',
+      4: 'Full Body x4. Very high frequency. Manage volume carefully.',
+      5: 'Extremely high frequency. Sleep and nutrition become the limiting factor.',
+    },
+    full2: {
+      2: 'Full Body A + B. The complete program. Every muscle gets hit twice per week.',
+      3: 'Full Body x3. Higher frequency than the base plan. Recovery is key.',
+      4: 'Full Body x4. Very high frequency. Progress stalls fast without enough sleep.',
+      5: 'Not recommended. Full body training at this frequency leads to burnout for most people.',
+    },
+    antagonist: {
+      2: 'One paired session + legs. Coverage is limited.',
+      3: 'All three session types once each. A solid starting point.',
+      4: 'Full antagonist cycle + one repeat. One muscle group gets double frequency.',
+      5: 'Close to the full 6-day cycle. One session per week is still missed.',
+      6: 'The full program. All three pairings trained twice per week.',
+    },
+    lul: {
+      2: 'One lower day + one upper day. Less leg frequency than the full plan.',
+      3: 'The full program. Lower A, Upper, Lower B. Two lower sessions and one upper.',
+      4: 'Full program + one repeat. Extra session for lagging areas.',
+      5: 'Very high frequency. Legs get trained three times a week. Recovery becomes critical.',
+    },
   };
   const desc = descriptions[type] || descriptions.ul;
   [2, 3, 4, 5].forEach(d => {
@@ -24347,7 +24706,7 @@ function renderDayRecommendations() {
   const baseCfg = GOAL_CONFIG[goal];
   if (!baseCfg) return;
   // Override recommended day count based on split type
-  const splitRec = { ul: 4, ppl: 3, fullbody: 3, bro: 5, glute: 3 };
+  const splitRec = { ul: 4, ppl: 3, fullbody: 3, bro: 5, glute: 3, pp: 4, full3: 3, full2: 2, antagonist: 6, lul: 3 };
   const cfg = { ...baseCfg, rec: splitRec[splitType] || baseCfg.rec };
 
   // Show the recommendation banner
@@ -24571,7 +24930,7 @@ function buildOnboardingSummary() {
   const goal = document.getElementById('ob-goal').value;
   const exp = document.getElementById('ob-experience').value;
   const splitType = document.getElementById('ob-split-type')?.value || 'ul';
-  const splitDefaultDays = { ul: 4, ppl: 3, fullbody: 3, bro: 5, glute: 3 };
+  const splitDefaultDays = { ul: 4, ppl: 3, fullbody: 3, bro: 5, glute: 3, pp: 4, full3: 3, full2: 2, antagonist: 6, lul: 3 };
   const trainingDays = parseInt(document.getElementById('ob-training-days').value) || splitDefaultDays[splitType] || 4;
   const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body' };
 
@@ -24825,7 +25184,7 @@ function resetOnboarding() {
       if (splitInput) splitInput.value = bk.splitType;
       const splitBtns = document.querySelectorAll('#onboard-step-4 .onboard-select-btn');
       splitBtns.forEach(b => b.classList.remove('selected'));
-      const splitMap = { ul: 0, ppl: 1, fullbody: 2, bro: 3, glute: 4 };
+      const splitMap = { ul: 0, ppl: 1, fullbody: 2, bro: 3, glute: 4, pp: 5, full3: 6, full2: 7, antagonist: 8, lul: 9 };
       const splitIdx = splitMap[bk.splitType];
       if (splitIdx !== undefined && splitBtns[splitIdx]) {
         selectSplitOnboard(bk.splitType, splitBtns[splitIdx]);
