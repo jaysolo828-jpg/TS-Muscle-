@@ -6065,7 +6065,10 @@ const GOAL_SETS = {
 // Falls back to the stored ex.sets if no mapping exists (e.g. custom exercises).
 function getGoalSets(exId, fallback) {
   const goal = state.profile?.goal || 'both';
-  return GOAL_SETS[exId]?.[goal] || fallback || 3;
+  const base = GOAL_SETS[exId]?.[goal] || fallback || 3;
+  // During deload weeks, cap at 2 sets per exercise — reduced volume is the point
+  if (state.isDeloadWeek) return Math.min(base, 2);
+  return base;
 }
 
 // Returns the goal-adjusted rep range string for an exercise.
@@ -9785,16 +9788,25 @@ function renderHome() {
   // Rest week banner (separate from deload banner) — show day countdown
   const restWeekBanner = document.getElementById('rest-week-banner');
   if (restWeekBanner) {
-    restWeekBanner.style.display = state.isRestWeek ? 'block' : 'none';
     if (state.isRestWeek && state.deloadStartDate) {
       const _restDaysElapsed = Math.floor((Date.now() - state.deloadStartDate) / 86400000);
-      const _restDaysLeft = Math.max(0, 7 - _restDaysElapsed);
-      const _restSubEl = restWeekBanner.querySelector('[data-rest-sub]');
-      if (_restSubEl) {
-        _restSubEl.textContent = _restDaysLeft > 0
-          ? `Rest up and recover. ${_restDaysLeft} day${_restDaysLeft !== 1 ? 's' : ''} left, or tap Resume when you're ready.`
-          : 'Your rest week is done. Tap Resume to get back to full training.';
+      // Auto-end rest week after 14 days so users don't get stuck indefinitely
+      if (_restDaysElapsed >= 14) {
+        endRecoveryWeek();
+        restWeekBanner.style.display = 'none';
+        showToast('Rest week auto-completed after 2 weeks. Welcome back 💪');
+      } else {
+        restWeekBanner.style.display = 'block';
+        const _restDaysLeft = Math.max(0, 7 - _restDaysElapsed);
+        const _restSubEl = restWeekBanner.querySelector('[data-rest-sub]');
+        if (_restSubEl) {
+          _restSubEl.textContent = _restDaysLeft > 0
+            ? `Rest up and recover. ${_restDaysLeft} day${_restDaysLeft !== 1 ? 's' : ''} left, or tap Resume when you're ready.`
+            : 'Your rest week is done. Tap Resume to get back to full training.';
+        }
       }
+    } else {
+      restWeekBanner.style.display = state.isRestWeek ? 'block' : 'none';
     }
   }
 
@@ -11117,6 +11129,7 @@ function applyDeloadWeek() {
     state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * _factor / 2.5) * 2.5;
   });
   state.isDeloadWeek = true;
+  state.weeksSinceDeload = 0;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
   delete state.deloadPostponedToWeek;
@@ -11240,11 +11253,16 @@ function endRecoveryWeek() {
   }
   state.isDeloadWeek = false;
   state.isRestWeek = false;
+  state.weeksSinceDeload = 0;
   // Flag for post-deload check-in — shows on home screen next render
   state.postDeloadCheckIn = true;
+  // Clean up deload metadata so stale values don't leak into the next cycle
   delete state.deloadStartDate;
   delete state.deloadSessionsCompleted;
   delete state.deloadReductionFactor;
+  delete state.deloadWeekNum;
+  delete state.deloadReason;
+  delete state.deloadMRVMuscles;
   saveState();
 }
 
@@ -16849,7 +16867,10 @@ function finalizeEndSession(save) {
     if (_sessionBased || _calendarBased) {
       if (_sessionBased) state.weekRolledOverAt = Date.now();
       state.weekStartTimestamp = _currentWeekSunday;
-      state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
+      // Don't count deload/rest weeks toward the "weeks since deload" counter
+      if (!state.isDeloadWeek && !state.isRestWeek) {
+        state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
+      }
       const prevWeek = state.weekCount || 1;
       if (_sessionBased) state.weekRolledOverPrevWeek = prevWeek;
       state.weekCount = Math.min((state.weekCount || 1) + 1, 8);
