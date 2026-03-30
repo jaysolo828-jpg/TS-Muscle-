@@ -17290,7 +17290,13 @@ function _buildRotationCard(ex, dayName, cfg) {
 
   if (cfg.preSelectSwap) _rotationPendingSwaps[ex.id] = suggestedAlt.name;
 
-  const dropdownAlts = filteredAlts.slice(cfg.dropdownStartIndex).map(a =>
+  // When an alt is promoted to the alt-block (dropdownStartIndex===1), exclude it
+  // from the dropdown by identity rather than by position — suggestedAlt may now
+  // be any index in filteredAlts, not always index 0.
+  const _dropdownList = cfg.dropdownStartIndex === 1
+    ? filteredAlts.filter(a => a !== suggestedAlt)
+    : filteredAlts;
+  const dropdownAlts = _dropdownList.map(a =>
     `<option value="${a.name.replace(/"/g,'&quot;')}" data-note="${(a.note||'').replace(/"/g,'&quot;')}">${a.name}</option>`
   ).join('');
 
