@@ -9790,11 +9790,11 @@ function renderHome() {
   if (restWeekBanner) {
     if (state.isRestWeek && state.deloadStartDate) {
       const _restDaysElapsed = Math.floor((Date.now() - state.deloadStartDate) / 86400000);
-      // Auto-end rest week after 14 days so users don't get stuck indefinitely
-      if (_restDaysElapsed >= 14) {
+      // Auto-end rest week after 7 days — same duration as deload week
+      if (_restDaysElapsed >= 7) {
         endRecoveryWeek();
         restWeekBanner.style.display = 'none';
-        showToast('Rest week auto-completed after 2 weeks. Welcome back 💪');
+        showToast('Rest week complete. Back to full training 💪');
       } else {
         restWeekBanner.style.display = 'block';
         const _restDaysLeft = Math.max(0, 7 - _restDaysElapsed);
