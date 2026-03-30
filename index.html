@@ -3331,7 +3331,7 @@
       <div style="font-size:13px; color:var(--gray-light); letter-spacing:2px; margin-top:4px;">LET'S SET YOU UP RIGHT</div>
     </div>
 
-    <!-- Progress dots -->
+    <!-- Progress dots (steps 1–8) -->
     <div style="display:flex; justify-content:center; gap:8px; margin-bottom:28px;" id="onboard-dots">
       <div class="onboard-dot active" data-step="1"></div>
       <div class="onboard-dot" data-step="2"></div>
@@ -3341,46 +3341,69 @@
       <div class="onboard-dot" data-step="6"></div>
       <div class="onboard-dot" data-step="7"></div>
       <div class="onboard-dot" data-step="8"></div>
-      <div class="onboard-dot" data-step="9"></div>
     </div>
 
-    <!-- STEP INTRO: App intro slides (shown to fresh installs before step 0) -->
+    <!-- STEP INTRO: App intro slides (shown to fresh installs after step 0 "Start Fresh") -->
     <div id="onboard-step-intro" class="onboard-step" style="display:none;">
-      <!-- Slide 1 -->
+      <!-- Slide 1: Brand identity -->
       <div class="intro-slide" id="intro-slide-1">
-        <div style="text-align:center; padding-top:10px; margin-bottom:32px;">
-          <div style="font-size:52px; margin-bottom:16px;">💪</div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:3px; margin-bottom:14px;">TRAIN SMARTER,<br>NOT HARDER</div>
-          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">T&amp;S Muscle is an adaptive lifting program. It tracks how hard you work each set and adjusts your weights automatically, so you're always training at the right intensity.</div>
+        <div style="text-align:center; padding-top:10px; margin-bottom:28px;">
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--red-text); letter-spacing:3px; margin-bottom:20px;">THERAPY &amp; SNEAKERS</div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:34px; color:var(--cream); letter-spacing:3px; margin-bottom:14px; line-height:1.1;">BUILT FOR<br>THE LONG GAME</div>
+          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">T&amp;S Muscle is an adaptive training program that learns how your body responds and adjusts automatically. The longer you use it, the smarter it gets.</div>
+        </div>
+        <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:24px; display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="font-size:22px; flex-shrink:0;">🏋️</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;"><strong style="color:var(--cream);">Adaptive lifting</strong> — weights adjust based on how hard your sets actually felt</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+            <div style="font-size:22px; flex-shrink:0;">🏃</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;"><strong style="color:var(--cream);">Cardio tracking</strong> — runs, rides, swims, walks, and more</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+            <div style="font-size:22px; flex-shrink:0;">🧠</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;"><strong style="color:var(--cream);">Mindset tools</strong> — mood check-ins, self-compassion exercises, and CBT-based reframes</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+            <div style="font-size:22px; flex-shrink:0;">📊</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;"><strong style="color:var(--cream);">Stats &amp; strength score</strong> — PRs, volume trends, and your personal T&amp;S benchmark</div>
+          </div>
         </div>
         <div class="ob-button-row" style="flex-direction:column; gap:12px;">
           <div style="display:flex; justify-content:center; gap:8px;">
             <div style="width:24px; height:4px; border-radius:2px; background:var(--red);"></div>
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
             <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
             <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
           </div>
           <button onclick="introSlideNext(2)" class="onboard-next-btn">NEXT →</button>
         </div>
       </div>
-      <!-- Slide 2 -->
+      <!-- Slide 2: The one thing to know (RPE) -->
       <div class="intro-slide" id="intro-slide-2" style="display:none;">
         <div style="text-align:center; padding-top:10px; margin-bottom:20px;">
-          <div style="font-size:52px; margin-bottom:16px;">📈</div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:3px; margin-bottom:14px;">EFFORT-BASED<br>PROGRESSION</div>
-          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">After each set, log your <strong style="color:var(--cream);">RPE</strong>. That one number drives your weights, volume, and recovery timing.</div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:3px; margin-bottom:10px;">THE ONE THING<br>YOU NEED TO KNOW</div>
+          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">After each set, you'll rate how hard it felt on a scale of 1–10. That's called <strong style="color:var(--cream);">RPE</strong>. It's the engine behind everything.</div>
         </div>
-        <div style="background:var(--dark3); border-radius:10px; padding:14px 16px; margin-bottom:20px;">
+        <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:16px;">
+          <div style="font-size:12px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:10px;">HOW HARD WAS THAT SET?</div>
           <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
-            <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 7</span><span style="color:var(--gray-light);">Could do 3+ more reps</span></div>
-            <div style="display:flex; justify-content:space-between; padding:6px 0; border-top:1px solid rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:var(--cream); font-weight:bold;">RPE 8 ✓ target</span><span style="color:var(--gray-light);">Could do 2 more reps</span></div>
-            <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 9</span><span style="color:var(--gray-light);">Could do 1 more rep</span></div>
-            <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 10</span><span style="color:var(--gray-light);">Max effort. Nothing left.</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 6</span><span style="color:var(--gray-light);">Easy. Could do 4+ more.</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 7</span><span style="color:var(--gray-light);">Solid. 3 more in the tank.</span></div>
+            <div style="display:flex; justify-content:space-between; padding:8px 10px; border-radius:8px; background:rgba(204,32,39,0.1); border:1px solid rgba(204,32,39,0.3); margin:2px 0;"><span style="color:var(--cream); font-weight:bold;">RPE 8 ← your target</span><span style="color:var(--gray-light);">2 reps left.</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 9</span><span style="color:var(--gray-light);">Almost there. 1 more rep.</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 10</span><span style="color:var(--gray-light);">Nothing left. Max effort.</span></div>
           </div>
+        </div>
+        <div style="background:rgba(204,32,39,0.07); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--gray-light); margin-bottom:20px; line-height:1.6;">
+          The app uses your RPE to decide when to increase weight, when to hold steady, and when to suggest you back off. You don't need to think about it — just be honest.
         </div>
         <div class="ob-button-row" style="flex-direction:column; gap:12px;">
           <div style="display:flex; justify-content:center; gap:8px;">
             <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
             <div style="width:24px; height:4px; border-radius:2px; background:var(--red);"></div>
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
             <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
           </div>
           <div style="display:flex; gap:10px;">
@@ -3389,101 +3412,125 @@
           </div>
         </div>
       </div>
-      <!-- Slide 3 -->
+      <!-- Slide 3: Week 1 calibration -->
       <div class="intro-slide" id="intro-slide-3" style="display:none;">
-        <div style="text-align:center; padding-top:10px; margin-bottom:32px;">
-          <div style="font-size:52px; margin-bottom:16px;">⚙️</div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:3px; margin-bottom:14px;">2-MINUTE SETUP</div>
-          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">You'll pick your goal, your training split, and your starting exercises. Week 1 is a calibration week. The app will dial in your weights after your first few sessions.<br><br>You can change anything at any time inside the app.</div>
+        <div style="text-align:center; padding-top:10px; margin-bottom:20px;">
+          <div style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:3px; margin-bottom:10px;">WEEK 1 IS<br>NOT A REAL WEEK</div>
+          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">Your first week is a calibration period. The app is figuring out your real working weights — not testing your limits.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+          <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start;">
+            <div style="font-size:22px; flex-shrink:0;">🎯</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Start lighter than you think you need to. Seriously. The app will push your weights up once it sees your RPE data.</div>
+          </div>
+          <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start;">
+            <div style="font-size:22px; flex-shrink:0;">📊</div>
+            <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">After 4 sessions, the app will recommend your true working weights based on how hard everything felt.</div>
+          </div>
         </div>
         <div class="ob-button-row" style="flex-direction:column; gap:12px;">
           <div style="display:flex; justify-content:center; gap:8px;">
             <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
             <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
             <div style="width:24px; height:4px; border-radius:2px; background:var(--red);"></div>
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
           </div>
           <div style="display:flex; gap:10px;">
             <button onclick="introSlideNext(2)" class="onboard-back-btn">← BACK</button>
-            <button onclick="introDone()" class="onboard-next-btn" style="flex:1;">LET'S SET UP →</button>
+            <button onclick="introSlideNext(4)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
+          </div>
+        </div>
+      </div>
+      <!-- Slide 4: Ready to build -->
+      <div class="intro-slide" id="intro-slide-4" style="display:none;">
+        <div style="text-align:center; padding-top:10px; margin-bottom:28px;">
+          <div style="font-size:52px; margin-bottom:16px;">🏗️</div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:3px; margin-bottom:14px;">LET'S BUILD<br>YOUR PROGRAM</div>
+          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">A few quick questions and your program is ready to go. You can change anything at any time from Settings.</div>
+        </div>
+        <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:24px;">
+          <div style="font-size:12px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:10px;">WHAT YOU'LL SET UP</div>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--gray-light);">
+            <div>① Your profile and training experience</div>
+            <div>② Your goal — size, strength, or both</div>
+            <div>③ Your training split and how many days per week</div>
+            <div>④ Your starting exercises and weights</div>
+          </div>
+        </div>
+        <div class="ob-button-row" style="flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:center; gap:8px;">
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
+            <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
+            <div style="width:24px; height:4px; border-radius:2px; background:var(--red);"></div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button onclick="introSlideNext(3)" class="onboard-back-btn">← BACK</button>
+            <button onclick="introDone()" class="onboard-next-btn" style="flex:1;">START SETUP →</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- STEP 0: New or Returning? -->
+    <!-- STEP 0: New or Returning? (shown first, before intro slides) -->
     <div id="onboard-step-0" class="onboard-step" style="display:none;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">FIRST TIME HERE?</div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:30px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">WELCOME TO<br>T&amp;S MUSCLE</div>
       <div style="font-size:13px; color:var(--gray-light); margin-bottom:28px; line-height:1.6;">
-        New user? Start fresh. Moving from another device? Restore your data from a backup file to pick up right where you left off.
+        New here? Let's build your program. Moving from another device? Restore your data and pick up exactly where you left off.
       </div>
       <div style="display:flex; flex-direction:column; gap:12px;">
-        <button class="onboard-select-btn" onclick="onboardStartFresh()" style="padding:18px 16px;">
-          <div style="font-weight:bold;">Start Fresh</div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">Set up a new program from scratch</div>
+        <button class="onboard-select-btn" onclick="onboardShowIntro()" style="padding:20px 16px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:22px;">🏗️</span>
+            <div>
+              <div style="font-weight:bold; font-size:15px;">I'm New — Build My Program</div>
+              <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">Takes about 2 minutes. Your program is ready when you're done.</div>
+            </div>
+          </div>
         </button>
-        <button class="onboard-select-btn" onclick="onboardRestoreBackup()" style="padding:18px 16px;">
-          <div style="font-weight:bold;">Restore from Backup</div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">Bring over your history, weights, and progress from another device</div>
+        <button class="onboard-select-btn" onclick="onboardRestoreBackup()" style="padding:20px 16px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:22px;">📲</span>
+            <div>
+              <div style="font-weight:bold; font-size:15px;">Restore from Backup</div>
+              <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">Bring over your history, weights, and progress from another device</div>
+            </div>
+          </div>
         </button>
       </div>
       <div style="margin-top:20px; font-size:12px; color:var(--gray); text-align:center; line-height:1.5;">
-        No backup? Choose Start Fresh. You can export a backup from Settings at any time.
+        No backup file? Choose "I'm New." You can export a backup any time from Settings.
       </div>
     </div>
 
     <!-- Hidden file input for onboarding restore path (inside modal for iOS compatibility) -->
     <input type="file" id="import-file-onboard" accept="*/*" style="display:none" onchange="handleImportOnboarding(event)"/>
 
-    <!-- STEP 1: Profile -->
+    <!-- STEP 1: Profile (name, bodyweight, experience, age, sex, why you train) -->
     <div id="onboard-step-1" class="onboard-step">
-      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR PROFILE</div>
-      <div style="font-size:13px; color:var(--gray-light); margin-bottom:24px;">This personalizes your program and pre-fills your starting weights.</div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TELL US ABOUT YOU</div>
+      <div style="font-size:13px; color:var(--gray-light); margin-bottom:24px;">This personalizes your program, pre-fills your weights, and powers your T&amp;S Strength Score.</div>
 
-      <div style="margin-bottom:16px;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">YOUR NAME</div>
-        <input type="text" id="ob-name" class="set-input" placeholder="e.g. Marcus" style="width:100%; padding:12px 14px; text-align:left;"/>
+      <div style="display:flex; gap:10px; margin-bottom:16px;">
+        <div style="flex:1;">
+          <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">YOUR NAME</div>
+          <input type="text" id="ob-name" class="set-input" placeholder="e.g. Marcus" style="width:100%; padding:12px 14px; text-align:left;"/>
+        </div>
+        <div style="width:90px;">
+          <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">AGE</div>
+          <input type="number" id="ob-age" class="set-input" inputmode="numeric" placeholder="28" min="13" max="100" style="width:100%; padding:12px 10px; text-align:left;"/>
+        </div>
       </div>
+
       <div style="margin-bottom:16px;">
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">BODYWEIGHT (LBS)</div>
-        <div style="font-size:13px; color:var(--gray-light); margin-bottom:6px;">Used to suggest starting weights for isolation exercises</div>
+        <div style="font-size:12px; color:var(--gray-light); margin-bottom:6px;">Used to suggest starting weights for isolation exercises</div>
         <input type="number" id="ob-bodyweight" class="set-input" inputmode="decimal" placeholder="e.g. 185" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
-      <div style="margin-bottom:24px;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">TRAINING EXPERIENCE</div>
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'beginner', this)">
-            <div style="font-weight:bold;">Beginner</div>
-            <div style="font-size:13px; color:var(--gray-light); margin-top:6px; line-height:1.5;">Under 1 year of consistent training, or returning after a long break</div>
-          </button>
-          <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'intermediate', this)">
-            <div style="font-weight:bold;">Intermediate</div>
-            <div style="font-size:13px; color:var(--gray-light); margin-top:6px; line-height:1.5;">1–3 years of consistent training. Comfortable with the main lifts.</div>
-          </button>
-          <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'advanced', this)">
-            <div style="font-weight:bold;">Advanced</div>
-            <div style="font-size:13px; color:var(--gray-light); margin-top:6px; line-height:1.5;">3+ years of consistent, structured progressive training</div>
-          </button>
-        </div>
-        <input type="hidden" id="ob-experience" value=""/>
-      </div>
 
-      <div class="ob-button-row">
-        <button onclick="onboardNext(2)" class="onboard-next-btn">NEXT →</button>
-      </div>
-    </div>
-
-    <!-- STEP 2: Age & Biological Sex -->
-    <div id="onboard-step-2" class="onboard-step" style="display:none;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">AGE &amp; BIOLOGICAL SEX</div>
-      <div style="font-size:13px; color:var(--gray-light); margin-bottom:24px;">Used to calculate your T&amp;S Strength Score and set accurate benchmarks. Never shared.</div>
-
-      <div style="margin-bottom:20px;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">AGE (YEARS)</div>
-        <input type="number" id="ob-age" class="set-input" inputmode="numeric" placeholder="e.g. 28" min="13" max="100" style="width:100%; padding:12px 14px; text-align:left;"/>
-      </div>
-
-      <div style="margin-bottom:24px;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">BIOLOGICAL SEX</div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">BIOLOGICAL SEX</div>
+        <div style="font-size:12px; color:var(--gray-light); margin-bottom:8px;">Used to calculate your T&amp;S Strength Score benchmarks. Never shared.</div>
         <div style="display:flex; gap:10px;">
           <button class="onboard-select-btn" id="ob-sex-male-btn" onclick="selectObSex('male')" style="flex:1; padding:14px 8px; text-align:center;">
             <div style="font-weight:bold;">Male</div>
@@ -3495,11 +3542,38 @@
         <input type="hidden" id="ob-sex" value=""/>
       </div>
 
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">HOW LONG HAVE YOU BEEN TRAINING?</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'beginner', this)">
+            <div style="font-weight:bold;">Just Starting Out</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Under 1 year of consistent training, or returning after a long break</div>
+          </button>
+          <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'intermediate', this)">
+            <div style="font-weight:bold;">Been at It a While</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">1–3 years of consistent training. Comfortable with the main lifts.</div>
+          </button>
+          <button class="onboard-select-btn" onclick="selectOption('ob-experience', 'advanced', this)">
+            <div style="font-weight:bold;">Experienced Lifter</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">3+ years of consistent, structured progressive training</div>
+          </button>
+        </div>
+        <input type="hidden" id="ob-experience" value=""/>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">WHY DO YOU TRAIN? <span style="color:var(--gray); font-weight:400; letter-spacing:0px;">(optional)</span></div>
+        <div style="font-size:12px; color:var(--gray-light); margin-bottom:8px; line-height:1.5;">The app will show this back to you when you need a reminder of why it matters.</div>
+        <input type="text" id="ob-why-train" class="set-input" placeholder="e.g. To feel stronger and show up for the people I love" style="width:100%; padding:12px 14px; text-align:left;"/>
+      </div>
+
       <div class="ob-button-row">
-        <button onclick="onboardBack(1)" class="onboard-back-btn">← BACK</button>
-        <button onclick="onboardNext(3)" class="onboard-next-btn">NEXT →</button>
+        <button onclick="onboardNext(2)" class="onboard-next-btn">NEXT →</button>
       </div>
     </div>
+
+    <!-- STEP 2: Goal (was step 3) -->
+    <div id="onboard-step-2" class="onboard-step" style="display:none;">
 
     <!-- STEP 3: Goal -->
     <div id="onboard-step-3" class="onboard-step" style="display:none;">
