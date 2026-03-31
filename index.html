@@ -3025,7 +3025,7 @@
   <div id="mood-checkin-card" style="background:linear-gradient(180deg,#1f1f1f 0%,#1a1a1a 100%); border-top:1px solid #2a2a2a; border-bottom:1px solid #2a2a2a; margin:0 -16px 16px; padding:16px 0 14px;">
     <div style="padding:0 20px;">
       <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:3px;" id="mood-checkin-label">T&amp;S FEELINGS WHEEL</div>
-      <div id="mood-wheel-subtitle" style="font-size:13px; color:var(--gray-light); margin-bottom:4px;">After your session — tap a section, then a feeling</div>
+      <div id="mood-wheel-subtitle" style="font-size:13px; color:var(--gray-light); margin-bottom:10px;">After your session — tap a section, then a feeling</div>
     </div>
     <input type="hidden" id="mood-timing" value="post"/>
     <input type="hidden" id="mood-value" value=""/>
@@ -3038,13 +3038,13 @@
     </div>
     <div id="mood-wheel-selected" style="display:none; text-align:center; margin-top:10px; padding:0 20px;">
       <div id="mood-wheel-selected-inner" style="display:inline-flex; align-items:center; gap:10px; background:var(--dark3); border:1px solid var(--dark4); border-radius:20px; padding:8px 18px;">
-        <span id="mw-cat-dot" style="width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0;"></span>
+        <span id="mw-cat-dot" style="width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0;"></span>
         <span id="mw-cat-label" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:1px; font-size:15px;"></span>
-        <span id="mw-arrow" style="color:var(--gray); font-size:13px;">›</span>
-        <span id="mw-feeling-label" style="font-size:13px; color:var(--gray-light);"></span>
+        <span style="color:var(--gray); font-size:13px;">›</span>
+        <span id="mw-feeling-label" style="font-size:14px; color:var(--cream);"></span>
       </div>
     </div>
-    <div id="mood-wheel-actions" style="display:none; margin-top:14px; padding:0 20px;">
+    <div id="mood-wheel-actions" style="display:none; margin-top:14px; padding:0 20px 4px;">
       <textarea id="mood-note" class="notes-input" placeholder="Add a note (optional)" style="min-height:50px; margin-bottom:10px;"></textarea>
       <button id="log-mood-btn" onclick="saveMoodEntry()" style="width:100%; background:var(--success); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; transition:background 0.2s;">LOG MOOD</button>
     </div>
@@ -26263,28 +26263,31 @@ function renderMoodWheel() {
 
   const selCat = _mwState.catIdx !== null ? MOOD_WHEEL_DATA[_mwState.catIdx] : null;
 
-  // Center circle
-  let inner = `<circle cx="${cx}" cy="${cy}" r="58" fill="${selCat ? rgba(selCat.color,0.18) : '#1c1c1c'}" stroke="${selCat ? selCat.color : '#2e2e2e'}" stroke-width="1.5"/>`;
+  // Center circle — tappable to clear when a category is selected
+  const centerClick = selCat ? `onclick="_mwClear()" style="cursor:pointer;"` : '';
+  let inner = `<circle cx="${cx}" cy="${cy}" r="58" fill="${selCat ? rgba(selCat.color,0.2) : '#1c1c1c'}" stroke="${selCat ? selCat.color : '#2e2e2e'}" stroke-width="${selCat ? 2 : 1.5}" ${centerClick}/>`;
   if (selCat) {
-    inner += `<text x="${cx}" y="${cy-10}" text-anchor="middle" dominant-baseline="middle" font-size="26" style="pointer-events:none;">${selCat.emoji}</text>`;
-    inner += `<text x="${cx}" y="${cy+16}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="15" fill="${selCat.color}" letter-spacing="2" style="pointer-events:none;">${selCat.label}</text>`;
+    inner += `<text x="${cx}" y="${cy-11}" text-anchor="middle" dominant-baseline="middle" font-size="28" style="pointer-events:none;">${selCat.emoji}</text>`;
+    inner += `<text x="${cx}" y="${cy+18}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="14" fill="${selCat.color}" letter-spacing="2" style="pointer-events:none;">${selCat.label}</text>`;
   } else {
-    inner += `<text x="${cx}" y="${cy-8}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="11" fill="#555" letter-spacing="1" style="pointer-events:none;">HOW DID</text>`;
-    inner += `<text x="${cx}" y="${cy+8}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="11" fill="#555" letter-spacing="1" style="pointer-events:none;">YOU FEEL?</text>`;
+    inner += `<text x="${cx}" y="${cy-8}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="11" fill="#4a4a4a" letter-spacing="1" style="pointer-events:none;">HOW DID</text>`;
+    inner += `<text x="${cx}" y="${cy+8}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="11" fill="#4a4a4a" letter-spacing="1" style="pointer-events:none;">YOU FEEL?</text>`;
   }
 
   // Inner ring
   MOOD_WHEEL_DATA.forEach((cat, i) => {
     const a0 = startOffset + i * sliceAngle, a1 = a0 + sliceAngle, am = (a0+a1)/2;
     const isSelCat = _mwState.catIdx === i;
-    const alpha = isSelCat ? 0.95 : (_mwState.catIdx !== null ? 0.2 : 0.78);
-    inner += `<path d="${wedgePath(innerR1+2, innerR2-2, a0+0.03, a1-0.03)}" fill="${rgba(cat.color,alpha)}" stroke="${rgba(cat.color, isSelCat ? 1 : 0.25)}" stroke-width="1.5" style="cursor:pointer;" onclick="_mwInnerClick(${i})"/>`;
+    const alpha = isSelCat ? 0.95 : (_mwState.catIdx !== null ? 0.28 : 0.8);
+    const textOp = isSelCat ? 1 : (_mwState.catIdx !== null ? 0.45 : 1);
+    inner += `<path d="${wedgePath(innerR1+2, innerR2-2, a0+0.04, a1-0.04)}" fill="${rgba(cat.color,alpha)}" stroke="${rgba(cat.color, isSelCat ? 1 : 0.2)}" stroke-width="1" style="cursor:pointer;" onclick="_mwInnerClick(${i})"/>`;
     const midR = (innerR1 + innerR2) / 2;
-    const emojiR = midR - 10, lblR = midR + 12;
-    const textOp = alpha > 0.35 ? 1 : 0.35;
-    inner += `<text x="${(cx+emojiR*Math.cos(am)).toFixed(1)}" y="${(cy+emojiR*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="15" opacity="${textOp}" style="pointer-events:none;">${cat.emoji}</text>`;
-    inner += `<text x="${(cx+lblR*Math.cos(am)).toFixed(1)}" y="${(cy+lblR*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="9" fill="white" letter-spacing="0.5" opacity="${textOp}" style="pointer-events:none;">${cat.label}</text>`;
+    inner += `<text x="${(cx+(midR-11)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR-11)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="16" opacity="${textOp}" style="pointer-events:none;">${cat.emoji}</text>`;
+    inner += `<text x="${(cx+(midR+13)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR+13)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="9.5" fill="white" letter-spacing="0.5" opacity="${textOp}" style="pointer-events:none;">${cat.label}</text>`;
   });
+
+  // Separator ring between inner and outer
+  inner += `<circle cx="${cx}" cy="${cy}" r="127" fill="none" stroke="rgba(0,0,0,0.55)" stroke-width="6"/>`;
 
   // Outer ring — only when a category is selected
   let outer = '';
@@ -26292,14 +26295,15 @@ function renderMoodWheel() {
     const nf = selCat.feelings.length;
     const outerSlice = (2 * Math.PI) / nf;
     const outerOffset = -Math.PI / 2 - outerSlice / 2;
+    const flR = (outerR1 + outerR2) / 2;
     selCat.feelings.forEach((feeling, j) => {
       const a0 = outerOffset + j * outerSlice, a1 = a0 + outerSlice, am = (a0+a1)/2;
       const isSel = _mwState.feelingIdx === j;
-      const fa = isSel ? 1 : 0.58;
-      const flR = (outerR1 + outerR2) / 2;
-      outer += `<path d="${wedgePath(outerR1+1, outerR2-1, a0+0.03, a1-0.03)}" fill="${rgba(selCat.color,fa)}" stroke="${rgba(selCat.color, isSel ? 1 : 0.4)}" stroke-width="${isSel ? 2.5 : 1}" style="cursor:pointer;" onclick="_mwOuterClick(${j})"/>`;
-      const fs = feeling.length > 9 ? 7.5 : 9;
-      outer += `<text x="${(cx+flR*Math.cos(am)).toFixed(1)}" y="${(cy+flR*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Barlow Condensed',sans-serif" font-size="${fs}" font-weight="${isSel ? 700 : 500}" fill="white" opacity="${isSel ? 1 : 0.92}" style="pointer-events:none;">${feeling}</text>`;
+      const fa = isSel ? 1 : 0.62;
+      outer += `<path d="${wedgePath(outerR1+1, outerR2-1, a0+0.04, a1-0.04)}" fill="${rgba(selCat.color, fa)}" stroke="${rgba(selCat.color, isSel ? 1 : 0.35)}" stroke-width="${isSel ? 2 : 0.5}" style="cursor:pointer;" onclick="_mwOuterClick(${j})"/>`;
+      // font size: shrink only for words > 10 chars
+      const fs = feeling.length > 10 ? 7 : feeling.length > 7 ? 8 : 9;
+      outer += `<text x="${(cx+flR*Math.cos(am)).toFixed(1)}" y="${(cy+flR*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Barlow Condensed',sans-serif" font-size="${fs}" font-weight="${isSel ? 700 : 600}" fill="white" opacity="${isSel ? 1 : 0.9}" style="pointer-events:none;">${feeling}</text>`;
     });
   }
 
@@ -26318,6 +26322,8 @@ function _mwClear() {
   document.getElementById('mood-wheel-clear').style.display = 'none';
   document.getElementById('mood-value').value = '';
   document.getElementById('mood-wheel-subtitle').textContent = 'After your session \u2014 tap a section, then a feeling';
+  const pill = document.getElementById('mood-wheel-selected-inner');
+  if (pill) { pill.style.borderColor = ''; pill.style.background = ''; }
   _mwSpinOnNext = false;
   renderMoodWheel();
 }
@@ -26349,6 +26355,8 @@ function _mwOuterClick(feelingIdx) {
   document.getElementById('mw-cat-label').textContent = cat.label;
   document.getElementById('mw-cat-label').style.color = cat.color;
   document.getElementById('mw-feeling-label').textContent = feeling;
+  const pill = document.getElementById('mood-wheel-selected-inner');
+  if (pill) { pill.style.borderColor = `${cat.color}55`; pill.style.background = `${cat.color}14`; }
   document.getElementById('mood-wheel-selected').style.display = '';
   document.getElementById('mood-wheel-actions').style.display = '';
   document.getElementById('mood-wheel-clear').style.display = 'block';
