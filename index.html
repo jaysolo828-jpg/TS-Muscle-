@@ -25022,6 +25022,7 @@ function selectSplitOnboard(type, btn) {
     full2: 'Full Body 2x is two sessions per week, each covering your whole body. The most efficient option if your schedule is tight.',
     antagonist: 'Antagonist Split pairs muscles that work against each other — chest with back, shoulders with arms, and a dedicated leg day — twice per week.',
     lul: 'Lower/Upper/Lower gives your legs and glutes two sessions per week while your upper body gets one. Popular with people who want stronger legs without going to the gym more than 3 days.',
+    ts: { html: 'Consistent moderate exercise is one of the most researched interventions for anxiety and depression.<br><br>This split keeps sessions short and completable so you actually show up. Full body compound lifts give you the biggest neurochemical return per session. Moderate effort means you leave feeling better than when you walked in, not wrecked.<br><br><strong>That\'s what builds the habit. And the habit is the whole thing.</strong>' },
   };
   // Expand the tip inline inside the selected button; reset all others to their short text
   const allBtnsForTip = btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn');
@@ -25034,7 +25035,11 @@ function selectSplitOnboard(type, btn) {
   });
   const selectedDesc = btn.querySelector('.ob-split-desc');
   if (selectedDesc && tips[type]) {
-    selectedDesc.textContent = tips[type];
+    if (typeof tips[type] === 'object') {
+      selectedDesc.innerHTML = tips[type].html;
+    } else {
+      selectedDesc.textContent = tips[type];
+    }
     selectedDesc.style.color = 'var(--cream)';
   }
 
@@ -25054,6 +25059,7 @@ function selectSplitOnboard(type, btn) {
       full2:      'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Overhead Press',
       antagonist: 'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; EZ Bar Curl &nbsp;·&nbsp; Leg Press',
       lul:        'Leg Press &nbsp;·&nbsp; Hip Thrust &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Bench &nbsp;·&nbsp; Machine Row',
+      ts:         'Bench &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Overhead Press',
     };
     pickPreview.innerHTML = previews[type] || previews.ul;
   }
