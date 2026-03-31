@@ -35,6 +35,12 @@
     --gold: #c47d00;
     --gold-dim: rgba(196,125,0,0.18);
     --blue: #5b8dee;
+    --ts-sage: #7FB685;
+    --ts-sage-dim: rgba(127,182,133,0.55);
+    --ts-sage-bg: rgba(127,182,133,0.12);
+    --ts-sage-glow: rgba(127,182,133,0.15);
+    --ts-amber: #D4A843;
+    --ts-soft-red: #CC6B6B;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -10085,10 +10091,10 @@ function showStatInfo(type) {
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:28px 24px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
         <div style="font-size:32px;">${icon}</div>
-        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;">${title}</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:${type === 'focus' && _isTS() ? 'var(--ts-sage)' : 'var(--cream)'};letter-spacing:2px;">${title}</div>
       </div>
       <div style="font-size:15px;color:var(--gray-light);line-height:1.6;margin-bottom:10px;">${body}</div>
-      <div style="font-size:13px;color:var(--gray);line-height:1.6;padding:12px 14px;background:var(--dark3);border-radius:10px;margin-bottom:20px;">${sub}</div>
+      <div style="font-size:13px;color:var(--gray);line-height:1.6;padding:12px 14px;background:${type === 'focus' && _isTS() ? 'var(--ts-sage-glow)' : 'var(--dark3)'};border-radius:10px;margin-bottom:20px;">${sub}</div>
       <button onclick="this.closest('[style*=fixed]').remove()" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--cream);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">GOT IT</button>
     </div>`;
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
@@ -10317,9 +10323,9 @@ function renderHome() {
     if (focusLabelEl) { focusLabelEl.textContent = '⏸ PAUSED'; focusLabelEl.style.color = 'var(--warning)'; }
     if (streakLabelEl) { streakLabelEl.textContent = '⏸ STREAK PAUSED'; streakLabelEl.style.color = 'var(--warning)'; }
   } else {
-    if (focusWordEl) focusWordEl.style.color = '#D4A843';
+    if (focusWordEl) focusWordEl.style.color = _isTS() ? 'var(--ts-sage)' : '#D4A843';
     streakEl.style.color = 'var(--cream)';
-    if (focusLabelEl) { focusLabelEl.textContent = "TODAY'S FOCUS"; focusLabelEl.style.color = ''; }
+    if (focusLabelEl) { focusLabelEl.textContent = "TODAY'S FOCUS"; focusLabelEl.style.color = _isTS() ? 'var(--ts-sage-dim)' : ''; }
     if (streakLabelEl) { streakLabelEl.textContent = 'Week Streak'; streakLabelEl.style.color = ''; }
   }
   let pausedSession = null;
@@ -11209,15 +11215,30 @@ function openRpePicker(exId, setIndex, type) {
     { val: 10,  desc: 'ABSOLUTE MAX' },
   ];
 
+  const _tsMode = _isTS();
   document.getElementById('rpe-picker-body').innerHTML =
-    '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);margin-bottom:4px;">SELECT <span style="color:var(--red-text);">RPE</span></div>' +
-    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;margin-bottom:14px;">How hard did that set feel?</div>' +
+    '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);margin-bottom:4px;">SELECT <span style="color:' + (_tsMode ? 'var(--ts-sage)' : 'var(--red-text)') + ';">RPE</span></div>' +
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;margin-bottom:14px;">' + (_tsMode ? 'How hard did that set feel? Target: RPE 6\u20137' : 'How hard did that set feel?') + '</div>' +
     '<div class="rpe-picker-grid">' +
-      rpeOptions.map(o =>
-        '<button class="rpe-picker-btn' + (currentRpe == o.val ? ' selected' : '') + '" data-rpe="' + o.val + '" onclick="selectRpeFromPicker(' + o.val + ')">' +
-          o.val + '<span class="rpe-picker-desc">' + o.desc + '</span>' +
-        '</button>'
-      ).join('') +
+      rpeOptions.map(o => {
+        let tsStyle = '';
+        let tsLabel = '';
+        if (_tsMode) {
+          if (o.val <= 7) {
+            tsStyle = 'border-color:var(--ts-sage);background:var(--ts-sage-bg);';
+            tsLabel = '<span style="display:block;font-size:9px;color:var(--ts-sage);letter-spacing:0.5px;margin-top:2px;">RECOMMENDED</span>';
+          } else if (o.val === 7.5) {
+            tsStyle = 'border-color:var(--ts-amber);background:rgba(212,168,67,0.08);';
+            tsLabel = '<span style="display:block;font-size:9px;color:var(--ts-amber);letter-spacing:0.5px;margin-top:2px;">UPPER LIMIT</span>';
+          } else {
+            tsStyle = 'opacity:0.4;';
+            tsLabel = '<span style="display:block;font-size:9px;color:var(--gray);letter-spacing:0.5px;margin-top:2px;">ABOVE TARGET</span>';
+          }
+        }
+        return '<button class="rpe-picker-btn' + (currentRpe == o.val ? ' selected' : '') + '" data-rpe="' + o.val + '" style="' + tsStyle + '" onclick="selectRpeFromPicker(' + o.val + ')">' +
+          o.val + '<span class="rpe-picker-desc">' + o.desc + '</span>' + tsLabel +
+        '</button>';
+      }).join('') +
     '</div>' +
     (currentRpe ? '<button onclick="clearRpeFromPicker()" style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);border-radius:12px;padding:12px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;margin-bottom:8px;">CLEAR RPE</button>' : '') +
     '<button onclick="closeRpePicker()" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray);border-radius:12px;padding:12px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;">CANCEL</button>';
@@ -11255,6 +11276,7 @@ function selectRpeFromPicker(rpe) {
     btn.textContent = rpe;
     btn.dataset.empty = 'false';
   }
+  if (_isTS() && rpe >= 8) showToast('T&S targets RPE 6\u20137. Ease back next set.');
   closeRpePicker();
 }
 
@@ -14136,7 +14158,16 @@ function _showRpeNudge(exId, setIndex) {
   const nudge = document.createElement('div');
   nudge.className = 'rpe-nudge-row';
   nudge.id = nudgeId;
-  nudge.innerHTML = `<span class="rpe-nudge-label">Effort level?</span><div class="rpe-nudge-pills">${rpeVals.map(r => `<button class="rpe-nudge-btn" onclick="selectRpeFromNudge('${exId}',${setIndex},${r})">${r}</button>`).join('')}</div><button class="rpe-nudge-dismiss" onclick="_removeRpeNudge('${exId}',${setIndex})">✕</button>`;
+  const _tsNudge = _isTS();
+  nudge.innerHTML = `<span class="rpe-nudge-label">${_tsNudge ? 'Effort? (target 6\u20137)' : 'Effort level?'}</span><div class="rpe-nudge-pills">${rpeVals.map(r => {
+    let _nStyle = '';
+    if (_tsNudge) {
+      if (r <= 7) _nStyle = 'border-color:var(--ts-sage);background:var(--ts-sage-bg);';
+      else if (r === 7.5) _nStyle = 'border-color:var(--ts-amber);';
+      else _nStyle = 'opacity:0.4;';
+    }
+    return `<button class="rpe-nudge-btn" style="${_nStyle}" onclick="selectRpeFromNudge('${exId}',${setIndex},${r})">${r}</button>`;
+  }).join('')}</div><button class="rpe-nudge-dismiss" onclick="_removeRpeNudge('${exId}',${setIndex})">✕</button>`;
   setRow.insertAdjacentElement('afterend', nudge);
   requestAnimationFrame(() => requestAnimationFrame(() => nudge.classList.add('open')));
 }
@@ -14157,6 +14188,7 @@ function selectRpeFromNudge(exId, setIndex, rpe) {
     btn.textContent = rpe;
     btn.dataset.empty = 'false';
   }
+  if (_isTS() && rpe >= 8) showToast('T&S targets RPE 6\u20137. Ease back next set.');
   _removeRpeNudge(exId, setIndex);
 }
 
@@ -15113,7 +15145,12 @@ async function _maybeFireCoachingCue(exId, setIndex) {
 // ============================================================
 let sessionTimerInterval = null;
 
+let _tsTimerWarningFired = false;
+let _tsTimerOverFired = false;
+
 function startSessionTimer() {
+  _tsTimerWarningFired = false;
+  _tsTimerOverFired = false;
   if (sessionTimerInterval) clearInterval(sessionTimerInterval);
   sessionTimerInterval = setInterval(() => {
     if (!activeSession) return;
@@ -15121,7 +15158,23 @@ function startSessionTimer() {
     const m = Math.floor(elapsed / 60);
     const s = elapsed % 60;
     const el = document.getElementById('session-timer-display');
-    if (el) el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+    if (!el) return;
+    el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+
+    // T&S session timer zone colors
+    if (_isTS()) {
+      if (m >= 50) {
+        el.style.color = 'var(--ts-soft-red)';
+        if (!_tsTimerOverFired) { _tsTimerOverFired = true; haptic(HAPTIC.warning); }
+      } else if (m >= 45) {
+        el.style.color = 'var(--ts-amber)';
+        if (!_tsTimerWarningFired) { _tsTimerWarningFired = true; haptic(HAPTIC.click); showToast('45 min. Good time to wrap up.'); }
+      } else if (m >= 35) {
+        el.style.color = 'var(--ts-sage)';
+      } else {
+        el.style.color = '';
+      }
+    }
   }, 1000);
 }
 
