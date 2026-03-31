@@ -22537,13 +22537,14 @@ var _toastBusy = false;
 //   3. Visual micro-feedback on the active element (universal)
 //
 // Pattern library for consistent, purposeful haptic feedback:
+// Minimum pulse width ~30ms for Android devices to register a noticeable buzz.
 const HAPTIC = {
-  tap:       10,                       // Nav, light selections
-  click:     [15, 30, 15],             // Toggles, confirms
-  success:   [20, 40, 30],             // Set done, saves
-  milestone: [30, 50, 30, 50, 60],     // PRs, streaks, session complete
-  warning:   [40, 30, 40, 30, 40],     // Destructive actions, resets
-  start:     [25, 40, 40],             // Starting a workout / timer
+  tap:       30,                       // Nav, light selections
+  click:     [35, 50, 35],             // Toggles, confirms
+  success:   [40, 60, 50],             // Set done, saves
+  milestone: [60, 80, 60, 80, 100],   // PRs, streaks, session complete
+  warning:   [70, 50, 70, 50, 70],    // Destructive actions, resets
+  start:     [50, 60, 70],            // Starting a workout / timer
 };
 
 // ── Web Audio haptic engine (iOS fallback) ──────────────────────
@@ -22584,8 +22585,8 @@ function _audioHaptic(pattern) {
   // Map pattern type to audio intensity
   const totalMs = seq.reduce((a, b) => a + b, 0);
   let freq, gain;
-  if (totalMs > 150)      { freq = 50; gain = 0.25; }  // milestone / strong
-  else if (totalMs > 50)  { freq = 60; gain = 0.15; }  // click / success
+  if (totalMs > 250)      { freq = 50; gain = 0.25; }  // milestone / strong
+  else if (totalMs > 100) { freq = 60; gain = 0.15; }  // click / success
   else                    { freq = 80; gain = 0.08; }  // tap / light
 
   let offset = 0;
@@ -22603,9 +22604,14 @@ function _audioHaptic(pattern) {
 // ── Visual micro-feedback (universal) ───────────────────────────
 // Applies a brief scale + flash animation to the element that
 // triggered the interaction so there's always tangible feedback.
+// Uses the event target from the most recent pointer/touch event
+// since document.activeElement is unreliable on mobile taps.
+let _lastTappedEl = null;
+document.addEventListener('pointerdown', e => { _lastTappedEl = e.target.closest('button, [onclick], .nav-item, .settings-item, .mood-btn, .set-done-btn, .start-btn, .day-card'); }, { passive: true });
+document.addEventListener('touchstart', e => { _lastTappedEl = e.target.closest('button, [onclick], .nav-item, .settings-item, .mood-btn, .set-done-btn, .start-btn, .day-card'); }, { passive: true });
+
 function _visualPulse(pattern) {
-  // Find the element that was just tapped
-  const el = document.activeElement;
+  const el = _lastTappedEl || document.activeElement;
   if (!el || el === document.body || el === document.documentElement) return;
 
   // Determine intensity from pattern duration
@@ -22613,9 +22619,9 @@ function _visualPulse(pattern) {
   const totalMs = seq.reduce((a, b) => a + b, 0);
 
   let cls;
-  if (totalMs > 150)     cls = 'haptic-pop-strong';
-  else if (totalMs > 50) cls = 'haptic-pop-medium';
-  else                   cls = 'haptic-pop-light';
+  if (totalMs > 250)     cls = 'haptic-pop-strong';
+  else if (totalMs > 100) cls = 'haptic-pop-medium';
+  else                    cls = 'haptic-pop-light';
 
   el.classList.remove('haptic-pop-light', 'haptic-pop-medium', 'haptic-pop-strong');
   void el.offsetWidth; // force reflow to restart animation
@@ -22628,9 +22634,9 @@ const _canVibrate = !!navigator.vibrate;
 function haptic(pattern) {
   // Layer 1: Native vibration (Android)
   if (_canVibrate) navigator.vibrate(pattern);
-  // Layer 2: Audio pulse (iOS + all platforms without vibrate)
+  // Layer 2: Audio pulse (fallback for all platforms)
   if (!_canVibrate) _audioHaptic(pattern);
-  // Layer 3: Visual micro-feedback (always)
+  // Layer 3: Visual micro-feedback (always, every platform)
   _visualPulse(pattern);
 }
 
