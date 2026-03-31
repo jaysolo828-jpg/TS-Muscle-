@@ -443,6 +443,27 @@
 
   .section-title span { color: var(--cream); }
 
+  /* HAPTIC VISUAL MICRO-FEEDBACK */
+  @keyframes hapticPopLight {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(0.97); }
+    100% { transform: scale(1); }
+  }
+  @keyframes hapticPopMedium {
+    0%   { transform: scale(1); opacity: 1; }
+    40%  { transform: scale(0.94); opacity: 0.85; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes hapticPopStrong {
+    0%   { transform: scale(1); opacity: 1; }
+    30%  { transform: scale(0.92); opacity: 0.8; }
+    60%  { transform: scale(1.03); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .haptic-pop-light  { animation: hapticPopLight  0.15s ease-out !important; }
+  .haptic-pop-medium { animation: hapticPopMedium 0.2s  ease-out !important; }
+  .haptic-pop-strong { animation: hapticPopStrong 0.3s  ease-out !important; }
+
   /* BOUNCE-IN ANIMATION */
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
@@ -22510,18 +22531,113 @@ function cancelRestoreDefaults() {
 var _toastQueue = [];
 var _toastBusy = false;
 // ── HAPTIC FEEDBACK ─────────────────────────────────────────────
-// Silently no-ops on iOS (Vibration API not supported there).
+// Multi-layer haptic system:
+//   1. navigator.vibrate (Android)
+//   2. Web Audio API low-freq pulse (iOS / all platforms)
+//   3. Visual micro-feedback on the active element (universal)
+//
 // Pattern library for consistent, purposeful haptic feedback:
+// Minimum pulse width ~30ms for Android devices to register a noticeable buzz.
 const HAPTIC = {
-  tap:       10,                       // Nav, light selections
-  click:     [15, 30, 15],             // Toggles, confirms
-  success:   [20, 40, 30],             // Set done, saves
-  milestone: [30, 50, 30, 50, 60],     // PRs, streaks, session complete
-  warning:   [40, 30, 40, 30, 40],     // Destructive actions, resets
-  start:     [25, 40, 40],             // Starting a workout / timer
+  tap:       30,                       // Nav, light selections
+  click:     [35, 50, 35],             // Toggles, confirms
+  success:   [40, 60, 50],             // Set done, saves
+  milestone: [60, 80, 60, 80, 100],   // PRs, streaks, session complete
+  warning:   [70, 50, 70, 50, 70],    // Destructive actions, resets
+  start:     [50, 60, 70],            // Starting a workout / timer
 };
+
+// ── Web Audio haptic engine (iOS fallback) ──────────────────────
+// Creates ultra-short low-frequency oscillator bursts that produce
+// a subtle "thump" through speakers/Taptic Engine on iOS devices.
+let _hapticAudioCtx = null;
+function _getHapticAudioCtx() {
+  if (!_hapticAudioCtx) {
+    try {
+      _hapticAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) { return null; }
+  }
+  // iOS requires resume after user gesture
+  if (_hapticAudioCtx.state === 'suspended') _hapticAudioCtx.resume();
+  return _hapticAudioCtx;
+}
+
+// Plays a single audio "thump" — duration in seconds, freq in Hz
+function _audioThump(duration, freq, gain) {
+  const ctx = _getHapticAudioCtx();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const vol = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  vol.gain.setValueAtTime(gain, ctx.currentTime);
+  vol.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+  osc.connect(vol);
+  vol.connect(ctx.destination);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + duration);
+}
+
+// Maps a vibrate-style pattern to audio thumps
+// Pattern is either a single ms value or [pulse, pause, pulse, pause, ...]
+function _audioHaptic(pattern) {
+  const seq = Array.isArray(pattern) ? pattern : [pattern];
+  // Map pattern type to audio intensity
+  const totalMs = seq.reduce((a, b) => a + b, 0);
+  let freq, gain;
+  if (totalMs > 250)      { freq = 50; gain = 0.25; }  // milestone / strong
+  else if (totalMs > 100) { freq = 60; gain = 0.15; }  // click / success
+  else                    { freq = 80; gain = 0.08; }  // tap / light
+
+  let offset = 0;
+  for (let i = 0; i < seq.length; i++) {
+    if (i % 2 === 0) {
+      // Pulse segment — play thump
+      const dur = Math.max(seq[i] / 1000, 0.008);
+      setTimeout(() => _audioThump(dur, freq, gain), offset);
+    }
+    // Odd indices are pauses — just advance offset
+    offset += seq[i];
+  }
+}
+
+// ── Visual micro-feedback (universal) ───────────────────────────
+// Applies a brief scale + flash animation to the element that
+// triggered the interaction so there's always tangible feedback.
+// Uses the event target from the most recent pointer/touch event
+// since document.activeElement is unreliable on mobile taps.
+let _lastTappedEl = null;
+document.addEventListener('pointerdown', e => { _lastTappedEl = e.target.closest('button, [onclick], .nav-item, .settings-item, .mood-btn, .set-done-btn, .start-btn, .day-card'); }, { passive: true });
+document.addEventListener('touchstart', e => { _lastTappedEl = e.target.closest('button, [onclick], .nav-item, .settings-item, .mood-btn, .set-done-btn, .start-btn, .day-card'); }, { passive: true });
+
+function _visualPulse(pattern) {
+  const el = _lastTappedEl || document.activeElement;
+  if (!el || el === document.body || el === document.documentElement) return;
+
+  // Determine intensity from pattern duration
+  const seq = Array.isArray(pattern) ? pattern : [pattern];
+  const totalMs = seq.reduce((a, b) => a + b, 0);
+
+  let cls;
+  if (totalMs > 250)     cls = 'haptic-pop-strong';
+  else if (totalMs > 100) cls = 'haptic-pop-medium';
+  else                    cls = 'haptic-pop-light';
+
+  el.classList.remove('haptic-pop-light', 'haptic-pop-medium', 'haptic-pop-strong');
+  void el.offsetWidth; // force reflow to restart animation
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), 300);
+}
+
+// ── Main haptic function ────────────────────────────────────────
+const _canVibrate = !!navigator.vibrate;
 function haptic(pattern) {
-  if (navigator.vibrate) navigator.vibrate(pattern);
+  // Layer 1: Native vibration (Android)
+  if (_canVibrate) navigator.vibrate(pattern);
+  // Layer 2: Audio pulse (fallback for all platforms)
+  if (!_canVibrate) _audioHaptic(pattern);
+  // Layer 3: Visual micro-feedback (always, every platform)
+  _visualPulse(pattern);
 }
 
 function showToast(msg, type) {
