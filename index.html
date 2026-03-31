@@ -35,6 +35,12 @@
     --gold: #c47d00;
     --gold-dim: rgba(196,125,0,0.18);
     --blue: #5b8dee;
+    --ts-sage: #7FB685;
+    --ts-sage-dim: rgba(127,182,133,0.55);
+    --ts-sage-bg: rgba(127,182,133,0.12);
+    --ts-sage-glow: rgba(127,182,133,0.15);
+    --ts-amber: #D4A843;
+    --ts-soft-red: #CC6B6B;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -3545,6 +3551,11 @@
           <div style="font-weight:bold;">Lower / Upper / Lower</div>
           <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Lower body twice, upper body once per week. Great for leg and glute development. 3 days.</div>
         </button>
+        <button class="onboard-select-btn" onclick="selectSplitOnboard('ts', this)"
+          data-short="Full body 3x per week. Compound lifts, moderate effort, built for mental health and consistency. 3 days.">
+          <div style="font-weight:bold;">T&S Split</div>
+          <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Full body 3x per week. Compound lifts, moderate effort, built for mental health and consistency. 3 days.</div>
+        </button>
       </div>
 
       <input type="hidden" id="ob-split-type" value=""/>
@@ -4673,6 +4684,12 @@
           </div>
           <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Lower body gets two sessions per week. Upper gets one. Great for leg and glute focus.</div>
         </button>
+        <button class="settings-day-btn" id="stb-ts" onclick="selectSplitTypeSettings('ts', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">T&S Split</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Full body, compound first, moderate effort. Built for mental health and long term consistency.</div>
+        </button>
       </div>
     </div>
 
@@ -5638,7 +5655,49 @@ const LUL_PROGRAM = [
   },
 ];
 
-const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBODY_PROGRAM, bro: BRO_PROGRAM, glute: GLUTE_PROGRAM, pp: PP_PROGRAM, full3: FULL3_PROGRAM, full2: FULL2_PROGRAM, antagonist: ANTAGONIST_PROGRAM, lul: LUL_PROGRAM };
+// ── T&S MENTAL HEALTH SPLIT (3-DAY FULL BODY) ─────────────────
+// Research-backed compound-first program designed for mental health.
+// 3 sessions/week, 4-5 exercises per session, 35-45 min target.
+// RPE 6-7 cap. Moderate volume. Sustainability over intensity.
+const TS_PROGRAM = [
+  {
+    id: 'ts-a', day: 'Monday', badge: 'T&S A', name: 'Squat + Press + Pull',
+    exercises: [
+      DEFAULT_PROGRAM[1].exercises[0], // legpress-a  (squat pattern — biggest endorphin driver)
+      DEFAULT_PROGRAM[0].exercises[0], // bench       (horizontal press)
+      DEFAULT_PROGRAM[2].exercises[0], // chest-row   (horizontal pull)
+      DEFAULT_PROGRAM[0].exercises[5], // ohp         (vertical press)
+      DEFAULT_PROGRAM[2].exercises[3], // ez-curl     (arm work to close)
+    ]
+  },
+  {
+    id: 'ts-b', day: 'Wednesday', badge: 'T&S B', name: 'Hinge + Pull + Press',
+    exercises: [
+      DEFAULT_PROGRAM[1].exercises[1], // rdl         (hip hinge — posterior chain)
+      DEFAULT_PROGRAM[2].exercises[1], // pulldown    (vertical pull)
+      DEFAULT_PROGRAM[0].exercises[1], // incline     (incline press)
+      DEFAULT_PROGRAM[1].exercises[4], // hip-thrust-a (glute driver)
+      DEFAULT_PROGRAM[0].exercises[6], // lateral     (shoulder accessory)
+    ]
+  },
+  {
+    id: 'ts-c', day: 'Friday', badge: 'T&S C', name: 'Full Body + Accessories',
+    exercises: [
+      DEFAULT_PROGRAM[3].exercises[0], // legpress-b  (squat variation)
+      DEFAULT_PROGRAM[2].exercises[2], // db-row      (unilateral pull)
+      DEFAULT_PROGRAM[0].exercises[2], // flye        (chest isolation)
+      DEFAULT_PROGRAM[1].exercises[3], // ham-curl-a  (hamstring isolation)
+      DEFAULT_PROGRAM[2].exercises[5], // rear-delt   (rear delt / posture)
+    ]
+  },
+];
+
+const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBODY_PROGRAM, bro: BRO_PROGRAM, glute: GLUTE_PROGRAM, pp: PP_PROGRAM, full3: FULL3_PROGRAM, full2: FULL2_PROGRAM, antagonist: ANTAGONIST_PROGRAM, lul: LUL_PROGRAM, ts: TS_PROGRAM };
+
+// ── T&S SPLIT DETECTION ────────────────────────────────────────
+// Single gate for all T&S specific behavior. Every T&S adaptation
+// checks this. If false, the existing code path runs unchanged.
+function _isTS() { return state.splitType === 'ts'; }
 
 // ── TRAVEL MODE EQUIPMENT TAGS ─────────────────────────────────
 // Applied immediately after all program data is defined.
@@ -9847,6 +9906,105 @@ const _FOCUS_DATA = {
     ]
   }
 }; end of removed _FOCUS_CONTEXT */
+// ── T&S DAILY FOCUS WORDS ────────────────────────────────────────
+// Gentle, mental health supportive vocabulary. Single lane per phase
+// because T&S does not escalate intensity across experience levels.
+// Phases map to the T&S 6 week cycle: early (1-2), mid (3-4), late (5), finish (6=recovery).
+const _TS_FOCUS_DATA = {
+  early: { phase: 'SETTLING IN', icon: '🌿',
+    words: [
+      {word:'GENTLE',  body:`Gentle effort builds more than forced effort ever could. Let today be gentle.`,                                       sub:`Gentleness with yourself is not weakness. It is how you stay in this for the long run.`},
+      {word:'ENOUGH',  body:`What you do today is enough. Not because the bar is low. Because showing up is the whole point.`,                     sub:`Enough is not a ceiling. It is permission to be where you are right now.`},
+      {word:'HERE',    body:`You are here. In the room. That is the hardest part and you already did it.`,                                         sub:`Being here, present, doing the work. That is all any session needs from you.`},
+      {word:'EASE',    body:`Ease into what your body offers today. Not what you think it should offer. What it actually has.`,                     sub:`Ease is not laziness. It is listening to what is real and working with it.`},
+      {word:'ALLOW',   body:`Allow yourself to be a beginner again. Allow the weights to feel light. Allow the pace to feel slow.`,                sub:`Allowing is an act of trust. Trust that this pace builds something lasting.`},
+      {word:'GROUND',  body:`Find your footing. Not your maximum. Just your footing. Everything else comes after that.`,                           sub:`Grounded movement, grounded breathing, grounded presence. That is the foundation.`},
+      {word:'ARRIVE',  body:`You arrived. That took something. Honor it by staying present for the next 40 minutes.`,                              sub:`Arriving when it is hard to arrive is the most important kind of consistency.`},
+      {word:'BEGIN',   body:`Every session is a new beginning. What happened before this one stays outside the door.`,                             sub:`Beginning again is not starting over. It is continuing with fresh eyes.`},
+      {word:'OPEN',    body:`Stay open to how today feels. Some days are heavy. Some days surprise you. Both are fine.`,                           sub:`Openness means not deciding how the session will go before it starts.`},
+      {word:'TRUST',   body:`Trust that moderate effort done consistently changes things. You do not need to prove anything today.`,                sub:`Trust the process even when the results are not visible yet. They are building.`},
+      {word:'MOVE',    body:`Just move. The mood shift happens after you start, not before. Movement is the mechanism.`,                           sub:`Moving is the most reliable way to change how you feel. You already know this.`},
+      {word:'STEP IN', body:`You stepped in. Most people talked themselves out of it today. You did not.`,                                         sub:`Stepping in is the act. Everything after it is just details.`},
+      {word:'STEADY',  body:`Steady is the speed. Not fast, not slow. Just steady, session after session.`,                                        sub:`Steady builds quietly. One day you will look back and see how far steady took you.`},
+      {word:'PRESENT', body:`Be in this rep. Not the last one, not the next one. This one.`,                                                       sub:`Presence is the practice. The gym is one of the few places that demands it.`},
+      {word:'SHOW UP', body:`Showing up is the skill. Everything else is secondary to the act of being here.`,                                     sub:`The days you show up when you do not want to are the ones that matter most.`},
+      {word:'CALM',    body:`Let the session be calm. Calm effort, calm breathing, calm focus. That is the T&S way.`,                              sub:`Calm does not mean easy. It means controlled, intentional, and free of pressure.`},
+    ]
+  },
+  mid: { phase: 'BUILDING', icon: '🌱',
+    words: [
+      {word:'RHYTHM', body:`You are finding your rhythm. The sessions are becoming familiar. Let that familiarity carry you.`,                     sub:`Rhythm means you do not have to think about whether to come. You just come.`},
+      {word:'TEND',   body:`Tend to yourself the way you would tend to something you are growing. Patiently. Consistently.`,                       sub:`Tending is quiet work. It does not ask for applause. It just asks you to keep going.`},
+      {word:'SETTLE', body:`Let yourself settle into this. The routine, the effort level, the pace. It is yours now.`,                             sub:`Settled means you are not fighting the process anymore. You are in it.`},
+      {word:'GROW',   body:`Growth here is not about the weight on the bar. It is about who you become by showing up.`,                            sub:`The growth that matters most is invisible. It happens between sessions, not during them.`},
+      {word:'ROOTS',  body:`You are putting down roots. Every session makes the habit deeper, harder to pull out.`,                                sub:`Deep roots hold when life gets stormy. You are building that stability right now.`},
+      {word:'CARRY',  body:`You carry things into the gym. You leave lighter. That exchange is the whole point.`,                                  sub:`The weight on the bar is not the heaviest thing you carry. But it is the one you can put down.`},
+      {word:'NOTICE', body:`Notice how you feel after. Not during. After. That is the data that matters on this split.`,                           sub:`The mood shift after a session is your proof that this works. Pay attention to it.`},
+      {word:'WATER',  body:`You are watering something. You cannot see the roots yet but they are spreading.`,                                     sub:`Consistent watering grows things. Skip a day, come back, water again. It still grows.`},
+      {word:'RETURN', body:`You returned. Again. That pattern is becoming who you are, not just what you do.`,                                     sub:`Returning is the most underrated skill in training. You have it.`},
+      {word:'HONEST', body:`Be honest with the effort. RPE 6 or 7 is honest work. You do not need to suffer to earn this.`,                       sub:`Honest effort means appropriate effort. Not maximum. Appropriate.`},
+      {word:'BELONG', body:`You belong here. In this room, doing this work, at this pace. There is no minimum requirement.`,                       sub:`Belonging is not earned through intensity. It is earned through presence.`},
+      {word:'SOFTEN', body:`Soften the grip. On the bar, on the expectations, on the idea that it needs to look a certain way.`,                   sub:`Softening is not giving up. It is letting go of what does not serve you.`},
+      {word:'HOLD',   body:`Hold the routine. Not perfectly. Just hold it. Imperfect consistency beats perfect inconsistency.`,                    sub:`Holding means you do not let go when it gets inconvenient. You just hold.`},
+      {word:'LAYER',  body:`Every session adds a layer. You cannot see the layers yet. That does not mean they are not there.`,                    sub:`Layers build quietly. One day the thing you built will surprise you.`},
+      {word:'PACE',   body:`Your pace is your pace. Not someone else's. Not what you think it should be. Yours.`,                                  sub:`The right pace is the one you can maintain. That is the only measurement that matters.`},
+      {word:'KIND',   body:`Be kind to yourself in here. The way you talk to yourself during a session matters.`,                                  sub:`Kindness toward yourself is not soft. It is the foundation of every sustainable habit.`},
+    ]
+  },
+  peak: { phase: 'SUSTAINING', icon: '☀️',
+    words: [
+      {word:'STILL',   body:`You are still here. Weeks in. Still showing up. That is not nothing. That is everything.`,                            sub:`Still here means the habit is holding. Protect it.`},
+      {word:'WORTHY',  body:`This session is worth your time. You are worth the time it takes. Both are true.`,                                    sub:`Worthiness is not conditional on performance. You showed up. That is worth everything.`},
+      {word:'LIGHT',   body:`Keep the effort light enough to come back. That is the only rule that matters long term.`,                            sub:`Light and consistent will always outperform heavy and sporadic. Always.`},
+      {word:'ACCEPT',  body:`Accept where you are today. Some sessions feel strong. Some feel like survival. Both count.`,                         sub:`Acceptance is not giving up on progress. It is making peace with the pace.`},
+      {word:'ANCHOR',  body:`This session is your anchor. Whatever else happened today, you did this for yourself.`,                               sub:`An anchor holds you steady. That is what these sessions do when everything else moves.`},
+      {word:'WHOLE',   body:`You are building something whole. Body and mind together. Not one at the expense of the other.`,                      sub:`Wholeness means nothing gets sacrificed. The body moves. The mind quiets. Both benefit.`},
+      {word:'STAY',    body:`Stay in the habit. Not because it is easy but because it is yours and it is working.`,                                sub:`Staying is the hardest part of any long term commitment. And the most valuable.`},
+      {word:'PROOF',   body:`Every session is proof. Not to anyone else. To yourself. That you can do hard things gently.`,                        sub:`The proof accumulates. Session by session. You are building a case for yourself.`},
+      {word:'DEEP',    body:`The benefits go deeper than the mirror. Sleep, mood, energy, patience. All of it improves.`,                          sub:`The deep changes are the ones that matter. And they are already happening.`},
+      {word:'YOURS',   body:`This is yours. The routine, the progress, the effort. Nobody gave it to you. You built it.`,                          sub:`What you build through consistency belongs to you completely.`},
+      {word:'SIMPLE',  body:`Keep it simple. Show up, move well, leave feeling better. That is the whole formula.`,                                sub:`Simple does not mean easy. It means clear. And clear is what you need.`},
+      {word:'SAFE',    body:`The gym is a safe place to feel strong when the rest of the world feels uncertain.`,                                   sub:`Safety in movement, safety in routine, safety in the predictability of showing up.`},
+      {word:'QUIET',   body:`Let the session be quiet. No pressure, no performance, no proving. Just the work.`,                                   sub:`Quiet sessions build just as much as loud ones. Sometimes more.`},
+      {word:'GRACE',   body:`Give yourself grace on the days it feels harder than it should. Those days still count.`,                             sub:`Grace means you do not punish yourself for being human. You just keep going.`},
+      {word:'REAL',    body:`This is real. The effort, the time, the commitment. It is real and it is changing you.`,                               sub:`Real change happens at this pace. Slowly, consistently, honestly.`},
+      {word:'RENEW',   body:`Every session renews something. Energy, clarity, patience, sleep. Something always improves.`,                        sub:`Renewal is not dramatic. It is the quiet shift you feel walking out of the gym.`},
+    ]
+  },
+  finish: { phase: 'COMPLETING', icon: '🌸',
+    words: [
+      {word:'DONE',    body:`You are finishing what you started. That matters more than how heavy the weights were.`,                               sub:`Finishing a cycle is an accomplishment. Let it feel like one.`},
+      {word:'FULL',    body:`A full cycle completed. The consistency is the achievement, not the numbers.`,                                        sub:`Fullness means you gave what you had, when you had it. That is complete.`},
+      {word:'CLOSE',   body:`Close this cycle the way you ran it. With presence, patience, and honest effort.`,                                    sub:`Closing well means showing up the same way you started. Nothing more is needed.`},
+      {word:'EARN',    body:`You earned the rest that is coming. Not through suffering but through steady commitment.`,                             sub:`Earned rest feels different from skipped sessions. Your body knows the difference.`},
+      {word:'LAND',    body:`Let the work land. The effects of the last few weeks are still settling into your body.`,                              sub:`Landing takes time. The session ends but the benefits keep arriving.`},
+      {word:'PROUD',   body:`You should be proud. Not for the weights. For the weeks. For the pattern you maintained.`,                            sub:`Pride in consistency is the deepest kind. It cannot be faked or borrowed.`},
+      {word:'FINISH',  body:`Finish gently. The way you end a cycle sets the tone for how the next one begins.`,                                   sub:`A gentle finish leads to a willing return. That is the goal.`},
+      {word:'WHOLE',   body:`You completed something whole. Start to finish. That takes more than most people give.`,                              sub:`Completion is rare. Most people start things. You finished one.`},
+      {word:'WRAP',    body:`Wrap this cycle up knowing you did it right. Consistent, moderate, honest.`,                                          sub:`Wrapping up well is its own skill. You are practicing it now.`},
+      {word:'MARK',    body:`Mark this. Another cycle done. Another stretch of showing up when it mattered.`,                                      sub:`Marking progress is not vanity. It is how you see how far you have come.`},
+      {word:'REST',    body:`Rest is next. You earned it by being consistent, not by being exhausted.`,                                            sub:`Approaching rest from consistency feels different from approaching it from burnout.`},
+      {word:'THANK',   body:`Thank your body for what it did these past weeks. It showed up every time you asked.`,                                sub:`Gratitude toward your body is not soft. It is the most honest response to what it gave you.`},
+    ]
+  },
+  deload: { phase: 'RESTING', icon: '🌊',
+    words: [
+      {word:'REST',    body:`Rest is not a break from the program. It is part of the program. Your body needs this.`,                              sub:`Resting well is a skill. Practice it this week with the same intention you bring to training.`},
+      {word:'PAUSE',   body:`Pause without guilt. The gym will be there when you come back. And you will come back stronger.`,                     sub:`Pausing is not quitting. It is breathing. You need to breathe.`},
+      {word:'SOFT',    body:`Let everything be soft this week. Movement, expectations, timelines. All of it.`,                                     sub:`Softness this week produces strength next week. That is how the cycle works.`},
+      {word:'BREATHE', body:`Breathe. The urgency to train is a habit, not a need. This week the need is rest.`,                                   sub:`Breathing room is what recovery provides. Fill your lungs with it.`},
+      {word:'FILL',    body:`Fill up on sleep, good food, and easy movement. Your body is rebuilding right now.`,                                  sub:`Filling up means putting back what the training drew from. Do that this week.`},
+      {word:'SLOW',    body:`Slow down on purpose. The goal this week is not performance. It is recovery.`,                                        sub:`Slow is intentional this week. Let slow be the pace without fighting it.`},
+      {word:'HEAL',    body:`Let your body heal what needs healing. Not just muscles. Energy, patience, sleep.`,                                    sub:`Healing is not just physical. Mental recovery happens in rest weeks too.`},
+      {word:'LET GO',  body:`Let go of the schedule this week. You do not owe the gym anything right now.`,                                        sub:`Letting go for a week is how you hold on for months. Give yourself the permission.`},
+      {word:'QUIET',   body:`A quiet week. No counting reps, no tracking effort. Just be in your body without asking it to perform.`,              sub:`Quiet is the goal. Let everything settle.`},
+      {word:'RESET',   body:`Reset your body and your mind. When you come back, both will be ready.`,                                              sub:`A proper reset means the next cycle starts fresh. Give yourself the full reset.`},
+      {word:'PEACE',   body:`Find peace in the lower intensity. There is no guilt in recovery. Only preparation.`,                                 sub:`Peace means no internal conflict about resting. Rest is the work this week.`},
+      {word:'GENTLE',  body:`Be gentle with yourself this week. Gentle is not lazy. Gentle is intentional recovery.`,                              sub:`Gentleness this week is the same discipline that got you through the last five weeks.`},
+    ]
+  }
+};
+
 // Score the user's profile into one of three word lanes: new → build → edge.
 // Factors: experience level (primary), goal, streak, total sessions, age.
 // Gender does not influence lane — the word pools are intentionally ungendered.
@@ -9881,6 +10039,19 @@ function getPersonaLane() {
 function getContextWord() {
   const week = state.weekCount || 1;
   const isDeload = state.isDeloadWeek || state.isRestWeek;
+
+  // T&S split: 6 week cycle (5 training + 1 recovery), separate word bank
+  if (_isTS()) {
+    let tsPhase = isDeload ? 'deload' : week >= 6 ? 'finish' : week >= 4 ? 'peak' : week >= 2 ? 'mid' : 'early';
+    const tsPool = _TS_FOCUS_DATA[tsPhase].words;
+    const today = new Date();
+    const daySeed     = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    const cycleOffset = ((state.cycleCount || 1) - 1) * 11;
+    const entry       = tsPool[(daySeed + cycleOffset) % tsPool.length];
+    const { phase: phaseName, icon } = _TS_FOCUS_DATA[tsPhase];
+    return { word: entry.word, phase: phaseName, icon, body: entry.body, sub: entry.sub, isTS: true };
+  }
+
   let phase = isDeload ? 'deload' : week >= 7 ? 'finish' : week >= 5 ? 'peak' : week >= 3 ? 'mid' : 'early';
   const lane = getPersonaLane();
   const pool = _FOCUS_DATA[phase][lane];
@@ -9930,10 +10101,10 @@ function showStatInfo(type) {
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:28px 24px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
         <div style="font-size:32px;">${icon}</div>
-        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;">${title}</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:${type === 'focus' && _isTS() ? 'var(--ts-sage)' : 'var(--cream)'};letter-spacing:2px;">${title}</div>
       </div>
       <div style="font-size:15px;color:var(--gray-light);line-height:1.6;margin-bottom:10px;">${body}</div>
-      <div style="font-size:13px;color:var(--gray);line-height:1.6;padding:12px 14px;background:var(--dark3);border-radius:10px;margin-bottom:20px;">${sub}</div>
+      <div style="font-size:13px;color:var(--gray);line-height:1.6;padding:12px 14px;background:${type === 'focus' && _isTS() ? 'var(--ts-sage-glow)' : 'var(--dark3)'};border-radius:10px;margin-bottom:20px;">${sub}</div>
       <button onclick="this.closest('[style*=fixed]').remove()" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--cream);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">GOT IT</button>
     </div>`;
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
@@ -10134,7 +10305,7 @@ function renderHome() {
   // Update split type badge next to "YOUR PROGRAM"
   const splitBadge = document.getElementById('home-split-badge');
   if (splitBadge) {
-    const splitLabels = { ul: 'UPPER / LOWER', ppl: 'PUSH / PULL / LEGS', fullbody: 'FULL BODY', bro: 'BRO SPLIT', glute: 'GLUTE PRIORITY', pp: 'PUSH / PULL', full3: 'FULL BODY 3x', full2: 'FULL BODY 2x', antagonist: 'ANTAGONIST SPLIT', lul: 'LOWER / UPPER / LOWER' };
+    const splitLabels = { ul: 'UPPER / LOWER', ppl: 'PUSH / PULL / LEGS', fullbody: 'FULL BODY', bro: 'BRO SPLIT', glute: 'GLUTE PRIORITY', pp: 'PUSH / PULL', full3: 'FULL BODY 3x', full2: 'FULL BODY 2x', antagonist: 'ANTAGONIST SPLIT', lul: 'LOWER / UPPER / LOWER', ts: 'T&S SPLIT' };
     const sType = state.splitType || 'ul';
     splitBadge.textContent = splitLabels[sType] || 'UPPER / LOWER';
     const sc = SPLIT_COLORS[sType];
@@ -10162,9 +10333,9 @@ function renderHome() {
     if (focusLabelEl) { focusLabelEl.textContent = '⏸ PAUSED'; focusLabelEl.style.color = 'var(--warning)'; }
     if (streakLabelEl) { streakLabelEl.textContent = '⏸ STREAK PAUSED'; streakLabelEl.style.color = 'var(--warning)'; }
   } else {
-    if (focusWordEl) focusWordEl.style.color = '#D4A843';
+    if (focusWordEl) focusWordEl.style.color = _isTS() ? 'var(--ts-sage)' : '#D4A843';
     streakEl.style.color = 'var(--cream)';
-    if (focusLabelEl) { focusLabelEl.textContent = "TODAY'S FOCUS"; focusLabelEl.style.color = ''; }
+    if (focusLabelEl) { focusLabelEl.textContent = "TODAY'S FOCUS"; focusLabelEl.style.color = _isTS() ? 'var(--ts-sage-dim)' : ''; }
     if (streakLabelEl) { streakLabelEl.textContent = 'Week Streak'; streakLabelEl.style.color = ''; }
   }
   let pausedSession = null;
@@ -11054,15 +11225,30 @@ function openRpePicker(exId, setIndex, type) {
     { val: 10,  desc: 'ABSOLUTE MAX' },
   ];
 
+  const _tsMode = _isTS();
   document.getElementById('rpe-picker-body').innerHTML =
-    '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);margin-bottom:4px;">SELECT <span style="color:var(--red-text);">RPE</span></div>' +
-    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;margin-bottom:14px;">How hard did that set feel?</div>' +
+    '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;letter-spacing:2px;color:var(--cream);margin-bottom:4px;">SELECT <span style="color:' + (_tsMode ? 'var(--ts-sage)' : 'var(--red-text)') + ';">RPE</span></div>' +
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;margin-bottom:14px;">' + (_tsMode ? 'How hard did that set feel? Target: RPE 6\u20137' : 'How hard did that set feel?') + '</div>' +
     '<div class="rpe-picker-grid">' +
-      rpeOptions.map(o =>
-        '<button class="rpe-picker-btn' + (currentRpe == o.val ? ' selected' : '') + '" data-rpe="' + o.val + '" onclick="selectRpeFromPicker(' + o.val + ')">' +
-          o.val + '<span class="rpe-picker-desc">' + o.desc + '</span>' +
-        '</button>'
-      ).join('') +
+      rpeOptions.map(o => {
+        let tsStyle = '';
+        let tsLabel = '';
+        if (_tsMode) {
+          if (o.val <= 7) {
+            tsStyle = 'border-color:var(--ts-sage);background:var(--ts-sage-bg);';
+            tsLabel = '<span style="display:block;font-size:9px;color:var(--ts-sage);letter-spacing:0.5px;margin-top:2px;">RECOMMENDED</span>';
+          } else if (o.val === 7.5) {
+            tsStyle = 'border-color:var(--ts-amber);background:rgba(212,168,67,0.08);';
+            tsLabel = '<span style="display:block;font-size:9px;color:var(--ts-amber);letter-spacing:0.5px;margin-top:2px;">UPPER LIMIT</span>';
+          } else {
+            tsStyle = 'opacity:0.4;';
+            tsLabel = '<span style="display:block;font-size:9px;color:var(--gray);letter-spacing:0.5px;margin-top:2px;">ABOVE TARGET</span>';
+          }
+        }
+        return '<button class="rpe-picker-btn' + (currentRpe == o.val ? ' selected' : '') + '" data-rpe="' + o.val + '" style="' + tsStyle + '" onclick="selectRpeFromPicker(' + o.val + ')">' +
+          o.val + '<span class="rpe-picker-desc">' + o.desc + '</span>' + tsLabel +
+        '</button>';
+      }).join('') +
     '</div>' +
     (currentRpe ? '<button onclick="clearRpeFromPicker()" style="width:100%;background:none;border:1px solid var(--dark4);color:var(--gray);border-radius:12px;padding:12px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;margin-bottom:8px;">CLEAR RPE</button>' : '') +
     '<button onclick="closeRpePicker()" style="width:100%;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray);border-radius:12px;padding:12px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;">CANCEL</button>';
@@ -11100,6 +11286,7 @@ function selectRpeFromPicker(rpe) {
     btn.textContent = rpe;
     btn.dataset.empty = 'false';
   }
+  if (_isTS() && rpe >= 8) showToast('T&S targets RPE 6\u20137. Ease back next set.');
   closeRpePicker();
 }
 
@@ -14068,7 +14255,16 @@ function _showRpeNudge(exId, setIndex) {
   const nudge = document.createElement('div');
   nudge.className = 'rpe-nudge-row';
   nudge.id = nudgeId;
-  nudge.innerHTML = `<span class="rpe-nudge-label">Effort level?</span><div class="rpe-nudge-pills">${rpeVals.map(r => `<button class="rpe-nudge-btn" onclick="selectRpeFromNudge('${exId}',${setIndex},${r})">${r}</button>`).join('')}</div><button class="rpe-nudge-dismiss" onclick="_removeRpeNudge('${exId}',${setIndex})">✕</button>`;
+  const _tsNudge = _isTS();
+  nudge.innerHTML = `<span class="rpe-nudge-label">${_tsNudge ? 'Effort? (target 6\u20137)' : 'Effort level?'}</span><div class="rpe-nudge-pills">${rpeVals.map(r => {
+    let _nStyle = '';
+    if (_tsNudge) {
+      if (r <= 7) _nStyle = 'border-color:var(--ts-sage);background:var(--ts-sage-bg);';
+      else if (r === 7.5) _nStyle = 'border-color:var(--ts-amber);';
+      else _nStyle = 'opacity:0.4;';
+    }
+    return `<button class="rpe-nudge-btn" style="${_nStyle}" onclick="selectRpeFromNudge('${exId}',${setIndex},${r})">${r}</button>`;
+  }).join('')}</div><button class="rpe-nudge-dismiss" onclick="_removeRpeNudge('${exId}',${setIndex})">✕</button>`;
   setRow.insertAdjacentElement('afterend', nudge);
   requestAnimationFrame(() => requestAnimationFrame(() => nudge.classList.add('open')));
 }
@@ -14089,6 +14285,7 @@ function selectRpeFromNudge(exId, setIndex, rpe) {
     btn.textContent = rpe;
     btn.dataset.empty = 'false';
   }
+  if (_isTS() && rpe >= 8) showToast('T&S targets RPE 6\u20137. Ease back next set.');
   _removeRpeNudge(exId, setIndex);
 }
 
@@ -15045,7 +15242,12 @@ async function _maybeFireCoachingCue(exId, setIndex) {
 // ============================================================
 let sessionTimerInterval = null;
 
+let _tsTimerWarningFired = false;
+let _tsTimerOverFired = false;
+
 function startSessionTimer() {
+  _tsTimerWarningFired = false;
+  _tsTimerOverFired = false;
   if (sessionTimerInterval) clearInterval(sessionTimerInterval);
   sessionTimerInterval = setInterval(() => {
     if (!activeSession) return;
@@ -15053,7 +15255,23 @@ function startSessionTimer() {
     const m = Math.floor(elapsed / 60);
     const s = elapsed % 60;
     const el = document.getElementById('session-timer-display');
-    if (el) el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+    if (!el) return;
+    el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+
+    // T&S session timer zone colors
+    if (_isTS()) {
+      if (m >= 50) {
+        el.style.color = 'var(--ts-soft-red)';
+        if (!_tsTimerOverFired) { _tsTimerOverFired = true; haptic(HAPTIC.warning); }
+      } else if (m >= 45) {
+        el.style.color = 'var(--ts-amber)';
+        if (!_tsTimerWarningFired) { _tsTimerWarningFired = true; haptic(HAPTIC.click); showToast('45 min. Good time to wrap up.'); }
+      } else if (m >= 35) {
+        el.style.color = 'var(--ts-sage)';
+      } else {
+        el.style.color = '';
+      }
+    }
   }, 1000);
 }
 
@@ -23962,7 +24180,7 @@ function applySplitType() {
   updateSplitTypeSub();
   updateTrainingDaysSub();
   renderHome();
-  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull', full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist Split', lul: 'Lower / Upper / Lower' };
+  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull', full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist Split', lul: 'Lower / Upper / Lower', ts: 'T&S Split' };
   showToast(`Split changed to ${splitLabels[pendingSplitType] || pendingSplitType} ✓`);
   // Let the toast settle, then offer exercise customization
   setTimeout(() => openPostSplitRotationReview(), 700);
@@ -23971,7 +24189,7 @@ function applySplitType() {
 function updateSplitTypeSub() {
   const el = document.getElementById('split-type-sub');
   if (!el) return;
-  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull', full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist Split', lul: 'Lower / Upper / Lower' };
+  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull', full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist Split', lul: 'Lower / Upper / Lower', ts: 'T&S Split' };
   el.textContent = 'Currently: ' + (splitLabels[state.splitType] || 'Upper / Lower');
 }
 
@@ -25212,7 +25430,7 @@ function renderDayRecommendations() {
   const baseCfg = GOAL_CONFIG[goal];
   if (!baseCfg) return;
   // Override recommended day count based on split type
-  const splitRec = { ul: 4, ppl: 3, fullbody: 3, bro: 5, glute: 3, pp: 4, full3: 3, full2: 2, antagonist: 6, lul: 3 };
+  const splitRec = { ul: 4, ppl: 3, fullbody: 3, bro: 5, glute: 3, pp: 4, full3: 3, full2: 2, antagonist: 6, lul: 3, ts: 3 };
   const cfg = { ...baseCfg, rec: splitRec[splitType] || baseCfg.rec };
 
   // Show the recommendation banner
@@ -25437,9 +25655,9 @@ function buildOnboardingSummary() {
   const goal = document.getElementById('ob-goal').value;
   const exp = document.getElementById('ob-experience').value;
   const splitType = document.getElementById('ob-split-type')?.value || 'ul';
-  const splitDefaultDays = { ul: 4, ppl: 3, fullbody: 3, bro: 5, glute: 3, pp: 4, full3: 3, full2: 2, antagonist: 6, lul: 3 };
+  const splitDefaultDays = { ul: 4, ppl: 3, fullbody: 3, bro: 5, glute: 3, pp: 4, full3: 3, full2: 2, antagonist: 6, lul: 3, ts: 3 };
   const trainingDays = parseInt(document.getElementById('ob-training-days').value) || splitDefaultDays[splitType] || 4;
-  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull', full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist', lul: 'Lower / Upper / Lower' };
+  const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull', full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist', lul: 'Lower / Upper / Lower', ts: 'T&S Split' };
   const expLabels = { beginner: 'Just Starting Out', intermediate: 'Been at It a While', advanced: 'Experienced Lifter' };
 
   state.profile = { name, goal, experience: exp, bodyweight: parseFloat(document.getElementById('ob-bodyweight').value) || 0 };
@@ -25461,7 +25679,9 @@ function buildOnboardingSummary() {
   // Personalized headline
   const headlineEl = document.getElementById('ob-greeting-headline');
   if (headlineEl) headlineEl.textContent = `YOU'RE ALL SET, ${name.toUpperCase()}`;
-  document.getElementById('ob-greeting').textContent = `Your program is built for ${goalDesc}. Week 1 is a calibration week — just train, log your RPE, and let the app learn you. Your weights will be dialled in after 4 sessions.`;
+  document.getElementById('ob-greeting').textContent = splitType === 'ts'
+    ? `Your T&S program is built for mental health and consistency. 3 days a week, moderate effort, compound lifts. Week 1 is about finding your rhythm. Log your RPE honestly and the app will learn you.`
+    : `Your program is built for ${goalDesc}. Week 1 is a calibration week — just train, log your RPE, and let the app learn you. Your weights will be dialled in after 4 sessions.`;
   document.getElementById('ob-summary').innerHTML = `
     <div>🎯 <strong>Goal:</strong> ${goalLabel}</div>
     <div>🗂 <strong>Split:</strong> ${splitLabels[splitType] || splitType}</div>
@@ -25698,7 +25918,7 @@ function resetOnboarding() {
       if (splitInput) splitInput.value = bk.splitType;
       const splitBtns = document.querySelectorAll('#onboard-step-4 .onboard-select-btn');
       splitBtns.forEach(b => b.classList.remove('selected'));
-      const splitMap = { ul: 0, ppl: 1, fullbody: 2, bro: 3, glute: 4, pp: 5, full3: 6, full2: 7, antagonist: 8, lul: 9 };
+      const splitMap = { ul: 0, ppl: 1, fullbody: 2, bro: 3, glute: 4, pp: 5, full3: 6, full2: 7, antagonist: 8, lul: 9, ts: 10 };
       const splitIdx = splitMap[bk.splitType];
       if (splitIdx !== undefined && splitBtns[splitIdx]) {
         selectSplitOnboard(bk.splitType, splitBtns[splitIdx]);
