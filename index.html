@@ -26139,17 +26139,24 @@ function renderValuesCard() {
   const card = document.getElementById('values-card');
   if (!card) return;
   const val = state.trainingValues || '';
+  card.style.cssText = 'position:relative; overflow:hidden; margin-bottom:12px;';
+  const watermark = `<div aria-hidden="true" style="position:absolute; bottom:-18px; right:-8px; font-family:'Bebas Neue',cursive; font-size:100px; line-height:1; color:var(--red); opacity:0.055; letter-spacing:6px; pointer-events:none; user-select:none; white-space:nowrap;">TRAIN</div>`;
+  const accent = `<div style="position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--red); border-radius:14px 0 0 14px;"></div>`;
   if (val) {
-    card.innerHTML = `
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WHY I TRAIN</div>
-      <div id="values-display-text" style="font-size:14px; color:var(--cream); line-height:1.7; margin-bottom:12px;">${val}</div>
-      <button onclick="editTrainingValues()" style="background:none; border:none; color:var(--gray); font-size:12px; cursor:pointer; padding:0; letter-spacing:1px;">EDIT</button>`;
+    card.innerHTML = `${watermark}${accent}
+      <div style="padding-left:10px;">
+        <div style="font-size:10px; color:var(--red); letter-spacing:2.5px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHY I TRAIN</div>
+        <div id="values-display-text" style="font-size:17px; color:var(--cream); line-height:1.65; font-family:'Barlow Condensed',sans-serif; font-weight:500; letter-spacing:0.2px; margin-bottom:14px;">${escapeHtml(val)}</div>
+        <button onclick="editTrainingValues()" style="background:none; border:none; color:rgba(255,255,255,0.25); font-size:11px; cursor:pointer; padding:0; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif;">EDIT</button>
+      </div>`;
   } else {
-    card.innerHTML = `
-      <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WHY I TRAIN</div>
-      <div style="font-size:13px; color:var(--gray-light); line-height:1.6; margin-bottom:14px;">When it's hard to show up, your reason pulls you through. What does training make possible for you?</div>
-      <textarea id="values-input" class="notes-input" placeholder="e.g. To manage my anxiety. To have energy for my kids. To feel at home in my body..." style="min-height:70px; margin-bottom:12px;"></textarea>
-      <button onclick="saveTrainingValues()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:12px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SAVE MY WHY</button>`;
+    card.innerHTML = `${watermark}${accent}
+      <div style="padding-left:10px;">
+        <div style="font-size:10px; color:var(--red); letter-spacing:2.5px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHY I TRAIN</div>
+        <div style="font-size:14px; color:rgba(255,255,255,0.35); line-height:1.6; margin-bottom:14px;">When it's hard to show up, your reason pulls you through.</div>
+        <textarea id="values-input" class="notes-input" placeholder="What does training make possible for you?" style="min-height:64px; margin-bottom:12px;"></textarea>
+        <button onclick="saveTrainingValues()" style="width:100%; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.3); color:var(--red); padding:12px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SET MY WHY</button>
+      </div>`;
   }
 }
 
@@ -26167,10 +26174,14 @@ function editTrainingValues() {
   const card = document.getElementById('values-card');
   if (!card) return;
   const current = state.trainingValues || '';
-  card.innerHTML = `
-    <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:10px;">WHY I TRAIN</div>
-    <textarea id="values-input" class="notes-input" style="min-height:70px; margin-bottom:12px;">${current}</textarea>
-    <button onclick="saveTrainingValues()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:12px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SAVE</button>`;
+  const watermark = `<div aria-hidden="true" style="position:absolute; bottom:-18px; right:-8px; font-family:'Bebas Neue',cursive; font-size:100px; line-height:1; color:var(--red); opacity:0.055; letter-spacing:6px; pointer-events:none; user-select:none; white-space:nowrap;">TRAIN</div>`;
+  const accent = `<div style="position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--red); border-radius:14px 0 0 14px;"></div>`;
+  card.innerHTML = `${watermark}${accent}
+    <div style="padding-left:10px;">
+      <div style="font-size:10px; color:var(--red); letter-spacing:2.5px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHY I TRAIN</div>
+      <textarea id="values-input" class="notes-input" style="min-height:70px; margin-bottom:12px;">${escapeHtml(current)}</textarea>
+      <button onclick="saveTrainingValues()" style="width:100%; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.3); color:var(--red); padding:12px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SAVE</button>
+    </div>`;
 }
 
 // ============================================================
