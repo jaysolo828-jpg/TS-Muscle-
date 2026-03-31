@@ -26094,12 +26094,11 @@ function renderMindsetActivity(showAll = false) {
 
   (state.moodLog || []).forEach(e => entries.push({ type: 'mood', date: e.date, data: e }));
   (state.selfCompassionLog || []).forEach(e => entries.push({ type: 'checkin', date: e.date, data: e }));
-  (state.hardDayCollection || []).forEach(e => entries.push({ type: 'hardday', date: e.date, data: e }));
 
   entries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   if (entries.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nothing logged yet. Your mood check-ins, hard days, and mindset check-ins will all appear here.</div></div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nothing logged yet. Your mood logs and mindset check-ins will appear here.</div></div>';
     return;
   }
 
@@ -26146,23 +26145,6 @@ function renderMindsetActivity(showAll = false) {
         ${e.feeling ? `<div style="font-size:13px; color:var(--cream); line-height:1.5; font-style:italic; margin-bottom:8px;">"${escapeHtml(e.feeling)}"</div>` : ''}
         ${e.aiResponse ? `<div style="font-size:12px; color:var(--gray-light); line-height:1.55; border-left:2px solid var(--red); padding-left:10px; margin-bottom:8px;">${escapeHtml(e.aiResponse)}</div>` : ''}
         ${e.plan ? `<div style="font-size:12px; color:var(--gray); border-top:1px solid var(--dark3); padding-top:8px;">↩ ${escapeHtml(e.plan)}</div>` : ''}
-      </div>`;
-    }
-    if (entry.type === 'hardday') {
-      const e = entry.data;
-      const meta = (typeof _CARRYING_LABELS !== 'undefined' && _CARRYING_LABELS[e.carrying]) || { label: e.carrying, icon: '🪨', color: 'rgba(204,32,39,0.35)' };
-      const vol = e.sessionVolume ? `${e.sessionVolume.toLocaleString()} lbs` : '';
-      return `<div class="card" style="margin-bottom:10px; padding:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div style="width:36px; height:36px; border-radius:8px; background:${meta.color.replace('0.35','0.1')}; border:1px solid ${meta.color}; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;">${meta.icon}</div>
-            <div>
-              <div style="font-size:14px; color:var(--cream); font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.3px;">${escapeHtml(e.sessionName || 'Hard Day')}</div>
-              <div style="font-size:11px; color:var(--gray); margin-top:2px;">${meta.label}${vol ? ' · ' + vol : ''}</div>
-            </div>
-          </div>
-          <div style="font-size:11px; color:var(--gray);">${dl}</div>
-        </div>
       </div>`;
     }
     return '';
