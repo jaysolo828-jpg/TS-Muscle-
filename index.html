@@ -3079,33 +3079,20 @@
   <!-- Support Tools — combined card -->
   <div class="section-title">SUPPORT <span>TOOLS</span></div>
   <div class="card" style="margin-bottom:16px; padding:16px;">
-    <button onclick="openCBTModal('manual')" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:14px 16px; border-radius:12px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:14px; margin-bottom:10px;">
+    <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:14px 16px; border-radius:12px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:14px;">
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; opacity:0.7;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <div>
         <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px;">I missed a workout</div>
-        <div style="font-size:12px; color:var(--gray-light); margin-top:2px;">Work through what got in the way</div>
-      </div>
-    </button>
-    <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); padding:14px 16px; border-radius:12px; cursor:pointer; min-height:44px; text-align:left; display:flex; align-items:center; gap:14px;">
-      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; opacity:0.7;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-      <div>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:1px;">I need a moment</div>
-        <div style="font-size:12px; color:var(--gray-light); margin-top:2px;">Self-compassion check-in</div>
+        <div style="font-size:12px; color:var(--gray-light); margin-top:2px;">Work through it and set your return</div>
       </div>
     </button>
   </div>
 
-  <!-- Combined history -->
-  <div class="section-title">SESSION <span>HISTORY</span></div>
+  <!-- Mindset history -->
+  <div class="section-title">MINDSET <span>CHECK-INS</span></div>
 
-  <div style="font-size:11px; color:var(--gray); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px; padding-left:10px; border-left:2px solid #444;">MISSED SESSION</div>
-  <div id="barrier-history-list" style="margin-bottom:14px;">
-    <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No reframes yet. Tap 'I missed a workout' above to add one.</div></div>
-  </div>
-
-  <div style="font-size:11px; color:var(--gray); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px; padding-left:10px; border-left:2px solid #444;">COMPASSION CHECK-IN</div>
   <div id="self-compassion-history-list">
-    <div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet. Tap 'I need a moment' above to start.</div></div>
+    <div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No entries yet. Tap 'I missed a workout' to log your first check-in.</div></div>
   </div>
 </div>
 
@@ -3902,7 +3889,7 @@
     <!-- Step 1: Acknowledge -->
     <div id="sc-step-1">
       <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">PAUSE HERE</div>
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 1 OF 3 · ACKNOWLEDGE</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 1 OF 4 · ACKNOWLEDGE</div>
       <div style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:20px;">
         Something got in the way of your training. Before anything else, just notice that. Don't push it away, don't spiral into it. Just sit with it for a second.
       </div>
@@ -3914,10 +3901,29 @@
       <button onclick="scNext(2)" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; min-height:44px;">I'VE ACKNOWLEDGED IT</button>
     </div>
 
-    <!-- Step 2: Common Humanity -->
+    <!-- Step 2: What got in the way? -->
     <div id="sc-step-2" style="display:none;">
+      <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">WHAT GOT IN THE WAY?</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 2 OF 4 · THE BARRIER</div>
+      <div style="font-size:14px; color:var(--cream); line-height:1.7; margin-bottom:20px;">Be honest with yourself. What actually stopped you?</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="cbt-barrier-btn" onclick="scSelectBarrier('too tired')">😴 Too tired / low energy</button>
+        <button class="cbt-barrier-btn" onclick="scSelectBarrier('too busy')">⏰ Too busy / no time</button>
+        <button class="cbt-barrier-btn" onclick="scSelectBarrier('not motivated')">😑 Not feeling it</button>
+        <button class="cbt-barrier-btn" onclick="scSelectBarrier('anxious or stressed')">😰 Anxious or stressed</button>
+        <button class="cbt-barrier-btn" onclick="scSelectBarrier('physical pain or sickness')">🤕 Pain or sickness</button>
+        <button class="cbt-barrier-btn" onclick="scSelectBarrier('other')">💬 Something else</button>
+      </div>
+      <div id="sc-barrier-other-input" style="display:none; margin-top:12px;">
+        <input id="sc-barrier-other-text" type="text" class="notes-input" placeholder="Briefly describe what got in the way..." style="width:100%; padding:12px; border-radius:10px; box-sizing:border-box; margin-bottom:10px; font-size:16px;"/>
+        <button onclick="scProceedFromOtherBarrier()" style="width:100%; background:var(--red); border:none; color:white; padding:12px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer; min-height:44px;">CONTINUE</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Common Humanity (AI response) -->
+    <div id="sc-step-3" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">YOU'RE NOT ALONE</div>
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 2 OF 3 · COMMON HUMANITY</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 3 OF 4 · COMMON HUMANITY</div>
       <div id="sc-feeling-echo" style="display:none; background:var(--dark3); border-radius:10px; padding:12px 14px; margin-bottom:16px; border-left:2px solid #555;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:4px;">YOU SAID</div>
         <div id="sc-feeling-echo-text" style="font-size:13px; color:var(--gray-light); line-height:1.6; font-style:italic;"></div>
@@ -3930,13 +3936,13 @@
       </div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:16px;">What would you say to a friend going through the exact same thing?</div>
       <textarea id="sc-friend" class="notes-input" placeholder="Talk to yourself the way you'd talk to someone you care about..." style="min-height:80px; margin-bottom:20px;"></textarea>
-      <button onclick="scNext(3)" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; min-height:44px;">THAT MAKES SENSE</button>
+      <button onclick="scNext(4)" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; min-height:44px;">THAT MAKES SENSE</button>
     </div>
 
-    <!-- Step 3: Self-Kindness + Return Plan -->
-    <div id="sc-step-3" style="display:none;">
+    <!-- Step 4: Self-Kindness + Return Plan -->
+    <div id="sc-step-4" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">BE KIND TO YOURSELF</div>
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 3 OF 3 · SELF-KINDNESS</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 4 OF 4 · SELF-KINDNESS</div>
       <div style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:16px;">
         You don't need to earn your way back. You can just come back. One session. That's all it takes to break a slump.
       </div>
@@ -26636,17 +26642,27 @@ function shareShowingUpAnyway() {
 // SELF-COMPASSION MODULE (Neff, 2003)
 // 3 components: Mindfulness → Common Humanity → Self-Kindness
 // ============================================================
+let scSelectedBarrier = '';
+let scLastAiResponse = null;
+
 function openSelfCompassionModal() {
-  // Reset to step 1
+  scSelectedBarrier = '';
+  scLastAiResponse = null;
   document.getElementById('sc-step-1').style.display = 'block';
   document.getElementById('sc-step-2').style.display = 'none';
   document.getElementById('sc-step-3').style.display = 'none';
+  document.getElementById('sc-step-4').style.display = 'none';
   const feeling = document.getElementById('sc-feeling');
   const friend = document.getElementById('sc-friend');
   const plan = document.getElementById('sc-plan');
   if (feeling) feeling.value = '';
   if (friend) friend.value = '';
   if (plan) plan.value = '';
+  const barrierOther = document.getElementById('sc-barrier-other-input');
+  const barrierOtherText = document.getElementById('sc-barrier-other-text');
+  if (barrierOther) barrierOther.style.display = 'none';
+  if (barrierOtherText) barrierOtherText.value = '';
+  document.querySelectorAll('#sc-step-2 .cbt-barrier-btn').forEach(b => b.classList.remove('selected'));
   const modal = document.getElementById('self-compassion-modal');
   modal.style.display = 'flex';
   modal.scrollTop = 0;
@@ -26658,10 +26674,54 @@ function closeSelfCompassionModal() {
   unlockBodyScroll();
 }
 
-async function _fetchSelfCompassionResponse(feeling) {
+function scSelectBarrier(barrier) {
+  scSelectedBarrier = barrier;
+  document.querySelectorAll('#sc-step-2 .cbt-barrier-btn').forEach(b => b.classList.remove('selected'));
+  if (event && event.target) event.target.closest('.cbt-barrier-btn').classList.add('selected');
+  const otherInput = document.getElementById('sc-barrier-other-input');
+  if (barrier === 'other') {
+    if (otherInput) otherInput.style.display = 'block';
+    const otherText = document.getElementById('sc-barrier-other-text');
+    if (otherText) otherText.focus();
+    return;
+  }
+  if (otherInput) otherInput.style.display = 'none';
+  setTimeout(() => scNext(3), 200);
+}
+
+function scProceedFromOtherBarrier() {
+  const otherText = document.getElementById('sc-barrier-other-text')?.value?.trim();
+  if (otherText) scSelectedBarrier = otherText;
+  const otherInput = document.getElementById('sc-barrier-other-input');
+  if (otherInput) otherInput.style.display = 'none';
+  scNext(3);
+}
+
+async function _fetchSelfCompassionResponse(feeling, barrier) {
   const apiKey = _getCoachingApiKey();
-  if (!apiKey || !feeling || feeling.trim().length < 5) return null;
-  const prompt = `You are a warm, grounded therapist helping someone who missed a workout and is working through a moment of self-criticism or struggle. They wrote this about how they're feeling right now:\n\n"${feeling}"\n\nWrite a response with exactly two parts:\n1. "main": 2 sentences that directly address what they wrote. Reference their specific words or situation — not a generic statement. Speak to them in second person. Do not use the word "valid", do not say "that makes sense", avoid motivational-poster language.\n2. "quote": 1 sentence written as a first-person affirmation they can say to themselves. Should feel earned and specific to their situation, not a generic platitude.\n\nRespond ONLY with valid JSON in this exact format with no other text: {"main":"...","quote":"..."}`;
+  if (!apiKey) return null;
+  if (!feeling || feeling.trim().length < 5) return null;
+
+  const expLevel = (typeof getEffectiveExperienceLevel === 'function') ? getEffectiveExperienceLevel() : 'intermediate';
+  const goal = (state.profile && state.profile.goal) || null;
+  const totalSessions = (state.history || []).length;
+  const weekCount = state.weekCount || 1;
+  const streak = state.streak || 0;
+
+  const goalMap = { strength: 'building strength', hypertrophy: 'building muscle', both: 'building strength and muscle' };
+  const goalStr = goalMap[goal] || null;
+
+  const contextLines = [
+    `- Experience level: ${expLevel}`,
+    goalStr ? `- Training goal: ${goalStr}` : null,
+    totalSessions > 0 ? `- Total sessions completed: ${totalSessions}` : null,
+    weekCount > 1 ? `- Weeks in program: ${weekCount}` : null,
+    streak > 0 ? `- Current streak: ${streak} week${streak === 1 ? '' : 's'}` : null,
+    barrier ? `- What got in the way: ${barrier}` : null,
+  ].filter(Boolean).join('\n');
+
+  const prompt = `You are a warm, grounded therapist helping someone who missed a workout. They're working through self-criticism or a difficult moment.\n\nWhat they wrote about how they're feeling:\n"${feeling}"\n\nContext about this person:\n${contextLines}\n\nWrite a response with exactly two parts:\n1. "main": 2 sentences that directly address what they wrote and their situation. Reference their specific words or context where relevant — not a generic statement. Use second person. Do not use the word "valid", don't say "that makes sense", avoid motivational-poster language. If they've completed many sessions or have a streak, acknowledge that track record. If they're early in their journey, acknowledge the difficulty of building the habit.\n2. "quote": 1 sentence written as a first-person affirmation they can say to themselves. Should feel earned and grounded in their specific situation, not a generic platitude.\n\nRespond ONLY with valid JSON in this exact format with no other text: {"main":"...","quote":"..."}`;
+
   try {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -26673,7 +26733,7 @@ async function _fetchSelfCompassionResponse(feeling) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 220,
+        max_tokens: 250,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -26694,8 +26754,8 @@ function scNext(step) {
     next.style.display = 'block';
     document.getElementById('self-compassion-modal').scrollTop = 0;
   }
-  // Personalize Step 2 based on what the user wrote
-  if (step === 2) {
+  // Step 3: AI response — fire personalized call with feeling + barrier
+  if (step === 3) {
     const feeling = document.getElementById('sc-feeling')?.value?.trim() || '';
     const echoEl = document.getElementById('sc-feeling-echo');
     const echoTextEl = document.getElementById('sc-feeling-echo-text');
@@ -26709,7 +26769,8 @@ function scNext(step) {
     const quoteEl = document.getElementById('sc-humanity-quote');
     if (mainEl) mainEl.style.opacity = '0.35';
     if (quoteEl) quoteEl.style.opacity = '0.35';
-    _fetchSelfCompassionResponse(feeling).then(result => {
+    _fetchSelfCompassionResponse(feeling, scSelectedBarrier).then(result => {
+      scLastAiResponse = result;
       if (result && result.main && result.quote) {
         if (mainEl) { mainEl.textContent = result.main; mainEl.style.opacity = '1'; }
         if (quoteEl) { quoteEl.textContent = '\u201c' + result.quote + '\u201d'; quoteEl.style.opacity = '1'; }
@@ -26719,8 +26780,8 @@ function scNext(step) {
       }
     });
   }
-  // Show values reminder on step 3 if set
-  if (step === 3) {
+  // Step 4: show training values if set
+  if (step === 4) {
     const valuesEl = document.getElementById('sc-values-reminder');
     const valuesTextEl = document.getElementById('sc-values-text');
     if (state.trainingValues && valuesEl && valuesTextEl) {
@@ -26741,6 +26802,8 @@ function saveSelfCompassionEntry() {
   state.selfCompassionLog.push({
     date: new Date().toISOString(),
     feeling,
+    barrier: scSelectedBarrier || '',
+    aiResponse: scLastAiResponse?.main || '',
     friend,
     plan
   });
@@ -26800,19 +26863,7 @@ let cbtSelectedBarrier = '';
 let cbtSelectedThought = '';
 
 function openCBTModal(trigger) {
-  cbtSelectedBarrier = '';
-  cbtSelectedThought = '';
-  document.getElementById('cbt-step-0').style.display = 'block';
-  document.getElementById('cbt-step-1').style.display = 'none';
-  document.getElementById('cbt-step-2').style.display = 'none';
-  document.getElementById('cbt-step-3').style.display = 'none';
-  document.querySelectorAll('.cbt-barrier-btn').forEach(b => b.classList.remove('selected'));
-  document.getElementById('cbt-own-response').value = '';
-  document.getElementById('barrier-other-input').style.display = 'none';
-  document.getElementById('barrier-other-text').value = '';
-  const modal = document.getElementById('cbt-modal');
-  modal.style.display = 'flex';
-  lockBodyScroll();
+  openSelfCompassionModal();
 }
 
 function closeCBTModal() {
@@ -26973,7 +27024,7 @@ function renderSelfCompassionLog(showAll = false) {
   const container = document.getElementById('self-compassion-history-list');
   if (!container) return;
   if (!state.selfCompassionLog || state.selfCompassionLog.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💛</div><div class="empty-state-text">No entries yet. Use "I need a moment" when you\'re being hard on yourself.</div></div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧠</div><div class="empty-state-text">No entries yet. Tap "I missed a workout" to log your first check-in.</div></div>';
     return;
   }
   const allReversed = state.selfCompassionLog.slice().reverse();
@@ -26982,10 +27033,15 @@ function renderSelfCompassionLog(showAll = false) {
     const realIdx = state.selfCompassionLog.length - 1 - idx;
     const d = new Date(entry.date);
     const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    const barrierLabels = { 'too tired':'Too tired', 'too busy':'Too busy', 'not motivated':'Not motivated', 'anxious or stressed':'Anxious / stressed', 'physical pain or sickness':'Pain / sickness' };
+    const barrierDisplay = entry.barrier ? (barrierLabels[entry.barrier] || entry.barrier) : null;
     return `
       <div class="card" style="margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1px;">SELF-COMPASSION CHECK-IN</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1px;">MINDSET CHECK-IN</div>
+            ${barrierDisplay ? `<div style="font-size:11px; color:var(--red-text); background:rgba(204,32,39,0.1); border-radius:4px; padding:2px 6px; letter-spacing:0.5px;">${escapeHtml(barrierDisplay)}</div>` : ''}
+          </div>
           <div style="display:flex; align-items:center; gap:10px;">
             <div style="font-size:11px; color:var(--gray);">${dateStr}</div>
             <button onclick="deleteSelfCompassionEntry(${realIdx})" style="background:none; border:none; color:var(--gray); cursor:pointer; padding:4px; opacity:0.65; font-size:16px; line-height:1;" title="Delete entry">
@@ -26993,8 +27049,9 @@ function renderSelfCompassionLog(showAll = false) {
             </button>
           </div>
         </div>
-        ${entry.feeling ? `<div style="font-size:13px; color:var(--cream); margin-bottom:6px;">${entry.feeling}</div>` : ''}
-        ${entry.plan ? `<div style="font-size:12px; color:var(--gray); border-top:1px solid var(--dark3); padding-top:8px; margin-top:6px;">Plan: ${entry.plan}</div>` : ''}
+        ${entry.feeling ? `<div style="font-size:13px; color:var(--cream); margin-bottom:6px; font-style:italic;">"${escapeHtml(entry.feeling)}"</div>` : ''}
+        ${entry.aiResponse ? `<div style="font-size:12px; color:var(--gray-light); line-height:1.5; border-left:2px solid var(--red); padding-left:10px; margin-bottom:6px;">${escapeHtml(entry.aiResponse)}</div>` : ''}
+        ${entry.plan ? `<div style="font-size:12px; color:var(--gray); border-top:1px solid var(--dark3); padding-top:8px; margin-top:6px;">↩ ${escapeHtml(entry.plan)}</div>` : ''}
       </div>`;
   }).join('');
   if (!showAll && state.selfCompassionLog.length > 1) {
@@ -27258,7 +27315,7 @@ function checkInactivityPrompt() {
             <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">It's been ${daysSince} days since your last workout. Want to do a quick mindset check-in?</div>
             <div style="display:flex;gap:10px;">
               <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">NOT NOW</button>
-              <button onclick="this.closest('[style*=fixed]').remove();showScreen('mindset',document.querySelector('[onclick*=mindset]'));openCBTModal('auto');" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CHECK IN</button>
+              <button onclick="this.closest('[style*=fixed]').remove();showScreen('mindset',document.querySelector('[onclick*=mindset]'));openSelfCompassionModal();" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CHECK IN</button>
             </div>
           </div>`;
       }
