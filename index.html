@@ -3485,6 +3485,10 @@
           <div style="font-weight:bold;">Size &amp; Strength</div>
           <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">The best of both. A powerbuilding balance — get bigger and stronger at the same time.</div>
         </button>
+        <button class="onboard-select-btn" onclick="selectGoalOnboard('wellness', this)">
+          <div style="font-weight:bold;">Mental Health / Wellness</div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">Train for how you feel, not just how you look. Moderate effort, compound lifts, sustainable habits. Pairs with the T&amp;S Split.</div>
+        </button>
       </div>
       <div id="ob-goal-echo" style="display:none; margin-bottom:16px; background:rgba(204,32,39,0.08); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--cream); line-height:1.6;"></div>
       <div id="ob-goal-rep-preview" style="display:none; margin-bottom:16px;"></div>
@@ -6483,42 +6487,42 @@ const FORM_CUES = {
 };
 
 // Goal-aligned rep ranges per exercise
-// Keys map to state.profile.goal values: 'strength' | 'size' | 'both'
+// Keys map to state.profile.goal values: 'strength' | 'size' | 'both' | 'wellness'
 const GOAL_REPS = {
   // ── UPPER A ────────────────────────────────────────────────
-  'bench':           { strength: '3–5',   size: '8–12',  both: '6–10'  },
-  'incline':         { strength: '4–6',   size: '10–12', both: '8–12'  },
-  'flye':            { strength: '8–10',  size: '12–15', both: '10–13' },
-  'ohp':             { strength: '4–6',   size: '8–12',  both: '6–10'  },
-  'pushdown':        { strength: '8–10',  size: '12–15', both: '10–13' },
-  'overhead-tri':    { strength: '6–8',   size: '10–12', both: '8–12'  },
-  'lateral':         { strength: '10–12', size: '15–20', both: '12–15' },
+  'bench':           { strength: '3–5',   size: '8–12',  both: '6–10',  wellness: '8–12'  },
+  'incline':         { strength: '4–6',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'flye':            { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'ohp':             { strength: '4–6',   size: '8–12',  both: '6–10',  wellness: '8–12'  },
+  'pushdown':        { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'overhead-tri':    { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'lateral':         { strength: '10–12', size: '15–20', both: '12–15', wellness: '12–15' },
   // ── LOWER A ────────────────────────────────────────────────
-  'legpress-a':      { strength: '6–8',   size: '10–12', both: '8–12'  },
-  'rdl':             { strength: '5–8',   size: '10–12', both: '8–12'  },
-  'leg-ext-a':       { strength: '8–10',  size: '12–15', both: '10–13' },
-  'ham-curl-a':      { strength: '8–10',  size: '12–15', both: '10–13' },
-  'hip-thrust-a':    { strength: '6–8',   size: '12–15', both: '10–13' },
-  'calf-a':          { strength: '10–12', size: '15–20', both: '12–17' },
+  'legpress-a':      { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'rdl':             { strength: '5–8',   size: '10–12', both: '8–12',  wellness: '8–12'  },
+  'leg-ext-a':       { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'ham-curl-a':      { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'hip-thrust-a':    { strength: '6–8',   size: '12–15', both: '10–13', wellness: '10–12' },
+  'calf-a':          { strength: '10–12', size: '15–20', both: '12–17', wellness: '15–20' },
   // ── UPPER B ────────────────────────────────────────────────
-  'chest-row':       { strength: '3–5',   size: '8–12',  both: '6–10'  },
-  'pulldown':        { strength: '5–8',   size: '10–12', both: '8–12'  },
-  'db-row':          { strength: '5–8',   size: '10–12', both: '8–12'  },
-  'ez-curl':         { strength: '6–8',   size: '10–12', both: '8–12'  },
-  'preacher':        { strength: '6–8',   size: '10–12', both: '8–12'  },
-  'rear-delt':       { strength: '8–10',  size: '12–15', both: '10–13' },
+  'chest-row':       { strength: '3–5',   size: '8–12',  both: '6–10',  wellness: '8–12'  },
+  'pulldown':        { strength: '5–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'db-row':          { strength: '5–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'ez-curl':         { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'preacher':        { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'rear-delt':       { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
   // ── LOWER B ────────────────────────────────────────────────
-  'legpress-b':      { strength: '6–8',   size: '10–12', both: '8–12'  },
-  'single-legpress': { strength: '6–8',   size: '10–12', both: '8–12'  },
-  'leg-ext-b':       { strength: '8–10',  size: '12–15', both: '10–13' },
-  'ham-curl-b':      { strength: '6–8',   size: '10–12', both: '8–12'  },
-  'pull-through':    { strength: '8–10',  size: '12–15', both: '10–13' },
-  'calf-b':          { strength: '10–12', size: '15–20', both: '12–17' },
+  'legpress-b':      { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'single-legpress': { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'leg-ext-b':       { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'ham-curl-b':      { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'pull-through':    { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'calf-b':          { strength: '10–12', size: '15–20', both: '12–17', wellness: '15–20' },
   // ── GLUTE SPLIT specific ───────────────────────────────────
-  'bss':             { strength: '6–8',   size: '10–12', both: '8–12'  },
-  'hip-abduction':   { strength: '12–15', size: '15–20', both: '12–17' },
-  'donkey-kick':     { strength: '12–15', size: '15',    both: '12–15' },
-  'glute-iso':       { strength: '10–12', size: '12–15', both: '10–13' },
+  'bss':             { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'hip-abduction':   { strength: '12–15', size: '15–20', both: '12–17', wellness: '15–20' },
+  'donkey-kick':     { strength: '12–15', size: '15',    both: '12–15', wellness: '12–15' },
+  'glute-iso':       { strength: '10–12', size: '12–15', both: '10–13', wellness: '12–15' },
 };
 
 // Goal-aligned set counts per exercise
@@ -6527,39 +6531,39 @@ const GOAL_REPS = {
 // Both: balanced approach
 const GOAL_SETS = {
   // ── UPPER A ────────────────────────────────────────────────
-  'bench':           { strength: 4, size: 4, both: 4 },
-  'incline':         { strength: 3, size: 3, both: 4 },
-  'flye':            { strength: 3, size: 4, both: 3 },
-  'pushdown':        { strength: 3, size: 4, both: 3 },
-  'overhead-tri':    { strength: 3, size: 3, both: 3 },
-  'ohp':             { strength: 3, size: 3, both: 4 },
-  'lateral':         { strength: 3, size: 4, both: 3 },
+  'bench':           { strength: 4, size: 4, both: 4, wellness: 3 },
+  'incline':         { strength: 3, size: 3, both: 4, wellness: 3 },
+  'flye':            { strength: 3, size: 4, both: 3, wellness: 3 },
+  'pushdown':        { strength: 3, size: 4, both: 3, wellness: 3 },
+  'overhead-tri':    { strength: 3, size: 3, both: 3, wellness: 3 },
+  'ohp':             { strength: 3, size: 3, both: 4, wellness: 3 },
+  'lateral':         { strength: 3, size: 4, both: 3, wellness: 3 },
   // ── LOWER A ────────────────────────────────────────────────
-  'legpress-a':      { strength: 4, size: 4, both: 4 },
-  'rdl':             { strength: 3, size: 4, both: 4 },
-  'leg-ext-a':       { strength: 3, size: 4, both: 3 },
-  'ham-curl-a':      { strength: 3, size: 4, both: 3 },
-  'hip-thrust-a':    { strength: 3, size: 4, both: 4 },
-  'calf-a':          { strength: 3, size: 4, both: 3 },
+  'legpress-a':      { strength: 4, size: 4, both: 4, wellness: 3 },
+  'rdl':             { strength: 3, size: 4, both: 4, wellness: 3 },
+  'leg-ext-a':       { strength: 3, size: 4, both: 3, wellness: 3 },
+  'ham-curl-a':      { strength: 3, size: 4, both: 3, wellness: 3 },
+  'hip-thrust-a':    { strength: 3, size: 4, both: 4, wellness: 3 },
+  'calf-a':          { strength: 3, size: 4, both: 3, wellness: 3 },
   // ── UPPER B ────────────────────────────────────────────────
-  'chest-row':       { strength: 4, size: 4, both: 4 },
-  'pulldown':        { strength: 3, size: 3, both: 4 },
-  'db-row':          { strength: 3, size: 3, both: 4 },
-  'ez-curl':         { strength: 3, size: 4, both: 3 },
-  'preacher':        { strength: 3, size: 4, both: 3 },
-  'rear-delt':       { strength: 3, size: 4, both: 3 },
+  'chest-row':       { strength: 4, size: 4, both: 4, wellness: 3 },
+  'pulldown':        { strength: 3, size: 3, both: 4, wellness: 3 },
+  'db-row':          { strength: 3, size: 3, both: 4, wellness: 3 },
+  'ez-curl':         { strength: 3, size: 4, both: 3, wellness: 3 },
+  'preacher':        { strength: 3, size: 4, both: 3, wellness: 3 },
+  'rear-delt':       { strength: 3, size: 4, both: 3, wellness: 3 },
   // ── LOWER B ────────────────────────────────────────────────
-  'legpress-b':      { strength: 4, size: 4, both: 4 },
-  'single-legpress': { strength: 3, size: 3, both: 4 },
-  'leg-ext-b':       { strength: 3, size: 4, both: 3 },
-  'ham-curl-b':      { strength: 3, size: 4, both: 3 },
-  'pull-through':    { strength: 3, size: 3, both: 3 },
-  'calf-b':          { strength: 3, size: 4, both: 3 },
+  'legpress-b':      { strength: 4, size: 4, both: 4, wellness: 3 },
+  'single-legpress': { strength: 3, size: 3, both: 4, wellness: 3 },
+  'leg-ext-b':       { strength: 3, size: 4, both: 3, wellness: 3 },
+  'ham-curl-b':      { strength: 3, size: 4, both: 3, wellness: 3 },
+  'pull-through':    { strength: 3, size: 3, both: 3, wellness: 3 },
+  'calf-b':          { strength: 3, size: 4, both: 3, wellness: 3 },
   // ── GLUTE SPLIT ───────────────────────────────────────────
-  'bss':             { strength: 3, size: 3, both: 4 },
-  'hip-abduction':   { strength: 3, size: 4, both: 3 },
-  'donkey-kick':     { strength: 3, size: 4, both: 3 },
-  'glute-iso':       { strength: 3, size: 4, both: 3 },
+  'bss':             { strength: 3, size: 3, both: 4, wellness: 3 },
+  'hip-abduction':   { strength: 3, size: 4, both: 3, wellness: 3 },
+  'donkey-kick':     { strength: 3, size: 4, both: 3, wellness: 3 },
+  'glute-iso':       { strength: 3, size: 4, both: 3, wellness: 3 },
 };
 
 // Returns the goal-adjusted set count for an exercise.
@@ -6598,6 +6602,11 @@ const CYCLE_WEEK_COACH_COPY = {
     '1-2': 'Establish the baseline',
     '3-4': 'Build strength and volume',
     '5-6': 'Peak week. Leave nothing.',
+  },
+  wellness: {
+    '1-2': 'Find your rhythm',
+    '3-4': 'Build the habit',
+    '5-6': 'Show up. That\'s enough.',
   },
 };
 
@@ -6717,9 +6726,9 @@ function buildGoalRepPreviewHTML(goal) {
   const ss = getGoalSetSummary(goal);
   // accent = border/background/dot (can be dimmer)
   // textColor = label text (must be bright enough to read at 11–12px on dark)
-  const accent    = { size: '#a855f7', strength: '#3b82f6', both: '#f59e0b' }[goal] || '#f59e0b';
-  const textColor = { size: '#c084fc', strength: '#93c5fd', both: '#fcd34d' }[goal] || '#fcd34d';
-  const goalName  = { size: 'Hypertrophy', strength: 'Strength', both: 'Powerbuilding' }[goal] || 'Powerbuilding';
+  const accent    = { size: '#a855f7', strength: '#3b82f6', both: '#f59e0b', wellness: '#10b981' }[goal] || '#f59e0b';
+  const textColor = { size: '#c084fc', strength: '#93c5fd', both: '#fcd34d', wellness: '#6ee7b7' }[goal] || '#fcd34d';
+  const goalName  = { size: 'Hypertrophy', strength: 'Strength', both: 'Powerbuilding', wellness: 'Wellness' }[goal] || 'Powerbuilding';
   return `
     <div style="background:${accent}12;border:1px solid ${accent}40;border-radius:12px;padding:14px 16px;margin-top:12px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -25398,6 +25407,9 @@ const GOAL_CONFIG = {
   both:     { min: 3, rec: 4, minLabel: 'Min for Powerbuilding', recLabel: 'Best for Powerbuilding',
                minWarn: 'Powerbuilding needs enough volume for both size and strength adaptation. 3 days is the practical minimum. 4 is the sweet spot.',
                recText: 'For powerbuilding, <strong>4 days</strong> gives you the volume and frequency to develop both size and strength simultaneously.' },
+  wellness: { min: 3, rec: 3, minLabel: 'Min for Wellness', recLabel: 'Best for Wellness',
+               minWarn: 'The T&S program is built for 3 sessions a week. Fewer than 3 reduces the mood and consistency benefits that come from regular movement.',
+               recText: 'For mental health and consistency, <strong>3 days</strong> is the sweet spot — enough to build a routine without burning out.' },
 };
 
 function selectGoalOnboard(value, btn) {
@@ -25412,6 +25424,7 @@ function selectGoalOnboard(value, btn) {
       size:     'Got it — you\'re here to build muscle. Moderate weights, higher reps, more volume.',
       strength: 'Got it — you\'re here to get stronger. Heavier weights, lower reps, more intensity.',
       both:     'Got it — you want both. A powerbuilding balance: strength and size in the same program.',
+      wellness: 'Got it — you\'re here to feel better. Moderate effort, consistent movement, sustainable habits. The T&S Split is built for you.',
     };
     echoEl.textContent = echoMap[value] || '';
     echoEl.style.display = 'block';
@@ -25619,9 +25632,9 @@ function calculate1RM() {
   const goal = document.getElementById('ob-goal').value || 'both';
   const _1rmExp = (document.getElementById('ob-experience')?.value || state.profile?.experience || 'intermediate');
   const _1rmPcts = {
-    beginner:     { strength: 0.75, size: 0.63, both: 0.69 },
-    intermediate: { strength: 0.80, size: 0.68, both: 0.74 },
-    advanced:     { strength: 0.83, size: 0.72, both: 0.78 },
+    beginner:     { strength: 0.75, size: 0.63, both: 0.69, wellness: 0.60 },
+    intermediate: { strength: 0.80, size: 0.68, both: 0.74, wellness: 0.65 },
+    advanced:     { strength: 0.83, size: 0.72, both: 0.78, wellness: 0.68 },
   };
   const pct = (_1rmPcts[_1rmExp] || _1rmPcts.intermediate)[goal] || 0.74;
   const working = Math.round(oneRM * pct / 2.5) * 2.5; // round to nearest 2.5
@@ -25674,8 +25687,8 @@ function buildOnboardingSummary() {
   applyObExerciseSelections();
   saveState();
 
-  const goalLabel = goal === 'size' ? 'Build Size' : goal === 'strength' ? 'Build Strength' : 'Size & Strength';
-  const goalDesc = goal === 'size' ? 'muscle growth' : goal === 'strength' ? 'raw strength' : 'size and strength';
+  const goalLabel = goal === 'size' ? 'Build Size' : goal === 'strength' ? 'Build Strength' : goal === 'wellness' ? 'Mental Health / Wellness' : 'Size & Strength';
+  const goalDesc = goal === 'size' ? 'muscle growth' : goal === 'strength' ? 'raw strength' : goal === 'wellness' ? 'mental health and consistency' : 'size and strength';
   // Personalized headline
   const headlineEl = document.getElementById('ob-greeting-headline');
   if (headlineEl) headlineEl.textContent = `YOU'RE ALL SET, ${name.toUpperCase()}`;
@@ -25908,9 +25921,9 @@ function resetOnboarding() {
     }
     if (bk.profile.goal) {
       document.getElementById('ob-goal').value = bk.profile.goal;
-      const goalBtns = document.querySelectorAll('#onboard-step-3 .onboard-select-btn');
+      const goalBtns = document.querySelectorAll('#onboard-step-2 .onboard-select-btn');
       goalBtns.forEach(b => b.classList.remove('selected'));
-      const goalIdx = { size: 0, strength: 1, both: 2 }[bk.profile.goal];
+      const goalIdx = { size: 0, strength: 1, both: 2, wellness: 3 }[bk.profile.goal];
       if (goalIdx !== undefined && goalBtns[goalIdx]) goalBtns[goalIdx].classList.add('selected');
     }
     if (bk.splitType) {
