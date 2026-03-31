@@ -26919,8 +26919,10 @@ async function _fetchSelfCompassionResponse(feeling) {
     });
     if (!resp.ok) { console.error('[CheckIn] API error', resp.status, await resp.text().catch(()=>'')); return null; }
     const data = await resp.json();
-    const text = data?.content?.[0]?.text?.trim();
-    if (!text) { console.warn('[CheckIn] Empty response from API'); return null; }
+    const raw = data?.content?.[0]?.text?.trim();
+    if (!raw) { console.warn('[CheckIn] Empty response from API'); return null; }
+    // Strip markdown code fences the model sometimes wraps JSON in
+    const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     return JSON.parse(text);
   } catch(e) {
     console.error('[CheckIn] Fetch/parse failed:', e);
