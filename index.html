@@ -3918,11 +3918,15 @@
     <div id="sc-step-2" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">YOU'RE NOT ALONE</div>
       <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 2 OF 3 · COMMON HUMANITY</div>
-      <div style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:16px;">
+      <div id="sc-feeling-echo" style="display:none; background:var(--dark3); border-radius:10px; padding:12px 14px; margin-bottom:16px; border-left:2px solid #555;">
+        <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:4px;">YOU SAID</div>
+        <div id="sc-feeling-echo-text" style="font-size:13px; color:var(--gray-light); line-height:1.6; font-style:italic;"></div>
+      </div>
+      <div id="sc-humanity-main" style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:16px; transition:opacity 0.3s;">
         Every person who trains goes through this. Every single one. The most consistent athletes in the world have weeks where it falls apart.
       </div>
       <div style="background:var(--dark3); border-radius:12px; padding:16px; margin-bottom:20px;">
-        <div style="font-size:13px; color:var(--gray-light); line-height:1.7; border-left:2px solid var(--red); padding-left:12px;">"Missing sessions doesn't mean I'm failing. It means I'm human. The people I look up to have been exactly here."</div>
+        <div id="sc-humanity-quote" style="font-size:13px; color:var(--gray-light); line-height:1.7; border-left:2px solid var(--red); padding-left:12px; transition:opacity 0.3s;">"Missing sessions doesn't mean I'm failing. It means I'm human. The people I look up to have been exactly here."</div>
       </div>
       <div style="font-size:13px; color:var(--gray); margin-bottom:16px;">What would you say to a friend going through the exact same thing?</div>
       <textarea id="sc-friend" class="notes-input" placeholder="Talk to yourself the way you'd talk to someone you care about..." style="min-height:80px; margin-bottom:20px;"></textarea>
@@ -26654,12 +26658,66 @@ function closeSelfCompassionModal() {
   unlockBodyScroll();
 }
 
+async function _fetchSelfCompassionResponse(feeling) {
+  const apiKey = _getCoachingApiKey();
+  if (!apiKey || !feeling || feeling.trim().length < 5) return null;
+  const prompt = `You are a warm, grounded therapist helping someone who missed a workout and is working through a moment of self-criticism or struggle. They wrote this about how they're feeling right now:\n\n"${feeling}"\n\nWrite a response with exactly two parts:\n1. "main": 2 sentences that directly address what they wrote. Reference their specific words or situation — not a generic statement. Speak to them in second person. Do not use the word "valid", do not say "that makes sense", avoid motivational-poster language.\n2. "quote": 1 sentence written as a first-person affirmation they can say to themselves. Should feel earned and specific to their situation, not a generic platitude.\n\nRespond ONLY with valid JSON in this exact format with no other text: {"main":"...","quote":"..."}`;
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 220,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const text = data?.content?.[0]?.text?.trim();
+    if (!text) return null;
+    return JSON.parse(text);
+  } catch(e) {
+    return null;
+  }
+}
+
 function scNext(step) {
   document.querySelectorAll('[id^="sc-step-"]').forEach(el => el.style.display = 'none');
   const next = document.getElementById('sc-step-' + step);
   if (next) {
     next.style.display = 'block';
     document.getElementById('self-compassion-modal').scrollTop = 0;
+  }
+  // Personalize Step 2 based on what the user wrote
+  if (step === 2) {
+    const feeling = document.getElementById('sc-feeling')?.value?.trim() || '';
+    const echoEl = document.getElementById('sc-feeling-echo');
+    const echoTextEl = document.getElementById('sc-feeling-echo-text');
+    if (feeling && echoEl && echoTextEl) {
+      echoTextEl.textContent = feeling;
+      echoEl.style.display = 'block';
+    } else if (echoEl) {
+      echoEl.style.display = 'none';
+    }
+    const mainEl = document.getElementById('sc-humanity-main');
+    const quoteEl = document.getElementById('sc-humanity-quote');
+    if (mainEl) mainEl.style.opacity = '0.35';
+    if (quoteEl) quoteEl.style.opacity = '0.35';
+    _fetchSelfCompassionResponse(feeling).then(result => {
+      if (result && result.main && result.quote) {
+        if (mainEl) { mainEl.textContent = result.main; mainEl.style.opacity = '1'; }
+        if (quoteEl) { quoteEl.textContent = '\u201c' + result.quote + '\u201d'; quoteEl.style.opacity = '1'; }
+      } else {
+        if (mainEl) mainEl.style.opacity = '1';
+        if (quoteEl) quoteEl.style.opacity = '1';
+      }
+    });
   }
   // Show values reminder on step 3 if set
   if (step === 3) {
