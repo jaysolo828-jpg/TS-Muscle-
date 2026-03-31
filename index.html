@@ -3060,6 +3060,12 @@
   <!-- Zone 2: Your Record -->
   <div id="mindset-stats-row" style="margin-bottom:20px;"></div>
 
+  <!-- Hard Day Collection -->
+  <div class="section-title">HARD <span>DAYS</span></div>
+  <div id="hard-day-collection" style="margin-bottom:20px;">
+    <div class="empty-state"><div class="empty-state-icon">🪨</div><div class="empty-state-text">No hard days yet. When you show up carrying something heavy, it gets added here.</div></div>
+  </div>
+
   <!-- Zone 3: Activity -->
   <div class="section-title">YOUR <span>ACTIVITY</span></div>
   <div id="mindset-activity-list" style="margin-bottom:16px;"></div>
@@ -3068,7 +3074,6 @@
   <div id="mood-insights-panel" style="display:none;"></div>
   <div id="showing-up-anyway-panel" style="display:none;"></div>
   <div id="mood-history-list" style="display:none;"></div>
-  <div id="hard-day-collection" style="display:none;"></div>
   <div id="self-compassion-history-list" style="display:none;"></div>
   <div id="barrier-history-list" style="display:none;"></div>
 
@@ -8618,7 +8623,7 @@ function showScreen(name, el) {
   if (name === 'history') { renderHistory(); renderProgress(); renderProgressChart(); }
 
   if (name === 'cardio') renderCardioHistory();
-  if (name === 'mindset') { renderValuesCard(); renderMindsetStats(); renderMindsetActivity(); }
+  if (name === 'mindset') { renderValuesCard(); renderMindsetStats(); renderHardDayCollection(); renderMindsetActivity(); }
 
   if (name === 'settings') {
     const nameInput = document.getElementById('display-name-input');
