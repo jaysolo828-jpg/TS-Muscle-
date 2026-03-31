@@ -287,6 +287,10 @@
   /* Mood wheel */
   #mood-wheel-svg { cursor: default; -webkit-tap-highlight-color: transparent; }
   #mood-wheel-actions textarea { width: 100%; box-sizing: border-box; }
+  @keyframes scLoadFill {
+    0%   { width: 0%; }
+    100% { width: 85%; }
+  }
   @keyframes mwSpinIn {
     0%   { transform: rotate(-360deg); opacity: 0; }
     55%  { opacity: 1; }
@@ -3891,6 +3895,9 @@
       <div id="sc-feeling-echo" style="display:none; background:var(--dark3); border-radius:10px; padding:12px 14px; margin-bottom:16px; border-left:2px solid #555;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:4px;">YOU SAID</div>
         <div id="sc-feeling-echo-text" style="font-size:13px; color:var(--gray-light); line-height:1.6; font-style:italic;"></div>
+      </div>
+      <div id="sc-loading-bar" style="display:none; height:2px; background:var(--dark4); border-radius:2px; overflow:hidden; margin-bottom:18px;">
+        <div id="sc-loading-fill" style="height:100%; width:0%; background:var(--red); border-radius:2px;"></div>
       </div>
       <div id="sc-humanity-main" style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:16px; transition:opacity 0.3s;"></div>
       <div style="background:var(--dark3); border-radius:12px; padding:16px; margin-bottom:20px;">
@@ -26910,16 +26917,29 @@ function scNext(step) {
     }
     const mainEl = document.getElementById('sc-humanity-main');
     const quoteEl = document.getElementById('sc-humanity-quote');
+    const loadBar = document.getElementById('sc-loading-bar');
+    const loadFill = document.getElementById('sc-loading-fill');
     // Loading state
-    if (mainEl) { mainEl.innerHTML = '<span style="color:var(--gray); font-size:14px; letter-spacing:0.5px;">Reading what you wrote\u2026</span>'; mainEl.style.opacity = '1'; }
+    if (mainEl) { mainEl.innerHTML = '<span style="color:var(--gray); font-size:14px; letter-spacing:0.3px;">Reading what you wrote\u2026</span>'; mainEl.style.opacity = '1'; }
     if (quoteEl) { quoteEl.textContent = ''; quoteEl.style.opacity = '0'; }
+    if (loadBar && loadFill) {
+      loadFill.style.transition = 'none';
+      loadFill.style.width = '0%';
+      loadBar.style.display = 'block';
+      requestAnimationFrame(() => {
+        loadFill.style.transition = 'width 3s ease-out';
+        loadFill.style.width = '85%';
+      });
+    }
     _fetchSelfCompassionResponse(feeling).then(result => {
+      // Complete the bar then reveal response
+      if (loadFill) { loadFill.style.transition = 'width 0.2s ease-out'; loadFill.style.width = '100%'; }
+      setTimeout(() => { if (loadBar) loadBar.style.display = 'none'; }, 220);
       scLastAiResponse = result;
       if (result && result.main && result.quote) {
         if (mainEl) { mainEl.textContent = result.main; mainEl.style.opacity = '1'; }
         if (quoteEl) { quoteEl.textContent = '\u201c' + result.quote + '\u201d'; quoteEl.style.opacity = '1'; }
       } else {
-        // Neutral fallback — no training assumption
         if (mainEl) { mainEl.textContent = 'You stopped to name what you\u2019re feeling instead of pushing past it. That\u2019s harder than it sounds, and it matters.'; mainEl.style.opacity = '1'; }
         if (quoteEl) { quoteEl.textContent = '\u201cNoticing how I feel is the first step to doing something about it.\u201d'; quoteEl.style.opacity = '1'; }
       }
