@@ -3022,8 +3022,8 @@
   <!-- Zone 1: State -->
   <div id="values-card" class="card" style="margin-bottom:12px;"></div>
 
-  <div id="mood-checkin-card" style="background:linear-gradient(180deg,#1f1f1f 0%,#1a1a1a 100%); border-top:1px solid #2a2a2a; border-bottom:1px solid #2a2a2a; margin:0 -16px 16px; padding:16px 0 14px;">
-    <div style="padding:0 20px;">
+  <div id="mood-checkin-card" class="card" style="margin-bottom:12px; padding:16px 0 14px; overflow:hidden;">
+    <div style="padding:0 16px;">
       <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:3px;" id="mood-checkin-label">T&amp;S FEELINGS WHEEL</div>
       <div id="mood-wheel-subtitle" style="font-size:13px; color:var(--gray-light); margin-bottom:10px;">After your session — tap a section, then a feeling</div>
     </div>
@@ -3036,7 +3036,7 @@
         CLEAR
       </button>
     </div>
-    <div id="mood-wheel-selected" style="display:none; text-align:center; margin-top:10px; padding:0 20px;">
+    <div id="mood-wheel-selected" style="display:none; text-align:center; margin-top:10px; padding:0 16px;">
       <div id="mood-wheel-selected-inner" style="display:inline-flex; align-items:center; gap:10px; background:var(--dark3); border:1px solid var(--dark4); border-radius:20px; padding:8px 18px;">
         <span id="mw-cat-dot" style="width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0;"></span>
         <span id="mw-cat-label" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:1px; font-size:15px;"></span>
@@ -3044,7 +3044,7 @@
         <span id="mw-feeling-label" style="font-size:14px; color:var(--cream);"></span>
       </div>
     </div>
-    <div id="mood-wheel-actions" style="display:none; margin-top:14px; padding:0 20px 4px;">
+    <div id="mood-wheel-actions" style="display:none; margin-top:14px; padding:0 16px 4px;">
       <textarea id="mood-note" class="notes-input" placeholder="Add a note (optional)" style="min-height:50px; margin-bottom:10px;"></textarea>
       <button id="log-mood-btn" onclick="saveMoodEntry()" style="width:100%; background:var(--success); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; transition:background 0.2s;">LOG MOOD</button>
     </div>
