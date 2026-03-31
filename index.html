@@ -26457,60 +26457,7 @@ function renderMoodInsights() {
       ${workoutsLastWeek > 0 ? `<div style="font-size:11px; color:var(--gray); margin-top:4px;">${sessionsWithMoodLastWeek} log${sessionsWithMoodLastWeek !== 1 ? 's' : ''} last week</div>` : ''}
     </div>`);
 
-  // Slide 1 — Post-mood trend (replaces old Mood Lift slide)
-  if (dedupedPost.length >= 2) {
-    const recent = dedupedPost.slice(-8);
-    const avgRecent = (recent.reduce((s, e) => s + e.value, 0) / recent.length).toFixed(1);
-    // Trend: compare first half vs second half of recent entries
-    const half = Math.floor(recent.length / 2);
-    const firstHalfAvg = recent.slice(0, half).reduce((s, e) => s + e.value, 0) / half;
-    const secondHalfAvg = recent.slice(half).reduce((s, e) => s + e.value, 0) / (recent.length - half);
-    const trendDiff = secondHalfAvg - firstHalfAvg;
-    const trendColor = trendDiff > 0.3 ? '#4caf50' : trendDiff < -0.3 ? 'var(--red)' : 'var(--gray)';
-    const trendArrow = trendDiff > 0.3 ? '↑' : trendDiff < -0.3 ? '↓' : '→';
-    const trendLabel = trendDiff > 0.3 ? 'IMPROVING' : trendDiff < -0.3 ? 'DECLINING' : 'STABLE';
-    const MAX_H = 50;
-    const trendBars = recent.map(e => {
-      const barH = Math.round((e.value / 5) * MAX_H);
-      const col = e.value >= 4 ? '#4caf50' : e.value === 3 ? '#666' : 'var(--red)';
-      const lbl = new Date(_localDateKey(e.date) + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      return `
-        <div style="flex:1; display:flex; flex-direction:column; align-items:center; min-width:0;">
-          <div style="width:100%; height:${MAX_H}px; display:flex; align-items:flex-end; justify-content:center;">
-            <div style="width:55%; height:${barH}px; background:${col}; border-radius:3px 3px 0 0;"></div>
-          </div>
-          <div style="width:100%; height:1px; background:#444;"></div>
-          <div style="font-size:10px; color:var(--gray); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; text-align:center; font-family:'Barlow Condensed',sans-serif;">${lbl}</div>
-        </div>`;
-    }).join('');
-    const narrative = (() => {
-      const avg = parseFloat(avgRecent);
-      if (avg >= 4.5) return "You consistently finish strong. That's the behavioral activation loop working — your body knows what training does for you now.";
-      if (avg >= 3.5) return "You're leaving most sessions feeling better than average. That's real data about what training does for your mood.";
-      if (avg >= 2.5) return "Your post-workout mood varies. That's normal. What matters is you're tracking it — awareness is the first step.";
-      return "Some stretches are hard. Keep logging. The trend over time tells a more honest story than any single session.";
-    })();
-    slides.push(`
-      <div class="card" style="padding:14px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-          <div>
-            <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">AVG POST MOOD</div>
-            <div style="font-family:'Bebas Neue',cursive; font-size:36px; color:var(--success); line-height:1;">${MOOD_EMOJIS[Math.round(parseFloat(avgRecent))]} ${avgRecent}</div>
-            <div style="font-size:11px; color:var(--gray); margin-top:2px;">across ${dedupedPost.length} session${dedupedPost.length !== 1 ? 's' : ''}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:11px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">TREND</div>
-            <div style="font-family:'Bebas Neue',cursive; font-size:28px; color:${trendColor}; line-height:1;">${trendArrow}</div>
-            <div style="font-size:11px; color:${trendColor}; margin-top:2px;">${trendLabel}</div>
-          </div>
-        </div>
-        <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">RECENT SESSIONS</div>
-        <div style="display:flex; gap:4px; margin-bottom:14px;">${trendBars}</div>
-        <div style="font-size:12px; color:var(--gray-light); line-height:1.6;">${narrative}</div>
-      </div>`);
-  }
-
-  // Slide 2 — Showed up anyway + mood on workout days
+  // Slide 1 — Showed up anyway + mood on workout days
   const statCards2 = [];
   if (showedUpAnyway > 0) {
     statCards2.push(`
