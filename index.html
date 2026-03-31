@@ -212,6 +212,11 @@
   }
   .onboard-select-btn:hover { border-color: #555; }
   .onboard-select-btn.selected { border-color: var(--red-text); background: rgba(204,32,39,0.12); }
+  /* Boost text contrast inside all onboarding steps without touching global variables */
+  .onboard-step, .intro-slide {
+    --gray-light: #c4c4c4;
+    --gray: #a8a8a8;
+  }
   .rep-range-option {
     width: 100%; background: var(--dark3); border: 1px solid var(--dark4);
     color: var(--cream); padding: 12px 14px; border-radius: 12px;
@@ -3308,8 +3313,8 @@
       <!-- Slide 3: Week 1 calibration -->
       <div class="intro-slide" id="intro-slide-3" style="display:none;">
         <div style="text-align:center; padding-top:10px; margin-bottom:20px;">
-          <div style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:3px; margin-bottom:10px;">WEEK 1 IS<br>NOT A REAL WEEK</div>
-          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">Your first week is a calibration period. The app is figuring out your real working weights — not testing your limits.</div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:3px; margin-bottom:10px;">WEEK 1:<br>FIND YOUR BASELINE</div>
+          <div style="font-size:14px; color:var(--gray-light); line-height:1.7; max-width:320px; margin:0 auto;">Your first week is a calibration period. The app is learning your real working weights, not testing your limits.</div>
         </div>
         <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
           <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start;">
