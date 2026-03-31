@@ -8502,6 +8502,7 @@ function escapeHtml(str) {
 // ============================================================
 function showScreen(name, el) {
   if (document.getElementById('workout-session').classList.contains('active')) return;
+  haptic(HAPTIC.tap);
   const appContent = document.querySelector(".app-content");
   if (appContent) appContent.scrollTop = 0;
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -8788,7 +8789,7 @@ function selectPauseReason(btn, reason) {
 }
 
 function confirmPauseProgram() {
-  haptic(60);
+  haptic(HAPTIC.warning);
   if (state.pauseUsedThisCycle) return;
   const selected = document.querySelector('.pause-reason-btn.selected');
   if (!selected) return;
@@ -10842,7 +10843,7 @@ function launchConfetti() {
 }
 
 function showPRModal(exName, weight, reps, improvement) {
-  haptic([15, 60, 20]);
+  haptic(HAPTIC.milestone);
   _currentPRShare = { exercise: exName, weight, reps };
   document.getElementById('pr-modal-exercise').textContent = exName;
   document.getElementById('pr-modal-detail').textContent = `${weight} lbs × ${reps} reps`;
@@ -11053,7 +11054,7 @@ function closeRpePicker() {
 
 function selectRpeFromPicker(rpe) {
   if (!_rpePickerCtx) return;
-  haptic(12);
+  haptic(HAPTIC.tap);
   const { exId, setIndex, type } = _rpePickerCtx;
   if (type === 'bonus') {
     updateBonusSet(exId, setIndex, 'rpe', rpe);
@@ -11534,6 +11535,7 @@ function _stampDeloadContext() {
 }
 
 function applyDeloadWeek() {
+  haptic(HAPTIC.click);
   _stampDeloadContext(); // sets deloadReason and deloadReductionFactor FIRST
   const _factor = state.deloadReductionFactor || 0.75;
   const _pctLabel = Math.round((1 - _factor) * 100);
@@ -11556,6 +11558,7 @@ function applyDeloadWeek() {
 }
 
 function applyRestWeek() {
+  haptic(HAPTIC.click);
   _stampDeloadContext();
   state.deloadReason  = 'rest';
   state.isRestWeek    = true;
@@ -11572,6 +11575,7 @@ function applyRestWeek() {
 
 // Aliases used by the 5-week deload suggestion modal
 function activateDeloadWeek() {
+  haptic(HAPTIC.click);
   _stampDeloadContext(); // sets deloadReason and deloadReductionFactor FIRST
   const _factor = state.deloadReductionFactor || 0.75;
   const _pctLabel = Math.round((1 - _factor) * 100);
@@ -11596,6 +11600,7 @@ function activateDeloadWeek() {
 }
 
 function activateDeloadRest() {
+  haptic(HAPTIC.click);
   _stampDeloadContext();
   state.deloadReason  = 'rest';
   state.deloadWeekNum = state.weekCount || 1;
@@ -12410,6 +12415,7 @@ function _launchSessionFromEl(triggerEl) {
 }
 
 function startSession(dayId, triggerEl) {
+  haptic(HAPTIC.start);
   // Check for a paused session for this day
   const paused = localStorage.getItem('ts-muscle-paused');
   if (paused) {
@@ -13957,7 +13963,7 @@ function _removeRpeNudge(exId, setIndex) {
 }
 
 function selectRpeFromNudge(exId, setIndex, rpe) {
-  haptic(12);
+  haptic(HAPTIC.tap);
   updateSet(exId, setIndex, 'rpe', rpe);
   const row = document.getElementById(`set-row-${exId}-${setIndex}`);
   const btn = row ? row.querySelector('.rpe-select') : null;
@@ -14022,6 +14028,8 @@ function toggleSetDone(exId, setIndex) {
     set.done = !willBeDone; // revert
     return;
   }
+
+  haptic(willBeDone ? HAPTIC.success : HAPTIC.tap);
 
   // Record the successful toggle timestamp (debounce)
   _setDoneLastToggle[_dbKey] = _now;
@@ -14218,6 +14226,7 @@ let _insightAbortController = null;
 
 
 function toggleBetweenSetCoaching() {
+  haptic(HAPTIC.click);
   state.betweenSetCoaching = !(state.betweenSetCoaching !== false);
   saveState();
   updateBetweenSetCoachingUI();
@@ -14238,6 +14247,7 @@ function updateBetweenSetCoachingUI() {
 }
 
 function toggleCarryingFeature() {
+  haptic(HAPTIC.click);
   state.carryingFeatureEnabled = !(state.carryingFeatureEnabled !== false);
   saveState();
   updateCarryingFeatureUI();
@@ -14959,7 +14969,7 @@ document.addEventListener('visibilitychange', () => {
             if (r <= 0) {
               clearInterval(restTimers[exId]?.interval);
               delete restTimers[exId];
-              if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+              haptic([100, 50, 100]);
               updateRestTimerUI(exId, 0, false, true);
               updateStickyRestTimer(0, false, true);
               setTimeout(() => { updateRestTimerUI(exId, t.total, false, false); updateStickyRestTimer(0, false, false); }, 3000);
@@ -14971,7 +14981,7 @@ document.addEventListener('visibilitychange', () => {
         } else {
           // Timer already expired while backgrounded
           delete restTimers[exId];
-          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+          haptic([100, 50, 100]);
           updateRestTimerUI(exId, 0, false, true);
           updateStickyRestTimer(0, false, true);
           setTimeout(() => { updateRestTimerUI(exId, t.total, false, false); updateStickyRestTimer(0, false, false); }, 3000);
@@ -15714,7 +15724,7 @@ function startRestTimer(exId, seconds) {
     if (remaining <= 0) {
       clearInterval(restTimers[exId]?.interval);
       delete restTimers[exId];
-      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      haptic([100, 50, 100]);
       updateRestTimerUI(exId, 0, false, true);
       updateStickyRestTimer(0, false, true);
       setTimeout(() => {
@@ -16315,6 +16325,7 @@ function doCustomSwap(permanent) {
 // doSwapFromDropdown never passes it, so pre-loaded alt swaps are unaffected.
 function doSwap(altName, permanent, isUnilateral) {
   if (!pendingSwap) return;
+  haptic(HAPTIC.click);
   const { dayId, exId, onboardMode } = pendingSwap;
 
   // Onboard mode: update the program exercise name + refresh the UI label
@@ -16751,7 +16762,7 @@ function showIncompleteDoneModal(exerciseNames, onSaveAnyway) {
 }
 
 function endSession(save) {
-  if (save) haptic([20, 60, 20]);
+  if (save) haptic(HAPTIC.milestone);
   clearAllRestTimers();
   stopSessionTimer();
   clearRepIndicators();
@@ -17948,6 +17959,7 @@ function _updateRotationCardBorder(exId) {
 }
 
 function confirmRotationSwaps() {
+  haptic(HAPTIC.success);
   let swapCount = 0;
   const currentCycle = state.cycleCount || 1;
   Object.entries(_rotationPendingSwaps).forEach(([exId, newName]) => {
@@ -22499,6 +22511,15 @@ var _toastQueue = [];
 var _toastBusy = false;
 // ── HAPTIC FEEDBACK ─────────────────────────────────────────────
 // Silently no-ops on iOS (Vibration API not supported there).
+// Pattern library for consistent, purposeful haptic feedback:
+const HAPTIC = {
+  tap:       10,                       // Nav, light selections
+  click:     [15, 30, 15],             // Toggles, confirms
+  success:   [20, 40, 30],             // Set done, saves
+  milestone: [30, 50, 30, 50, 60],     // PRs, streaks, session complete
+  warning:   [40, 30, 40, 30, 40],     // Destructive actions, resets
+  start:     [25, 40, 40],             // Starting a workout / timer
+};
 function haptic(pattern) {
   if (navigator.vibrate) navigator.vibrate(pattern);
 }
@@ -23811,6 +23832,7 @@ function updateNotificationsUI() {
 }
 
 function toggleProgressiveOverload() {
+  haptic(HAPTIC.click);
   state.progressiveOverload = state.progressiveOverload === false ? true : false;
   saveState();
   updateProgressiveOverloadUI();
@@ -24399,7 +24421,7 @@ function onboardBack(step) {
 }
 
 function selectOption(fieldId, value, btn) {
-  haptic(10);
+  haptic(HAPTIC.tap);
   document.getElementById(fieldId).value = value;
   btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
@@ -24533,7 +24555,7 @@ function getSplitAwareDayExplanation(n) {
 }
 
 function selectSplitOnboard(type, btn) {
-  haptic(10);
+  haptic(HAPTIC.tap);
   document.getElementById('ob-split-type').value = type;
   const allBtns = btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn');
   allBtns.forEach(b => {
@@ -24948,7 +24970,7 @@ const GOAL_CONFIG = {
 };
 
 function selectGoalOnboard(value, btn) {
-  haptic(10);
+  haptic(HAPTIC.tap);
   document.getElementById('ob-goal').value = value;
   btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
@@ -25057,7 +25079,7 @@ function evaluateDaysWarning(days, cfg) {
 }
 
 function selectTrainingDaysOnboard(days, btn) {
-  haptic(10);
+  haptic(HAPTIC.tap);
   document.getElementById('ob-training-days').value = days;
   document.querySelectorAll('#onboard-step-6 .onboard-select-btn').forEach(b => {
     b.classList.remove('selected');
@@ -25660,6 +25682,7 @@ function selectMoodTiming(timing, btn) {
 }
 
 function selectMood(value, btn) {
+  haptic(HAPTIC.tap);
   document.getElementById('mood-value').value = value;
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
@@ -25698,6 +25721,7 @@ function saveMoodEntry() {
   const moodTimingInput = document.getElementById('mood-timing');
   if (moodTimingInput) moodTimingInput.value = 'post';
 
+  haptic(HAPTIC.success);
   showToast(`Mood logged: ${entry.emoji} ${entry.label}`);
   renderMoodHistory();
   renderMoodInsights();
@@ -26916,6 +26940,7 @@ function selectCardioType(type) {
 }
 
 function setTimerPreset(mins) {
+  haptic(HAPTIC.tap);
   document.getElementById('timer-mins').value = mins;
   document.getElementById('timer-secs').value = '00';
 }
@@ -26926,6 +26951,7 @@ function startCardioTimer() {
   cardioTimerSeconds = mins * 60 + secs;
   cardioTimerOriginal = cardioTimerSeconds;
   if (cardioTimerSeconds <= 0) { showToast('Set a time first!'); return; }
+  haptic(HAPTIC.start);
 
   document.getElementById('timer-mins').style.display = 'none';
   document.getElementById('timer-secs').style.display = 'none';
@@ -26943,6 +26969,7 @@ function startCardioTimer() {
       cardioTimerRunning = false;
       document.getElementById('timer-display').textContent = 'DONE! 💪';
       document.getElementById('timer-display').style.color = 'var(--red)';
+      haptic(HAPTIC.milestone);
       showToast('Cardio timer complete! 🔥');
       return;
     }
@@ -26952,6 +26979,7 @@ function startCardioTimer() {
 }
 
 function pauseCardioTimer() {
+  haptic(HAPTIC.click);
   if (cardioTimerRunning) {
     clearInterval(cardioTimerInterval);
     cardioTimerRunning = false;
@@ -26964,6 +26992,7 @@ function pauseCardioTimer() {
         clearInterval(cardioTimerInterval);
         document.getElementById('timer-display').textContent = 'DONE! 💪';
         document.getElementById('timer-display').style.color = 'var(--red)';
+        haptic(HAPTIC.milestone);
         return;
       }
       cardioTimerSeconds--;
@@ -26973,6 +27002,7 @@ function pauseCardioTimer() {
 }
 
 function resetCardioTimer() {
+  haptic(HAPTIC.warning);
   clearInterval(cardioTimerInterval);
   cardioTimerRunning = false;
   cardioTimerSeconds = 0;
@@ -27053,6 +27083,7 @@ function shakeField(el) {
 }
 
 function saveCardioSession() {
+  haptic(HAPTIC.success);
   // Validate weight + distance before saving
   const weightFieldIds = { treadmill: 'tm-weight', outdoor: 'od-weight', walk: 'wk-weight', briskwalk: 'bw-weight', jog: 'jg-weight' };
   const distFieldIds   = { treadmill: 'tm-distance', outdoor: 'od-distance', walk: 'wk-distance', briskwalk: 'bw-distance', jog: 'jg-distance' };
