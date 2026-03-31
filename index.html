@@ -26023,47 +26023,7 @@ function applyTestWeekWeights() {
 function renderMindsetStats() {
   const container = document.getElementById('mindset-stats-row');
   if (!container) return;
-
-  const log = state.moodLog || [];
-  const hardDays = (state.hardDayCollection || []).length;
-  const checkIns = (state.selfCompassionLog || []).length;
-
-  // Check-in streak (days with a mood log entry)
-  const logDays = new Set(log.map(e => _localDateKey(e.date)));
-  const today = new Date();
-  const todayKey = _localDateKey(today);
-  let streak = 0;
-  const startFrom = logDays.has(todayKey) ? 0 : 1;
-  for (let i = startFrom; i < 365; i++) {
-    const d = new Date(today); d.setDate(d.getDate() - i);
-    if (logDays.has(_localDateKey(d))) streak++;
-    else break;
-  }
-
-  // Avg post-workout mood
-  const byDay = {};
-  log.forEach(e => {
-    const day = _localDateKey(e.date);
-    if (!byDay[day]) byDay[day] = {};
-    if (!byDay[day][e.timing]) byDay[day][e.timing] = e;
-  });
-  const dedupedPost = Object.values(byDay).filter(d => d.post).map(d => d.post);
-  const avgMood = dedupedPost.length
-    ? Math.round(dedupedPost.reduce((s, e) => s + e.value, 0) / dedupedPost.length)
-    : null;
-
-  const statCard = (top, bot) => `
-    <div class="card" style="text-align:center; padding:14px 8px;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); line-height:1; margin-bottom:4px;">${top}</div>
-      <div style="font-size:10px; color:var(--gray); letter-spacing:1px;">${bot}</div>
-    </div>`;
-
-  container.innerHTML = `
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-      ${statCard(hardDays, 'HARD DAYS')}
-      ${statCard(streak, 'DAY STREAK')}
-      ${statCard(avgMood ? MOOD_EMOJIS[avgMood] : '—', 'AVG MOOD')}
-    </div>`;
+  container.innerHTML = '';
 }
 
 function renderMindsetActivity(showAll = false) {
