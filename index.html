@@ -3180,157 +3180,6 @@
 <!-- ============================================================
      TRAINING DAYS MODAL
      ============================================================ -->
-<div id="training-days-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid var(--dark3); max-height:calc(100dvh - 40px); display:flex; flex-direction:column; overflow:hidden;">
-    <!-- Sticky header -->
-    <div style="padding:20px 24px 12px; flex-shrink:0;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TRAINING DAYS</div>
-      <div style="font-size:13px; color:var(--gray); line-height:1.6;">Choose how many days per week you want to train.</div>
-    </div>
-
-    <!-- Scrollable body -->
-    <div style="overflow-y:auto; flex:1; min-height:0; padding:0 24px 8px;">
-      <!-- Goal-aware recommendation banner -->
-      <div id="settings-days-rec" style="display:none; background:rgba(204,32,39,0.1); border:1px solid rgba(204,32,39,0.35); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:var(--cream); line-height:1.5;"></div>
-
-      <!-- Day option buttons with badges -->
-      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
-        <button class="settings-day-btn" id="sdb-2" onclick="selectDaysPerWeek(2, this)"
-          data-short="Upper A + Lower A. Full body coverage, maximum recovery time.">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">2 Days / Week</span>
-            <span id="sdb-badge-2" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
-          </div>
-          <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">Upper A + Lower A. Full body coverage, maximum recovery time.</div>
-        </button>
-        <button class="settings-day-btn" id="sdb-3" onclick="selectDaysPerWeek(3, this)"
-          data-short="Upper A, Lower A, Upper B. Good balance with plenty of recovery.">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">3 Days / Week</span>
-            <span id="sdb-badge-3" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
-          </div>
-          <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">Upper A, Lower A, Upper B. Good balance with plenty of recovery.</div>
-        </button>
-        <button class="settings-day-btn" id="sdb-4" onclick="selectDaysPerWeek(4, this)"
-          data-short="The full program. Optimal for hypertrophy with structured recovery.">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">4 Days / Week</span>
-            <span id="sdb-badge-4" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
-          </div>
-          <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">The full program. Optimal for hypertrophy with structured recovery.</div>
-        </button>
-        <button class="settings-day-btn" id="sdb-5" onclick="selectDaysPerWeek(5, this)"
-          data-short="Full program + one extra session for weak points or cardio focus.">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">5 Days / Week</span>
-            <span id="sdb-badge-5" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
-          </div>
-          <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">Full program + one extra session for weak points or cardio focus.</div>
-        </button>
-      </div>
-
-      <!-- Descriptive tip -->
-      <div id="days-explanation" style="display:none;"></div>
-
-      <!-- Below-minimum warning -->
-      <div id="settings-days-warning" style="display:none; background:rgba(243,156,18,0.1); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--warning); margin-bottom:8px; line-height:1.6;"></div>
-    </div>
-
-    <!-- Sticky footer -->
-    <div style="padding:12px 24px 20px; flex-shrink:0; display:flex; gap:10px;">
-      <button onclick="closeTrainingDaysModal()" style="flex:1; background:var(--dark3); border:1px solid #444; color:var(--gray); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
-      <button onclick="applyTrainingDays()" id="apply-days-btn" style="flex:2; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">APPLY</button>
-    </div>
-  </div>
-</div>
-
-<!-- ============================================================
-     SPLIT TYPE MODAL
-     ============================================================ -->
-<div id="split-type-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:12px;">
-  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:460px; border:1px solid var(--dark3); display:flex; flex-direction:column; overflow:hidden;">
-    <!-- Sticky header -->
-    <div style="padding:20px 24px 12px; flex-shrink:0;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-        <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px;">SPLIT TYPE</div>
-        <button onclick="closeSplitTypeModal()" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:36px; height:36px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">✕</button>
-      </div>
-      <div style="font-size:13px; color:var(--gray); line-height:1.6;">Your workout days will be restructured. Your history and weights are preserved. Any custom exercise swaps will reset.</div>
-    </div>
-
-    <!-- Scrollable split list -->
-    <div style="overflow-y:auto; flex:1; min-height:0; padding:4px 24px 8px;">
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <button class="settings-day-btn" id="stb-ul" onclick="selectSplitTypeSettings('ul', this)">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Upper / Lower</span>
-          </div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">4 days. Each muscle group trained twice per week. Classic hypertrophy split.</div>
-        </button>
-        <button class="settings-day-btn" id="stb-ppl" onclick="selectSplitTypeSettings('ppl', this)">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Push / Pull / Legs</span>
-          </div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. One focused session per movement pattern. Push, Pull, and Legs.</div>
-        </button>
-        <button class="settings-day-btn" id="stb-fullbody" onclick="selectSplitTypeSettings('fullbody', this)">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Full Body</span>
-          </div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Every major muscle group trained each session. Best for 2–3 days/week.</div>
-        </button>
-        <button class="settings-day-btn" id="stb-bro" onclick="selectSplitTypeSettings('bro', this)">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Bro Split</span>
-          </div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">5 days. One muscle group per day. Chest, Back, Legs, Shoulders, Arms. High volume.</div>
-        </button>
-        <button class="settings-day-btn" id="stb-glute" onclick="selectSplitTypeSettings('glute', this)">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Glute Priority</span>
-          </div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Two glute-focused sessions + one upper day. Hip thrusts, RDLs, and abduction.</div>
-        </button>
-        <button class="settings-day-btn" id="stb-pp" onclick="selectSplitTypeSettings('pp', this)">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Push / Pull</span>
-          </div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">4 days. Two push days and two pull days. Pressing and pulling muscles get dedicated sessions.</div>
-        </button>
-        <button class="settings-day-btn" id="stb-full3" onclick="selectSplitTypeSettings('full3', this)">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Full Body 3x</span>
-          </div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Every major muscle worked each session, three times per week. Monday, Wednesday, Friday.</div>
-        </button>
-        <button class="settings-day-btn" id="stb-full2" onclick="selectSplitTypeSettings('full2', this)">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Full Body 2x</span>
-          </div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">2 days. A and B sessions, each hitting every major muscle. Ideal for very busy schedules.</div>
-        </button>
-        <button class="settings-day-btn" id="stb-antagonist" onclick="selectSplitTypeSettings('antagonist', this)">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Antagonist Split</span>
-          </div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">6 days. Chest with back, shoulders with arms, and a full leg day — repeated twice per week.</div>
-        </button>
-        <button class="settings-day-btn" id="stb-lul" onclick="selectSplitTypeSettings('lul', this)">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Lower / Upper / Lower</span>
-          </div>
-          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Lower body gets two sessions per week. Upper gets one. Great for leg and glute focus.</div>
-        </button>
-      </div>
-    </div>
-
-    <!-- Sticky footer -->
-    <div style="padding:12px 24px 20px; flex-shrink:0; display:flex; gap:10px;">
-      <button onclick="closeSplitTypeModal()" style="flex:1; background:var(--dark3); border:1px solid #444; color:var(--gray); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
-      <button onclick="applySplitType()" style="flex:2; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">APPLY</button>
-    </div>
-  </div>
-</div>
 
 <!-- ============================================================
      ONBOARDING MODAL
@@ -4656,6 +4505,163 @@
 
 
 </div><!-- end .app-content -->
+
+<!-- ============================================================
+     TRAINING DAYS MODAL — outside .app-content to avoid z-index/
+     overflow clipping from that stacking context.
+     ============================================================ -->
+<div id="training-days-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid var(--dark3); max-height:calc(100dvh - 40px); display:flex; flex-direction:column; overflow:hidden;">
+    <!-- Sticky header -->
+    <div style="padding:20px 24px 12px; flex-shrink:0;">
+      <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TRAINING DAYS</div>
+      <div style="font-size:13px; color:var(--gray); line-height:1.6;">Choose how many days per week you want to train.</div>
+    </div>
+
+    <!-- Scrollable body -->
+    <div style="overflow-y:auto; flex:1; min-height:0; padding:0 24px 8px;">
+      <!-- Goal-aware recommendation banner -->
+      <div id="settings-days-rec" style="display:none; background:rgba(204,32,39,0.1); border:1px solid rgba(204,32,39,0.35); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:var(--cream); line-height:1.5;"></div>
+
+      <!-- Day option buttons with badges -->
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+        <button class="settings-day-btn" id="sdb-2" onclick="selectDaysPerWeek(2, this)"
+          data-short="Upper A + Lower A. Full body coverage, maximum recovery time.">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">2 Days / Week</span>
+            <span id="sdb-badge-2" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
+          </div>
+          <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">Upper A + Lower A. Full body coverage, maximum recovery time.</div>
+        </button>
+        <button class="settings-day-btn" id="sdb-3" onclick="selectDaysPerWeek(3, this)"
+          data-short="Upper A, Lower A, Upper B. Good balance with plenty of recovery.">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">3 Days / Week</span>
+            <span id="sdb-badge-3" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
+          </div>
+          <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">Upper A, Lower A, Upper B. Good balance with plenty of recovery.</div>
+        </button>
+        <button class="settings-day-btn" id="sdb-4" onclick="selectDaysPerWeek(4, this)"
+          data-short="The full program. Optimal for hypertrophy with structured recovery.">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">4 Days / Week</span>
+            <span id="sdb-badge-4" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
+          </div>
+          <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">The full program. Optimal for hypertrophy with structured recovery.</div>
+        </button>
+        <button class="settings-day-btn" id="sdb-5" onclick="selectDaysPerWeek(5, this)"
+          data-short="Full program + one extra session for weak points or cardio focus.">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">5 Days / Week</span>
+            <span id="sdb-badge-5" style="display:none; font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></span>
+          </div>
+          <div class="ob-sdays-desc" style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5; text-align:left;">Full program + one extra session for weak points or cardio focus.</div>
+        </button>
+      </div>
+
+      <!-- Descriptive tip -->
+      <div id="days-explanation" style="display:none;"></div>
+
+      <!-- Below-minimum warning -->
+      <div id="settings-days-warning" style="display:none; background:rgba(243,156,18,0.1); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--warning); margin-bottom:8px; line-height:1.6;"></div>
+    </div>
+
+    <!-- Sticky footer -->
+    <div style="padding:12px 24px 20px; flex-shrink:0; display:flex; gap:10px;">
+      <button onclick="closeTrainingDaysModal()" style="flex:1; background:var(--dark3); border:1px solid #444; color:var(--gray); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
+      <button onclick="applyTrainingDays()" id="apply-days-btn" style="flex:2; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">APPLY</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SPLIT TYPE MODAL — outside .app-content to avoid z-index/
+     overflow clipping from that stacking context.
+     ============================================================ -->
+<div id="split-type-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:12px;">
+  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:460px; border:1px solid var(--dark3); max-height:calc(100dvh - 24px); display:flex; flex-direction:column; overflow:hidden;">
+    <!-- Sticky header -->
+    <div style="padding:20px 24px 12px; flex-shrink:0;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px;">SPLIT TYPE</div>
+        <button onclick="closeSplitTypeModal()" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); width:36px; height:36px; border-radius:8px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">✕</button>
+      </div>
+      <div style="font-size:13px; color:var(--gray); line-height:1.6;">Your workout days will be restructured. Your history and weights are preserved. Any custom exercise swaps will reset.</div>
+    </div>
+
+    <!-- Scrollable split list -->
+    <div style="overflow-y:auto; flex:1; min-height:0; padding:4px 24px 8px;">
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="settings-day-btn" id="stb-ul" onclick="selectSplitTypeSettings('ul', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Upper / Lower</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">4 days. Each muscle group trained twice per week. Classic hypertrophy split.</div>
+        </button>
+        <button class="settings-day-btn" id="stb-ppl" onclick="selectSplitTypeSettings('ppl', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Push / Pull / Legs</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. One focused session per movement pattern. Push, Pull, and Legs.</div>
+        </button>
+        <button class="settings-day-btn" id="stb-fullbody" onclick="selectSplitTypeSettings('fullbody', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Full Body</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Every major muscle group trained each session. Best for 2–3 days/week.</div>
+        </button>
+        <button class="settings-day-btn" id="stb-bro" onclick="selectSplitTypeSettings('bro', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Bro Split</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">5 days. One muscle group per day. Chest, Back, Legs, Shoulders, Arms. High volume.</div>
+        </button>
+        <button class="settings-day-btn" id="stb-glute" onclick="selectSplitTypeSettings('glute', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Glute Priority</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Two glute-focused sessions + one upper day. Hip thrusts, RDLs, and abduction.</div>
+        </button>
+        <button class="settings-day-btn" id="stb-pp" onclick="selectSplitTypeSettings('pp', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Push / Pull</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">4 days. Two push days and two pull days. Pressing and pulling muscles get dedicated sessions.</div>
+        </button>
+        <button class="settings-day-btn" id="stb-full3" onclick="selectSplitTypeSettings('full3', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Full Body 3x</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Every major muscle worked each session, three times per week. Monday, Wednesday, Friday.</div>
+        </button>
+        <button class="settings-day-btn" id="stb-full2" onclick="selectSplitTypeSettings('full2', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Full Body 2x</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">2 days. A and B sessions, each hitting every major muscle. Ideal for very busy schedules.</div>
+        </button>
+        <button class="settings-day-btn" id="stb-antagonist" onclick="selectSplitTypeSettings('antagonist', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Antagonist Split</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">6 days. Chest with back, shoulders with arms, and a full leg day — repeated twice per week.</div>
+        </button>
+        <button class="settings-day-btn" id="stb-lul" onclick="selectSplitTypeSettings('lul', this)">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream);">Lower / Upper / Lower</span>
+          </div>
+          <div style="font-size:13px; color:var(--gray-light); margin-top:3px; text-align:left;">3 days. Lower body gets two sessions per week. Upper gets one. Great for leg and glute focus.</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sticky footer -->
+    <div style="padding:12px 24px 20px; flex-shrink:0; display:flex; gap:10px;">
+      <button onclick="closeSplitTypeModal()" style="flex:1; background:var(--dark3); border:1px solid #444; color:var(--gray); padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
+      <button onclick="applySplitType()" style="flex:2; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">APPLY</button>
+    </div>
+  </div>
+</div>
 
 <!-- ============================================================
      TUTORIAL MODAL — must live OUTSIDE .app-content so its z-index
@@ -23568,10 +23574,7 @@ function openSplitTypeModal() {
     activeBtn.classList.add('selected');
     applySplitButtonColor(activeBtn, pendingSplitType, false);
   }
-  const modal = document.getElementById('split-type-modal');
-  modal.style.display = 'flex';
-  const inner = modal.querySelector('div');
-  inner.style.maxHeight = (window.innerHeight - 24) + 'px';
+  document.getElementById('split-type-modal').style.display = 'flex';
 }
 
 function closeSplitTypeModal() {
