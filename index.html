@@ -25525,7 +25525,7 @@ function evaluateDaysWarning(days, cfg) {
 function selectTrainingDaysOnboard(days, btn) {
   haptic(HAPTIC.tap);
   document.getElementById('ob-training-days').value = days;
-  document.querySelectorAll('#onboard-step-6 .onboard-select-btn').forEach(b => {
+  document.querySelectorAll('#onboard-step-4 .onboard-select-btn').forEach(b => {
     b.classList.remove('selected');
     b.style.borderColor = '';
     b.style.background = '';
