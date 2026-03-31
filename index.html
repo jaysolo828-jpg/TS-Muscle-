@@ -3030,6 +3030,12 @@
     <input type="hidden" id="mood-timing" value="post"/>
     <input type="hidden" id="mood-value" value=""/>
     <svg id="mood-wheel-svg" viewBox="0 0 360 360" style="width:100%; display:block;"></svg>
+    <div id="mood-wheel-clear" style="display:none; text-align:center; margin-top:12px;">
+      <button onclick="_mwClear()" style="display:inline-flex; align-items:center; gap:6px; background:none; border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.35); padding:7px 16px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        CLEAR
+      </button>
+    </div>
     <div id="mood-wheel-selected" style="display:none; text-align:center; margin-top:10px; padding:0 20px;">
       <div id="mood-wheel-selected-inner" style="display:inline-flex; align-items:center; gap:10px; background:var(--dark3); border:1px solid var(--dark4); border-radius:20px; padding:8px 18px;">
         <span id="mw-cat-dot" style="width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0;"></span>
@@ -26304,22 +26310,30 @@ function renderMoodWheel() {
   svg.innerHTML = `<g ${spinA}>${inner}</g>${selCat ? `<g ${outerA}>${outer}</g>` : ''}`;
 }
 
+function _mwClear() {
+  haptic(HAPTIC.tap);
+  _mwState = { catIdx: null, feelingIdx: null };
+  document.getElementById('mood-wheel-actions').style.display = 'none';
+  document.getElementById('mood-wheel-selected').style.display = 'none';
+  document.getElementById('mood-wheel-clear').style.display = 'none';
+  document.getElementById('mood-value').value = '';
+  document.getElementById('mood-wheel-subtitle').textContent = 'After your session \u2014 tap a section, then a feeling';
+  _mwSpinOnNext = false;
+  renderMoodWheel();
+}
+
 function _mwInnerClick(catIdx) {
   haptic(HAPTIC.tap);
   if (_mwState.catIdx === catIdx) {
-    // deselect
-    _mwState = { catIdx: null, feelingIdx: null };
-    document.getElementById('mood-wheel-actions').style.display = 'none';
-    document.getElementById('mood-wheel-selected').style.display = 'none';
-    document.getElementById('mood-value').value = '';
-    document.getElementById('mood-wheel-subtitle').textContent = 'Tap a section to pick your mood';
-  } else {
-    _mwState = { catIdx, feelingIdx: null };
-    document.getElementById('mood-wheel-subtitle').textContent = 'Now tap the outer ring for a specific feeling';
-    document.getElementById('mood-wheel-actions').style.display = 'none';
-    document.getElementById('mood-wheel-selected').style.display = 'none';
-    document.getElementById('mood-value').value = '';
+    _mwClear();
+    return;
   }
+  _mwState = { catIdx, feelingIdx: null };
+  document.getElementById('mood-wheel-subtitle').textContent = 'Now tap the outer ring for a feeling';
+  document.getElementById('mood-wheel-actions').style.display = 'none';
+  document.getElementById('mood-wheel-selected').style.display = 'none';
+  document.getElementById('mood-wheel-clear').style.display = 'block';
+  document.getElementById('mood-value').value = '';
   renderMoodWheel();
 }
 
@@ -26337,6 +26351,7 @@ function _mwOuterClick(feelingIdx) {
   document.getElementById('mw-feeling-label').textContent = feeling;
   document.getElementById('mood-wheel-selected').style.display = '';
   document.getElementById('mood-wheel-actions').style.display = '';
+  document.getElementById('mood-wheel-clear').style.display = 'block';
   document.getElementById('mood-wheel-subtitle').textContent = '';
   // Update LOG button color to match category
   const logBtn = document.getElementById('log-mood-btn');
@@ -26421,7 +26436,8 @@ function saveMoodEntry() {
   document.getElementById('mood-note').value = '';
   document.getElementById('mood-wheel-actions').style.display = 'none';
   document.getElementById('mood-wheel-selected').style.display = 'none';
-  document.getElementById('mood-wheel-subtitle').textContent = 'Tap a section to pick your mood';
+  document.getElementById('mood-wheel-clear').style.display = 'none';
+  document.getElementById('mood-wheel-subtitle').textContent = 'After your session \u2014 tap a section, then a feeling';
   const moodTimingInput = document.getElementById('mood-timing');
   if (moodTimingInput) moodTimingInput.value = 'post';
 
