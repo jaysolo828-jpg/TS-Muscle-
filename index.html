@@ -15001,16 +15001,16 @@ async function _maybeFireCoachingCue(exId, setIndex) {
   // Suppress if every active set is already done — cue must never fire after the last set
   var _activeSets = (activeSession.sets[exId] || []).filter(function(s) { return !s.coachRemoved; });
   if (_activeSets.length > 0 && _activeSets.every(function(s) { return s.done; })) return;
-  // Superset pairing: suppress mid-session cues until the partner has matched the round,
-  // but always allow the cue once this exercise has completed all its planned sets.
-  // This prevents the leading exercise from being permanently silenced when the user
-  // does all its sets sequentially before starting the partner (non-interleaved usage).
+  // Superset pairing: only suppress when the exercise is more than 1 round
+  // ahead of its partner (sequential, non-interleaved usage) to avoid cue spam.
+  // In normal alternating flow (A1→B1→A2→B2) the leading exercise is exactly
+  // 1 ahead, so allow the cue. Always allow once all planned sets are done.
   var partnerId = activeSession.supersets && activeSession.supersets[exId];
   if (partnerId) {
     var myDone = (activeSession.sets[exId] || []).filter(function(s) { return s.done; }).length;
     var partnerDone = (activeSession.sets[partnerId] || []).filter(function(s) { return s.done; }).length;
     var goalSetsForEx = getGoalSets(exId, (activeSession.sets[exId] || []).length);
-    if (partnerDone < myDone && myDone < goalSetsForEx) return;
+    if (myDone - partnerDone > 1 && myDone < goalSetsForEx) return;
   }
 
   var result = _evalCoachingCueTriggers(exId, setIndex);
