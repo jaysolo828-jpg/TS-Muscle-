@@ -19181,6 +19181,65 @@ function renderHistory() {
         : _wn <= 4 ? 'Volume is building toward its peak.'
         : 'Approaching peak volume. Recovery week is coming.';
 
+      // ── Breakdown helper ──────────────────────────────────────
+      function _getMuscleBreakdown(muscle) {
+        const nameMap = {};
+        (state.program || []).forEach(day => {
+          (day.exercises || []).forEach(ex => { if (ex.id && ex.name) nameMap[ex.id] = ex.name; });
+        });
+        const wd = new Date(); wd.setDate(wd.getDate() - wd.getDay()); wd.setHours(0,0,0,0);
+        const weekStart = wd.getTime();
+        const results = [];
+        (state.history || []).filter(e => new Date(e.date).getTime() >= weekStart).forEach(entry => {
+          const dayStr = new Date(entry.date).toLocaleDateString('en-US', { weekday: 'long' });
+          const exRows = [];
+          Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
+            if (MUSCLE_MAP[exId] !== muscle) return;
+            const mult = (UNILATERAL_EXERCISES.has(exId) || state.customUnilateralExercises?.[exId]) ? 2 : 1;
+            const doneSets = sets.filter(s => s.done && !s.coachRemoved).length * mult;
+            if (!doneSets) return;
+            exRows.push({ name: nameMap[exId] || exId, sets: doneSets });
+          });
+          if (exRows.length) results.push({ day: dayStr, exRows });
+        });
+        return results;
+      }
+
+      window._toggleMuscleBreakdown = function(el) {
+        const existing = el.querySelector('.wk-bd');
+        const chev = el.querySelector('.wk-chev');
+        if (existing) {
+          existing.remove();
+          el.style.background = '';
+          el.style.padding = '';
+          if (chev) chev.textContent = '›';
+          return;
+        }
+        const muscle = el.dataset.muscle;
+        const mcolor = MUSCLE_COLORS[muscle] || 'var(--red-text)';
+        const data = _getMuscleBreakdown(muscle);
+        let bdHTML = `<div class="wk-bd" style="margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,0.08);">`;
+        if (!data.length) {
+          bdHTML += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(175,170,165,0.75);font-style:italic;">No sets recorded yet this week.</div>`;
+        } else {
+          data.forEach(({ day, exRows }, i) => {
+            if (i > 0) bdHTML += `<div style="height:1px;background:rgba(255,255,255,0.06);margin:9px 0;"></div>`;
+            bdHTML += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:rgba(150,145,140,0.60);margin-bottom:7px;">${day.toUpperCase()}</div>`;
+            exRows.forEach(({ name, sets }) => {
+              bdHTML += `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(210,205,198,0.90);">${name}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:${mcolor};margin-left:10px;flex-shrink:0;">${sets} sets</div>
+              </div>`;
+            });
+          });
+        }
+        bdHTML += `</div>`;
+        el.insertAdjacentHTML('beforeend', bdHTML);
+        el.style.background = 'rgba(255,255,255,0.03)';
+        el.style.padding = '8px 8px 8px';
+        if (chev) chev.textContent = '‹';
+      };
+
       // ── Row builder ───────────────────────────────────────────
       function _makeVolRow(muscle, notDone) {
         const actual     = _wsets[muscle] || 0;
@@ -19211,11 +19270,14 @@ function renderHistory() {
         const nameColor = nearMRV ? '#f39c12' : atTarget ? '#50c882' : 'rgba(215,210,202,0.95)';
         const check     = atTarget ? `<span style="color:#50c882;font-size:12px;margin-left:4px;vertical-align:middle;">✓</span>` : '';
 
-        return `<div style="margin-bottom:16px;">
+        return `<div data-muscle="${muscle}" onclick="window._toggleMuscleBreakdown(this)" style="margin-bottom:16px;cursor:pointer;border-radius:8px;transition:background 0.15s,padding 0.15s;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:${nameColor};letter-spacing:0.5px;">${label}${check}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;">
-              <span style="color:${nameColor};font-weight:700;font-size:15px;">${actual}</span><span style="color:rgba(195,190,182,0.65);"> / ${target} sets</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;">
+                <span style="color:${nameColor};font-weight:700;font-size:15px;">${actual}</span><span style="color:rgba(195,190,182,0.65);"> / ${target} sets</span>
+              </div>
+              <span class="wk-chev" style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(160,155,150,0.45);line-height:1;user-select:none;">›</span>
             </div>
           </div>
           <div style="position:relative;height:13px;">
@@ -19263,22 +19325,22 @@ function renderHistory() {
             </svg>
             <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
               <div style="font-family:'Bebas Neue',cursive;font-size:${_noData ? '20' : '32'}px;color:${_noData ? 'rgba(160,155,150,0.75)' : _ringColor};line-height:1;letter-spacing:1px;">${_noData ? '—' : _overallPctInt + '%'}</div>
-              ${!_noData ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:rgba(155,150,145,0.65);letter-spacing:0.5px;margin-top:2px;">of volume</div>` : ''}
+              ${!_noData ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(155,150,145,0.60);letter-spacing:0.5px;margin-top:2px;">volume</div>` : ''}
             </div>
           </div>
 
           <div style="flex:1;min-width:0;">
             <div style="display:flex;gap:8px;margin-bottom:11px;">
               <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:9px 10px 8px;">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(150,145,140,0.7);margin-bottom:3px;">MUSCLES</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:rgba(155,150,145,0.75);margin-bottom:3px;">MUSCLES</div>
                 <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:${_anyActual && _musclesHit === _musclesTotal ? '#50c882' : 'rgba(215,210,202,0.95)'};letter-spacing:1px;line-height:1;">${_musclesHit}<span style="font-size:13px;color:rgba(155,150,145,0.6);letter-spacing:0.5px;"> / ${_musclesTotal}</span></div>
               </div>
               <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:9px 10px 8px;">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(150,145,140,0.7);margin-bottom:3px;">SETS</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:rgba(155,150,145,0.75);margin-bottom:3px;">SETS</div>
                 <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:rgba(215,210,202,0.95);letter-spacing:1px;line-height:1;">${_totalActual}<span style="font-size:13px;color:rgba(155,150,145,0.6);letter-spacing:0.5px;"> / ${_totalTarget}</span></div>
               </div>
             </div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(180,175,167,0.80);line-height:1.5;letter-spacing:0.2px;">${_weekMsg}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(185,180,172,0.88);line-height:1.5;letter-spacing:0.2px;">${_weekMsg}</div>
           </div>
         </div>
 
