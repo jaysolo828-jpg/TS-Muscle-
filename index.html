@@ -6181,10 +6181,20 @@ function checkAutoregulation(exId, dayId, raiseThreshold) {
     .filter(h => h.dayId === dayId && h.sets?.[exId] && !h.isDeload);
   if (sessions.length < 2) return null;
 
+  // Superset-aware RPE: adjust historical RPE when pairing context changed.
+  // Without this, two paired sessions at true RPE 8.5 could read as 9.5 and
+  // falsely trigger the autoregulation "too heavy" card.
+  const _arCurrentlyPaired = !!(activeSession?.supersets?.[exId]);
+  const _AR_SUPERSET_OFFSET = 0.75;
+
   function sessAvgRpe(sess) {
     const sets = (sess.sets[exId] || []).filter(s => s.done && s.rpe != null && s.rpe !== '');
     if (!sets.length) return null;
-    return sets.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / sets.length;
+    let avg = sets.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / sets.length;
+    const _wasPaired = !!(sess.supersets?.[exId]);
+    if (_wasPaired && !_arCurrentlyPaired) avg = Math.max(5, avg - _AR_SUPERSET_OFFSET);
+    else if (!_wasPaired && _arCurrentlyPaired) avg = Math.min(10, avg + _AR_SUPERSET_OFFSET);
+    return avg;
   }
 
   const rpe0 = sessAvgRpe(sessions[0]);
@@ -11981,9 +11991,35 @@ function getProgressiveWeight(exId, dayId) {
   // prevents premature increases). Advanced rarely skip RPE unless coasting → 7.5.
   // Intermediate: 8 (baseline).
   const _defaultRPE = _expLevel === 'beginner' ? 8.5 : _expLevel === 'advanced' ? 7.5 : 8;
-  const rpeSets = allSets.filter(s => s.rpe);
+
+  // ── Superset RPE adjustment ──────────────────────────────────────────────
+  // Supersets inflate RPE by ~0.5–1.0 due to shorter rest between paired
+  // exercises. When the pairing context changes between sessions (was paired
+  // → now unpaired, or vice versa), raw RPE comparisons mislead the algorithm
+  // into wrong increase/decrease signals. Adjust historical RPE toward what
+  // it would have been without the superset fatigue penalty.
+  const _currentlyPaired = !!(activeSession?.supersets?.[exId]);
+  const _RPE_SUPERSET_OFFSET = 0.75; // typical RPE inflation from superset fatigue
+
+  const rpeSets = [];
+  sessions.forEach(sess => {
+    const _wasPaired = !!(sess.supersets?.[exId]);
+    const s = (sess.sets[exId] || []).filter(s => s.done && !s.coachRemoved && s.rpe);
+    s.forEach(set => {
+      let adjustedRPE = parseFloat(set.rpe);
+      if (_wasPaired && !_currentlyPaired) {
+        // Previous session was paired, current is not — RPE was inflated, adjust down
+        adjustedRPE = Math.max(5, adjustedRPE - _RPE_SUPERSET_OFFSET);
+      } else if (!_wasPaired && _currentlyPaired) {
+        // Previous session was unpaired, current is paired — expect higher RPE, adjust up
+        adjustedRPE = Math.min(10, adjustedRPE + _RPE_SUPERSET_OFFSET);
+      }
+      rpeSets.push({ ...set, _adjustedRPE: adjustedRPE });
+    });
+  });
+
   const avgRPE = rpeSets.length > 0
-    ? rpeSets.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / rpeSets.length
+    ? rpeSets.reduce((sum, s) => sum + s._adjustedRPE, 0) / rpeSets.length
     : _defaultRPE;
 
   // Avg reps across window — only count sets where reps were actually logged
@@ -11993,12 +12029,20 @@ function getProgressiveWeight(exId, dayId) {
   const avgReps = repLoggedSets.reduce((sum, s) => sum + parseInt(s.reps), 0) / repLoggedSets.length;
 
   // For trend mode: check consistency — how many sessions had high RPE
+  // Applies the same superset RPE adjustment so a paired session's inflated
+  // RPE doesn't falsely count as a "high RPE session" when now unpaired.
   let highRPESessionCount = 0;
   if (useTrend) {
     sessions.forEach(sess => {
       const s = (sess.sets[exId] || []).filter(s => s.done && s.rpe);
       if (s.length > 0) {
-        const sessAvgRPE = s.reduce((sum, x) => sum + parseFloat(x.rpe), 0) / s.length;
+        const _sessWasPaired = !!(sess.supersets?.[exId]);
+        let sessAvgRPE = s.reduce((sum, x) => sum + parseFloat(x.rpe), 0) / s.length;
+        if (_sessWasPaired && !_currentlyPaired) {
+          sessAvgRPE = Math.max(5, sessAvgRPE - _RPE_SUPERSET_OFFSET);
+        } else if (!_sessWasPaired && _currentlyPaired) {
+          sessAvgRPE = Math.min(10, sessAvgRPE + _RPE_SUPERSET_OFFSET);
+        }
         if (sessAvgRPE >= 9) highRPESessionCount++;
       }
     });
@@ -12198,6 +12242,10 @@ function getProgressiveWeight(exId, dayId) {
   }
   // ── End manual adjustment period ─────────────────────────────────────────
 
+  // Track whether the superset context changed from the most recent session
+  const _lastSessionWasPaired = !!(sameDaySessions[0]?.supersets?.[exId]);
+  const _supersetContextChanged = _lastSessionWasPaired !== _currentlyPaired;
+
   if (!activeSession.overloadReasons) activeSession.overloadReasons = {};
   activeSession.overloadReasons[exId] = {
     lastWeight, newWeight,
@@ -12207,6 +12255,9 @@ function getProgressiveWeight(exId, dayId) {
     useTrend,
     sessionCount: sessions.length,
     consecutiveReductions,
+    supersetContextChanged: _supersetContextChanged
+      ? (_currentlyPaired ? 'now-paired' : 'now-unpaired')
+      : null,
     inAdjustmentPeriod: _manualAdj
       ? { direction: _manualAdj.direction, sessionsLeft: _manualAdj.sessionsLeft }
       : null
@@ -12299,6 +12350,13 @@ function buildOverloadHint(exId) {
     ? ''
     : `<div style="font-size:13px; color:var(--gray-light); padding-left:23px; line-height:1.5;">${_buildReasonSentence(info, _minR, _maxR)}</div>`;
 
+  // When exercise is currently paired, add a small note so the user knows
+  // the suggestion accounts for superset fatigue and is specific to THIS exercise.
+  const _isPairedNow = !!(activeSession?.supersets?.[exId]);
+  const _ssCtxNote = _isPairedNow
+    ? `<div style="font-size:11px; color:var(--gray); padding-left:23px; margin-top:4px; line-height:1.4; font-style:italic;">Adjusted for superset — each exercise has its own weight target.</div>`
+    : '';
+
   if (info.changed && info.newWeight > info.lastWeight) {
     return `<div style="background:rgba(46,204,113,0.12); border:1px solid rgba(46,204,113,0.35); border-radius:10px; padding:9px 12px; margin:8px 16px 8px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
@@ -12308,6 +12366,7 @@ function buildOverloadHint(exId) {
         </div>
       </div>
       ${_cardBody}
+      ${_ssCtxNote}
     </div>`;
   } else if (info.changed && info.newWeight < info.lastWeight) {
     // Beginners: require 3 consecutive drops before nudging deload (2 drops is
@@ -12326,6 +12385,7 @@ function buildOverloadHint(exId) {
       </div>
       <div style="font-size:12px; color:rgba(243,156,18,0.85); padding-left:23px; margin-bottom:6px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.3px;">This is intentional. The weight input below is pre-filled lower.</div>
       ${_cardBody}
+      ${_ssCtxNote}
       ${deloadNudge}
     </div>`;
   } else if (info.lastWeight) {
@@ -12337,6 +12397,7 @@ function buildOverloadHint(exId) {
         </div>
       </div>
       ${_cardBody}
+      ${_ssCtxNote}
     </div>`;
   }
   return '';
@@ -12345,13 +12406,21 @@ function buildOverloadHint(exId) {
 // Builds a plain-language, readable explanation for the progression card body.
 // No "last session" tag — context is folded naturally into the subject.
 function _buildReasonSentence(info, minR, maxR) {
-  const { avgReps, avgRPE, useTrend, sessionCount, changed, newWeight, lastWeight } = info;
+  const { avgReps, avgRPE, useTrend, sessionCount, changed, newWeight, lastWeight, supersetContextChanged } = info;
   const multi = useTrend && sessionCount > 1;
   // Subject phrases — "You hit 12 reps" (single) vs "Averaging 12 reps" (trend)
   const repsStr = avgReps ? (multi ? `Averaging ${avgReps} reps` : `You hit ${avgReps} reps`) : null;
   const rpeStr  = avgRPE !== null ? `RPE ${avgRPE.toFixed(1)}` : null;
   const inc = changed && newWeight > lastWeight;
   const dec = changed && newWeight < lastWeight;
+
+  // Append a short note when pairing context changed so the user understands
+  // why the suggestion might differ from what they'd naively expect.
+  const _ssNote = supersetContextChanged === 'now-paired'
+    ? ' Paired this session — RPE adjusted for superset fatigue.'
+    : supersetContextChanged === 'now-unpaired'
+    ? ' Unpaired this session — RPE adjusted (no superset fatigue).'
+    : '';
 
   if (dec) {
     const _decCopy = {
@@ -12360,23 +12429,23 @@ function _buildReasonSentence(info, minR, maxR) {
       '5-6':     'High RPE in peak week is normal. Only drop if form is breaking down.',
       'recovery':'Reduce weight and focus on movement quality',
     };
-    return _decCopy[getCycleWeekBand()] || _decCopy['3-4'];
+    return (_decCopy[getCycleWeekBand()] || _decCopy['3-4']) + _ssNote;
   }
 
   if (inc) {
     if (rpeStr) {
       if (avgRPE <= 7) {
-        return repsStr && maxR > 0 && avgReps > maxR
+        return (repsStr && maxR > 0 && avgReps > maxR
           ? `${repsStr} at ${rpeStr}. Above target and feeling easy. Time to go heavier.`
-          : `${rpeStr}. Weight is feeling comfortable. Ready to push heavier.`;
+          : `${rpeStr}. Weight is feeling comfortable. Ready to push heavier.`) + _ssNote;
       }
-      return repsStr
+      return (repsStr
         ? `${repsStr} at ${rpeStr}. Hitting your target. Ready to increase.`
-        : `Hitting your rep target at ${rpeStr}. Ready to go heavier.`;
+        : `Hitting your rep target at ${rpeStr}. Ready to go heavier.`) + _ssNote;
     }
-    return repsStr && maxR > 0 && avgReps > maxR
+    return (repsStr && maxR > 0 && avgReps > maxR
       ? `${repsStr}. Above your target range. Time to add weight.`
-      : `Consistently hitting the top of your rep range. Time to go heavier.`;
+      : `Consistently hitting the top of your rep range. Time to go heavier.`) + _ssNote;
   }
 
   // Maintain — week-band-aware copy
@@ -12386,7 +12455,7 @@ function _buildReasonSentence(info, minR, maxR) {
     '5-6':     "Hit the top of your range. You're in peak week.",
     'recovery':'Focus on form and feel today. No pressure to push.',
   };
-  return _maintainCopy[getCycleWeekBand()] || _maintainCopy['3-4'];
+  return (_maintainCopy[getCycleWeekBand()] || _maintainCopy['3-4']) + _ssNote;
 }
 
 function _autoregAccept(exId, newWeight) {
@@ -13147,6 +13216,8 @@ function startPairSelection(exId) {
         modal.remove();
         delete activeSession.supersets[exId];
         delete activeSession.supersets[partner];
+        _refreshWeightAfterPairingChange(exId);
+        _refreshWeightAfterPairingChange(partner);
         renderSession();
         showToast('Superset removed for this session');
       };
@@ -13155,6 +13226,8 @@ function startPairSelection(exId) {
         modal.remove();
         delete activeSession.supersets[exId];
         delete activeSession.supersets[partner];
+        _refreshWeightAfterPairingChange(exId);
+        _refreshWeightAfterPairingChange(partner);
         if (progDay?.supersets) {
           delete progDay.supersets[exId];
           delete progDay.supersets[partner];
@@ -13167,6 +13240,8 @@ function startPairSelection(exId) {
       // Session-only pair — just remove
       delete activeSession.supersets[exId];
       delete activeSession.supersets[partner];
+      _refreshWeightAfterPairingChange(exId);
+      _refreshWeightAfterPairingChange(partner);
       pairingSourceId = null;
       renderSession();
       showToast('Superset removed');
@@ -13207,6 +13282,24 @@ function _ensureSupersetAdjacent(idA, idB) {
   }
 }
 
+// Recalculate progressive weight and overload hint for an exercise after its
+// superset pairing changes mid-session. Only updates undone sets so any weights
+// the user already completed are preserved.
+function _refreshWeightAfterPairingChange(exId) {
+  if (!activeSession) return;
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  if (!day) return;
+  const ex = day.exercises.find(e => e.id === exId);
+  if (!ex) return;
+  const newSuggested = getProgressiveWeight(ex.id, day.id);
+  activeSession.suggestedWeights[exId] = newSuggested;
+  // Update undone sets to the recalculated weight
+  const sets = activeSession.sets[exId];
+  if (sets) {
+    sets.forEach(s => { if (!s.done) s.weight = newSuggested; });
+  }
+}
+
 function completePair(targetExId) {
   if (!pairingSourceId || pairingSourceId === targetExId) {
     pairingSourceId = null;
@@ -13244,6 +13337,8 @@ function completePair(targetExId) {
     activeSession.supersets[sourceId] = targetExId;
     activeSession.supersets[targetExId] = sourceId;
     _ensureSupersetAdjacent(sourceId, targetExId);
+    _refreshWeightAfterPairingChange(sourceId);
+    _refreshWeightAfterPairingChange(targetExId);
     renderSession();
     showToast('Superset set for this session ✓');
   };
@@ -13254,6 +13349,8 @@ function completePair(targetExId) {
     activeSession.supersets[sourceId] = targetExId;
     activeSession.supersets[targetExId] = sourceId;
     _ensureSupersetAdjacent(sourceId, targetExId);
+    _refreshWeightAfterPairingChange(sourceId);
+    _refreshWeightAfterPairingChange(targetExId);
     // Persist to the program day so it loads in future sessions
     const progDay = state.program.find(d => d.id === activeSession.dayId);
     if (progDay) {
