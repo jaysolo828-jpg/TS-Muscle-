@@ -15,3 +15,10 @@
   [headers.values]
     Cache-Control = "no-cache"
 
+# manifest.json must have correct Content-Type so Chrome accepts it as a PWA manifest.
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "no-cache"
+
