@@ -25022,6 +25022,7 @@ function selectSplitOnboard(type, btn) {
     full2: 'Full Body 2x is two sessions per week, each covering your whole body. The most efficient option if your schedule is tight.',
     antagonist: 'Antagonist Split pairs muscles that work against each other — chest with back, shoulders with arms, and a dedicated leg day — twice per week.',
     lul: 'Lower/Upper/Lower gives your legs and glutes two sessions per week while your upper body gets one. Popular with people who want stronger legs without going to the gym more than 3 days.',
+    ts: 'The T&S Split is three full-body sessions per week built around compound lifts at moderate effort. Designed for people who train for how they feel, not just how they look. Monday, Wednesday, Friday.',
   };
   // Expand the tip inline inside the selected button; reset all others to their short text
   const allBtnsForTip = btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn');
@@ -25054,6 +25055,7 @@ function selectSplitOnboard(type, btn) {
       full2:      'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Overhead Press',
       antagonist: 'Bench &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; EZ Bar Curl &nbsp;·&nbsp; Leg Press',
       lul:        'Leg Press &nbsp;·&nbsp; Hip Thrust &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Bench &nbsp;·&nbsp; Machine Row',
+      ts:         'Bench &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Romanian Deadlift &nbsp;·&nbsp; Overhead Press',
     };
     pickPreview.innerHTML = previews[type] || previews.ul;
   }
