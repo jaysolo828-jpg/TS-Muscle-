@@ -19156,88 +19156,135 @@ function renderHistory() {
     if (_progMuscles.size > 0) {
       const _wsets = getWeeklySetsByMuscle();
       const _anyActual = Object.values(_wsets).some(v => v > 0);
-
       const _muscleOrder = ['CHEST','BACK','SHOULDERS','BICEPS','TRICEPS','QUADS','HAMSTRINGS','GLUTES','CALVES'];
-      const _rows = _muscleOrder.filter(m => _progMuscles.has(m)).map(muscle => {
-        const actual   = _wsets[muscle] || 0;
-        const notDone  = actual === 0;
-        const target   = getRPEAdjustedVolumeTarget(muscle, _wn) || 1;
-        const _sl      = getScaledVolumeLandmarks(muscle) || VOLUME_LANDMARKS[muscle];
-        const mrv      = _sl.mrv;
-        const mcolor   = MUSCLE_COLORS[muscle] || 'var(--red-text)';
-        const pct      = Math.min(actual / target, 1);
-        const nearMRV  = actual >= Math.round(mrv * 0.9);
-        const atTarget = actual >= target;
-        const barColor = notDone  ? 'rgba(255,255,255,0.08)'
-                       : nearMRV  ? 'var(--warning)'
-                       : atTarget ? '#50c882'
-                       : mcolor;
-        const nameColor = notDone ? 'rgba(160,155,150,0.85)' : nearMRV ? 'var(--warning)' : atTarget ? '#50c882' : 'rgba(215,210,202,0.95)';
-        const label     = muscle.charAt(0) + muscle.slice(1).toLowerCase();
-        const rightSide = notDone
-          ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(160,155,150,0.75);letter-spacing:0.3px;font-style:italic;">not trained yet</span>`
-          : `<span style="color:${nameColor};font-weight:700;">${actual}</span><span style="color:rgba(200,195,188,0.80);"> / ${target} sets</span>`;
-        return `<div style="margin-bottom:13px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:${nameColor};letter-spacing:0.5px;">${label}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;">${rightSide}</div>
-          </div>
-          <div style="background:rgba(255,255,255,0.10);border-radius:4px;height:7px;overflow:hidden;">
-            <div style="height:100%;border-radius:4px;background:${barColor};width:${Math.round(pct * 100)}%;transition:width 0.3s ease;"></div>
-          </div>
-        </div>`;
-      }).join('');
+      const _progList = _muscleOrder.filter(m => _progMuscles.has(m));
 
-      const _weekMsg = (state.isDeloadWeek || state.isRestWeek || _wn >= 7)
-        ? (_wn === 8 ? 'Final week of the cycle. Keep it light and finish strong.' : 'Recovery week. Let your body adapt and rebuild.')
-        : _wn <= 2
-        ? 'Building your base. Volume increases each week.'
-        : _wn <= 4
-        ? 'Volume is building week over week toward its peak.'
-        : 'Approaching peak volume. Recovery week is coming.';
-
-      const _footNote = !_anyActual
-        ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(195,190,182,0.85);letter-spacing:0.2px;margin-top:12px;line-height:1.5;">Complete a session this week to see your sets tracked here.</div>`
-        : '';
-
-      // ── Readiness ring ────────────────────────────────────────
-      const _ringMuscles = _muscleOrder.filter(m => _progMuscles.has(m));
-      const _totalActual = _ringMuscles.reduce((s, m) => s + (_wsets[m] || 0), 0);
-      const _totalTarget = _ringMuscles.reduce((s, m) => s + (getRPEAdjustedVolumeTarget(m, _wn) || 1), 0);
-      const _overallPct  = _totalTarget > 0 ? Math.min(_totalActual / _totalTarget, 1) : 0;
+      // ── Totals ────────────────────────────────────────────────
+      const _totalActual  = _progList.reduce((s, m) => s + (_wsets[m] || 0), 0);
+      const _totalTarget  = _progList.reduce((s, m) => s + (getRPEAdjustedVolumeTarget(m, _wn) || 1), 0);
+      const _overallPct   = _totalTarget > 0 ? Math.min(_totalActual / _totalTarget, 1) : 0;
       const _overallPctInt = Math.round(_overallPct * 100);
-      const _ringR = 34;
+      const _noData       = !_anyActual;
+      const _musclesHit   = _progList.filter(m => (_wsets[m] || 0) >= (getRPEAdjustedVolumeTarget(m, _wn) || 1)).length;
+      const _musclesTotal = _progList.length;
+
+      // ── Ring ──────────────────────────────────────────────────
+      const _ringR    = 44;
       const _ringCirc = +(2 * Math.PI * _ringR).toFixed(2);
       const _ringOffset = +(_ringCirc * (1 - _overallPct)).toFixed(2);
-      const _noData = !_anyActual;
-      const _ringColor = _noData ? 'rgba(255,255,255,0.18)' : _overallPct >= 1 ? '#50c882' : _overallPct >= 0.8 ? '#f39c12' : '#e8404a';
-      const _ringMsg = _noData
-        ? "Complete your first session to see your weekly progress."
-        : _overallPct >= 1
-        ? "Weekly volume target hit. Excellent work!"
-        : _overallPct >= 0.8
-        ? `You're ${_overallPctInt}% through this week's volume target. Almost there.`
-        : `You're ${_overallPctInt}% through this week's volume target.`;
+      const _ringColor  = _noData ? 'rgba(255,255,255,0.18)' : _overallPct >= 1 ? '#50c882' : _overallPct >= 0.8 ? '#f39c12' : '#e8404a';
+
+      // ── Week context line ─────────────────────────────────────
+      const _weekMsg = (state.isDeloadWeek || state.isRestWeek || _wn >= 7)
+        ? (_wn === 8 ? 'Final week. Keep it light and finish strong.' : 'Recovery week. Let your body adapt.')
+        : _wn <= 2 ? 'Building your base. Volume increases each week.'
+        : _wn <= 4 ? 'Volume is building toward its peak.'
+        : 'Approaching peak volume. Recovery week is coming.';
+
+      // ── Row builder ───────────────────────────────────────────
+      function _makeVolRow(muscle, notDone) {
+        const actual     = _wsets[muscle] || 0;
+        const target     = getRPEAdjustedVolumeTarget(muscle, _wn) || 1;
+        const _sl        = getScaledVolumeLandmarks(muscle) || VOLUME_LANDMARKS[muscle];
+        const mrv        = _sl.mrv;
+        const mcolor     = MUSCLE_COLORS[muscle] || 'var(--red-text)';
+        const fillPct    = Math.round(Math.min(actual / mrv, 1) * 100);
+        const targetPct  = Math.round(Math.min(target / mrv, 1) * 100);
+        const nearMRV    = actual >= Math.round(mrv * 0.9);
+        const atTarget   = actual >= target;
+        const label      = muscle.charAt(0) + muscle.slice(1).toLowerCase();
+
+        if (notDone) {
+          return `<div style="margin-bottom:14px;opacity:0.45;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:rgba(160,155,150,0.85);letter-spacing:0.5px;">${label}</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(150,145,140,0.7);letter-spacing:0.3px;font-style:italic;">not yet</div>
+            </div>
+            <div style="position:relative;height:11px;">
+              <div style="position:absolute;inset:0;background:rgba(255,255,255,0.07);border-radius:6px;"></div>
+              <div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,0.18);border-radius:1px;left:calc(${targetPct}% - 1px);"></div>
+            </div>
+          </div>`;
+        }
+
+        const barColor  = nearMRV ? '#f39c12' : atTarget ? '#50c882' : mcolor;
+        const nameColor = nearMRV ? '#f39c12' : atTarget ? '#50c882' : 'rgba(215,210,202,0.95)';
+        const check     = atTarget ? `<span style="color:#50c882;font-size:12px;margin-left:4px;vertical-align:middle;">✓</span>` : '';
+
+        return `<div style="margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:${nameColor};letter-spacing:0.5px;">${label}${check}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;">
+              <span style="color:${nameColor};font-weight:700;font-size:15px;">${actual}</span><span style="color:rgba(195,190,182,0.65);"> / ${target} sets</span>
+            </div>
+          </div>
+          <div style="position:relative;height:13px;">
+            <div style="position:absolute;inset:0;background:rgba(255,255,255,0.09);border-radius:7px;overflow:hidden;">
+              <div style="height:100%;border-radius:7px;background:${barColor};width:${fillPct}%;transition:width 0.4s ease;"></div>
+            </div>
+            <div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,0.32);border-radius:1px;left:calc(${targetPct}% - 1px);pointer-events:none;"></div>
+          </div>
+        </div>`;
+      }
+
+      // ── Sort: trained first, untrained below divider ──────────
+      const _trained   = _progList.filter(m => (_wsets[m] || 0) > 0);
+      const _untrained = _progList.filter(m => (_wsets[m] || 0) === 0);
+
+      const _trainedHTML = _trained.map(m => _makeVolRow(m, false)).join('');
+      const _untrainedHTML = _untrained.length > 0
+        ? `<div style="display:flex;align-items:center;gap:10px;margin:2px 0 16px;">
+            <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;color:rgba(155,150,145,0.5);letter-spacing:1.5px;">NOT YET THIS WEEK</div>
+            <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
+          </div>${_untrained.map(m => _makeVolRow(m, true)).join('')}`
+        : '';
+
+      const _footNote = !_anyActual
+        ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(185,180,172,0.70);letter-spacing:0.2px;margin-top:6px;line-height:1.5;">Complete a session this week to see your sets here.</div>`
+        : '';
+
+      const _muscleLabelColor = (_anyActual && _musclesHit === _musclesTotal) ? '#50c882' : 'rgba(195,190,182,0.75)';
 
       const _volCard = mkCard();
       _volCard.innerHTML = `
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(160,155,150,0.9);margin-bottom:14px;">THIS WEEK'S SETS</div>
-        <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:14px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08);">
-          <div style="position:relative;width:90px;height:90px;">
-            <svg width="90" height="90" viewBox="0 0 80 80" style="display:block;transform:rotate(-90deg);">
-              <circle cx="40" cy="40" r="${_ringR}" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="7"/>
-              <circle cx="40" cy="40" r="${_ringR}" fill="none" stroke="${_ringColor}" stroke-width="7"
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(160,155,150,0.9);">THIS WEEK'S SETS</div>
+          ${_anyActual ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:${_muscleLabelColor};letter-spacing:0.5px;">${_musclesHit} / ${_musclesTotal} muscles</div>` : ''}
+        </div>
+
+        <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px;">
+          <div style="position:relative;width:110px;height:110px;flex-shrink:0;">
+            <svg width="110" height="110" viewBox="0 0 100 100" style="display:block;transform:rotate(-90deg);">
+              <circle cx="50" cy="50" r="${_ringR}" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="10"/>
+              <circle cx="50" cy="50" r="${_ringR}" fill="none" stroke="${_ringColor}" stroke-width="10"
                 stroke-dasharray="${_ringCirc}" stroke-dashoffset="${_ringOffset}"
-                stroke-linecap="round" style="transition:stroke-dashoffset 0.4s ease,stroke 0.4s ease;"/>
+                stroke-linecap="round" style="transition:stroke-dashoffset 0.5s ease,stroke 0.5s ease;"/>
             </svg>
             <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
-              <div style="font-family:'Bebas Neue',cursive;font-size:23px;color:${_noData ? 'rgba(160,155,150,0.85)' : _ringColor};line-height:1;letter-spacing:1px;">${_noData ? '—' : _overallPctInt + '%'}</div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:${_noData ? '20' : '32'}px;color:${_noData ? 'rgba(160,155,150,0.75)' : _ringColor};line-height:1;letter-spacing:1px;">${_noData ? '—' : _overallPctInt + '%'}</div>
+              ${!_noData ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:rgba(155,150,145,0.65);letter-spacing:0.5px;margin-top:2px;">of volume</div>` : ''}
             </div>
           </div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(210,205,198,0.90);letter-spacing:0.2px;margin-top:10px;text-align:center;line-height:1.5;">${_ringMsg}</div>
+
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;gap:8px;margin-bottom:11px;">
+              <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:9px 10px 8px;">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(150,145,140,0.7);margin-bottom:3px;">MUSCLES</div>
+                <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:${_anyActual && _musclesHit === _musclesTotal ? '#50c882' : 'rgba(215,210,202,0.95)'};letter-spacing:1px;line-height:1;">${_musclesHit}<span style="font-size:13px;color:rgba(155,150,145,0.6);letter-spacing:0.5px;"> / ${_musclesTotal}</span></div>
+              </div>
+              <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:9px 10px 8px;">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(150,145,140,0.7);margin-bottom:3px;">SETS</div>
+                <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:rgba(215,210,202,0.95);letter-spacing:1px;line-height:1;">${_totalActual}<span style="font-size:13px;color:rgba(155,150,145,0.6);letter-spacing:0.5px;"> / ${_totalTarget}</span></div>
+              </div>
+            </div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(180,175,167,0.80);line-height:1.5;letter-spacing:0.2px;">${_weekMsg}</div>
+          </div>
         </div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:rgba(195,190,182,0.88);line-height:1.6;letter-spacing:0.2px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06);">${_weekMsg}</div>
-        ${_rows}${_footNote}`;
+
+        <div style="height:1px;background:rgba(255,255,255,0.07);margin-bottom:18px;"></div>
+
+        ${_trainedHTML}${_untrainedHTML}${_footNote}`;
       container.appendChild(_volCard);
     }
   }
