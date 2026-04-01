@@ -26070,6 +26070,8 @@ function renderMindsetActivity(showAll = false) {
 
   const barrierLabels = { 'too tired': 'Exhausted', 'too busy': 'Life got in the way', 'not motivated': 'Lost motivation', 'anxious or stressed': 'Anxious / stressed', 'physical pain or sickness': 'Pain / not well' };
 
+  const _trash = (key, type) => `<button onclick="_confirmDeleteEntry('${key}','${type}')" style="background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;padding:4px;line-height:1;-webkit-tap-highlight-color:transparent;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`;
+
   const html = visible.map(entry => {
     const dl = relDate(entry.date);
     if (entry.type === 'mood') {
@@ -26083,7 +26085,10 @@ function renderMindsetActivity(showAll = false) {
               <div style="font-size:11px; color:var(--gray); letter-spacing:0.5px;">${e.catLabel ? `${e.catLabel} · FEELINGS CHECK-IN` : 'MOOD LOG'}</div>
             </div>
           </div>
-          <div style="font-size:11px; color:var(--gray);">${dl}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+            <div style="font-size:11px;color:var(--gray);">${dl}</div>
+            ${_trash(e.id, 'mood')}
+          </div>
         </div>
         ${e.note ? `<div style="font-size:12px; color:var(--gray-light); line-height:1.55; border-top:1px solid var(--dark3); padding-top:10px;">${escapeHtml(e.note)}</div>` : ''}
       </div>`;
@@ -26097,7 +26102,10 @@ function renderMindsetActivity(showAll = false) {
             <div style="font-size:11px; color:var(--gray); letter-spacing:1px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">MINDSET CHECK-IN</div>
             ${bl ? `<div style="font-size:11px; color:var(--red-text); background:rgba(204,32,39,0.1); border-radius:4px; padding:2px 6px;">${escapeHtml(bl)}</div>` : ''}
           </div>
-          <div style="font-size:11px; color:var(--gray); flex-shrink:0; margin-left:8px;">${dl}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;margin-left:8px;">
+            <div style="font-size:11px;color:var(--gray);">${dl}</div>
+            ${_trash(e.date, 'checkin')}
+          </div>
         </div>
         ${e.feeling ? `<div style="font-size:13px; color:var(--cream); line-height:1.5; font-style:italic; margin-bottom:8px;">"${escapeHtml(e.feeling)}"</div>` : ''}
         ${e.aiResponse ? `<div style="font-size:12px; color:var(--gray-light); line-height:1.55; border-left:2px solid var(--red); padding-left:10px; margin-bottom:8px;">${escapeHtml(e.aiResponse)}</div>` : ''}
@@ -27260,6 +27268,7 @@ function renderHardDayCollection(showAll = false) {
       </div>
       <div style="font-size:28px;">🪨</div>
     </div>`;
+  const _trashBtn = (key, type) => `<button onclick="_confirmDeleteEntry('${key}','${type}')" style="background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;padding:4px;line-height:1;-webkit-tap-highlight-color:transparent;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`;
   const entriesHTML = shown.map((entry, idx) => {
     const meta = _CARRYING_LABELS[entry.carrying] || { label: entry.carrying, icon: '●', color: 'rgba(255,255,255,0.1)' };
     const d = new Date(entry.date);
@@ -27282,7 +27291,10 @@ function renderHardDayCollection(showAll = false) {
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--cream);letter-spacing:0.5px;line-height:1.2;">${entry.sessionName}</div>
           <div style="font-size:12px;color:var(--gray);margin-top:3px;">${meta.label}${volumeStr ? ' · ' + volumeStr : ''}</div>
         </div>
-        <div style="font-size:11px;color:var(--gray);flex-shrink:0;text-align:right;">${dateStr}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+          <div style="font-size:11px;color:var(--gray);">${dateStr}</div>
+          ${_trashBtn(entry.id, 'hardday')}
+        </div>
       </div>`;
   }).join('');
   let html = summaryHTML + entriesHTML;
@@ -27292,6 +27304,39 @@ function renderHardDayCollection(showAll = false) {
     html += `<button onclick="renderHardDayCollection(false)" style="width:100%;background:none;border:1px solid var(--dark3);color:var(--gray);padding:12px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;margin-top:4px;">SHOW LESS</button>`;
   }
   container.innerHTML = html;
+}
+
+function _confirmDeleteEntry(key, type) {
+  document.querySelectorAll('[data-delete-confirm]').forEach(el => el.remove());
+  const overlay = document.createElement('div');
+  overlay.setAttribute('data-delete-confirm', '1');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;border-top:1px solid var(--dark3);">
+      <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">REMOVE ENTRY</div>
+      <div style="font-size:13px;color:var(--gray-light);margin-bottom:24px;line-height:1.5;">This entry will be permanently deleted.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button onclick="_doDeleteEntry('${key}','${type}')" style="width:100%;background:rgba(204,32,39,0.1);border:1px solid rgba(204,32,39,0.35);color:var(--red);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;cursor:pointer;">REMOVE</button>
+        <button onclick="document.querySelectorAll('[data-delete-confirm]').forEach(el=>el.remove())" style="width:100%;background:none;border:1px solid var(--dark3);color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;cursor:pointer;">KEEP IT</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function _doDeleteEntry(key, type) {
+  if (type === 'mood') {
+    state.moodLog = (state.moodLog || []).filter(e => String(e.id) !== String(key));
+  } else if (type === 'checkin') {
+    state.selfCompassionLog = (state.selfCompassionLog || []).filter(e => e.date !== key);
+  } else if (type === 'hardday') {
+    state.hardDayCollection = (state.hardDayCollection || []).filter(e => String(e.id) !== String(key));
+  }
+  saveState();
+  renderHardDayCollection();
+  renderMindsetActivity();
+  document.querySelectorAll('[data-delete-confirm]').forEach(el => el.remove());
+  showToast('Entry removed.');
 }
 
 async function _fetchHardDayMilestone(count) {
