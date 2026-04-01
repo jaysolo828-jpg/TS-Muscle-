@@ -7072,7 +7072,7 @@ function _updateSettingsAccountSection() {
       <div class="settings-item" onclick="document.getElementById('account-manage-drawer').style.display=document.getElementById('account-manage-drawer').style.display==='none'?'block':'none';var a=document.getElementById('account-drawer-arrow');a.style.transform=a.style.transform?'':'rotate(90deg)';" style="cursor:pointer;">
         <div>
           <div class="settings-label">${name}</div>
-          <div class="settings-sub">Signed in &mdash; tap to manage account</div>
+          <div class="settings-sub">Signed in. Tap to manage account.</div>
         </div>
         <div class="settings-arrow" id="account-drawer-arrow" style="transition:transform 0.2s;"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
@@ -17312,7 +17312,7 @@ function showSessionWrapUp() {
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
       <!-- Header: workout name + DONE -->
       <div style="margin-bottom:16px;">
-        <div style="font-family:'Bebas Neue',cursive;font-size:34px;color:var(--cream);letter-spacing:2px;line-height:1;">${activeSession.dayName ? activeSession.dayName + ' \u2014 DONE.' : 'SESSION \u2014 DONE.'}</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:34px;color:var(--cream);letter-spacing:2px;line-height:1;">${activeSession.dayName ? activeSession.dayName + '. DONE.' : 'SESSION DONE.'}</div>
       </div>
       <!-- Cycle progress bar -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
@@ -23003,7 +23003,7 @@ function showSWUpdateBanner() {
     </div>` : `
     <div onclick="applySWUpdate()" style="background:#C0392B;padding:16px;cursor:pointer;text-align:center;">
       <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:#fff;letter-spacing:2px;margin-bottom:2px;">NEW: CONNECT WITH FRIENDS</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(255,255,255,0.85);letter-spacing:0.5px;">See who's working out &amp; hype each other up &mdash; <span style="text-decoration:underline;font-weight:700;">TAP TO GET STARTED</span></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(255,255,255,0.85);letter-spacing:0.5px;">See who's working out and hype each other up. <span style="text-decoration:underline;font-weight:700;">TAP TO GET STARTED</span></div>
     </div>`;
   document.body.prepend(banner);
 }
