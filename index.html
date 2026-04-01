@@ -21875,27 +21875,35 @@ function _buildGrowthPath(snaps) {
 // Compact weigh-in row for the Growth Log card (stats tab)
 function _buildGrowthWeighInRow() {
   const lastWeighin = (state.weightLog || []).slice(-1)[0];
-  const lastLabel = lastWeighin
-    ? lastWeighin.weight + ' lbs \xb7 ' + _timeAgoShort(lastWeighin.date)
-    : '';
+  const lastLabel = lastWeighin ? _timeAgoShort(lastWeighin.date) : '';
+  const prefill = lastWeighin ? lastWeighin.weight : '';
+
+  // If there's a recent entry (this week), show it as editable with an update button
+  const now = new Date();
+  const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
+  const thisWeekEntry = lastWeighin && new Date(lastWeighin.date).getTime() >= startOfWeek.getTime();
+
+  const btnLabel = thisWeekEntry ? 'UPDATE' : 'SAVE';
+  const hint = thisWeekEntry
+    ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Logged ' + lastLabel + '. Edit and tap update to correct it.</div>'
+    : (lastWeighin
+      ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Last: ' + lastWeighin.weight + ' lbs \xb7 ' + lastLabel + '</div>'
+      : '');
 
   return `
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;margin-bottom:14px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:6px;">WEIGH-IN${lastLabel ? ' <span style="font-weight:400;letter-spacing:0.3px;color:var(--gray);font-size:11px;">\xb7 Last: ' + lastLabel + '</span>' : ''}</div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <input type="number" id="growth-weighin-input" inputmode="decimal" placeholder="e.g. 185" style="
-              flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;
-              color:var(--cream);padding:8px 10px;
-              font-family:'Barlow Condensed',sans-serif;font-size:15px;
-              box-sizing:border-box;text-align:left;max-width:120px;
-            "/>
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);">lbs</span>
-            <button onclick="_saveGrowthWeighIn()" style="background:rgba(46,204,113,0.12);border:1px solid rgba(46,204,113,0.35);color:#2ecc71;padding:8px 14px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;">SAVE</button>
-          </div>
-        </div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:6px;">WEIGH-IN</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="number" id="growth-weighin-input" inputmode="decimal" value="${thisWeekEntry ? prefill : ''}" placeholder="${prefill || 'e.g. 185'}" style="
+          flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;
+          color:var(--cream);padding:8px 10px;
+          font-family:'Barlow Condensed',sans-serif;font-size:15px;
+          box-sizing:border-box;text-align:left;max-width:120px;
+        "/>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);">lbs</span>
+        <button onclick="_saveGrowthWeighIn()" style="background:rgba(46,204,113,0.12);border:1px solid rgba(46,204,113,0.35);color:#2ecc71;padding:8px 14px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;">${btnLabel}</button>
       </div>
+      ${hint}
     </div>`;
 }
 
@@ -21908,14 +21916,26 @@ function _saveGrowthWeighIn() {
     return;
   }
   if (!state.weightLog) state.weightLog = [];
-  state.weightLog.push({ weight: wVal, date: new Date().toISOString() });
-  if (state.weightLog.length > 200) state.weightLog = state.weightLog.slice(-200);
+
+  // If there's already an entry this week, update it instead of adding a new one
+  const now = new Date();
+  const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
+  const existingIdx = state.weightLog.findIndex(w => new Date(w.date).getTime() >= startOfWeek.getTime());
+
+  if (existingIdx >= 0) {
+    state.weightLog[existingIdx].weight = wVal;
+    state.weightLog[existingIdx].date = new Date().toISOString();
+    showToast(wVal + ' lbs updated');
+  } else {
+    state.weightLog.push({ weight: wVal, date: new Date().toISOString() });
+    if (state.weightLog.length > 200) state.weightLog = state.weightLog.slice(-200);
+    showToast(wVal + ' lbs saved');
+  }
+
   // Update profile bodyweight to keep it current
   if (!state.profile) state.profile = {};
   state.profile.bodyweight = wVal;
   saveState();
-  input.value = '';
-  showToast(wVal + ' lbs saved');
   // Re-render the stats tab to update the card
   _statsRenderKey = null;
   renderHistory();
