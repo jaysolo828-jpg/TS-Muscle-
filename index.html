@@ -14746,6 +14746,7 @@ function toggleThirdShiftMode() {
   state.thirdShiftMode = !state.thirdShiftMode;
   saveState();
   updateThirdShiftModeUI();
+  renderHome();
   showToast(state.thirdShiftMode ? '3rd Shift Mode on' : '3rd Shift Mode off');
 }
 
