@@ -2809,7 +2809,10 @@
     </div>
   </div>
 
-  <div id="home-greeting" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:2px; color:var(--gray-light); margin-bottom:14px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;"></div>
+  <div id="home-greeting" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:2px; color:var(--gray-light); margin-bottom:6px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;"></div>
+  <div id="home-third-shift-badge" style="display:none; margin-bottom:12px;">
+    <span style="font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:2px; color:#f0a500; background:rgba(240,165,0,0.12); border:1px solid rgba(240,165,0,0.35); border-radius:6px; padding:3px 8px; text-transform:uppercase;">3RD SHIFT MODE ON</span>
+  </div>
 
   <div id="home-main-content">
   <div class="stat-grid">
@@ -4181,13 +4184,22 @@
         <div id="carrying-feature-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(18px);"></div>
       </div>
     </div>
-    <div onclick="toggleGrowthTracking()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+    <div onclick="toggleGrowthTracking()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--dark3);cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <div style="min-width:0;flex:1;padding-right:12px;">
         <div class="settings-label" style="margin-bottom:2px;">Growth Tracking</div>
         <div id="growth-tracking-sub" class="settings-sub" style="color:var(--gray);">Off. Enter your weight once a week to estimate muscle gained.</div>
       </div>
       <div id="growth-tracking-icon" style="width:44px;height:26px;border-radius:13px;background:#555;position:relative;transition:background 0.2s;flex-shrink:0;">
         <div id="growth-tracking-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(0px);"></div>
+      </div>
+    </div>
+    <div onclick="toggleThirdShiftMode()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <div style="min-width:0;flex:1;padding-right:12px;">
+        <div class="settings-label" style="margin-bottom:2px;">3rd Shift Mode</div>
+        <div id="third-shift-sub" class="settings-sub" style="color:var(--gray);">Off. Enable if you work overnight (10 PM – 6 AM).</div>
+      </div>
+      <div id="third-shift-icon" style="width:44px;height:26px;border-radius:13px;background:#555;position:relative;transition:background 0.2s;flex-shrink:0;">
+        <div id="third-shift-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(0px);"></div>
       </div>
     </div>
   </div>
@@ -6875,6 +6887,7 @@ let state = {
   travelMode: null,           // { tier, startDate, endDate } when active, else null
   travelWeights: {},           // keyed by alt exercise name → last logged weight
   travelSubPrefs: {},          // keyed by exercise id → chosen alt name (persists per trip)
+  thirdShiftMode: false,           // shift time-of-day logic for overnight workers
   // ── Growth Tracking ──
   growthTrackingEnabled: false,
   weightLog: [],               // [{ weight: number, date: ISO string }]
@@ -10414,7 +10427,7 @@ function renderHome() {
   if (greetingEl) {
     const name = (state.displayName || state.profile?.name || '').trim();
     if (name) {
-      const h = new Date().getHours();
+      const h = (new Date().getHours() + (state.thirdShiftMode ? 8 : 0)) % 24;
       const salutation = h >= 5 && h < 12 ? 'GOOD MORNING'
                        : h >= 12 && h < 17 ? 'GOOD AFTERNOON'
                        : h >= 17 && h < 21 ? 'GOOD EVENING'
@@ -10424,6 +10437,8 @@ function renderHome() {
       greetingEl.textContent = '';
     }
   }
+  const thirdShiftBadge = document.getElementById('home-third-shift-badge');
+  if (thirdShiftBadge) thirdShiftBadge.style.display = state.thirdShiftMode ? 'block' : 'none';
 
   // Update split type badge next to "YOUR PROGRAM"
   const splitBadge = document.getElementById('home-split-badge');
@@ -14723,6 +14738,27 @@ function updateGrowthTrackingUI() {
     sub.style.color = on ? '#2ecc71' : 'var(--gray)';
   }
   if (track) track.style.background = on ? '#2ecc71' : '#555';
+  if (knob) knob.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
+}
+
+function toggleThirdShiftMode() {
+  haptic(HAPTIC.click);
+  state.thirdShiftMode = !state.thirdShiftMode;
+  saveState();
+  updateThirdShiftModeUI();
+  showToast(state.thirdShiftMode ? '3rd Shift Mode on' : '3rd Shift Mode off');
+}
+
+function updateThirdShiftModeUI() {
+  var on = !!state.thirdShiftMode;
+  var sub = document.getElementById('third-shift-sub');
+  var icon = document.getElementById('third-shift-icon');
+  var knob = document.getElementById('third-shift-knob');
+  if (sub) {
+    sub.textContent = on ? 'On. Time-based features adjusted for overnight hours.' : 'Off. Enable if you work overnight (10 PM \u2013 6 AM).';
+    sub.style.color = on ? '#2ecc71' : 'var(--gray)';
+  }
+  if (icon) icon.style.background = on ? '#2ecc71' : '#555';
   if (knob) knob.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
 }
 
@@ -28785,6 +28821,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateBetweenSetCoachingUI();
   updateCarryingFeatureUI();
   updateGrowthTrackingUI();
+  updateThirdShiftModeUI();
   updateIncrementUI();
   updateNotificationsUI();
   updateGoalSettingsSub();
