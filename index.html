@@ -14840,11 +14840,6 @@ function _evalCoachingCueTriggers(exId, setIndex) {
   // exclude sets where the user never entered an RPE value.
   var currentRpe = parseFloat(currentSet.rpe) || null;
 
-  // Trigger 5: First set completed — always-available (except recovery, already gated above)
-  if (allowedTriggers[5] && setIndex === 0) {
-    return { trigger: 5, data: { reps: currentReps, rpe: currentRpe, repMin: repMin, repMax: repMax } };
-  }
-
   // Trigger 1: RPE very high + reps below target (overload/fatigue indicator)
   if (allowedTriggers[1]) {
     var doneSets = sets.filter(function(s, i) { return i <= setIndex; });
@@ -15008,7 +15003,7 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
     3: 'RPE spiked significantly vs the previous set — notable jump in difficulty.',
     4: 'RPE has been consistently high (8+) across multiple sets — cumulative fatigue building.',
     5: 'First set completed — set the tone for the rest of the exercise.',
-    6: 'All planned sets completed — close out the exercise.',
+    6: 'Second-to-last set — one set remaining. Use the session data to give them something specific going into that final set.',
   };
 
   var sessCtx = _getSessionExerciseContext(exId);
@@ -15379,6 +15374,8 @@ async function _maybeFireCoachingCue(exId, setIndex) {
   // Suppress if every active set is already done — cue must never fire after the last set
   var _activeSets = (activeSession.sets[exId] || []).filter(function(s) { return !s.coachRemoved; });
   if (_activeSets.length > 0 && _activeSets.every(function(s) { return s.done; })) return;
+  // Once a cue has fired for this exercise this session, don't fire again
+  if (activeSession.coachingCues && activeSession.coachingCues[exId]) return;
   // Superset pairing: only suppress when the exercise is more than 1 round
   // ahead of its partner (sequential, non-interleaved usage) to avoid cue spam.
   // In normal alternating flow (A1→B1→A2→B2) the leading exercise is exactly
