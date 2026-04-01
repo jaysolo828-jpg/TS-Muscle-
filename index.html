@@ -26253,8 +26253,8 @@ function renderMoodWheel() {
     inner += `<text x="${cx}" y="${cy-11}" text-anchor="middle" dominant-baseline="middle" font-size="28" style="pointer-events:none;">${selCat.emoji}</text>`;
     inner += `<text x="${cx}" y="${cy+18}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="14" fill="${selCat.color}" letter-spacing="2" style="pointer-events:none;">${selCat.label}</text>`;
   } else {
-    inner += `<text x="${cx}" y="${cy-8}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="11" fill="#4a4a4a" letter-spacing="1" style="pointer-events:none;">HOW DID</text>`;
-    inner += `<text x="${cx}" y="${cy+8}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="11" fill="#4a4a4a" letter-spacing="1" style="pointer-events:none;">YOU FEEL?</text>`;
+    inner += `<text x="${cx}" y="${cy-8}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="12" fill="#5a5a5a" letter-spacing="1" style="pointer-events:none;">HOW DO</text>`;
+    inner += `<text x="${cx}" y="${cy+8}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="12" fill="#5a5a5a" letter-spacing="1" style="pointer-events:none;">YOU FEEL?</text>`;
   }
 
   // Inner ring
@@ -26265,8 +26265,8 @@ function renderMoodWheel() {
     const textOp = isSelCat ? 1 : (_mwState.catIdx !== null ? 0.45 : 1);
     inner += `<path d="${wedgePath(innerR1+2, innerR2-2, a0+0.04, a1-0.04)}" fill="${rgba(cat.color,alpha)}" stroke="${rgba(cat.color, isSelCat ? 1 : 0.2)}" stroke-width="1" style="cursor:pointer;" onclick="_mwInnerClick(${i})"/>`;
     const midR = (innerR1 + innerR2) / 2;
-    inner += `<text x="${(cx+(midR-11)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR-11)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="16" opacity="${textOp}" style="pointer-events:none;">${cat.emoji}</text>`;
-    inner += `<text x="${(cx+(midR+13)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR+13)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="9.5" fill="white" letter-spacing="0.5" opacity="${textOp}" style="pointer-events:none;">${cat.label}</text>`;
+    inner += `<text x="${(cx+(midR-10)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR-10)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="17" opacity="${textOp}" style="pointer-events:none;">${cat.emoji}</text>`;
+    inner += `<text x="${(cx+(midR+12)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR+12)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="10.5" fill="white" letter-spacing="1" opacity="${textOp}" style="pointer-events:none;">${cat.label}</text>`;
   });
 
   // Separator ring between inner and outer
@@ -26284,9 +26284,8 @@ function renderMoodWheel() {
       const isSel = _mwState.feelingIdx === j;
       const fa = isSel ? 1 : 0.62;
       outer += `<path d="${wedgePath(outerR1+1, outerR2-1, a0+0.04, a1-0.04)}" fill="${rgba(selCat.color, fa)}" stroke="${rgba(selCat.color, isSel ? 1 : 0.35)}" stroke-width="${isSel ? 2 : 0.5}" style="cursor:pointer;" onclick="_mwOuterClick(${j})"/>`;
-      // font size: shrink only for words > 10 chars
-      const fs = feeling.length > 10 ? 7 : feeling.length > 7 ? 8 : 9;
-      outer += `<text x="${(cx+flR*Math.cos(am)).toFixed(1)}" y="${(cy+flR*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Barlow Condensed',sans-serif" font-size="${fs}" font-weight="${isSel ? 700 : 600}" fill="white" opacity="${isSel ? 1 : 0.9}" style="pointer-events:none;">${feeling}</text>`;
+      const fs = feeling.length > 10 ? 8.5 : feeling.length > 7 ? 9.5 : 10.5;
+      outer += `<text x="${(cx+flR*Math.cos(am)).toFixed(1)}" y="${(cy+flR*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Barlow Condensed',sans-serif" font-size="${fs}" font-weight="700" fill="white" opacity="${isSel ? 1 : 0.82}" style="pointer-events:none;">${feeling}</text>`;
     });
   }
 
@@ -26304,7 +26303,7 @@ function _mwClear() {
   document.getElementById('mood-wheel-selected').style.display = 'none';
   document.getElementById('mood-wheel-clear').style.display = 'none';
   document.getElementById('mood-value').value = '';
-  document.getElementById('mood-wheel-subtitle').textContent = 'After your session \u2014 tap a section, then a feeling';
+  document.getElementById('mood-wheel-subtitle').textContent = 'Tap a section to name how you feel right now.';
   const pill = document.getElementById('mood-wheel-selected-inner');
   if (pill) { pill.style.borderColor = ''; pill.style.background = ''; }
   _mwSpinOnNext = false;
@@ -26428,7 +26427,7 @@ function saveMoodEntry() {
   document.getElementById('mood-wheel-actions').style.display = 'none';
   document.getElementById('mood-wheel-selected').style.display = 'none';
   document.getElementById('mood-wheel-clear').style.display = 'none';
-  document.getElementById('mood-wheel-subtitle').textContent = 'After your session \u2014 tap a section, then a feeling';
+  document.getElementById('mood-wheel-subtitle').textContent = 'Tap a section to name how you feel right now.';
   const moodTimingInput = document.getElementById('mood-timing');
   if (moodTimingInput) moodTimingInput.value = 'post';
 
@@ -26462,7 +26461,7 @@ function renderMoodCheckinLabel() {
   if (!el) return;
   const { deduped } = _getTodayMoods();
   const postEntry = deduped.find(e => e.timing === 'post');
-  if (!postEntry) { el.textContent = 'T\u0026S FEELINGS WHEEL'; el.style.color = ''; const sub = document.getElementById('mood-wheel-subtitle'); if (sub) sub.textContent = 'After your session \u2014 tap a section, then a feeling'; return; }
+  if (!postEntry) { el.textContent = 'T\u0026S FEELINGS WHEEL'; el.style.color = ''; const sub = document.getElementById('mood-wheel-subtitle'); if (sub) sub.textContent = 'Tap a section to name how you feel right now.'; return; }
   el.style.color = 'var(--success)';
   el.innerHTML = `<span>FEELINGS WHEEL \u00b7 \u2713 ${postEntry.emoji} ${postEntry.label}</span>`;
   const sub = document.getElementById('mood-wheel-subtitle');
