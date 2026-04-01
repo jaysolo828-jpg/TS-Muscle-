@@ -4185,7 +4185,7 @@
     <div onclick="toggleGrowthTracking()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <div style="min-width:0;flex:1;padding-right:12px;">
         <div class="settings-label" style="margin-bottom:2px;">Growth Tracking</div>
-        <div id="growth-tracking-sub" class="settings-sub" style="color:var(--gray);">Off. Track bodyweight weekly to estimate muscle gained.</div>
+        <div id="growth-tracking-sub" class="settings-sub" style="color:var(--gray);">Off. Enter your weight once a week to estimate muscle gained.</div>
       </div>
       <div id="growth-tracking-icon" style="width:44px;height:26px;border-radius:13px;background:#555;position:relative;transition:background 0.2s;flex-shrink:0;">
         <div id="growth-tracking-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(0px);"></div>
@@ -14720,7 +14720,7 @@ function updateGrowthTrackingUI() {
   var track = document.getElementById('growth-tracking-icon');
   var knob = document.getElementById('growth-tracking-knob');
   if (sub) {
-    sub.textContent = on ? 'On. Weekly weigh-in and muscle estimate.' : 'Off. Track bodyweight weekly to estimate muscle gained.';
+    sub.textContent = on ? 'On. Weekly weigh-in and muscle estimate.' : 'Off. Enter your weight once a week to estimate muscle gained.';
     sub.style.color = on ? '#2ecc71' : 'var(--gray)';
   }
   if (track) track.style.background = on ? '#2ecc71' : '#555';
@@ -17552,37 +17552,6 @@ function showSessionWrapUp() {
           </div>
         </div>`;
       })()}
-      ${(()=>{
-        if (!state.growthTrackingEnabled) return '';
-        // Show once per week: check if a weigh-in was already logged this calendar week
-        const now = new Date();
-        const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
-        const hasWeighinThisWeek = (state.weightLog || []).some(w => new Date(w.date).getTime() >= startOfWeek.getTime());
-        if (hasWeighinThisWeek) return '';
-        const lastWeighin = (state.weightLog || []).slice(-1)[0];
-        const lastLabel = lastWeighin
-          ? 'Last: ' + lastWeighin.weight + ' lbs \xb7 ' + _timeAgoShort(lastWeighin.date)
-          : '';
-        const prefill = lastWeighin ? lastWeighin.weight : (state.profile?.bodyweight || '');
-        return `
-        <div style="margin-bottom:16px;background:rgba(46,204,113,0.05);border:1px solid rgba(46,204,113,0.18);border-radius:12px;padding:14px 16px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#2ecc71;letter-spacing:1.5px;font-weight:700;">WEEKLY WEIGH-IN</span>
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.5px;margin-left:auto;">Optional</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <input type="number" id="wrapup-weighin" inputmode="decimal" placeholder="${prefill || 'lbs'}" style="
-              flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;
-              color:var(--cream);padding:10px 12px;
-              font-family:'Barlow Condensed',sans-serif;font-size:16px;
-              box-sizing:border-box;text-align:left;
-            "/>
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray);letter-spacing:0.5px;">lbs</span>
-          </div>
-          ${lastLabel ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);margin-top:6px;letter-spacing:0.3px;">' + lastLabel + '</div>' : ''}
-        </div>`;
-      })()}
       <button onclick="saveWrapupNotesAndFinish()"
         style="width:100%;background:#FFD700;border:none;color:#0a0a0a;padding:16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:1.5px;cursor:pointer;box-shadow:0 4px 16px rgba(255,215,0,0.3);">
         SAVE &amp; FINISH ✓
@@ -17695,20 +17664,6 @@ function saveWrapupNotesAndFinish() {
     const sessionVal = sessionField.value.trim();
     if (wrapupVal) {
       sessionField.value = sessionVal ? sessionVal + '\n' + wrapupVal : wrapupVal;
-    }
-  }
-  // Save weekly weigh-in if provided
-  const weighinField = document.getElementById('wrapup-weighin');
-  if (weighinField) {
-    const wVal = parseFloat(weighinField.value);
-    if (wVal && wVal > 50 && wVal < 700) {
-      if (!state.weightLog) state.weightLog = [];
-      state.weightLog.push({ weight: wVal, date: new Date().toISOString() });
-      // Cap at 200 entries
-      if (state.weightLog.length > 200) state.weightLog = state.weightLog.slice(-200);
-      // Also update profile bodyweight to keep it current
-      if (!state.profile) state.profile = {};
-      state.profile.bodyweight = wVal;
     }
   }
   const modal = document.getElementById('session-wrapup-modal');
@@ -21748,7 +21703,7 @@ function renderGrowthLogCard() {
         <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">GROWTH LOG</div>
       </div>
       <div style="text-align:center;padding:16px 0 14px;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;max-width:280px;margin:0 auto 14px;">Track your bodyweight weekly and the app will estimate how much muscle you\u2019ve built over time.</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;max-width:280px;margin:0 auto 14px;">Log your weight once a week and the app will estimate how much muscle you\u2019ve built over time.</div>
         <button onclick="toggleGrowthTracking();renderHistory();" style="background:rgba(46,204,113,0.12);border:1px solid rgba(46,204,113,0.35);color:#2ecc71;padding:10px 18px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;">ENABLE IN SETTINGS \u2192</button>
       </div>`;
     return card;
@@ -21763,8 +21718,8 @@ function renderGrowthLogCard() {
     }).join('');
 
     const msg = weighIns === 0
-      ? 'Log your first weekly weigh-in after a session to start.'
-      : `${weighIns} of ${MIN_WEIGHINS} weigh-ins logged. ${MIN_WEIGHINS - weighIns} more to unlock your estimate.`;
+      ? 'Enter your weight once a week below to get started.'
+      : `${weighIns} of ${MIN_WEIGHINS} weigh-ins recorded. ${MIN_WEIGHINS - weighIns} more to unlock your estimate.`;
 
     card.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
@@ -21774,7 +21729,8 @@ function renderGrowthLogCard() {
       <div class="ts-growth-unlock-dots">${dots}</div>
       <div style="text-align:center;padding:0 0 6px;">
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;max-width:280px;margin:0 auto;">${msg}</div>
-      </div>`;
+      </div>
+      ${_buildGrowthWeighInRow()}`;
     return card;
   }
 
@@ -21867,6 +21823,7 @@ function renderGrowthLogCard() {
         </div>
       </div>
     </div>
+    ${_buildGrowthWeighInRow()}
     <button onclick="shareGrowthLogCard()" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.13);color:rgba(220,215,205,0.75);border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;">
       <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       SHARE GROWTH LOG
@@ -21913,6 +21870,55 @@ function _buildGrowthPath(snaps) {
   const glow = `<circle cx="${last.x}" cy="${last.y}" r="7" fill="none" stroke="${dotColor}" stroke-width="1" opacity="0.4"/>`;
 
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:40px;display:block;" preserveAspectRatio="none">${segments}${glow}${dot}</svg>`;
+}
+
+// Compact weigh-in row for the Growth Log card (stats tab)
+function _buildGrowthWeighInRow() {
+  const lastWeighin = (state.weightLog || []).slice(-1)[0];
+  const lastLabel = lastWeighin
+    ? lastWeighin.weight + ' lbs \xb7 ' + _timeAgoShort(lastWeighin.date)
+    : '';
+
+  return `
+    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:6px;">WEIGH-IN${lastLabel ? ' <span style="font-weight:400;letter-spacing:0.3px;color:var(--gray);font-size:11px;">\xb7 Last: ' + lastLabel + '</span>' : ''}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="number" id="growth-weighin-input" inputmode="decimal" placeholder="e.g. 185" style="
+              flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;
+              color:var(--cream);padding:8px 10px;
+              font-family:'Barlow Condensed',sans-serif;font-size:15px;
+              box-sizing:border-box;text-align:left;max-width:120px;
+            "/>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);">lbs</span>
+            <button onclick="_saveGrowthWeighIn()" style="background:rgba(46,204,113,0.12);border:1px solid rgba(46,204,113,0.35);color:#2ecc71;padding:8px 14px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;">SAVE</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function _saveGrowthWeighIn() {
+  const input = document.getElementById('growth-weighin-input');
+  if (!input) return;
+  const wVal = parseFloat(input.value);
+  if (!wVal || wVal <= 50 || wVal >= 700) {
+    showToast('Enter a valid weight', 'error');
+    return;
+  }
+  if (!state.weightLog) state.weightLog = [];
+  state.weightLog.push({ weight: wVal, date: new Date().toISOString() });
+  if (state.weightLog.length > 200) state.weightLog = state.weightLog.slice(-200);
+  // Update profile bodyweight to keep it current
+  if (!state.profile) state.profile = {};
+  state.profile.bodyweight = wVal;
+  saveState();
+  input.value = '';
+  showToast(wVal + ' lbs saved');
+  // Re-render the stats tab to update the card
+  _statsRenderKey = null;
+  renderHistory();
 }
 
 function _toggleGrowthInfo(btn) {
