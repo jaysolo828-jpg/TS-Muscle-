@@ -21712,7 +21712,7 @@ function renderGrowthLogCard() {
   // ── LOCKED STATE: enabled but not enough weigh-ins ──
   const MIN_WEIGHINS = 3;
   if (weighIns < MIN_WEIGHINS) {
-    const dots = Array.from({ length: 5 }, (_, i) => {
+    const dots = Array.from({ length: MIN_WEIGHINS }, (_, i) => {
       const filled = i < weighIns;
       return `<div class="ts-growth-unlock-dot${filled ? ' filled' : ''}"></div>`;
     }).join('');
