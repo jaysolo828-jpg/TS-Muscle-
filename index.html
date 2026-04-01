@@ -13490,8 +13490,8 @@ function showCarryingSheet(dayId) {
           -webkit-tap-highlight-color:transparent;
         "
       >Skip</button>
-      <div style="text-align:center;padding:2px 0 0;font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#555;letter-spacing:0.3px;">
-        Don't want this? Turn off <span onclick="showScreen('settings')" style="color:#777;cursor:pointer;text-decoration:underline;-webkit-tap-highlight-color:transparent;">Pre-Session Check-In in Settings</span>.
+      <div onclick="document.getElementById('carrying-sheet').remove();showScreen('settings')" style="text-align:center;padding:6px 0 0;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.3px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+        Don't need this? <span style="text-decoration:underline;">Turn off in Settings</span>
       </div>
     </div>`;
   document.body.appendChild(sheet);
