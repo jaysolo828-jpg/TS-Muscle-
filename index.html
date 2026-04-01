@@ -26265,7 +26265,7 @@ function renderMoodWheel() {
     const textOp = isSelCat ? 1 : (_mwState.catIdx !== null ? 0.45 : 1);
     inner += `<path d="${wedgePath(innerR1+2, innerR2-2, a0+0.04, a1-0.04)}" fill="${rgba(cat.color,alpha)}" stroke="${rgba(cat.color, isSelCat ? 1 : 0.2)}" stroke-width="1" style="cursor:pointer;" onclick="_mwInnerClick(${i})"/>`;
     const midR = (innerR1 + innerR2) / 2;
-    inner += `<text x="${(cx+(midR-14)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR-14)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="15" opacity="${textOp}" style="pointer-events:none;">${cat.emoji}</text>`;
+    inner += `<text x="${(cx+(midR-17)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR-17)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="15" opacity="${textOp}" style="pointer-events:none;">${cat.emoji}</text>`;
     inner += `<text x="${(cx+(midR+11)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR+11)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="10.5" fill="white" letter-spacing="1" opacity="${textOp}" style="pointer-events:none;">${cat.label}</text>`;
   });
 
