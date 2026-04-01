@@ -13477,7 +13477,7 @@ function showCarryingSheet(dayId) {
     ">
       <div style="width:36px;height:3px;background:#333;border-radius:2px;margin:0 auto 26px;"></div>
       <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:var(--cream);letter-spacing:2px;line-height:1;margin-bottom:6px;">WHAT ARE YOU CARRYING</div>
-      <div style="font-size:14px;color:var(--gray);margin-bottom:24px;font-family:'Barlow',sans-serif;line-height:1.5;">Into this session today?</div>
+      <div style="font-size:14px;color:var(--gray);margin-bottom:24px;font-family:'Barlow',sans-serif;line-height:1.5;">Before you train today.</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
         ${optionsHTML}
       </div>
@@ -13490,6 +13490,9 @@ function showCarryingSheet(dayId) {
           -webkit-tap-highlight-color:transparent;
         "
       >Skip</button>
+      <div style="text-align:center;padding:2px 0 0;font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#555;letter-spacing:0.3px;">
+        Don't want this? Turn off <span onclick="showScreen('settings')" style="color:#777;cursor:pointer;text-decoration:underline;-webkit-tap-highlight-color:transparent;">Pre-Session Check-In in Settings</span>.
+      </div>
     </div>`;
   document.body.appendChild(sheet);
 }
