@@ -26266,7 +26266,7 @@ function renderMoodWheel() {
     inner += `<path d="${wedgePath(innerR1+2, innerR2-2, a0+0.04, a1-0.04)}" fill="${rgba(cat.color,alpha)}" stroke="${rgba(cat.color, isSelCat ? 1 : 0.2)}" stroke-width="1" style="cursor:pointer;" onclick="_mwInnerClick(${i})"/>`;
     const midR = (innerR1 + innerR2) / 2;
     inner += `<text x="${(cx+(midR-17)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR-17)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="15" opacity="${textOp}" style="pointer-events:none;">${cat.emoji}</text>`;
-    inner += `<text x="${(cx+(midR+11)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR+11)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="10.5" fill="white" letter-spacing="1" opacity="${textOp}" style="pointer-events:none;">${cat.label}</text>`;
+    inner += `<text x="${(cx+(midR+8)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR+8)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="10.5" fill="white" letter-spacing="1" opacity="${textOp}" style="pointer-events:none;">${cat.label}</text>`;
   });
 
   // Separator ring between inner and outer
