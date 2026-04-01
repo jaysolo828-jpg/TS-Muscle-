@@ -2181,6 +2181,115 @@
     background: var(--red);
     transition: width 0.4s ease;
   }
+
+  /* ── T&S Growth Log card ──────────────────────────────────────── */
+  .ts-growth-card {
+    background: var(--dark3);
+    border: 1px solid rgba(46,204,113,0.12);
+    border-radius: 14px;
+    padding: 20px 18px 16px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ts-growth-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(46,204,113,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .ts-growth-card[data-state="declining"]::before,
+  .ts-growth-card[data-state="slow_decay"]::before {
+    background: linear-gradient(135deg, rgba(204,32,39,0.03) 0%, transparent 60%);
+  }
+  .ts-growth-card[data-state="declining"],
+  .ts-growth-card[data-state="slow_decay"] {
+    border-color: rgba(255,255,255,0.07);
+  }
+  .ts-growth-card[data-state="holding"]::before,
+  .ts-growth-card[data-state="plateau"]::before {
+    background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 60%);
+  }
+  .ts-growth-card[data-state="holding"],
+  .ts-growth-card[data-state="plateau"] {
+    border-color: rgba(255,255,255,0.07);
+  }
+  .ts-growth-number {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 72px;
+    color: var(--cream);
+    line-height: 1;
+    letter-spacing: 2px;
+  }
+  .ts-growth-unit {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 26px;
+    color: var(--gray);
+    letter-spacing: 2px;
+    padding-bottom: 10px;
+  }
+  .ts-growth-state {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+  .ts-growth-evidence {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .ts-growth-evidence > div {
+    background: var(--dark2);
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .ts-growth-evidence-num {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 20px;
+    color: var(--cream);
+    line-height: 1;
+  }
+  .ts-growth-evidence-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    color: rgba(165,160,155,0.90);
+    letter-spacing: 1px;
+    margin-top: 3px;
+  }
+  .ts-growth-path {
+    margin: 14px 0 10px;
+    height: 40px;
+    position: relative;
+  }
+  .ts-growth-unlock-dots {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 16px 0 12px;
+  }
+  .ts-growth-unlock-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(46,204,113,0.3);
+    background: transparent;
+    transition: all 0.3s ease;
+  }
+  .ts-growth-unlock-dot.filled {
+    background: rgba(46,204,113,0.28);
+    border-color: #2ecc71;
+    box-shadow: 0 0 8px rgba(46,204,113,0.4);
+  }
+
   /* Sex selector buttons in settings */
   .profile-sex-btn {
     flex: 1;
@@ -4064,13 +4173,22 @@
         <div id="between-set-coaching-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(18px);"></div>
       </div>
     </div>
-    <div onclick="toggleCarryingFeature()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+    <div onclick="toggleCarryingFeature()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--dark3);cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <div style="min-width:0;flex:1;padding-right:12px;">
         <div class="settings-label" style="margin-bottom:2px;">Pre-Session Check-In</div>
         <div id="carrying-feature-sub" class="settings-sub" style="color:#2ecc71;">On. Pre-session check-in.</div>
       </div>
       <div id="carrying-feature-icon" style="width:44px;height:26px;border-radius:13px;background:#2ecc71;position:relative;transition:background 0.2s;flex-shrink:0;">
         <div id="carrying-feature-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(18px);"></div>
+      </div>
+    </div>
+    <div onclick="toggleGrowthTracking()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <div style="min-width:0;flex:1;padding-right:12px;">
+        <div class="settings-label" style="margin-bottom:2px;">Growth Tracking</div>
+        <div id="growth-tracking-sub" class="settings-sub" style="color:var(--gray);">Off. Track bodyweight weekly to estimate muscle gained.</div>
+      </div>
+      <div id="growth-tracking-icon" style="width:44px;height:26px;border-radius:13px;background:#555;position:relative;transition:background 0.2s;flex-shrink:0;">
+        <div id="growth-tracking-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(0px);"></div>
       </div>
     </div>
   </div>
@@ -6758,6 +6876,12 @@ let state = {
   travelMode: null,           // { tier, startDate, endDate } when active, else null
   travelWeights: {},           // keyed by alt exercise name → last logged weight
   travelSubPrefs: {},          // keyed by exercise id → chosen alt name (persists per trip)
+  // ── Growth Tracking ──
+  growthTrackingEnabled: false,
+  weightLog: [],               // [{ weight: number, date: ISO string }]
+  growthBalance: 0,            // running estimated muscle gain in lbs
+  growthHistory: [],           // [{ balance, state, date }] snapshots, max 100
+  growthState: 'inactive',     // gaining|holding|declining|regaining|plateau|slow_decay|inactive
 };
 
 let activeSession = null;
@@ -14582,6 +14706,27 @@ function updateCarryingFeatureUI() {
   if (knob) knob.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
 }
 
+function toggleGrowthTracking() {
+  haptic(HAPTIC.click);
+  state.growthTrackingEnabled = !state.growthTrackingEnabled;
+  saveState();
+  updateGrowthTrackingUI();
+  showToast(state.growthTrackingEnabled ? 'Growth Tracking on' : 'Growth Tracking off');
+}
+
+function updateGrowthTrackingUI() {
+  var on = !!state.growthTrackingEnabled;
+  var sub = document.getElementById('growth-tracking-sub');
+  var track = document.getElementById('growth-tracking-icon');
+  var knob = document.getElementById('growth-tracking-knob');
+  if (sub) {
+    sub.textContent = on ? 'On. Weekly weigh-in and muscle estimate.' : 'Off. Track bodyweight weekly to estimate muscle gained.';
+    sub.style.color = on ? '#2ecc71' : 'var(--gray)';
+  }
+  if (track) track.style.background = on ? '#2ecc71' : '#555';
+  if (knob) knob.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
+}
+
 function _cancelCoachingCue() {
   if (_coachingCueAbortController) {
     try { _coachingCueAbortController.abort(); } catch(e) {}
@@ -17407,6 +17552,37 @@ function showSessionWrapUp() {
           </div>
         </div>`;
       })()}
+      ${(()=>{
+        if (!state.growthTrackingEnabled) return '';
+        // Show once per week: check if a weigh-in was already logged this calendar week
+        const now = new Date();
+        const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
+        const hasWeighinThisWeek = (state.weightLog || []).some(w => new Date(w.date).getTime() >= startOfWeek.getTime());
+        if (hasWeighinThisWeek) return '';
+        const lastWeighin = (state.weightLog || []).slice(-1)[0];
+        const lastLabel = lastWeighin
+          ? 'Last: ' + lastWeighin.weight + ' lbs \xb7 ' + _timeAgoShort(lastWeighin.date)
+          : '';
+        const prefill = lastWeighin ? lastWeighin.weight : (state.profile?.bodyweight || '');
+        return `
+        <div style="margin-bottom:16px;background:rgba(46,204,113,0.05);border:1px solid rgba(46,204,113,0.18);border-radius:12px;padding:14px 16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19h12M12 5v14"/><path d="M3 12l3-7 3 7M15 12l3-7 3 7"/></svg>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#2ecc71;letter-spacing:1.5px;font-weight:700;">WEEKLY WEIGH-IN</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.5px;margin-left:auto;">Optional</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <input type="number" id="wrapup-weighin" inputmode="decimal" placeholder="${prefill || 'lbs'}" style="
+              flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;
+              color:var(--cream);padding:10px 12px;
+              font-family:'Barlow Condensed',sans-serif;font-size:16px;
+              box-sizing:border-box;text-align:left;
+            "/>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray);letter-spacing:0.5px;">lbs</span>
+          </div>
+          ${lastLabel ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);margin-top:6px;letter-spacing:0.3px;">' + lastLabel + '</div>' : ''}
+        </div>`;
+      })()}
       <button onclick="saveWrapupNotesAndFinish()"
         style="width:100%;background:#FFD700;border:none;color:#0a0a0a;padding:16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:1.5px;cursor:pointer;box-shadow:0 4px 16px rgba(255,215,0,0.3);">
         SAVE &amp; FINISH ✓
@@ -17497,6 +17673,19 @@ function _skipHardDayClaim() {
   if (card) card.remove();
 }
 
+function _timeAgoShort(dateStr) {
+  const ms = Date.now() - new Date(dateStr).getTime();
+  const days = Math.floor(ms / 86400000);
+  if (days < 1) return 'today';
+  if (days === 1) return '1 day ago';
+  if (days < 7) return days + ' days ago';
+  const weeks = Math.floor(days / 7);
+  if (weeks === 1) return '1 week ago';
+  if (weeks < 5) return weeks + ' weeks ago';
+  const months = Math.floor(days / 30);
+  return months <= 1 ? '1 month ago' : months + ' months ago';
+}
+
 function saveWrapupNotesAndFinish() {
   // Merge wrapup notes with any existing session notes
   const wrapupField = document.getElementById('wrapup-notes');
@@ -17506,6 +17695,20 @@ function saveWrapupNotesAndFinish() {
     const sessionVal = sessionField.value.trim();
     if (wrapupVal) {
       sessionField.value = sessionVal ? sessionVal + '\n' + wrapupVal : wrapupVal;
+    }
+  }
+  // Save weekly weigh-in if provided
+  const weighinField = document.getElementById('wrapup-weighin');
+  if (weighinField) {
+    const wVal = parseFloat(weighinField.value);
+    if (wVal && wVal > 50 && wVal < 700) {
+      if (!state.weightLog) state.weightLog = [];
+      state.weightLog.push({ weight: wVal, date: new Date().toISOString() });
+      // Cap at 200 entries
+      if (state.weightLog.length > 200) state.weightLog = state.weightLog.slice(-200);
+      // Also update profile bodyweight to keep it current
+      if (!state.profile) state.profile = {};
+      state.profile.bodyweight = wVal;
     }
   }
   const modal = document.getElementById('session-wrapup-modal');
@@ -17864,6 +18067,7 @@ function finalizeEndSession(save) {
         delete state.pauseWeekCount;
         delete state.pauseStreak;
         _updateAndSaveStrengthScore();
+        recalcGrowthBalance();
         saveState();
         updateStreak();
         renderHome();
@@ -17887,6 +18091,9 @@ function finalizeEndSession(save) {
 
     // Update T&S Strength Score after every completed session
     _updateAndSaveStrengthScore();
+
+    // Update Growth Log balance after every completed session
+    recalcGrowthBalance();
 
     saveState();
     renderHome();
@@ -19311,7 +19518,7 @@ function renderHistoryItem(entry, container, insertBefore) {
 let _statsRenderKey = null;
 function _getStatsKey() {
   const h = state.history || [];
-  return `v2|${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}|${state.strengthScore ?? ''}`;
+  return `v3|${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}|${state.strengthScore ?? ''}|${state.growthBalance ?? ''}|${state.growthTrackingEnabled ? '1' : '0'}|${(state.weightLog || []).length}`;
 }
 
 function renderHistory() {
@@ -19335,6 +19542,9 @@ function renderHistory() {
 
   // ── 0. T&S STRENGTH SCORE — most prominent card ───────────
   container.appendChild(renderStrengthScoreCard());
+
+  // ── 0b. GROWTH LOG — muscle gain estimate ─────────────────
+  container.appendChild(renderGrowthLogCard());
 
   // ── Experience level indicator ────────────────────────────
   const _expIndicator = document.createElement('div');
@@ -20848,6 +21058,304 @@ function _tsNormalizeLift(ratio, stds) {
   return 1000;
 }
 
+// ============================================================
+// GROWTH LOG — Muscle Gain Estimation Model
+// ============================================================
+// Research basis:
+//   Base rates: McDonald (2009), Aragon (2008-2011), Helms et al. (2014)
+//   Sex differences: Refalo et al. (2025 PeerJ), Roberts et al. (2020)
+//   Age decline: Peterson et al. (2011), Kumar et al. (2009), Sarto et al. (2022)
+//   Detraining: Mujika & Padilla (2000-2001), McMahon et al. (2014)
+//   Muscle memory: Seaborne et al. (2018)
+//   Consistency: ACSM 2026 Position Stand
+
+// Base rate: male, 20-29, beginner, consistent training (lbs/month)
+const GROWTH_BASE_RATE = 1.75;
+
+// Experience multipliers (logarithmic decay toward genetic ceiling)
+const GROWTH_EXP_MULT = { beginner: 1.0, intermediate: 0.5, advanced: 0.15 };
+
+// Sex multiplier for absolute mass gain
+// Refalo 2025: relative hypertrophy ~identical; absolute differs due to baseline mass
+const GROWTH_SEX_MULT = { male: 1.0, female: 0.55, neutral: 0.77 };
+
+// Age multipliers — synthesized from Kumar 2009, Peterson 2011, Sarto 2022
+// Applied on top of sex multiplier
+function _growthAgeMult(age, sex) {
+  if (!age || age < 16) return 1.0;
+  let m;
+  if (age < 20) m = 0.90;
+  else if (age < 30) m = 1.0;
+  else if (age < 40) m = 0.95;
+  else if (age < 50) m = 0.80;
+  else if (age < 60) m = 0.65;
+  else if (age < 70) m = 0.55;
+  else m = 0.45;
+  // Post-menopausal additional reduction (Kissow et al. 2023)
+  if (sex === 'female' && age >= 50) m *= 0.85;
+  return m;
+}
+
+// Consistency multiplier — ACSM 2026: consistency is the dominant factor
+function _growthConsistencyMult() {
+  const cutoff = Date.now() - 28 * 86400000;
+  const recent = (state.history || []).filter(e =>
+    new Date(e.date).getTime() >= cutoff &&
+    Object.values(e.sets || {}).some(sets => sets.some(s => s.done))
+  );
+  const expected = Math.max(4, (state.trainingDaysPerWeek || 3) * 4);
+  const pct = recent.length / expected;
+  if (pct >= 0.90) return 1.0;
+  if (pct >= 0.75) return 0.82;
+  if (pct >= 0.50) return 0.55;
+  if (pct >= 0.25) return 0.25;
+  return 0.05;
+}
+
+// Real-world discount: no nutrition/sleep tracking → conservative
+const GROWTH_REALWORLD_DISCOUNT = 0.75;
+
+// Compute monthly gain rate based on current profile
+function _growthMonthlyRate() {
+  const exp = getEffectiveExperienceLevel ? getEffectiveExperienceLevel() : (state.profile?.experience || 'beginner');
+  const sex = state.profile?.sex || 'neutral';
+  const age = parseInt(state.profile?.age) || null;
+  const expMult = GROWTH_EXP_MULT[exp] || 0.5;
+  const sexMult = GROWTH_SEX_MULT[sex] || 0.77;
+  const ageMult = _growthAgeMult(age, sex);
+  const consistMult = _growthConsistencyMult();
+  return GROWTH_BASE_RATE * expMult * sexMult * ageMult * consistMult * GROWTH_REALWORLD_DISCOUNT;
+}
+
+// Compute average e1RM % change over recent history for strength trend signal
+function _growthStrengthTrend() {
+  const TRACKED = ['bench','incline','chest-row','pulldown','rdl','legpress-a','legpress-b'];
+  const hist = state.history || [];
+  if (hist.length < 6) return 'insufficient';
+  const cutoff30 = Date.now() - 30 * 86400000;
+  const cutoff90 = Date.now() - 90 * 86400000;
+
+  const changes = [];
+  TRACKED.forEach(exId => {
+    const isUni = UNILATERAL_EXERCISES.has(exId) || !!state.customUnilateralExercises?.[exId];
+    const recent = getBestE1RM(exId, 30, isUni);
+    const older  = (function() {
+      // Get best e1RM from 30-90 days ago
+      const wMult = isUni ? 2 : 1;
+      let best = 0;
+      hist.forEach(entry => {
+        const ms = new Date(entry.date).getTime();
+        if (ms >= cutoff30 || ms < cutoff90) return;
+        (entry.sets?.[exId] || []).filter(s => s.done && s.weight && s.reps && !s.coachRemoved).forEach(s => {
+          const w = parseFloat(s.weight) * wMult, r = parseInt(s.reps);
+          if (!w || !r || r < 1) return;
+          const e1rm = r === 1 ? w : Math.round(w * (1 + r / 30));
+          if (e1rm > best) best = e1rm;
+        });
+      });
+      return best > 0 ? best : null;
+    })();
+    if (recent && older && older > 0) {
+      changes.push((recent - older) / older);
+    }
+  });
+
+  if (changes.length < 2) return 'insufficient';
+  const avg = changes.reduce((a, b) => a + b, 0) / changes.length;
+  if (avg > 0.02) return 'up';
+  if (avg < -0.02) return 'down';
+  return 'flat';
+}
+
+// Decay rates per week (as fraction of accumulated balance)
+// Sarto et al. 2022: ~0.5-1% muscle mass/week during inactivity
+// Applied to estimated gain balance, not total mass
+const GROWTH_DECAY = {
+  slow:   { beginner: 0.015, intermediate: 0.010, advanced: 0.008 },
+  active: { beginner: 0.030, intermediate: 0.020, advanced: 0.015 },
+};
+
+// Muscle memory regain boost (Seaborne et al. 2018)
+const GROWTH_REGAIN_BOOST = 1.5;
+const GROWTH_REGAIN_WEEKS = 8;
+
+// Determine current growth state from app signals
+function _determineGrowthState() {
+  if (!state.growthTrackingEnabled) return 'inactive';
+
+  const hist = state.history || [];
+  if (hist.length < 1) return 'inactive';
+
+  const lastSession = hist[hist.length - 1];
+  const daysSinceTraining = lastSession
+    ? (Date.now() - new Date(lastSession.date).getTime()) / 86400000 : 999;
+
+  // Paused program → slow decay
+  if (state.programPaused) return 'slow_decay';
+
+  // Long gap with no pause → active decay
+  if (daysSinceTraining >= 14) return 'declining';
+
+  // Recently returned after gap (had a declining period in history)
+  const prevHistory = state.growthHistory || [];
+  const recentDecline = prevHistory.slice(-8).some(s => s.state === 'declining' || s.state === 'slow_decay');
+  const consistMult = _growthConsistencyMult();
+
+  if (recentDecline && consistMult >= 0.55 && daysSinceTraining < 14) {
+    // Check if within regain window
+    const declineEnd = [...prevHistory].reverse().find(s => s.state !== 'regaining' && (s.state === 'declining' || s.state === 'slow_decay'));
+    if (declineEnd) {
+      const weeksSinceDecline = (Date.now() - new Date(declineEnd.date).getTime()) / (7 * 86400000);
+      if (weeksSinceDecline <= GROWTH_REGAIN_WEEKS) return 'regaining';
+    }
+  }
+
+  // Consistency too low to build
+  if (consistMult <= 0.25) return 'slow_decay';
+  if (consistMult <= 0.55) return 'holding';
+
+  // Plateau detection
+  const plateau = typeof detectProgressionPlateau === 'function' ? detectProgressionPlateau() : { stalled: false };
+  if (plateau.stalled) return 'plateau';
+
+  // Strength actively declining with decent consistency
+  const strengthTrend = _growthStrengthTrend();
+  if (strengthTrend === 'down' && consistMult >= 0.55) return 'declining';
+
+  return 'gaining';
+}
+
+// Main recalculation — called after each completed session
+function recalcGrowthBalance() {
+  if (!state.growthTrackingEnabled) return;
+
+  const growthState = _determineGrowthState();
+  state.growthState = growthState;
+
+  const exp = getEffectiveExperienceLevel ? getEffectiveExperienceLevel() : (state.profile?.experience || 'beginner');
+  const prevBalance = state.growthBalance || 0;
+  const monthlyRate = _growthMonthlyRate();
+  const weeklyRate = monthlyRate / 4.33;
+
+  // Determine time since last snapshot
+  const snapshots = state.growthHistory || [];
+  const lastSnap = snapshots[snapshots.length - 1];
+  const lastSnapDate = lastSnap ? new Date(lastSnap.date).getTime() : null;
+  const weeksSinceLast = lastSnapDate
+    ? Math.max(0.5, (Date.now() - lastSnapDate) / (7 * 86400000))
+    : 1;
+
+  let newBalance = prevBalance;
+
+  switch (growthState) {
+    case 'gaining':
+      newBalance += weeklyRate * weeksSinceLast;
+      break;
+
+    case 'regaining':
+      newBalance += weeklyRate * GROWTH_REGAIN_BOOST * weeksSinceLast;
+      break;
+
+    case 'holding':
+    case 'plateau':
+      // Flat — no gain, no loss
+      break;
+
+    case 'slow_decay': {
+      const rate = GROWTH_DECAY.slow[exp] || 0.010;
+      // Compound decay: balance × (1 - rate)^weeks
+      newBalance *= Math.pow(1 - rate, weeksSinceLast);
+      break;
+    }
+
+    case 'declining': {
+      const rate = GROWTH_DECAY.active[exp] || 0.020;
+      newBalance *= Math.pow(1 - rate, weeksSinceLast);
+      break;
+    }
+
+    default:
+      break;
+  }
+
+  // Floor at zero
+  newBalance = Math.max(0, newBalance);
+  state.growthBalance = parseFloat(newBalance.toFixed(2));
+
+  // Snapshot (one per session, max 100)
+  if (!state.growthHistory) state.growthHistory = [];
+  state.growthHistory.push({
+    balance: state.growthBalance,
+    state: growthState,
+    date: new Date().toISOString()
+  });
+  if (state.growthHistory.length > 100) {
+    state.growthHistory = state.growthHistory.slice(-100);
+  }
+}
+
+// Growth state display metadata
+function _getGrowthStateMeta(gs) {
+  switch (gs) {
+    case 'gaining':    return { label: 'GAINING',    color: '#2ecc71', bg: 'rgba(46,204,113,0.12)' };
+    case 'regaining':  return { label: 'REGAINING',  color: '#4a8af5', bg: 'rgba(74,138,245,0.12)' };
+    case 'holding':    return { label: 'HOLDING',    color: 'var(--gray-light)', bg: 'rgba(255,255,255,0.08)' };
+    case 'plateau':    return { label: 'PLATEAU',    color: '#f0a500', bg: 'rgba(240,165,0,0.12)' };
+    case 'declining':  return { label: 'DECLINING',  color: '#cc5555', bg: 'rgba(204,85,85,0.10)' };
+    case 'slow_decay': return { label: 'DECLINING',  color: '#cc5555', bg: 'rgba(204,85,85,0.10)' };
+    default:           return { label: 'INACTIVE',   color: 'var(--gray)', bg: 'rgba(255,255,255,0.05)' };
+  }
+}
+
+// Insight text — state-driven, T&S voice
+function _getGrowthInsight(gs, delta30, strengthTrend) {
+  switch (gs) {
+    case 'gaining':
+      if (strengthTrend === 'up') return 'Strength is up across compounds. The estimate reflects that.';
+      if (strengthTrend === 'flat') return 'Still building. Strength isn\'t the only signal for hypertrophy.';
+      return 'Consistency is doing the work. Keep showing up.';
+
+    case 'regaining':
+      return 'Muscle memory is real. Rebuilding faster than the first time.';
+
+    case 'holding':
+      return 'Training enough to hold what you have. Not enough to add to it right now.';
+
+    case 'plateau':
+      return 'Flat with good consistency. Usually means it\'s time for a deload or a change.';
+
+    case 'declining':
+      if (delta30 !== null && delta30 < -0.3) {
+        return 'Some ground lost. Regain will be faster than building was.';
+      }
+      return 'Weights are trending down. Could be recovery, stress, or volume.';
+
+    case 'slow_decay':
+      return 'You kept most of what you built. The rest is waiting when you\'re back.';
+
+    default:
+      return '';
+  }
+}
+
+// Uncertainty range — wider for advanced (less predictable), tighter for beginners
+function _growthRange(balance) {
+  const exp = getEffectiveExperienceLevel ? getEffectiveExperienceLevel() : (state.profile?.experience || 'beginner');
+  const uncertainty = exp === 'beginner' ? 0.35 : exp === 'intermediate' ? 0.42 : 0.50;
+  const strengthTrend = _growthStrengthTrend();
+
+  // Strength trend biases position within range
+  let bias = 0.5; // middle
+  if (strengthTrend === 'up') bias = 0.7;
+  if (strengthTrend === 'down') bias = 0.3;
+
+  const low  = Math.max(0, balance * (1 - uncertainty));
+  const high = balance * (1 + uncertainty);
+  const display = low + (high - low) * bias;
+
+  return { low: parseFloat(low.toFixed(1)), high: parseFloat(high.toFixed(1)), display: parseFloat(display.toFixed(1)) };
+}
+
 // Best estimated 1RM for an exercise over the last N days (Epley: w*(1+r/30)).
 // When isUnilateral is true the user logs per-side weight; multiply by 2 to get
 // the bilateral-equivalent load before applying the Epley formula, so the result
@@ -21202,6 +21710,232 @@ function _toggleScoreInfo(btn) {
   const visible = info.style.display !== 'none';
   info.style.display = visible ? 'none' : 'block';
   btn.style.color = visible ? 'var(--gray)' : 'var(--cream)';
+}
+
+// ============================================================
+// GROWTH LOG CARD
+// ============================================================
+
+function renderGrowthLogCard() {
+  const card = document.createElement('div');
+  card.className = 'ts-growth-card';
+
+  const enabled = !!state.growthTrackingEnabled;
+  const weighIns = (state.weightLog || []).length;
+  const balance = state.growthBalance || 0;
+  const gs = state.growthState || 'inactive';
+  const snapshots = (state.growthHistory || []).slice(-20);
+
+  card.setAttribute('data-state', gs);
+
+  // ── Info button ──
+  const _infoBtn = `<button onclick="_toggleGrowthInfo(this)" style="background:none;border:2px solid #2ecc71;padding:0;cursor:pointer;color:#2ecc71;font-size:14px;line-height:1;width:44px;height:44px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.82;" aria-label="About Growth Log"><span style="font-size:20px;line-height:1;">\u2139</span></button>`;
+
+  const _infoText = `<div id="ts-growth-info-box" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(210,205,198,0.92);line-height:1.75;margin-bottom:14px;padding:12px 14px;background:rgba(255,255,255,0.05);border-radius:8px;">
+    Your Growth Log estimates muscle gained based on your training experience, age, biological sex, training consistency, and bodyweight changes over time.<br><br>
+    The model uses rates from peer-reviewed research (McDonald, Aragon, Helms, Refalo 2025, ACSM 2026) and adjusts for real-world conditions. It can go up <em>and</em> down \u2014 gaps, low consistency, and detraining are reflected honestly.<br><br>
+    This is an <strong style="color:var(--cream);">estimate</strong>, not a measurement. Presented as a range to reflect individual variation. Weekly weigh-ins improve accuracy.
+  </div>`;
+
+  // ── Header (shared across all states) ──
+  const leafSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.85;"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66L17 8z"/><path d="M20.59 5.47A17.94 17.94 0 0 1 18 11c-2.5 3.5-5 5.5-7 7"/><path d="M2 21c0-3 1.85-5.36 5.08-8C10.5 10.5 13 9 17 8"/></svg>';
+
+  // ── EMPTY STATE: not enabled ──
+  if (!enabled) {
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        ${leafSvg}
+        <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">GROWTH LOG</div>
+      </div>
+      <div style="text-align:center;padding:16px 0 14px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;max-width:280px;margin:0 auto 14px;">Track your bodyweight weekly and the app will estimate how much muscle you\u2019ve built over time.</div>
+        <button onclick="toggleGrowthTracking();renderHistory();" style="background:rgba(46,204,113,0.12);border:1px solid rgba(46,204,113,0.35);color:#2ecc71;padding:10px 18px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;">ENABLE IN SETTINGS \u2192</button>
+      </div>`;
+    return card;
+  }
+
+  // ── LOCKED STATE: enabled but not enough weigh-ins ──
+  const MIN_WEIGHINS = 3;
+  if (weighIns < MIN_WEIGHINS) {
+    const dots = Array.from({ length: 5 }, (_, i) => {
+      const filled = i < weighIns;
+      return `<div class="ts-growth-unlock-dot${filled ? ' filled' : ''}"></div>`;
+    }).join('');
+
+    const msg = weighIns === 0
+      ? 'Log your first weekly weigh-in after a session to start.'
+      : `${weighIns} of ${MIN_WEIGHINS} weigh-ins logged. ${MIN_WEIGHINS - weighIns} more to unlock your estimate.`;
+
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        ${leafSvg}
+        <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">GROWTH LOG</div>
+      </div>
+      <div class="ts-growth-unlock-dots">${dots}</div>
+      <div style="text-align:center;padding:0 0 6px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;max-width:280px;margin:0 auto;">${msg}</div>
+      </div>`;
+    return card;
+  }
+
+  // ── ACTIVE STATE: enough data to show estimate ──
+  const meta = _getGrowthStateMeta(gs);
+  const range = _growthRange(balance);
+  const strengthTrend = _growthStrengthTrend();
+  // Actual adherence % for display (not the multiplier, which is non-linear)
+  const _gc_cutoff = Date.now() - 28 * 86400000;
+  const _gc_recent = (state.history || []).filter(e =>
+    new Date(e.date).getTime() >= _gc_cutoff &&
+    Object.values(e.sets || {}).some(sets => sets.some(s => s.done))
+  ).length;
+  const _gc_expected = Math.max(4, (state.trainingDaysPerWeek || 3) * 4);
+  const consistPct = Math.min(100, Math.round((_gc_recent / _gc_expected) * 100));
+
+  // 30-day delta
+  const cutoff30 = Date.now() - 30 * 86400000;
+  const old30 = [...snapshots].reverse().find(s => new Date(s.date).getTime() < cutoff30);
+  const delta30 = old30 ? parseFloat((balance - old30.balance).toFixed(1)) : null;
+  const deltaStr = delta30 !== null
+    ? delta30 > 0.05
+      ? `<span style="color:#2ecc71;">\u25B2 +${delta30}</span> <span style="color:var(--gray);">LAST 30 DAYS</span>`
+      : delta30 < -0.05
+        ? `<span style="color:#cc5555;">\u25BC ${delta30}</span> <span style="color:var(--gray);">LAST 30 DAYS</span>`
+        : `<span style="color:var(--gray);">\u2192 FLAT LAST 30 DAYS</span>`
+    : '';
+
+  // Training duration
+  const firstSession = (state.history || [])[0];
+  const trainingWeeks = firstSession
+    ? Math.max(1, Math.round((Date.now() - new Date(firstSession.date).getTime()) / (7 * 86400000)))
+    : 0;
+  const durationLabel = trainingWeeks >= 52
+    ? Math.floor(trainingWeeks / 52) + (Math.floor(trainingWeeks / 52) === 1 ? ' yr' : ' yrs')
+    : trainingWeeks + (trainingWeeks === 1 ? ' wk' : ' wks');
+
+  // Strength trend label
+  const strengthLabel = strengthTrend === 'up' ? '\u2191 Up'
+    : strengthTrend === 'down' ? '\u2193 Down'
+    : strengthTrend === 'flat' ? '\u2192 Flat'
+    : '\u2014';
+
+  // Insight text
+  const insight = _getGrowthInsight(gs, delta30, strengthTrend);
+
+  // ── SVG Progress Path ──
+  const pathSvg = _buildGrowthPath(snapshots);
+
+  // ── Display number: use tilde to emphasize estimate ──
+  const displayNum = balance < 0.1 ? '0' : '~' + range.display.toFixed(1);
+  const rangeStr = balance >= 0.1
+    ? `${range.low.toFixed(1)}\u2013${range.high.toFixed(1)} lbs likely range`
+    : '';
+
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+      ${leafSvg}
+      <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">GROWTH LOG</div>
+      <div style="margin-left:auto;">${_infoBtn}</div>
+    </div>
+    ${_infoText}
+    <div style="display:flex;align-items:flex-end;gap:8px;">
+      <div>
+        <div class="ts-growth-number">${displayNum}<span class="ts-growth-unit" style="margin-left:6px;">LBS</span></div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:0.5px;margin-top:2px;">ESTIMATED MUSCLE GAINED</div>
+      </div>
+    </div>
+    ${deltaStr ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;margin-top:8px;">${deltaStr}</div>` : ''}
+    <div class="ts-growth-path">${pathSvg}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <div class="ts-growth-state" style="background:${meta.bg};color:${meta.color};">${meta.label}</div>
+      ${rangeStr ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.3px;">${rangeStr}</div>` : ''}
+    </div>
+    ${insight ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(220,215,205,0.9);line-height:1.65;margin-bottom:16px;">${insight}</div>` : ''}
+    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;margin-bottom:12px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:10px;">EVIDENCE</div>
+      <div class="ts-growth-evidence">
+        <div>
+          <div class="ts-growth-evidence-num">${strengthLabel}</div>
+          <div class="ts-growth-evidence-label">STRENGTH</div>
+        </div>
+        <div>
+          <div class="ts-growth-evidence-num">${consistPct}%</div>
+          <div class="ts-growth-evidence-label">CONSISTENCY</div>
+        </div>
+        <div>
+          <div class="ts-growth-evidence-num">${durationLabel}</div>
+          <div class="ts-growth-evidence-label">TRAINING</div>
+        </div>
+      </div>
+    </div>
+    <button onclick="shareGrowthLogCard()" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.13);color:rgba(220,215,205,0.75);border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;">
+      <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      SHARE GROWTH LOG
+    </button>`;
+
+  return card;
+}
+
+// Build SVG progress path from growth history snapshots
+function _buildGrowthPath(snaps) {
+  if (!snaps || snaps.length < 2) {
+    return '<div style="height:40px;display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;">Tracking progress\u2026</div>';
+  }
+
+  const W = 300, H = 40, PAD = 6;
+  const vals = snaps.map(s => s.balance);
+  const lo = Math.min(0, ...vals);
+  const hi = Math.max(0.1, ...vals);
+  const rng = hi - lo || 0.1;
+
+  const points = vals.map((v, i) => {
+    const x = PAD + (i / (vals.length - 1)) * (W - PAD * 2);
+    const y = H - PAD - ((v - lo) / rng) * (H - PAD * 2);
+    return { x, y, state: snaps[i].state };
+  });
+
+  // Build path segments colored by state
+  let pathD = `M ${points[0].x} ${points[0].y}`;
+  let segments = '';
+  for (let i = 1; i < points.length; i++) {
+    const segD = `M ${points[i - 1].x} ${points[i - 1].y} L ${points[i].x} ${points[i].y}`;
+    const st = points[i].state;
+    const color = (st === 'gaining' || st === 'regaining') ? '#2ecc71'
+      : (st === 'declining' || st === 'slow_decay') ? '#cc5555'
+      : '#555';
+    const dash = (st === 'holding' || st === 'plateau') ? 'stroke-dasharray="4 3"' : '';
+    segments += `<path d="${segD}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" ${dash}/>`;
+  }
+
+  // Current position dot
+  const last = points[points.length - 1];
+  const dotColor = _getGrowthStateMeta(snaps[snaps.length - 1].state).color;
+  const dot = `<circle cx="${last.x}" cy="${last.y}" r="4" fill="${dotColor}" stroke="var(--dark2)" stroke-width="2"/>`;
+  const glow = `<circle cx="${last.x}" cy="${last.y}" r="7" fill="none" stroke="${dotColor}" stroke-width="1" opacity="0.4"/>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:40px;display:block;" preserveAspectRatio="none">${segments}${glow}${dot}</svg>`;
+}
+
+function _toggleGrowthInfo(btn) {
+  const info = btn.closest('.ts-growth-card')?.querySelector('#ts-growth-info-box');
+  if (!info) return;
+  const visible = info.style.display !== 'none';
+  info.style.display = visible ? 'none' : 'block';
+  btn.style.color = visible ? '#2ecc71' : 'var(--cream)';
+}
+
+function shareGrowthLogCard() {
+  const balance = state.growthBalance || 0;
+  if (balance < 0.1) { showToast('Build some training history first!'); return; }
+  const range = _growthRange(balance);
+  const meta = _getGrowthStateMeta(state.growthState || 'inactive');
+  generateAndShareCard('growth_log', {
+    estimate: '~' + range.display.toFixed(1) + ' lbs',
+    range: range.low.toFixed(1) + '\u2013' + range.high.toFixed(1) + ' lbs',
+    state: meta.label,
+    weeks: Math.round(((state.history || [])[0]
+      ? (Date.now() - new Date(state.history[0].date).getTime()) / (7 * 86400000)
+      : 0))
+  });
 }
 
 // ============================================================
@@ -28045,6 +28779,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateProgressiveOverloadUI();
   updateBetweenSetCoachingUI();
   updateCarryingFeatureUI();
+  updateGrowthTrackingUI();
   updateIncrementUI();
   updateNotificationsUI();
   updateGoalSettingsSub();
