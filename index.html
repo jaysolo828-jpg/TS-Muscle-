@@ -476,9 +476,15 @@
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    padding: 0 0 16px;
+    padding: 0 0 12px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--black);
+    padding-top: 4px;
+    margin-bottom: 4px;
   }
   #settings-jump-nav::-webkit-scrollbar { display: none; }
   #settings-jump-nav button {
@@ -521,7 +527,7 @@
   /* Sticky section titles inside settings */
   #screen-settings .section-title {
     position: sticky;
-    top: 0;
+    top: 48px;
     z-index: 5;
     background: var(--black);
     padding-top: 8px;
@@ -4187,14 +4193,15 @@
 </div>
 
 <div id="settings-jump-nav">
-  <button onclick="settingsJumpTo('settings-sec-program')">Program</button>
-  <button onclick="settingsJumpTo('settings-sec-account')">Account</button>
-  <button onclick="settingsJumpTo('settings-sec-profile')">Profile</button>
-  <button onclick="settingsJumpTo('settings-sec-help')">Help</button>
-  <button class="snav-danger" onclick="settingsJumpTo('settings-sec-danger')">Danger</button>
+  <button onclick="settingsFilter('program')">Program</button>
+  <button onclick="settingsFilter('account')">Account</button>
+  <button onclick="settingsFilter('profile')">Profile</button>
+  <button onclick="settingsFilter('help')">Help</button>
+  <button class="snav-danger" onclick="settingsFilter('danger')">Danger</button>
 </div>
 
   <!-- PROGRAM -->
+  <div class="settings-section" id="ssec-program">
   <div id="settings-sec-program" class="section-title">PROGRAM</div>
 
   <div class="settings-item" onclick="openGoalPickerFromSettings()">
@@ -4330,8 +4337,10 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
   </div>
 
-  <!-- PROFILE -->
+  </div><!-- /ssec-program -->
+
   <!-- ACCOUNT -->
+  <div class="settings-section" id="ssec-account">
   <div id="settings-sec-account" class="section-title" style="margin-top:8px;">ACCOUNT</div>
   <div id="settings-account-section">
     <!-- Populated by _updateSettingsAccountSection() -->
@@ -4383,6 +4392,10 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg></div>
   </div>
 
+  </div><!-- /ssec-account -->
+
+  <!-- PROFILE -->
+  <div class="settings-section" id="ssec-profile">
   <div id="settings-sec-profile" class="section-title" style="margin-top:8px;">PROFILE</div>
   <div class="settings-item" onclick="openProfileModal()">
     <div>
@@ -4392,7 +4405,10 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
   </div>
 
+  </div><!-- /ssec-profile -->
+
   <!-- HELP -->
+  <div class="settings-section" id="ssec-help">
   <div id="settings-sec-help" class="section-title" style="margin-top:8px;">HELP</div>
 
   <div class="settings-item" onclick="openHelpSheet()">
@@ -4405,7 +4421,10 @@
 
   <input type="file" id="import-file" accept="*/*" style="display:none" onchange="handleImport(event)"/>
 
+  </div><!-- /ssec-help -->
+
   <!-- DANGER ZONE -->
+  <div class="settings-section" id="ssec-danger">
   <div id="settings-sec-danger" class="section-title" style="margin-top:8px;color:#CC2027;">DANGER ZONE</div>
   <div onclick="confirmHardReset()" class="settings-item" style="border-color:rgba(204,32,39,0.3);cursor:pointer;">
     <div>
@@ -4416,6 +4435,8 @@
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="#CC2027" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
     </div>
   </div>
+
+  </div><!-- /ssec-danger -->
 
   <!-- Contact / Feedback -->
   <div style="margin-top:24px; padding:16px; background:var(--dark2); border:1px solid var(--dark3); border-radius:14px; text-align:center;">
@@ -23692,6 +23713,29 @@ function openMaintenanceSheet() {
       </div>
     </div>`;
   document.body.appendChild(sheet);
+}
+
+function settingsFilter(section) {
+  const sections = ['program','account','profile','help','danger'];
+  const nav = document.getElementById('settings-jump-nav');
+  const activeBtn = nav ? nav.querySelector('.snav-active') : null;
+  const alreadyThis = activeBtn && activeBtn.getAttribute('onclick').includes("'" + section + "'");
+
+  sections.forEach(function(s) {
+    var el = document.getElementById('ssec-' + s);
+    if (el) el.style.display = (alreadyThis || s === section) ? '' : 'none';
+  });
+
+  var btns = nav ? nav.querySelectorAll('button') : [];
+  btns.forEach(function(b) {
+    b.classList.remove('snav-active');
+    if (!alreadyThis && b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + section + "'")) {
+      b.classList.add('snav-active');
+    }
+  });
+
+  var container = document.querySelector('.app-content');
+  if (container && !alreadyThis) container.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function settingsJumpTo(id) {
