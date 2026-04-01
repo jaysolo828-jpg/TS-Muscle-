@@ -558,7 +558,7 @@
     display: flex;
     align-items: stretch;
     justify-content: space-between;
-    padding: 14px 16px;
+    padding: 14px 16px 14px 0;
     cursor: pointer;
     gap: 12px;
   }
@@ -10710,8 +10710,8 @@ function renderHome() {
     if (_tmActive) card.style.borderColor = 'rgba(74,158,219,0.25)';
     card.innerHTML = `
       <div class="day-header" onclick="toggleDayCard('${day.id}')">
+        <div class="day-accent" style="background:${_dayColor};"></div>
         <div class="day-info">
-          <div class="day-accent" style="background:${_dayColor};"></div>
           <div class="day-text">
             <div class="day-badge" style="color:${_dayColor};">${_tmActive ? '✈ ' : ''}${day.badge}</div>
             <div class="day-name">
