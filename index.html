@@ -21734,6 +21734,31 @@ function renderGrowthLogCard() {
     return card;
   }
 
+  // ── FIRST REVEAL: one-time introduction when estimate first unlocks ──
+  if (!state.growthLogRevealed) {
+    const meta = _getGrowthStateMeta(gs);
+    const range = _growthRange(balance);
+    const displayNum = balance < 0.1 ? '0' : '~' + range.display.toFixed(1);
+
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+        ${leafSvg}
+        <div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--cream);letter-spacing:2px;">GROWTH LOG</div>
+      </div>
+      <div style="text-align:center;padding:8px 0 16px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">YOUR GROWTH LOG IS ACTIVE</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:64px;color:#2ecc71;line-height:1;margin-bottom:4px;">${displayNum}<span style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--gray);margin-left:6px;">LBS</span></div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1px;margin-bottom:20px;">ESTIMATED MUSCLE GAINED SO FAR</div>
+        <div style="text-align:left;max-width:300px;margin:0 auto;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.7;margin-bottom:8px;">This estimate is based on your training experience, age, sex, and consistency. It uses rates from published research.</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.7;margin-bottom:8px;">It goes up when you train consistently. It goes down if you stop. It\u2019s honest, not a trophy.</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.7;">Keep logging your weight once a week to improve accuracy.</div>
+        </div>
+      </div>
+      <button onclick="_dismissGrowthReveal()" style="width:100%;background:rgba(46,204,113,0.15);border:1px solid rgba(46,204,113,0.4);color:#2ecc71;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:17px;letter-spacing:2px;cursor:pointer;margin-top:8px;">GOT IT</button>`;
+    return card;
+  }
+
   // ── ACTIVE STATE: enough data to show estimate ──
   const meta = _getGrowthStateMeta(gs);
   const range = _growthRange(balance);
@@ -21937,6 +21962,13 @@ function _saveGrowthWeighIn() {
   state.profile.bodyweight = wVal;
   saveState();
   // Re-render the stats tab to update the card
+  _statsRenderKey = null;
+  renderHistory();
+}
+
+function _dismissGrowthReveal() {
+  state.growthLogRevealed = true;
+  saveState();
   _statsRenderKey = null;
   renderHistory();
 }
