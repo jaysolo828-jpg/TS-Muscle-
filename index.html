@@ -2898,7 +2898,7 @@
 
   <!-- Progress chart block — moved into lifts section by renderHistory() -->
   <div id="progress-section" style="display:none; margin-top:8px;">
-    <select class="exercise-picker" id="exercise-picker" onchange="renderProgressChart(); _statsProgInfo()"></select>
+    <select class="exercise-picker" id="exercise-picker" style="display:none;" onchange="renderProgressChart(); _statsProgInfo()"></select>
     <!-- Chart mode toggle -->
     <div style="display:flex; gap:8px; margin-bottom:12px;">
       <button id="chart-mode-weight" onclick="setChartMode('weight')"
@@ -20099,24 +20099,58 @@ function renderHistory() {
     emptyCard.innerHTML = `<div style="text-align:center;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;padding:16px 0;">No workout history yet. Complete a session to see your lift stats.</div>`;
     container.appendChild(emptyCard);
   } else {
-    // Lifts card: picker + progression stats + chart + share
+    // Lifts card: T&S exercise picker → stats → chart + share
     const liftsCard = mkCard();
 
-    // Populate the existing exercise-picker with exercises that have history
     const progSection = document.getElementById('progress-section');
     const picker = document.getElementById('exercise-picker');
+    const exIds = Array.from(exIdsWithHistory);
+    const currentVal = (picker && picker.value && exIds.includes(picker.value)) ? picker.value : exIds[0];
+
+    // Sync hidden native select (value store for renderProgressChart / _statsProgInfo)
     if (picker) {
-      const exIds = Array.from(exIdsWithHistory);
-      const currentVal = picker.value;
       picker.innerHTML = exIds.map(id => `<option value="${id}"${id === currentVal ? ' selected' : ''}>${nameMap[id] || id}</option>`).join('');
     }
+
+    // ── T&S horizontal exercise picker ───────────────────────
+    const pickerWrap = document.createElement('div');
+    pickerWrap.style.cssText = 'overflow-x:auto;white-space:nowrap;margin-bottom:14px;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;';
+    const pickerInner = document.createElement('div');
+    pickerInner.style.cssText = 'display:inline-flex;gap:8px;';
+    function _applyPickerSelection(exId) {
+      if (picker) picker.value = exId;
+      pickerInner.querySelectorAll('button[data-exid]').forEach(b => {
+        const on = b.dataset.exid === exId;
+        b.style.border     = on ? '1px solid var(--red)' : '1px solid rgba(255,255,255,0.12)';
+        b.style.background = on ? 'rgba(204,32,39,0.15)' : 'transparent';
+        b.style.color      = on ? 'var(--cream)' : 'var(--gray)';
+      });
+      _statsProgInfo();
+      renderProgressChart();
+    }
+    exIds.forEach(id => {
+      const btn = document.createElement('button');
+      btn.dataset.exid = id;
+      const on = id === currentVal;
+      btn.style.cssText = `font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;padding:7px 14px;border-radius:20px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;transition:border-color 0.15s,background 0.15s,color 0.15s;border:1px solid ${on ? 'var(--red)' : 'rgba(255,255,255,0.12)'};background:${on ? 'rgba(204,32,39,0.15)' : 'transparent'};color:${on ? 'var(--cream)' : 'var(--gray)'};`;
+      btn.textContent = (nameMap[id] || id).toUpperCase();
+      btn.onclick = () => _applyPickerSelection(id);
+      pickerInner.appendChild(btn);
+    });
+    pickerWrap.appendChild(pickerInner);
+    liftsCard.appendChild(pickerWrap);
+
+    // Divider
+    const pickerDivider = document.createElement('div');
+    pickerDivider.style.cssText = 'border-top:1px solid rgba(255,255,255,0.07);margin-bottom:14px;';
+    liftsCard.appendChild(pickerDivider);
 
     // Progression info div (updated by _statsProgInfo)
     const progInfoDiv = document.createElement('div');
     progInfoDiv.id = 'stats-prog-info';
     liftsCard.appendChild(progInfoDiv);
 
-    // Move the chart block into lifts card
+    // Move chart block into card (native select inside is hidden)
     if (progSection) {
       progSection.style.display = 'block';
       liftsCard.appendChild(progSection);
