@@ -26266,7 +26266,7 @@ function renderMoodWheel() {
     inner += `<path d="${wedgePath(innerR1+2, innerR2-2, a0+0.04, a1-0.04)}" fill="${rgba(cat.color,alpha)}" stroke="${rgba(cat.color, isSelCat ? 1 : 0.2)}" stroke-width="1" style="cursor:pointer;" onclick="_mwInnerClick(${i})"/>`;
     const midR = (innerR1 + innerR2) / 2;
     inner += `<text x="${(cx+(midR-17)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR-17)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="15" opacity="${textOp}" style="pointer-events:none;">${cat.emoji}</text>`;
-    inner += `<text x="${(cx+(midR+8)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR+8)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="10.5" fill="white" letter-spacing="1" opacity="${textOp}" style="pointer-events:none;">${cat.label}</text>`;
+    inner += `<text x="${(cx+(midR+8)*Math.cos(am)).toFixed(1)}" y="${(cy+(midR+8)*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',cursive" font-size="10.5" fill="white" letter-spacing="1.5" opacity="${textOp}" filter="url(#mw-txt-shadow)" style="pointer-events:none;">${cat.label}</text>`;
   });
 
   // Separator ring between inner and outer
@@ -26285,7 +26285,7 @@ function renderMoodWheel() {
       const fa = isSel ? 1 : 0.62;
       outer += `<path d="${wedgePath(outerR1+1, outerR2-1, a0+0.04, a1-0.04)}" fill="${rgba(selCat.color, fa)}" stroke="${rgba(selCat.color, isSel ? 1 : 0.35)}" stroke-width="${isSel ? 2 : 0.5}" style="cursor:pointer;" onclick="_mwOuterClick(${j})"/>`;
       const fs = feeling.length > 10 ? 8.5 : feeling.length > 7 ? 9.5 : 10.5;
-      outer += `<text x="${(cx+flR*Math.cos(am)).toFixed(1)}" y="${(cy+flR*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Barlow Condensed',sans-serif" font-size="${fs}" font-weight="700" fill="white" opacity="${isSel ? 1 : 0.82}" style="pointer-events:none;">${feeling}</text>`;
+      outer += `<text x="${(cx+flR*Math.cos(am)).toFixed(1)}" y="${(cy+flR*Math.sin(am)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="'Barlow Condensed',sans-serif" font-size="${fs}" font-weight="700" fill="white" opacity="${isSel ? 1 : 0.82}" filter="url(#mw-txt-shadow)" style="pointer-events:none;">${feeling}</text>`;
     });
   }
 
@@ -26293,7 +26293,8 @@ function renderMoodWheel() {
   const outerA = selCat ? `style="transform-box:fill-box;transform-origin:center;animation:mwOuterIn 0.22s ease-out;"` : '';
   _mwSpinOnNext = false;
 
-  svg.innerHTML = `<g ${spinA}>${inner}</g>${selCat ? `<g ${outerA}>${outer}</g>` : ''}`;
+  const defs = `<defs><filter id="mw-txt-shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="0.5" stdDeviation="1.2" flood-color="rgba(0,0,0,0.7)"/></filter></defs>`;
+  svg.innerHTML = defs + `<g ${spinA}>${inner}</g>${selCat ? `<g ${outerA}>${outer}</g>` : ''}`;
 }
 
 function _mwClear() {
