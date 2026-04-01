@@ -20926,7 +20926,7 @@ function renderProgressChart() {
 
   // Recent sessions table
   let tableHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;padding:0 2px;">Recent Sessions</div>';
-  [...dataPoints].reverse().slice(0, 5).forEach(pt => {
+  [...dataPoints].reverse().slice(0, 3).forEach(pt => {
     const val = chartMode === 'volume' ? `${Math.round(pt.weight).toLocaleString()} lbs` : `${pt.weight} lbs`;
     const dateStr = pt.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const tags = [];
