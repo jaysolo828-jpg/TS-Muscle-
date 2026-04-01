@@ -3042,7 +3042,7 @@
     </div>
     <div style="flex:1; min-width:0;">
       <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; letter-spacing:0.5px; margin-bottom:2px;">Check in with yourself</div>
-      <div style="font-size:12px; color:var(--gray-light);">Pause, reflect, and plan your next step.</div>
+      <div style="font-size:12px; color:var(--gray-light);">A moment for what's actually on your mind.</div>
     </div>
     <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
   </button>
@@ -3050,7 +3050,7 @@
   <div id="mood-checkin-card" class="card" style="margin-bottom:24px; padding:16px 0 14px; overflow:hidden;">
     <div style="padding:0 16px;">
       <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:3px;" id="mood-checkin-label">T&amp;S FEELINGS WHEEL</div>
-      <div id="mood-wheel-subtitle" style="font-size:13px; color:var(--gray-light); margin-bottom:10px;">After your session — tap a section, then a feeling</div>
+      <div id="mood-wheel-subtitle" style="font-size:13px; color:var(--gray-light); margin-bottom:10px;">Tap a section to name how you feel right now.</div>
     </div>
     <input type="hidden" id="mood-timing" value="post"/>
     <input type="hidden" id="mood-value" value=""/>
@@ -3076,13 +3076,13 @@
   </div>
 
   <!-- Hard Days -->
-  <div class="section-title">HARD <span>DAYS</span></div>
+  <div class="section-title" style="margin-bottom:10px;">HARD <span>DAYS</span></div>
   <div id="hard-day-collection" style="margin-bottom:24px;">
     <div class="empty-state"><div class="empty-state-icon">🪨</div><div class="empty-state-text">No hard days yet. When you show up carrying something heavy, it gets added here.</div></div>
   </div>
 
   <!-- Activity -->
-  <div class="section-title">YOUR <span>ACTIVITY</span></div>
+  <div class="section-title" style="margin-bottom:10px;">YOUR <span>ACTIVITY</span></div>
   <div id="mindset-activity-list" style="margin-bottom:16px;"></div>
 
   <!-- Hidden legacy -->
@@ -3892,7 +3892,7 @@
       <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">HOW ARE YOU DOING?</div>
       <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 1 OF 3 · CHECK IN</div>
       <div style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:20px;">
-        No agenda. Just take a second and notice where you actually are — with training, energy, life. Whatever's true right now.
+        No agenda. Just notice where you actually are. Energy, mood, life. Whatever's true right now.
       </div>
       <textarea id="sc-feeling" class="notes-input" placeholder="What's on your mind? Feeling strong, drained, off-track, uncertain... anything goes." style="min-height:90px; margin-bottom:16px;"></textarea>
       <button onclick="scNext(2)" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; min-height:44px;">THAT'S WHERE I'M AT</button>
@@ -3923,16 +3923,16 @@
       <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">WHAT COMES NEXT</div>
       <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">STEP 3 OF 3 · ONE STEP</div>
       <div style="font-size:15px; color:var(--cream); line-height:1.7; margin-bottom:16px;">
-        You don't need a full plan. Just one thing that would feel right — whether that's training, resting, or something else entirely.
+        You don't need a full plan. Just one thing that feels right. Whether that's training, resting, or something else entirely.
       </div>
       <div id="sc-values-reminder" style="display:none; background:var(--dark3); border-radius:12px; padding:14px; margin-bottom:16px; border-left:2px solid #555;">
         <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; margin-bottom:6px;">WHY YOU TRAIN</div>
-        <div id="sc-values-text" style="font-size:13px; color:var(--gray-light); line-height:1.6; font-style:italic;"></div>
+        <div id="sc-values-text" style="font-size:14px; color:var(--cream); line-height:1.6;"></div>
       </div>
-      <div style="font-size:13px; color:var(--gray); margin-bottom:6px;">What's one thing? <span style="opacity:0.6;">(optional)</span></div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:6px;">What's one thing? <span style="color:rgba(255,255,255,0.25); font-size:12px;">(optional)</span></div>
       <input type="text" id="sc-plan" class="notes-input" placeholder="e.g. Train Thursday, rest today, take a walk, talk to someone" style="min-height:44px; margin-bottom:20px; resize:none;"/>
       <button onclick="saveSelfCompassionEntry()" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; margin-bottom:10px; min-height:44px;">SAVE & CLOSE</button>
-      <button onclick="closeSelfCompassionModal()" style="width:100%; background:transparent; border:none; color:var(--gray); padding:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px; cursor:pointer; min-height:44px;">CLOSE WITHOUT SAVING</button>
+      <button onclick="closeSelfCompassionModal()" style="width:100%; background:none; border:1px solid rgba(255,255,255,0.07); color:var(--gray); padding:12px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; min-height:44px;">CLOSE WITHOUT SAVING</button>
     </div>
 
   </div>
