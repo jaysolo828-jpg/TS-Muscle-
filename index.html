@@ -14805,15 +14805,14 @@ function _evalCoachingCueTriggers(exId, setIndex) {
   }
 
   // Determine which triggers are allowed based on session count and calibration week
+  // 7 = new weight vs last session | 8 = rep regression vs last session | 9 = multi-session miss pattern
   var allowedTriggers;
-  if (isCalibrationWeek) {
-    allowedTriggers = { 5: true };
-  } else if (sessionCount <= 2) {
-    allowedTriggers = { 5: true };
+  if (isCalibrationWeek || sessionCount <= 2) {
+    allowedTriggers = {};
   } else if (sessionCount <= 4) {
-    allowedTriggers = { 1: true, 2: true, 5: true };
+    allowedTriggers = { 1: true, 2: true, 7: true, 8: true };
   } else {
-    allowedTriggers = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true };
+    allowedTriggers = { 1: true, 2: true, 3: true, 4: true, 6: true, 7: true, 8: true, 9: true };
   }
 
   // Test week: triggers 3 and 4 require multi-set RPE patterns — suppress during max-effort testing
@@ -14840,11 +14839,6 @@ function _evalCoachingCueTriggers(exId, setIndex) {
   // exclude sets where the user never entered an RPE value.
   var currentRpe = parseFloat(currentSet.rpe) || null;
 
-  // Trigger 5: First set completed — always-available (except recovery, already gated above)
-  if (allowedTriggers[5] && setIndex === 0) {
-    return { trigger: 5, data: { reps: currentReps, rpe: currentRpe, repMin: repMin, repMax: repMax } };
-  }
-
   // Trigger 1: RPE very high + reps below target (overload/fatigue indicator)
   if (allowedTriggers[1]) {
     var doneSets = sets.filter(function(s, i) { return i <= setIndex; });
@@ -14867,6 +14861,40 @@ function _evalCoachingCueTriggers(exId, setIndex) {
     }
   }
 
+  // Trigger 7: Training at a higher weight than last session (priority 3)
+  if (allowedTriggers[7] && setIndex >= 1 && currentReps > 0) {
+    var _curWeight7 = parseFloat(currentSet.weight) || null;
+    if (_curWeight7) {
+      var _lastMaxWeight7 = null;
+      for (var _hi7 = (state.history || []).length - 1; _hi7 >= 0; _hi7--) {
+        var _h7 = state.history[_hi7];
+        if (_h7.dayId === activeSession.dayId && _h7.sets && _h7.sets[exId]) {
+          var _hSets7 = _h7.sets[exId].filter(function(s) { return s.done && s.weight; });
+          if (_hSets7.length) {
+            _lastMaxWeight7 = Math.max.apply(null, _hSets7.map(function(s) { return parseFloat(s.weight) || 0; }));
+            break;
+          }
+        }
+      }
+      if (_lastMaxWeight7 !== null && _curWeight7 > _lastMaxWeight7) {
+        return { trigger: 7, data: { reps: currentReps, rpe: currentRpe, repMin: repMin, repMax: repMax, curWeight: _curWeight7, lastWeight: _lastMaxWeight7 } };
+      }
+    }
+  }
+
+  // Trigger 8: Rep regression vs same set last session at same or heavier weight (priority 4)
+  if (allowedTriggers[8] && currentReps > 0) {
+    var _lastSet8 = (typeof getLastSetData === 'function') ? getLastSetData(exId, setIndex) : null;
+    if (_lastSet8 && _lastSet8.reps) {
+      var _lastReps8 = parseInt(_lastSet8.reps) || 0;
+      var _lastWeight8 = parseFloat(_lastSet8.weight) || 0;
+      var _curWeight8 = parseFloat(currentSet.weight) || 0;
+      if (_lastReps8 > 0 && (currentReps <= _lastReps8 - 2) && _curWeight8 >= _lastWeight8) {
+        return { trigger: 8, data: { reps: currentReps, rpe: currentRpe, repMin: repMin, repMax: repMax, lastReps: _lastReps8, repDiff: _lastReps8 - currentReps } };
+      }
+    }
+  }
+
   // Trigger 3: RPE spike this set vs previous set (+2 or more, current RPE ≥ 8)
   if (allowedTriggers[3] && setIndex >= 1) {
     var prevSet3 = sets[setIndex - 1];
@@ -14884,6 +14912,24 @@ function _evalCoachingCueTriggers(exId, setIndex) {
     if (allHigh4) {
       var avgRpe4 = recent4.reduce(function(sum, s) { return sum + (parseFloat(s.rpe) || 0); }, 0) / recent4.length;
       return { trigger: 4, data: { reps: currentReps, rpe: currentRpe, avgRpe: Math.round(avgRpe4 * 10) / 10 } };
+    }
+  }
+
+  // Trigger 9: Missed rep target in all 3 recent sessions AND missing again now (priority 7)
+  if (allowedTriggers[9] && currentReps > 0 && weekBandTarget && currentReps < weekBandTarget) {
+    var _last3h9 = (state.history || []).slice().reverse().filter(function(h) {
+      return h.dayId === activeSession.dayId && h.sets && h.sets[exId] && !h.isDeload;
+    }).slice(0, 3);
+    if (_last3h9.length >= 3) {
+      var _missCount9 = 0;
+      _last3h9.forEach(function(h) {
+        var _hS = (h.sets[exId] || []).filter(function(s) { return s.done && parseInt(s.reps) > 0; });
+        var _hAvg = _hS.length ? _hS.reduce(function(a, s) { return a + parseInt(s.reps); }, 0) / _hS.length : 0;
+        if (_hAvg < weekBandTarget) _missCount9++;
+      });
+      if (_missCount9 >= 3) {
+        return { trigger: 9, data: { reps: currentReps, rpe: currentRpe, repMin: repMin, repMax: repMax } };
+      }
     }
   }
 
@@ -15008,7 +15054,10 @@ function _buildCoachingCuePrompt(exId, setIndex, triggerNum, triggerData) {
     3: 'RPE spiked significantly vs the previous set — notable jump in difficulty.',
     4: 'RPE has been consistently high (8+) across multiple sets — cumulative fatigue building.',
     5: 'First set completed — set the tone for the rest of the exercise.',
-    6: 'All planned sets completed — close out the exercise.',
+    6: 'Second-to-last set — one set remaining. Use the session data to give them something specific going into that final set.',
+    7: 'Training heavier than last session — first time at this weight. Acknowledge the progression and give them something specific to focus on.',
+    8: 'Reps are down vs the same set last session at the same or heavier weight. Acknowledge the regression without alarm — give them something actionable.',
+    9: 'Rep targets have been missed in each of the last 3 sessions, and this set is also below target. Address the pattern directly and give a clear recommendation.',
   };
 
   var sessCtx = _getSessionExerciseContext(exId);
@@ -15379,6 +15428,8 @@ async function _maybeFireCoachingCue(exId, setIndex) {
   // Suppress if every active set is already done — cue must never fire after the last set
   var _activeSets = (activeSession.sets[exId] || []).filter(function(s) { return !s.coachRemoved; });
   if (_activeSets.length > 0 && _activeSets.every(function(s) { return s.done; })) return;
+  // Once a cue has fired for this exercise this session, don't fire again
+  if (activeSession.coachingCues && activeSession.coachingCues[exId]) return;
   // Superset pairing: only suppress when the exercise is more than 1 round
   // ahead of its partner (sequential, non-interleaved usage) to avoid cue spam.
   // In normal alternating flow (A1→B1→A2→B2) the leading exercise is exactly
