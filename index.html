@@ -476,9 +476,15 @@
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    padding: 0 0 16px;
+    padding: 0 0 12px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--black);
+    padding-top: 4px;
+    margin-bottom: 4px;
   }
   #settings-jump-nav::-webkit-scrollbar { display: none; }
   #settings-jump-nav button {
@@ -521,7 +527,7 @@
   /* Sticky section titles inside settings */
   #screen-settings .section-title {
     position: sticky;
-    top: 0;
+    top: 48px;
     z-index: 5;
     background: var(--black);
     padding-top: 8px;
