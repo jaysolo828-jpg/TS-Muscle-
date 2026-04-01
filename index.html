@@ -1614,7 +1614,6 @@
     background: linear-gradient(135deg, var(--red), var(--red-dark));
     border-radius: 10px;
     padding: 14px 16px;
-    margin-bottom: 12px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -2904,14 +2903,14 @@
         MAX WEIGHT
       </button>
       <button id="chart-mode-volume" onclick="setChartMode('volume')"
-        style="flex:1; padding:8px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; cursor:pointer; border:1px solid var(--dark4); background:transparent; color:var(--gray);">
+        style="flex:1; padding:8px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:1px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--gray);">
         VOLUME
       </button>
     </div>
     <div class="progress-chart">
       <canvas id="progress-canvas" style="width:100%; display:block;"></canvas>
     </div>
-    <div id="overload-recommendation" style="margin-top:12px;"></div>
+    <div id="overload-recommendation"></div>
     <div id="progress-history-table" style="margin-top:12px;"></div>
   </div>
 
@@ -20693,12 +20692,12 @@ function setChartMode(mode) {
   const wBtn = document.getElementById('chart-mode-weight');
   const vBtn = document.getElementById('chart-mode-volume');
   if (wBtn) {
-    wBtn.style.borderColor = mode === 'weight' ? 'var(--red)' : 'var(--dark4)';
+    wBtn.style.borderColor = mode === 'weight' ? 'var(--red)' : 'rgba(255,255,255,0.15)';
     wBtn.style.background = mode === 'weight' ? 'rgba(204,32,39,0.15)' : 'transparent';
     wBtn.style.color = mode === 'weight' ? 'var(--cream)' : 'var(--gray)';
   }
   if (vBtn) {
-    vBtn.style.borderColor = mode === 'volume' ? 'var(--red)' : 'var(--dark4)';
+    vBtn.style.borderColor = mode === 'volume' ? 'var(--red)' : 'rgba(255,255,255,0.15)';
     vBtn.style.background = mode === 'volume' ? 'rgba(204,32,39,0.15)' : 'transparent';
     vBtn.style.color = mode === 'volume' ? 'var(--cream)' : 'var(--gray)';
   }
@@ -20835,68 +20834,16 @@ function renderProgressChart() {
     }
   });
 
-  // Overload recommendation — use last NON-travel session so travel weights
-  // don't trigger false progress or regression signals.
+  // Overload recommendation — volume mode only
   const _nonTravelPts = dataPoints.filter(p => !p.isTravel);
   const last = _nonTravelPts.length > 0 ? _nonTravelPts[_nonTravelPts.length - 1] : dataPoints[dataPoints.length - 1];
   const prev = _nonTravelPts.length > 1 ? _nonTravelPts[_nonTravelPts.length - 2] : dataPoints[dataPoints.length - 2];
   let recHTML = '';
-
-  // Goal-aware targets for this exercise
-  const _chartGoal = state.profile?.goal || 'both';
-  const _chartReps = GOAL_REPS[exId]?.[_chartGoal] || '8–12';
-  const _chartRepParts = _chartReps.split(/[–\-]/);
-  const _chartRepTop = parseInt(_chartRepParts[1] || _chartRepParts[0]) || 12;
   const _chartTargetSets = typeof getGoalSets === 'function' ? getGoalSets(exId, 3) : 3;
-  const _lastSets = last.setsCount || 0;
-  const _lastRPE  = last.avgRPE ? ` · avg RPE ${last.avgRPE.toFixed(1)}` : '';
 
-  if (chartMode === 'weight') {
+  if (chartMode === 'volume') {
     if (last.weight > prev.weight) {
-      const nextWeight = last.weight + getIncrement('small');
-      recHTML = `<div class="overload-badge">
-        <div class="overload-icon">🔥</div>
-        <div class="overload-text">
-          <strong>READY TO PROGRESS</strong>
-          Try ${nextWeight} lbs next session. Weight is moving. Keep it up.
-        </div>
-      </div>`;
-    } else if (last.setsCount != null && _lastSets < _chartTargetSets) {
-      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#1a1200,#2a2000)">
-        <div class="overload-icon">⚡</div>
-        <div class="overload-text">
-          <strong>COMPLETE YOUR SETS FIRST</strong>
-          You did ${_lastSets} of ${_chartTargetSets} sets last session. Finish all ${_chartTargetSets} sets before adding weight.
-        </div>
-      </div>`;
-    } else if (last.weight === prev.weight) {
-      const _lastReps = last.maxReps || 0;
-      const _repsLeft = _chartRepTop - _lastReps;
-      const _repsNote = _lastReps > 0
-        ? (_repsLeft > 0
-            ? `Last session: ${_lastReps} rep${_lastReps !== 1 ? 's' : ''}. ${_repsLeft} more to hit target.`
-            : `Last session: ${_lastReps} rep${_lastReps !== 1 ? 's' : ''}. Target reached. Bump the weight!`)
-        : '';
-      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#1a1200,#2a2000)">
-        <div class="overload-icon">⚡</div>
-        <div class="overload-text">
-          <strong>ADD REPS FIRST</strong>
-          Weight has held for 2+ sessions. Push to ${_chartRepTop} reps (your ${_chartReps} target). Once you hit it, increase the weight.
-          ${_repsNote ? `<br><span style="color:var(--gray-light);font-size:11px;opacity:0.85;">${_repsNote}</span>` : ''}
-        </div>
-      </div>`;
-    } else {
-      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#001a0a,#002a10)">
-        <div class="overload-icon">🛡️</div>
-        <div class="overload-text">
-          <strong>MAINTAIN & REFOCUS</strong>
-          Weight dipped. Rebuild to your ${_chartReps} rep target at this weight before pushing heavier.
-        </div>
-      </div>`;
-    }
-  } else {
-    if (last.weight > prev.weight) {
-      recHTML = `<div class="overload-badge">
+      recHTML = `<div class="overload-badge" style="margin-top:12px;">
         <div class="overload-icon">🔥</div>
         <div class="overload-text">
           <strong>VOLUME INCREASING</strong>
@@ -20904,7 +20851,7 @@ function renderProgressChart() {
         </div>
       </div>`;
     } else if (last.weight === prev.weight) {
-      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#1a1200,#2a2000)">
+      recHTML = `<div class="overload-badge" style="margin-top:12px;background:linear-gradient(135deg,#1a1200,#2a2000)">
         <div class="overload-icon">⚡</div>
         <div class="overload-text">
           <strong>VOLUME STABLE</strong>
@@ -20912,7 +20859,7 @@ function renderProgressChart() {
         </div>
       </div>`;
     } else {
-      recHTML = `<div class="overload-badge" style="background:linear-gradient(135deg,#001a0a,#002a10)">
+      recHTML = `<div class="overload-badge" style="margin-top:12px;background:linear-gradient(135deg,#001a0a,#002a10)">
         <div class="overload-icon">🛡️</div>
         <div class="overload-text">
           <strong>VOLUME DROPPED</strong>
@@ -20925,7 +20872,7 @@ function renderProgressChart() {
   document.getElementById('overload-recommendation').innerHTML = recHTML;
 
   // Recent sessions table
-  let tableHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;padding:0 2px;">Recent Sessions</div>';
+  let tableHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;padding:0 2px;">RECENT SESSIONS</div>';
   [...dataPoints].reverse().slice(0, 3).forEach(pt => {
     const val = chartMode === 'volume' ? `${Math.round(pt.weight).toLocaleString()} lbs` : `${pt.weight} lbs`;
     const dateStr = pt.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
