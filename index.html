@@ -22151,11 +22151,17 @@ function _saveGrowthWeighIn() {
   // Recalc growth estimate with updated weight trend (need ≥2 entries for a trend signal)
   if ((state.weightLog || []).length >= 2) recalcGrowthBalance();
   saveState();
-  // Re-render the stats tab to update the card
+  // Swap just the growth log card so dots + counter update without rebuilding the
+  // entire stats list (avoids scroll-position jumps and missed visual updates)
   _statsRenderKey = null;
-  renderHistory();
-  // Scroll to the top of the growth log card so dots + counter are visible
-  document.getElementById('growth-log-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const _existingCard = document.getElementById('growth-log-card');
+  if (_existingCard && _existingCard.parentNode) {
+    const _newCard = renderGrowthLogCard();
+    _existingCard.parentNode.replaceChild(_newCard, _existingCard);
+    _newCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    renderHistory();
+  }
 }
 
 function _dismissGrowthReveal() {
