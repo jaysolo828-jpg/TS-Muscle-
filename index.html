@@ -352,6 +352,25 @@
   }
   .active-cardio-btn svg { stroke: var(--red) !important; }
 
+  .cardio-rpe-btn {
+    background: var(--dark3);
+    border: 1px solid var(--dark4);
+    color: var(--gray);
+    border-radius: 8px;
+    flex: 1;
+    min-height: 36px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .cardio-rpe-btn.active {
+    background: rgba(46,204,113,0.15);
+    border-color: #2ecc71;
+    color: #2ecc71;
+  }
+
   .days-btn {
     aspect-ratio: 1; background: var(--dark3); border: 2px solid #333;
     color: var(--cream); border-radius: 12px; font-family: 'Bebas Neue', cursive;
@@ -3010,7 +3029,8 @@
 
   <!-- TIMER -->
   <div class="card" style="text-align:center; margin-bottom:16px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:8px;">COUNTDOWN TIMER</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:2px;">DURATION</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); margin-bottom:8px;">Use the timer <span style="opacity:0.6;">or just enter minutes manually to log a past session</span></div>
     <!-- Quick presets -->
     <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
       <button onclick="setTimerPreset(20)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px;">20 min</button>
@@ -3167,6 +3187,30 @@
     </div>
   </div>
 
+  <!-- RPE -->
+  <div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;">EFFORT (RPE)</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);opacity:0.6;">optional</div>
+    </div>
+    <div style="display:flex;gap:4px;">
+      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="1">1</button>
+      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="2">2</button>
+      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="3">3</button>
+      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="4">4</button>
+      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="5">5</button>
+      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="6">6</button>
+      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="7">7</button>
+      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="8">8</button>
+      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="9">9</button>
+      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="10">10</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:5px;">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">Easy</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">Max effort</span>
+    </div>
+  </div>
+
   <!-- SAVE BUTTON -->
   <button onclick="saveCardioSession()" style="width:100%; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:20px; letter-spacing:2px; cursor:pointer; margin-bottom:20px; box-shadow:0 4px 16px rgba(204,32,39,0.4);">SAVE CARDIO SESSION</button>
 
@@ -3187,6 +3231,7 @@
         <div class="stat-label">Calories</div>
       </div>
     </div>
+    <div id="cardio-week-breakdown" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);text-align:center;margin-top:6px;letter-spacing:0.3px;"></div>
   </div>
 
   <!-- CARDIO HISTORY -->
@@ -28732,6 +28777,13 @@ let cardioTimerInterval = null;
 let cardioTimerSeconds = 0;
 let cardioTimerRunning = false;
 let cardioTimerOriginal = 0;
+let _cardioRpe = null;
+
+function _setCardioRpe(btn) {
+  document.querySelectorAll('.cardio-rpe-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _cardioRpe = parseInt(btn.dataset.rpe);
+}
 
 function selectCardioType(type) {
   cardioType = type;
@@ -28819,6 +28871,7 @@ function resetCardioTimer() {
   clearInterval(cardioTimerInterval);
   cardioTimerRunning = false;
   cardioTimerSeconds = 0;
+  cardioTimerOriginal = 0;
   document.getElementById('timer-display').style.display = 'none';
   document.getElementById('timer-display').style.color = 'var(--cream)';
   document.getElementById('timer-mins').style.display = 'inline-block';
@@ -28911,9 +28964,11 @@ function saveCardioSession() {
     ? Math.round((cardioTimerOriginal - cardioTimerSeconds) / 60)
     : parseInt(document.getElementById('timer-mins').value) || 0;
 
+  const _cPfx = { treadmill: 'tm', outdoor: 'od', walk: 'wk', briskwalk: 'bw', jog: 'jg' }[cardioType] || 'od';
   let details = {};
   if (cardioType === 'treadmill') {
     details = {
+      weight: document.getElementById('tm-weight').value,
       speed: document.getElementById('tm-speed').value,
       incline: document.getElementById('tm-incline').value,
       distance: document.getElementById('tm-distance').value,
@@ -28921,13 +28976,14 @@ function saveCardioSession() {
       notes: document.getElementById('tm-notes').value,
     };
   } else {
-    const dist = parseFloat(document.getElementById('od-distance').value) || 0;
-    const pace = duration > 0 && dist > 0 ? (duration / dist) : 0;
+    const dist = parseFloat(document.getElementById(_cPfx + '-distance').value) || 0;
+    const pace = cardioType === 'outdoor' && duration > 0 && dist > 0 ? (duration / dist) : 0;
     details = {
-      distance: document.getElementById('od-distance').value,
-      calories: document.getElementById('od-calories').value,
-      pace: pace > 0 ? `${Math.floor(pace)}:${String(Math.round((pace % 1) * 60)).padStart(2,'0')}` : '--',
-      notes: document.getElementById('od-notes').value,
+      weight: document.getElementById(_cPfx + '-weight').value,
+      distance: document.getElementById(_cPfx + '-distance').value,
+      calories: document.getElementById(_cPfx + '-calories').value,
+      ...(cardioType === 'outdoor' ? { pace: pace > 0 ? `${Math.floor(pace)}:${String(Math.round((pace % 1) * 60)).padStart(2,'0')}` : '--' } : {}),
+      notes: document.getElementById(_cPfx + '-notes').value,
     };
   }
 
@@ -28935,6 +28991,7 @@ function saveCardioSession() {
     id: Date.now(),
     type: cardioType,
     duration,
+    rpe: _cardioRpe,
     date: new Date().toISOString(),
     details,
   };
@@ -28943,14 +29000,23 @@ function saveCardioSession() {
   state.cardioHistory.push(session);
   saveState();
   resetCardioTimer();
+  // Clear RPE selection
+  _cardioRpe = null;
+  document.querySelectorAll('.cardio-rpe-btn').forEach(b => b.classList.remove('active'));
   renderCardioHistory();
   showToast('Cardio session saved! 🔥');
 
-  // Clear inputs
+  // Clear inputs, then re-apply bodyweight pre-fill for convenience
   ['tm-speed','tm-incline','tm-distance','tm-calories','tm-notes','tm-weight','od-distance','od-calories','od-notes','od-weight','wk-distance','wk-calories','wk-notes','wk-weight','bw-distance','bw-calories','bw-notes','bw-weight','jg-distance','jg-calories','jg-notes','jg-weight'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  const _bwAfterSave = state.profile?.bodyweight;
+  if (_bwAfterSave) {
+    const _bwFields = { treadmill:'tm-weight', outdoor:'od-weight', walk:'wk-weight', briskwalk:'bw-weight', jog:'jg-weight' };
+    const _bwEl = document.getElementById(_bwFields[cardioType]);
+    if (_bwEl) _bwEl.value = _bwAfterSave;
+  }
 }
 
 function renderCardioWeeklySummary() {
@@ -28980,11 +29046,27 @@ function renderCardioWeeklySummary() {
   document.getElementById('cardio-week-sessions').textContent = thisWeek.length;
   document.getElementById('cardio-week-minutes').textContent = totalMins;
   document.getElementById('cardio-week-calories').textContent = Math.round(totalCal) || '—';
+
+  // Breakdown by activity type
+  const typeNames = { treadmill: 'Treadmill', outdoor: 'Outdoor run', walk: 'Walk', briskwalk: 'Brisk walk', jog: 'Jog' };
+  const counts = {};
+  thisWeek.forEach(s => { counts[s.type] = (counts[s.type] || 0) + 1; });
+  const breakdown = Object.entries(counts).map(([t, n]) => `${n} ${(typeNames[t] || t).toLowerCase()}${n > 1 ? 's' : ''}`).join(' · ');
+  const bdEl = document.getElementById('cardio-week-breakdown');
+  if (bdEl) bdEl.textContent = breakdown;
+
   summary.style.display = 'block';
 }
 
 function renderCardioHistory() {
   renderCardioWeeklySummary();
+  // Auto-fill bodyweight for the active type on every render (covers initial tab open)
+  const _bwPrefill = state.profile?.bodyweight;
+  if (_bwPrefill) {
+    const _bwMap = { treadmill:'tm-weight', outdoor:'od-weight', walk:'wk-weight', briskwalk:'bw-weight', jog:'jg-weight' };
+    const _bwField = document.getElementById(_bwMap[cardioType]);
+    if (_bwField && !_bwField.value) _bwField.value = _bwPrefill;
+  }
   const container = document.getElementById('cardio-history-list');
   if (!container) return;
   if (!state.cardioHistory || state.cardioHistory.length === 0) {
@@ -29000,7 +29082,8 @@ function renderCardioHistory() {
     const pace = s.details.pace && s.details.pace !== '--' ? `${s.details.pace}/mi` : '';
     const speed = s.details.speed ? `${s.details.speed} mph` : '';
     const incline = s.details.incline ? `${s.details.incline}% incline` : '';
-    const meta = [dist, cal, pace, speed, incline].filter(Boolean).join(' · ');
+    const rpeStr = s.rpe ? `RPE ${s.rpe}` : '';
+    const meta = [dist, cal, pace, speed, incline, rpeStr].filter(Boolean).join(' · ');
     return `<div class="history-item" style="cursor:default;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
       <div style="flex:1;min-width:0;">
         <div class="history-date">${date}</div>
