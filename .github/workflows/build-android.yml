@@ -26,7 +26,6 @@ jobs:
           KEYSTORE_PATH: /tmp/upload-keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          chmod +x gradlew 2>/dev/null || true
           wget -q https://services.gradle.org/distributions/gradle-7.6.3-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp
           /tmp/gradle-7.6.3/bin/gradle wrapper --gradle-version 7.6.3
