@@ -21834,6 +21834,7 @@ function _toggleScoreInfo(btn) {
 function renderGrowthLogCard() {
   const card = document.createElement('div');
   card.className = 'ts-growth-card';
+  card.id = 'growth-log-card';
 
   const enabled = !!state.growthTrackingEnabled;
   const weighIns = (state.weightLog || []).length;
@@ -22126,6 +22127,8 @@ function _saveGrowthWeighIn() {
   // Re-render the stats tab to update the card
   _statsRenderKey = null;
   renderHistory();
+  // Scroll to the top of the growth log card so dots + counter are visible
+  document.getElementById('growth-log-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function _dismissGrowthReveal() {
