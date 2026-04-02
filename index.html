@@ -22138,11 +22138,13 @@ function _saveGrowthWeighIn() {
   if (existingIdx >= 0) {
     state.weightLog[existingIdx].weight = wVal;
     state.weightLog[existingIdx].date = new Date().toISOString();
-    showToast(wVal + ' lbs updated');
+    const _wCount = state.weightLog.length;
+    showToast(_wCount >= 3 ? wVal + ' lbs updated' : wVal + ' lbs updated (' + _wCount + '/3)');
   } else {
     state.weightLog.push({ weight: wVal, date: new Date().toISOString() });
     if (state.weightLog.length > 200) state.weightLog = state.weightLog.slice(-200);
-    showToast(wVal + ' lbs saved');
+    const _wCount = state.weightLog.length;
+    showToast(_wCount >= 3 ? wVal + ' lbs saved' : wVal + ' lbs saved (' + _wCount + '/3)');
   }
 
   // Update profile bodyweight to keep it current
@@ -22151,16 +22153,21 @@ function _saveGrowthWeighIn() {
   // Recalc growth estimate with updated weight trend (need ≥2 entries for a trend signal)
   if ((state.weightLog || []).length >= 2) recalcGrowthBalance();
   saveState();
-  // Swap just the growth log card so dots + counter update without rebuilding the
-  // entire stats list (avoids scroll-position jumps and missed visual updates)
+  // Update the growth log card in-place so dots + counter reflect the new state.
+  // We mutate the existing card's innerHTML directly (rather than replaceChild) so the
+  // DOM node stays put and getElementById always finds it on subsequent saves.
   _statsRenderKey = null;
   const _existingCard = document.getElementById('growth-log-card');
-  if (_existingCard && _existingCard.parentNode) {
+  if (_existingCard) {
     const _newCard = renderGrowthLogCard();
-    _existingCard.parentNode.replaceChild(_newCard, _existingCard);
-    _newCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    _existingCard.innerHTML = _newCard.innerHTML;
+    _existingCard.setAttribute('data-state', _newCard.getAttribute('data-state') || 'inactive');
+    _existingCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } else {
     renderHistory();
+    requestAnimationFrame(() => {
+      document.getElementById('growth-log-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
   }
 }
 
