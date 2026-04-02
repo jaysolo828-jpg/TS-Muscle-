@@ -22098,7 +22098,7 @@ function _buildGrowthWeighInRow() {
 
   const btnLabel = thisWeekEntry ? 'UPDATE' : 'SAVE';
   const hint = thisWeekEntry
-    ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Logged this week (' + displayEntry.weight + ' lbs). Edit and tap update to correct it.</div>'
+    ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Logged ' + new Date(displayEntry.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' \xb7 ' + displayEntry.weight + ' lbs. Edit and tap update to correct it.</div>'
     : (displayEntry
       ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Last: ' + displayEntry.weight + ' lbs \xb7 ' + lastLabel + ' \xb7 New week = new check-in.</div>'
       : '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">One weigh-in per week counts toward unlocking your estimate.</div>');
