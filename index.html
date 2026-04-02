@@ -19650,7 +19650,8 @@ function renderHistoryItem(entry, container, insertBefore) {
 let _statsRenderKey = null;
 function _getStatsKey() {
   const h = state.history || [];
-  return `v3|${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}|${state.strengthScore ?? ''}|${state.growthBalance ?? ''}|${state.growthTrackingEnabled ? '1' : '0'}|${(state.weightLog || []).length}`;
+  const lastW = (state.weightLog || []).slice(-1)[0];
+  return `v3|${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}|${state.strengthScore ?? ''}|${state.growthBalance ?? ''}|${state.growthTrackingEnabled ? '1' : '0'}|${(state.weightLog || []).length}|${lastW?.date || ''}`;
 }
 
 function renderHistory() {
@@ -22058,20 +22059,22 @@ function _buildGrowthPath(snaps) {
 
 // Compact weigh-in row for the Growth Log card (stats tab)
 function _buildGrowthWeighInRow() {
-  const lastWeighin = (state.weightLog || []).slice(-1)[0];
-  const lastLabel = lastWeighin ? _timeAgoShort(lastWeighin.date) : '';
-  const prefill = lastWeighin ? lastWeighin.weight : '';
-
-  // If there's a recent entry (this week), show it as editable with an update button
+  // If there's a recent entry (this week), show it as editable with an update button.
+  // Use the same findIndex logic as _saveGrowthWeighIn so button label always matches save behaviour.
   const now = new Date();
   const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
-  const thisWeekEntry = lastWeighin && new Date(lastWeighin.date).getTime() >= startOfWeek.getTime();
+  const wLog = state.weightLog || [];
+  const thisWeekIdx = wLog.findIndex(w => new Date(w.date).getTime() >= startOfWeek.getTime());
+  const thisWeekEntry = thisWeekIdx >= 0;
+  const displayEntry = thisWeekEntry ? wLog[thisWeekIdx] : wLog.slice(-1)[0];
+  const lastLabel = displayEntry ? _timeAgoShort(displayEntry.date) : '';
+  const prefill = displayEntry ? displayEntry.weight : '';
 
   const btnLabel = thisWeekEntry ? 'UPDATE' : 'SAVE';
   const hint = thisWeekEntry
     ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Logged ' + lastLabel + '. Edit and tap update to correct it.</div>'
-    : (lastWeighin
-      ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Last: ' + lastWeighin.weight + ' lbs \xb7 ' + lastLabel + '</div>'
+    : (displayEntry
+      ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Last: ' + displayEntry.weight + ' lbs \xb7 ' + lastLabel + '</div>'
       : '');
 
   return `
