@@ -19,9 +19,9 @@ jobs:
 
       - name: Download Gradle 8.6
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.6-bin.zip -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /tmp/gradle
-          echo "/tmp/gradle/gradle-8.6/bin" >> $GITHUB_PATH
+          wget https://services.gradle.org/distributions/gradle-8.6-bin.zip -O /tmp/gradle.zip
+          unzip /tmp/gradle.zip -d /tmp/gradle
+          /tmp/gradle/gradle-8.6/bin/gradle --version
 
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/upload-keystore.jks
@@ -34,7 +34,7 @@ jobs:
         run: |
           echo "android.useAndroidX=true" > gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
-          gradle bundleRelease --no-daemon
+          /tmp/gradle/gradle-8.6/bin/gradle bundleRelease --no-daemon
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
