@@ -22150,6 +22150,8 @@ function _saveGrowthWeighIn() {
   // Update profile bodyweight to keep it current
   if (!state.profile) state.profile = {};
   state.profile.bodyweight = wVal;
+  const _bwSub = document.getElementById('bw-settings-sub');
+  if (_bwSub) _bwSub.textContent = wVal + ' lbs';
   // Recalc growth estimate with updated weight trend (need ≥2 entries for a trend signal)
   if ((state.weightLog || []).length >= 2) recalcGrowthBalance();
   saveState();
