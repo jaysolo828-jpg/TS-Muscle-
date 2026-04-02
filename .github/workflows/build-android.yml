@@ -17,13 +17,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/upload-keystore.jks
-
       - name: Build release AAB
         working-directory: android
         env:
-          KEYSTORE_PATH: /tmp/upload-keystore.jks
+          KEYSTORE_PATH: ${{ github.workspace }}/signing.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           wget -q https://services.gradle.org/distributions/gradle-7.6.3-bin.zip -O /tmp/gradle.zip
