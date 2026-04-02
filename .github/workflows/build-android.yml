@@ -17,6 +17,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: List keystore aliases
+        run: keytool -list -keystore "${{ github.workspace }}/signing.keystore" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" -v 2>&1 | grep -i "alias"
+
       - name: Build release AAB
         working-directory: android
         env:
