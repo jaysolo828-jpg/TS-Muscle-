@@ -21227,6 +21227,30 @@ function _growthConsistencyMult() {
   return 0.05;
 }
 
+// Body weight trend from weightLog — proxy for caloric balance
+// Returns lbs/week rate of change, or null if insufficient data
+function _growthWeightTrend() {
+  const wLog = state.weightLog || [];
+  if (wLog.length < 2) return null;
+  const entries = wLog.slice(-12); // up to ~3 months of weekly data
+  const oldest = entries[0];
+  const newest = entries[entries.length - 1];
+  const weeksDiff = (new Date(newest.date).getTime() - new Date(oldest.date).getTime()) / (7 * 86400000);
+  if (weeksDiff < 1) return null;
+  return (newest.weight - oldest.weight) / weeksDiff;
+}
+
+// Caloric balance signal: gaining weight = surplus = more muscle possible; losing = deficit = less
+function _growthWeightTrendMult() {
+  const trend = _growthWeightTrend();
+  if (trend === null) return 1.0; // no trend data yet → neutral
+  if (trend > 0.75)  return 1.10; // aggressive bulk
+  if (trend > 0.25)  return 1.05; // moderate bulk / lean gain
+  if (trend >= -0.1) return 1.00; // maintenance / slight surplus
+  if (trend >= -0.5) return 0.85; // mild cut
+  return 0.65;                     // aggressive cut
+}
+
 // Real-world discount: no nutrition/sleep tracking → conservative
 const GROWTH_REALWORLD_DISCOUNT = 0.75;
 
@@ -21239,7 +21263,8 @@ function _growthMonthlyRate() {
   const sexMult = GROWTH_SEX_MULT[sex] || 0.77;
   const ageMult = _growthAgeMult(age, sex);
   const consistMult = _growthConsistencyMult();
-  return GROWTH_BASE_RATE * expMult * sexMult * ageMult * consistMult * GROWTH_REALWORLD_DISCOUNT;
+  const weightMult = _growthWeightTrendMult();
+  return GROWTH_BASE_RATE * expMult * sexMult * ageMult * consistMult * weightMult * GROWTH_REALWORLD_DISCOUNT;
 }
 
 // Compute average e1RM % change over recent history for strength trend signal
@@ -21834,6 +21859,7 @@ function _toggleScoreInfo(btn) {
 function renderGrowthLogCard() {
   const card = document.createElement('div');
   card.className = 'ts-growth-card';
+  card.id = 'growth-log-card';
 
   const enabled = !!state.growthTrackingEnabled;
   const weighIns = (state.weightLog || []).length;
@@ -22122,10 +22148,14 @@ function _saveGrowthWeighIn() {
   // Update profile bodyweight to keep it current
   if (!state.profile) state.profile = {};
   state.profile.bodyweight = wVal;
+  // Recalc growth estimate with updated weight trend (need ≥2 entries for a trend signal)
+  if ((state.weightLog || []).length >= 2) recalcGrowthBalance();
   saveState();
   // Re-render the stats tab to update the card
   _statsRenderKey = null;
   renderHistory();
+  // Scroll to the top of the growth log card so dots + counter are visible
+  document.getElementById('growth-log-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function _dismissGrowthReveal() {
