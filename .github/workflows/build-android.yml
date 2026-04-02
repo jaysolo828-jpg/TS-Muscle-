@@ -17,18 +17,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: List keystore aliases
-        run: keytool -list -keystore "${{ github.workspace }}/signing.keystore" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" -v 2>&1 | grep -i "alias"
-
       - name: Build release AAB
         working-directory: android
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/signing.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-7.6.3-bin.zip -O /tmp/gradle.zip
+          wget -q https://services.gradle.org/distributions/gradle-8.6-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp
-          /tmp/gradle-7.6.3/bin/gradle wrapper --gradle-version 7.6.3
+          printf 'android.useAndroidX=true\nandroid.enableJetifier=true\n' > gradle.properties
+          /tmp/gradle-8.6/bin/gradle wrapper --gradle-version 8.6
           chmod +x gradlew
           ./gradlew bundleRelease --no-daemon
 
