@@ -36,7 +36,7 @@ jobs:
         env:
           KEYSTORE_PATH: /tmp/upload-keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: gradle bundleRelease
+        run: gradle bundleRelease -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
