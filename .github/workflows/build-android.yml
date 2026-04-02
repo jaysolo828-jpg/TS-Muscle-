@@ -8,76 +8,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
-
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/upload-keystore.jks
 
-      - name: Configure Bubblewrap
-        run: |
-          mkdir -p ~/.bubblewrap
-          echo "{\"jdkPath\": \"$JAVA_HOME\", \"androidSdkPath\": \"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
-          echo "JDK: $JAVA_HOME"
-          echo "SDK: $ANDROID_SDK_ROOT"
-          ls $ANDROID_SDK_ROOT
+      - name: Make gradlew executable
+        run: cd android && gradle wrapper && chmod +x gradlew
 
-      - name: Accept SDK licenses
-        run: yes | sdkmanager --licenses > /dev/null 2>&1 || true
-
-      - name: Create twa-manifest.json
-        run: |
-          cat > twa-manifest.json << 'EOF'
-          {
-            "packageId": "io.github.jaysolo828_jpg.twa",
-            "host": "app.therapyandsneakers.org",
-            "name": "T&S Muscle",
-            "launcherName": "T&S Muscle",
-            "display": "standalone",
-            "orientation": "portrait",
-            "themeColor": "#0a0a0a",
-            "backgroundColor": "#0a0a0a",
-            "startUrl": "/",
-            "iconUrl": "https://app.therapyandsneakers.org/icon-192.png",
-            "maskableIconUrl": "https://app.therapyandsneakers.org/icon-192.png",
-            "appVersion": "2",
-            "appVersionName": "1.0.0.1",
-            "signingKey": {
-              "path": "/tmp/upload-keystore.jks",
-              "alias": "upload-key"
-            },
-            "features": {
-              "playBilling": {
-                "enabled": true
-              }
-            },
-            "enableNotifications": false,
-            "fallbackType": "customtabs"
-          }
-          EOF
-
-      - name: Build AAB with Bubblewrap
+      - name: Build release AAB
+        working-directory: android
         env:
+          KEYSTORE_PATH: /tmp/upload-keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: |
-          bubblewrap build \
-            --skipPwaValidation \
-            --manifest twa-manifest.json \
-            --signingKeyPassword "$KEYSTORE_PASSWORD" \
-            --signingKeyStorePassword "$KEYSTORE_PASSWORD"
+        run: ./gradlew bundleRelease
 
-      - name: Upload AAB artifact
+      - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: ts-muscle-android
-          path: |
-            app-release-bundle.aab
-            app-release.apk
-          if-no-files-found: warn
+          path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
