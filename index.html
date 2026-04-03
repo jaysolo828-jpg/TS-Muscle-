@@ -7776,6 +7776,7 @@ async function _checkSupabaseSession() {
       _updateSupabaseAuthCard();
       _swStoreUserId(session.user.id);
       _requestNotificationPermission();
+      if (window._fcmToken) _saveFcmToken(window._fcmToken);
       // Refresh display name from DB so notifications show username not email
       sb.from('users').select('username, avatar_url').eq('id', session.user.id).single()
         .then(function(res) {
@@ -8773,17 +8774,16 @@ async function _savePushSubscription(endpoint, keys) {
   if (!sb) return;
   var ua = (navigator.userAgent || '').toLowerCase();
   var platform = /android/.test(ua) ? 'android' : /iphone|ipad|ipod/.test(ua) ? 'ios' : 'web';
-  await sb.from('onesignal_subscriptions').upsert(
-    {
-      user_id: state.supabaseUserId,
-      onesignal_player_id: endpoint,
-      push_endpoint: endpoint,
-      push_p256dh: keys.p256dh,
-      push_auth: keys.auth,
-      platform
-    },
-    { onConflict: 'user_id,platform' }
-  );
+  var row = {
+    user_id: state.supabaseUserId,
+    onesignal_player_id: endpoint,
+    push_endpoint: endpoint,
+    push_p256dh: keys.p256dh,
+    push_auth: keys.auth,
+    platform
+  };
+  if (platform === 'android' && window._fcmToken) row.fcm_token = window._fcmToken;
+  await sb.from('onesignal_subscriptions').upsert(row, { onConflict: 'user_id,platform' });
 }
 
 // Store the signed-in user's Supabase ID in IndexedDB so the service worker
@@ -24795,18 +24795,21 @@ if (navigator.storage && navigator.storage.persist) {
 // ── FCM token: Android TWA passes it as ?fcm_token=... on launch ──
 (function() {
   var token = new URLSearchParams(location.search).get('fcm_token');
-  if (token) _saveFcmToken(token);
+  if (token) { window._fcmToken = token; _saveFcmToken(token); }
 })();
 
 async function _saveFcmToken(token) {
-  if (!token || !state.supabaseUserId) return;
+  if (!token) return;
+  window._fcmToken = token;
+  if (!state.supabaseUserId) return; // retried from _checkSupabaseSession and _savePushSubscription
   try {
     var sb = _getSupabaseClient();
     if (!sb) return;
-    await sb.from('onesignal_subscriptions').upsert(
-      { user_id: state.supabaseUserId, fcm_token: token },
-      { onConflict: 'user_id' }
-    );
+    // Just update the fcm_token on the existing android row — don't touch push subscription fields
+    await sb.from('onesignal_subscriptions')
+      .update({ fcm_token: token })
+      .eq('user_id', state.supabaseUserId)
+      .eq('platform', 'android');
   } catch(e) {}
 }
 
