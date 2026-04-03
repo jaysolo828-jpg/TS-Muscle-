@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v221';
+const CACHE_NAME = 'ts-muscle-v222';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './badge-dumbbell.png', './manifest.json'];
 
@@ -48,7 +48,7 @@ self.addEventListener('push', function(event) {
       var options = {
         body: data.body || '',
         icon: resolvedIcon,
-        badge: 'https://app.therapyandsneakers.org/icon-192.png',
+        badge: undefined,
         data: data.data || {},
         requireInteraction: false,
       };
