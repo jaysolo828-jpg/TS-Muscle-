@@ -42,7 +42,17 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val largeIcon = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
+        val avatarUrl = message.data["avatar_url"]
+        val largeIcon = try {
+            if (!avatarUrl.isNullOrEmpty()) {
+                val stream = java.net.URL(avatarUrl).openStream()
+                BitmapFactory.decodeStream(stream)
+            } else {
+                BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
+            }
+        } catch (e: Exception) {
+            BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
+        }
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_icon)
