@@ -37,8 +37,8 @@ self.addEventListener('push', function(event) {
   var title = data.title || 'T&S Muscle';
   var options = {
     body: data.body || '',
-    icon: data.icon || undefined,
-    badge: undefined,
+    icon: data.icon || 'https://app.therapyandsneakers.org/icon-192.png',
+    badge: 'https://app.therapyandsneakers.org/badge-dumbbell.png',
     data: data.data || {},
     requireInteraction: false,
   };
