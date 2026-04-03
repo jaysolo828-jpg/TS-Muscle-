@@ -212,6 +212,7 @@ Deno.serve(async (req) => {
   const extraData: Record<string, string> = {};
   if (sid)        extraData.signal_id  = sid;
   if (uid||to_uid) extraData.to_user_id = uid || to_uid || '';
+  if (avatar_url) extraData.avatar_url  = avatar_url;
 
   // Get FCM access token once (if any subs have FCM tokens)
   const hasFcm = subs.some(s => s.fcm_token);
