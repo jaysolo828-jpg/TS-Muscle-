@@ -8544,21 +8544,14 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
 
   // Send push notification
   try {
-    const { data: sub } = await sb.from('onesignal_subscriptions')
-      .select('push_endpoint, push_p256dh, push_auth')
-      .eq('user_id', toUserId)
-      .not('push_endpoint', 'is', null)
-      .limit(1)
-      .single();
-    if (sub?.push_endpoint) {
-      const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
-      const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
-      const _emoji = _rxnEmoji[reactionType] || reactionType;
-      var _rxnSb = _getSupabaseClient();
-      _rxnSb.functions.invoke('smooth-service', {
-        body: { to_uid: toUserId, title: fromName + ' reacted to your workout', body: 'They gave you a ' + _emoji }
-      }).catch(function() {});
-    }
+    const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+    const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
+    const _emoji = _rxnEmoji[reactionType] || reactionType;
+    fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/smooth-service', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
+      body: JSON.stringify({ to_uid: toUserId, title: fromName + ' reacted to your workout', body: 'They gave you a ' + _emoji })
+    }).catch(function() {});
   } catch (e) {}
 }
 
