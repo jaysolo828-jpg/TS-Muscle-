@@ -48,7 +48,7 @@ self.addEventListener('push', function(event) {
       var options = {
         body: data.body || '',
         icon: resolvedIcon,
-        badge: 'https://app.therapyandsneakers.org/badge-icon.png',
+        badge: 'https://app.therapyandsneakers.org/icon-192.png',
         data: data.data || {},
         requireInteraction: false,
       };
