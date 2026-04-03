@@ -24807,12 +24807,14 @@ async function _saveFcmToken(token) {
     if (!sb) return;
     // Upsert the android row — inserts if no android row exists yet, updates fcm_token otherwise.
     // onesignal_player_id is nullable (migration 006) so FCM-only rows don't need it.
-    await sb.from('onesignal_subscriptions')
+    const { error } = await sb.from('onesignal_subscriptions')
       .upsert(
         { user_id: state.supabaseUserId, platform: 'android', fcm_token: token },
         { onConflict: 'user_id,platform' }
       );
-  } catch(e) {}
+    if (error) console.error('[FCM] save failed:', error.message, error.details);
+    else console.log('[FCM] token saved for user', state.supabaseUserId);
+  } catch(e) { console.error('[FCM] save exception:', e); }
 }
 
 // ── Debug: fire a test notification immediately via ?notif-debug ──
