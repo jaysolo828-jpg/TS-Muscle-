@@ -8232,8 +8232,12 @@ async function _doFriendSearch(query) {
 async function _sendFriendRequest(addresseeId, btn) {
   const sb = _getSupabaseClient();
   if (!sb) return;
-  if (btn) { btn.disabled = true; btn.textContent = '...'; }
   const myId = state.supabaseUserId;
+  if (!myId) {
+    showToast('Sign in to send friend requests.');
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
 
   // Remove any stale declined/pending row in either direction before inserting
   await Promise.all([
@@ -8308,20 +8312,11 @@ async function _acceptFriendRequest(friendshipId, btn) {
 }
 
 async function _declineFriendRequest(friendshipId, btn) {
+  const sb = _getSupabaseClient();
+  if (!sb) return;
   if (btn) btn.disabled = true;
-  const supabaseUrl = window.SUPABASE_URL || '';
-  const anonKey    = window.SUPABASE_PUBLISHABLE_KEY || '';
-  const jwt = await _getJwt();
-  if (!jwt || !supabaseUrl) {
-    if (btn) btn.disabled = false;
-    showToast('Could not decline. Try again.');
-    return;
-  }
-  const res = await fetch(`${supabaseUrl}/rest/v1/friendships?id=eq.${friendshipId}`, {
-    method: 'DELETE',
-    headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' },
-  });
-  if (!res.ok) {
+  const { error } = await sb.from('friendships').delete().eq('id', friendshipId);
+  if (error) {
     if (btn) btn.disabled = false;
     showToast('Could not decline. Try again.');
     return;
