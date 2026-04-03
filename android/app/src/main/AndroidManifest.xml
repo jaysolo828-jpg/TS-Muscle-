@@ -16,7 +16,8 @@
     <application
         android:label="@string/appName"
         android:icon="@mipmap/ic_launcher"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
 
         <activity
             android:name=".MainActivity"
