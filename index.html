@@ -24805,11 +24805,13 @@ async function _saveFcmToken(token) {
   try {
     var sb = _getSupabaseClient();
     if (!sb) return;
-    // Just update the fcm_token on the existing android row — don't touch push subscription fields
+    // Upsert the android row — inserts if no android row exists yet, updates fcm_token otherwise.
+    // onesignal_player_id is nullable (migration 006) so FCM-only rows don't need it.
     await sb.from('onesignal_subscriptions')
-      .update({ fcm_token: token })
-      .eq('user_id', state.supabaseUserId)
-      .eq('platform', 'android');
+      .upsert(
+        { user_id: state.supabaseUserId, platform: 'android', fcm_token: token },
+        { onConflict: 'user_id,platform' }
+      );
   } catch(e) {}
 }
 
