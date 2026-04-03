@@ -8757,12 +8757,17 @@ async function _registerOneSignalPlayerId() {
     if (!vapidKey) { showToast('Push not configured — contact support'); return; }
 
     var existing = await reg.pushManager.getSubscription();
-    if (existing) await existing.unsubscribe();
+    if (existing) {
+      // Already subscribed — just re-save to DB in case it got out of sync. Don't unsubscribe.
+      var existingJson = existing.toJSON();
+      await _savePushSubscription(existing.endpoint, existingJson.keys);
+      _applyNotifToggleUI();
+      return;
+    }
 
     var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
     var subJson = sub.toJSON();
     await _savePushSubscription(sub.endpoint, subJson.keys);
-    // showToast('Notifications enabled'); // suppressed for diagnostics
     _applyNotifToggleUI();
   } catch(e) {
     showToast('Could not enable notifications — try again');
