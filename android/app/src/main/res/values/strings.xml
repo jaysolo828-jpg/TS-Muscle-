@@ -4,4 +4,5 @@
     <string name="launchUrl">https://app.therapyandsneakers.org</string>
     <bool name="enableNotificationDelegation">true</bool>
     <string name="notificationChannelName">T&amp;S Muscle</string>
+    <drawable name="notificationSmallIcon">@drawable/notification_icon</drawable>
 </resources>
