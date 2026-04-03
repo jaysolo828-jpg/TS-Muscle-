@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v213';
+const CACHE_NAME = 'ts-muscle-v215';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './badge-dumbbell.png', './manifest.json'];
 
@@ -30,22 +30,34 @@ self.addEventListener('activate', e => {
 });
 
 // Display incoming push notifications.
+// Pre-fetch the avatar icon so we can fall back to the app logo if the URL fails to load.
 self.addEventListener('push', function(event) {
   if (!event.data) return;
   var data = {};
   try { data = event.data.json(); } catch(e) { data = { title: event.data.text(), body: '' }; }
   var title = data.title || 'T&S Muscle';
-  var options = {
-    body: data.body || '',
-    icon: 'https://app.therapyandsneakers.org/icon-192.png',
-    badge: undefined,
-    data: data.data || {},
-    requireInteraction: false,
-  };
-  if (data.data && data.data.signal_id) {
-    options.actions = [{ action: 'thumbs_up', title: '👍 Nice work' }];
-  }
-  event.waitUntil(self.registration.showNotification(title, options));
+  var fallbackIcon = 'https://app.therapyandsneakers.org/icon-192.png';
+  var avatarUrl    = data.icon || null;
+
+  var iconPromise = avatarUrl
+    ? fetch(avatarUrl).then(function(r) { return r.ok ? avatarUrl : fallbackIcon; }).catch(function() { return fallbackIcon; })
+    : Promise.resolve(fallbackIcon);
+
+  event.waitUntil(
+    iconPromise.then(function(resolvedIcon) {
+      var options = {
+        body: data.body || '',
+        icon: resolvedIcon,
+        badge: undefined,
+        data: data.data || {},
+        requireInteraction: false,
+      };
+      if (data.data && data.data.signal_id) {
+        options.actions = [{ action: 'thumbs_up', title: '👍 Nice work' }];
+      }
+      return self.registration.showNotification(title, options);
+    })
+  );
 });
 
 // Handle notification action button taps.
