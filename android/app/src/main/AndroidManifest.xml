@@ -57,6 +57,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity" />
+
         <service
             android:name="com.google.androidbrowserhelper.trusted.DelegationService"
             android:exported="true"
