@@ -2,9 +2,9 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "io.github.jaysolo828_jpg",
+    "package_name": "io.github.jaysolo828_jpg.twa",
     "sha256_cert_fingerprints": [
-      "4D:C2:D2:BA:E9:39:6A:13:9C:53:A9:39:C3:CA:C5:35:B7:E5:54:05:C8:D8:02:EE:42:79:23:01:0C:98:6D:B6"
+      "E3:76:67:C3:5C:E4:4C:F2:8F:71:49:AD:CA:2B:D8:62:01:D4:81:44:F5:5C:CC:74:73:D0:0C:3A:CD:BB:49:DA"
     ]
   }
 }]
