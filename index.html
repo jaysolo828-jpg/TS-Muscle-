@@ -8686,15 +8686,6 @@ async function _requestNotificationPermission() {
   if (!('Notification' in window) || !('PushManager' in window)) return;
   if (Notification.permission === 'denied') return;
   if (Notification.permission === 'granted') {
-    // Re-call requestPermission() once per app version to activate TWA delegation.
-    // In a TWA, Chrome only runs the delegation check when requestPermission() is
-    // explicitly called. We gate it on a version key so it fires once on install,
-    // not on every page load (which broke delegation on already-delegated devices).
-    var delegationKey = 'twa_delegation_v20';
-    if (!localStorage.getItem(delegationKey)) {
-      localStorage.setItem(delegationKey, '1');
-      await Notification.requestPermission().catch(function() {});
-    }
     _registerOneSignalPlayerId();
     return;
   }
