@@ -8600,7 +8600,7 @@ async function _sendWorkoutSignal(dayName) {
         signalId,
         state.supabaseAvatarUrl || null
       );
-    }, 5 * 60 * 1000);
+    }, 0);
   } catch(e) {}
 }
 
