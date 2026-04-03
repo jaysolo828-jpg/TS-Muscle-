@@ -7367,10 +7367,6 @@ function _updateSettingsAccountSection() {
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Sign Out</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
-        <div class="settings-item" onclick="_sendDebugNotification()" style="cursor:pointer;">
-          <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Send Test Notification</div><div style="font-family:'Barlow',sans-serif;font-size:11px;color:#555;">Tap to fire a test — check if left icon is app logo</div></div>
-          <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
-        </div>
         <div class="settings-item" onclick="supabaseDeleteAccount()">
           <div><div class="settings-label" style="color:#e74c3c;font-size:14px;">Delete Account</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="#e74c3c" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -8685,18 +8681,6 @@ async function _notifyFriends(title, body, signalId, avatarUrl) {
 
 // ── Push Notifications (direct web push, no third-party SDK) ───────────────
 
-// Called on sign-in if permission already granted, to refresh the subscription.
-function _sendDebugNotification() {
-  if (!('serviceWorker' in navigator)) { showToast('Service worker not available'); return; }
-  navigator.serviceWorker.ready.then(function(reg) {
-    if (reg.active) {
-      reg.active.postMessage({ type: 'DEBUG_NOTIFY' });
-      showToast('Test notification sent — check your shade');
-    } else {
-      showToast('Service worker not active yet — try again');
-    }
-  }).catch(function() { showToast('Could not reach service worker'); });
-}
 
 async function _requestNotificationPermission() {
   if (!('Notification' in window) || !('PushManager' in window)) return;
@@ -24815,12 +24799,6 @@ async function _saveFcmToken(token) {
   } catch(e) { console.error('[FCM] save exception:', e); }
 }
 
-// ── Debug: fire a test notification immediately via ?notif-debug ──
-if (location.search.includes('notif-debug') && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.ready.then(function(reg) {
-    if (reg.active) reg.active.postMessage({ type: 'DEBUG_NOTIFY' });
-  }).catch(function() {});
-}
 
 // iOS standalone PWA: scroll focused inputs into view after keyboard opens
 document.addEventListener('focusin', function(e) {
