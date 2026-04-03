@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v207';
+const CACHE_NAME = 'ts-muscle-v208';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './manifest.json'];
 
@@ -87,13 +87,16 @@ self.addEventListener('notificationclick', function(event) {
     return; // Do not open the app window for this action
   }
 
-  // Default tap — focus or open the app
+  // Default tap — focus existing window or open the TWA/app
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(cs) {
-      var c = cs.find(function(x) { return 'focus' in x; });
+      // Prefer a window already on our origin
+      var c = cs.find(function(x) { return x.url.startsWith(_SW_BASE) && 'focus' in x; });
+      if (!c) c = cs.find(function(x) { return 'focus' in x; });
       if (c) return c.focus();
-      return clients.openWindow(_SW_BASE);
+      // openWindow with the exact launch URL so Android routes it to the TWA
+      return clients.openWindow('https://app.therapyandsneakers.org/');
     })
   );
 });
