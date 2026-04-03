@@ -41,10 +41,6 @@
                 android:name="android.support.customtabs.trusted.NAVIGATION_BAR_COLOR_DARK"
                 android:resource="@color/navigationBarColor" />
 
-            <meta-data
-                android:name="android.support.customtabs.trusted.NOTIFICATION_DELEGATION_ENABLED"
-                android:value="true" />
-
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -64,6 +60,11 @@
             android:name="com.google.androidbrowserhelper.trusted.DelegationService"
             android:exported="true"
             android:enabled="true">
+
+            <meta-data
+                android:name="android.support.customtabs.trusted.SMALL_ICON"
+                android:resource="@drawable/ic_notification_icon" />
+
             <intent-filter>
                 <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
                 <category android:name="android.intent.category.DEFAULT" />
