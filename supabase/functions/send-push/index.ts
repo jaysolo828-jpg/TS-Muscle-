@@ -131,15 +131,8 @@ async function sendFcm(
       body: JSON.stringify({
         message: {
           token: fcmToken,
-          notification: { title, body },
-          android: {
-            notification: {
-              icon:       'ic_notification_icon',
-              channel_id: 'ts_muscle_workouts',
-              color:      '#C0392B',
-            },
-          },
-          data,
+          android: { priority: 'high' },
+          data: { ...data, title, body },
         },
       }),
     }
