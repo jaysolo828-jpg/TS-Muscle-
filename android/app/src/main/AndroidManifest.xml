@@ -57,6 +57,7 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="com.google.androidbrowserhelper.trusted.FocusActivity" />
         <activity android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity" />
 
         <service
