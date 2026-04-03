@@ -23629,7 +23629,9 @@ function sendFeedback() {
 
 function exportData() {
   const data = JSON.stringify(state, null, 2);
-  const filename = 'ts-muscle-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  const d = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const filename = 'TS Muscle Backup - ' + months[d.getMonth()] + ' ' + d.getDate() + ' ' + d.getFullYear() + '.backup';
 
   function markBackupDone() {
     state.lastBackupDate = Date.now();
@@ -25841,7 +25843,7 @@ function handleImportOnboarding(e) {
         : 'Your data has been restored.';
       showToast(`${who} ${detail} ✓`);
     } catch(err) {
-      showToast('Could not read that file. Make sure it\'s a T&S Muscle backup (.json).', 'error');
+      showToast('Could not read that file. Make sure it\'s a T&S Muscle backup file.', 'error');
       e.target.value = '';
     }
   };
