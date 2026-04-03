@@ -8,7 +8,7 @@ android {
         applicationId 'io.github.jaysolo828_jpg.twa'
         minSdk 21
         targetSdk 35
-        versionCode 8
+        versionCode 9
         versionName '1.0.0.7'
     }
 
