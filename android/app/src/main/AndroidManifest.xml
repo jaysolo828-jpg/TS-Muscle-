@@ -61,6 +61,14 @@
         <activity android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity" />
 
         <service
+            android:name=".TSFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <service
             android:name="com.google.androidbrowserhelper.trusted.DelegationService"
             android:exported="true"
             android:enabled="true">

@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.google.gms.google-services'
 
 android {
     namespace 'io.github.jaysolo828_jpg.twa'
@@ -9,8 +10,8 @@ android {
         applicationId 'io.github.jaysolo828_jpg.twa'
         minSdk 21
         targetSdk 35
-        versionCode 14
-        versionName '1.0.0.9'
+        versionCode 15
+        versionName '1.0.1.0'
     }
 
     signingConfigs {
@@ -43,4 +44,6 @@ dependencies {
     implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
     implementation 'com.android.billingclient:billing:6.1.0'
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+    implementation platform('com.google.firebase:firebase-bom:33.1.0')
+    implementation 'com.google.firebase:firebase-messaging-ktx'
 }

@@ -24792,6 +24792,24 @@ if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().catch(() => {});
 }
 
+// ── FCM token: Android TWA passes it as ?fcm_token=... on launch ──
+(function() {
+  var token = new URLSearchParams(location.search).get('fcm_token');
+  if (token) _saveFcmToken(token);
+})();
+
+async function _saveFcmToken(token) {
+  if (!token || !state.supabaseUserId) return;
+  try {
+    var sb = _getSupabaseClient();
+    if (!sb) return;
+    await sb.from('onesignal_subscriptions').upsert(
+      { user_id: state.supabaseUserId, fcm_token: token },
+      { onConflict: 'user_id' }
+    );
+  } catch(e) {}
+}
+
 // ── Debug: fire a test notification immediately via ?notif-debug ──
 if (location.search.includes('notif-debug') && 'serviceWorker' in navigator) {
   navigator.serviceWorker.ready.then(function(reg) {
