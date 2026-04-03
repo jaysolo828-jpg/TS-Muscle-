@@ -22,18 +22,20 @@ class MainActivity : LauncherActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
 
-        // If we don't have a cached token yet (first ever install), wait up to 2 seconds
-        // for Firebase to register the device. On every subsequent launch the token is
-        // already in SharedPreferences so this block is skipped entirely.
         if (!prefs.contains(FCM_KEY)) {
+            // Run the Firebase token fetch on a background thread to avoid
+            // blocking the main thread (which would deadlock the completion listener).
             val latch = CountDownLatch(1)
-            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    task.result?.let { prefs.edit().putString(FCM_KEY, it).apply() }
-                }
-                latch.countDown()
-            }
-            latch.await(2, TimeUnit.SECONDS)
+            Thread {
+                FirebaseMessaging.getInstance().token
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            task.result?.let { prefs.edit().putString(FCM_KEY, it).apply() }
+                        }
+                        latch.countDown()
+                    }
+                latch.await(5, TimeUnit.SECONDS)
+            }.apply { isDaemon = true; start() }.join(6000)
         }
 
         super.onCreate(savedInstanceState)
