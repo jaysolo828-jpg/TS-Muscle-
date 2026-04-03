@@ -8702,13 +8702,6 @@ async function _requestNotificationPermission() {
   if (!('Notification' in window) || !('PushManager' in window)) return;
   if (Notification.permission === 'denied') return;
   if (Notification.permission === 'granted') {
-    // Always re-call requestPermission() even when already granted.
-    // In a TWA, Chrome only runs the notification delegation check (which triggers
-    // NotificationPermissionRequestActivity to request the Android POST_NOTIFICATIONS
-    // permission at the OS level) when requestPermission() is explicitly called.
-    // Without this, delegation never activates and Chrome shows its own icon.
-    // In a plain browser this is a silent no-op.
-    await Notification.requestPermission().catch(function() {});
     _registerOneSignalPlayerId();
     return;
   }
@@ -8757,12 +8750,17 @@ async function _registerOneSignalPlayerId() {
     if (!vapidKey) { showToast('Push not configured — contact support'); return; }
 
     var existing = await reg.pushManager.getSubscription();
-    if (existing) await existing.unsubscribe();
+    if (existing) {
+      // Already subscribed — just re-save to DB in case it got out of sync. Don't unsubscribe.
+      var existingJson = existing.toJSON();
+      await _savePushSubscription(existing.endpoint, existingJson.keys);
+      _applyNotifToggleUI();
+      return;
+    }
 
     var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
     var subJson = sub.toJSON();
     await _savePushSubscription(sub.endpoint, subJson.keys);
-    // showToast('Notifications enabled'); // suppressed for diagnostics
     _applyNotifToggleUI();
   } catch(e) {
     showToast('Could not enable notifications — try again');
