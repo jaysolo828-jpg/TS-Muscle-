@@ -7758,7 +7758,14 @@ async function _checkSupabaseSession() {
     // ── Step 3: Normal session check (already signed in) ──
     const { data: { session } } = await sb.auth.getSession();
     if (session?.access_token) _cachedJwt = session.access_token;
-    if (session?.user && !state.supabaseUserId) {
+    if (!session?.user && state.supabaseUserId) {
+      // Stale state — no live session but userId was saved from a previous login.
+      // Clear it so the sign-in prompt shows and social features don't silently fail.
+      state.supabaseUserId = null;
+      state.supabaseDisplayName = null;
+      _cachedJwt = null;
+      _updateSupabaseAuthCard();
+    } else if (session?.user && !state.supabaseUserId) {
       await _onSupabaseSignIn(session.user);
     } else if (session?.user) {
       state.supabaseUserId = session.user.id;
