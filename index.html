@@ -8702,13 +8702,6 @@ async function _requestNotificationPermission() {
   if (!('Notification' in window) || !('PushManager' in window)) return;
   if (Notification.permission === 'denied') return;
   if (Notification.permission === 'granted') {
-    // Always re-call requestPermission() even when already granted.
-    // In a TWA, Chrome only runs the notification delegation check (which triggers
-    // NotificationPermissionRequestActivity to request the Android POST_NOTIFICATIONS
-    // permission at the OS level) when requestPermission() is explicitly called.
-    // Without this, delegation never activates and Chrome shows its own icon.
-    // In a plain browser this is a silent no-op.
-    await Notification.requestPermission().catch(function() {});
     _registerOneSignalPlayerId();
     return;
   }
