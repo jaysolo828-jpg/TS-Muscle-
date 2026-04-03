@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v219';
+const CACHE_NAME = 'ts-muscle-v220';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './badge-dumbbell.png', './manifest.json'];
 
@@ -14,12 +14,6 @@ self.addEventListener('install', e => {
 // Allow the page to trigger skipWaiting when the user taps the update banner
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
-  if (e.data && e.data.type === 'DEBUG_NOTIFY') {
-    self.registration.showNotification('T&S Muscle — Notification Test', {
-      body: 'If this has the app logo on the LEFT, delegation is working. If it has a Chrome icon, it is not.',
-      icon: 'https://app.therapyandsneakers.org/icon-192.png',
-    });
-  }
 });
 
 // On activate: claim all clients and delete old caches.
