@@ -89,6 +89,7 @@ async function getGoogleAccessToken(clientEmail: string, privateKeyPem: string):
 
   // Import RSA private key
   const pemBody = privateKeyPem
+    .replace(/\\n/g, '\n')
     .replace(/-----BEGIN PRIVATE KEY-----/, '')
     .replace(/-----END PRIVATE KEY-----/, '')
     .replace(/\s/g, '');
