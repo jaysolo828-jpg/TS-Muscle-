@@ -69,7 +69,7 @@
         </service>
 
         <service
-            android:name="com.google.androidbrowserhelper.trusted.DelegationService"
+            android:name=".TSDelegationService"
             android:exported="true"
             android:enabled="true">
 
