@@ -11,6 +11,29 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
+// ── How the notification card is built ────────────────────────────────────────
+//
+// LEFT SIDE (small icon): ic_notification_icon.png (res/drawable/)
+//   - The PNG has a TRANSPARENT background with only the T&S logo pixels remaining.
+//   - Black background was intentionally stripped so Android renders the logo
+//     shape, not a solid white circle. On devices that support colored icons,
+//     the logo shows in its brand color. On Android 12+ it renders as white
+//     silhouette — still the logo shape, not a filled circle.
+//   - DO NOT add a black or solid background to this file or it will show as
+//     a white circle again.
+//
+// RIGHT SIDE (large icon): sender's avatar fetched from avatar_url in FCM data.
+//   - Falls back to ic_launcher (the full-color T&S app icon) if no avatar.
+//
+// WHY DATA-ONLY FCM (no notification block in the payload):
+//   - If the FCM message includes a "notification" block, Android handles it
+//     automatically in the background and never calls onMessageReceived.
+//   - That means setSmallIcon and setLargeIcon never run — no logo, no avatar.
+//   - Data-only messages always call onMessageReceived regardless of app state,
+//     so our code here always controls exactly how the notification looks.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
 class TSFirebaseMessagingService : FirebaseMessagingService() {
 
     companion object {
@@ -42,6 +65,7 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Right side of notification card: sender's profile picture, or app logo as fallback
         val avatarUrl = message.data["avatar_url"]
         val largeIcon = try {
             if (!avatarUrl.isNullOrEmpty()) {
@@ -55,8 +79,8 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
         }
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification_icon)
-            .setLargeIcon(largeIcon)
+            .setSmallIcon(R.drawable.ic_notification_icon) // left side — T&S logo (transparent bg)
+            .setLargeIcon(largeIcon)                       // right side — sender avatar or app logo
             .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)
@@ -68,6 +92,8 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         // Always persist the latest token so MainActivity can append it to the launch URL.
+        // This also fires when a token is refreshed, keeping SharedPreferences current
+        // even if the initial fetch in MainActivity timed out.
         getSharedPreferences("ts_muscle_prefs", MODE_PRIVATE)
             .edit().putString("fcm_token", token).apply()
     }
