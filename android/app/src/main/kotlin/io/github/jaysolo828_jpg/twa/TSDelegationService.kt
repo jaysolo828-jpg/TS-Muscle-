@@ -4,17 +4,21 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
-import com.google.androidbrowserhelper.trusted.DelegationService
+import androidx.browser.trusted.TrustedWebActivityService
 
-// Custom DelegationService that strips the "app.thera..." origin URL from web push
-// notifications delegated by Chrome. Chrome bakes the site origin into the notification
-// subtext — we recover the builder and clear it so only the app name shows.
-class TSDelegationService : DelegationService() {
+// Extends TrustedWebActivityService directly (not DelegationService) because
+// DelegationService in androidbrowserhelper 2.5.0 makes onNotifyNotificationWithChannel
+// final, so subclasses cannot override it. TrustedWebActivityService exposes it as open.
+//
+// Purpose: strip the "app.thera..." origin subtext Chrome bakes into delegated
+// web push notifications, so only "T&S Muscle" shows in the notification header.
+class TSDelegationService : TrustedWebActivityService() {
 
-    override fun onNotifyNotification(
-        platformTag: String?,
+    override fun onNotifyNotificationWithChannel(
+        platformTag: String,
         platformId: Int,
-        notification: Notification
+        notification: Notification,
+        channelName: String
     ): Boolean {
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
