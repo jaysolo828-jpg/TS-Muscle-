@@ -4,15 +4,15 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
-import androidx.browser.trusted.TrustedWebActivityService
+import com.google.androidbrowserhelper.trusted.DelegationService
 
-// Extends TrustedWebActivityService directly (not DelegationService) because
-// DelegationService in androidbrowserhelper 2.5.0 makes onNotifyNotificationWithChannel
-// final, so subclasses cannot override it. TrustedWebActivityService exposes it as open.
+// Custom DelegationService that strips the "app.thera..." origin URL Chrome bakes
+// into delegated web push notifications. Extends DelegationService (not
+// TrustedWebActivityService directly) so getTokenStore() is handled by the library.
 //
-// Purpose: strip the "app.thera..." origin subtext Chrome bakes into delegated
-// web push notifications, so only "T&S Muscle" shows in the notification header.
-class TSDelegationService : TrustedWebActivityService() {
+// NOTE: parameters must be non-nullable (String not String?) to match the Java
+// @NonNull signature — nullable caused "overrides nothing" compile errors.
+class TSDelegationService : DelegationService() {
 
     override fun onNotifyNotificationWithChannel(
         platformTag: String,
