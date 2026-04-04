@@ -207,21 +207,25 @@ Deno.serve(async (req) => {
   if (uid||to_uid) extraData.to_user_id = uid || to_uid || '';
   if (avatar_url) extraData.avatar_url  = avatar_url;
 
+  let sent = 0, failed = 0;
+  const debug: string[] = [];
+
   // Get FCM access token once (if any subs have FCM tokens)
   const hasFcm = subs.some(s => s.fcm_token);
   let fcmAccessToken = '';
   if (hasFcm && fbEmail && fbKey && fbProject) {
-    try { fcmAccessToken = await getGoogleAccessToken(fbEmail, fbKey); } catch (_) {}
+    try { fcmAccessToken = await getGoogleAccessToken(fbEmail, fbKey); } catch (e) { debug.push(`oauth_error:${e}`); }
   }
-
-  let sent = 0, failed = 0;
 
   await Promise.all(subs.map(async (sub: any) => {
     // Try FCM first (Android native — app icon, no Chrome branding)
     if (sub.fcm_token && fcmAccessToken) {
       const ok = await sendFcm(sub.fcm_token, notifTitle, notifBody, extraData, fcmAccessToken, fbProject)
-        .catch(() => false);
-      if (ok) { sent++; return; }
+        .catch((e) => { debug.push(`fcm_error:${e}`); return false; });
+      if (ok) { sent++; debug.push(`fcm_ok:${sub.fcm_token.slice(0,15)}`); return; }
+      debug.push(`fcm_failed:${sub.fcm_token.slice(0,15)}`);
+    } else {
+      debug.push(`no_fcm:has_token=${!!sub.fcm_token},has_access=${!!fcmAccessToken}`);
     }
 
     // Fall back to VAPID web push (iOS, desktop, Android without FCM token)
@@ -244,11 +248,11 @@ Deno.serve(async (req) => {
         },
         body: encBody,
       });
-      if (r.status >= 200 && r.status < 300) sent++; else failed++;
+      if (r.status >= 200 && r.status < 300) { sent++; debug.push(`webpush_ok`); } else { failed++; debug.push(`webpush_failed:${r.status}`); }
     } catch (_) { failed++; }
   }));
 
-  return new Response(JSON.stringify({ sent, failed }), {
+  return new Response(JSON.stringify({ sent, failed, debug }), {
     headers: { ...CORS, 'content-type':'application/json' },
   });
 });
