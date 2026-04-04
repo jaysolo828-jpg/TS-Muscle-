@@ -11,17 +11,16 @@ import com.google.androidbrowserhelper.trusted.DelegationService
 // subtext — we recover the builder and clear it so only the app name shows.
 class TSDelegationService : DelegationService() {
 
-    override fun onNotifyNotificationWithChannel(
+    override fun onNotifyNotification(
         platformTag: String?,
         platformId: Int,
-        notification: Notification,
-        channelName: String
+        notification: Notification
     ): Boolean {
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                channelName,
+                "ts_muscle_workouts",
                 "T&S Muscle Notifications",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
@@ -30,8 +29,8 @@ class TSDelegationService : DelegationService() {
 
         val rebuilt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             Notification.Builder.recoverBuilder(this, notification)
-                .setSubText(null)   // removes "app.thera..." origin text
-                .setChannelId(channelName)
+                .setSubText(null)
+                .setChannelId("ts_muscle_workouts")
                 .build()
         } else {
             notification
