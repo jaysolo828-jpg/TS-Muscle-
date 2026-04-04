@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -56,6 +57,7 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_icon)
+            .setColor(Color.parseColor("#C0392B"))
             .setLargeIcon(largeIcon)
             .setContentTitle(title)
             .setContentText(body)
