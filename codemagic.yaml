@@ -1,0 +1,30 @@
+workflows:
+  android-build:
+    name: Build Android AAB
+    max_build_duration: 30
+    environment:
+      java: 17
+      android_signing:
+        - ts_muscle_keystore
+      vars:
+        KEYSTORE_PATH: /tmp/keystore.jks
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: Set up keystore
+        script: |
+          echo $CM_KEYSTORE | base64 --decode > $KEYSTORE_PATH
+      - name: Build release AAB
+        script: |
+          cd android
+          printf 'android.useAndroidX=true\nandroid.enableJetifier=true\n' > gradle.properties
+          gradle wrapper --gradle-version 8.6
+          chmod +x gradlew
+          export KEYSTORE_PASSWORD=$CM_KEY_PASSWORD
+          ./gradlew bundleRelease --no-daemon
+    artifacts:
+      - android/app/build/outputs/bundle/release/*.aab
