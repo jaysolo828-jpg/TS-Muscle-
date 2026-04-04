@@ -13,14 +13,7 @@ import com.google.firebase.messaging.RemoteMessage
 
 // ── How the notification card is built ────────────────────────────────────────
 //
-// LEFT SIDE (small icon): ic_notification_icon.png (res/drawable/)
-//   - The PNG has a TRANSPARENT background with only the T&S logo pixels remaining.
-//   - Black background was intentionally stripped so Android renders the logo
-//     shape, not a solid white circle. On devices that support colored icons,
-//     the logo shows in its brand color. On Android 12+ it renders as white
-//     silhouette — still the logo shape, not a filled circle.
-//   - DO NOT add a black or solid background to this file or it will show as
-//     a white circle again.
+// LEFT SIDE (small icon): ic_launcher (mipmap) — the sneaker logo.
 //
 // RIGHT SIDE (large icon): sender's avatar fetched from avatar_url in FCM data.
 //   - Falls back to ic_launcher (the full-color T&S app icon) if no avatar.
@@ -79,7 +72,7 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
         }
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification_icon) // left side — T&S logo (transparent bg)
+            .setSmallIcon(R.mipmap.ic_launcher)              // left side — sneaker logo
             .setLargeIcon(largeIcon)                       // right side — sender avatar or app logo
             .setContentTitle(title)
             .setContentText(body)
