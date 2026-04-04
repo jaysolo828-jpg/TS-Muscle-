@@ -8550,7 +8550,7 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
     const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
     const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
     const _emoji = _rxnEmoji[reactionType] || reactionType;
-    fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/smooth-service', {
+    fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/bright-processor', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
       body: JSON.stringify({ to_uid: toUserId, title: fromName + ' reacted to your workout', body: 'They gave you a ' + _emoji })
@@ -8632,7 +8632,7 @@ async function _completeWorkoutSignal() {
 }
 
 // ── Push Notification Architecture ────────────────────────────────────────────
-// Push notifications are sent via a Supabase Edge Function called "smooth-service".
+// Push notifications are sent via a Supabase Edge Function called "bright-processor".
 //
 // WHY SUPABASE AND NOT NETLIFY:
 //   Netlify Edge Functions and Node.js Functions both returned 404/405 for this
@@ -8651,7 +8651,7 @@ async function _completeWorkoutSignal() {
 //
 // AUTH:
 //   The function has JWT verification DISABLED in the Supabase dashboard
-//   (Edge Functions → smooth-service → Configuration → Verify JWT = OFF).
+//   (Edge Functions → bright-processor → Configuration → Verify JWT = OFF).
 //   We send the apikey header with SUPABASE_PUBLISHABLE_KEY instead of a JWT,
 //   because Supabase's new publishable key format is not a valid JWT for Edge
 //   Function Bearer auth.
@@ -8671,7 +8671,7 @@ async function _notifyFriends(title, body, signalId, avatarUrl) {
     var _p = { uid: state.supabaseUserId, title: title, body: body };
     if (signalId) _p.sid = signalId;
     if (avatarUrl) _p.avatar_url = avatarUrl;
-    fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/smooth-service', {
+    fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/bright-processor', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
       body: JSON.stringify(_p),
