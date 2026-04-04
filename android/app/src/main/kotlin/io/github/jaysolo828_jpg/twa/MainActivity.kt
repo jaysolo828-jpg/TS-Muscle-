@@ -9,8 +9,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.androidbrowserhelper.trusted.LauncherActivity
 import com.google.firebase.messaging.FirebaseMessaging
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 class MainActivity : LauncherActivity() {
 
@@ -22,20 +20,10 @@ class MainActivity : LauncherActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
 
-        if (!prefs.contains(FCM_KEY)) {
-            // Run the Firebase token fetch on a background thread to avoid
-            // blocking the main thread (which would deadlock the completion listener).
-            val latch = CountDownLatch(1)
-            Thread {
-                FirebaseMessaging.getInstance().token
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            task.result?.let { prefs.edit().putString(FCM_KEY, it).apply() }
-                        }
-                        latch.countDown()
-                    }
-                latch.await(5, TimeUnit.SECONDS)
-            }.apply { isDaemon = true; start() }.join(6000)
+        // Always refresh the FCM token in the background — onNewToken also saves it,
+        // but this ensures it's stored before getLaunchingUrl() is called.
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            prefs.edit().putString(FCM_KEY, token).apply()
         }
 
         super.onCreate(savedInstanceState)

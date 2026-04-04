@@ -67,6 +67,8 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onNewToken(token: String) {
-        // Token is saved to Supabase by the web app when it calls _saveFcmToken()
+        // Always persist the latest token so MainActivity can append it to the launch URL.
+        getSharedPreferences("ts_muscle_prefs", MODE_PRIVATE)
+            .edit().putString("fcm_token", token).apply()
     }
 }
