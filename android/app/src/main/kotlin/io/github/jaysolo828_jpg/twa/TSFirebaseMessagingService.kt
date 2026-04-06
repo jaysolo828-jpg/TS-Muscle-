@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.core.graphics.drawable.IconCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -72,13 +71,8 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
             BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
         }
 
-        // Note 20 fix: wrap the small icon as a bitmap (instead of a drawable resource)
-        // so Android skips the badge "wrap inside white circle" treatment that was
-        // shrinking the logo on older devices. S26 renders the same bitmap unchanged.
-        val smallIconBitmap = BitmapFactory.decodeResource(resources, R.drawable.ic_ts_notification)
-
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(IconCompat.createWithBitmap(smallIconBitmap))  // left side — sneaker logo (as bitmap)
+            .setSmallIcon(R.drawable.ic_ts_notification)   // left side — sneaker logo
             .setLargeIcon(largeIcon)                       // right side — sender avatar or app logo
             .setColor(0xFF000000.toInt())                  // black tint matches logo's circular background
             .setContentTitle(title)
