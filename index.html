@@ -8836,7 +8836,14 @@ function _promptNotifsForSocial() {
 function _showNotifSheet() {
   if (Notification.permission === 'granted') return;
   if (document.getElementById('notif-prompt-sheet')) return;
-  sessionStorage.setItem('notifSheetShown', '1');
+  // Note: do NOT set sessionStorage.notifSheetShown here. If we did, a
+  // service-worker controllerchange reload (which fires whenever the web
+  // deploy updates) would wipe the sheet from the DOM and the post-reload
+  // attempt would bail out because the flag is already set. Instead, the
+  // flag is only set when the user explicitly dismisses or acts on the
+  // sheet — see _enableNotifFromSheet, the NOT NOW button, and the GOT IT
+  // button. Until then, the sheet will faithfully re-appear on every
+  // _requestNotificationPermission call.
 
   const blocked = Notification.permission === 'denied';
   const title   = blocked ? 'NOTIFICATIONS BLOCKED' : 'STAY IN THE LOOP';
@@ -8844,24 +8851,29 @@ function _showNotifSheet() {
     ? "Notifications are turned off for T&amp;S Muscle. To get alerts when friends start training, enable them in:<br><br><b>Android Settings → Apps → T&amp;S Muscle → Notifications → Allow</b>"
     : "Get notified when your friends start training. No spam — just real accountability.";
   const primary = blocked ? 'GOT IT' : 'ENABLE NOTIFICATIONS';
+  // Dismiss buttons set the flag so the sheet does NOT re-appear after an
+  // explicit user action this session.
+  const dismissJs = "sessionStorage.setItem('notifSheetShown','1');document.getElementById('notif-prompt-sheet')?.remove()";
   const primaryAction = blocked
-    ? "document.getElementById('notif-prompt-sheet')?.remove()"
+    ? dismissJs
     : "_enableNotifFromSheet()";
 
   const sheet = document.createElement('div');
   sheet.id = 'notif-prompt-sheet';
-  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99998;display:flex;align-items:flex-end;justify-content:center;';
+  // z-index 999999 so no app modal at 99999 can visually cover it.
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
   sheet.innerHTML = `
     <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;">
       <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">${title}</div>
       <div style="font-family:'Barlow',sans-serif;font-size:15px;color:#ccc;line-height:1.6;margin-bottom:24px;">${msg}</div>
       <button onclick="${primaryAction}" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;margin-bottom:12px;-webkit-tap-highlight-color:transparent;">${primary}</button>
-      ${blocked ? '' : `<button onclick="document.getElementById('notif-prompt-sheet')?.remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">NOT NOW</button>`}
+      ${blocked ? '' : `<button onclick="${dismissJs}" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">NOT NOW</button>`}
     </div>`;
   document.body.appendChild(sheet);
 }
 
 async function _enableNotifFromSheet() {
+  sessionStorage.setItem('notifSheetShown', '1');
   document.getElementById('notif-prompt-sheet')?.remove();
   await _onNotifSettingsTap();
 }
