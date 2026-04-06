@@ -1,12 +1,7 @@
 package io.github.jaysolo828_jpg.twa
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.google.androidbrowserhelper.trusted.LauncherActivity
 import com.google.firebase.messaging.FirebaseMessaging
 import java.util.concurrent.CountDownLatch
@@ -65,8 +60,21 @@ class MainActivity : LauncherActivity() {
                 }
         }
 
+        // NOTE: We intentionally do NOT call ActivityCompat.requestPermissions
+        // for POST_NOTIFICATIONS here. LauncherActivity.super.onCreate() launches
+        // the Chrome Custom Tab and finishes this activity synchronously, so any
+        // permission dialog requested from this point would fire on a finishing
+        // activity and either never display or be dismissed by the Custom Tab
+        // taking focus — exactly the bug that left users stuck in a "denied"
+        // state without ever seeing a prompt.
+        //
+        // The correct TWA architecture is: the web page calls
+        // Notification.requestPermission() when the user taps our "Enable
+        // Notifications" button. Chrome, recognising this as a verified TWA
+        // (via assetlinks.json), delegates to NotificationPermissionRequestActivity
+        // (already declared in AndroidManifest.xml), which requests
+        // POST_NOTIFICATIONS at the right moment in the lifecycle.
         super.onCreate(savedInstanceState)
-        requestNotificationPermissionIfNeeded()
     }
 
     override fun getLaunchingUrl(): Uri {
@@ -74,20 +82,5 @@ class MainActivity : LauncherActivity() {
         val token = getSharedPreferences(PREFS, MODE_PRIVATE).getString(FCM_KEY, null)
             ?: return base
         return base.buildUpon().appendQueryParameter("fcm_token", token).build()
-    }
-
-    private fun requestNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    1001
-                )
-            }
-        }
     }
 }
