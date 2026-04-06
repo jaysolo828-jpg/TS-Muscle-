@@ -1,3 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Theme applied to MainActivity while it is starting up. Sets the
+         window background to the app's dark color so the cold-start frame
+         is dark instead of white, eliminating the brief "logo on a white
+         square" flash before the TWA splash screen takes over.
+
+         android:windowBackground covers Android 5-11.
+         android:windowSplashScreenBackground covers Android 12+ (the OS
+         system splash screen introduced in API 31); it is silently
+         ignored on older API levels. -->
+    <style name="AppTheme.Launcher" parent="android:Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/backgroundColor</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/backgroundColor</item>
+    </style>
 </resources>
