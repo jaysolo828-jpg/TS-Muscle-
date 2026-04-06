@@ -22,41 +22,47 @@ class MainActivity : LauncherActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+        val prefs        = getSharedPreferences(PREFS, MODE_PRIVATE)
+        val cachedToken  = prefs.getString(FCM_KEY, null)
 
-        // Synchronously fetch the FCM token (with a short timeout) BEFORE
-        // super.onCreate() so that getLaunchingUrl() — which is called
-        // from inside super.onCreate() — has the token to append to the
-        // launching URL on the very first launch after install.
-        //
-        // Without this, on a fresh install SharedPreferences is empty,
-        // the URL launches without ?fcm_token=..., the page never sees
-        // the native token, never registers it with Supabase, and every
-        // notification falls back to web push (rendered by Chrome with
-        // the source URL on the card). That is the bug we're fixing.
-        try {
-            val latch = CountDownLatch(1)
-            // Run the completion listener on a background executor so it
-            // does not deadlock against the main thread we're blocking.
-            val bgExecutor = Executors.newSingleThreadExecutor()
-            FirebaseMessaging.getInstance().token
-                .addOnCompleteListener(bgExecutor) { task ->
-                    try {
-                        if (task.isSuccessful) {
-                            val token = task.result
-                            if (!token.isNullOrEmpty()) {
-                                prefs.edit().putString(FCM_KEY, token).apply()
+        if (cachedToken.isNullOrEmpty()) {
+            // FIRST LAUNCH AFTER INSTALL ONLY: we don't yet have a token in
+            // SharedPreferences, so getLaunchingUrl() would launch without
+            // ?fcm_token=... and the page would never register the native
+            // token with Supabase. Block briefly (with a short timeout) to
+            // fetch it synchronously. The completion listener runs on a
+            // background executor to avoid deadlocking the main thread.
+            try {
+                val latch = CountDownLatch(1)
+                val bgExecutor = Executors.newSingleThreadExecutor()
+                FirebaseMessaging.getInstance().token
+                    .addOnCompleteListener(bgExecutor) { task ->
+                        try {
+                            if (task.isSuccessful) {
+                                val token = task.result
+                                if (!token.isNullOrEmpty()) {
+                                    prefs.edit().putString(FCM_KEY, token).apply()
+                                }
                             }
+                        } finally {
+                            latch.countDown()
                         }
-                    } finally {
-                        latch.countDown()
+                    }
+                latch.await(FCM_FETCH_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                bgExecutor.shutdown()
+            } catch (_: Exception) {
+                // Ignore — onNewToken will catch up on a later launch.
+            }
+        } else {
+            // SUBSEQUENT LAUNCHES: we already have a cached token — use it
+            // immediately and refresh asynchronously so next launch has the
+            // latest. Do NOT block the main thread here.
+            FirebaseMessaging.getInstance().token
+                .addOnSuccessListener { token ->
+                    if (!token.isNullOrEmpty() && token != cachedToken) {
+                        prefs.edit().putString(FCM_KEY, token).apply()
                     }
                 }
-            latch.await(FCM_FETCH_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-            bgExecutor.shutdown()
-        } catch (_: Exception) {
-            // Ignore — fall through with whatever (if anything) is cached.
-            // onNewToken will catch up the next time the token rotates.
         }
 
         super.onCreate(savedInstanceState)
