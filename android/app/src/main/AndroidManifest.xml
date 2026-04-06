@@ -75,7 +75,7 @@
 
             <meta-data
                 android:name="android.support.customtabs.trusted.SMALL_ICON"
-                android:resource="@mipmap/ic_launcher" />
+                android:resource="@drawable/ic_ts_notification" />
 
             <intent-filter>
                 <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />

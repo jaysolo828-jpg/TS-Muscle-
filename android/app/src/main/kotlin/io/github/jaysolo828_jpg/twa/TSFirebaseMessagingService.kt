@@ -72,7 +72,7 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
         }
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)              // left side — sneaker logo
+            .setSmallIcon(R.drawable.ic_ts_notification)     // left side — sneaker logo
             .setLargeIcon(largeIcon)                       // right side — sender avatar or app logo
             .setContentTitle(title)
             .setContentText(body)
