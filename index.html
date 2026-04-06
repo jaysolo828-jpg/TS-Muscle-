@@ -8807,17 +8807,8 @@ async function _notifyFriends(title, body, signalId, avatarUrl) {
 
 
 async function _requestNotificationPermission() {
-  // DIAGNOSTIC toasts — leaving in until notification flow is confirmed working.
-  try {
-    const hasN  = 'Notification' in window;
-    const hasPM = 'PushManager' in window;
-    const perm  = hasN ? Notification.permission : 'no-api';
-    showToast('DBG req perm=' + perm + ' n=' + hasN + ' pm=' + hasPM);
-  } catch (_) {}
-
   if (!('Notification' in window) || !('PushManager' in window)) return;
   if (Notification.permission === 'granted') {
-    // Still register the push subscription if we don't have one.
     _registerOneSignalPlayerId();
   }
   // ALWAYS fall through to the sheet — even in 'granted' state. On Android,
@@ -8829,7 +8820,6 @@ async function _requestNotificationPermission() {
 }
 
 function _maybeShowNotifSheet() {
-  try { showToast('DBG _maybe perm=' + Notification.permission + ' flag=' + sessionStorage.getItem('notifSheetShown')); } catch(_) {}
   // Skip only if already dismissed this session. We show in ALL permission
   // states including 'granted' — because on Android, Chrome's per-origin
   // permission can be 'granted' while the Android OS POST_NOTIFICATIONS
@@ -8881,7 +8871,6 @@ function _triggerNativePermissionPrompt() {
 }
 
 function _showNotifSheet() {
-  try { showToast('DBG _show fired perm=' + Notification.permission); } catch(_) {}
   if (document.getElementById('notif-prompt-sheet')) return;
   // Note: do NOT set sessionStorage.notifSheetShown here. If we did, a
   // service-worker controllerchange reload (which fires whenever the web
