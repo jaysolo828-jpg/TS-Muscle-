@@ -61,6 +61,26 @@
         <activity android:name="com.google.androidbrowserhelper.trusted.FocusActivity" />
         <activity android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity" />
 
+        <!-- Small bridge activity invoked from the web page via a custom-scheme
+             intent URL. Its sole job is to call ActivityCompat.requestPermissions
+             for POST_NOTIFICATIONS so the real Android OS dialog is shown even
+             when Chrome's cached per-origin permission is 'granted' (the split
+             state that cannot be unstuck from JavaScript). -->
+        <activity
+            android:name=".EnableNotificationsActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ts-muscle-enable-notifs" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".TSFirebaseMessagingService"
             android:exported="false">
