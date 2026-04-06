@@ -8855,19 +8855,28 @@ function _promptNotifsForSocial() {
   _showNotifSheet();
 }
 
-// Trigger the real Android OS POST_NOTIFICATIONS prompt by navigating
-// to a custom-scheme URL. Our native EnableNotificationsActivity
-// (declared in AndroidManifest.xml as of 1.0.3.1) has an intent-filter
-// on the ts-muscle-enable-notifs:// scheme — Android routes the URL
-// to that activity, which calls ActivityCompat.requestPermissions for
-// POST_NOTIFICATIONS and shows the system dialog. This bypasses
-// Chrome's cached origin permission state entirely and asks the OS
-// directly, which is the only path that works when Chrome's origin
-// permission is cached as 'granted' but the app-level POST_NOTIFICATIONS
-// is actually denied.
+// Trigger the real Android OS POST_NOTIFICATIONS prompt by launching
+// our native EnableNotificationsActivity via Chrome's intent:// URL
+// format. This format is explicitly supported by Chrome on Android
+// for launching arbitrary Android intents from a web page — it carries
+// scheme= and package= parameters that Chrome routes through Android's
+// intent resolver directly to the matching activity in our TWA package.
+//
+// The activity (declared in AndroidManifest.xml as of 1.0.3.1) has an
+// intent-filter on the ts-muscle-enable-notifs:// scheme. When Android
+// routes the intent to it, the activity calls ActivityCompat.requestPermissions
+// for POST_NOTIFICATIONS and shows the real system dialog — bypassing
+// Chrome's cached origin permission state entirely.
+//
+// Docs: https://developer.chrome.com/docs/android/intents
 function _triggerNativePermissionPrompt() {
   try {
-    window.location.href = 'ts-muscle-enable-notifs://prompt';
+    var url =
+      'intent://prompt' +
+      '#Intent;scheme=ts-muscle-enable-notifs' +
+      ';package=io.github.jaysolo828_jpg.twa' +
+      ';end';
+    window.location.href = url;
   } catch (_) {}
 }
 
