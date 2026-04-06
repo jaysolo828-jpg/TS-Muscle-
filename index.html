@@ -8843,6 +8843,22 @@ async function _enableNotifFromSheet() {
   await _onNotifSettingsTap();
 }
 
+// On Android, briefly wait for the native FCM token to arrive in window._fcmToken
+// before saving the push subscription, so the initial onesignal_subscriptions row
+// contains fcm_token from the first save and notifications go straight through
+// native FCM instead of falling back to web push. If the token never arrives
+// (e.g. older app version without the native bridge, or deep-link navigation
+// that dropped the URL param), we proceed after the timeout and self-heal on
+// the next launch when _saveFcmToken eventually fills in the column.
+async function _waitForFcmTokenIfAndroid(timeoutMs) {
+  if (window._fcmToken) return;
+  if (!/android/.test((navigator.userAgent || '').toLowerCase())) return;
+  var start = Date.now();
+  while (!window._fcmToken && Date.now() - start < timeoutMs) {
+    await new Promise(function(r) { setTimeout(r, 50); });
+  }
+}
+
 // Register a native PushManager subscription and save endpoint + keys to Supabase.
 async function _registerOneSignalPlayerId() {
   if (!state.supabaseUserId) return;
@@ -8854,6 +8870,9 @@ async function _registerOneSignalPlayerId() {
 
     var vapidKey = window.VAPID_PUBLIC_KEY || '';
     if (!vapidKey) { showToast('Push not configured — contact support'); return; }
+
+    // Ensure window._fcmToken is populated (on Android) before we save the row.
+    await _waitForFcmTokenIfAndroid(800);
 
     var existing = await reg.pushManager.getSubscription();
     if (existing) {
