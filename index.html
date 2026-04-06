@@ -8807,33 +8807,25 @@ async function _notifyFriends(title, body, signalId, avatarUrl) {
 
 
 async function _requestNotificationPermission() {
-  // DIAGNOSTIC: show permission state so we can see exactly where the
-  // flow is dying on the user's device. Remove once the issue is
-  // identified.
-  try {
-    const hasN  = 'Notification' in window;
-    const hasPM = 'PushManager' in window;
-    const perm  = hasN ? Notification.permission : 'no-api';
-    showToast('DBG perm=' + perm + ' n=' + hasN + ' pm=' + hasPM);
-  } catch (_) {}
-
   if (!('Notification' in window) || !('PushManager' in window)) return;
   if (Notification.permission === 'granted') {
+    // Still register the push subscription if we don't have one. The
+    // sheet itself is shown separately by code paths that want an
+    // explicit opt-in moment (e.g. toggleSocialFeatures).
     _registerOneSignalPlayerId();
     return;
   }
   // 'default' OR 'denied' — show the opt-in sheet. _maybeShowNotifSheet
-  // picks the right messaging based on state (ask-to-enable vs blocked-
-  // with-settings-instructions). We deliberately do NOT bail on denied
-  // because the user still needs to see the recovery instructions.
+  // picks the right messaging based on state.
   _maybeShowNotifSheet();
 }
 
 function _maybeShowNotifSheet() {
-  try { showToast('DBG _maybe perm=' + Notification.permission + ' flag=' + sessionStorage.getItem('notifSheetShown')); } catch(_) {}
-  // Only skip if already granted — show in 'default' AND 'denied' (with different
-  // messaging) so blocked users get clear recovery instructions.
-  if (Notification.permission === 'granted') return;
+  // Skip only if already dismissed this session. We show in ALL permission
+  // states including 'granted' — because on Android, Chrome's per-origin
+  // permission can be 'granted' while the Android OS POST_NOTIFICATIONS
+  // permission is blocked at the app level, and the user still needs a
+  // visible recovery path (instructions to open Android settings).
   if (sessionStorage.getItem('notifSheetShown')) return;
   // Note: do NOT set notifSheetShown here. _onSupabaseSignIn schedules a
   // location.reload() at 1200ms, which would cancel the pending sheet
@@ -8849,35 +8841,40 @@ function _maybeShowNotifSheet() {
 function _promptNotifsForSocial() {
   if (!state.supabaseUserId) return;
   if (!('Notification' in window)) return;
-  if (Notification.permission === 'granted') return;
   if (sessionStorage.getItem('socialNotifPromptShown')) return;
   sessionStorage.setItem('socialNotifPromptShown', '1');
   _showNotifSheet();
 }
 
 function _showNotifSheet() {
-  try { showToast('DBG _show fired perm=' + Notification.permission); } catch(_) {}
-  if (Notification.permission === 'granted') return;
   if (document.getElementById('notif-prompt-sheet')) return;
   // Note: do NOT set sessionStorage.notifSheetShown here. If we did, a
   // service-worker controllerchange reload (which fires whenever the web
   // deploy updates) would wipe the sheet from the DOM and the post-reload
   // attempt would bail out because the flag is already set. Instead, the
   // flag is only set when the user explicitly dismisses or acts on the
-  // sheet — see _enableNotifFromSheet, the NOT NOW button, and the GOT IT
-  // button. Until then, the sheet will faithfully re-appear on every
-  // _requestNotificationPermission call.
+  // sheet.
 
-  const blocked = Notification.permission === 'denied';
-  const title   = blocked ? 'NOTIFICATIONS BLOCKED' : 'STAY IN THE LOOP';
+  // Three states — including the split-permission case where Chrome's
+  // origin permission is 'granted' but the Android OS app-level
+  // POST_NOTIFICATIONS is blocked. The user still needs instructions
+  // in that case because notifications won't actually show up.
+  const perm    = Notification.permission;
+  const blocked = perm === 'denied';
+  const granted = perm === 'granted';
+  const title   = blocked ? 'NOTIFICATIONS BLOCKED'
+                : granted ? 'CHECK YOUR SETTINGS'
+                : 'STAY IN THE LOOP';
   const msg     = blocked
     ? "Notifications are turned off for T&amp;S Muscle. To get alerts when friends start training, enable them in:<br><br><b>Android Settings → Apps → T&amp;S Muscle → Notifications → Allow</b>"
-    : "Get notified when your friends start training. No spam — just real accountability.";
-  const primary = blocked ? 'GOT IT' : 'ENABLE NOTIFICATIONS';
+    : granted
+      ? "If you're not receiving workout alerts from friends, your phone may be blocking them. Check:<br><br><b>Android Settings → Apps → T&amp;S Muscle → Notifications → Allow</b>"
+      : "Get notified when your friends start training. No spam — just real accountability.";
+  const primary = (blocked || granted) ? 'GOT IT' : 'ENABLE NOTIFICATIONS';
   // Dismiss buttons set the flag so the sheet does NOT re-appear after an
   // explicit user action this session.
   const dismissJs = "sessionStorage.setItem('notifSheetShown','1');document.getElementById('notif-prompt-sheet')?.remove()";
-  const primaryAction = blocked
+  const primaryAction = (blocked || granted)
     ? dismissJs
     : "_enableNotifFromSheet()";
 
@@ -8890,7 +8887,7 @@ function _showNotifSheet() {
       <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">${title}</div>
       <div style="font-family:'Barlow',sans-serif;font-size:15px;color:#ccc;line-height:1.6;margin-bottom:24px;">${msg}</div>
       <button onclick="${primaryAction}" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;margin-bottom:12px;-webkit-tap-highlight-color:transparent;">${primary}</button>
-      ${blocked ? '' : `<button onclick="${dismissJs}" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">NOT NOW</button>`}
+      ${(blocked || granted) ? '' : `<button onclick="${dismissJs}" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">NOT NOW</button>`}
     </div>`;
   document.body.appendChild(sheet);
 }
