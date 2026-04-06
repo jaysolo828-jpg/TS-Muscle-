@@ -9,21 +9,54 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.androidbrowserhelper.trusted.LauncherActivity
 import com.google.firebase.messaging.FirebaseMessaging
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class MainActivity : LauncherActivity() {
 
     companion object {
-        private const val PREFS   = "ts_muscle_prefs"
-        private const val FCM_KEY = "fcm_token"
+        private const val PREFS                = "ts_muscle_prefs"
+        private const val FCM_KEY              = "fcm_token"
+        private const val FCM_FETCH_TIMEOUT_MS = 1500L
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
 
-        // Always refresh the FCM token in the background — onNewToken also saves it,
-        // but this ensures it's stored before getLaunchingUrl() is called.
-        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
-            prefs.edit().putString(FCM_KEY, token).apply()
+        // Synchronously fetch the FCM token (with a short timeout) BEFORE
+        // super.onCreate() so that getLaunchingUrl() — which is called
+        // from inside super.onCreate() — has the token to append to the
+        // launching URL on the very first launch after install.
+        //
+        // Without this, on a fresh install SharedPreferences is empty,
+        // the URL launches without ?fcm_token=..., the page never sees
+        // the native token, never registers it with Supabase, and every
+        // notification falls back to web push (rendered by Chrome with
+        // the source URL on the card). That is the bug we're fixing.
+        try {
+            val latch = CountDownLatch(1)
+            // Run the completion listener on a background executor so it
+            // does not deadlock against the main thread we're blocking.
+            val bgExecutor = Executors.newSingleThreadExecutor()
+            FirebaseMessaging.getInstance().token
+                .addOnCompleteListener(bgExecutor) { task ->
+                    try {
+                        if (task.isSuccessful) {
+                            val token = task.result
+                            if (!token.isNullOrEmpty()) {
+                                prefs.edit().putString(FCM_KEY, token).apply()
+                            }
+                        }
+                    } finally {
+                        latch.countDown()
+                    }
+                }
+            latch.await(FCM_FETCH_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            bgExecutor.shutdown()
+        } catch (_: Exception) {
+            // Ignore — fall through with whatever (if anything) is cached.
+            // onNewToken will catch up the next time the token rotates.
         }
 
         super.onCreate(savedInstanceState)
