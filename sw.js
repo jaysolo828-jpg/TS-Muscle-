@@ -48,7 +48,11 @@ self.addEventListener('push', function(event) {
       var options = {
         body: data.body || '',
         icon: resolvedIcon,
-        badge: undefined,
+        // White silhouette dumbbell — used by Chrome for the small
+        // status-bar glyph. Without this Chrome falls back to its own
+        // generic icon, which reads as "a Chrome notification" instead
+        // of a native-looking T&S notification.
+        badge: '/badge-dumbbell.png',
         data: data.data || {},
         requireInteraction: false,
       };
