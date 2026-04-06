@@ -8809,31 +8809,54 @@ async function _requestNotificationPermission() {
 }
 
 function _maybeShowNotifSheet() {
-  if (Notification.permission !== 'default') return;
+  // Only skip if already granted — show in 'default' AND 'denied' (with different
+  // messaging) so blocked users get clear recovery instructions.
+  if (Notification.permission === 'granted') return;
   if (sessionStorage.getItem('notifSheetShown')) return;
   // Note: do NOT set notifSheetShown here. _onSupabaseSignIn schedules a
   // location.reload() at 1200ms, which would cancel the pending sheet
-  // setTimeout. We need the sheet to get another chance after reload via
-  // _checkSupabaseSession -> _requestNotificationPermission. If we marked
-  // the flag before the sheet actually rendered, the post-reload attempt
-  // would bail out and the user would never see the sheet. The flag is
-  // now set inside _showNotifSheet so it only records a real render.
+  // setTimeout. The flag is set inside _showNotifSheet so it only records
+  // a real render and the post-reload attempt still gets a chance.
   setTimeout(_showNotifSheet, 1500);
 }
 
+// Contextual re-prompt when a signed-in user opens the social modal ("joins
+// the crew"). Bypasses the once-per-session flag because this is a new
+// contextual trigger — the user is actively opting into a feature that
+// depends on notifications.
+function _promptNotifsForSocial() {
+  if (!state.supabaseUserId) return;
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') return;
+  if (sessionStorage.getItem('socialNotifPromptShown')) return;
+  sessionStorage.setItem('socialNotifPromptShown', '1');
+  _showNotifSheet();
+}
+
 function _showNotifSheet() {
-  if (Notification.permission !== 'default') return;
+  if (Notification.permission === 'granted') return;
   if (document.getElementById('notif-prompt-sheet')) return;
   sessionStorage.setItem('notifSheetShown', '1');
+
+  const blocked = Notification.permission === 'denied';
+  const title   = blocked ? 'NOTIFICATIONS BLOCKED' : 'STAY IN THE LOOP';
+  const msg     = blocked
+    ? "Notifications are turned off for T&amp;S Muscle. To get alerts when friends start training, enable them in:<br><br><b>Android Settings → Apps → T&amp;S Muscle → Notifications → Allow</b>"
+    : "Get notified when your friends start training. No spam — just real accountability.";
+  const primary = blocked ? 'GOT IT' : 'ENABLE NOTIFICATIONS';
+  const primaryAction = blocked
+    ? "document.getElementById('notif-prompt-sheet')?.remove()"
+    : "_enableNotifFromSheet()";
+
   const sheet = document.createElement('div');
   sheet.id = 'notif-prompt-sheet';
   sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99998;display:flex;align-items:flex-end;justify-content:center;';
   sheet.innerHTML = `
     <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;">
-      <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">STAY IN THE LOOP</div>
-      <div style="font-family:'Barlow',sans-serif;font-size:15px;color:#ccc;line-height:1.6;margin-bottom:24px;">Get notified when your friends start training. No spam — just real accountability.</div>
-      <button onclick="_enableNotifFromSheet()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;margin-bottom:12px;-webkit-tap-highlight-color:transparent;">ENABLE NOTIFICATIONS</button>
-      <button onclick="document.getElementById('notif-prompt-sheet')?.remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">NOT NOW</button>
+      <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">${title}</div>
+      <div style="font-family:'Barlow',sans-serif;font-size:15px;color:#ccc;line-height:1.6;margin-bottom:24px;">${msg}</div>
+      <button onclick="${primaryAction}" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;margin-bottom:12px;-webkit-tap-highlight-color:transparent;">${primary}</button>
+      ${blocked ? '' : `<button onclick="document.getElementById('notif-prompt-sheet')?.remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">NOT NOW</button>`}
     </div>`;
   document.body.appendChild(sheet);
 }
@@ -8937,6 +8960,9 @@ function openSocialModal() {
   _renderFriendsSection();
   // Recheck real state — dot stays if pending requests still exist
   _updateSocialNotifyDot();
+  // Contextual prompt: if a signed-in user is opening social for the first
+  // time this session without notifications enabled, offer to enable now.
+  setTimeout(_promptNotifsForSocial, 400);
 }
 
 function closeSocialModal() {
