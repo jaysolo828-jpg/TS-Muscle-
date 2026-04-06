@@ -4429,6 +4429,14 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.11"/></svg></div>
   </div>
 
+  <div id="undo-restore-row" class="settings-item" onclick="undoLastRestore()" style="display:none;">
+    <div>
+      <div class="settings-label">Undo Last Restore</div>
+      <div class="settings-sub" id="undo-restore-sub">Bring back your data from before your last restore</div>
+    </div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/></svg></div>
+  </div>
+
   <div id="install-app-row" class="settings-item" onclick="doInstall()">
     <div>
       <div class="settings-label">Install App to Home Screen</div>
@@ -7086,6 +7094,113 @@ function _idbGet(key) {
     req.onsuccess = e => resolve(e.target.result);
     req.onerror = () => reject();
   }));
+}
+
+// ============================================================
+// PRE-RESTORE SNAPSHOT (undo restore safety net)
+// Before any restore, save a snapshot of the current state so
+// the user can undo if they hit restore by accident.
+// ============================================================
+const _SNAPSHOT_KEY = 'ts-muscle-pre-restore-snapshot';
+
+function _savePreRestoreSnapshot() {
+  return new Promise((resolve) => {
+    try {
+      const snapshot = {
+        state: JSON.stringify(state),
+        savedAt: Date.now(),
+        sessionCount: (state.history || []).length,
+        cardioCount: (state.cardioHistory || []).length,
+      };
+      _openIDB().then(db => {
+        const tx = db.transaction(_IDB_STORE, 'readwrite');
+        tx.objectStore(_IDB_STORE).put(snapshot, _SNAPSHOT_KEY);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+      }).catch(() => resolve(false));
+    } catch(e) { resolve(false); }
+  });
+}
+
+function _getPreRestoreSnapshot() {
+  return _idbGet(_SNAPSHOT_KEY).catch(() => null);
+}
+
+function _clearPreRestoreSnapshot() {
+  _openIDB().then(db => {
+    const tx = db.transaction(_IDB_STORE, 'readwrite');
+    tx.objectStore(_IDB_STORE).delete(_SNAPSHOT_KEY);
+  }).catch(() => {});
+}
+
+function refreshUndoRestoreUI() {
+  _getPreRestoreSnapshot().then(snap => {
+    const row = document.getElementById('undo-restore-row');
+    const sub = document.getElementById('undo-restore-sub');
+    if (!row) return;
+    if (snap && snap.state) {
+      row.style.display = '';
+      const d = new Date(snap.savedAt);
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      const dateStr = `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} at ${timeStr}`;
+      if (sub) sub.textContent = `Snapshot from ${dateStr} (${snap.sessionCount} sessions). Tap to bring it back.`;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+
+function undoLastRestore() {
+  _getPreRestoreSnapshot().then(snap => {
+    if (!snap || !snap.state) {
+      showToast('No snapshot available to undo.', 'error');
+      refreshUndoRestoreUI();
+      return;
+    }
+    const d = new Date(snap.savedAt);
+    const dateStr = d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    showRestoreConfirmModal({
+      title: 'UNDO LAST RESTORE?',
+      message: `This will replace your current data with the snapshot from <strong style="color:var(--cream);">${dateStr}</strong> — the data that existed right before your last restore.<br><br>Your current data will be replaced and cannot be recovered.`,
+      confirmLabel: 'YES, UNDO',
+      onConfirm: () => {
+        try {
+          const parsed = JSON.parse(snap.state);
+          state = { ...state, ...parsed };
+          saveState();
+          _clearPreRestoreSnapshot();
+          refreshUndoRestoreUI();
+          updateStreak();
+          renderHome();
+          showToast('Restore undone. Your previous data is back ✓');
+        } catch(e) {
+          showToast('Could not undo restore. Snapshot is unreadable.', 'error');
+        }
+      }
+    });
+  });
+}
+
+// Generic confirmation modal used by both restore and undo flows
+function showRestoreConfirmModal({ title, message, confirmLabel, onConfirm }) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:400px;border:1px solid var(--dark3);">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">${title}</div>
+      <div style="font-size:14px;color:var(--gray-light);line-height:1.6;margin-bottom:20px;">${message}</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button id="_rcm-confirm" style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">${confirmLabel}</button>
+        <button id="_rcm-cancel" style="width:100%;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#_rcm-confirm').onclick = () => {
+    modal.remove();
+    try { onConfirm(); } catch(e) {}
+  };
+  modal.querySelector('#_rcm-cancel').onclick = () => modal.remove();
 }
 
 function migrateExerciseNames() {
@@ -23718,7 +23833,12 @@ function exportData() {
 }
 
 function importData() {
-  document.getElementById('import-file').click();
+  showRestoreConfirmModal({
+    title: 'RESTORE FROM BACKUP?',
+    message: 'This will replace <strong style="color:var(--cream);">all of your current data</strong> — workouts, history, settings, and program — with whatever is in the backup file you choose.<br><br>Your current data will be saved as a snapshot, so you can undo this from Settings if you change your mind.',
+    confirmLabel: 'CHOOSE BACKUP FILE',
+    onConfirm: () => document.getElementById('import-file').click()
+  });
 }
 
 function handleImport(e) {
@@ -23736,23 +23856,28 @@ function handleImport(e) {
       const backupDate   = parsed.lastBackupDate
         ? new Date(parsed.lastBackupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         : null;
-      state = { ...state, ...parsed };
-      // Gracefully handle missing fields when restoring older backups:
-      // betweenSetCoaching: default on (existing check is `!== false`, so undefined = on)
-      if (state.betweenSetCoaching === undefined) state.betweenSetCoaching = true;
-      if (!state.hardDayCollection) state.hardDayCollection = [];
-      if (state.carryingFeatureEnabled === undefined) state.carryingFeatureEnabled = true;
-      // customUnilateralExercises: introduced with unilateral tracking — default empty object
-      if (!state.customUnilateralExercises) state.customUnilateralExercises = {};
-      // weekCount: if missing from an old backup, derive from session history as a fallback
-      if (!state.weekCount) {
-        const _daysPerWeek = state.trainingDaysPerWeek || state.program?.length || 4;
-        state.weekCount = Math.max(1, Math.ceil((state.history || []).length / _daysPerWeek));
-      }
-      saveState();
-      updateStreak();
-      renderHome();
-      showImportSuccessModal({ name, sessionCount, cardioCount, backupDate });
+      // Save snapshot of current data BEFORE replacing it, so user can undo
+      // from Settings if they changed their mind or hit restore by accident.
+      _savePreRestoreSnapshot().then(() => {
+        state = { ...state, ...parsed };
+        // Gracefully handle missing fields when restoring older backups:
+        // betweenSetCoaching: default on (existing check is `!== false`, so undefined = on)
+        if (state.betweenSetCoaching === undefined) state.betweenSetCoaching = true;
+        if (!state.hardDayCollection) state.hardDayCollection = [];
+        if (state.carryingFeatureEnabled === undefined) state.carryingFeatureEnabled = true;
+        // customUnilateralExercises: introduced with unilateral tracking — default empty object
+        if (!state.customUnilateralExercises) state.customUnilateralExercises = {};
+        // weekCount: if missing from an old backup, derive from session history as a fallback
+        if (!state.weekCount) {
+          const _daysPerWeek = state.trainingDaysPerWeek || state.program?.length || 4;
+          state.weekCount = Math.max(1, Math.ceil((state.history || []).length / _daysPerWeek));
+        }
+        saveState();
+        updateStreak();
+        renderHome();
+        refreshUndoRestoreUI();
+        showImportSuccessModal({ name, sessionCount, cardioCount, backupDate });
+      });
     } catch(err) {
       showToast('Import failed. Invalid file.', 'error');
     }
@@ -23772,8 +23897,11 @@ function showImportSuccessModal({ name, sessionCount, cardioCount, backupDate })
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:400px;border:1px solid var(--dark3);">
       <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">${greeting}</div>
-      <div style="font-size:14px;color:var(--gray);line-height:1.8;margin-bottom:20px;">
+      <div style="font-size:14px;color:var(--gray);line-height:1.8;margin-bottom:14px;">
         ${rows.join('')}
+      </div>
+      <div style="font-size:12px;color:var(--gray);line-height:1.5;padding:12px;background:var(--dark);border-radius:10px;border:1px solid var(--dark3);margin-bottom:18px;">
+        Didn't mean to do this? You can undo this restore from <strong style="color:var(--cream);">Settings → Undo Last Restore</strong>.
       </div>
       <button onclick="this.closest('[style*=fixed]').remove();"
         style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">
@@ -29201,6 +29329,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updatePauseSettingsLabel();
   _applySocialToggleUI();
   checkTrainingReminder();
+  refreshUndoRestoreUI();
   // Set "What's New" sub-label to current version
   const whatsNewSub = document.getElementById('whats-new-sub');
   if (whatsNewSub) whatsNewSub.textContent = 'Latest: v' + APP_VERSION;
