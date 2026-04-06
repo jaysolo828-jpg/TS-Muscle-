@@ -8811,13 +8811,20 @@ async function _requestNotificationPermission() {
 function _maybeShowNotifSheet() {
   if (Notification.permission !== 'default') return;
   if (sessionStorage.getItem('notifSheetShown')) return;
-  sessionStorage.setItem('notifSheetShown', '1');
+  // Note: do NOT set notifSheetShown here. _onSupabaseSignIn schedules a
+  // location.reload() at 1200ms, which would cancel the pending sheet
+  // setTimeout. We need the sheet to get another chance after reload via
+  // _checkSupabaseSession -> _requestNotificationPermission. If we marked
+  // the flag before the sheet actually rendered, the post-reload attempt
+  // would bail out and the user would never see the sheet. The flag is
+  // now set inside _showNotifSheet so it only records a real render.
   setTimeout(_showNotifSheet, 1500);
 }
 
 function _showNotifSheet() {
   if (Notification.permission !== 'default') return;
   if (document.getElementById('notif-prompt-sheet')) return;
+  sessionStorage.setItem('notifSheetShown', '1');
   const sheet = document.createElement('div');
   sheet.id = 'notif-prompt-sheet';
   sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99998;display:flex;align-items:flex-end;justify-content:center;';
