@@ -8799,12 +8799,14 @@ async function _notifyFriends(title, body, signalId, avatarUrl) {
 
 async function _requestNotificationPermission() {
   if (!('Notification' in window) || !('PushManager' in window)) return;
-  if (Notification.permission === 'denied') return;
   if (Notification.permission === 'granted') {
     _registerOneSignalPlayerId();
     return;
   }
-  // permission is 'default' — show opt-in sheet once per session
+  // 'default' OR 'denied' — show the opt-in sheet. _maybeShowNotifSheet
+  // picks the right messaging based on state (ask-to-enable vs blocked-
+  // with-settings-instructions). We deliberately do NOT bail on denied
+  // because the user still needs to see the recovery instructions.
   _maybeShowNotifSheet();
 }
 
