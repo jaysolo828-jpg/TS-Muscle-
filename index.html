@@ -7409,6 +7409,15 @@ function toggleSocialFeatures() {
   saveState();
   _applySocialToggleUI();
   _updateSupabaseAuthCard();
+  // If the user just turned social features ON, nudge them to enable
+  // notifications (which are needed for the feature to actually notify
+  // them about friend activity). Clear any pending dismissal flags so
+  // the sheet re-appears — toggling is an explicit opt-in action.
+  if (state.socialEnabled !== false && state.supabaseUserId) {
+    try { sessionStorage.removeItem('notifSheetShown'); } catch(_) {}
+    try { sessionStorage.removeItem('socialNotifPromptShown'); } catch(_) {}
+    _requestNotificationPermission();
+  }
 }
 
 function _applyNotifToggleUI() {
@@ -8798,6 +8807,16 @@ async function _notifyFriends(title, body, signalId, avatarUrl) {
 
 
 async function _requestNotificationPermission() {
+  // DIAGNOSTIC: show permission state so we can see exactly where the
+  // flow is dying on the user's device. Remove once the issue is
+  // identified.
+  try {
+    const hasN  = 'Notification' in window;
+    const hasPM = 'PushManager' in window;
+    const perm  = hasN ? Notification.permission : 'no-api';
+    showToast('DBG perm=' + perm + ' n=' + hasN + ' pm=' + hasPM);
+  } catch (_) {}
+
   if (!('Notification' in window) || !('PushManager' in window)) return;
   if (Notification.permission === 'granted') {
     _registerOneSignalPlayerId();
@@ -8811,6 +8830,7 @@ async function _requestNotificationPermission() {
 }
 
 function _maybeShowNotifSheet() {
+  try { showToast('DBG _maybe perm=' + Notification.permission + ' flag=' + sessionStorage.getItem('notifSheetShown')); } catch(_) {}
   // Only skip if already granted — show in 'default' AND 'denied' (with different
   // messaging) so blocked users get clear recovery instructions.
   if (Notification.permission === 'granted') return;
@@ -8836,6 +8856,7 @@ function _promptNotifsForSocial() {
 }
 
 function _showNotifSheet() {
+  try { showToast('DBG _show fired perm=' + Notification.permission); } catch(_) {}
   if (Notification.permission === 'granted') return;
   if (document.getElementById('notif-prompt-sheet')) return;
   // Note: do NOT set sessionStorage.notifSheetShown here. If we did, a
