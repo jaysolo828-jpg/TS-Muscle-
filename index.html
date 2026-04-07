@@ -8609,23 +8609,37 @@ async function _openFriendActivity(userId, signalId) {
     return;
   }
 
-  const RXNS = [{ t: 'thumbs_up', e: '\ud83d\udc4d' }, { t: 'fist_bump', e: '\ud83d\udc4a' }, { t: 'fire', e: '\ud83d\udd25' }, { t: 'checkmark', e: '\u2713' }];
+  const RXNS = [
+    // Row 1
+    { t: 'thumbs_up', e: '\ud83d\udc4d' },
+    { t: 'fist_bump', e: '\ud83d\udc4a' },
+    { t: 'fire',      e: '\ud83d\udd25' },
+    { t: 'checkmark', e: '\u2714\ufe0f' }, // emoji-style heavy check (matches other glyphs at 20px)
+    // Row 2
+    { t: 'goat',      e: '\ud83d\udc10' },
+    { t: 'heart',     e: '\u2764\ufe0f' },
+    { t: 'salute',    e: '\ud83e\udee1' },
+    { t: 'sparkles',  e: '\u2728'       }
+  ];
   const signalLabels = { started: 'Started', completed: 'Completed', pr: 'Hit a PR', hard_day: 'Hard day' };
 
   sigEl.innerHTML = signals.map(s => {
     const when = _timeAgo(new Date(s.started_at).getTime());
     const label = signalLabels[s.signal_type] || s.signal_type;
     const hasReacted = !!reacted[s.id];
-    const btns = RXNS.map(r => {
+    const renderBtn = (r) => {
       const isThis = reacted[s.id] === r.t;
       return '<button onclick="_sendReaction(\'' + s.id + '\',\'' + userId + '\',\'' + r.t + '\',this)"'
-        + ' style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid ' + (isThis ? '#C0392B' : '#333') + ';background:' + (isThis ? 'rgba(192,57,43,0.15)' : 'transparent') + ';color:var(--cream);font-size:18px;cursor:pointer;-webkit-tap-highlight-color:transparent;"'
+        + ' style="flex:1;padding:11px 4px;border-radius:10px;border:1px solid ' + (isThis ? '#C0392B' : 'var(--dark4)') + ';background:' + (isThis ? 'rgba(192,57,43,0.18)' : 'var(--dark)') + ';color:var(--cream);font-size:20px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.15s,background 0.15s;"'
         + '>' + r.e + '</button>';
-    }).join('');
-    return '<div class="friend-signal-card" style="background:#1a1a1a;border-radius:12px;padding:14px;margin-bottom:10px;">'
-      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);margin-bottom:2px;">' + escapeHtml(s.workout_name || 'Workout') + '</div>'
-      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-bottom:12px;">' + label + ' \u00b7 ' + when + '</div>'
-      + '<div style="display:flex;gap:8px;">' + btns + '</div>'
+    };
+    const row1 = RXNS.slice(0, 4).map(renderBtn).join('');
+    const row2 = RXNS.slice(4).map(renderBtn).join('');
+    return '<div class="friend-signal-card" style="background:var(--dark2);border-radius:12px;padding:16px 16px 14px;margin-bottom:10px;border-left:3px solid #C0392B;">'
+      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;line-height:1.1;text-transform:uppercase;margin-bottom:4px;word-wrap:break-word;">' + escapeHtml(s.workout_name || 'Workout') + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;">' + label + ' \u00b7 ' + when + '</div>'
+      + '<div style="display:flex;gap:8px;margin-bottom:8px;">' + row1 + '</div>'
+      + '<div style="display:flex;gap:8px;">' + row2 + '</div>'
       + '</div>';
   }).join('');
 }
@@ -8711,7 +8725,10 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
   // Send push notification
   try {
     const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
-    const _rxnEmoji = { thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓' };
+    const _rxnEmoji = {
+      thumbs_up: '👍', fist_bump: '👊', fire: '🔥', checkmark: '✓',
+      goat: '🐐', heart: '❤️', salute: '🫡', sparkles: '✨'
+    };
     const _emoji = _rxnEmoji[reactionType] || reactionType;
     fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/bright-processor', {
       method: 'POST',
