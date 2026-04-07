@@ -8544,7 +8544,7 @@ async function _openFriendActivity(userId, signalId) {
   sheet.innerHTML = `
     <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 20px 40px;max-height:80vh;overflow-y:auto;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div id="friend-activity-header" style="display:flex;align-items:center;gap:12px;">
           ${_avatarHtml(cached.username || cached.display_name || 'Friend', cached.avatar_color, 44, cached.avatar_url)}
           <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;">@${escapeHtml(cached.username || cached.display_name || 'Friend')}</div>
         </div>
@@ -8572,12 +8572,31 @@ async function _openFriendActivity(userId, signalId) {
         .eq('user_id', userId)
         .order('started_at', { ascending: false })
         .limit(1);
-  const [{ data: signals }, { data: myRxns }] = await Promise.all([
+  // If the friend cache is empty (e.g. notification deep-link on cold launch
+  // before the friends list has been loaded), fetch user data in parallel and
+  // update the header in place when it arrives. Otherwise skip the extra query.
+  const userQuery = _friendCache[userId]
+    ? Promise.resolve(null)
+    : sb.from('users').select('id, display_name, username, avatar_color, avatar_url, last_active').eq('id', userId).single();
+  const [{ data: signals }, { data: myRxns }, userRes] = await Promise.all([
     signalsQuery,
     sb.from('reactions')
       .select('signal_id, reaction_type')
-      .eq('from_user_id', state.supabaseUserId)
+      .eq('from_user_id', state.supabaseUserId),
+    userQuery
   ]);
+
+  if (userRes && userRes.data) {
+    _friendCache[userId] = userRes.data;
+    const headerEl = document.getElementById('friend-activity-header');
+    if (headerEl) {
+      const u = userRes.data;
+      const label = u.username || u.display_name || 'Friend';
+      headerEl.innerHTML =
+        _avatarHtml(label, u.avatar_color, 44, u.avatar_url) +
+        '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;">@' + escapeHtml(label) + '</div>';
+    }
+  }
 
   const reacted = {};
   (myRxns || []).forEach(r => { reacted[r.signal_id] = r.reaction_type; });
@@ -8954,10 +8973,12 @@ async function _enableNotifFromSheet() {
 }
 
 // ── Pending notification deep link ─────────────────────────────────────────
-// Called from the session-restore path once state.supabaseUserId is valid,
-// and from the service-worker message listener (iOS/desktop focus-existing
-// window path). Opens the friend-activity sheet for the tapped notification.
-async function _maybeHandlePendingNotifOpen() {
+// Called from the init block (after loadState populates state.supabaseUserId)
+// and from the session-restore path of _checkSupabaseSession as a fallback.
+// Also called from the SW message listener (iOS/desktop focus-existing path).
+// Opens the friend-activity sheet immediately — does NOT block on warming
+// the friend cache, so the sheet appears before the home screen even renders.
+function _maybeHandlePendingNotifOpen() {
   if (!state.supabaseUserId) return;
   var raw;
   try { raw = sessionStorage.getItem('pendingNotifOpen'); } catch(_) { return; }
@@ -8976,21 +8997,11 @@ async function _maybeHandlePendingNotifOpen() {
   // for them. Persist the notif-sheet dismissal so the "Enable Notifications"
   // sheet (z-index 999999) doesn't pop over the friend-activity sheet.
   try { localStorage.setItem('notifSheetShown', '1'); } catch(_) {}
-  // Warm the friend cache so the sheet header shows their real name/avatar.
-  // _openFriendActivity reads _friendCache synchronously on render — if the
-  // friends list hasn't been loaded yet, the header would show "Friend".
-  if (!_friendCache[pending.userId]) {
-    try {
-      var sb = _getSupabaseClient();
-      if (sb) {
-        var res = await sb.from('users')
-          .select('id, display_name, username, avatar_color, avatar_url, last_active')
-          .eq('id', pending.userId)
-          .single();
-        if (res && res.data) _friendCache[pending.userId] = res.data;
-      }
-    } catch(_) {}
-  }
+  // Open the sheet immediately. _openFriendActivity already creates and
+  // appends the DOM synchronously before its first await, so the sheet
+  // shows up the moment this call runs — no waiting on network roundtrips.
+  // If _friendCache is empty (cold launch), the header will briefly show
+  // "Friend" — _openFriendActivity will populate it from its own queries.
   _openFriendActivity(pending.userId, pending.signalId);
 }
 
@@ -25046,6 +25057,35 @@ try {
   _renderTravelModeHeaderIcon();
   _checkTravelModeExpiry();
   updateStreak();
+  // ── Notification deep link ──
+  // Read ?open_friend=X&signal_id=Y as early as possible (after loadState
+  // populates state.supabaseUserId from localStorage) so the friend-activity
+  // sheet appears BEFORE renderHome() — no home-screen flash before the sheet.
+  // sessionStorage survives the post-sign-in location.reload(); URL is cleaned
+  // via history.replaceState so a manual refresh doesn't re-trigger.
+  (function() {
+    var p = new URLSearchParams(location.search);
+    var openFriend = p.get('open_friend');
+    var signalIdParam = p.get('signal_id');
+    if (openFriend) {
+      try {
+        sessionStorage.setItem(
+          'pendingNotifOpen',
+          JSON.stringify({ userId: openFriend, signalId: signalIdParam || null })
+        );
+      } catch(_) {}
+      try {
+        p.delete('open_friend');
+        p.delete('signal_id');
+        var cleanQs = p.toString();
+        history.replaceState(null, '', location.pathname + (cleanQs ? '?' + cleanQs : ''));
+      } catch(_) {}
+    }
+    // Fire immediately — if state.supabaseUserId was loaded from localStorage,
+    // the sheet appears now (before renderHome). Otherwise the session-restore
+    // path of _checkSupabaseSession will call this again as a fallback.
+    _maybeHandlePendingNotifOpen();
+  })();
   renderHome();
   // If this is an OAuth return (Google sign-in redirect), skip onboarding before it renders.
   if (!state.onboardingComplete && window.location.hash && window.location.hash.includes('access_token')) {
@@ -25103,31 +25143,6 @@ if (navigator.storage && navigator.storage.persist) {
 (function() {
   var token = new URLSearchParams(location.search).get('fcm_token');
   if (token) { window._fcmToken = token; _saveFcmToken(token); }
-})();
-
-// ── Notification deep link: ?open_friend=X&signal_id=Y on launch ──
-// Set by TSFirebaseMessagingService (Android FCM tap) and by sw.js
-// (iOS/desktop web push tap when opening a new window). Store in
-// sessionStorage so the pending open survives the possible post-sign-in
-// location.reload(), then clean the URL so a manual refresh doesn't
-// re-trigger the sheet.
-(function() {
-  var p = new URLSearchParams(location.search);
-  var openFriend = p.get('open_friend');
-  var signalId   = p.get('signal_id');
-  if (!openFriend) return;
-  try {
-    sessionStorage.setItem(
-      'pendingNotifOpen',
-      JSON.stringify({ userId: openFriend, signalId: signalId || null })
-    );
-  } catch(_) {}
-  try {
-    p.delete('open_friend');
-    p.delete('signal_id');
-    var cleanQs = p.toString();
-    history.replaceState(null, '', location.pathname + (cleanQs ? '?' + cleanQs : ''));
-  } catch(_) {}
 })();
 
 async function _saveFcmToken(token) {
