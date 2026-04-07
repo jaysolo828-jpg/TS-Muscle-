@@ -8311,7 +8311,13 @@ function _socialSetupLater() {
 
 const _friendCache = {};       // userId -> { display_name, username, last_active, avatar_color }
 const _mutedFriends = new Set(); // friend user IDs the current user has muted from receiving workout-start notifications
-const _reactedSignals = new Set(); // signal IDs the current user has already reacted to — used to gate push notifications so changing reaction stays silent
+// Per-signal reaction state for the current user. Used by _sendReaction
+// to (a) skip the DB upsert when re-tapping the SAME reaction type
+// (no-op), (b) fire a push only when the type CHANGES, and (c) gate
+// rapid toggling between two types so each unique type only pushes once
+// per session per signal.
+//   shape: { [signalId]: { current: 'fire' | null, pushed: Set<string> } }
+const _signalReactionState = {};
 
 // SVG bell-off icon, used as a subtle "you've muted this friend from
 // your workout notifications" indicator next to the friend-row chevron.
@@ -8694,13 +8700,21 @@ async function _openFriendActivity(userId, signalId) {
 
   const reacted = {};
   // myRxns is the full list of the current user's reactions across all
-  // friends — use it to refresh _reactedSignals so the next _sendReaction
-  // call knows which signals already had a push fired (DB-only update,
-  // no second notification).
-  _reactedSignals.clear();
+  // friends. Rebuild _signalReactionState from it so _sendReaction knows
+  // (a) the current persisted reaction type per signal (for the same-type
+  // skip) and (b) which types have already been pushed (for the per-type
+  // gate). The pushed Set is initialised with just the current type per
+  // signal — in-session push history is otherwise lost on sheet reopen,
+  // which is acceptable: re-sending a previously-tapped type after a
+  // reload is a tolerable edge case in exchange for keeping the state
+  // simple and DB-driven.
+  Object.keys(_signalReactionState).forEach(k => delete _signalReactionState[k]);
   (myRxns || []).forEach(r => {
     reacted[r.signal_id] = r.reaction_type;
-    _reactedSignals.add(r.signal_id);
+    _signalReactionState[r.signal_id] = {
+      current: r.reaction_type,
+      pushed: new Set([r.reaction_type])
+    };
   });
 
   const sigEl = document.getElementById('friend-activity-signals');
@@ -8862,10 +8876,16 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
   if (!sb || !btn) return;
   const card = btn.closest('.friend-signal-card');
   const cardButtons = card ? Array.from(card.querySelectorAll('button.rxn-btn')) : [btn];
-  // Capture this BEFORE we mutate _reactedSignals so the success path can
-  // distinguish "first reaction to this signal" (fire push) from "already
-  // reacted" (silent update + status-line pulse).
-  const wasAlreadyReacted = _reactedSignals.has(signalId);
+
+  // Look up (or initialise) per-signal reaction state. `current` is the
+  // persisted reaction type for this signal; `pushed` is the Set of
+  // reaction types we've already fired a push for in this session.
+  let signalState = _signalReactionState[signalId];
+  if (!signalState) {
+    signalState = { current: null, pushed: new Set() };
+    _signalReactionState[signalId] = signalState;
+  }
+  const isSameType = signalState.current === reactionType;
 
   // ── Immediate feedback ─────────────────────────────────────────────
   // Subtle haptic bump on phones that support it (iOS Safari ignores).
@@ -8877,70 +8897,72 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
     background:  b.style.background,
   }));
 
-  // Optimistic update: flip styles BEFORE the network call so the user
-  // sees instant selection feedback. Buttons stay disabled until the
-  // server confirms (prevents double-tap fan-out spam).
+  // Optimistic visual flip — previously-selected button (if any) loses
+  // its highlight, the just-tapped one gains it. Runs synchronously so
+  // the UI updates instantly regardless of whether we hit the network.
   cardButtons.forEach(b => {
-    b.disabled = true;
     b.style.borderColor = 'var(--dark4)';
     b.style.background  = 'var(--dark)';
   });
   btn.style.borderColor = '#C0392B';
   btn.style.background  = 'rgba(192,57,43,0.18)';
 
-  const { error } = await sb.from('reactions').upsert({
-    from_user_id: state.supabaseUserId,
-    to_user_id: toUserId,
-    signal_id: signalId,
-    reaction_type: reactionType
-  }, { onConflict: 'from_user_id,signal_id' });
+  // DB upsert — only when the type is actually changing. Re-tapping the
+  // same reaction is a no-op: the row is already in the DB with this
+  // type, so we skip the network round-trip entirely and just acknowledge
+  // the tap visually below.
+  if (!isSameType) {
+    cardButtons.forEach(b => { b.disabled = true; });
+    const { error } = await sb.from('reactions').upsert({
+      from_user_id: state.supabaseUserId,
+      to_user_id: toUserId,
+      signal_id: signalId,
+      reaction_type: reactionType
+    }, { onConflict: 'from_user_id,signal_id' });
+    cardButtons.forEach(b => { b.disabled = false; });
 
-  if (error) {
-    // Revert to the exact pre-tap state and re-enable.
-    cardButtons.forEach((b, i) => {
-      b.disabled = false;
-      b.style.borderColor = snapshot[i].borderColor;
-      b.style.background  = snapshot[i].background;
-    });
-    showToast('Could not send reaction.');
-    return;
+    if (error) {
+      // Revert to the exact pre-tap state and toast.
+      cardButtons.forEach((b, i) => {
+        b.style.borderColor = snapshot[i].borderColor;
+        b.style.background  = snapshot[i].background;
+      });
+      showToast('Could not send reaction.');
+      return;
+    }
+    // Persist the new current type so future taps know what's in the DB.
+    signalState.current = reactionType;
   }
 
-  // Re-enable everything; selected button is already styled from the
-  // optimistic update above. Trigger a celebratory pop animation on the
-  // selected button so the success is unmistakable.
-  cardButtons.forEach(b => { b.disabled = false; });
+  // Pop animation on the selected button — celebratory feedback.
   btn.classList.remove('rxn-btn-pop');
-  // Force reflow so adding the class re-runs the keyframe even on rapid
-  // successive taps of the same button.
+  // Force reflow so the keyframe re-runs even on rapid successive taps.
   void btn.offsetWidth;
   btn.classList.add('rxn-btn-pop');
   setTimeout(function() { btn.classList.remove('rxn-btn-pop'); }, 400);
 
-  // Status line: persistent "✓ Reaction sent · Tap to change" indicator
-  // under the button rows. Reveals on first reaction; on subsequent taps
-  // (re-tap or change) it pulses with a brief brand-red flash so the
-  // sender gets a visible cue that we acknowledged the tap — even though
-  // no new push is going out.
+  // Status line: reveal + pulse so the sender always gets visible
+  // acknowledgement, whether the tap was a real change or a silent
+  // no-op same-type re-tap.
   const statusEl = document.getElementById('signal-status-' + signalId);
   if (statusEl) {
     statusEl.style.display = 'block';
     statusEl.classList.remove('pulsing');
-    // Force reflow so the keyframe re-runs on rapid successive taps.
     void statusEl.offsetWidth;
     statusEl.classList.add('pulsing');
     setTimeout(function() { statusEl.classList.remove('pulsing'); }, 520);
   }
 
-  // Send push notification — only on the FIRST reaction to this signal.
-  // Changing reactions or re-tapping the same one updates the DB row but
-  // does NOT fire another push, so the recipient gets exactly one ping per
-  // workout per friend reacting (no spam from rapid button-mashing).
-  // _reactedSignals is refreshed from the DB on every _openFriendActivity
-  // open via the same myRxns query that builds `reacted`, so it stays in
-  // sync across sessions and devices.
-  if (wasAlreadyReacted) return;
-  _reactedSignals.add(signalId);
+  // Push notification gate. Fire ONLY when:
+  //   1. The reaction type actually changed (not a same-type re-tap), AND
+  //   2. We haven't already pushed this exact type for this signal in
+  //      this session (so toggling 👍 → 🔥 → 👍 → 🔥 only fires twice,
+  //      not four times).
+  // After the gate, mark the type as pushed so future taps of the same
+  // type stay silent until the page reloads.
+  if (isSameType) return;
+  if (signalState.pushed.has(reactionType)) return;
+  signalState.pushed.add(reactionType);
   try {
     const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
     const _rxnEmoji = {
