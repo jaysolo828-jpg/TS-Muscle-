@@ -7414,7 +7414,7 @@ function toggleSocialFeatures() {
   // them about friend activity). Clear any pending dismissal flags so
   // the sheet re-appears — toggling is an explicit opt-in action.
   if (state.socialEnabled !== false && state.supabaseUserId) {
-    try { sessionStorage.removeItem('notifSheetShown'); } catch(_) {}
+    try { localStorage.removeItem('notifSheetShown'); } catch(_) {}
     try { sessionStorage.removeItem('socialNotifPromptShown'); } catch(_) {}
     _requestNotificationPermission();
   }
@@ -8814,18 +8814,21 @@ async function _requestNotificationPermission() {
   // ALWAYS fall through to the sheet — even in 'granted' state. On Android,
   // Chrome's origin permission can be 'granted' while the OS-level
   // POST_NOTIFICATIONS is blocked, and the user needs a visible recovery path.
-  // _maybeShowNotifSheet respects sessionStorage.notifSheetShown so once
-  // the user dismisses it, it won't re-appear until the next session.
+  // _maybeShowNotifSheet respects localStorage.notifSheetShown so once
+  // the user dismisses it, it stays dismissed across app restarts. The
+  // user can re-trigger it by toggling social features in settings,
+  // which clears the flag.
   _maybeShowNotifSheet();
 }
 
 function _maybeShowNotifSheet() {
-  // Skip only if already dismissed this session. We show in ALL permission
-  // states including 'granted' — because on Android, Chrome's per-origin
-  // permission can be 'granted' while the Android OS POST_NOTIFICATIONS
-  // permission is blocked at the app level, and the user still needs a
-  // visible recovery path (instructions to open Android settings).
-  if (sessionStorage.getItem('notifSheetShown')) return;
+  // Skip if already dismissed (persisted in localStorage so it survives
+  // app restarts — that was the every-refresh-pestering bug). We still
+  // show in ALL permission states including 'granted' because on Android,
+  // Chrome's per-origin permission can be 'granted' while the Android OS
+  // POST_NOTIFICATIONS permission is blocked, and those users need an
+  // automatic recovery path (the ENABLE button fires the native bridge).
+  if (localStorage.getItem('notifSheetShown')) return;
   // Note: do NOT set notifSheetShown here. _onSupabaseSignIn schedules a
   // location.reload() at 1200ms, which would cancel the pending sheet
   // setTimeout. The flag is set inside _showNotifSheet so it only records
@@ -8872,7 +8875,7 @@ function _triggerNativePermissionPrompt() {
 
 function _showNotifSheet() {
   if (document.getElementById('notif-prompt-sheet')) return;
-  // Note: do NOT set sessionStorage.notifSheetShown here. If we did, a
+  // Note: do NOT set localStorage.notifSheetShown here. If we did, a
   // service-worker controllerchange reload (which fires whenever the web
   // deploy updates) would wipe the sheet from the DOM and the post-reload
   // attempt would bail out because the flag is already set. Instead, the
@@ -8889,13 +8892,20 @@ function _showNotifSheet() {
   const msg       = "Get notified when your friends start training. No spam — just real accountability.";
   const primary   = 'ENABLE NOTIFICATIONS';
 
-  // Dismiss helper: set the flag + remove the sheet.
-  const dismissJs = "sessionStorage.setItem('notifSheetShown','1');document.getElementById('notif-prompt-sheet')?.remove()";
+  // NOT NOW: always persist the dismissal so the sheet doesn't pester
+  // them on every app restart. Recoverable via the social-features toggle.
+  const dismissJs = "localStorage.setItem('notifSheetShown','1');document.getElementById('notif-prompt-sheet')?.remove()";
+  // ENABLE: only persist the dismissal if Chrome already says 'granted'
+  // (the bridge will be a no-op anyway, so the sheet is truly done). If
+  // permission is 'default'/'denied', don't set the flag — that way a
+  // user who fat-fingers the OS dialog gets the sheet back next session
+  // and can retry without going to settings.
+  const enableJs = "if(Notification.permission==='granted')localStorage.setItem('notifSheetShown','1');document.getElementById('notif-prompt-sheet')?.remove()";
   // On Android, invoke the native bridge activity via custom scheme
   // to show the real OS prompt. On non-Android, fall through to the
   // web API which works fine because there's no split-permission state.
   const primaryAction = isAndroid
-    ? (dismissJs + ';_triggerNativePermissionPrompt()')
+    ? (enableJs + ';_triggerNativePermissionPrompt()')
     : "_enableNotifFromSheet()";
 
   const sheet = document.createElement('div');
@@ -8913,7 +8923,12 @@ function _showNotifSheet() {
 }
 
 async function _enableNotifFromSheet() {
-  sessionStorage.setItem('notifSheetShown', '1');
+  // Only persist the dismissal if permission is already 'granted' (the
+  // request will be a no-op). Otherwise leave the flag unset so a denied
+  // browser prompt can be retried next session without going to settings.
+  if (Notification.permission === 'granted') {
+    localStorage.setItem('notifSheetShown', '1');
+  }
   document.getElementById('notif-prompt-sheet')?.remove();
   await _onNotifSettingsTap();
 }
