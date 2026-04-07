@@ -8275,6 +8275,14 @@ function _socialSetupLater() {
 // ============================================================
 
 const _friendCache = {};       // userId -> { display_name, username, last_active, avatar_color }
+const _mutedFriends = new Set(); // friend user IDs the current user has muted from receiving workout-start notifications
+
+// SVG bell-off icon, used as a subtle "you've muted this friend from
+// your workout notifications" indicator next to the friend-row chevron.
+// Defined at module scope so both _loadFriendsList (initial render) and
+// _toggleWorkoutMute (in-place update after toggle) can read it.
+const _BELL_OFF_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="#888" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Muted from your workouts" style="flex-shrink:0;"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+const _CHEVRON_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
 let _friendSearchTimer = null; // debounce handle for username search
 
 // Returns true if a hex color is light enough to need black text
@@ -8489,7 +8497,15 @@ async function _loadFriendsList() {
   }
 
   const friendIds = rows.map(f => f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id);
-  const { data: users } = await sb.from('users').select('id, display_name, username, last_active, avatar_color, avatar_url').in('id', friendIds);
+  // Fetch users + the current user's workout-mute list in parallel so the
+  // friends list and the per-friend mute indicators show up together with
+  // no extra round-trip.
+  const [{ data: users }, { data: mutes }] = await Promise.all([
+    sb.from('users').select('id, display_name, username, last_active, avatar_color, avatar_url').in('id', friendIds),
+    sb.from('workout_notif_mutes').select('muted_friend_id').eq('muter_id', state.supabaseUserId)
+  ]);
+  _mutedFriends.clear();
+  (mutes || []).forEach(m => { _mutedFriends.add(m.muted_friend_id); });
 
   if (!users || users.length === 0) {
     list.innerHTML = '<div style="padding:8px 0;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);">No friends yet.</div>';
@@ -8503,6 +8519,7 @@ async function _loadFriendsList() {
     const lastTs = u.last_active ? new Date(u.last_active).getTime() : 0;
     const recentlyActive = lastTs > 0 && (now - lastTs) < 86400000;
     const lastText = lastTs ? _timeAgo(lastTs) : 'Not recently active';
+    const isMuted = _mutedFriends.has(u.id);
     return `<div onclick="_openFriendActivity('${u.id}')"
       style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <div style="display:flex;align-items:center;gap:10px;">
@@ -8515,7 +8532,10 @@ async function _loadFriendsList() {
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">${lastText}</div>
         </div>
       </div>
-      <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      <div id="friend-row-actions-${u.id}" style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        ${isMuted ? _BELL_OFF_SVG : ''}
+        ${_CHEVRON_SVG}
+      </div>
     </div>`;
   }).join('');
 }
@@ -8553,7 +8573,16 @@ async function _openFriendActivity(userId, signalId) {
       <div id="friend-activity-signals">
         <div style="text-align:center;padding:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);">Loading...</div>
       </div>
-      <button onclick="_removeFriend('${userId}')" style="width:100%;margin-top:18px;background:transparent;border:1px solid #333;color:#666;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">REMOVE FRIEND</button>
+      <div onclick="_toggleWorkoutMute('${userId}')" style="display:flex;align-items:center;justify-content:space-between;background:var(--dark2);border-radius:12px;padding:14px 16px;margin-top:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+        <div style="flex:1;min-width:0;padding-right:14px;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1.1;margin-bottom:3px;">ALERT THEM WHEN I TRAIN</div>
+          <div id="workout-mute-sub-${userId}" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;line-height:1.3;">${_mutedFriends.has(userId) ? "Silent — they won't be notified" : 'They get a ping when you start training'}</div>
+        </div>
+        <div id="workout-mute-toggle-${userId}" style="width:44px;height:26px;border-radius:13px;background:${_mutedFriends.has(userId) ? '#444' : '#2ecc71'};position:relative;transition:background 0.2s;flex-shrink:0;">
+          <div style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(${_mutedFriends.has(userId) ? '0' : '18px'});"></div>
+        </div>
+      </div>
+      <button onclick="_removeFriend('${userId}')" style="width:100%;margin-top:10px;background:transparent;border:1px solid #333;color:#666;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">REMOVE FRIEND</button>
     </div>`;
   document.body.appendChild(sheet);
   sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
@@ -8578,12 +8607,21 @@ async function _openFriendActivity(userId, signalId) {
   const userQuery = _friendCache[userId]
     ? Promise.resolve(null)
     : sb.from('users').select('id, display_name, username, avatar_color, avatar_url, last_active').eq('id', userId).single();
-  const [{ data: signals }, { data: myRxns }, userRes] = await Promise.all([
+  // Always re-fetch the per-friend mute state in case the friends list
+  // hasn't been loaded yet (notification deep-link scenario) or _mutedFriends
+  // is stale. Cheap query, runs in parallel with the others.
+  const muteQuery = sb.from('workout_notif_mutes')
+    .select('muted_friend_id')
+    .eq('muter_id', state.supabaseUserId)
+    .eq('muted_friend_id', userId)
+    .limit(1);
+  const [{ data: signals }, { data: myRxns }, userRes, muteRes] = await Promise.all([
     signalsQuery,
     sb.from('reactions')
       .select('signal_id, reaction_type')
       .eq('from_user_id', state.supabaseUserId),
-    userQuery
+    userQuery,
+    muteQuery
   ]);
 
   if (userRes && userRes.data) {
@@ -8595,6 +8633,26 @@ async function _openFriendActivity(userId, signalId) {
       headerEl.innerHTML =
         _avatarHtml(label, u.avatar_color, 44, u.avatar_url) +
         '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;">@' + escapeHtml(label) + '</div>';
+    }
+  }
+
+  // Reconcile the toggle visual with the actual mute state. The toggle
+  // was rendered synchronously above using whatever _mutedFriends had at
+  // the time — for deep-link opens that may be empty/stale. Update the
+  // Set + the toggle visual silently if the DB disagrees.
+  const dbMuted = !!(muteRes && muteRes.data && muteRes.data.length > 0);
+  const memMuted = _mutedFriends.has(userId);
+  if (dbMuted !== memMuted) {
+    if (dbMuted) _mutedFriends.add(userId); else _mutedFriends.delete(userId);
+    const toggle = document.getElementById('workout-mute-toggle-' + userId);
+    const sub    = document.getElementById('workout-mute-sub-' + userId);
+    if (toggle) {
+      toggle.style.background = dbMuted ? '#444' : '#2ecc71';
+      const knob = toggle.firstElementChild;
+      if (knob) knob.style.transform = dbMuted ? 'translateX(0)' : 'translateX(18px)';
+    }
+    if (sub) {
+      sub.textContent = dbMuted ? "Silent — they won't be notified" : 'They get a ping when you start training';
     }
   }
 
@@ -8642,6 +8700,72 @@ async function _openFriendActivity(userId, signalId) {
       + '<div style="display:flex;gap:8px;">' + row2 + '</div>'
       + '</div>';
   }).join('');
+}
+
+// Per-friend mute for workout-start notifications. Toggles whether the
+// edge function fans out "I'm in the gym" notifications to this friend
+// when the current user starts training. Optimistic update for instant
+// feedback; reverts the visual + shows a toast on DB error.
+async function _toggleWorkoutMute(userId) {
+  if (!state.supabaseUserId || userId === state.supabaseUserId) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  const wasMuted = _mutedFriends.has(userId);
+  const willBeMuted = !wasMuted;
+
+  // ── Optimistic update: flip the in-memory state and the visual.
+  if (willBeMuted) _mutedFriends.add(userId); else _mutedFriends.delete(userId);
+  const toggle = document.getElementById('workout-mute-toggle-' + userId);
+  const sub    = document.getElementById('workout-mute-sub-' + userId);
+  if (toggle) {
+    toggle.style.background = willBeMuted ? '#444' : '#2ecc71';
+    const knob = toggle.firstElementChild;
+    if (knob) knob.style.transform = willBeMuted ? 'translateX(0)' : 'translateX(18px)';
+  }
+  if (sub) {
+    sub.textContent = willBeMuted ? "Silent — they won't be notified" : 'They get a ping when you start training';
+  }
+
+  // ── Persist
+  let error = null;
+  try {
+    if (willBeMuted) {
+      const res = await sb.from('workout_notif_mutes').upsert(
+        { muter_id: state.supabaseUserId, muted_friend_id: userId },
+        { onConflict: 'muter_id,muted_friend_id' }
+      );
+      error = res.error;
+    } else {
+      const res = await sb.from('workout_notif_mutes')
+        .delete()
+        .eq('muter_id', state.supabaseUserId)
+        .eq('muted_friend_id', userId);
+      error = res.error;
+    }
+  } catch (e) { error = e; }
+
+  if (error) {
+    // ── Revert on failure
+    if (wasMuted) _mutedFriends.add(userId); else _mutedFriends.delete(userId);
+    if (toggle) {
+      toggle.style.background = wasMuted ? '#444' : '#2ecc71';
+      const knob = toggle.firstElementChild;
+      if (knob) knob.style.transform = wasMuted ? 'translateX(0)' : 'translateX(18px)';
+    }
+    if (sub) {
+      sub.textContent = wasMuted ? "Silent — they won't be notified" : 'They get a ping when you start training';
+    }
+    showToast("Couldn't update — try again");
+    return;
+  }
+
+  // Targeted DOM update on the friend-row in the friends list (sitting
+  // underneath the open sheet) so the bell-off indicator next to the
+  // chevron stays in sync. No re-fetch, no re-render, no flash.
+  const rowActions = document.getElementById('friend-row-actions-' + userId);
+  if (rowActions) {
+    rowActions.innerHTML = (willBeMuted ? _BELL_OFF_SVG : '') + _CHEVRON_SVG;
+  }
 }
 
 function _removeFriend(userId) {

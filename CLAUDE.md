@@ -101,18 +101,45 @@ worth of "why aren't notifications working" debugging.
 
 ### 3. Notification sheet (`_showNotifSheet` in `index.html`)
 
-- **`sessionStorage.notifSheetShown` is only set on explicit user
-  action** (NOT NOW, ENABLE, GOT IT). Do not set it at render time — a
-  service-worker `controllerchange` reload will wipe the DOM and the
-  post-reload attempt will bail out because the flag is set.
+- **`localStorage.notifSheetShown` is the dismissal flag.** Originally
+  this was `sessionStorage` which cleared every app restart, causing
+  the sheet to pop up on every refresh for users with working
+  notifications. Switched to `localStorage` so the dismissal persists
+  across launches. **Do not switch back to sessionStorage.**
+- **NOT NOW always sets the flag** (permanent dismissal). The user can
+  re-trigger the sheet by toggling social features off/on in settings —
+  `toggleSocialFeatures` is the ONLY automatic clearing path and it
+  removes from `localStorage`.
+- **ENABLE only sets the flag when `Notification.permission === 'granted'`
+  at click time.** The inline onclick reads:
+  ```js
+  if(Notification.permission==='granted')localStorage.setItem('notifSheetShown','1');document.getElementById('notif-prompt-sheet')?.remove()
+  ```
+  Reason: if permission isn't already granted, we want a fat-fingered
+  "Don't allow" on the OS dialog to be recoverable — the sheet returns
+  on next app open. If permission IS already granted (working user or
+  split-brain user who just succeeded), persist the dismissal so we
+  don't pester them again.
+- **Do not set the flag at render time** — a service-worker
+  `controllerchange` reload will wipe the DOM and the post-reload
+  attempt will bail out because the flag is set.
 - **z-index is `999999`** — the app has dozens of modals at `99999`
   which would visually cover a lower sheet. Do not lower it.
 - **The sheet shows in all three permission states** (`default`,
   `denied`, `granted`) — blocking on `granted` hides the sheet for
-  users in the split-permission state.
+  users in the split-permission state. We rely on the `localStorage`
+  persistence + the conditional ENABLE logic to keep working users
+  from being pestered, instead of an early return on `granted`.
 - **`_requestNotificationPermission` does not early-return on `denied`
   or `granted`** — both still call `_maybeShowNotifSheet` so the user
   can see and recover.
+- **`_promptNotifsForSocial` (called when opening the social modal)
+  also checks `localStorage.notifSheetShown`** before showing the
+  sheet. Without this check, a user who tapped NOT NOW would see the
+  sheet again every time they opened the social modal in a new session.
+- **`_onNotifSettingsTap` denied toast is platform-aware** — shows an
+  Android/iOS/desktop-specific message based on user agent. Don't
+  hardcode "Android Settings" again.
 
 ### 4. Page-side FCM token handoff
 
@@ -127,7 +154,114 @@ Supabase auth is async.
 before saving the push subscription, so the first-ever subscription row
 contains `fcm_token` and delivery goes native from the start.
 
-### 5. The notification small icon on Samsung Note 20 (abandoned)
+### 5. Notification deep link → friend reactions sheet
+
+When a user taps a workout notification, the app deep-links into the
+friend-activity sheet for that specific workout signal so they can
+react. Three pieces have to stay in sync:
+
+**Android (`TSFirebaseMessagingService.kt`)** — the PendingIntent URL
+is built from the FCM data with `to_user_id` and `signal_id` query
+params:
+```kotlin
+val tapUri = Uri.parse("https://app.therapyandsneakers.org/")
+    .buildUpon()
+    .apply {
+        if (!toUserId.isNullOrEmpty()) appendQueryParameter("open_friend", toUserId)
+        if (!signalId.isNullOrEmpty()) appendQueryParameter("signal_id", signalId)
+    }
+    .build()
+```
+`MainActivity.getLaunchingUrl()` then composes cleanly via its own
+`buildUpon().appendQueryParameter("fcm_token", token)`. Don't break
+this — the existing fcm_token append is what the page needs to
+register native FCM.
+
+**Service worker (`sw.js`)** — the default `notificationclick` handler
+builds the same query params for new windows AND postMessages
+`{type: 'OPEN_FRIEND_ACTIVITY', to_user_id, signal_id}` to existing
+same-origin clients (the iOS/desktop focus-existing-window case).
+Android TWA reloads the URL via the Intent so doesn't need the
+postMessage path.
+
+**Page (`index.html`)** — there's an IIFE inside the init `try` block
+(immediately after `loadState()`, BEFORE `renderHome()`) that reads
+`?open_friend=` / `?signal_id=`, stores them in `sessionStorage`, then
+cleans the URL via `history.replaceState`. It calls
+`_maybeHandlePendingNotifOpen()` synchronously so the friend-activity
+sheet can be in the DOM before the home screen even paints.
+
+`_maybeHandlePendingNotifOpen()` is intentionally **not async** — it
+fires `_openFriendActivity()` which creates and appends the sheet
+synchronously before its first await. Don't add awaits to this
+function or the home-screen-flash bug returns. The friend cache warm
+is done as a parallel third query inside `_openFriendActivity`'s
+existing `Promise.all` (alongside `workout_signals` and `reactions`),
+and the header is updated in place via `#friend-activity-header`
+when the user data arrives.
+
+`_openFriendActivity` accepts an optional `signalId` second parameter.
+When provided (notification deep link), it queries `eq('id', signalId)`
+to fetch the exact signal — without it (normal friends-list tap) it
+falls back to "most recent" which can be the wrong workout if the
+friend has logged another since the notification was sent.
+
+The session-restore path of `_checkSupabaseSession` ALSO calls
+`_maybeHandlePendingNotifOpen()` as a fallback, in case
+`state.supabaseUserId` wasn't loaded synchronously from localStorage
+on the IIFE pass. Both calls are idempotent (sessionStorage is cleared
+on first handle).
+
+### 6. Reaction-notification loop-close (do not break)
+
+When B reacts to A's workout, A receives a "B reacted to your workout"
+notification. The notification's deep link carries `to_user_id = A`
+(the workout owner = the recipient), but **no `signal_id`** because
+the reaction notification doesn't reference a workout signal. Without
+the loop-close logic in `_maybeHandlePendingNotifOpen`, tapping that
+notification would call `_openFriendActivity(A)` which fetches A's own
+most-recent workout signal and shows the reaction buttons — letting A
+react to themselves. The loop never closes.
+
+**Fix in place:** before calling `_openFriendActivity`, check:
+```js
+if (pending.userId === state.supabaseUserId || !pending.signalId) {
+  // Open social modal instead, deferring to DOMContentLoaded if needed.
+}
+```
+The check is OR'd: either condition (target is self, or signal_id is
+missing) routes to the social modal. Both conditions catch reaction
+notifications. The userId-equals-self condition is also a defensive
+catch for any other notification accidentally pointing to the user.
+
+The social modal path appends a placeholder dark backdrop to body
+during the init script (z-index 900, matches `.lib-overlay`) because
+`#social-overlay` lives at line ~30336 in the static HTML, AFTER the
+closing `</script>` tag — so during the init-time call it doesn't
+exist yet and `openSocialModal()` would no-op. The placeholder
+prevents a home-screen flash while we wait for `DOMContentLoaded`,
+then is removed when the real modal opens. **If you change where
+`#social-overlay` lives in the HTML, this placeholder dance can be
+simplified.**
+
+### 7. Never write `</scr` + `ipt>` literally inside a JS comment
+
+The HTML parser is greedy and doesn't care if `</scr` + `ipt>` is
+inside a JavaScript `//` comment, a string, or a template literal —
+when it sees those characters in script content it ends the script
+tag right there, then parses the rest of the file (including the
+remaining JS) as plain text. The user will see raw code on screen.
+
+**This happened once already.** A code comment in
+`_maybeHandlePendingNotifOpen` referenced "the closing `</scr` + `ipt>`
+tag" and bricked the entire app. Fixed in commit `cd9ef5b`.
+
+If you need to write this literal text in JS (comments, strings, etc.),
+break it up as `'<\/scr' + 'ipt>'` or `'</scri' + 'pt>'` or just rephrase
+so the literal characters never appear. Same goes for any multiline
+string, template literal, or `innerHTML` content.
+
+### 8. The notification small icon on Samsung Note 20 (abandoned)
 
 There is a visible "white square" behind the full-color notification
 small icon on Galaxy Note 20 and similar Samsung devices running One UI
@@ -165,6 +299,46 @@ block, Android auto-displays it in the background and never calls
 `onMessageReceived`, meaning our custom icon/title/body logic never runs.
 Do not change to mixed payloads.
 
+**Tap behavior:** the PendingIntent (Android FCM) and the `openWindow`
+URL (sw.js web push) both carry `?open_friend=` and `?signal_id=`
+query params built from the notification's data. The page reads these
+on launch and deep-links into the friend reactions sheet for that
+exact workout signal. Reaction notifications carry `to_user_id` but
+no `signal_id` — those tap to the social modal instead, see Critical
+section 6.
+
+---
+
+## Reactions
+
+The `reactions` table has a CHECK constraint on `reaction_type`:
+
+```sql
+check (reaction_type in (
+  'thumbs_up', 'fist_bump', 'fire', 'checkmark',
+  'goat', 'heart', 'salute', 'sparkles'
+))
+```
+
+Eight values total, currently rendered as 4-button rows in the
+friend-activity sheet (`_openFriendActivity` in `index.html`). The
+`RXNS` array near the top of that function defines the row layout —
+slice 0..4 is row 1, slice 4..8 is row 2.
+
+If you add new reaction types, you must:
+
+1. Add them to the `RXNS` array in `_openFriendActivity`.
+2. Add them to the `_rxnEmoji` map in `_sendReaction` so the push
+   notification body text shows the right emoji.
+3. Write a new migration (next number after `008_expand_reaction_types.sql`)
+   that drops and re-adds the CHECK constraint with the additional
+   values. **Apply the migration to Supabase BEFORE merging the code**,
+   otherwise users tapping the new buttons get the "Could not send
+   reaction" toast because the upsert fails.
+
+Each user can have one reaction per signal at a time — the upsert is
+keyed on `(from_user_id, signal_id)`.
+
 ---
 
 ## Android signing / build
@@ -189,8 +363,11 @@ Do not change to mixed payloads.
 
 ## Current version
 
-- `versionCode 40`, `versionName '1.0.3.1'` in `android/app/build.gradle`.
-- Always bump both for any native change that ships to Play Console.
+- `versionCode 41`, `versionName '1.0.4'` in `android/app/build.gradle`.
+- `sw.js` cache is `ts-muscle-v225` — bump this on any sw.js change so
+  existing users get the new SW on their next visit.
+- Always bump both `versionCode` and `versionName` for any native change
+  that ships to Play Console.
 - Play Console has hit "shadowed by higher versionCode" warnings before
   when multiple AABs were attached to the same release. If that
   happens, the fix is to remove the older AAB from the release, NOT to
@@ -230,6 +407,13 @@ These have been identified but intentionally left alone:
 - Don't drag notification work into more native builds unless the web
   side truly cannot reach what is needed.
 - Don't re-open the Note 20 white-square issue.
+- Don't switch `notifSheetShown` back to `sessionStorage` — it MUST be
+  `localStorage` so the dismissal persists across app restarts.
+- Don't make `_maybeHandlePendingNotifOpen` async or add awaits to it.
+  It must call `_openFriendActivity` synchronously so the friend sheet
+  paints in the same frame as the home screen.
+- Don't write the literal characters `</scr` + `ipt>` inside any JS
+  comment, string, or template literal — see Critical section 7.
 
 ---
 
@@ -245,7 +429,11 @@ These have been identified but intentionally left alone:
 - `index.html` (search for: `_requestNotificationPermission`,
   `_maybeShowNotifSheet`, `_showNotifSheet`, `_triggerNativePermissionPrompt`,
   `_registerOneSignalPlayerId`, `_savePushSubscription`, `_saveFcmToken`,
-  `_waitForFcmTokenIfAndroid`, `toggleSocialFeatures`, `openSocialModal`)
-- `sw.js` (push event handler)
+  `_waitForFcmTokenIfAndroid`, `toggleSocialFeatures`, `openSocialModal`,
+  `_maybeHandlePendingNotifOpen`, `_openFriendActivity`, `_sendReaction`,
+  `_promptNotifsForSocial`, `_onNotifSettingsTap`)
+- `sw.js` (push event handler + notificationclick deep link)
 - `supabase/functions/send-push/index.ts`
+- `supabase/migrations/008_expand_reaction_types.sql` (most recent — add
+  the next migration as `009_*.sql` if expanding reaction types again)
 - `.well-known/assetlinks.json`

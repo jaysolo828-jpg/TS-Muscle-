@@ -175,14 +175,25 @@ Deno.serve(async (req) => {
   // Resolve target user IDs
   let targets: string[] = [];
   if (to_uid) {
+    // Direct send (e.g. reaction notification) — never filter through mutes,
+    // those are personal/recipient-targeted not workout fan-out.
     targets = [to_uid];
   } else {
-    const [r1, r2] = await Promise.all([
+    // Workout fan-out: expand sender's accepted friends, then exclude any
+    // friends the sender has explicitly muted from workout notifications.
+    const [r1, r2, mutesResp] = await Promise.all([
       fetch(`${sbUrl}/rest/v1/friendships?status=eq.accepted&requester_id=eq.${uid}&select=addressee_id`, { headers: h }),
       fetch(`${sbUrl}/rest/v1/friendships?status=eq.accepted&addressee_id=eq.${uid}&select=requester_id`, { headers: h }),
+      fetch(`${sbUrl}/rest/v1/workout_notif_mutes?muter_id=eq.${uid}&select=muted_friend_id`, { headers: h }),
     ]);
-    const [f1, f2]: [any[], any[]] = await Promise.all([r1.json().catch(() => []), r2.json().catch(() => [])]);
-    targets = [...f1.map(r => r.addressee_id), ...f2.map(r => r.requester_id)];
+    const [f1, f2, mutes]: [any[], any[], any[]] = await Promise.all([
+      r1.json().catch(() => []),
+      r2.json().catch(() => []),
+      mutesResp.json().catch(() => []),
+    ]);
+    const mutedSet = new Set(mutes.map(m => m.muted_friend_id));
+    targets = [...f1.map(r => r.addressee_id), ...f2.map(r => r.requester_id)]
+      .filter(t => !mutedSet.has(t));
   }
 
   if (!targets.length) {
