@@ -8891,7 +8891,12 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
     fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/bright-processor', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
-      body: JSON.stringify({ to_uid: toUserId, title: fromName + ' reacted to your workout', body: 'They gave you a ' + _emoji })
+      body: JSON.stringify({
+        to_uid: toUserId,
+        title: fromName + ' reacted to your workout',
+        body: 'They gave you a ' + _emoji,
+        avatar_url: state.supabaseAvatarUrl || null
+      })
     }).catch(function() {});
   } catch (e) {}
 }
