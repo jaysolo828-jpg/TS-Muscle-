@@ -2804,6 +2804,18 @@
   cursor: pointer;
 }
 
+/* ── Reaction button feedback ─────────────────────────────────────────── */
+/* Tap-down squish so the button visibly responds the moment a finger
+   touches it — no waiting on the network for visual feedback. */
+.rxn-btn:active:not(:disabled) { transform: scale(0.9); }
+/* Celebratory pop on successful send. Bouncy easing makes it feel snappy. */
+@keyframes rxn-pop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+.rxn-btn-pop { animation: rxn-pop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
 </style>
 <script src="config.js?v=20260318"></script>
 <script>window.SUPABASE_URL = 'https://idiaozmcnckopwfisdpu.supabase.co'; window.SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_c8-lPLNrgTCPbtSxWVh_Xw_ybZ3s8KG';</script>
@@ -8687,8 +8699,8 @@ async function _openFriendActivity(userId, signalId) {
     const hasReacted = !!reacted[s.id];
     const renderBtn = (r) => {
       const isThis = reacted[s.id] === r.t;
-      return '<button onclick="_sendReaction(\'' + s.id + '\',\'' + userId + '\',\'' + r.t + '\',this)"'
-        + ' style="flex:1;padding:11px 4px;border-radius:10px;border:1px solid ' + (isThis ? '#C0392B' : 'var(--dark4)') + ';background:' + (isThis ? 'rgba(192,57,43,0.18)' : 'var(--dark)') + ';color:var(--cream);font-size:20px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.15s,background 0.15s;"'
+      return '<button class="rxn-btn" onclick="_sendReaction(\'' + s.id + '\',\'' + userId + '\',\'' + r.t + '\',this)"'
+        + ' style="flex:1;padding:11px 4px;border-radius:10px;border:1px solid ' + (isThis ? '#C0392B' : 'var(--dark4)') + ';background:' + (isThis ? 'rgba(192,57,43,0.18)' : 'var(--dark)') + ';color:var(--cream);font-size:20px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.15s,background 0.15s,transform 0.12s;"'
         + '>' + r.e + '</button>';
     };
     const row1 = RXNS.slice(0, 4).map(renderBtn).join('');
@@ -8814,10 +8826,30 @@ async function _confirmRemoveFriend(userId) {
 
 async function _sendReaction(signalId, toUserId, reactionType, btn) {
   const sb = _getSupabaseClient();
-  if (!sb) return;
-  const card = btn?.closest('.friend-signal-card');
-  if (btn) btn.disabled = true;
-  if (card) card.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  if (!sb || !btn) return;
+  const card = btn.closest('.friend-signal-card');
+  const cardButtons = card ? Array.from(card.querySelectorAll('button.rxn-btn')) : [btn];
+
+  // ── Immediate feedback ─────────────────────────────────────────────
+  // Subtle haptic bump on phones that support it (iOS Safari ignores).
+  try { if (navigator.vibrate) navigator.vibrate(8); } catch (_) {}
+
+  // Snapshot current visual state so we can revert exactly on failure.
+  const snapshot = cardButtons.map(b => ({
+    borderColor: b.style.borderColor,
+    background:  b.style.background,
+  }));
+
+  // Optimistic update: flip styles BEFORE the network call so the user
+  // sees instant selection feedback. Buttons stay disabled until the
+  // server confirms (prevents double-tap fan-out spam).
+  cardButtons.forEach(b => {
+    b.disabled = true;
+    b.style.borderColor = 'var(--dark4)';
+    b.style.background  = 'var(--dark)';
+  });
+  btn.style.borderColor = '#C0392B';
+  btn.style.background  = 'rgba(192,57,43,0.18)';
 
   const { error } = await sb.from('reactions').upsert({
     from_user_id: state.supabaseUserId,
@@ -8827,24 +8859,26 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
   }, { onConflict: 'from_user_id,signal_id' });
 
   if (error) {
-    if (btn) btn.disabled = false;
-    if (card) card.querySelectorAll('button').forEach(b => { b.disabled = false; });
+    // Revert to the exact pre-tap state and re-enable.
+    cardButtons.forEach((b, i) => {
+      b.disabled = false;
+      b.style.borderColor = snapshot[i].borderColor;
+      b.style.background  = snapshot[i].background;
+    });
     showToast('Could not send reaction.');
     return;
   }
 
-  // Re-enable all buttons and reset styles, then highlight the selected one
-  if (card) {
-    card.querySelectorAll('button').forEach(b => {
-      b.disabled = false;
-      b.style.borderColor = '#333';
-      b.style.background = 'transparent';
-    });
-  }
-  if (btn) {
-    btn.style.borderColor = '#C0392B';
-    btn.style.background = 'rgba(192,57,43,0.15)';
-  }
+  // Re-enable everything; selected button is already styled from the
+  // optimistic update above. Trigger a celebratory pop animation on the
+  // selected button so the success is unmistakable.
+  cardButtons.forEach(b => { b.disabled = false; });
+  btn.classList.remove('rxn-btn-pop');
+  // Force reflow so adding the class re-runs the keyframe even on rapid
+  // successive taps of the same button.
+  void btn.offsetWidth;
+  btn.classList.add('rxn-btn-pop');
+  setTimeout(function() { btn.classList.remove('rxn-btn-pop'); }, 400);
 
   // Send push notification
   try {
