@@ -9004,7 +9004,7 @@ function _maybeHandlePendingNotifOpen() {
   // never carry one). Open the social modal instead so they can see who
   // reacted. Defer if the social-overlay element isn't in the DOM yet
   // (init try block runs during HTML parsing — the overlay markup lives
-  // after the closing </script> tag).
+  // after the closing script tag).
   if (pending.userId === state.supabaseUserId || !pending.signalId) {
     if (document.getElementById('social-overlay')) {
       openSocialModal();
