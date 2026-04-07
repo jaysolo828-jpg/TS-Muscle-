@@ -50,8 +50,19 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
             manager.createNotificationChannel(channel)
         }
 
-        // Tap opens the app
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://app.therapyandsneakers.org/"))
+        // Tap opens the app, deep-linking to the reactions sheet for this
+        // workout signal. The web page reads ?open_friend= and ?signal_id=
+        // on launch and opens _openFriendActivity for that signal.
+        val toUserId = message.data["to_user_id"]
+        val signalId = message.data["signal_id"]
+        val tapUri = Uri.parse("https://app.therapyandsneakers.org/")
+            .buildUpon()
+            .apply {
+                if (!toUserId.isNullOrEmpty()) appendQueryParameter("open_friend", toUserId)
+                if (!signalId.isNullOrEmpty()) appendQueryParameter("signal_id", signalId)
+            }
+            .build()
+        val intent = Intent(Intent.ACTION_VIEW, tapUri)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,

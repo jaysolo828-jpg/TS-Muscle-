@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v224';
+const CACHE_NAME = 'ts-muscle-v225';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './badge-dumbbell.png', './manifest.json'];
 
@@ -103,16 +103,38 @@ self.addEventListener('notificationclick', function(event) {
     return; // Do not open the app window for this action
   }
 
-  // Default tap — focus existing window or open the TWA/app
+  // Default tap — focus existing window or open the TWA/app. If the push
+  // carries to_user_id + signal_id, deep-link to the reactions sheet:
+  //   - new window: open URL with ?open_friend=X&signal_id=Y query params
+  //   - existing window on our origin: postMessage so the already-loaded
+  //     page opens the sheet without navigating
   event.notification.close();
+  var toUid = data.to_user_id;
+  var sigId = data.signal_id;
+  var qs = (toUid && sigId)
+    ? '?open_friend=' + encodeURIComponent(toUid) + '&signal_id=' + encodeURIComponent(sigId)
+    : '';
+  var targetUrl = 'https://app.therapyandsneakers.org/' + qs;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(cs) {
       // Prefer a window already on our origin
-      var c = cs.find(function(x) { return x.url.startsWith(_SW_BASE) && 'focus' in x; });
-      if (!c) c = cs.find(function(x) { return 'focus' in x; });
-      if (c) return c.focus();
+      var ourClient = cs.find(function(x) { return x.url.startsWith(_SW_BASE) && 'focus' in x; });
+      if (ourClient) {
+        if (toUid) {
+          try {
+            ourClient.postMessage({
+              type: 'OPEN_FRIEND_ACTIVITY',
+              to_user_id: toUid,
+              signal_id: sigId || null
+            });
+          } catch(_) {}
+        }
+        return ourClient.focus();
+      }
+      var anyClient = cs.find(function(x) { return 'focus' in x; });
+      if (anyClient) return anyClient.focus();
       // openWindow with the exact launch URL so Android routes it to the TWA
-      return clients.openWindow('https://app.therapyandsneakers.org/');
+      return clients.openWindow(targetUrl);
     })
   );
 });

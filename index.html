@@ -7905,6 +7905,7 @@ async function _checkSupabaseSession() {
       _updateSupabaseAuthCard();
       _swStoreUserId(session.user.id);
       _requestNotificationPermission();
+      _maybeHandlePendingNotifOpen();
       if (window._fcmToken) _saveFcmToken(window._fcmToken);
       // Refresh display name from DB so notifications show username not email
       sb.from('users').select('username, avatar_url').eq('id', session.user.id).single()
@@ -8529,7 +8530,7 @@ function _timeAgo(ts) {
   return Math.floor(h / 24) + 'd ago';
 }
 
-async function _openFriendActivity(userId) {
+async function _openFriendActivity(userId, signalId) {
   const sb = _getSupabaseClient();
   if (!sb) return;
   const cached = _friendCache[userId] || {};
@@ -8557,12 +8558,22 @@ async function _openFriendActivity(userId) {
   document.body.appendChild(sheet);
   sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
 
+  // When deep-linked from a notification tap, signalId is the specific workout
+  // the notification referred to — query it directly so the reactions are tied
+  // to the right signal even if the friend has logged another workout since.
+  // Without a signalId (normal friends-list tap) fall back to most recent.
+  const signalsQuery = signalId
+    ? sb.from('workout_signals')
+        .select('id, workout_name, started_at, signal_type')
+        .eq('id', signalId)
+        .limit(1)
+    : sb.from('workout_signals')
+        .select('id, workout_name, started_at, signal_type')
+        .eq('user_id', userId)
+        .order('started_at', { ascending: false })
+        .limit(1);
   const [{ data: signals }, { data: myRxns }] = await Promise.all([
-    sb.from('workout_signals')
-      .select('id, workout_name, started_at, signal_type')
-      .eq('user_id', userId)
-      .order('started_at', { ascending: false })
-      .limit(1),
+    signalsQuery,
     sb.from('reactions')
       .select('signal_id, reaction_type')
       .eq('from_user_id', state.supabaseUserId)
@@ -8940,6 +8951,47 @@ async function _enableNotifFromSheet() {
   }
   document.getElementById('notif-prompt-sheet')?.remove();
   await _onNotifSettingsTap();
+}
+
+// ── Pending notification deep link ─────────────────────────────────────────
+// Called from the session-restore path once state.supabaseUserId is valid,
+// and from the service-worker message listener (iOS/desktop focus-existing
+// window path). Opens the friend-activity sheet for the tapped notification.
+async function _maybeHandlePendingNotifOpen() {
+  if (!state.supabaseUserId) return;
+  var raw;
+  try { raw = sessionStorage.getItem('pendingNotifOpen'); } catch(_) { return; }
+  if (!raw) return;
+  var pending;
+  try { pending = JSON.parse(raw); } catch(_) {
+    try { sessionStorage.removeItem('pendingNotifOpen'); } catch(_) {}
+    return;
+  }
+  if (!pending || !pending.userId) {
+    try { sessionStorage.removeItem('pendingNotifOpen'); } catch(_) {}
+    return;
+  }
+  try { sessionStorage.removeItem('pendingNotifOpen'); } catch(_) {}
+  // This user just tapped a notification — notifications are clearly working
+  // for them. Persist the notif-sheet dismissal so the "Enable Notifications"
+  // sheet (z-index 999999) doesn't pop over the friend-activity sheet.
+  try { localStorage.setItem('notifSheetShown', '1'); } catch(_) {}
+  // Warm the friend cache so the sheet header shows their real name/avatar.
+  // _openFriendActivity reads _friendCache synchronously on render — if the
+  // friends list hasn't been loaded yet, the header would show "Friend".
+  if (!_friendCache[pending.userId]) {
+    try {
+      var sb = _getSupabaseClient();
+      if (sb) {
+        var res = await sb.from('users')
+          .select('id, display_name, username, avatar_color, avatar_url, last_active')
+          .eq('id', pending.userId)
+          .single();
+        if (res && res.data) _friendCache[pending.userId] = res.data;
+      }
+    } catch(_) {}
+  }
+  _openFriendActivity(pending.userId, pending.signalId);
 }
 
 // On Android, briefly wait for the native FCM token to arrive in window._fcmToken
@@ -24445,6 +24497,23 @@ if ('serviceWorker' in navigator) {
     });
   }).catch(() => {});
 
+  // Handle "open friend activity" messages from the service worker — sent
+  // when the user taps a web-push notification while the app is already open
+  // (iOS/desktop focus-existing-window path; Android TWA reloads the URL
+  // instead, handled by the deep-link IIFE at page load).
+  navigator.serviceWorker.addEventListener('message', function(e) {
+    var d = e.data;
+    if (d && d.type === 'OPEN_FRIEND_ACTIVITY' && d.to_user_id) {
+      try {
+        sessionStorage.setItem(
+          'pendingNotifOpen',
+          JSON.stringify({ userId: d.to_user_id, signalId: d.signal_id || null })
+        );
+      } catch(_) {}
+      _maybeHandlePendingNotifOpen();
+    }
+  });
+
   // When the waiting SW activates (user tapped the banner), reload to pick up new assets
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!_hadController) return; // first install, not an update
@@ -25034,6 +25103,31 @@ if (navigator.storage && navigator.storage.persist) {
 (function() {
   var token = new URLSearchParams(location.search).get('fcm_token');
   if (token) { window._fcmToken = token; _saveFcmToken(token); }
+})();
+
+// ── Notification deep link: ?open_friend=X&signal_id=Y on launch ──
+// Set by TSFirebaseMessagingService (Android FCM tap) and by sw.js
+// (iOS/desktop web push tap when opening a new window). Store in
+// sessionStorage so the pending open survives the possible post-sign-in
+// location.reload(), then clean the URL so a manual refresh doesn't
+// re-trigger the sheet.
+(function() {
+  var p = new URLSearchParams(location.search);
+  var openFriend = p.get('open_friend');
+  var signalId   = p.get('signal_id');
+  if (!openFriend) return;
+  try {
+    sessionStorage.setItem(
+      'pendingNotifOpen',
+      JSON.stringify({ userId: openFriend, signalId: signalId || null })
+    );
+  } catch(_) {}
+  try {
+    p.delete('open_friend');
+    p.delete('signal_id');
+    var cleanQs = p.toString();
+    history.replaceState(null, '', location.pathname + (cleanQs ? '?' + cleanQs : ''));
+  } catch(_) {}
 })();
 
 async function _saveFcmToken(token) {
