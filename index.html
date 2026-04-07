@@ -8288,6 +8288,7 @@ function _socialSetupLater() {
 
 const _friendCache = {};       // userId -> { display_name, username, last_active, avatar_color }
 const _mutedFriends = new Set(); // friend user IDs the current user has muted from receiving workout-start notifications
+const _reactedSignals = new Set(); // signal IDs the current user has already reacted to — used to gate push notifications so changing reaction stays silent
 
 // SVG bell-off icon, used as a subtle "you've muted this friend from
 // your workout notifications" indicator next to the friend-row chevron.
@@ -8669,7 +8670,15 @@ async function _openFriendActivity(userId, signalId) {
   }
 
   const reacted = {};
-  (myRxns || []).forEach(r => { reacted[r.signal_id] = r.reaction_type; });
+  // myRxns is the full list of the current user's reactions across all
+  // friends — use it to refresh _reactedSignals so the next _sendReaction
+  // call knows which signals already had a push fired (DB-only update,
+  // no second notification).
+  _reactedSignals.clear();
+  (myRxns || []).forEach(r => {
+    reacted[r.signal_id] = r.reaction_type;
+    _reactedSignals.add(r.signal_id);
+  });
 
   const sigEl = document.getElementById('friend-activity-signals');
   if (!sigEl) return;
@@ -8880,7 +8889,15 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
   btn.classList.add('rxn-btn-pop');
   setTimeout(function() { btn.classList.remove('rxn-btn-pop'); }, 400);
 
-  // Send push notification
+  // Send push notification — only on the FIRST reaction to this signal.
+  // Changing reactions or re-tapping the same one updates the DB row but
+  // does NOT fire another push, so the recipient gets exactly one ping per
+  // workout per friend reacting (no spam from rapid button-mashing).
+  // _reactedSignals is refreshed from the DB on every _openFriendActivity
+  // open via the same myRxns query that builds `reacted`, so it stays in
+  // sync across sessions and devices.
+  if (_reactedSignals.has(signalId)) return;
+  _reactedSignals.add(signalId);
   try {
     const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
     const _rxnEmoji = {
