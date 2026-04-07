@@ -9002,16 +9002,34 @@ function _maybeHandlePendingNotifOpen() {
   // their OWN workout with reaction buttons, letting them react to themselves.
   // Same goes for any deep link missing signal_id (reaction notifications
   // never carry one). Open the social modal instead so they can see who
-  // reacted. Defer if the social-overlay element isn't in the DOM yet
-  // (init try block runs during HTML parsing — the overlay markup lives
-  // after the closing script tag).
+  // reacted.
+  //
+  // The social-overlay element lives near the bottom of the static HTML,
+  // after the main script tag — so during the init-try-block path the
+  // element doesn't exist yet and openSocialModal would no-op. Two things
+  // are needed: (1) cover the home screen with an immediate placeholder
+  // backdrop so the user doesn't see a home-flash while waiting, and
+  // (2) defer the openSocialModal call until DOMContentLoaded.
   if (pending.userId === state.supabaseUserId || !pending.signalId) {
-    if (document.getElementById('social-overlay')) {
+    var openAndCleanup = function() {
+      var b = document.getElementById('notif-social-backdrop');
+      if (b) b.remove();
       openSocialModal();
+    };
+    if (document.getElementById('social-overlay')) {
+      openAndCleanup();
     } else {
-      document.addEventListener('DOMContentLoaded', function() {
-        openSocialModal();
-      }, { once: true });
+      // Append a dark backdrop immediately so the home screen never paints
+      // unobscured. body always exists at this point (the script tag lives
+      // inside body) so this works during init-time HTML parsing.
+      if (!document.getElementById('notif-social-backdrop')) {
+        var backdrop = document.createElement('div');
+        backdrop.id = 'notif-social-backdrop';
+        backdrop.style.cssText =
+          'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:900;';
+        document.body.appendChild(backdrop);
+      }
+      document.addEventListener('DOMContentLoaded', openAndCleanup, { once: true });
     }
     return;
   }
