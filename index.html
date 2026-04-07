@@ -7432,7 +7432,16 @@ function _applyNotifToggleUI() {
 
 async function _onNotifSettingsTap() {
   if (!('Notification' in window)) { showToast('Notifications not supported on this device'); return; }
-  if (Notification.permission === 'denied') { showToast('Notifications blocked — enable in Android Settings > Apps > Chrome > Notifications'); return; }
+  if (Notification.permission === 'denied') {
+    const ua = (navigator.userAgent || '').toLowerCase();
+    const msg = /android/.test(ua)
+      ? 'Notifications blocked — go to Settings → Apps → T&S Muscle → Notifications'
+      : /iphone|ipad|ipod/.test(ua)
+      ? 'Notifications blocked — go to Settings → Notifications and enable for this app'
+      : 'Notifications blocked — enable via your browser\'s site settings';
+    showToast(msg);
+    return;
+  }
   if (Notification.permission !== 'granted') {
     try {
       const result = await Notification.requestPermission();
@@ -8837,12 +8846,12 @@ function _maybeShowNotifSheet() {
 }
 
 // Contextual re-prompt when a signed-in user opens the social modal ("joins
-// the crew"). Bypasses the once-per-session flag because this is a new
-// contextual trigger — the user is actively opting into a feature that
-// depends on notifications.
+// the crew"). Bypasses the per-session flag because this is a new contextual
+// trigger — but still respects the permanent NOT NOW dismissal (localStorage).
 function _promptNotifsForSocial() {
   if (!state.supabaseUserId) return;
   if (!('Notification' in window)) return;
+  if (localStorage.getItem('notifSheetShown')) return;
   if (sessionStorage.getItem('socialNotifPromptShown')) return;
   sessionStorage.setItem('socialNotifPromptShown', '1');
   _showNotifSheet();
