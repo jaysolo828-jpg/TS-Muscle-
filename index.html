@@ -2816,6 +2816,29 @@
 }
 .rxn-btn-pop { animation: rxn-pop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
+/* "✓ REACTION SENT · TAP TO CHANGE" status line that appears under the
+   reaction button rows once a user has reacted. Pulses on every tap so
+   that taps which DON'T fire a new push (re-tapping or changing reaction)
+   still get a visible acknowledgement — tells the sender "we know, no
+   extra ping is going out." */
+.signal-status {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  color: var(--gray);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: center;
+  margin-top: 12px;
+  opacity: 0.7;
+  transform-origin: center;
+}
+@keyframes signal-status-pulse {
+  0%   { opacity: 0.7; transform: scale(1);    color: var(--gray); }
+  35%  { opacity: 1;   transform: scale(1.06); color: #C0392B; }
+  100% { opacity: 0.7; transform: scale(1);    color: var(--gray); }
+}
+.signal-status.pulsing { animation: signal-status-pulse 0.5s ease-out; }
+
 </style>
 <script src="config.js?v=20260318"></script>
 <script>window.SUPABASE_URL = 'https://idiaozmcnckopwfisdpu.supabase.co'; window.SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_c8-lPLNrgTCPbtSxWVh_Xw_ybZ3s8KG';</script>
@@ -8288,6 +8311,7 @@ function _socialSetupLater() {
 
 const _friendCache = {};       // userId -> { display_name, username, last_active, avatar_color }
 const _mutedFriends = new Set(); // friend user IDs the current user has muted from receiving workout-start notifications
+const _reactedSignals = new Set(); // signal IDs the current user has already reacted to — used to gate push notifications so changing reaction stays silent
 
 // SVG bell-off icon, used as a subtle "you've muted this friend from
 // your workout notifications" indicator next to the friend-row chevron.
@@ -8669,7 +8693,15 @@ async function _openFriendActivity(userId, signalId) {
   }
 
   const reacted = {};
-  (myRxns || []).forEach(r => { reacted[r.signal_id] = r.reaction_type; });
+  // myRxns is the full list of the current user's reactions across all
+  // friends — use it to refresh _reactedSignals so the next _sendReaction
+  // call knows which signals already had a push fired (DB-only update,
+  // no second notification).
+  _reactedSignals.clear();
+  (myRxns || []).forEach(r => {
+    reacted[r.signal_id] = r.reaction_type;
+    _reactedSignals.add(r.signal_id);
+  });
 
   const sigEl = document.getElementById('friend-activity-signals');
   if (!sigEl) return;
@@ -8710,6 +8742,7 @@ async function _openFriendActivity(userId, signalId) {
       + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;">' + label + ' \u00b7 ' + when + '</div>'
       + '<div style="display:flex;gap:8px;margin-bottom:8px;">' + row1 + '</div>'
       + '<div style="display:flex;gap:8px;">' + row2 + '</div>'
+      + '<div id="signal-status-' + s.id + '" class="signal-status" style="display:' + (hasReacted ? 'block' : 'none') + ';">\u2713 Reaction sent \u00b7 Tap to change</div>'
       + '</div>';
   }).join('');
 }
@@ -8829,6 +8862,10 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
   if (!sb || !btn) return;
   const card = btn.closest('.friend-signal-card');
   const cardButtons = card ? Array.from(card.querySelectorAll('button.rxn-btn')) : [btn];
+  // Capture this BEFORE we mutate _reactedSignals so the success path can
+  // distinguish "first reaction to this signal" (fire push) from "already
+  // reacted" (silent update + status-line pulse).
+  const wasAlreadyReacted = _reactedSignals.has(signalId);
 
   // ── Immediate feedback ─────────────────────────────────────────────
   // Subtle haptic bump on phones that support it (iOS Safari ignores).
@@ -8880,7 +8917,30 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
   btn.classList.add('rxn-btn-pop');
   setTimeout(function() { btn.classList.remove('rxn-btn-pop'); }, 400);
 
-  // Send push notification
+  // Status line: persistent "✓ Reaction sent · Tap to change" indicator
+  // under the button rows. Reveals on first reaction; on subsequent taps
+  // (re-tap or change) it pulses with a brief brand-red flash so the
+  // sender gets a visible cue that we acknowledged the tap — even though
+  // no new push is going out.
+  const statusEl = document.getElementById('signal-status-' + signalId);
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.classList.remove('pulsing');
+    // Force reflow so the keyframe re-runs on rapid successive taps.
+    void statusEl.offsetWidth;
+    statusEl.classList.add('pulsing');
+    setTimeout(function() { statusEl.classList.remove('pulsing'); }, 520);
+  }
+
+  // Send push notification — only on the FIRST reaction to this signal.
+  // Changing reactions or re-tapping the same one updates the DB row but
+  // does NOT fire another push, so the recipient gets exactly one ping per
+  // workout per friend reacting (no spam from rapid button-mashing).
+  // _reactedSignals is refreshed from the DB on every _openFriendActivity
+  // open via the same myRxns query that builds `reacted`, so it stays in
+  // sync across sessions and devices.
+  if (wasAlreadyReacted) return;
+  _reactedSignals.add(signalId);
   try {
     const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
     const _rxnEmoji = {
