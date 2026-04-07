@@ -8892,13 +8892,20 @@ function _showNotifSheet() {
   const msg       = "Get notified when your friends start training. No spam — just real accountability.";
   const primary   = 'ENABLE NOTIFICATIONS';
 
-  // Dismiss helper: set the flag + remove the sheet.
+  // NOT NOW: always persist the dismissal so the sheet doesn't pester
+  // them on every app restart. Recoverable via the social-features toggle.
   const dismissJs = "localStorage.setItem('notifSheetShown','1');document.getElementById('notif-prompt-sheet')?.remove()";
+  // ENABLE: only persist the dismissal if Chrome already says 'granted'
+  // (the bridge will be a no-op anyway, so the sheet is truly done). If
+  // permission is 'default'/'denied', don't set the flag — that way a
+  // user who fat-fingers the OS dialog gets the sheet back next session
+  // and can retry without going to settings.
+  const enableJs = "if(Notification.permission==='granted')localStorage.setItem('notifSheetShown','1');document.getElementById('notif-prompt-sheet')?.remove()";
   // On Android, invoke the native bridge activity via custom scheme
   // to show the real OS prompt. On non-Android, fall through to the
   // web API which works fine because there's no split-permission state.
   const primaryAction = isAndroid
-    ? (dismissJs + ';_triggerNativePermissionPrompt()')
+    ? (enableJs + ';_triggerNativePermissionPrompt()')
     : "_enableNotifFromSheet()";
 
   const sheet = document.createElement('div');
@@ -8916,7 +8923,12 @@ function _showNotifSheet() {
 }
 
 async function _enableNotifFromSheet() {
-  localStorage.setItem('notifSheetShown', '1');
+  // Only persist the dismissal if permission is already 'granted' (the
+  // request will be a no-op). Otherwise leave the flag unset so a denied
+  // browser prompt can be retried next session without going to settings.
+  if (Notification.permission === 'granted') {
+    localStorage.setItem('notifSheetShown', '1');
+  }
   document.getElementById('notif-prompt-sheet')?.remove();
   await _onNotifSettingsTap();
 }
