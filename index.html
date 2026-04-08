@@ -8383,7 +8383,7 @@ async function _renderFriendsSection() {
     </div>
 
     <div id="recent-reactions-section" style="display:none;margin-bottom:14px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">RECENT REACTIONS</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">TODAY'S REACTIONS</div>
       <div id="recent-reactions-list"></div>
     </div>
 
@@ -8433,6 +8433,24 @@ async function _loadOutgoingFriendRequests() {
 // then joins the results client-side. Updates state.socialLastSeen
 // AFTER the render so the notify-dot "unread since" gate only advances
 // when the reactions were actually shown — not on modal open.
+// Load and render the "Today's reactions" section showing reactions
+// OTHER users have sent to the current user's most recent workout,
+// and ONLY if that workout was started today (local time). No history
+// feed — once a new workout happens, the old reactions are no longer
+// shown. One card with a row of reactor "chips" (avatar + emoji badge).
+//
+// Each chip is a two-button pill:
+//   - Left (avatar + emoji) → open the REACTOR's activity sheet with
+//     THEIR workouts so the user can react back. No signal_id passed.
+//   - Right (✕) → single-reaction delete confirm sheet.
+//
+// The card header trash icon clears every reaction on today's workout
+// at once (bulk delete). Both delete paths rely on the
+// reactions_to_me_delete RLS policy added in migration 012.
+//
+// Updates state.socialLastSeen AFTER the render so the notify-dot
+// "unread since" gate only advances when the reactions were actually
+// shown — not on modal open.
 async function _loadRecentReactions() {
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
@@ -8440,27 +8458,40 @@ async function _loadRecentReactions() {
   const list    = document.getElementById('recent-reactions-list');
   if (!section || !list) return;
 
-  // Pull ~30 to give headroom for grouping — after grouping we only
-  // render 5 workouts but more reactions per workout means more chips.
+  // Find the user's most recent workout signal, scoped to TODAY only
+  // (local midnight to now). If none, hide the section — no feed.
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const { data: latestSignals } = await sb.from('workout_signals')
+    .select('id, workout_name, started_at')
+    .eq('user_id', state.supabaseUserId)
+    .gte('started_at', todayStart.toISOString())
+    .order('started_at', { ascending: false })
+    .limit(1);
+
+  if (!latestSignals || latestSignals.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  const signal = latestSignals[0];
+
+  // Get all reactions on THIS one signal, directed at the current user.
   const { data: rxns } = await sb.from('reactions')
-    .select('id, from_user_id, signal_id, reaction_type, created_at')
+    .select('id, from_user_id, reaction_type, created_at')
     .eq('to_user_id', state.supabaseUserId)
-    .order('created_at', { ascending: false })
-    .limit(30);
+    .eq('signal_id', signal.id)
+    .order('created_at', { ascending: false });
 
   if (!rxns || rxns.length === 0) {
     section.style.display = 'none';
     return;
   }
 
-  const fromIds   = Array.from(new Set(rxns.map(r => r.from_user_id)));
-  const signalIds = Array.from(new Set(rxns.map(r => r.signal_id)));
-  const [{ data: users }, { data: signals }] = await Promise.all([
-    sb.from('users').select('id, username, display_name, avatar_color, avatar_url').in('id', fromIds),
-    sb.from('workout_signals').select('id, workout_name, started_at').in('id', signalIds)
-  ]);
-  const userMap   = {}; (users   || []).forEach(u => { userMap[u.id]   = u; _friendCache[u.id] = u; });
-  const signalMap = {}; (signals || []).forEach(s => { signalMap[s.id] = s; });
+  const fromIds = Array.from(new Set(rxns.map(r => r.from_user_id)));
+  const { data: users } = await sb.from('users')
+    .select('id, username, display_name, avatar_color, avatar_url')
+    .in('id', fromIds);
+  const userMap = {}; (users || []).forEach(u => { userMap[u.id] = u; _friendCache[u.id] = u; });
 
   const _rxnEmojiMap = {
     thumbs_up: '\ud83d\udc4d', fist_bump: '\ud83d\udc4a',
@@ -8469,77 +8500,50 @@ async function _loadRecentReactions() {
     salute:    '\ud83e\udee1', sparkles:  '\u2728'
   };
 
-  // Group reactions by signal_id and sort each group by newest reaction
-  // first. Then sort the groups themselves by their newest reaction so
-  // the most recently-active workout appears at the top.
-  const bySignal = {};
-  rxns.forEach(r => {
-    if (!bySignal[r.signal_id]) bySignal[r.signal_id] = [];
-    bySignal[r.signal_id].push(r);
-  });
-  const groups = Object.keys(bySignal).map(signalId => {
-    const rs = bySignal[signalId].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
-    return { signalId, reactions: rs, newestAt: rs[0].created_at };
-  }).sort((a, b) => (b.newestAt || '').localeCompare(a.newestAt || ''));
-  // Cap at 5 workouts — older reactions age out of the list, the user
-  // can see them in the reactor's activity sheet directly.
-  const visible = groups.slice(0, 5);
-
   // Reset the per-reaction context cache before rebuilding — ensures
-  // deleted/aged-out reactions don't linger in the lookup map.
+  // deleted/stale reactions don't linger in the lookup map.
   Object.keys(_recentReactionsCache).forEach(k => delete _recentReactionsCache[k]);
 
-  section.style.display = 'block';
-  list.innerHTML = visible.map(group => {
-    const s = signalMap[group.signalId] || {};
-    const workoutName = s.workout_name || 'Workout';
-    const when = group.newestAt ? _timeAgo(new Date(group.newestAt).getTime()) : '';
-    const chips = group.reactions.map(r => {
-      const u = userMap[r.from_user_id] || {};
-      const label = u.username || u.display_name || 'Someone';
-      const emoji = _rxnEmojiMap[r.reaction_type] || '';
-      // Cache the full context for this reaction so the confirm sheet
-      // can render a descriptive message without interpolating the
-      // label/workoutName into the inline onclick (double-escape hell).
-      _recentReactionsCache[r.id] = {
-        label: label,
-        emoji: emoji,
-        workoutName: workoutName,
-        signalId: group.signalId
-      };
-      // Two-button pill:
-      //   Left side (avatar + emoji badge) → open the REACTOR's
-      //     activity sheet with THEIR workouts so the user can react
-      //     back. No signal_id passed = falls back to most-recent-10.
-      //   Right side (✕) → single-reaction delete confirm sheet.
-      return `<div style="display:inline-flex;align-items:center;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;padding:4px 2px 4px 4px;flex-shrink:0;">
-        <button onclick="_openFriendActivity('${r.from_user_id}')" aria-label="Open @${escapeHtml(label)}" style="position:relative;width:36px;height:36px;background:transparent;border:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          ${_avatarHtml(label, u.avatar_color, 32, u.avatar_url)}
-          <div style="position:absolute;bottom:-1px;right:-1px;background:var(--dark);border:2px solid var(--dark);border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;">${emoji}</div>
-        </button>
-        <button onclick="_confirmRemoveSingleReaction('${r.id}')" aria-label="Remove @${escapeHtml(label)}'s reaction" style="width:28px;height:36px;background:transparent;border:none;border-left:1px solid var(--dark4);padding:0;margin-left:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg viewBox="0 0 24 24" width="11" height="11" stroke="#C0392B" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>`;
-    }).join('');
-    return `<div style="background:var(--dark2);border-radius:12px;padding:14px 14px 12px;margin-bottom:8px;border-left:3px solid #C0392B;">
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
-        <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1;flex:1;min-width:0;">${escapeHtml(workoutName)}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">${when}</div>
-        <button onclick="_confirmClearReactions('${group.signalId}', ${group.reactions.length})" aria-label="Clear all reactions for this workout" style="background:transparent;border:none;padding:6px;margin:-6px -6px -6px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
-        </button>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">${chips}</div>
+  const workoutName = signal.workout_name || 'Workout';
+  const when = _timeAgo(new Date(signal.started_at).getTime()).toUpperCase();
+
+  const chips = rxns.map(r => {
+    const u = userMap[r.from_user_id] || {};
+    const label = u.username || u.display_name || 'Someone';
+    const emoji = _rxnEmojiMap[r.reaction_type] || '';
+    // Cache context for the single-reaction confirm sheet lookup so
+    // we don't have to interpolate user-controlled strings into the
+    // inline onclick (double-escape hell).
+    _recentReactionsCache[r.id] = {
+      label: label,
+      emoji: emoji,
+      workoutName: workoutName,
+      signalId: signal.id
+    };
+    return `<div style="display:inline-flex;align-items:center;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;padding:4px 2px 4px 4px;flex-shrink:0;">
+      <button onclick="_openFriendActivity('${r.from_user_id}')" aria-label="Open @${escapeHtml(label)}" style="position:relative;width:36px;height:36px;background:transparent;border:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        ${_avatarHtml(label, u.avatar_color, 32, u.avatar_url)}
+        <div style="position:absolute;bottom:-1px;right:-1px;background:var(--dark);border:2px solid var(--dark);border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;">${emoji}</div>
+      </button>
+      <button onclick="_confirmRemoveSingleReaction('${r.id}')" aria-label="Remove reaction" style="width:28px;height:36px;background:transparent;border:none;border-left:1px solid var(--dark4);padding:0;margin-left:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg viewBox="0 0 24 24" width="11" height="11" stroke="#C0392B" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>`;
   }).join('');
 
-  // Only NOW mark reactions as seen — after they've actually been
-  // rendered. Previously openSocialModal set this on modal open, which
-  // let users miss reactions they hadn't noticed yet if they briefly
-  // opened and closed the modal. The timestamp stores the newest
-  // rendered reaction's created_at so the _updateSocialNotifyDot query
-  // only hides the dot for reactions up to this point.
+  section.style.display = 'block';
+  list.innerHTML = `<div style="background:var(--dark2);border-radius:12px;padding:14px 14px 12px;margin-bottom:8px;border-left:3px solid #C0392B;">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1;flex:1;min-width:0;">${escapeHtml(workoutName)}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">${when}</div>
+      <button onclick="_confirmClearReactions('${signal.id}', ${rxns.length})" aria-label="Clear all reactions for this workout" style="background:transparent;border:none;padding:6px;margin:-6px -6px -6px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">${chips}</div>
+  </div>`;
+
+  // Mark reactions as seen now that they've been rendered.
   const newest = rxns[0]?.created_at;
   if (newest && newest > (state.socialLastSeen || '')) {
     state.socialLastSeen = newest;
@@ -9344,6 +9348,15 @@ function inviteFriend() {
 // ── Workout Signals ────────────────────────────────────────────────────────
 
 // Called at the start of a fresh session — inserts a signal row and notifies friends.
+//
+// Deduplication: if the user already has a 'started' signal for this
+// same workout name within the last 2 hours, REUSE it instead of
+// inserting a new row. Prevents abandoned-then-restarted sessions
+// (e.g. user hits Start Fresh on the resume modal) from producing
+// multiple workout_signals with the same name, which would split
+// reactions across duplicate cards in the recipient's Today's
+// Reactions section. Friends are NOT re-notified on reuse — they
+// already got the push from the first start.
 async function _sendWorkoutSignal(dayName) {
   if (!state.supabaseUserId) return;
   // Respect the Social Features setting — a user who turned social off
@@ -9353,6 +9366,22 @@ async function _sendWorkoutSignal(dayName) {
   if (!sb) return;
   const displayName = state.supabaseDisplayName || 'Someone';
   try {
+    // Dedup check: look for a 'started' signal for this exact workout
+    // name within the last 2 hours. If found, reuse its id silently.
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    const { data: recent } = await sb.from('workout_signals')
+      .select('id')
+      .eq('user_id', state.supabaseUserId)
+      .eq('workout_name', dayName)
+      .eq('signal_type', 'started')
+      .gte('started_at', twoHoursAgo)
+      .order('started_at', { ascending: false })
+      .limit(1);
+    if (recent && recent.length > 0) {
+      _currentSignalId = recent[0].id;
+      return;
+    }
+
     const { data, error } = await sb.from('workout_signals').insert({
       user_id:      state.supabaseUserId,
       workout_name: dayName,
