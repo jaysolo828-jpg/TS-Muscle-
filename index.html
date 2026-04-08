@@ -8974,8 +8974,10 @@ async function _openFriendActivity(userId, signalId) {
   // When deep-linked from a notification tap, signalId is the specific workout
   // the notification referred to — query it directly so the reactions are tied
   // to the right signal even if the friend has logged another workout since.
-  // Without a signalId (normal friends-list tap) show the friend's recent
-  // workouts so the user can react to any of them, not just the latest.
+  // Without a signalId (normal friends-list tap) show ONLY the friend's
+  // most recent workout — no history feed, matching the user's Today's
+  // Reactions behavior. If the friend hasn't worked out recently, the
+  // "No recent workout activity" fallback shows.
   const signalsQuery = signalId
     ? sb.from('workout_signals')
         .select('id, workout_name, started_at, signal_type')
@@ -8985,7 +8987,7 @@ async function _openFriendActivity(userId, signalId) {
         .select('id, workout_name, started_at, signal_type')
         .eq('user_id', userId)
         .order('started_at', { ascending: false })
-        .limit(10);
+        .limit(1);
   // If the friend cache is empty (e.g. notification deep-link on cold launch
   // before the friends list has been loaded), fetch user data in parallel and
   // update the header in place when it arrives. Otherwise skip the extra query.
