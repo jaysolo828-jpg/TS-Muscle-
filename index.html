@@ -8876,23 +8876,34 @@ async function _loadFriendsList() {
     .eq('status', 'accepted');
 
   if (!rows || rows.length === 0) {
-    list.innerHTML = '<div style="padding:8px 0;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);">No friends yet. Search above to add someone.</div>';
+    list.innerHTML = `<div style="text-align:center;padding:24px 12px 8px;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">NO CREW YET</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;line-height:1.5;text-transform:uppercase;">Search above to link up — or tap<br>INVITE A FRIEND to pull your crew in.</div>
+    </div>`;
     return;
   }
 
   const friendIds = rows.map(f => f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id);
   // Fetch users + the current user's workout-mute list in parallel so the
   // friends list and the per-friend mute indicators show up together with
-  // no extra round-trip.
+  // no extra round-trip. Users sorted by last_active desc so recently-
+  // active crew bubble to the top (nullsFirst: false pushes users who
+  // have never been seen to the bottom).
   const [{ data: users }, { data: mutes }] = await Promise.all([
-    sb.from('users').select('id, display_name, username, last_active, avatar_color, avatar_url').in('id', friendIds),
+    sb.from('users')
+      .select('id, display_name, username, last_active, avatar_color, avatar_url')
+      .in('id', friendIds)
+      .order('last_active', { ascending: false, nullsFirst: false }),
     sb.from('workout_notif_mutes').select('muted_friend_id').eq('muter_id', state.supabaseUserId)
   ]);
   _mutedFriends.clear();
   (mutes || []).forEach(m => { _mutedFriends.add(m.muted_friend_id); });
 
   if (!users || users.length === 0) {
-    list.innerHTML = '<div style="padding:8px 0;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);">No friends yet.</div>';
+    list.innerHTML = `<div style="text-align:center;padding:24px 12px 8px;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">NO CREW YET</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;line-height:1.5;text-transform:uppercase;">Search above to link up — or tap<br>INVITE A FRIEND to pull your crew in.</div>
+    </div>`;
     return;
   }
 
@@ -9353,10 +9364,17 @@ function inviteFriend() {
 // reuses a recent one for the same workout) and notifies friends.
 //
 // Signal dedup: if the user already has a 'started' signal for this
-// same workout name within the last 2 hours, REUSE its id instead of
-// inserting a new row. Keeps reactions accumulating on one signal
+// same workout name within the last 30 minutes, REUSE its id instead
+// of inserting a new row. Keeps reactions accumulating on one signal
 // across abandon-restart scenarios (so the Today's Reactions card
 // doesn't lose its reactions when a session is restarted).
+//
+// The 30-minute window is tight on purpose: abandon-restart almost
+// always happens within a few minutes (user realizes they forgot
+// something, etc.), while two legitimate back-to-back workouts of
+// the same name are almost never that close. A previous 2-hour
+// window sometimes merged genuine second workouts into the first
+// signal, hiding them from friends' deep-link tap paths.
 //
 // Notifications: ALWAYS fire, whether the signal was reused or freshly
 // inserted. Friends should know about the (re)start regardless.
@@ -9370,15 +9388,16 @@ async function _sendWorkoutSignal(dayName) {
   const displayName = state.supabaseDisplayName || 'Someone';
   try {
     // Dedup check: look for a 'started' signal for this exact workout
-    // name within the last 2 hours. If found, reuse its id. Otherwise
-    // insert a new one. Either way, fall through to _notifyFriends.
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    // name within the last 30 minutes. If found, reuse its id.
+    // Otherwise insert a new one. Either way, fall through to
+    // _notifyFriends.
+    const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const { data: recent } = await sb.from('workout_signals')
       .select('id')
       .eq('user_id', state.supabaseUserId)
       .eq('workout_name', dayName)
       .eq('signal_type', 'started')
-      .gte('started_at', twoHoursAgo)
+      .gte('started_at', cutoff)
       .order('started_at', { ascending: false })
       .limit(1);
 
@@ -9792,6 +9811,12 @@ function closeSocialModal() {
   setTimeout(function() {
     overlay.style.display = 'none';
   }, 320);
+  // Clear session caches that are only used inside the social modal.
+  // These rebuild from the first query on next modal open, so there's
+  // no cost to clearing them — prevents unbounded growth over a long
+  // session and eliminates any stale lookups.
+  Object.keys(_friendCache).forEach(k => delete _friendCache[k]);
+  Object.keys(_recentReactionsCache).forEach(k => delete _recentReactionsCache[k]);
   // Re-evaluate dot after closing in case new activity arrived
   _updateSocialNotifyDot();
 }
@@ -9827,8 +9852,11 @@ async function _updateSocialNotifyDot() {
   }
 }
 
-// Poll for new friend requests / reactions every 60 seconds
-_socialPollInterval = setInterval(() => { if (state.supabaseUserId) _updateSocialNotifyDot(); }, 60000);
+// Poll for new friend requests / reactions every 5 minutes. This is
+// a SECONDARY indicator — push notifications are the primary channel.
+// The dot just catches edge cases (user was offline when push fired,
+// missed notification, etc.) so a tight poll isn't needed.
+_socialPollInterval = setInterval(() => { if (state.supabaseUserId) _updateSocialNotifyDot(); }, 300000);
 
 // ============================================================
 // UTILITIES
