@@ -8311,6 +8311,13 @@ function _socialSetupLater() {
 
 const _friendCache = {};       // userId -> { display_name, username, last_active, avatar_color }
 const _mutedFriends = new Set(); // friend user IDs the current user has muted from receiving workout-start notifications
+// Outgoing friend requests the current user has sent. Used to (a) persist
+// the "SENT ✓" / "CANCEL" button state in the search results across
+// re-renders (user typing a new query) and (b) drive the cancel flow.
+// Map so we can store the friendship row id alongside each addressee,
+// which _cancelFriendRequest needs to delete the row.
+//   shape: { [addresseeId]: friendshipRowId }
+const _outgoingFriendRequests = {};
 // Per-signal reaction state for the current user. Used by _sendReaction
 // to (a) skip the DB upsert when re-tapping the SAME reaction type
 // (no-op), (b) fire a push only when the type CHANGES, and (c) gate
@@ -8376,6 +8383,23 @@ async function _renderFriendsSection() {
 
   _loadPendingRequests();
   _loadFriendsList();
+  _loadOutgoingFriendRequests();
+}
+
+// Refresh the in-memory map of outgoing pending friend requests. Called
+// from _renderFriendsSection on modal open. Used by the search result
+// rendering to show "CANCEL" instead of "ADD FRIEND" on users you've
+// already requested, and by _cancelFriendRequest to know which row to
+// delete.
+async function _loadOutgoingFriendRequests() {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const { data } = await sb.from('friendships')
+    .select('id, addressee_id')
+    .eq('requester_id', state.supabaseUserId)
+    .eq('status', 'pending');
+  Object.keys(_outgoingFriendRequests).forEach(k => delete _outgoingFriendRequests[k]);
+  (data || []).forEach(r => { _outgoingFriendRequests[r.addressee_id] = r.id; });
 }
 
 function _friendsSearch(query) {
@@ -8394,9 +8418,13 @@ async function _doFriendSearch(query) {
   const sb = _getSupabaseClient();
   if (!sb) { results.innerHTML = ''; return; }
 
+  // Escape SQL LIKE wildcards (% and _) so a user searching "_" doesn't
+  // match every single-character username and "%" doesn't match everything.
+  const safeQuery = query.replace(/[\\%_]/g, m => '\\' + m);
+  // Match on username OR display_name so users can find friends by either.
   const { data, error } = await sb.from('users')
     .select('id, display_name, username, avatar_color, avatar_url')
-    .ilike('username', `%${query}%`)
+    .or(`username.ilike.%${safeQuery}%,display_name.ilike.%${safeQuery}%`)
     .neq('id', state.supabaseUserId)
     .limit(8);
 
@@ -8410,15 +8438,19 @@ async function _doFriendSearch(query) {
   }
 
   data.forEach(u => { _friendCache[u.id] = u; });
-  results.innerHTML = data.map(u =>
-    `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;">
+  results.innerHTML = data.map(u => {
+    const hasOutgoing = !!_outgoingFriendRequests[u.id];
+    const btnHtml = hasOutgoing
+      ? `<button onclick="_cancelFriendRequest('${u.id}',this)" style="background:transparent;border:1px solid #444;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">CANCEL</button>`
+      : `<button onclick="_sendFriendRequest('${u.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">ADD FRIEND</button>`;
+    return `<div id="friend-search-row-${u.id}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;">
       <div style="display:flex;align-items:center;gap:10px;">
         ${_avatarHtml(u.display_name, u.avatar_color, 32, u.avatar_url)}
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);">@${escapeHtml(u.username || u.display_name)}</div>
       </div>
-      <button onclick="_sendFriendRequest('${u.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">ADD FRIEND</button>
-    </div>`
-  ).join('');
+      ${btnHtml}
+    </div>`;
+  }).join('');
 }
 
 async function _sendFriendRequest(addresseeId, btn) {
@@ -8431,11 +8463,16 @@ async function _sendFriendRequest(addresseeId, btn) {
   }
   if (btn) { btn.disabled = true; btn.textContent = '...'; }
 
-  // Remove any stale declined/pending row in either direction before inserting
-  await Promise.all([
+  // Remove any stale declined/pending row in either direction before inserting.
+  // Log delete errors for visibility — they don't block the insert, but a
+  // silent failure here (e.g. RLS) would cause the insert to fail with a
+  // misleading "Could not send request" toast.
+  const [delA, delB] = await Promise.all([
     sb.from('friendships').delete().eq('requester_id', myId).eq('addressee_id', addresseeId).neq('status', 'accepted'),
     sb.from('friendships').delete().eq('requester_id', addresseeId).eq('addressee_id', myId).neq('status', 'accepted'),
   ]);
+  if (delA?.error) console.warn('[friend request] stale delete A failed:', delA.error.message);
+  if (delB?.error) console.warn('[friend request] stale delete B failed:', delB.error.message);
 
   const { error } = await sb.from('friendships').insert({
     requester_id: myId,
@@ -8513,13 +8550,9 @@ async function _declineFriendRequest(friendshipId, btn) {
     showToast('Could not decline. Try again.');
     return;
   }
-  const row = btn?.closest('.friends-request-item');
-  if (row) row.remove();
-  const list = document.getElementById('friends-pending-list');
-  if (list && list.children.length === 0) {
-    const sec = document.getElementById('friends-pending-section');
-    if (sec) sec.style.display = 'none';
-  }
+  // Re-fetch the pending list so we stay in sync with the DB (handles
+  // the edge case where two declines are in flight at the same time).
+  _loadPendingRequests();
   _updateSocialNotifyDot();
 }
 
@@ -8617,8 +8650,8 @@ async function _openFriendActivity(userId, signalId) {
       </div>
       <div onclick="_toggleWorkoutMute('${userId}')" style="display:flex;align-items:center;justify-content:space-between;background:var(--dark2);border-radius:12px;padding:14px 16px;margin-top:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
         <div style="flex:1;min-width:0;padding-right:14px;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1.1;margin-bottom:3px;">ALERT THEM WHEN I TRAIN</div>
-          <div id="workout-mute-sub-${userId}" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;line-height:1.3;">${_mutedFriends.has(userId) ? "Silent — they won't be notified" : 'They get a ping when you start training'}</div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1.1;margin-bottom:3px;">PUSH THEM WHEN I TRAIN</div>
+          <div id="workout-mute-sub-${userId}" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;line-height:1.3;">${_mutedFriends.has(userId) ? "Push off — they can still see your workouts in the app" : 'They get a push when you start a workout'}</div>
         </div>
         <div id="workout-mute-toggle-${userId}" style="width:44px;height:26px;border-radius:13px;background:${_mutedFriends.has(userId) ? '#444' : '#2ecc71'};position:relative;transition:background 0.2s;flex-shrink:0;">
           <div style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(${_mutedFriends.has(userId) ? '0' : '18px'});"></div>
@@ -8632,7 +8665,8 @@ async function _openFriendActivity(userId, signalId) {
   // When deep-linked from a notification tap, signalId is the specific workout
   // the notification referred to — query it directly so the reactions are tied
   // to the right signal even if the friend has logged another workout since.
-  // Without a signalId (normal friends-list tap) fall back to most recent.
+  // Without a signalId (normal friends-list tap) show the friend's recent
+  // workouts so the user can react to any of them, not just the latest.
   const signalsQuery = signalId
     ? sb.from('workout_signals')
         .select('id, workout_name, started_at, signal_type')
@@ -8642,7 +8676,7 @@ async function _openFriendActivity(userId, signalId) {
         .select('id, workout_name, started_at, signal_type')
         .eq('user_id', userId)
         .order('started_at', { ascending: false })
-        .limit(1);
+        .limit(10);
   // If the friend cache is empty (e.g. notification deep-link on cold launch
   // before the friends list has been loaded), fetch user data in parallel and
   // update the header in place when it arrives. Otherwise skip the extra query.
@@ -8694,7 +8728,7 @@ async function _openFriendActivity(userId, signalId) {
       if (knob) knob.style.transform = dbMuted ? 'translateX(0)' : 'translateX(18px)';
     }
     if (sub) {
-      sub.textContent = dbMuted ? "Silent — they won't be notified" : 'They get a ping when you start training';
+      sub.textContent = dbMuted ? "Push off — they can still see your workouts in the app" : 'They get a push when you start a workout';
     }
   }
 
@@ -8782,7 +8816,7 @@ async function _toggleWorkoutMute(userId) {
     if (knob) knob.style.transform = willBeMuted ? 'translateX(0)' : 'translateX(18px)';
   }
   if (sub) {
-    sub.textContent = willBeMuted ? "Silent — they won't be notified" : 'They get a ping when you start training';
+    sub.textContent = willBeMuted ? "Push off — they can still see your workouts in the app" : 'They get a push when you start a workout';
   }
 
   // ── Persist
@@ -8812,7 +8846,7 @@ async function _toggleWorkoutMute(userId) {
       if (knob) knob.style.transform = wasMuted ? 'translateX(0)' : 'translateX(18px)';
     }
     if (sub) {
-      sub.textContent = wasMuted ? "Silent — they won't be notified" : 'They get a ping when you start training';
+      sub.textContent = wasMuted ? "Push off — they can still see your workouts in the app" : 'They get a push when you start a workout';
     }
     showToast("Couldn't update — try again");
     return;
@@ -9007,6 +9041,9 @@ function inviteFriend() {
 // Called at the start of a fresh session — inserts a signal row and notifies friends.
 async function _sendWorkoutSignal(dayName) {
   if (!state.supabaseUserId) return;
+  // Respect the Social Features setting — a user who turned social off
+  // in settings should not broadcast workouts to their friends at all.
+  if (state.socialEnabled === false) return;
   const sb = _getSupabaseClient();
   if (!sb) return;
   const displayName = state.supabaseDisplayName || 'Someone';
@@ -9039,6 +9076,8 @@ async function _completeWorkoutSignal() {
   const signalId = _currentSignalId;
   _currentSignalId = null;
   if (!signalId || !state.supabaseUserId) return;
+  // Same guard as _sendWorkoutSignal — silent when social is disabled.
+  if (state.socialEnabled === false) return;
   const sb = _getSupabaseClient();
   if (!sb) return;
   const displayName = state.supabaseDisplayName || 'Someone';
