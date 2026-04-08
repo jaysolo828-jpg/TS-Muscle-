@@ -10090,20 +10090,56 @@ function _hasActiveChallenge() {
 // Load challenges (pending + active + recently-completed) the current
 // user is involved in, along with their participant rows. Populates
 // _challenges and returns it. Silent on error — leaves the cache as-is.
+//
+// The query does two phases because multi-person challenges after
+// migration 016 don't list invitees on the parent row — invitees only
+// live in challenge_participants. Phase 1: find all challenge IDs I'm
+// a participant in. Phase 2: fetch the parent challenges by those IDs,
+// plus any legacy 1v1 challenges where I'm listed as challenger /
+// challenged (for backwards compat with pre-016 data).
 async function _loadChallenges() {
   if (!state.supabaseUserId) { _challenges = []; return _challenges; }
   const sb = _getSupabaseClient();
   if (!sb) return _challenges;
   try {
-    const { data: chs, error: chErr } = await sb.from('challenges')
+    // Phase 1: my participant rows → collect challenge IDs.
+    const { data: myRows, error: mrErr } = await sb.from('challenge_participants')
+      .select('challenge_id')
+      .eq('user_id', state.supabaseUserId);
+    if (mrErr) throw mrErr;
+    const myChIds = Array.from(new Set((myRows || []).map(r => r.challenge_id)));
+
+    // Phase 2: the challenges themselves — union of (I'm listed on the
+    // parent) OR (I'm in challenge_participants on it). We run two
+    // separate queries and merge because supabase-js .or() doesn't
+    // support in.() sub-lists reliably.
+    const legacyP = sb.from('challenges')
       .select('*')
       .or('challenger_id.eq.' + state.supabaseUserId + ',challenged_id.eq.' + state.supabaseUserId)
       .in('status', ['pending', 'active', 'completed'])
       .order('created_at', { ascending: false })
       .limit(20);
-    if (chErr) throw chErr;
-    const list = chs || [];
+    const partsP = myChIds.length
+      ? sb.from('challenges')
+          .select('*')
+          .in('id', myChIds)
+          .in('status', ['pending', 'active', 'completed'])
+          .order('created_at', { ascending: false })
+          .limit(20)
+      : Promise.resolve({ data: [], error: null });
+    const [legacyRes, partsRes] = await Promise.all([legacyP, partsP]);
+    if (legacyRes.error) throw legacyRes.error;
+    if (partsRes.error)  throw partsRes.error;
+
+    const byId = {};
+    (legacyRes.data || []).forEach(c => { byId[c.id] = c; });
+    (partsRes.data  || []).forEach(c => { byId[c.id] = c; });
+    const list = Object.values(byId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 20);
     if (!list.length) { _challenges = []; return _challenges; }
+
+    // Phase 3: pull every participant row for these challenges.
     const chIds = list.map(c => c.id);
     const { data: parts, error: pErr } = await sb.from('challenge_participants')
       .select('*')
@@ -10114,16 +10150,19 @@ async function _loadChallenges() {
       if (!byCh[p.challenge_id]) byCh[p.challenge_id] = [];
       byCh[p.challenge_id].push(p);
     });
-    // Warm the friend cache with opponent ids so the UI can render names
-    // without an extra lookup. Only pull users we don't already have.
-    const opponentIds = list
-      .map(c => c.challenger_id === state.supabaseUserId ? c.challenged_id : c.challenger_id)
-      .filter(id => id && !_friendCache[id]);
-    if (opponentIds.length) {
-      const { data: oppUsers } = await sb.from('users')
+
+    // Warm the friend cache with anyone on a challenge we don't
+    // already know about (creator + invitees).
+    const wantUserIds = new Set();
+    list.forEach(c => { if (c.challenger_id) wantUserIds.add(c.challenger_id); });
+    (parts || []).forEach(p => { if (p.user_id) wantUserIds.add(p.user_id); });
+    wantUserIds.delete(state.supabaseUserId);
+    const needFetch = Array.from(wantUserIds).filter(id => !_friendCache[id]);
+    if (needFetch.length) {
+      const { data: users } = await sb.from('users')
         .select('id, display_name, username, avatar_color, avatar_url')
-        .in('id', opponentIds);
-      (oppUsers || []).forEach(u => { _friendCache[u.id] = u; });
+        .in('id', needFetch);
+      (users || []).forEach(u => { _friendCache[u.id] = u; });
     }
     _challenges = list.map(c => ({ ...c, participants: byCh[c.id] || [] }));
   } catch (e) {
@@ -10137,24 +10176,74 @@ function _myParticipantRow(challenge) {
   if (!challenge || !state.supabaseUserId) return null;
   return (challenge.participants || []).find(p => p.user_id === state.supabaseUserId) || null;
 }
-// Convenience: find the opponent's participant row on a given challenge,
-// or null if they haven't joined yet.
-function _opponentParticipantRow(challenge) {
-  if (!challenge || !state.supabaseUserId) return null;
-  return (challenge.participants || []).find(p => p.user_id !== state.supabaseUserId) || null;
-}
-// Convenience: the other user's ID for a given challenge.
-function _opponentUserId(challenge) {
-  if (!challenge || !state.supabaseUserId) return null;
-  return challenge.challenger_id === state.supabaseUserId
-    ? challenge.challenged_id
-    : challenge.challenger_id;
+
+// All participant rows EXCEPT mine. Multi-person challenges can have
+// up to three of these; legacy 1v1 has at most one. Filter callers
+// (join, invite, leaderboard) do their own status filtering on top.
+function _otherParticipantRows(challenge) {
+  if (!challenge || !state.supabaseUserId) return [];
+  return (challenge.participants || []).filter(p => p.user_id !== state.supabaseUserId);
 }
 
-// Formats a display label for an opponent from _friendCache.
+// Backwards-compat shim for the 1v1 code paths — returns the FIRST
+// other participant (or null). In multi-person challenges with more
+// than one opponent this is only the "primary" other person; the
+// leaderboard path walks the full list instead.
+function _opponentParticipantRow(challenge) {
+  const others = _otherParticipantRows(challenge);
+  return others.length ? others[0] : null;
+}
+
+// "The other user's ID" only makes sense in 1v1 — in multi-person we
+// return the first other participant's user_id as a reasonable
+// default. Legacy 1v1 rows fall back to challenged_id on the parent.
+function _opponentUserId(challenge) {
+  if (!challenge || !state.supabaseUserId) return null;
+  const others = _otherParticipantRows(challenge);
+  if (others.length) return others[0].user_id;
+  if (challenge.challenger_id === state.supabaseUserId) return challenge.challenged_id;
+  return challenge.challenger_id;
+}
+
+// Formats a display label for a user from _friendCache.
 function _opponentLabel(userId) {
   const u = _friendCache[userId] || {};
   return u.username || u.display_name || 'Someone';
+}
+
+// True if I'm the creator (challenger_id) of this challenge.
+function _isChallengeCreator(challenge) {
+  if (!challenge || !state.supabaseUserId) return false;
+  return challenge.challenger_id === state.supabaseUserId;
+}
+
+// Participant rows by status. Multi-person UI uses these directly to
+// render the leaderboard + invite status chips.
+function _joinedParticipants(challenge) {
+  return (challenge && challenge.participants || []).filter(p => p.status === 'joined');
+}
+function _invitedParticipants(challenge) {
+  // Legacy rows have status = 'joined' by default (migration 016
+  // default). Anything explicitly 'invited' is a new multi-person
+  // pending invite.
+  return (challenge && challenge.participants || []).filter(p => p.status === 'invited');
+}
+function _declinedParticipants(challenge) {
+  return (challenge && challenge.participants || []).filter(p => p.status === 'declined');
+}
+function _leftParticipants(challenge) {
+  return (challenge && challenge.participants || []).filter(p => p.status === 'left');
+}
+
+// How many invited friends the creator picked on this challenge —
+// used by the manual-start confirmation prompt ("only 1 of 3 have
+// accepted, start anyway?"). Counts invited + joined (excluding the
+// creator themselves) + declined + left — the original recipient set.
+function _originalInviteeCount(challenge) {
+  if (!challenge) return 0;
+  return (challenge.participants || [])
+    .filter(p => p.user_id !== challenge.challenger_id)
+    .length;
 }
 
 // Send a direct push notification to a single user via the to_uid path.
@@ -10371,6 +10460,10 @@ let _challengeDraft = null;
 function _openNewChallengeFlow() {
   _challengeDraft = {
     step: 'friend',
+    // Multi-person: up to 3 invitees. friendId kept for legacy 1v1
+    // code paths that read it as a single value; the authoritative
+    // list is friendIds.
+    friendIds: [],
     friendId: null,
     exerciseName: null,
     durationWeeks: 5,
@@ -10413,15 +10506,19 @@ async function _renderChallengeCreateStep() {
   const body = document.getElementById('challenge-create-body');
   if (!body || !_challengeDraft) return;
   const step = _challengeDraft.step;
-  if (step === 'friend')    { body.innerHTML = _challengeCreateHeaderHtml('PICK A FRIEND') + '<div id="challenge-friend-picker"><div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">Loading friends...</div></div>'; await _renderChallengeFriendPicker(); return; }
+  if (step === 'friend')    { body.innerHTML = _challengeCreateHeaderHtml('PICK UP TO 3') + '<div id="challenge-friend-picker"><div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">Loading friends...</div></div>'; await _renderChallengeFriendPicker(); return; }
   if (step === 'exercise')  { body.innerHTML = _challengeCreateHeaderHtml('YOUR LIFT') + _challengeExercisePickerHtml(); return; }
   if (step === 'duration')  { body.innerHTML = _challengeCreateHeaderHtml('DURATION') + _challengeDurationPickerHtml(); return; }
   if (step === 'baseline')  { body.innerHTML = _challengeCreateHeaderHtml('YOUR BASELINE') + _challengeBaselinePickerHtml(); return; }
   if (step === 'confirm')   { body.innerHTML = _challengeCreateHeaderHtml('REVIEW & SEND') + _challengeConfirmHtml(); return; }
 }
 
-// STEP 1 — Friend picker. Reads accepted friends from Supabase, shows a
-// tappable list. Tapping a row advances the draft to the exercise step.
+// STEP 1 — Friend picker. Reads accepted friends from Supabase, shows
+// a multi-select list with checkboxes. Up to 3 invitees (4 total
+// including the creator). A CONTINUE button at the bottom advances
+// to the exercise step when at least one is selected.
+const _CHALLENGE_MAX_INVITEES = 3;
+
 async function _renderChallengeFriendPicker() {
   const container = document.getElementById('challenge-friend-picker');
   if (!container) return;
@@ -10448,18 +10545,87 @@ async function _renderChallengeFriendPicker() {
       container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">No friends found.</div>';
       return;
     }
-    container.innerHTML = users.map(u => {
-      const label = u.username || u.display_name || 'Friend';
-      return '<div onclick="_challengeDraft.friendId=\'' + u.id + '\';_challengeDraft.step=\'exercise\';_renderChallengeCreateStep()" '
-        + 'style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
-        + _avatarHtml(label, u.avatar_color, 36, u.avatar_url)
-        + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);">@' + escapeHtml(label) + '</div>'
-        + '</div>';
-    }).join('');
+    container.innerHTML =
+      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:10px;">Pick up to 3 friends to challenge. You can start the moment one accepts.</div>'
+      + '<div id="challenge-friend-list">' + users.map(u => _challengeFriendRowHtml(u)).join('') + '</div>'
+      + '<div id="challenge-friend-counter" style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-align:center;margin:10px 0 4px;text-transform:uppercase;">0 OF 3 SELECTED</div>'
+      + '<button id="challenge-friend-next" onclick="_onChallengeFriendContinue()" disabled style="width:100%;margin-top:4px;background:#333;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:not-allowed;-webkit-tap-highlight-color:transparent;">CONTINUE</button>';
+    _refreshChallengeFriendPickerUi();
   } catch (e) {
     console.error('[challenge-friend-picker] load failed:', e);
     container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">Could not load friends. Try again.</div>';
   }
+}
+
+// Builds a single selectable row in the multi-select friend list.
+// Visual state (checked / unchecked) is driven by _challengeDraft.friendIds.
+function _challengeFriendRowHtml(u) {
+  const label = u.username || u.display_name || 'Friend';
+  const selected = (_challengeDraft && _challengeDraft.friendIds || []).indexOf(u.id) !== -1;
+  return '<div data-friend-id="' + u.id + '" data-friend-row="1" onclick="_toggleChallengeFriendPick(\'' + u.id + '\')" '
+    + 'style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:' + (selected ? '#2a1414' : '#1a1a1a') + ';border:1px solid ' + (selected ? '#C0392B' : 'transparent') + ';border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
+    + _avatarHtml(label, u.avatar_color, 36, u.avatar_url)
+    + '<div style="flex:1;font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);">@' + escapeHtml(label) + '</div>'
+    + '<div style="width:22px;height:22px;border-radius:6px;border:2px solid ' + (selected ? '#C0392B' : '#555') + ';background:' + (selected ? '#C0392B' : 'transparent') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+    + (selected ? '<svg viewBox="0 0 24 24" width="14" height="14" stroke="#fff" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '')
+    + '</div>'
+    + '</div>';
+}
+
+// Toggle a friend id in the draft. Enforces the 3-max by bouncing
+// the tap with a toast when already at cap.
+function _toggleChallengeFriendPick(userId) {
+  if (!_challengeDraft) return;
+  if (!_challengeDraft.friendIds) _challengeDraft.friendIds = [];
+  const idx = _challengeDraft.friendIds.indexOf(userId);
+  if (idx === -1) {
+    if (_challengeDraft.friendIds.length >= _CHALLENGE_MAX_INVITEES) {
+      showToast('Max 3 friends per challenge.');
+      return;
+    }
+    _challengeDraft.friendIds.push(userId);
+  } else {
+    _challengeDraft.friendIds.splice(idx, 1);
+  }
+  _refreshChallengeFriendPickerUi();
+}
+
+// Re-paint the selected/unselected state of every row + update the
+// counter and the enable/disable state of the CONTINUE button. Avoids
+// a full re-render to keep scroll position and tap responsiveness.
+function _refreshChallengeFriendPickerUi() {
+  if (!_challengeDraft) return;
+  const picked = _challengeDraft.friendIds || [];
+  document.querySelectorAll('#challenge-friend-list [data-friend-row]').forEach(el => {
+    const id = el.getAttribute('data-friend-id');
+    const u = _friendCache[id];
+    if (!u) return;
+    el.outerHTML = _challengeFriendRowHtml(u);
+  });
+  const counter = document.getElementById('challenge-friend-counter');
+  if (counter) counter.textContent = picked.length + ' OF ' + _CHALLENGE_MAX_INVITEES + ' SELECTED';
+  const btn = document.getElementById('challenge-friend-next');
+  if (btn) {
+    if (picked.length > 0) {
+      btn.disabled = false;
+      btn.style.background = '#C0392B';
+      btn.style.cursor = 'pointer';
+    } else {
+      btn.disabled = true;
+      btn.style.background = '#333';
+      btn.style.cursor = 'not-allowed';
+    }
+  }
+}
+
+function _onChallengeFriendContinue() {
+  if (!_challengeDraft) return;
+  const picked = _challengeDraft.friendIds || [];
+  if (!picked.length) { showToast('Pick at least one friend.'); return; }
+  // Keep the single-value friendId in sync for any legacy code paths.
+  _challengeDraft.friendId = picked[0];
+  _challengeDraft.step = 'exercise';
+  _renderChallengeCreateStep();
 }
 
 // STEP 2 — Exercise picker. Free-text input with suggestion chips for
@@ -10619,16 +10785,30 @@ function _challengeConfirmHtml() {
   const d = _challengeDraft;
   const isAccept = d.mode === 'accept';
   const liftLabel = _challengeExerciseLabel(d.exerciseName);
-  const friend = _friendCache[d.friendId] || {};
-  const friendLabel = friend.username || friend.display_name || 'Friend';
+  // Collect invitee labels. Accept mode still uses the single friendId;
+  // create mode uses the multi-select friendIds list.
+  let inviteeIds = [];
+  if (isAccept) inviteeIds = d.friendId ? [d.friendId] : [];
+  else inviteeIds = (d.friendIds && d.friendIds.length ? d.friendIds : (d.friendId ? [d.friendId] : []));
+  const inviteeLabels = inviteeIds.map(id => {
+    const u = _friendCache[id] || {};
+    return u.username || u.display_name || 'Friend';
+  });
+  const opponentBlockLabel = isAccept ? 'OPPONENT' : (inviteeIds.length > 1 ? 'INVITING' : 'OPPONENT');
+  const opponentDisplay = inviteeLabels.length
+    ? inviteeLabels.map(l => '@' + escapeHtml(l)).join(', ')
+    : 'Friend';
   const e1rm = _epley1RM(d.baselineWeight, d.baselineReps);
   const buttonLabel = isAccept ? 'ACCEPT & START' : 'SEND CHALLENGE';
+  const friendsForConsent = inviteeLabels.length
+    ? inviteeLabels.map(l => '@' + l).join(', ')
+    : 'them';
   const consentCopy = isAccept
-    ? ('Accepting reveals YOUR baseline to @' + friendLabel + ' and starts the clock.')
-    : ('Sending this reveals YOUR baseline to @' + friendLabel + '. Their numbers stay hidden until they accept and log their own.');
+    ? ('Accepting reveals YOUR baseline to ' + friendsForConsent + ' and adds you to the challenge.')
+    : ('Sending this reveals YOUR baseline to ' + friendsForConsent + '. Their numbers stay hidden until each one accepts and logs their own. You\u2019ll get a 48-hour window before it auto-starts, or you can start it sooner once at least one accepts.');
   return '<div style="background:#1a1a1a;border-radius:12px;padding:18px 16px;border-left:3px solid #C0392B;">'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">OPPONENT</div>'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">@' + escapeHtml(friendLabel) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + opponentBlockLabel + '</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;line-height:1.2;">' + opponentDisplay + '</div>'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">YOUR LIFT</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1.5px;margin-bottom:12px;">' + escapeHtml(liftLabel) + '</div>'
     + '<div style="display:flex;gap:20px;margin-bottom:12px;">'
@@ -10653,43 +10833,68 @@ async function _submitNewChallenge() {
   const d = _challengeDraft;
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) { showToast('Sign in first.'); return; }
+  const inviteeIds = (d.friendIds && d.friendIds.length ? d.friendIds : (d.friendId ? [d.friendId] : []));
+  if (!inviteeIds.length) { showToast('Pick at least one friend.'); return; }
   const btn = document.getElementById('challenge-send-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'SENDING...'; }
   try {
     const baselineE1rm = _epley1RM(d.baselineWeight, d.baselineReps);
+    // challenged_id is left NULL for multi-person challenges — the
+    // authoritative invitee list lives in challenge_participants. A
+    // 48-hour grace period is locked in as auto_start_at so the cron
+    // knows when to auto-start or auto-cancel.
+    const autoStartAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
     const { data: ch, error: chErr } = await sb.from('challenges')
       .insert({
         challenger_id:  state.supabaseUserId,
-        challenged_id:  d.friendId,
+        challenged_id:  null,
         challenge_type: 'one_rep_max',
         duration_weeks: d.durationWeeks,
-        status:         'pending'
+        status:         'pending',
+        auto_start_at:  autoStartAt
       })
       .select('*')
       .single();
     if (chErr || !ch) throw (chErr || new Error('create failed'));
-    const { error: pErr } = await sb.from('challenge_participants')
-      .insert({
-        challenge_id:    ch.id,
-        user_id:         state.supabaseUserId,
-        exercise_name:   d.exerciseName,
-        baseline_weight: parseFloat(d.baselineWeight),
-        baseline_reps:   parseInt(d.baselineReps, 10),
-        baseline_e1rm:   baselineE1rm
-      });
-    if (pErr) {
-      // Roll back the challenge row so we don't leave orphaned invites.
+    // Insert creator's own 'joined' participant row with baseline.
+    const creatorRow = {
+      challenge_id:    ch.id,
+      user_id:         state.supabaseUserId,
+      exercise_name:   d.exerciseName,
+      baseline_weight: parseFloat(d.baselineWeight),
+      baseline_reps:   parseInt(d.baselineReps, 10),
+      baseline_e1rm:   baselineE1rm,
+      status:          'joined'
+    };
+    const { error: cpErr } = await sb.from('challenge_participants').insert(creatorRow);
+    if (cpErr) {
       await sb.from('challenges').delete().eq('id', ch.id);
-      throw pErr;
+      throw cpErr;
     }
+    // Batch-insert the 'invited' rows for each invitee. They have no
+    // baseline yet (filled in on accept).
+    const inviteeRows = inviteeIds.map(uid => ({
+      challenge_id: ch.id,
+      user_id:      uid,
+      status:       'invited'
+    }));
+    const { error: invErr } = await sb.from('challenge_participants').insert(inviteeRows);
+    if (invErr) {
+      // Best-effort rollback: remove the challenge and the creator row.
+      await sb.from('challenges').delete().eq('id', ch.id);
+      throw invErr;
+    }
+    // Fire invite pushes in parallel (one per invitee).
     const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
-    _sendDirectPush(
-      d.friendId,
-      fromName + ' challenged you',
-      'Tap to see the 1RM challenge.',
-      'challenge'
-    );
-    showToast('Challenge sent');
+    inviteeIds.forEach(uid => {
+      _sendDirectPush(
+        uid,
+        fromName + ' challenged you',
+        'Tap to see the 1RM challenge.',
+        'challenge'
+      );
+    });
+    showToast(inviteeIds.length > 1 ? 'Invites sent' : 'Challenge sent');
     _closeChallengeCreateSheet();
     await _loadChallenges();
     _renderChallengesListHtml();
@@ -10744,53 +10949,42 @@ async function _refreshChallengeDetailSheet() {
   _renderChallengeDetailBody(ch);
 }
 
-// Main detail-sheet renderer. Branches on (am I challenger?) × status.
+// Main detail-sheet renderer. Leaderboard style — one row per
+// participant (up to 4). Rows show status chips for unjoined folks,
+// lift + improvement % for joined folks. Action buttons vary by role
+// (creator vs invitee vs joined non-creator) and status (pending vs
+// active vs completed vs cancelled vs declined).
 function _renderChallengeDetailBody(ch) {
   const body = document.getElementById('challenge-detail-body');
   if (!body) return;
-  const meIsChallenger = ch.challenger_id === state.supabaseUserId;
-  const oppId = _opponentUserId(ch);
-  const oppLabel = _opponentLabel(oppId);
+  const meIsCreator = _isChallengeCreator(ch);
   const me = _myParticipantRow(ch);
-  const opp = _opponentParticipantRow(ch);
+  const myStatus = me ? me.status : null;
+
+  // Header title: for pending, show number of invitees. For active,
+  // show "YOU vs N" quickly. Legacy 1v1 falls through to a 2-person
+  // label.
+  const otherJoined = _joinedParticipants(ch).filter(p => p.user_id !== state.supabaseUserId);
+  let titleRight = '';
+  if (ch.status === 'pending') {
+    const total = _originalInviteeCount(ch);
+    titleRight = total === 1 ? '1 INVITE' : (total + ' INVITES');
+  } else if (ch.status === 'active') {
+    const joinedCount = _joinedParticipants(ch).length;
+    titleRight = joinedCount + ' IN';
+  } else {
+    titleRight = ch.status.toUpperCase();
+  }
 
   const headerHtml = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">'
     + '<div>'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">1 REP MAX CHALLENGE</div>'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">vs @' + escapeHtml(oppLabel) + '</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">' + escapeHtml(titleRight) + '</div>'
     + '</div>'
     + '<button onclick="_closeChallengeDetailSheet()" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
     + '</div>';
 
-  // A standard stat block for one participant.
-  function statBlock(label, row, isLocked) {
-    if (isLocked || !row) {
-      return '<div style="flex:1;background:#1a1a1a;border-radius:12px;padding:16px 14px;">'
-        + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + escapeHtml(label) + '</div>'
-        + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--gray);letter-spacing:1px;">HIDDEN</div>'
-        + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:4px;line-height:1.4;">Revealed when they accept.</div>'
-        + '</div>';
-    }
-    const liftLabel = _challengeExerciseLabel(row.exercise_name);
-    const base = row.baseline_weight + ' \u00d7 ' + row.baseline_reps + ' (e1RM ' + row.baseline_e1rm + ')';
-    const hasFinal = row.final_e1rm != null;
-    const finalTxt = hasFinal
-      ? (row.final_weight + ' \u00d7 ' + row.final_reps + ' (e1RM ' + row.final_e1rm + ')')
-      : 'Not logged yet';
-    const pctTxt = hasFinal ? (_improvementPct(row.baseline_e1rm, row.final_e1rm) + '%') : '\u2014';
-    return '<div style="flex:1;background:#1a1a1a;border-radius:12px;padding:16px 14px;">'
-      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + escapeHtml(label) + '</div>'
-      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1px;line-height:1.1;margin-bottom:8px;">' + escapeHtml(liftLabel) + '</div>'
-      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;text-transform:uppercase;">BASELINE</div>'
-      + '<div style="font-family:\'Barlow\',sans-serif;font-size:13px;color:var(--cream);margin-bottom:6px;">' + escapeHtml(base) + '</div>'
-      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;text-transform:uppercase;">BEST LOG</div>'
-      + '<div style="font-family:\'Barlow\',sans-serif;font-size:13px;color:var(--cream);margin-bottom:6px;">' + escapeHtml(finalTxt) + '</div>'
-      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;text-transform:uppercase;">IMPROVEMENT</div>'
-      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:' + (hasFinal && _improvementPct(row.baseline_e1rm, row.final_e1rm) >= 0 ? '#2ecc71' : '#C0392B') + ';letter-spacing:1px;">' + pctTxt + '</div>'
-      + '</div>';
-  }
-
-  // Meta strip: status + duration + days-remaining.
+  // Meta strip.
   let metaRight = '';
   if (ch.status === 'pending')   metaRight = 'Pending';
   if (ch.status === 'active')    metaRight = _daysRemaining(ch.end_date) + ' days left';
@@ -10802,42 +10996,144 @@ function _renderChallengeDetailBody(ch) {
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:13px;color:var(--cream);letter-spacing:1.5px;">' + escapeHtml(metaRight) + '</div>'
     + '</div>';
 
-  // Stats layout — always show me on the left, opponent on the right.
-  // Opponent is locked if they haven't joined yet.
-  const statsHtml = '<div style="display:flex;gap:10px;margin-bottom:14px;">'
-    + statBlock('YOU', me, false)
-    + statBlock('@' + oppLabel, opp, !opp)
-    + '</div>';
-
-  // Action buttons vary by role + status.
-  let actionsHtml = '';
-  if (ch.status === 'pending' && !meIsChallenger) {
-    // Invitee pending: accept / decline
-    actionsHtml = '<button onclick="_openAcceptChallengeFlow(\'' + ch.id + '\')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:8px;">ACCEPT & PICK YOUR LIFT</button>'
-      + '<button onclick="_confirmDeclineChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DECLINE</button>';
-  } else if (ch.status === 'pending' && meIsChallenger) {
-    // Challenger pending: cancel only
-    actionsHtml = '<button onclick="_confirmCancelChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL CHALLENGE</button>';
-  } else if (ch.status === 'active') {
-    // Active: log result / cancel
-    actionsHtml = '<button onclick="_openLogResultFlow(\'' + ch.id + '\')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:8px;">LOG YOUR BEST SET</button>'
-      + '<button onclick="_confirmCancelChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL CHALLENGE</button>';
-  } else if (ch.status === 'completed') {
-    // Completed: show winner banner
-    const myPct = me ? _improvementPct(me.baseline_e1rm, me.final_e1rm) : 0;
-    const oppPct = opp ? _improvementPct(opp.baseline_e1rm, opp.final_e1rm) : 0;
-    let banner = '';
-    if (ch.winner_id === state.supabaseUserId) {
-      banner = '<div style="background:#2ecc71;color:#111;font-family:\'Bebas Neue\',cursive;font-size:22px;letter-spacing:2px;text-align:center;padding:14px;border-radius:12px;margin-bottom:10px;">YOU WON \u00b7 ' + myPct + '%</div>';
-    } else if (ch.winner_id === oppId) {
-      banner = '<div style="background:#1a1a1a;border:1px solid #444;color:var(--cream);font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;text-align:center;padding:14px;border-radius:12px;margin-bottom:10px;">@' + escapeHtml(oppLabel) + ' WON \u00b7 ' + oppPct + '%</div>';
-    } else {
-      banner = '<div style="background:#1a1a1a;border:1px solid #444;color:var(--cream);font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;text-align:center;padding:14px;border-radius:12px;margin-bottom:10px;">TIE</div>';
-    }
-    actionsHtml = banner;
+  // Leaderboard — ADAPTIVE. Only joined rows show as full cards. The
+  // layout never reserves empty slots for people who haven't accepted.
+  // Anyone still waiting, declined, or quit gets compressed into a
+  // small footer summary line so the creator can still see the state
+  // without bloating the sheet.
+  const joinedParts = _joinedParticipants(ch).slice();
+  joinedParts.forEach(p => {
+    p._pct = (p.final_e1rm != null)
+      ? _improvementPct(p.baseline_e1rm, p.final_e1rm)
+      : (ch.status === 'pending' ? null : 0);
+  });
+  // Sort: leaders first for active/completed, creator first for pending.
+  if (ch.status === 'pending') {
+    joinedParts.sort((a, b) => {
+      if (a.user_id === ch.challenger_id) return -1;
+      if (b.user_id === ch.challenger_id) return 1;
+      return 0;
+    });
+  } else {
+    joinedParts.sort((a, b) => (b._pct || 0) - (a._pct || 0));
   }
 
-  body.innerHTML = headerHtml + metaHtml + statsHtml + actionsHtml;
+  // Leader highlight: gold border on winner when completed, green
+  // border on the current leader when active.
+  let leaderUserId = null;
+  if (ch.status === 'completed' && ch.winner_id) leaderUserId = ch.winner_id;
+  else if (ch.status === 'active' && joinedParts.length) leaderUserId = joinedParts[0].user_id;
+
+  const leaderboardRowsHtml = joinedParts.map(p => {
+    const isMe = p.user_id === state.supabaseUserId;
+    const u = _friendCache[p.user_id] || {};
+    const label = isMe ? 'YOU' : ('@' + (u.username || u.display_name || 'Friend'));
+    const isLeader = p.user_id === leaderUserId;
+    const borderColor = isLeader ? (ch.status === 'completed' ? '#D4A843' : '#2ecc71') : 'transparent';
+
+    // Stats line — lift + baseline (pending) or lift + improvement (active/completed).
+    const liftLabel = _challengeExerciseShort(p.exercise_name || '');
+    let statsLine;
+    if (ch.status === 'pending') {
+      statsLine = liftLabel + ' \u00b7 baseline ' + (p.baseline_e1rm != null ? p.baseline_e1rm : '—');
+    } else {
+      const pct = p.final_e1rm != null ? (_improvementPct(p.baseline_e1rm, p.final_e1rm) + '%') : 'no log yet';
+      statsLine = liftLabel + ' \u00b7 ' + pct;
+    }
+
+    const creatorBadge = p.user_id === ch.challenger_id
+      ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:9px;color:#C0392B;letter-spacing:1px;text-transform:uppercase;margin-top:2px;">CREATOR</div>'
+      : '';
+
+    // Rank pill on the left (only meaningful with >1 joined).
+    const rankIdx = joinedParts.indexOf(p) + 1;
+    const rankPill = joinedParts.length > 1 && ch.status !== 'pending'
+      ? '<div style="width:26px;height:26px;border-radius:50%;background:' + (rankIdx === 1 ? '#D4A843' : '#333') + ';color:' + (rankIdx === 1 ? '#111' : 'var(--gray-light)') + ';display:flex;align-items:center;justify-content:center;font-family:\'Bebas Neue\',cursive;font-size:13px;flex-shrink:0;">' + rankIdx + '</div>'
+      : '';
+
+    return '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;border-left:3px solid ' + borderColor + ';">'
+      + rankPill
+      + _avatarHtml(u.display_name || (isMe ? (state.supabaseDisplayName || 'You') : 'Friend'), u.avatar_color, 36, u.avatar_url)
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:15px;color:var(--cream);letter-spacing:1.3px;line-height:1.1;">' + escapeHtml(label) + '</div>'
+      + creatorBadge
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray-light);margin-top:3px;">' + escapeHtml(statsLine) + '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  // Footer summary: compressed counts of anyone not currently shown in
+  // the leaderboard. Only renders when there's something to report.
+  const invitedCount  = _invitedParticipants(ch).length;
+  const declinedCount = _declinedParticipants(ch).length;
+  const leftCount     = _leftParticipants(ch).length;
+  const footerBits = [];
+  if (invitedCount)  footerBits.push(invitedCount  + ' waiting');
+  if (declinedCount) footerBits.push(declinedCount + ' declined');
+  if (leftCount)     footerBits.push(leftCount     + ' quit');
+  const footerHtml = footerBits.length
+    ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;padding:4px 14px 10px;">' + escapeHtml(footerBits.join(' \u00b7 ')) + '</div>'
+    : '';
+
+  // Empty-state: no joined rows yet (fresh multi-person challenge
+  // before the creator's own row hit the DB — defensive).
+  const leaderboardInner = leaderboardRowsHtml
+    || '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);text-align:center;padding:14px 0;">No players yet.</div>';
+
+  const leaderboardHtml = '<div style="margin-bottom:14px;">' + leaderboardInner + footerHtml + '</div>';
+
+  // Action buttons by role + status.
+  let actionsHtml = '';
+  const joinedCount = _joinedParticipants(ch).length;
+  const pendingCanStart = joinedCount >= 2; // creator + at least 1 accept
+
+  if (ch.status === 'pending') {
+    if (myStatus === 'invited') {
+      // Invitee: accept / decline
+      actionsHtml += '<button onclick="_openAcceptChallengeFlow(\'' + ch.id + '\')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:8px;">ACCEPT & PICK YOUR LIFT</button>'
+        + '<button onclick="_confirmDeclineChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DECLINE</button>';
+    } else if (meIsCreator) {
+      // Creator pending: START (if at least 1 accept), CANCEL
+      if (pendingCanStart) {
+        actionsHtml += '<button onclick="_confirmStartChallenge(\'' + ch.id + '\')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:8px;">START CHALLENGE</button>';
+      } else {
+        actionsHtml += '<div style="background:#1a1a1a;border:1px dashed #444;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1px;text-align:center;padding:14px;border-radius:10px;margin-bottom:8px;text-transform:uppercase;">Waiting on at least one accept</div>';
+      }
+      actionsHtml += '<button onclick="_confirmCancelChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL CHALLENGE</button>';
+    } else if (myStatus === 'joined') {
+      // Already accepted, waiting on creator / more people.
+      actionsHtml += '<div style="background:#1a1a1a;border:1px dashed #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1px;text-align:center;padding:14px;border-radius:10px;text-transform:uppercase;">You\u2019re in. Waiting for the creator to start.</div>';
+    }
+  } else if (ch.status === 'active') {
+    if (myStatus === 'joined') {
+      actionsHtml += '<button onclick="_openLogResultFlow(\'' + ch.id + '\')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:8px;">LOG YOUR BEST SET</button>';
+      if (meIsCreator) {
+        actionsHtml += '<button onclick="_confirmCancelChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL CHALLENGE</button>';
+      } else {
+        actionsHtml += '<button onclick="_confirmQuitChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">QUIT CHALLENGE</button>';
+      }
+    } else if (myStatus === 'invited') {
+      // Late accept path — they can still jump in after auto-start.
+      actionsHtml += '<button onclick="_openAcceptChallengeFlow(\'' + ch.id + '\')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:8px;">JUMP IN LATE</button>'
+        + '<button onclick="_confirmDeclineChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DECLINE</button>';
+    }
+  } else if (ch.status === 'completed') {
+    // Winner banner at top of actions.
+    if (ch.winner_id === state.supabaseUserId) {
+      const myPct = me && me.final_e1rm != null ? _improvementPct(me.baseline_e1rm, me.final_e1rm) : 0;
+      actionsHtml += '<div style="background:#2ecc71;color:#111;font-family:\'Bebas Neue\',cursive;font-size:22px;letter-spacing:2px;text-align:center;padding:14px;border-radius:12px;margin-bottom:10px;">YOU WON \u00b7 ' + myPct + '%</div>';
+    } else if (ch.winner_id) {
+      const w = _friendCache[ch.winner_id] || {};
+      const wLabel = w.username || w.display_name || 'Someone';
+      const wRow = (ch.participants || []).find(p => p.user_id === ch.winner_id);
+      const wPct = wRow && wRow.final_e1rm != null ? _improvementPct(wRow.baseline_e1rm, wRow.final_e1rm) : 0;
+      actionsHtml += '<div style="background:#1a1a1a;border:1px solid #444;color:var(--cream);font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;text-align:center;padding:14px;border-radius:12px;margin-bottom:10px;">@' + escapeHtml(wLabel) + ' WON \u00b7 ' + wPct + '%</div>';
+    } else {
+      actionsHtml += '<div style="background:#1a1a1a;border:1px solid #444;color:var(--cream);font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;text-align:center;padding:14px;border-radius:12px;margin-bottom:10px;">TIE</div>';
+    }
+  }
+
+  body.innerHTML = headerHtml + metaHtml + leaderboardHtml + actionsHtml;
 }
 
 // Open the accept flow. This is essentially the create-flow's exercise
@@ -10870,9 +11166,12 @@ async function _openAcceptChallengeFlow(challengeId) {
   _renderChallengeCreateStep();
 }
 
-// Submit handler extension — wrap _submitNewChallenge to branch on
-// draft.mode. If accepting an existing challenge, insert the participant
-// row on the existing challenge_id and flip its status to 'active'.
+// Accept handler. Branches on whether an 'invited' row already exists
+// for this user on the challenge (multi-person / post-016) or not
+// (legacy 1v1 / pre-016). Legacy path inserts a new row and activates
+// the challenge. Multi-person path UPDATEs the existing invited row
+// and leaves activation to the creator (manual start) or the cron
+// (auto-start at 48h).
 async function _submitAcceptChallenge() {
   if (!_challengeDraft || _challengeDraft.mode !== 'accept') return;
   const d = _challengeDraft;
@@ -10882,37 +11181,67 @@ async function _submitAcceptChallenge() {
   if (btn) { btn.disabled = true; btn.textContent = 'JOINING...'; }
   try {
     const baselineE1rm = _epley1RM(d.baselineWeight, d.baselineReps);
-    const { error: pErr } = await sb.from('challenge_participants')
-      .insert({
-        challenge_id:    d.challengeId,
-        user_id:         state.supabaseUserId,
-        exercise_name:   d.exerciseName,
-        baseline_weight: parseFloat(d.baselineWeight),
-        baseline_reps:   parseInt(d.baselineReps, 10),
-        baseline_e1rm:   baselineE1rm
-      });
-    if (pErr) throw pErr;
-    // Flip status to active and set the window dates. RLS allows the
-    // challenged party to update their own challenge row.
-    const now = new Date();
-    const end = new Date(now.getTime() + d.durationWeeks * 7 * 24 * 60 * 60 * 1000);
-    const { error: uErr } = await sb.from('challenges').update({
-      status:     'active',
-      start_date: now.toISOString(),
-      end_date:   end.toISOString()
-    }).eq('id', d.challengeId);
-    if (uErr) throw uErr;
-    const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
-    _sendDirectPush(
-      d.friendId,
-      fromName + ' accepted your challenge',
-      'The 1RM clock is running. Go get it.',
-      'challenge'
-    );
+    const ch = (_challenges || []).find(c => c.id === d.challengeId);
+    const existingRow = ch ? _myParticipantRow(ch) : null;
+    const creatorId = ch ? ch.challenger_id : d.friendId;
+
+    if (existingRow && existingRow.status === 'invited') {
+      // Multi-person flow — update the invited row in place.
+      const { error: uErr } = await sb.from('challenge_participants')
+        .update({
+          status:          'joined',
+          exercise_name:   d.exerciseName,
+          baseline_weight: parseFloat(d.baselineWeight),
+          baseline_reps:   parseInt(d.baselineReps, 10),
+          baseline_e1rm:   baselineE1rm
+        })
+        .eq('challenge_id', d.challengeId)
+        .eq('user_id', state.supabaseUserId);
+      if (uErr) throw uErr;
+      // No challenge-row mutation here — creator starts it manually or
+      // the cron auto-starts at 48h.
+      const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+      _sendDirectPush(
+        creatorId,
+        fromName + ' accepted your challenge',
+        'Waiting on the rest — start the clock when you\u2019re ready.',
+        'challenge'
+      );
+    } else {
+      // Legacy 1v1 pre-016 flow — insert a row + flip the challenge
+      // straight to active. Backwards compat for old rows in the wild.
+      const { error: pErr } = await sb.from('challenge_participants')
+        .insert({
+          challenge_id:    d.challengeId,
+          user_id:         state.supabaseUserId,
+          exercise_name:   d.exerciseName,
+          baseline_weight: parseFloat(d.baselineWeight),
+          baseline_reps:   parseInt(d.baselineReps, 10),
+          baseline_e1rm:   baselineE1rm,
+          status:          'joined'
+        });
+      if (pErr) throw pErr;
+      const now = new Date();
+      const end = new Date(now.getTime() + d.durationWeeks * 7 * 24 * 60 * 60 * 1000);
+      const { error: uErr } = await sb.from('challenges').update({
+        status:     'active',
+        start_date: now.toISOString(),
+        end_date:   end.toISOString()
+      }).eq('id', d.challengeId);
+      if (uErr) throw uErr;
+      const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+      _sendDirectPush(
+        creatorId,
+        fromName + ' accepted your challenge',
+        'The 1RM clock is running. Go get it.',
+        'challenge'
+      );
+    }
     showToast('Challenge accepted');
     _closeChallengeCreateSheet();
     await _loadChallenges();
     _renderChallengesListHtml();
+    _renderActiveChallengeHomeCard();
   } catch (e) {
     console.error('[challenge-accept] submit failed:', e);
     showToast('Could not accept. Try again.');
@@ -10920,8 +11249,9 @@ async function _submitAcceptChallenge() {
   }
 }
 
-// Confirm + decline a pending invite. Updates status to 'declined'.
-// Fires a push to the challenger so they see it promptly.
+// Confirm + decline a pending invite. Updates my participant row to
+// 'declined' (or the whole challenge row if this is a legacy 1v1 with
+// no participant row yet). Fires a push to the creator.
 function _confirmDeclineChallenge(challengeId) {
   if (!confirm('Decline this challenge?')) return;
   _declineChallenge(challengeId);
@@ -10930,9 +11260,22 @@ async function _declineChallenge(challengeId) {
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
   const ch = (_challenges || []).find(c => c.id === challengeId);
+  const existing = ch ? _myParticipantRow(ch) : null;
   try {
-    const { error } = await sb.from('challenges').update({ status: 'declined' }).eq('id', challengeId);
-    if (error) throw error;
+    if (existing) {
+      // Multi-person / post-016: just mark my row as declined. The
+      // challenge itself stays pending for other invitees.
+      const { error } = await sb.from('challenge_participants')
+        .update({ status: 'declined' })
+        .eq('challenge_id', challengeId)
+        .eq('user_id', state.supabaseUserId);
+      if (error) throw error;
+    } else {
+      // Legacy 1v1: no participant row exists yet — flip the whole
+      // challenge row to 'declined'. Matches pre-016 behavior.
+      const { error } = await sb.from('challenges').update({ status: 'declined' }).eq('id', challengeId);
+      if (error) throw error;
+    }
     if (ch) {
       const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
       _sendDirectPush(ch.challenger_id, fromName + ' declined your challenge', 'Maybe next time.', 'challenge');
@@ -10941,16 +11284,17 @@ async function _declineChallenge(challengeId) {
     _closeChallengeDetailSheet();
     await _loadChallenges();
     _renderChallengesListHtml();
+    _renderActiveChallengeHomeCard();
   } catch (e) {
     console.error('[challenge-decline] failed:', e);
     showToast('Could not decline. Try again.');
   }
 }
 
-// Confirm + cancel a pending OR active challenge. Either participant
-// can cancel at any time. Fires a push to the opponent.
+// Confirm + cancel a pending OR active challenge. CREATOR-ONLY action.
+// Ends the challenge for everyone. Non-creators use _quitChallenge.
 function _confirmCancelChallenge(challengeId) {
-  if (!confirm('Cancel this challenge? Both of you will stop seeing it.')) return;
+  if (!confirm('Cancel this challenge? It ends for everyone.')) return;
   _cancelChallenge(challengeId);
 }
 async function _cancelChallenge(challengeId) {
@@ -10961,9 +11305,18 @@ async function _cancelChallenge(challengeId) {
     const { error } = await sb.from('challenges').update({ status: 'cancelled' }).eq('id', challengeId);
     if (error) throw error;
     if (ch) {
-      const oppId = _opponentUserId(ch);
       const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
-      _sendDirectPush(oppId, fromName + ' cancelled the challenge', '', 'challenge');
+      // Notify every other user on the challenge, not just one opponent.
+      const others = _otherParticipantRows(ch)
+        .filter(p => p.status !== 'declined')
+        .map(p => p.user_id);
+      // Legacy 1v1 fallback — notify challenged_id too if no participants.
+      if (!others.length && ch.challenged_id && ch.challenged_id !== state.supabaseUserId) {
+        others.push(ch.challenged_id);
+      }
+      others.forEach(uid => {
+        _sendDirectPush(uid, fromName + ' cancelled the challenge', '', 'challenge');
+      });
     }
     showToast('Cancelled');
     _closeChallengeDetailSheet();
@@ -10973,6 +11326,106 @@ async function _cancelChallenge(challengeId) {
   } catch (e) {
     console.error('[challenge-cancel] failed:', e);
     showToast('Could not cancel. Try again.');
+  }
+}
+
+// Quit an active challenge. Non-creator action that forfeits your
+// spot. Flips your participant row to 'left' — the rest of the
+// challenge keeps going if at least 2 joined participants remain.
+// If the quit drops the roster below 2 joined, the whole challenge
+// auto-cancels.
+function _confirmQuitChallenge(challengeId) {
+  if (!confirm('Quit this challenge? You\u2019ll be out — the rest keeps going without you.')) return;
+  _quitChallenge(challengeId);
+}
+async function _quitChallenge(challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const ch = (_challenges || []).find(c => c.id === challengeId);
+  try {
+    const { error: qErr } = await sb.from('challenge_participants')
+      .update({ status: 'left' })
+      .eq('challenge_id', challengeId)
+      .eq('user_id', state.supabaseUserId);
+    if (qErr) throw qErr;
+    // Re-evaluate: if fewer than 2 joined remain, cancel the whole
+    // challenge. Local cache update first so the count is accurate.
+    if (ch) {
+      const updatedParts = (ch.participants || []).map(p =>
+        p.user_id === state.supabaseUserId ? { ...p, status: 'left' } : p
+      );
+      const joinedLeft = updatedParts.filter(p => p.status === 'joined').length;
+      if (joinedLeft < 2) {
+        await sb.from('challenges').update({ status: 'cancelled' }).eq('id', challengeId);
+      }
+      const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+      // Notify every other joined/invited participant that this person quit.
+      const others = updatedParts
+        .filter(p => p.user_id !== state.supabaseUserId && (p.status === 'joined' || p.status === 'invited'))
+        .map(p => p.user_id);
+      others.forEach(uid => {
+        _sendDirectPush(uid, fromName + ' quit the challenge', joinedLeft < 2 ? 'Not enough players — challenge ended.' : 'The rest keeps going.', 'challenge');
+      });
+    }
+    showToast('You quit the challenge');
+    _closeChallengeDetailSheet();
+    await _loadChallenges();
+    _renderChallengesListHtml();
+    _renderActiveChallengeHomeCard();
+  } catch (e) {
+    console.error('[challenge-quit] failed:', e);
+    showToast('Could not quit. Try again.');
+  }
+}
+
+// Creator manual start. Can fire any time after at least one invitee
+// has accepted. If more than one was invited and only one has
+// accepted, confirm first ("only 1 of N accepted, start anyway?").
+function _confirmStartChallenge(challengeId) {
+  const ch = (_challenges || []).find(c => c.id === challengeId);
+  if (!ch) return;
+  const joined = _joinedParticipants(ch);
+  const otherJoined = joined.filter(p => p.user_id !== state.supabaseUserId).length;
+  if (otherJoined < 1) {
+    showToast('Need at least one accept to start.');
+    return;
+  }
+  const originalInvites = _originalInviteeCount(ch);
+  if (originalInvites > 1 && otherJoined === 1) {
+    if (!confirm('Only 1 of ' + originalInvites + ' has accepted. Start anyway?')) return;
+  }
+  _startChallengeNow(challengeId);
+}
+async function _startChallengeNow(challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const ch = (_challenges || []).find(c => c.id === challengeId);
+  if (!ch) return;
+  try {
+    const now = new Date();
+    const end = new Date(now.getTime() + (ch.duration_weeks || 5) * 7 * 24 * 60 * 60 * 1000);
+    const { error } = await sb.from('challenges').update({
+      status:     'active',
+      start_date: now.toISOString(),
+      end_date:   end.toISOString()
+    }).eq('id', challengeId);
+    if (error) throw error;
+    const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+    // Tell every joined participant the clock is now running.
+    const joined = _joinedParticipants(ch)
+      .filter(p => p.user_id !== state.supabaseUserId)
+      .map(p => p.user_id);
+    joined.forEach(uid => {
+      _sendDirectPush(uid, fromName + ' started the challenge', 'The 1RM clock is running. Go get it.', 'challenge');
+    });
+    showToast('Challenge started');
+    _closeChallengeDetailSheet();
+    await _loadChallenges();
+    _renderChallengesListHtml();
+    _renderActiveChallengeHomeCard();
+  } catch (e) {
+    console.error('[challenge-start] failed:', e);
+    showToast('Could not start. Try again.');
   }
 }
 
@@ -11061,23 +11514,49 @@ function _renderActiveChallengeHomeCard() {
   }
 
   const ch = active[0];
-  const oppId = _opponentUserId(ch);
-  const oppLabel = _opponentLabel(oppId);
   const me = _myParticipantRow(ch);
-  const opp = _opponentParticipantRow(ch);
+  const joined = _joinedParticipants(ch);
   const daysLeft = _daysRemaining(ch.end_date);
   const liftLabel = me ? _challengeExerciseShort(me.exercise_name) : '';
-  const myPct = (me && me.final_e1rm != null) ? _improvementPct(me.baseline_e1rm, me.final_e1rm) : null;
-  const oppPct = (opp && opp.final_e1rm != null) ? _improvementPct(opp.baseline_e1rm, opp.final_e1rm) : null;
 
-  // Leader glyph: \u25B2 up (you leading) / \u25BC down (opponent leading) / \u2014 tied.
-  let leaderLine = 'Log your best set to take the lead';
-  if (myPct != null || oppPct != null) {
-    const my = myPct != null ? myPct : 0;
-    const op = oppPct != null ? oppPct : 0;
-    if (my > op)      leaderLine = 'You lead \u00b7 ' + my + '% vs ' + (oppPct != null ? op + '%' : '\u2014');
-    else if (op > my) leaderLine = '@' + oppLabel + ' leads \u00b7 ' + op + '% vs ' + (myPct != null ? my + '%' : '\u2014');
-    else              leaderLine = 'Tied at ' + my + '%';
+  // Compute each joined row's improvement % for the header line.
+  const withPct = joined.map(p => ({
+    user_id: p.user_id,
+    pct: (p.final_e1rm != null) ? _improvementPct(p.baseline_e1rm, p.final_e1rm) : null
+  }));
+  const mine = withPct.find(p => p.user_id === state.supabaseUserId);
+  const others = withPct.filter(p => p.user_id !== state.supabaseUserId);
+
+  // Title: 1RM · <lift> · vs @name (when 1v1), vs 2 (when multi).
+  let titleLine;
+  if (others.length === 1) {
+    const oppLabel = _opponentLabel(others[0].user_id);
+    titleLine = '1RM \u00b7 ' + liftLabel + ' vs @' + oppLabel;
+  } else if (others.length > 1) {
+    titleLine = '1RM \u00b7 ' + liftLabel + ' vs ' + others.length;
+  } else {
+    titleLine = '1RM \u00b7 ' + liftLabel;
+  }
+
+  // Leader line: adaptive to number of opponents.
+  let leaderLine;
+  if (!withPct.length) {
+    leaderLine = 'Waiting on players';
+  } else if (others.length === 0) {
+    leaderLine = 'Log your best set to take the lead';
+  } else {
+    // Find the actual leader across ALL joined (including me).
+    const ranked = withPct.slice().sort((a, b) => (b.pct || 0) - (a.pct || 0));
+    const top = ranked[0];
+    const myPct = mine && mine.pct != null ? mine.pct : 0;
+    if (top.user_id === state.supabaseUserId && (top.pct || 0) > 0) {
+      leaderLine = 'You lead \u00b7 ' + (top.pct || 0) + '%';
+    } else if (top.pct != null && top.pct > myPct) {
+      const leaderLabel = _opponentLabel(top.user_id);
+      leaderLine = '@' + leaderLabel + ' leads \u00b7 ' + top.pct + '%';
+    } else {
+      leaderLine = 'Log your best set to take the lead';
+    }
   }
 
   const daysTxt = daysLeft > 0 ? (daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' left') : 'Final day';
@@ -11089,7 +11568,7 @@ function _renderActiveChallengeHomeCard() {
     + '<svg viewBox="0 0 24 24" width="22" height="22" stroke="#C0392B" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>'
     + '</div>'
     + '<div style="flex:1;min-width:0;">'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:16px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;">1RM \u00b7 ' + escapeHtml(liftLabel) + ' vs @' + escapeHtml(oppLabel) + '</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:16px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;">' + escapeHtml(titleLine) + '</div>'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);margin-top:3px;">' + escapeHtml(leaderLine) + '</div>'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:1px;">' + escapeHtml(daysTxt) + '</div>'
     + '</div>'
