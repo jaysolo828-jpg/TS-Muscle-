@@ -2883,7 +2883,7 @@
       <svg viewBox="0 0 24 24" width="26" height="26" stroke="#999" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.24" y2="14.24"/></svg>
     </button>
     <button class="icon-btn" id="social-open-btn" onclick="openSocialModal()" aria-label="Friends" title="Friends" style="position:relative;">
-      <span id="social-notify-dot" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--black);pointer-events:none;z-index:1;" aria-hidden="true"></span>
+      <span id="social-notify-dot" style="display:none;position:absolute;top:2px;right:2px;min-width:14px;height:14px;background:var(--red);border-radius:7px;border:2px solid var(--black);pointer-events:none;z-index:1;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:#fff;line-height:10px;padding:0 3px;text-align:center;box-sizing:content-box;" aria-hidden="true"></span>
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     </button>
   </div>
@@ -8420,6 +8420,11 @@ async function _renderFriendsSection() {
       <div id="friends-pending-list"></div>
     </div>
 
+    <div id="friends-outgoing-section" style="display:none;margin-bottom:14px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">SENT REQUESTS</div>
+      <div id="friends-outgoing-list"></div>
+    </div>
+
     <div id="recent-reactions-section" style="display:none;margin-bottom:14px;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">TODAY'S REACTIONS</div>
       <div id="recent-reactions-list"></div>
@@ -8437,20 +8442,57 @@ async function _renderFriendsSection() {
   _loadRecentReactions();
 }
 
-// Refresh the in-memory map of outgoing pending friend requests. Called
-// from _renderFriendsSection on modal open. Used by the search result
-// rendering to show "CANCEL" instead of "ADD FRIEND" on users you've
-// already requested, and by _cancelFriendRequest to know which row to
-// delete.
+// Refresh the in-memory map of outgoing pending friend requests AND
+// render the SENT REQUESTS section in the social modal. Called from
+// _renderFriendsSection on modal open. The in-memory map is used by
+// the search result rendering to show "CANCEL" instead of "ADD FRIEND"
+// on users you've already requested, and by _cancelFriendRequest to
+// know which row to delete. The rendered section lets the user see
+// all their sent requests in one place without re-searching.
 async function _loadOutgoingFriendRequests() {
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
+  const section = document.getElementById('friends-outgoing-section');
+  const list    = document.getElementById('friends-outgoing-list');
+
   const { data } = await sb.from('friendships')
     .select('id, addressee_id')
     .eq('requester_id', state.supabaseUserId)
     .eq('status', 'pending');
+
   Object.keys(_outgoingFriendRequests).forEach(k => delete _outgoingFriendRequests[k]);
   (data || []).forEach(r => { _outgoingFriendRequests[r.addressee_id] = r.id; });
+
+  if (!section || !list) return;
+
+  if (!data || data.length === 0) {
+    section.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+
+  const ids = data.map(r => r.addressee_id);
+  const { data: users } = await sb.from('users')
+    .select('id, display_name, username, avatar_color, avatar_url')
+    .in('id', ids);
+  const uMap = {};
+  (users || []).forEach(u => { uMap[u.id] = u; _friendCache[u.id] = u; });
+
+  section.style.display = 'block';
+  list.innerHTML = data.map(f => {
+    const u = uMap[f.addressee_id] || {};
+    const label = u.username || u.display_name || 'Unknown';
+    return `<div id="friends-outgoing-row-${f.addressee_id}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${_avatarHtml(label, u.avatar_color, 32, u.avatar_url)}
+        <div style="font-family:'Barlow Condensed',sans-serif;">
+          <div style="font-size:14px;color:var(--cream);">@${escapeHtml(label)}</div>
+          <div style="font-size:11px;color:var(--gray);letter-spacing:0.5px;">Waiting on reply</div>
+        </div>
+      </div>
+      <button onclick="_cancelFriendRequest('${f.addressee_id}',this)" style="background:transparent;border:1px solid #444;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">CANCEL</button>
+    </div>`;
+  }).join('');
 }
 
 // Load and render the "Recent reactions" section showing reactions other
@@ -8824,8 +8866,20 @@ async function _cancelFriendRequest(addresseeId, btn) {
     return;
   }
   delete _outgoingFriendRequests[addresseeId];
-  // Revert the button back to ADD FRIEND in place.
-  if (btn) {
+  // If the cancel was triggered from the SENT REQUESTS list, remove
+  // that row from the DOM and hide the section if it was the last one.
+  // Detect by checking whether btn is inside a friends-outgoing-row-*
+  // container (vs. a friend-search-row-* from the search results).
+  const outgoingRow = document.getElementById('friends-outgoing-row-' + addresseeId);
+  if (outgoingRow) {
+    outgoingRow.remove();
+    const outgoingList = document.getElementById('friends-outgoing-list');
+    if (outgoingList && outgoingList.children.length === 0) {
+      const outgoingSection = document.getElementById('friends-outgoing-section');
+      if (outgoingSection) outgoingSection.style.display = 'none';
+    }
+  } else if (btn) {
+    // Search-row path: revert the button back to ADD FRIEND in place.
     btn.disabled = false;
     btn.textContent = 'ADD FRIEND';
     btn.style.background = '#C0392B';
@@ -9924,10 +9978,18 @@ async function _updateSocialNotifyDot() {
     ]);
     // If either query errored, don't change dot state — leave as-is
     if (pendingRes.error || rxnRes.error) return;
-    const hasAlert = ((pendingRes.count || 0) + (rxnRes.count || 0)) > 0;
-    dot.style.display = hasAlert ? 'block' : 'none';
-    if (hasAlert) dot.classList.add('notify-dot-pulse');
-    else dot.classList.remove('notify-dot-pulse');
+    const total = (pendingRes.count || 0) + (rxnRes.count || 0);
+    const hasAlert = total > 0;
+    dot.style.display = hasAlert ? 'inline-block' : 'none';
+    // Show the count when there's any alert. Cap the display at "9+" so
+    // a flood of notifications doesn't blow out the badge width.
+    if (hasAlert) {
+      dot.textContent = total > 9 ? '9+' : String(total);
+      dot.classList.add('notify-dot-pulse');
+    } else {
+      dot.textContent = '';
+      dot.classList.remove('notify-dot-pulse');
+    }
     const btn = document.getElementById('social-open-btn');
     if (btn) btn.style.color = hasAlert ? 'var(--red)' : '';
   } catch (e) {
