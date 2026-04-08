@@ -10190,12 +10190,15 @@ function _findRecentBaselineByExId(exId) {
   const cutoffMs = Date.now() - 14 * 24 * 60 * 60 * 1000;
   const history = state.history || [];
   // Walk newest → oldest so the first match IS the most recent.
+  // Use `continue` (not `return null`) on out-of-window entries so a
+  // non-chronologically-ordered history (edge case from a backup
+  // restore) still finds any valid match inside the window.
   for (let i = history.length - 1; i >= 0; i--) {
     const h = history[i];
     if (!h || !h.date) continue;
     const t = new Date(h.date).getTime();
     if (isNaN(t)) continue;
-    if (t < cutoffMs) return null; // past the window — nothing recent enough
+    if (t < cutoffMs) continue;
     const sets = (h.sets && h.sets[exId]) || [];
     if (!sets.length) continue;
     // Find this session's top completed set (highest weight; tie-break
@@ -10389,6 +10392,19 @@ function _originalInviteeCount(challenge) {
     .length;
 }
 
+// Extract a short, user-facing error message from an error value.
+// Supabase errors expose message/details/hint/code fields, plain
+// Errors have .message, strings are themselves. Falls back to
+// JSON.stringify and caps length so toasts don't blow out.
+function _chErrMsg(e) {
+  if (!e) return '';
+  let msg = e.message || e.details || e.hint || e.code || '';
+  if (!msg && typeof e === 'string') msg = e;
+  if (!msg) { try { msg = JSON.stringify(e); } catch (_) { msg = String(e); } }
+  if (msg.length > 140) msg = msg.slice(0, 140) + '...';
+  return msg;
+}
+
 // Send a direct push notification to a single user via the to_uid path.
 // Used by the challenge create/accept/decline/cancel flows. Errors are
 // logged but never bubbled — the DB mutation is the source of truth.
@@ -10466,18 +10482,20 @@ function _openChallengeIntroSheet(type, onContinue) {
   if (type === 'one_rep_max') {
     title = '1 REP MAX CHALLENGE';
     bullets = [
-      { h: 'PICK ANY LIFT',
-        b: "Pick the lift you actually train — bench, squat, curls, whatever. You and your opponent each pick your own. The lifts don't have to match." },
+      { h: 'CREATOR PICKS THE LIFT',
+        b: "Whoever starts the challenge picks one lift — bench, squat, curls, whatever. Everyone they invite trains that same lift for the window." },
+      { h: 'UP TO 4 PEOPLE',
+        b: "You can invite up to 3 friends per challenge, so you and your crew can all go at the same goal together." },
       { h: 'FIVE WEEKS ON THE CLOCK',
-        b: "Default window is 5 weeks. You can set it anywhere from 4 to 6. The clock starts the moment your opponent accepts." },
+        b: "Default window is 5 weeks. You can set it anywhere from 4 to 6. After you send, you get a 48-hour grace period to collect invites before it auto-starts." },
       { h: 'PERCENT WINS, NOT POUNDS',
-        b: "Scoring is percentage improvement — not raw weight. That way a 135 lb bench can beat a 315 lb bench if you grew more. Fair fight." },
+        b: "Scoring is percentage improvement — not raw weight. That way a 135 lb bench can beat a 315 lb bench if you grew more. Fair fight across any strength level." },
       { h: 'LOG YOUR BEST SET',
         b: "Each of you logs your top set during the window. We run it through Epley to estimate your 1 rep max. Highest percent gain wins." },
       { h: 'CONSENT IS THE POINT',
-        b: "Your numbers stay yours. Sending a challenge reveals YOUR baseline. Accepting one reveals YOURS. If you decline, nothing is shared." },
+        b: "Your numbers stay yours. Sending reveals YOUR baseline. Accepting reveals YOURS. Decline and nothing is shared." },
       { h: 'HISTORY IS LOCKED',
-        b: "While a challenge is active, you can't edit past workouts. Keeps everyone honest. Unlocks the second the challenge ends or is cancelled." }
+        b: "While a challenge is active, you can't delete past workouts. Keeps everyone honest. Unlocks the second the challenge ends or is cancelled." }
     ];
   }
 
@@ -10538,49 +10556,71 @@ function _renderChallengesListHtml() {
   list.innerHTML = rows.map(c => _challengeRowHtml(c)).join('');
 }
 
-// One row in the CHALLENGES list. Shows type, opponent, status chip,
-// and the key headline numbers based on who's looking and what stage
-// the challenge is in.
+// One row in the CHALLENGES list inside the social modal. Under
+// Option B, everyone on a challenge trains the same lift, so the
+// row shows: the lift (from the creator's row so invited users see
+// it too), a sub-line describing state + headcount, and a status
+// chip on the right.
 function _challengeRowHtml(c) {
   const meIsChallenger = c.challenger_id === state.supabaseUserId;
-  const oppId = _opponentUserId(c);
-  const oppLabel = _opponentLabel(oppId);
-  const me  = _myParticipantRow(c);
-  const opp = _opponentParticipantRow(c);
+  const me = _myParticipantRow(c);
 
+  // Pull the canonical lift name off the creator's row. Fall back to
+  // my own row (legacy 1v1 rows where creator may not be joined yet)
+  // then to an em dash so the row still renders.
+  const creatorRow = (c.participants || []).find(p => p.user_id === c.challenger_id);
+  const liftSource = (creatorRow && creatorRow.exercise_name)
+    || (me && me.exercise_name)
+    || '';
+  const liftLabel = _challengeExerciseLabel(liftSource) || '\u2014';
+
+  // Status chip.
   let statusChipBg = '#444', statusChipText = 'PENDING';
   if (c.status === 'pending') {
     if (meIsChallenger) { statusChipBg = '#444'; statusChipText = 'WAITING'; }
-    else                { statusChipBg = '#C0392B'; statusChipText = 'INCOMING'; }
+    else if (me && me.status === 'joined') { statusChipBg = '#2ecc71'; statusChipText = 'READY'; }
+    else { statusChipBg = '#C0392B'; statusChipText = 'INCOMING'; }
   } else if (c.status === 'active') {
     statusChipBg = '#2ecc71'; statusChipText = 'ACTIVE';
+  } else if (c.status === 'completed') {
+    statusChipBg = '#555'; statusChipText = 'DONE';
   }
 
-  // Sub-label: days remaining when active, lift summary when pending.
+  // Sub-line: different story by state + role.
   let sub = '';
   if (c.status === 'active') {
     const days = _daysRemaining(c.end_date);
-    sub = days > 0 ? (days + ' day' + (days === 1 ? '' : 's') + ' left') : 'Final day';
+    const joined = _joinedParticipants(c).length;
+    const daysTxt = days > 0 ? (days + ' day' + (days === 1 ? '' : 's') + ' left') : 'Final day';
+    sub = joined + (joined === 1 ? ' player' : ' players') + ' \u00b7 ' + daysTxt;
   } else if (c.status === 'pending') {
     if (meIsChallenger) {
-      sub = 'Sent \u00b7 waiting on @' + oppLabel;
+      const joined = _joinedParticipants(c).filter(p => p.user_id !== c.challenger_id).length;
+      const total = _originalInviteeCount(c);
+      sub = joined + ' of ' + total + ' accepted';
+    } else if (me && me.status === 'joined') {
+      // I'm an invitee who already accepted, waiting on creator.
+      sub = 'You\u2019re in \u00b7 waiting to start';
     } else {
-      sub = '@' + oppLabel + ' challenged you';
+      // Invitee who hasn't responded yet — covers both the new
+      // multi-person path (me.status === 'invited') and the legacy
+      // 1v1 path where `me` is null because no row exists.
+      const creatorLabel = _opponentLabel(c.challenger_id);
+      sub = '@' + creatorLabel + ' invited you';
     }
+  } else if (c.status === 'completed') {
+    if (c.winner_id === state.supabaseUserId) sub = 'You won';
+    else if (c.winner_id) sub = '@' + _opponentLabel(c.winner_id) + ' won';
+    else sub = 'Ended in a tie';
   }
 
-  const myLiftLabel = me ? _challengeExerciseShort(me.exercise_name) : '';
-  const oppLiftLabel = opp ? _challengeExerciseShort(opp.exercise_name) : '';
-  const liftSummary = c.status === 'active' && myLiftLabel && oppLiftLabel
-    ? (myLiftLabel + ' vs ' + oppLiftLabel)
-    : (myLiftLabel ? ('Your lift: ' + myLiftLabel) : '');
+  const borderColor = c.status === 'active' ? '#2ecc71' : '#C0392B';
 
   return '<div onclick="_openChallengeDetailSheet(\'' + c.id + '\')" '
-    + 'style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;border-left:3px solid ' + (c.status === 'active' ? '#2ecc71' : '#C0392B') + ';">'
-    + '<div style="min-width:0;padding-right:10px;">'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:16px;color:var(--cream);letter-spacing:1.3px;line-height:1.1;">1RM \u00b7 @' + escapeHtml(oppLabel) + '</div>'
-    + (liftSummary ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);margin-top:3px;">' + escapeHtml(liftSummary) + '</div>' : '')
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:2px;">' + escapeHtml(sub) + '</div>'
+    + 'style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;border-left:3px solid ' + borderColor + ';gap:10px;">'
+    + '<div style="min-width:0;flex:1;">'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:15px;color:var(--cream);letter-spacing:1.3px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">1RM \u00b7 ' + escapeHtml(liftLabel) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(sub) + '</div>'
     + '</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:11px;letter-spacing:1.5px;background:' + statusChipBg + ';color:#fff;padding:4px 9px;border-radius:6px;flex-shrink:0;">' + statusChipText + '</div>'
     + '</div>';
@@ -10788,7 +10828,7 @@ function _challengeExercisePickerHtml() {
   const isAccept = _challengeDraft && _challengeDraft.mode === 'accept';
   const intro = isAccept
     ? 'Pick the lift you actually train. Type anything — the chips are just shortcuts.'
-    : 'Pick the lift you want to train for. Type anything — the chips are just shortcuts. Your opponent picks their own when they accept.';
+    : 'Pick the lift you want to train for. Everyone you invite will train the same lift. Type anything — the chips are just shortcuts.';
   const currentVal = (_challengeDraft && _challengeDraft.exerciseName) ? _challengeDraft.exerciseName : '';
   const chips = _CHALLENGE_SUGGESTIONS.map(name =>
     '<button type="button" onclick="_setChallengeExerciseFromChip(this,\'' + escapeHtml(name).replace(/'/g,'&#39;') + '\')" '
@@ -10848,6 +10888,15 @@ function _onChallengeExerciseContinue() {
   const typed = input ? input.value.trim() : '';
   const name = typed || _challengeDraft.exerciseName || '';
   if (!name) { showToast('Enter a lift name.'); return; }
+  // If the exercise changed, wipe any previously auto-filled baseline
+  // so the baseline step re-runs the lookup against the new lift.
+  // Without this a user who auto-filled 225x5 bench, then backed up
+  // and picked squat, would land on the baseline step with 225x5
+  // still pre-populated from bench — obviously wrong for squat.
+  if (_challengeDraft.exerciseName !== name) {
+    _challengeDraft.baselineWeight = '';
+    _challengeDraft.baselineReps   = '';
+  }
   _challengeDraft.exerciseName = name;
   _challengeDraft.step = _challengeDraft.mode === 'accept' ? 'baseline' : 'duration';
   _renderChallengeCreateStep();
@@ -10865,7 +10914,7 @@ function _challengeDurationPickerHtml() {
       + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--cream);letter-spacing:1.5px;margin-top:3px;text-transform:uppercase;">WEEKS</div>'
       + '</div>';
   }).join('');
-  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:14px;">Pick a window. 5 weeks is the sweet spot for most lifts. The clock starts the second your opponent accepts.</div>'
+  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:14px;">Pick a window. 5 weeks is the sweet spot for most lifts. Clock starts when you hit START, or auto-starts 48 hours after you send.</div>'
     + '<div style="display:flex;gap:10px;">' + tiles + '</div>'
     + '<button onclick="_challengeDraft.step=\'exercise\';_renderChallengeCreateStep()" style="width:100%;margin-top:16px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
 }
@@ -10919,7 +10968,14 @@ function _challengeBaselinePickerHtml() {
     + '</div>'
     + '<div id="challenge-baseline-e1rm" style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--cream);margin-top:14px;">' + escapeHtml(e1rmText) + '</div>'
     + '<button id="challenge-baseline-next" onclick="_onChallengeBaselineContinue()" style="width:100%;margin-top:18px;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CONTINUE</button>'
-    + '<button onclick="_challengeDraft.step=\'' + (draft.mode === 'accept' ? 'exercise' : 'duration') + '\';_renderChallengeCreateStep()" style="width:100%;margin-top:8px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
+    // BACK only makes sense in the CREATE flow. Accept mode enters the
+    // baseline step directly (no friend/exercise/duration before it) so
+    // the header close X is the only way to back out — a BACK button
+    // here would either dead-end or close the sheet, which is
+    // confusing. Omit it in accept mode.
+    + (draft.mode === 'accept'
+        ? ''
+        : '<button onclick="_challengeDraft.step=\'duration\';_renderChallengeCreateStep()" style="width:100%;margin-top:8px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>');
 }
 
 // Called on input in the baseline weight/reps fields. Updates the live
@@ -10978,17 +11034,20 @@ function _challengeConfirmHtml() {
     ? inviteeLabels.map(l => '@' + escapeHtml(l)).join(', ')
     : 'Friend';
   const e1rm = _epley1RM(d.baselineWeight, d.baselineReps);
-  const buttonLabel = isAccept ? 'ACCEPT & START' : 'SEND CHALLENGE';
+  const buttonLabel = isAccept ? 'ACCEPT CHALLENGE' : 'SEND CHALLENGE';
   const friendsForConsent = inviteeLabels.length
     ? inviteeLabels.map(l => '@' + l).join(', ')
     : 'them';
   const consentCopy = isAccept
     ? ('Accepting reveals YOUR baseline to ' + friendsForConsent + ' and adds you to the challenge.')
     : ('Sending this reveals YOUR baseline to ' + friendsForConsent + '. Their numbers stay hidden until each one accepts and logs their own. You\u2019ll get a 48-hour window before it auto-starts, or you can start it sooner once at least one accepts.');
+  // "YOUR LIFT" for the creator (they picked it), "CHALLENGE LIFT"
+  // for the invitee (they're joining what the creator already chose).
+  const liftBlockLabel = isAccept ? 'CHALLENGE LIFT' : 'YOUR LIFT';
   return '<div style="background:#1a1a1a;border-radius:12px;padding:18px 16px;border-left:3px solid #C0392B;">'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + opponentBlockLabel + '</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;line-height:1.2;">' + opponentDisplay + '</div>'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">YOUR LIFT</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + liftBlockLabel + '</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1.5px;margin-bottom:12px;">' + escapeHtml(liftLabel) + '</div>'
     + '<div style="display:flex;gap:20px;margin-bottom:12px;">'
     + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">BASELINE</div><div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1px;">' + escapeHtml(d.baselineWeight) + ' \u00d7 ' + escapeHtml(d.baselineReps) + '</div></div>'
@@ -11082,18 +11141,7 @@ async function _submitNewChallenge() {
     _renderChallengesListHtml();
   } catch (e) {
     console.error('[challenge-create] submit failed:', e);
-    // Surface the specific error in the toast so we can diagnose
-    // silent failures on mobile (no devtools). Supabase error objects
-    // may expose message, details, hint, or code — pick the first
-    // non-empty one and truncate so the toast doesn't blow up.
-    let msg = '';
-    if (e) {
-      msg = e.message || e.details || e.hint || e.code || '';
-      if (!msg && typeof e === 'string') msg = e;
-      if (!msg) { try { msg = JSON.stringify(e); } catch (_) { msg = String(e); } }
-    }
-    if (msg.length > 140) msg = msg.slice(0, 140) + '...';
-    showToast('Send failed: ' + (msg || 'unknown error'));
+    showToast('Send failed: ' + (_chErrMsg(e) || 'unknown error'));
     if (btn) { btn.disabled = false; btn.textContent = 'SEND CHALLENGE'; }
   }
 }
@@ -11198,38 +11246,42 @@ function _renderChallengeDetailBody(ch) {
   const me = _myParticipantRow(ch);
   const myStatus = me ? me.status : null;
 
-  // Header title: for pending, show number of invitees. For active,
-  // show "YOU vs N" quickly. Legacy 1v1 falls through to a 2-person
-  // label.
-  const otherJoined = _joinedParticipants(ch).filter(p => p.user_id !== state.supabaseUserId);
-  let titleRight = '';
-  if (ch.status === 'pending') {
-    const total = _originalInviteeCount(ch);
-    titleRight = total === 1 ? '1 INVITE' : (total + ' INVITES');
-  } else if (ch.status === 'active') {
-    const joinedCount = _joinedParticipants(ch).length;
-    titleRight = joinedCount + ' IN';
-  } else {
-    titleRight = ch.status.toUpperCase();
-  }
-
-  const headerHtml = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">'
-    + '<div>'
+  // Header: small eyebrow ("1 REP MAX CHALLENGE") + big lift name.
+  // Option B means everyone on the challenge trains the same lift,
+  // so we pull the name off the creator's participant row and show
+  // it as the single, prominent title instead of repeating it on
+  // every leaderboard row.
+  const creatorRow = (ch.participants || []).find(p => p.user_id === ch.challenger_id);
+  const challengeLift = _challengeExerciseLabel(creatorRow && creatorRow.exercise_name);
+  const headerHtml = '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">'
+    + '<div style="min-width:0;padding-right:10px;">'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">1 REP MAX CHALLENGE</div>'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">' + escapeHtml(titleRight) + '</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">' + (challengeLift ? escapeHtml(challengeLift) : '\u2014') + '</div>'
     + '</div>'
     + '<button onclick="_closeChallengeDetailSheet()" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
     + '</div>';
 
-  // Meta strip.
+  // Meta strip — duration + headcount + status/time left all in one
+  // horizontal row so the status is visible without scrolling past
+  // the leaderboard.
   let metaRight = '';
   if (ch.status === 'pending')   metaRight = 'Pending';
   if (ch.status === 'active')    metaRight = _daysRemaining(ch.end_date) + ' days left';
   if (ch.status === 'completed') metaRight = 'Completed';
   if (ch.status === 'cancelled') metaRight = 'Cancelled';
   if (ch.status === 'declined')  metaRight = 'Declined';
-  const metaHtml = '<div style="display:flex;justify-content:space-between;align-items:center;background:#1a1a1a;border-radius:10px;padding:10px 14px;margin-bottom:12px;">'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">' + ch.duration_weeks + ' week window</div>'
+  // Headcount context changes by status — pending shows invites,
+  // active shows who's in.
+  let metaLeftCount = '';
+  if (ch.status === 'pending') {
+    const total = _originalInviteeCount(ch);
+    metaLeftCount = total === 1 ? '1 invite' : (total + ' invites');
+  } else {
+    const joinedCount = _joinedParticipants(ch).length;
+    metaLeftCount = joinedCount + (joinedCount === 1 ? ' player' : ' players');
+  }
+  const metaHtml = '<div style="display:flex;justify-content:space-between;align-items:center;background:#1a1a1a;border-radius:10px;padding:10px 14px;margin-bottom:12px;gap:10px;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">' + ch.duration_weeks + ' wk \u00b7 ' + metaLeftCount + '</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:13px;color:var(--cream);letter-spacing:1.5px;">' + escapeHtml(metaRight) + '</div>'
     + '</div>';
 
@@ -11268,14 +11320,15 @@ function _renderChallengeDetailBody(ch) {
     const isLeader = p.user_id === leaderUserId;
     const borderColor = isLeader ? (ch.status === 'completed' ? '#D4A843' : '#2ecc71') : 'transparent';
 
-    // Stats line — lift + baseline (pending) or lift + improvement (active/completed).
-    const liftLabel = _challengeExerciseShort(p.exercise_name || '');
+    // Stats line — baseline (pending) or improvement (active/completed).
+    // No lift name per-row; the lift is in the sheet header once,
+    // since everyone on the challenge trains the same one.
     let statsLine;
     if (ch.status === 'pending') {
-      statsLine = liftLabel + ' \u00b7 baseline ' + (p.baseline_e1rm != null ? p.baseline_e1rm : '—');
+      statsLine = 'Baseline ' + (p.baseline_e1rm != null ? (p.baseline_e1rm + ' lbs') : '\u2014');
     } else {
       const pct = p.final_e1rm != null ? (_improvementPct(p.baseline_e1rm, p.final_e1rm) + '%') : 'no log yet';
-      statsLine = liftLabel + ' \u00b7 ' + pct;
+      statsLine = pct;
     }
 
     const creatorBadge = p.user_id === ch.challenger_id
@@ -11325,9 +11378,15 @@ function _renderChallengeDetailBody(ch) {
   const pendingCanStart = joinedCount >= 2; // creator + at least 1 accept
 
   if (ch.status === 'pending') {
-    if (myStatus === 'invited') {
+    // Legacy 1v1 rows from before migration 016 have challenged_id set
+    // on the parent but no participant row for the invitee yet —
+    // `me` is null for them. Treat "I'm the challenged_id with no
+    // participant row" as an 'invited' state so accept/decline
+    // buttons still render for those rows.
+    const isLegacyInvitee = !me && ch.challenged_id === state.supabaseUserId;
+    if (myStatus === 'invited' || isLegacyInvitee) {
       // Invitee: accept / decline
-      actionsHtml += '<button onclick="_openAcceptChallengeFlow(\'' + ch.id + '\')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:8px;">ACCEPT & PICK YOUR LIFT</button>'
+      actionsHtml += '<button onclick="_openAcceptChallengeFlow(\'' + ch.id + '\')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:8px;">ACCEPT CHALLENGE</button>'
         + '<button onclick="_confirmDeclineChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DECLINE</button>';
     } else if (meIsCreator) {
       // Creator pending: START (if at least 1 accept), CANCEL
@@ -11382,12 +11441,20 @@ async function _openAcceptChallengeFlow(challengeId) {
   _closeChallengeDetailSheet();
   const ch = (_challenges || []).find(c => c.id === challengeId);
   if (!ch) { showToast('Challenge not found.'); return; }
+  // Option B: everyone on a challenge trains the SAME lift — the one
+  // the creator picked. Pull it off the creator's participant row and
+  // inherit it into the invitee's draft, then skip straight past the
+  // exercise picker to the baseline step. Falls back to the old
+  // exercise-picker flow if for some reason the creator's row doesn't
+  // have a lift set (legacy rows, data drift).
+  const creatorRow = (ch.participants || []).find(p => p.user_id === ch.challenger_id);
+  const inheritedLift = (creatorRow && creatorRow.exercise_name) || null;
   _challengeDraft = {
     mode: 'accept',
     challengeId: challengeId,
-    step: 'exercise',
+    step: inheritedLift ? 'baseline' : 'exercise',
     friendId: _opponentUserId(ch),
-    exerciseName: null,
+    exerciseName: inheritedLift,
     durationWeeks: ch.duration_weeks,
     baselineWeight: '',
     baselineReps: ''
@@ -11483,8 +11550,8 @@ async function _submitAcceptChallenge() {
     _renderActiveChallengeHomeCard();
   } catch (e) {
     console.error('[challenge-accept] submit failed:', e);
-    showToast('Could not accept. Try again.');
-    if (btn) { btn.disabled = false; btn.textContent = 'ACCEPT & START'; }
+    showToast('Accept failed: ' + (_chErrMsg(e) || 'unknown error'));
+    if (btn) { btn.disabled = false; btn.textContent = 'ACCEPT CHALLENGE'; }
   }
 }
 
@@ -11526,7 +11593,7 @@ async function _declineChallenge(challengeId) {
     _renderActiveChallengeHomeCard();
   } catch (e) {
     console.error('[challenge-decline] failed:', e);
-    showToast('Could not decline. Try again.');
+    showToast('Decline failed: ' + (_chErrMsg(e) || 'try again'));
   }
 }
 
@@ -11564,7 +11631,7 @@ async function _cancelChallenge(challengeId) {
     _renderActiveChallengeHomeCard();
   } catch (e) {
     console.error('[challenge-cancel] failed:', e);
-    showToast('Could not cancel. Try again.');
+    showToast('Cancel failed: ' + (_chErrMsg(e) || 'try again'));
   }
 }
 
@@ -11613,7 +11680,7 @@ async function _quitChallenge(challengeId) {
     _renderActiveChallengeHomeCard();
   } catch (e) {
     console.error('[challenge-quit] failed:', e);
-    showToast('Could not quit. Try again.');
+    showToast('Quit failed: ' + (_chErrMsg(e) || 'try again'));
   }
 }
 
@@ -11664,7 +11731,7 @@ async function _startChallengeNow(challengeId) {
     _renderActiveChallengeHomeCard();
   } catch (e) {
     console.error('[challenge-start] failed:', e);
-    showToast('Could not start. Try again.');
+    showToast('Start failed: ' + (_chErrMsg(e) || 'try again'));
   }
 }
 
@@ -11675,14 +11742,20 @@ function _openLogResultFlow(challengeId) {
   const ch = (_challenges || []).find(c => c.id === challengeId);
   if (!ch) { showToast('Challenge not found.'); return; }
   const me = _myParticipantRow(ch);
-  if (!me) { showToast('You are not in this challenge.'); return; }
+  if (!me)                       { showToast('You are not in this challenge.'); return; }
+  if (me.status !== 'joined')    { showToast('Accept the challenge first.'); return; }
+  if (me.baseline_e1rm == null)  { showToast('Your baseline is missing.'); return; }
   _closeChallengeDetailSheet();
   const existing = document.getElementById('challenge-log-sheet');
   if (existing) existing.remove();
-  const liftLabel = _challengeExerciseLabel(me.exercise_name);
-  const baselineTxt = me.baseline_weight + ' \u00d7 ' + me.baseline_reps + ' (e1RM ' + me.baseline_e1rm + ')';
+  // Lift label falls back to the creator's row for safety (Option B
+  // means every joined row should have the same lift, but if there's
+  // any drift we'd rather show the creator's canonical value).
+  const creatorRow = (ch.participants || []).find(p => p.user_id === ch.challenger_id);
+  const liftLabel = _challengeExerciseLabel(me.exercise_name || (creatorRow && creatorRow.exercise_name));
+  const baselineTxt = (me.baseline_weight || 0) + ' \u00d7 ' + (me.baseline_reps || 0) + ' (e1RM ' + me.baseline_e1rm + ')';
   const bestTxt = me.final_e1rm != null
-    ? (me.final_weight + ' \u00d7 ' + me.final_reps + ' (e1RM ' + me.final_e1rm + ')')
+    ? ((me.final_weight || 0) + ' \u00d7 ' + (me.final_reps || 0) + ' (e1RM ' + me.final_e1rm + ')')
     : 'Nothing logged yet';
   const sheet = document.createElement('div');
   sheet.id = 'challenge-log-sheet';
@@ -11753,12 +11826,22 @@ function _renderActiveChallengeHomeCard() {
   }
 
   const ch = active[0];
-  const me = _myParticipantRow(ch);
   const joined = _joinedParticipants(ch);
   const daysLeft = _daysRemaining(ch.end_date);
-  const liftLabel = me ? _challengeExerciseShort(me.exercise_name) : '';
 
-  // Compute each joined row's improvement % for the header line.
+  // Option B: everyone on a challenge trains the same lift. Pull it
+  // from the creator's participant row so late-joining invitees (whose
+  // own row may still be 'invited' with a null exercise_name) still
+  // see the correct lift. Fall back to my own row as a second resort,
+  // then to the legacy 1v1 opponent's row.
+  const creatorRow = (ch.participants || []).find(p => p.user_id === ch.challenger_id);
+  const meRow = _myParticipantRow(ch);
+  const liftSource = (creatorRow && creatorRow.exercise_name)
+    || (meRow && meRow.exercise_name)
+    || '';
+  const liftLabel = _challengeExerciseLabel(liftSource);
+
+  // Compute each joined row's improvement % for the leader line.
   const withPct = joined.map(p => ({
     user_id: p.user_id,
     pct: (p.final_e1rm != null) ? _improvementPct(p.baseline_e1rm, p.final_e1rm) : null
@@ -11766,52 +11849,87 @@ function _renderActiveChallengeHomeCard() {
   const mine = withPct.find(p => p.user_id === state.supabaseUserId);
   const others = withPct.filter(p => p.user_id !== state.supabaseUserId);
 
-  // Title: 1RM · <lift> · vs @name (when 1v1), vs 2 (when multi).
-  let titleLine;
-  if (others.length === 1) {
-    const oppLabel = _opponentLabel(others[0].user_id);
-    titleLine = '1RM \u00b7 ' + liftLabel + ' vs @' + oppLabel;
-  } else if (others.length > 1) {
-    titleLine = '1RM \u00b7 ' + liftLabel + ' vs ' + others.length;
+  // Opponents summary. Single opponent shows @name; 2+ shows "X players".
+  let opponentsLine;
+  if (others.length === 0) {
+    opponentsLine = 'Solo \u00b7 waiting for others';
+  } else if (others.length === 1) {
+    opponentsLine = 'vs @' + _opponentLabel(others[0].user_id);
   } else {
-    titleLine = '1RM \u00b7 ' + liftLabel;
+    opponentsLine = 'vs ' + others.length + ' others';
   }
 
-  // Leader line: adaptive to number of opponents.
+  // Leader line: who's ahead right now.
   let leaderLine;
   if (!withPct.length) {
     leaderLine = 'Waiting on players';
   } else if (others.length === 0) {
-    leaderLine = 'Log your best set to take the lead';
+    leaderLine = 'Log your best set to get on the board';
   } else {
-    // Find the actual leader across ALL joined (including me).
     const ranked = withPct.slice().sort((a, b) => (b.pct || 0) - (a.pct || 0));
     const top = ranked[0];
     const myPct = mine && mine.pct != null ? mine.pct : 0;
-    if (top.user_id === state.supabaseUserId && (top.pct || 0) > 0) {
-      leaderLine = 'You lead \u00b7 ' + (top.pct || 0) + '%';
-    } else if (top.pct != null && top.pct > myPct) {
-      const leaderLabel = _opponentLabel(top.user_id);
-      leaderLine = '@' + leaderLabel + ' leads \u00b7 ' + top.pct + '%';
+    const topPct = top.pct != null ? top.pct : 0;
+    if (topPct === 0 && myPct === 0) {
+      leaderLine = 'No logs yet — be first';
+    } else if (myPct > 0 && myPct >= topPct) {
+      // I'm at the top (or tied at the top) with positive pct.
+      leaderLine = 'You lead \u00b7 +' + myPct + '%';
+    } else if (topPct > myPct) {
+      leaderLine = '@' + _opponentLabel(top.user_id) + ' leads \u00b7 +' + topPct + '%';
     } else {
       leaderLine = 'Log your best set to take the lead';
     }
   }
 
   const daysTxt = daysLeft > 0 ? (daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' left') : 'Final day';
+  // Combine opponents + days into a single meta line so the layout
+  // stays compact: "vs @bob · 25 days left".
+  const metaLine = opponentsLine + ' \u00b7 ' + daysTxt;
+
+  // Days-left pill — prominent when under 7 days, neutral otherwise,
+  // warning yellow on the final day.
+  let daysPillBg, daysPillFg;
+  if (daysLeft <= 0) { daysPillBg = '#C0392B'; daysPillFg = '#fff'; }
+  else if (daysLeft < 7) { daysPillBg = 'rgba(212,168,67,0.18)'; daysPillFg = '#D4A843'; }
+  else { daysPillBg = 'rgba(255,255,255,0.06)'; daysPillFg = 'var(--gray-light)'; }
+  const daysPillText = daysLeft > 0 ? (daysLeft + 'D LEFT') : 'FINAL DAY';
+
+  // Leader-line color: green when you're at the top (or tied at the
+  // top) with a positive improvement, red when someone else is ahead,
+  // cream otherwise (nothing logged yet or everyone's at 0).
+  let leaderColor = 'var(--cream)';
+  if (withPct.length > 1) {
+    const sorted = withPct.slice().sort((a, b) => (b.pct || 0) - (a.pct || 0));
+    const topPctForColor = sorted[0].pct != null ? sorted[0].pct : 0;
+    const myPctForColor = mine && mine.pct != null ? mine.pct : 0;
+    if (myPctForColor > 0 && myPctForColor >= topPctForColor) {
+      leaderColor = '#2ecc71';
+    } else if (topPctForColor > myPctForColor) {
+      leaderColor = '#C0392B';
+    }
+  }
 
   el.style.display = '';
-  el.style.cssText = 'margin-bottom:12px;background:#1a1414;border:1px solid #C0392B;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;';
+  // 2px brand-red border + subtle red-tinted background to match the
+  // prominence tier of the travel banner. Different colored border =
+  // clearly a different banner type, but same shape / radius / padding
+  // as every other home card so it feels intentional, not bolted-on.
+  el.style.cssText = 'margin-bottom:12px;background:linear-gradient(135deg,rgba(192,57,43,0.12) 0%,rgba(192,57,43,0.04) 100%);border:2px solid rgba(192,57,43,0.55);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;';
   el.onclick = () => _openChallengeDetailSheet(ch.id);
-  el.innerHTML = '<div style="width:40px;height:40px;background:rgba(192,57,43,0.18);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+  el.innerHTML = '<div style="width:44px;height:44px;background:rgba(192,57,43,0.22);border:1px solid rgba(192,57,43,0.4);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
     + '<svg viewBox="0 0 24 24" width="22" height="22" stroke="#C0392B" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>'
     + '</div>'
     + '<div style="flex:1;min-width:0;">'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:16px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;">' + escapeHtml(titleLine) + '</div>'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);margin-top:3px;">' + escapeHtml(leaderLine) + '</div>'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:1px;">' + escapeHtml(daysTxt) + '</div>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#C0392B;letter-spacing:1.8px;text-transform:uppercase;font-weight:700;">1RM CHALLENGE</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:10px;letter-spacing:1.2px;background:' + daysPillBg + ';color:' + daysPillFg + ';padding:3px 8px;border-radius:999px;flex-shrink:0;">' + daysPillText + '</div>'
     + '</div>'
-    + '<svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:19px;color:var(--cream);letter-spacing:1.8px;line-height:1.1;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(liftLabel || '\u2014') + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:' + leaderColor + ';letter-spacing:0.3px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(leaderLine) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(opponentsLine) + '</div>'
+    + '</div>'
+    + '<svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>';
 }
 
 async function _submitChallengeLog(challengeId) {
@@ -11857,7 +11975,7 @@ async function _submitChallengeLog(challengeId) {
     _openChallengeDetailSheet(challengeId);
   } catch (e) {
     console.error('[challenge-log] submit failed:', e);
-    showToast('Could not save. Try again.');
+    showToast('Log failed: ' + (_chErrMsg(e) || 'try again'));
     if (btn) { btn.disabled = false; btn.textContent = 'SAVE LOG'; }
   }
 }
