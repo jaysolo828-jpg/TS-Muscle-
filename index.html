@@ -9347,16 +9347,17 @@ function inviteFriend() {
 
 // ── Workout Signals ────────────────────────────────────────────────────────
 
-// Called at the start of a fresh session — inserts a signal row and notifies friends.
+// Called at the start of a fresh session — inserts a signal row (or
+// reuses a recent one for the same workout) and notifies friends.
 //
-// Deduplication: if the user already has a 'started' signal for this
-// same workout name within the last 2 hours, REUSE it instead of
-// inserting a new row. Prevents abandoned-then-restarted sessions
-// (e.g. user hits Start Fresh on the resume modal) from producing
-// multiple workout_signals with the same name, which would split
-// reactions across duplicate cards in the recipient's Today's
-// Reactions section. Friends are NOT re-notified on reuse — they
-// already got the push from the first start.
+// Signal dedup: if the user already has a 'started' signal for this
+// same workout name within the last 2 hours, REUSE its id instead of
+// inserting a new row. Keeps reactions accumulating on one signal
+// across abandon-restart scenarios (so the Today's Reactions card
+// doesn't lose its reactions when a session is restarted).
+//
+// Notifications: ALWAYS fire, whether the signal was reused or freshly
+// inserted. Friends should know about the (re)start regardless.
 async function _sendWorkoutSignal(dayName) {
   if (!state.supabaseUserId) return;
   // Respect the Social Features setting — a user who turned social off
@@ -9367,7 +9368,8 @@ async function _sendWorkoutSignal(dayName) {
   const displayName = state.supabaseDisplayName || 'Someone';
   try {
     // Dedup check: look for a 'started' signal for this exact workout
-    // name within the last 2 hours. If found, reuse its id silently.
+    // name within the last 2 hours. If found, reuse its id. Otherwise
+    // insert a new one. Either way, fall through to _notifyFriends.
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
     const { data: recent } = await sb.from('workout_signals')
       .select('id')
@@ -9377,20 +9379,22 @@ async function _sendWorkoutSignal(dayName) {
       .gte('started_at', twoHoursAgo)
       .order('started_at', { ascending: false })
       .limit(1);
-    if (recent && recent.length > 0) {
-      _currentSignalId = recent[0].id;
-      return;
-    }
 
-    const { data, error } = await sb.from('workout_signals').insert({
-      user_id:      state.supabaseUserId,
-      workout_name: dayName,
-      started_at:   new Date().toISOString(),
-      signal_type:  'started'
-    }).select('id').single();
-    if (error || !data) return;
-    _currentSignalId = data.id;
-    const signalId   = data.id;
+    let signalId;
+    if (recent && recent.length > 0) {
+      signalId = recent[0].id;
+    } else {
+      const { data, error } = await sb.from('workout_signals').insert({
+        user_id:      state.supabaseUserId,
+        workout_name: dayName,
+        started_at:   new Date().toISOString(),
+        signal_type:  'started'
+      }).select('id').single();
+      if (error || !data) return;
+      signalId = data.id;
+    }
+    _currentSignalId = signalId;
+
     clearTimeout(_notifyFriendsTimer);
     _notifyFriendsTimer = setTimeout(function() {
       _notifyFriends(
