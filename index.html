@@ -8375,6 +8375,11 @@ async function _renderFriendsSection() {
       <div id="friends-pending-list"></div>
     </div>
 
+    <div id="recent-reactions-section" style="display:none;margin-bottom:14px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">RECENT REACTIONS</div>
+      <div id="recent-reactions-list"></div>
+    </div>
+
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">MY FRIENDS</div>
     <div id="friends-list"></div>
 
@@ -8384,6 +8389,7 @@ async function _renderFriendsSection() {
   _loadPendingRequests();
   _loadFriendsList();
   _loadOutgoingFriendRequests();
+  _loadRecentReactions();
 }
 
 // Refresh the in-memory map of outgoing pending friend requests. Called
@@ -8400,6 +8406,87 @@ async function _loadOutgoingFriendRequests() {
     .eq('status', 'pending');
   Object.keys(_outgoingFriendRequests).forEach(k => delete _outgoingFriendRequests[k]);
   (data || []).forEach(r => { _outgoingFriendRequests[r.addressee_id] = r.id; });
+}
+
+// Load and render the "Recent reactions" section showing the last ~20
+// reactions OTHER users have sent to the current user. Grouped visually
+// by row: reactor avatar + @username + emoji + workout name + time.
+// Tapping a row opens the reactor's friend-activity sheet for that
+// signal so the current user can react back.
+//
+// Runs three parallel queries (reactions + reactor users + signals)
+// then joins the results client-side. Updates state.socialLastSeen
+// AFTER the render so the notify-dot "unread since" gate only advances
+// when the reactions were actually shown — not on modal open.
+async function _loadRecentReactions() {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const section = document.getElementById('recent-reactions-section');
+  const list    = document.getElementById('recent-reactions-list');
+  if (!section || !list) return;
+
+  const { data: rxns } = await sb.from('reactions')
+    .select('id, from_user_id, signal_id, reaction_type, created_at')
+    .eq('to_user_id', state.supabaseUserId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (!rxns || rxns.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  const fromIds   = Array.from(new Set(rxns.map(r => r.from_user_id)));
+  const signalIds = Array.from(new Set(rxns.map(r => r.signal_id)));
+  const [{ data: users }, { data: signals }] = await Promise.all([
+    sb.from('users').select('id, username, display_name, avatar_color, avatar_url').in('id', fromIds),
+    sb.from('workout_signals').select('id, workout_name, started_at').in('id', signalIds)
+  ]);
+  const userMap   = {}; (users   || []).forEach(u => { userMap[u.id]   = u; _friendCache[u.id] = u; });
+  const signalMap = {}; (signals || []).forEach(s => { signalMap[s.id] = s; });
+
+  const _rxnEmojiMap = {
+    thumbs_up: '\ud83d\udc4d', fist_bump: '\ud83d\udc4a',
+    fire:      '\ud83d\udd25', checkmark: '\u2714\ufe0f',
+    goat:      '\ud83d\udc10', heart:     '\u2764\ufe0f',
+    salute:    '\ud83e\udee1', sparkles:  '\u2728'
+  };
+
+  section.style.display = 'block';
+  list.innerHTML = rxns.map(r => {
+    const u = userMap[r.from_user_id] || {};
+    const s = signalMap[r.signal_id]  || {};
+    const emoji = _rxnEmojiMap[r.reaction_type] || '';
+    const workoutName = s.workout_name || 'Workout';
+    const when = r.created_at ? _timeAgo(new Date(r.created_at).getTime()) : '';
+    const label = u.username || u.display_name || 'Someone';
+    return `<div onclick="_openFriendActivity('${r.from_user_id}','${r.signal_id}')"
+      style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      ${_avatarHtml(label, u.avatar_color, 32, u.avatar_url)}
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          <span style="font-size:16px;margin-right:4px;">${emoji}</span>@${escapeHtml(label)}
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          ${escapeHtml(workoutName)} \u00b7 ${when}
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;
+  }).join('');
+
+  // Only NOW mark reactions as seen — after they've actually been
+  // rendered. Previously openSocialModal set this on modal open, which
+  // let users miss reactions they hadn't noticed yet if they briefly
+  // opened and closed the modal. The timestamp stores the newest
+  // rendered reaction's created_at so the _updateSocialNotifyDot query
+  // only hides the dot for reactions up to this point.
+  const newest = rxns[0]?.created_at;
+  if (newest && newest > (state.socialLastSeen || '')) {
+    state.socialLastSeen = newest;
+    saveState();
+    _updateSocialNotifyDot();
+  }
 }
 
 function _friendsSearch(query) {
@@ -9495,9 +9582,13 @@ function _swStoreUserId(userId) {
 }
 
 function openSocialModal() {
-  // Mark reactions/requests as seen so the dot clears
-  state.socialLastSeen = new Date().toISOString();
-  saveState();
+  // Note: socialLastSeen is NOT updated here anymore. It used to be set
+  // on modal open, which meant a user who briefly opened and closed the
+  // modal without looking at reactions would have their "unread since"
+  // timestamp advanced and miss reactions they hadn't noticed. Now
+  // _loadRecentReactions updates it only after the reactions section
+  // has actually rendered (so the notify dot only clears for reactions
+  // the user had a chance to see).
   const overlay = document.getElementById('social-overlay');
   if (!overlay) return;
   overlay.style.display = 'flex';
