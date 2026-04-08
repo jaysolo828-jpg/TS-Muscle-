@@ -146,6 +146,50 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ── Notification preferences helpers ─────────────────────────────────────────
+// Check if the current time falls within a recipient's quiet hours
+// window in their own timezone. Both endpoints are "HH:mm" strings.
+// If the window is 22:00 → 06:00 it crosses midnight.
+function isInQuietHours(prefs: any): boolean {
+  if (!prefs || !prefs.quiet_enabled) return false;
+  if (!prefs.quiet_start || !prefs.quiet_end || !prefs.timezone) return false;
+  try {
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: prefs.timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const parts = fmt.formatToParts(new Date());
+    const hourStr = parts.find(p => p.type === 'hour')?.value || '00';
+    const minuteStr = parts.find(p => p.type === 'minute')?.value || '00';
+    const nowMinutes = parseInt(hourStr, 10) * 60 + parseInt(minuteStr, 10);
+    const [sH, sM] = String(prefs.quiet_start).split(':').map((n: string) => parseInt(n, 10));
+    const [eH, eM] = String(prefs.quiet_end).split(':').map((n: string) => parseInt(n, 10));
+    const startMinutes = sH * 60 + (sM || 0);
+    const endMinutes   = eH * 60 + (eM || 0);
+    if (startMinutes === endMinutes) return false; // empty window
+    if (startMinutes < endMinutes) {
+      return nowMinutes >= startMinutes && nowMinutes < endMinutes;
+    }
+    // Window crosses midnight (e.g. 22:00 → 06:00)
+    return nowMinutes >= startMinutes || nowMinutes < endMinutes;
+  } catch (_) {
+    return false;
+  }
+}
+
+// Return true if this recipient should receive a notification of this
+// type right now, based on their notif_prefs. Opt-out model: missing
+// keys default to "notify". Quiet hours override everything.
+function shouldNotify(prefs: any, notifType: string): boolean {
+  if (!prefs || typeof prefs !== 'object') return true;
+  if (isInQuietHours(prefs)) return false;
+  // Per-type toggle: if the key is explicitly false, suppress.
+  if (prefs[notifType] === false) return false;
+  return true;
+}
+
 // ── Main handler ─────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
@@ -167,8 +211,12 @@ Deno.serve(async (req) => {
   try { body = await req.json(); }
   catch (_) { return new Response('Invalid JSON', { status: 400, headers: CORS }); }
 
-  const { uid, to_uid, title, body: msgBody, sid, avatar_url } = body;
+  const { uid, to_uid, title, body: msgBody, sid, avatar_url, type } = body;
   if (!uid && !to_uid) return new Response('Missing uid or to_uid', { status: 400, headers: CORS });
+  // Notification type used for per-recipient preference filtering.
+  // Defaults to 'workout_start' for backwards compatibility if the
+  // sender doesn't pass a type.
+  const notifType: string = (typeof type === 'string' && type) ? type : 'workout_start';
 
   const h = { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' };
 
@@ -200,15 +248,37 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ sent:0, reason:'no targets' }), { headers: { ...CORS, 'content-type':'application/json' } });
   }
 
-  // Fetch subscriptions (both web push and FCM)
-  const subsResp = await fetch(
-    `${sbUrl}/rest/v1/onesignal_subscriptions?user_id=in.(${targets.join(',')})&select=user_id,push_endpoint,push_p256dh,push_auth,fcm_token`,
-    { headers: h }
-  );
-  const subs: any[] = await subsResp.json().catch(() => []);
+  // Fetch subscriptions + per-recipient notification preferences in parallel.
+  // prefs drives the per-type filter and quiet-hours suppression below.
+  const [subsResp, prefsResp] = await Promise.all([
+    fetch(
+      `${sbUrl}/rest/v1/onesignal_subscriptions?user_id=in.(${targets.join(',')})&select=user_id,push_endpoint,push_p256dh,push_auth,fcm_token`,
+      { headers: h }
+    ),
+    fetch(
+      `${sbUrl}/rest/v1/users?id=in.(${targets.join(',')})&select=id,notif_prefs`,
+      { headers: h }
+    ),
+  ]);
+  const rawSubs: any[] = await subsResp.json().catch(() => []);
+  // Defensive: if the users query errored (e.g. notif_prefs column
+  // doesn't exist because migration 013 hasn't been applied yet),
+  // PostgREST returns an error object instead of an array. Fall back
+  // to empty prefs so existing users still get notified.
+  const prefsRawUnknown = await prefsResp.json().catch(() => []);
+  const prefsRows: any[] = Array.isArray(prefsRawUnknown) ? prefsRawUnknown : [];
+  const prefsByUser: Record<string, any> = {};
+  prefsRows.forEach(p => { prefsByUser[p.id] = p.notif_prefs || {}; });
+
+  // Filter subscriptions: drop any recipient whose notif_prefs say they
+  // don't want this notification type right now (per-type toggle or
+  // quiet hours). Opt-out model — missing prefs default to notify.
+  const subs: any[] = rawSubs.filter(sub => {
+    return shouldNotify(prefsByUser[sub.user_id], notifType);
+  });
 
   if (!subs.length) {
-    return new Response(JSON.stringify({ sent:0, reason:'no subscriptions' }), { headers: { ...CORS, 'content-type':'application/json' } });
+    return new Response(JSON.stringify({ sent:0, reason:'no subscriptions after prefs filter' }), { headers: { ...CORS, 'content-type':'application/json' } });
   }
 
   const notifTitle  = title   || 'T&S Muscle';
