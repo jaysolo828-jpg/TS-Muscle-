@@ -10940,6 +10940,16 @@ function _onChallengeBaselineInput() {
 // Validate + advance to confirm step.
 function _onChallengeBaselineContinue() {
   if (!_challengeDraft) return;
+  // Defensive: also read straight from the DOM in case the oninput
+  // handler didn't fire for the final keystroke. Some mobile
+  // browsers can skip the last oninput event if the user taps
+  // CONTINUE immediately after typing, leaving the draft out of
+  // sync with what's actually in the input. This re-sync catches
+  // that case so the validation below sees the real values.
+  const wEl = document.getElementById('challenge-baseline-weight');
+  const rEl = document.getElementById('challenge-baseline-reps');
+  if (wEl) _challengeDraft.baselineWeight = wEl.value;
+  if (rEl) _challengeDraft.baselineReps   = rEl.value;
   const w = parseFloat(_challengeDraft.baselineWeight);
   const r = parseInt(_challengeDraft.baselineReps, 10);
   if (!w || w <= 0) { showToast('Enter a valid weight.'); return; }
@@ -11072,7 +11082,18 @@ async function _submitNewChallenge() {
     _renderChallengesListHtml();
   } catch (e) {
     console.error('[challenge-create] submit failed:', e);
-    showToast('Could not send challenge. Try again.');
+    // Surface the specific error in the toast so we can diagnose
+    // silent failures on mobile (no devtools). Supabase error objects
+    // may expose message, details, hint, or code — pick the first
+    // non-empty one and truncate so the toast doesn't blow up.
+    let msg = '';
+    if (e) {
+      msg = e.message || e.details || e.hint || e.code || '';
+      if (!msg && typeof e === 'string') msg = e;
+      if (!msg) { try { msg = JSON.stringify(e); } catch (_) { msg = String(e); } }
+    }
+    if (msg.length > 140) msg = msg.slice(0, 140) + '...';
+    showToast('Send failed: ' + (msg || 'unknown error'));
     if (btn) { btn.disabled = false; btn.textContent = 'SEND CHALLENGE'; }
   }
 }
