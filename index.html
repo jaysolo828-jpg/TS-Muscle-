@@ -8318,6 +8318,13 @@ const _mutedFriends = new Set(); // friend user IDs the current user has muted f
 // which _cancelFriendRequest needs to delete the row.
 //   shape: { [addresseeId]: friendshipRowId }
 const _outgoingFriendRequests = {};
+// Per-reaction context cached during _loadRecentReactions rendering so
+// the single-reaction confirm sheet can look up the reactor label,
+// emoji, and workout name without needing to pass user-controlled
+// strings through inline onclick attributes (which would require
+// double-level escaping and is error-prone).
+//   shape: { [reactionId]: { label, emoji, workoutName, signalId } }
+const _recentReactionsCache = {};
 // Per-signal reaction state for the current user. Used by _sendReaction
 // to (a) skip the DB upsert when re-tapping the SAME reaction type
 // (no-op), (b) fire a push only when the type CHANGES, and (c) gate
@@ -8408,11 +8415,19 @@ async function _loadOutgoingFriendRequests() {
   (data || []).forEach(r => { _outgoingFriendRequests[r.addressee_id] = r.id; });
 }
 
-// Load and render the "Recent reactions" section showing the last ~20
-// reactions OTHER users have sent to the current user. Grouped visually
-// by row: reactor avatar + @username + emoji + workout name + time.
-// Tapping a row opens the reactor's friend-activity sheet for that
-// signal so the current user can react back.
+// Load and render the "Recent reactions" section showing reactions other
+// users have sent to the current user, GROUPED BY WORKOUT. One compact
+// card per workout that got reactions, with a row of reactor "chips"
+// (avatar + emoji badge) inside. Capped at 5 most recent workouts.
+//
+// Each chip is individually tappable and opens the REACTOR's own
+// activity sheet (their workouts) — NOT a signal-specific sheet. This
+// closes the "react to your own workout" loop: previously tapping a
+// row called _openFriendActivity(reactorId, YOUR_signalId), which
+// rendered your own workout inside the reactor's sheet and let you
+// send a reaction with from=you, to=reactor, signal=YOUR_workout —
+// cross-wired nonsense. Now a chip is a direct shortcut to the
+// reactor's real workouts so you can legitimately react back.
 //
 // Runs three parallel queries (reactions + reactor users + signals)
 // then joins the results client-side. Updates state.socialLastSeen
@@ -8425,11 +8440,13 @@ async function _loadRecentReactions() {
   const list    = document.getElementById('recent-reactions-list');
   if (!section || !list) return;
 
+  // Pull ~30 to give headroom for grouping — after grouping we only
+  // render 5 workouts but more reactions per workout means more chips.
   const { data: rxns } = await sb.from('reactions')
     .select('id, from_user_id, signal_id, reaction_type, created_at')
     .eq('to_user_id', state.supabaseUserId)
     .order('created_at', { ascending: false })
-    .limit(20);
+    .limit(30);
 
   if (!rxns || rxns.length === 0) {
     section.style.display = 'none';
@@ -8452,26 +8469,68 @@ async function _loadRecentReactions() {
     salute:    '\ud83e\udee1', sparkles:  '\u2728'
   };
 
+  // Group reactions by signal_id and sort each group by newest reaction
+  // first. Then sort the groups themselves by their newest reaction so
+  // the most recently-active workout appears at the top.
+  const bySignal = {};
+  rxns.forEach(r => {
+    if (!bySignal[r.signal_id]) bySignal[r.signal_id] = [];
+    bySignal[r.signal_id].push(r);
+  });
+  const groups = Object.keys(bySignal).map(signalId => {
+    const rs = bySignal[signalId].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+    return { signalId, reactions: rs, newestAt: rs[0].created_at };
+  }).sort((a, b) => (b.newestAt || '').localeCompare(a.newestAt || ''));
+  // Cap at 5 workouts — older reactions age out of the list, the user
+  // can see them in the reactor's activity sheet directly.
+  const visible = groups.slice(0, 5);
+
+  // Reset the per-reaction context cache before rebuilding — ensures
+  // deleted/aged-out reactions don't linger in the lookup map.
+  Object.keys(_recentReactionsCache).forEach(k => delete _recentReactionsCache[k]);
+
   section.style.display = 'block';
-  list.innerHTML = rxns.map(r => {
-    const u = userMap[r.from_user_id] || {};
-    const s = signalMap[r.signal_id]  || {};
-    const emoji = _rxnEmojiMap[r.reaction_type] || '';
+  list.innerHTML = visible.map(group => {
+    const s = signalMap[group.signalId] || {};
     const workoutName = s.workout_name || 'Workout';
-    const when = r.created_at ? _timeAgo(new Date(r.created_at).getTime()) : '';
-    const label = u.username || u.display_name || 'Someone';
-    return `<div onclick="_openFriendActivity('${r.from_user_id}','${r.signal_id}')"
-      style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
-      ${_avatarHtml(label, u.avatar_color, 32, u.avatar_url)}
-      <div style="flex:1;min-width:0;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-          <span style="font-size:16px;margin-right:4px;">${emoji}</span>@${escapeHtml(label)}
-        </div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-          ${escapeHtml(workoutName)} \u00b7 ${when}
-        </div>
+    const when = group.newestAt ? _timeAgo(new Date(group.newestAt).getTime()) : '';
+    const chips = group.reactions.map(r => {
+      const u = userMap[r.from_user_id] || {};
+      const label = u.username || u.display_name || 'Someone';
+      const emoji = _rxnEmojiMap[r.reaction_type] || '';
+      // Cache the full context for this reaction so the confirm sheet
+      // can render a descriptive message without interpolating the
+      // label/workoutName into the inline onclick (double-escape hell).
+      _recentReactionsCache[r.id] = {
+        label: label,
+        emoji: emoji,
+        workoutName: workoutName,
+        signalId: group.signalId
+      };
+      // Two-button pill:
+      //   Left side (avatar + emoji badge) → open the REACTOR's
+      //     activity sheet with THEIR workouts so the user can react
+      //     back. No signal_id passed = falls back to most-recent-10.
+      //   Right side (✕) → single-reaction delete confirm sheet.
+      return `<div style="display:inline-flex;align-items:center;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;padding:4px 2px 4px 4px;flex-shrink:0;">
+        <button onclick="_openFriendActivity('${r.from_user_id}')" aria-label="Open @${escapeHtml(label)}" style="position:relative;width:36px;height:36px;background:transparent;border:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          ${_avatarHtml(label, u.avatar_color, 32, u.avatar_url)}
+          <div style="position:absolute;bottom:-1px;right:-1px;background:var(--dark);border:2px solid var(--dark);border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;">${emoji}</div>
+        </button>
+        <button onclick="_confirmRemoveSingleReaction('${r.id}')" aria-label="Remove @${escapeHtml(label)}'s reaction" style="width:28px;height:36px;background:transparent;border:none;border-left:1px solid var(--dark4);padding:0;margin-left:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg viewBox="0 0 24 24" width="11" height="11" stroke="#C0392B" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>`;
+    }).join('');
+    return `<div style="background:var(--dark2);border-radius:12px;padding:14px 14px 12px;margin-bottom:8px;border-left:3px solid #C0392B;">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1;flex:1;min-width:0;">${escapeHtml(workoutName)}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">${when}</div>
+        <button onclick="_confirmClearReactions('${group.signalId}', ${group.reactions.length})" aria-label="Clear all reactions for this workout" style="background:transparent;border:none;padding:6px;margin:-6px -6px -6px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+        </button>
       </div>
-      <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">${chips}</div>
     </div>`;
   }).join('');
 
@@ -8487,6 +8546,92 @@ async function _loadRecentReactions() {
     saveState();
     _updateSocialNotifyDot();
   }
+}
+
+// Show a confirmation sheet before clearing ALL reactions the current
+// user received on a specific workout signal. Called from the trash
+// icon in each recent-reactions group card header.
+function _confirmClearReactions(signalId, count) {
+  const existing = document.getElementById('clear-reactions-confirm-sheet');
+  if (existing) existing.remove();
+  const noun = count === 1 ? 'reaction' : 'reactions';
+  const sheet = document.createElement('div');
+  sheet.id = 'clear-reactions-confirm-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">REMOVE ${count} ${noun.toUpperCase()}?</div>
+      <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray);margin-bottom:24px;line-height:1.5;">This clears ${count === 1 ? 'this reaction' : 'every reaction'} on this workout from your list. The ${count === 1 ? 'sender' : 'senders'} won't be notified.</div>
+      <button onclick="_clearReactionsForSignal('${signalId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px;">REMOVE</button>
+      <button onclick="document.getElementById('clear-reactions-confirm-sheet').remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
+    </div>`;
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+}
+
+// Delete all reactions directed at the current user on a specific
+// workout signal, then re-render the recent-reactions section so the
+// card disappears. Relies on the reactions_to_me_delete RLS policy
+// added in migration 012.
+async function _clearReactionsForSignal(signalId) {
+  document.getElementById('clear-reactions-confirm-sheet')?.remove();
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const { error } = await sb.from('reactions')
+    .delete()
+    .eq('to_user_id', state.supabaseUserId)
+    .eq('signal_id', signalId);
+  if (error) {
+    showToast("Couldn't clear reactions. Try again.");
+    return;
+  }
+  _loadRecentReactions();
+  _updateSocialNotifyDot();
+}
+
+// Show a confirmation sheet before removing a SINGLE reaction. Called
+// from the ✕ side of each reaction pill. Looks up the full context
+// (reactor label + emoji + workout name) from _recentReactionsCache
+// so the sheet can show a descriptive message without needing user-
+// controlled strings in the inline onclick attribute.
+function _confirmRemoveSingleReaction(reactionId) {
+  const ctx = _recentReactionsCache[reactionId];
+  if (!ctx) return;
+  const existing = document.getElementById('remove-reaction-confirm-sheet');
+  if (existing) existing.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'remove-reaction-confirm-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">REMOVE THIS REACTION?</div>
+      <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray);margin-bottom:24px;line-height:1.5;">This clears @${escapeHtml(ctx.label)}'s <span style="color:var(--cream);">${ctx.emoji}</span> on <span style="color:var(--cream);text-transform:uppercase;letter-spacing:1px;font-family:'Bebas Neue',cursive;">${escapeHtml(ctx.workoutName)}</span> from your list. They won't be notified.</div>
+      <button onclick="_removeSingleReaction('${reactionId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px;">REMOVE</button>
+      <button onclick="document.getElementById('remove-reaction-confirm-sheet').remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
+    </div>`;
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+}
+
+// Delete a single reaction row by id, scoped to the current user as
+// the recipient (the RLS policy reactions_to_me_delete requires
+// to_user_id = auth.uid(), so the .eq filter is defensive matching).
+// After success, re-fetches the recent-reactions section so the chip
+// disappears and the card collapses/disappears if it was the last one.
+async function _removeSingleReaction(reactionId) {
+  document.getElementById('remove-reaction-confirm-sheet')?.remove();
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const { error } = await sb.from('reactions')
+    .delete()
+    .eq('id', reactionId)
+    .eq('to_user_id', state.supabaseUserId);
+  if (error) {
+    showToast("Couldn't remove reaction. Try again.");
+    return;
+  }
+  _loadRecentReactions();
+  _updateSocialNotifyDot();
 }
 
 function _friendsSearch(query) {
