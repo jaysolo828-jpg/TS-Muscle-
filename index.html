@@ -10009,14 +10009,137 @@ function _getChallengeExerciseIndex() {
   return idx;
 }
 
+// Explicit alias map. The DEFAULT_PROGRAM index keys on the full
+// program name (e.g. "barbell bench press", "overhead press (barbell)",
+// "incline db press") which doesn't match what users actually type or
+// the quick-pick chip labels they tap. This table catches the common
+// variations so the auto-fill works without forcing users to type the
+// exact program name. Keys are already normalized (lowercased, single-
+// spaced) to match _normExerciseName output.
+const _CHALLENGE_EXERCISE_ALIASES = {
+  // bench
+  'bench':                   'bench',
+  'bench press':             'bench',
+  'barbell bench':           'bench',
+  'barbell bench press':     'bench',
+  'bb bench':                'bench',
+  'bb bench press':          'bench',
+  'flat bench':              'bench',
+  'flat bench press':        'bench',
+  // incline bench
+  'incline':                 'incline',
+  'incline bench':           'incline',
+  'incline bench press':     'incline',
+  'incline db press':        'incline',
+  'incline dumbbell press':  'incline',
+  'incline barbell press':   'incline',
+  'incline press':           'incline',
+  // overhead press
+  'ohp':                     'ohp',
+  'overhead press':          'ohp',
+  'overhead press barbell':  'ohp',
+  'barbell overhead press':  'ohp',
+  'military press':          'ohp',
+  'standing press':          'ohp',
+  'standing overhead press': 'ohp',
+  'shoulder press':          'ohp',
+  'barbell shoulder press':  'ohp',
+  // romanian deadlift (program's actual hinge exercise)
+  'rdl':                     'rdl',
+  'romanian deadlift':       'rdl',
+  'barbell rdl':             'rdl',
+  'stiff leg deadlift':      'rdl',
+  'sldl':                    'rdl',
+  // lat pulldown
+  'pulldown':                'pulldown',
+  'lat pulldown':            'pulldown',
+  'lat pull down':           'pulldown',
+  'lat pull-down':           'pulldown',
+  // chest supported row
+  'chest row':               'chest-row',
+  'chest supported row':     'chest-row',
+  'machine row':             'chest-row',
+  'supported row':           'chest-row',
+  // leg press
+  'leg press':               'legpress-a',
+  'legpress':                'legpress-a',
+  'barbell hip thrust':      'hip-thrust-a',
+  'hip thrust':              'hip-thrust-a'
+};
+
 // Try to resolve a user-typed exercise name to a program exercise id
-// so baseline auto-fill has something to look up. Returns the exId
-// or null if no match (caller falls back to manual entry).
+// so baseline auto-fill has something to look up. Tries (in order):
+//
+//  1. Exact match against the DEFAULT_PROGRAM index.
+//  2. Exact match against the alias table (covers the chip labels).
+//  3. Substring containment in either direction against the index
+//     keys (so "bench" matches "barbell bench press").
+//  4. Substring containment against alias keys.
+//  5. Token overlap >= 50% against index keys (so "incline bench
+//     press" matches "incline db press" via [incline, press] tokens).
+//
+// Returns the exId or null if nothing matches. The caller falls back
+// to the soft warning + manual entry when null.
 function _resolveExerciseToExId(name) {
   const norm = _normExerciseName(name);
   if (!norm) return null;
   const idx = _getChallengeExerciseIndex();
-  return idx[norm] || null;
+
+  // 1. Exact match in DEFAULT_PROGRAM index.
+  if (idx[norm]) return idx[norm];
+  // 2. Exact match in alias table.
+  if (_CHALLENGE_EXERCISE_ALIASES[norm]) return _CHALLENGE_EXERCISE_ALIASES[norm];
+
+  // 3. Substring match against the DEFAULT_PROGRAM index — prefer the
+  //    longest overlap so more specific matches win.
+  const idxKeys = Object.keys(idx);
+  let bestSubKey = null;
+  let bestSubOverlap = 0;
+  for (const k of idxKeys) {
+    if (k.includes(norm) || norm.includes(k)) {
+      const overlap = Math.min(k.length, norm.length);
+      if (overlap > bestSubOverlap) {
+        bestSubOverlap = overlap;
+        bestSubKey = k;
+      }
+    }
+  }
+  if (bestSubKey) return idx[bestSubKey];
+
+  // 4. Substring match against the alias table.
+  const aliasKeys = Object.keys(_CHALLENGE_EXERCISE_ALIASES);
+  let bestAliasKey = null;
+  let bestAliasOverlap = 0;
+  for (const k of aliasKeys) {
+    if (k.includes(norm) || norm.includes(k)) {
+      const overlap = Math.min(k.length, norm.length);
+      if (overlap > bestAliasOverlap) {
+        bestAliasOverlap = overlap;
+        bestAliasKey = k;
+      }
+    }
+  }
+  if (bestAliasKey) return _CHALLENGE_EXERCISE_ALIASES[bestAliasKey];
+
+  // 5. Token-overlap scoring against the DEFAULT_PROGRAM index.
+  const typedTokens = norm.split(/\s+/).filter(t => t.length > 1);
+  if (typedTokens.length) {
+    let bestTokKey = null;
+    let bestTokScore = 0;
+    for (const k of idxKeys) {
+      const keyTokens = k.split(/\s+/).filter(t => t.length > 1);
+      if (!keyTokens.length) continue;
+      const shared = typedTokens.filter(t => keyTokens.includes(t)).length;
+      const score = shared / Math.max(typedTokens.length, keyTokens.length);
+      if (score > bestTokScore && score >= 0.5) {
+        bestTokScore = score;
+        bestTokKey = k;
+      }
+    }
+    if (bestTokKey) return idx[bestTokKey];
+  }
+
+  return null;
 }
 
 // In-memory cache of challenges the current user is involved in. Each entry
