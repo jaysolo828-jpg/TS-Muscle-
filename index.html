@@ -8408,11 +8408,19 @@ async function _loadOutgoingFriendRequests() {
   (data || []).forEach(r => { _outgoingFriendRequests[r.addressee_id] = r.id; });
 }
 
-// Load and render the "Recent reactions" section showing the last ~20
-// reactions OTHER users have sent to the current user. Grouped visually
-// by row: reactor avatar + @username + emoji + workout name + time.
-// Tapping a row opens the reactor's friend-activity sheet for that
-// signal so the current user can react back.
+// Load and render the "Recent reactions" section showing reactions other
+// users have sent to the current user, GROUPED BY WORKOUT. One compact
+// card per workout that got reactions, with a row of reactor "chips"
+// (avatar + emoji badge) inside. Capped at 5 most recent workouts.
+//
+// Each chip is individually tappable and opens the REACTOR's own
+// activity sheet (their workouts) — NOT a signal-specific sheet. This
+// closes the "react to your own workout" loop: previously tapping a
+// row called _openFriendActivity(reactorId, YOUR_signalId), which
+// rendered your own workout inside the reactor's sheet and let you
+// send a reaction with from=you, to=reactor, signal=YOUR_workout —
+// cross-wired nonsense. Now a chip is a direct shortcut to the
+// reactor's real workouts so you can legitimately react back.
 //
 // Runs three parallel queries (reactions + reactor users + signals)
 // then joins the results client-side. Updates state.socialLastSeen
@@ -8425,11 +8433,13 @@ async function _loadRecentReactions() {
   const list    = document.getElementById('recent-reactions-list');
   if (!section || !list) return;
 
+  // Pull ~30 to give headroom for grouping — after grouping we only
+  // render 5 workouts but more reactions per workout means more chips.
   const { data: rxns } = await sb.from('reactions')
     .select('id, from_user_id, signal_id, reaction_type, created_at')
     .eq('to_user_id', state.supabaseUserId)
     .order('created_at', { ascending: false })
-    .limit(20);
+    .limit(30);
 
   if (!rxns || rxns.length === 0) {
     section.style.display = 'none';
@@ -8452,26 +8462,44 @@ async function _loadRecentReactions() {
     salute:    '\ud83e\udee1', sparkles:  '\u2728'
   };
 
+  // Group reactions by signal_id and sort each group by newest reaction
+  // first. Then sort the groups themselves by their newest reaction so
+  // the most recently-active workout appears at the top.
+  const bySignal = {};
+  rxns.forEach(r => {
+    if (!bySignal[r.signal_id]) bySignal[r.signal_id] = [];
+    bySignal[r.signal_id].push(r);
+  });
+  const groups = Object.keys(bySignal).map(signalId => {
+    const rs = bySignal[signalId].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+    return { signalId, reactions: rs, newestAt: rs[0].created_at };
+  }).sort((a, b) => (b.newestAt || '').localeCompare(a.newestAt || ''));
+  // Cap at 5 workouts — older reactions age out of the list, the user
+  // can see them in the reactor's activity sheet directly.
+  const visible = groups.slice(0, 5);
+
   section.style.display = 'block';
-  list.innerHTML = rxns.map(r => {
-    const u = userMap[r.from_user_id] || {};
-    const s = signalMap[r.signal_id]  || {};
-    const emoji = _rxnEmojiMap[r.reaction_type] || '';
+  list.innerHTML = visible.map(group => {
+    const s = signalMap[group.signalId] || {};
     const workoutName = s.workout_name || 'Workout';
-    const when = r.created_at ? _timeAgo(new Date(r.created_at).getTime()) : '';
-    const label = u.username || u.display_name || 'Someone';
-    return `<div onclick="_openFriendActivity('${r.from_user_id}','${r.signal_id}')"
-      style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
-      ${_avatarHtml(label, u.avatar_color, 32, u.avatar_url)}
-      <div style="flex:1;min-width:0;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-          <span style="font-size:16px;margin-right:4px;">${emoji}</span>@${escapeHtml(label)}
-        </div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-          ${escapeHtml(workoutName)} \u00b7 ${when}
-        </div>
+    const when = group.newestAt ? _timeAgo(new Date(group.newestAt).getTime()) : '';
+    const chips = group.reactions.map(r => {
+      const u = userMap[r.from_user_id] || {};
+      const label = u.username || u.display_name || 'Someone';
+      const emoji = _rxnEmojiMap[r.reaction_type] || '';
+      // Tap → open the REACTOR's activity sheet with THEIR workouts.
+      // No signal_id passed = falls back to most-recent-10 for them.
+      return `<button onclick="_openFriendActivity('${r.from_user_id}')" aria-label="@${escapeHtml(label)} reacted with ${r.reaction_type}" style="position:relative;background:transparent;border:none;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">
+        ${_avatarHtml(label, u.avatar_color, 32, u.avatar_url)}
+        <div style="position:absolute;bottom:-3px;right:-3px;background:var(--dark);border:2px solid #1a1a1a;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;">${emoji}</div>
+      </button>`;
+    }).join('');
+    return `<div style="background:#1a1a1a;border-radius:12px;padding:12px 14px;margin-bottom:8px;border-left:3px solid #C0392B;">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1;">${escapeHtml(workoutName)}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">${when}</div>
       </div>
-      <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;">${chips}</div>
     </div>`;
   }).join('');
 
