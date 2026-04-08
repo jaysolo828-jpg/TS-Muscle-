@@ -274,6 +274,161 @@ etc. Nothing works. Users on affected phones will see the white square
 until their phone gets One UI 7+. Do not reopen this unless you have
 truly new information — the user is done with it.
 
+### 9. Per-friend workout mute (do not regress)
+
+A user can mute individual friends from seeing their workouts. "Mute"
+means BOTH "no push notification fires to them" AND "they can't see
+the workout at all in the app" — not just silencing the push. Three
+independent pieces enforce this, all must stay in sync:
+
+- **`workout_notif_mutes` table** (migration 009):
+  ```sql
+  (muter_id, muted_friend_id, created_at)
+  ```
+  Primary key on `(muter_id, muted_friend_id)`. RLS policy
+  `mutes_own_all` — a user can only read/write their own rows.
+  `CHECK (muter_id <> muted_friend_id)` prevents self-mute.
+
+- **Edge function filter** in `supabase/functions/send-push/index.ts`.
+  The workout fan-out path (`if (to_uid) { ... } else { ... }`)
+  fetches `workout_notif_mutes` for the sender in parallel with the
+  friendships expansion and filters the targets list. The `to_uid`
+  direct-send path (reactions, friend requests) does NOT filter —
+  those are personal recipient-targeted notifications, not fan-out.
+
+- **RLS policy `signals_friends_read`** (migration 011) has a
+  `NOT EXISTS` subquery against `workout_notif_mutes` so muted
+  friends can't even SELECT the signal row. Without this, a muted
+  friend would still see the workout when they open your activity
+  sheet — push-silencing alone is not enough.
+
+Page-side state:
+- `_mutedFriends` (Set) at module level, populated from the DB via
+  `_loadFriendsList` in parallel with the users fetch (no extra
+  round-trip).
+- `_toggleWorkoutMute` does optimistic UI flip + DB upsert/delete,
+  reverts + toasts on error. Targeted DOM update on the friend-row
+  actions container (`#friend-row-actions-{userId}`) to show/hide
+  the bell-off SVG — no re-fetch, no re-render.
+- Toggle UI lives in `_openFriendActivity` above REMOVE FRIEND.
+- Toggle label: **"SHARE WORKOUTS WITH THEM"**
+  - ON sub: "They see your workouts and know when you start"
+  - OFF sub: "Hidden — they won't see any of your workouts"
+- `_BELL_OFF_SVG` and `_CHEVRON_SVG` are module-level constants so
+  both the initial render and the in-place update can reach them.
+
+### 10. Per-type reaction push gate + signal dedup
+
+Two separate dedup mechanisms, both matter. **Do not conflate them.**
+
+**Signal-side dedup (`_sendWorkoutSignal`):** When a user starts a
+workout, check for an existing `signal_type = 'started'` row for the
+same `(user_id, workout_name)` within the last 2 hours. If found,
+reuse its id (`_currentSignalId = recent[0].id`) instead of
+inserting a new row. Keeps reactions accumulating on one signal row
+across abandoned-then-restarted sessions so the Today's Reactions
+single-card view can display them correctly.
+
+**But always fire the friend push notification**, whether the signal
+was reused or freshly inserted. In an earlier version I early-returned
+on reuse, which made notifications silently stop firing whenever a
+user started a workout within 2 hours of a previous start —
+catastrophic UX bug ("notifications broke"). The fix is to split the
+two concerns: dedup the DB row, always notify friends. Trade-off:
+friends get two "in the gym" pushes if the user abandons and restarts
+within 2 hours — preferable to pushes silently not firing.
+
+**Per-type reaction push gate (`_sendReaction`):** Module-level state
+tracks per-signal reaction history:
+```js
+const _signalReactionState = {};
+// { [signalId]: { current: 'fire' | null, pushed: Set<string> } }
+```
+Populated in `_openFriendActivity` from the existing `myRxns` query
+(cleared and rebuilt on every sheet open). On tap:
+
+- **Same type as `current`** → total no-op. Skip the DB upsert
+  entirely (the row is already in the DB with this type). Still run
+  the optimistic visual flip and the status line pulse so the tap is
+  acknowledged, but no network round-trip and no push.
+- **Different type** → upsert the row (updates `reaction_type`),
+  update `signalState.current = reactionType`. Then check the
+  `pushed` Set: if this reaction type has already fired a push this
+  session for this signal, skip the push. Otherwise add to the Set
+  and fire the push.
+
+Net effect: each unique reaction type fires exactly one push per
+signal per session. Toggling 👍 → 🔥 → 👍 → 🔥 fires two pushes (one
+when 👍 is first sent, one when 🔥 is first sent), then stays silent.
+Max 8 pushes per signal per sender (one per reaction type). Re-taps
+of the same current type are completely free (no DB, no push).
+
+### 11. Today's Reactions is today-only, single card — no history feed
+
+`_loadRecentReactions` is NOT a history view. It queries the user's
+most recent `workout_signals` row scoped to today (local midnight)
+and shows reactions on that ONE signal. If no signal today → section
+hidden. If signal but no reactions → section hidden. There is never
+more than one card.
+
+**Do not add grouping or pagination.** An earlier version grouped by
+signal_id and rendered up to 5 workout cards. The user rejected this
+as overwhelming ("I don't see the need to see reactions for any other
+workout except for the day of only"). The single-card approach is
+deliberate.
+
+Section title is **"TODAY'S REACTIONS"**, not "RECENT REACTIONS" —
+don't revert the label.
+
+Chip structure: each reactor is a two-button pill inside the card.
+- Left half (avatar + emoji badge, 36×36 tap target): tap → open the
+  reactor's activity sheet via `_openFriendActivity(reactorId)` with
+  NO `signal_id` argument. Earlier versions passed `signal_id`, which
+  rendered the current user's own workout inside the reactor's sheet
+  and let them cross-wire a self-reaction (loop never closed). Don't
+  pass signal_id from this chip.
+- Right half (brand-red ✕, 28×36 tap target): tap → open the single-
+  reaction confirm sheet (`_confirmRemoveSingleReaction`).
+
+Card header has a trash icon for bulk clear (`_confirmClearReactions`
+→ `_clearReactionsForSignal`). Both delete paths require migration
+012's `reactions_to_me_delete` RLS policy to actually work.
+
+`_recentReactionsCache` at module level stores per-reaction context
+(label/emoji/workoutName/signalId) so the confirm sheet can look up
+the descriptive message without interpolating user-controlled strings
+into inline onclick attributes (double-escape hell). The onclick only
+carries the reaction UUID, which is always safe.
+
+### 12. Friend activity sheet: `.limit(1)` is intentional
+
+`_openFriendActivity` has two paths for its `signalsQuery`:
+- **With `signalId` (deep-link)**: `.eq('id', signalId).limit(1)` —
+  fetches the exact signal the notification pointed at.
+- **Without `signalId` (normal friends-list tap)**: `.limit(1)` on
+  the most recent signal only.
+
+Both are capped at 1. An earlier version used `.limit(10)` on the
+normal path to let users react to any of a friend's recent workouts.
+The user rejected it as overwhelming — "it should still just show the
+current one only... this is inside the card not on the friends home
+screen." Don't re-expand the limit.
+
+### 13. Friend requests fire push notifications
+
+`_sendFriendRequest` fires a push to the recipient via the `to_uid`
+direct-send path immediately after the DB insert succeeds. Uses
+`bright-processor` edge function with:
+```js
+{ to_uid: addresseeId, title: `${fromName} wants to be your friend`,
+  body: 'Tap to accept or decline.', avatar_url: state.supabaseAvatarUrl }
+```
+The mute filter does NOT apply (direct-send `to_uid` path). Recipients
+see the request instantly instead of waiting on the 60-second social
+dot poll. Cancel flow exists via `_cancelFriendRequest` — the search
+result button flips between "ADD FRIEND" and "CANCEL" based on the
+`_outgoingFriendRequests` map populated on social-modal open.
+
 ---
 
 ## How notifications flow end-to-end
@@ -307,6 +462,19 @@ exact workout signal. Reaction notifications carry `to_user_id` but
 no `signal_id` — those tap to the social modal instead, see Critical
 section 6.
 
+**Mutes (Critical section 9):** the workout fan-out path filters the
+sender's `workout_notif_mutes` rows out of the targets list before
+sending. Reaction notifications (`to_uid` path) are NOT filtered —
+they're personal recipient-targeted, not workout fan-out. Friend
+requests (Critical section 13) also use the `to_uid` path and bypass
+mutes.
+
+**Reaction push gate (Critical section 10):** every `_sendReaction`
+call fires at most one push per unique `(signal_id, reaction_type)`
+pair per session — the `_signalReactionState[signalId].pushed` Set
+gates it. Re-tapping the same reaction type is a no-op (no DB, no
+push, no network). Friends do not get spammed by rapid toggling.
+
 ---
 
 ## Reactions
@@ -320,6 +488,11 @@ check (reaction_type in (
 ))
 ```
 
+Plus `CHECK (from_user_id <> to_user_id)` (migration 010) — defensive
+backstop preventing self-reactions. Plus a unique constraint on
+`(from_user_id, signal_id)` so a user can only have one reaction per
+signal at a time — upserts are keyed on those two columns.
+
 Eight values total, currently rendered as 4-button rows in the
 friend-activity sheet (`_openFriendActivity` in `index.html`). The
 `RXNS` array near the top of that function defines the row layout —
@@ -330,14 +503,55 @@ If you add new reaction types, you must:
 1. Add them to the `RXNS` array in `_openFriendActivity`.
 2. Add them to the `_rxnEmoji` map in `_sendReaction` so the push
    notification body text shows the right emoji.
-3. Write a new migration (next number after `008_expand_reaction_types.sql`)
-   that drops and re-adds the CHECK constraint with the additional
-   values. **Apply the migration to Supabase BEFORE merging the code**,
-   otherwise users tapping the new buttons get the "Could not send
-   reaction" toast because the upsert fails.
+3. Write a new migration (next number after the latest in
+   `supabase/migrations/`, currently `012`) that drops and re-adds
+   the CHECK constraint with the additional values. **Apply the
+   migration to Supabase BEFORE merging the code**, otherwise users
+   tapping the new buttons get the "Could not send reaction" toast
+   because the upsert fails.
 
-Each user can have one reaction per signal at a time — the upsert is
-keyed on `(from_user_id, signal_id)`.
+RLS on the reactions table has three policies:
+- `reactions_own_all` — the sender has full access to their own
+  reaction rows (read/insert/update/delete).
+- `reactions_to_me_read` — the recipient can read reactions directed
+  at them (powers the Today's Reactions section).
+- `reactions_to_me_delete` (migration 012) — the recipient can
+  delete reactions directed at them (powers the per-chip ✕ and the
+  card-header trash bulk-clear).
+
+Each user can have one reaction per signal at a time, and each unique
+reaction type fires at most one push notification per signal per
+session (see Critical section 10 for the per-type gate mechanics).
+
+---
+
+## Supabase migrations list
+
+Apply migrations to Supabase via the SQL Editor BEFORE merging code
+that depends on them. Always show the SQL to the user explicitly —
+do not assume a past migration was applied just because you wrote
+the file. (Happened this session: `reactions_to_me_delete` was
+silently never applied and deletes appeared broken for hours.)
+
+- `001_social_schema.sql` — initial tables
+- `002_workout_notifications.sql` — added `thumbs_up` + unique
+  constraints
+- `003_reset_friendships.sql`
+- `004_users_search_policy.sql`
+- `005_fcm_token.sql`
+- `006_fcm_nullable_player_id.sql`
+- `007_unique_user_platform.sql`
+- `008_expand_reaction_types.sql` — goat/heart/salute/sparkles
+- `009_workout_notif_mutes.sql` — per-friend mute table + RLS
+- `010_reactions_no_self.sql` — CHECK constraint preventing
+  `from_user_id = to_user_id` (had a real collision when first
+  applied — had to `DELETE FROM reactions WHERE from_user_id =
+  to_user_id` first; keep that DELETE in mind if reopening this
+  constraint on other tables)
+- `011_mute_hides_workouts.sql` — `signals_friends_read` RLS policy
+  updated to also exclude muted friends via NOT EXISTS subquery
+- `012_reactions_delete_to_me.sql` — `reactions_to_me_delete` RLS
+  policy so recipients can clear reactions directed at them
 
 ---
 
@@ -414,6 +628,35 @@ These have been identified but intentionally left alone:
   paints in the same frame as the home screen.
 - Don't write the literal characters `</scr` + `ipt>` inside any JS
   comment, string, or template literal — see Critical section 7.
+- Don't early-return from `_sendWorkoutSignal` on signal reuse. The
+  signal dedup and the friend notification are SEPARATE concerns —
+  reuse the signal row, but always fire the notification. Conflating
+  them caused "notifications broke" behavior when a user started a
+  workout within 2 hours of a previous start.
+- Don't expand `_openFriendActivity`'s normal-path (`signalsQuery`
+  without `signalId`) beyond `.limit(1)`. The friend activity sheet
+  shows ONLY the most recent workout by design. The user explicitly
+  rejected a 10-workout history view as overwhelming.
+- Don't pass `signal_id` to `_openFriendActivity` from the Today's
+  Reactions chip onclicks. The chip's signal is the CURRENT USER's
+  own workout, and forwarding that to the reactor's sheet cross-wires
+  a self-reaction path (loop never closes). Pass only the reactor's
+  user ID.
+- Don't add grouping, pagination, or a history feed to
+  `_loadRecentReactions`. It's intentionally single-card, today-only.
+  An earlier grouped version was rejected as overwhelming.
+- Don't write apostrophes inside single-quoted JavaScript string
+  literals. `'They'll know'` breaks the script silently (`'They'`
+  closes the string, `ll know'` is invalid syntax). Use double
+  quotes, backtick template literals, or escape the apostrophe.
+  Broke the build at least twice this session.
+- Don't tell the user a migration "is already applied" unless they
+  have explicitly confirmed running it. ALWAYS show them the SQL in
+  a user-facing reply (not just in a commit message — they don't
+  read commit messages). Migration 012 was silently not applied for
+  several commits because I told the user it was "already applied"
+  based on a commit message they never saw. The delete feature was
+  broken until we caught this.
 
 ---
 
@@ -431,9 +674,17 @@ These have been identified but intentionally left alone:
   `_registerOneSignalPlayerId`, `_savePushSubscription`, `_saveFcmToken`,
   `_waitForFcmTokenIfAndroid`, `toggleSocialFeatures`, `openSocialModal`,
   `_maybeHandlePendingNotifOpen`, `_openFriendActivity`, `_sendReaction`,
-  `_promptNotifsForSocial`, `_onNotifSettingsTap`)
+  `_sendWorkoutSignal`, `_completeWorkoutSignal`, `_notifyFriends`,
+  `_promptNotifsForSocial`, `_onNotifSettingsTap`, `_toggleWorkoutMute`,
+  `_loadRecentReactions`, `_confirmRemoveSingleReaction`,
+  `_removeSingleReaction`, `_confirmClearReactions`,
+  `_clearReactionsForSignal`, `_sendFriendRequest`,
+  `_cancelFriendRequest`, `_loadOutgoingFriendRequests`,
+  `_mutedFriends`, `_signalReactionState`, `_recentReactionsCache`,
+  `_outgoingFriendRequests`, `_BELL_OFF_SVG`)
 - `sw.js` (push event handler + notificationclick deep link)
-- `supabase/functions/send-push/index.ts`
-- `supabase/migrations/008_expand_reaction_types.sql` (most recent — add
-  the next migration as `009_*.sql` if expanding reaction types again)
+- `supabase/functions/send-push/index.ts` (fan-out + mute filter)
+- `supabase/migrations/` — current latest is `012_reactions_delete_to_me.sql`;
+  see the Supabase migrations list above for the full history. The
+  next new migration goes in as `013_*.sql`.
 - `.well-known/assetlinks.json`
