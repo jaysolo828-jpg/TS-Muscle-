@@ -5139,6 +5139,24 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- SOCIAL / FRIENDS MODAL — moved up from after the main script so it
+     exists in the DOM at init-script time. Previously the modal element
+     lived near the end of the file, which meant _maybeHandlePendingNotifOpen
+     had to defer its openSocialModal call to DOMContentLoaded and paint
+     a placeholder backdrop in the meantime. Now the element is already
+     there when the init script runs. -->
+<div id="social-overlay" class="lib-overlay" onclick="if(event.target===this)closeSocialModal()">
+  <div class="lib-modal">
+    <div class="lib-header">
+      <div class="lib-header-top">
+        <div class="lib-title">FRIENDS</div>
+        <button class="lib-close-btn" onclick="closeSocialModal()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="lib-list" id="social-modal-content"></div>
+  </div>
+</div>
+
 <script src="exercise-library.js"></script>
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ============================================================
@@ -9801,33 +9819,12 @@ function _maybeHandlePendingNotifOpen() {
   // never carry one). Open the social modal instead so they can see who
   // reacted.
   //
-  // The social-overlay element lives near the bottom of the static HTML,
-  // after the main script tag — so during the init-try-block path the
-  // element doesn't exist yet and openSocialModal would no-op. Two things
-  // are needed: (1) cover the home screen with an immediate placeholder
-  // backdrop so the user doesn't see a home-flash while waiting, and
-  // (2) defer the openSocialModal call until DOMContentLoaded.
+  // The #social-overlay element now lives before the main script tag
+  // (moved from near the bottom of the file), so it exists in the DOM
+  // at init-script time. We can call openSocialModal directly without
+  // the old placeholder-backdrop dance or DOMContentLoaded deferral.
   if (pending.userId === state.supabaseUserId || !pending.signalId) {
-    var openAndCleanup = function() {
-      var b = document.getElementById('notif-social-backdrop');
-      if (b) b.remove();
-      openSocialModal();
-    };
-    if (document.getElementById('social-overlay')) {
-      openAndCleanup();
-    } else {
-      // Append a dark backdrop immediately so the home screen never paints
-      // unobscured. body always exists at this point (the script tag lives
-      // inside body) so this works during init-time HTML parsing.
-      if (!document.getElementById('notif-social-backdrop')) {
-        var backdrop = document.createElement('div');
-        backdrop.id = 'notif-social-backdrop';
-        backdrop.style.cssText =
-          'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:900;';
-        document.body.appendChild(backdrop);
-      }
-      document.addEventListener('DOMContentLoaded', openAndCleanup, { once: true });
-    }
+    openSocialModal();
     return;
   }
   // Open the sheet immediately. _openFriendActivity already creates and
@@ -31172,19 +31169,6 @@ function _escHtml(str) {
 </div>
 
 <!-- ── EXERCISE LIBRARY OVERLAY ─────────────────────────────────────────── -->
-<!-- SOCIAL / FRIENDS MODAL — same animation pattern as exercise library -->
-<div id="social-overlay" class="lib-overlay" onclick="if(event.target===this)closeSocialModal()">
-  <div class="lib-modal">
-    <div class="lib-header">
-      <div class="lib-header-top">
-        <div class="lib-title">FRIENDS</div>
-        <button class="lib-close-btn" onclick="closeSocialModal()">&#x2715;</button>
-      </div>
-    </div>
-    <div class="lib-list" id="social-modal-content"></div>
-  </div>
-</div>
-
 <div id="lib-overlay" class="lib-overlay" onclick="if(event.target===this)closeExerciseLibrary()">
   <div class="lib-modal">
     <div class="lib-header">
