@@ -7808,6 +7808,7 @@ async function _onSupabaseSignIn(user) {
     _swStoreUserId(user.id);
     _requestNotificationPermission();
     _loadNotifPrefs(); // eager load so settings sub-text is ready
+    _loadChallenges().then(() => { _renderActiveChallengeHomeCard(); }).catch(() => {});
     showToast("You're connected!");
     setTimeout(() => location.reload(), 1200);
   }
@@ -7969,6 +7970,7 @@ async function _checkSupabaseSession() {
       _swStoreUserId(session.user.id);
       _requestNotificationPermission();
       _loadNotifPrefs(); // eager load so settings sub-text is ready
+    _loadChallenges().then(() => { _renderActiveChallengeHomeCard(); }).catch(() => {});
       _maybeHandlePendingNotifOpen();
       if (window._fcmToken) _saveFcmToken(window._fcmToken);
       // Refresh display name from DB so notifications show username not email
@@ -8454,6 +8456,16 @@ async function _renderFriendsSection() {
       <div id="friends-outgoing-list"></div>
     </div>
 
+    <div id="challenges-section" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;">CHALLENGES</div>
+        <button id="challenges-info-btn" onclick="_openChallengeIntroSheet('one_rep_max', null)" aria-label="How challenges work" title="How it works"
+          style="background:transparent;border:none;color:var(--gray);padding:4px 8px;cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;">HOW IT WORKS</button>
+      </div>
+      <div id="challenges-list"></div>
+      <button onclick="_startNewChallenge()" style="width:100%;margin-top:6px;background:transparent;border:1px dashed #C0392B;color:#C0392B;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:13px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">START A 1RM CHALLENGE</button>
+    </div>
+
     <div id="recent-reactions-section" style="display:none;margin-bottom:14px;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">TODAY'S REACTIONS</div>
       <div id="recent-reactions-list"></div>
@@ -8469,6 +8481,7 @@ async function _renderFriendsSection() {
   _loadFriendsList();
   _loadOutgoingFriendRequests();
   _loadRecentReactions();
+  _renderChallengesSection();
 }
 
 // Refresh the in-memory map of outgoing pending friend requests AND
@@ -9691,6 +9704,7 @@ function _getDefaultNotifPrefs() {
     workout_complete: true,
     reaction:         true,
     friend:           true,
+    challenge:        true,
     quiet_enabled:    false,
     quiet_start:      '22:00',
     quiet_end:        '06:00',
@@ -9752,12 +9766,12 @@ function _updateNotifPrefsSettingsSub() {
   const sub = document.getElementById('notif-prefs-settings-sub');
   if (!sub) return;
   const p = state.notifPrefs || _getDefaultNotifPrefs();
-  const types = ['workout_start', 'workout_complete', 'reaction', 'friend'];
+  const types = ['workout_start', 'workout_complete', 'reaction', 'friend', 'challenge'];
   const onCount = types.filter(k => p[k] !== false).length;
   const quietLabel = p.quiet_enabled
     ? (p.quiet_start + '\u2013' + p.quiet_end)
     : 'off';
-  sub.textContent = onCount + ' of 4 on \u00b7 Quiet ' + quietLabel;
+  sub.textContent = onCount + ' of 5 on \u00b7 Quiet ' + quietLabel;
 }
 
 // Open the notification preferences bottom sheet. Lazy-loads prefs
@@ -9777,7 +9791,8 @@ async function _openNotifPrefsSheet() {
     { key: 'workout_start',    label: 'FRIEND STARTS A WORKOUT', sub: 'When a friend kicks off a session'      },
     { key: 'workout_complete', label: 'FRIEND FINISHES A WORKOUT', sub: 'When a friend wraps one up'           },
     { key: 'reaction',         label: 'REACTIONS TO MY WORKOUTS', sub: 'When someone reacts to your training' },
-    { key: 'friend',           label: 'FRIEND REQUESTS',          sub: 'New requests and acceptances'         }
+    { key: 'friend',           label: 'FRIEND REQUESTS',          sub: 'New requests and acceptances'         },
+    { key: 'challenge',        label: 'CHALLENGES',               sub: 'Invites, acceptances, and results'    }
   ];
 
   const renderToggle = (isOn) =>
@@ -9867,7 +9882,1107 @@ async function _setNotifQuietTime(key, value) {
   await _saveNotifPrefs(patch);
 }
 
-// ── Push Notifications (direct web push, no third-party SDK) ───────────────
+// ── 1RM Challenges ─────────────────────────────────────────────────────────
+// Friendly 4-6 week 1 Rep Max contests between two users. Data lives in
+// public.challenges + public.challenge_participants (migration 014).
+//
+// Scoring:   e1RM = weight * (1 + reps / 30)   — Epley
+//            winner = whoever has the highest % improvement over the window.
+//            Each picks their own lift from the big 4 — % scoring keeps it
+//            fair across very different strength levels.
+//
+// Privacy:   Alice creates a challenge → her own participant row is written
+//            immediately. Her numbers are visible to Bob on the invite (her
+//            consent = the act of sending). Bob accepts → his participant row
+//            is written (his consent = the act of accepting). Bob decline =
+//            his row is never written and Alice never sees his numbers.
+//            RLS on challenge_participants enforces both halves.
+
+// Big 4 exercise choices. `exIdHint` is the program exercise ID we use
+// for auto-baseline lookups (bench / ohp have direct matches; squat and
+// deadlift aren't in the default program so we fall back to manual entry).
+const _CHALLENGE_EXERCISES = [
+  { id: 'squat',    label: 'BACK SQUAT',      short: 'Squat',     exIdHint: null     },
+  { id: 'bench',    label: 'BENCH PRESS',     short: 'Bench',     exIdHint: 'bench'  },
+  { id: 'deadlift', label: 'DEADLIFT',        short: 'Deadlift',  exIdHint: null     },
+  { id: 'ohp',      label: 'OVERHEAD PRESS',  short: 'OHP',       exIdHint: 'ohp'    }
+];
+
+// Human label lookup, used all over the UI.
+function _challengeExerciseLabel(id) {
+  const ex = _CHALLENGE_EXERCISES.find(e => e.id === id);
+  return ex ? ex.label : String(id || '').toUpperCase();
+}
+function _challengeExerciseShort(id) {
+  const ex = _CHALLENGE_EXERCISES.find(e => e.id === id);
+  return ex ? ex.short : (id || '');
+}
+
+// In-memory cache of challenges the current user is involved in. Each entry
+// is a challenge row plus a `.participants` array of challenge_participants
+// rows. Populated by _loadChallenges() on social-modal open and after any
+// mutation; cleared on sign-out.
+let _challenges = [];
+
+// localStorage key for the HOW IT WORKS intro-sheet permanent dismissal.
+// Stored as a JSON object keyed by challenge type so future challenge
+// types (volume / streak / etc.) get their own first-time intro.
+//   shape: { one_rep_max: true, ... }
+const _CHALLENGE_INTRO_KEY = 'ts-challenge-intro-seen';
+
+// Epley 1-rep-max estimator. Rounded to 1 decimal.
+// Clamps reps to [1, 20] — Epley diverges at extreme reps.
+function _epley1RM(weight, reps) {
+  const w = parseFloat(weight);
+  const r = parseInt(reps, 10);
+  if (!w || !r || r < 1 || r > 20) return 0;
+  return Math.round(w * (1 + r / 30) * 10) / 10;
+}
+
+// Returns the improvement percentage from baseline to final, rounded to
+// one decimal. Negative values mean regression.
+function _improvementPct(baselineE1rm, finalE1rm) {
+  const b = parseFloat(baselineE1rm);
+  const f = parseFloat(finalE1rm);
+  if (!b || !f) return 0;
+  return Math.round(((f - b) / b) * 1000) / 10;
+}
+
+// Search state.history for the most recent top-e1RM set of the given
+// program exercise ID within the last 21 days. Returns { weight, reps,
+// e1rm } or null. Used to pre-fill the baseline input on the create and
+// accept flows for bench / ohp. Squat and deadlift have no exIdHint, so
+// callers fall back to manual entry.
+function _findRecentBaselineByExId(exId) {
+  if (!exId) return null;
+  const cutoff = Date.now() - 21 * 24 * 60 * 60 * 1000;
+  const history = state.history || [];
+  let best = null;
+  for (let i = history.length - 1; i >= 0; i--) {
+    const h = history[i];
+    if (!h || !h.date) continue;
+    const t = new Date(h.date).getTime();
+    if (isNaN(t) || t < cutoff) continue;
+    const sets = (h.sets && h.sets[exId]) || [];
+    for (const s of sets) {
+      if (!s || !s.done) continue;
+      const w = parseFloat(s.weight);
+      const r = parseInt(s.reps, 10);
+      if (!w || !r || r < 1 || r > 20) continue;
+      const e1rm = _epley1RM(w, r);
+      if (!best || e1rm > best.e1rm) {
+        best = { weight: w, reps: r, e1rm: e1rm };
+      }
+    }
+  }
+  return best;
+}
+
+// Returns true if the current user has at least one active challenge.
+// Used by the history-edit lock and the home-card renderer. Relies on
+// _challenges being freshly loaded — call _loadChallenges() first if
+// you want certainty.
+function _hasActiveChallenge() {
+  return (_challenges || []).some(c => c.status === 'active');
+}
+
+// Load challenges (pending + active + recently-completed) the current
+// user is involved in, along with their participant rows. Populates
+// _challenges and returns it. Silent on error — leaves the cache as-is.
+async function _loadChallenges() {
+  if (!state.supabaseUserId) { _challenges = []; return _challenges; }
+  const sb = _getSupabaseClient();
+  if (!sb) return _challenges;
+  try {
+    const { data: chs, error: chErr } = await sb.from('challenges')
+      .select('*')
+      .or('challenger_id.eq.' + state.supabaseUserId + ',challenged_id.eq.' + state.supabaseUserId)
+      .in('status', ['pending', 'active', 'completed'])
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (chErr) throw chErr;
+    const list = chs || [];
+    if (!list.length) { _challenges = []; return _challenges; }
+    const chIds = list.map(c => c.id);
+    const { data: parts, error: pErr } = await sb.from('challenge_participants')
+      .select('*')
+      .in('challenge_id', chIds);
+    if (pErr) throw pErr;
+    const byCh = {};
+    (parts || []).forEach(p => {
+      if (!byCh[p.challenge_id]) byCh[p.challenge_id] = [];
+      byCh[p.challenge_id].push(p);
+    });
+    // Warm the friend cache with opponent ids so the UI can render names
+    // without an extra lookup. Only pull users we don't already have.
+    const opponentIds = list
+      .map(c => c.challenger_id === state.supabaseUserId ? c.challenged_id : c.challenger_id)
+      .filter(id => id && !_friendCache[id]);
+    if (opponentIds.length) {
+      const { data: oppUsers } = await sb.from('users')
+        .select('id, display_name, username, avatar_color, avatar_url')
+        .in('id', opponentIds);
+      (oppUsers || []).forEach(u => { _friendCache[u.id] = u; });
+    }
+    _challenges = list.map(c => ({ ...c, participants: byCh[c.id] || [] }));
+  } catch (e) {
+    console.error('[challenges] load failed:', e);
+  }
+  return _challenges;
+}
+
+// Convenience: find my own participant row on a given challenge, or null.
+function _myParticipantRow(challenge) {
+  if (!challenge || !state.supabaseUserId) return null;
+  return (challenge.participants || []).find(p => p.user_id === state.supabaseUserId) || null;
+}
+// Convenience: find the opponent's participant row on a given challenge,
+// or null if they haven't joined yet.
+function _opponentParticipantRow(challenge) {
+  if (!challenge || !state.supabaseUserId) return null;
+  return (challenge.participants || []).find(p => p.user_id !== state.supabaseUserId) || null;
+}
+// Convenience: the other user's ID for a given challenge.
+function _opponentUserId(challenge) {
+  if (!challenge || !state.supabaseUserId) return null;
+  return challenge.challenger_id === state.supabaseUserId
+    ? challenge.challenged_id
+    : challenge.challenger_id;
+}
+
+// Formats a display label for an opponent from _friendCache.
+function _opponentLabel(userId) {
+  const u = _friendCache[userId] || {};
+  return u.username || u.display_name || 'Someone';
+}
+
+// Send a direct push notification to a single user via the to_uid path.
+// Used by the challenge create/accept/decline/cancel flows. Errors are
+// logged but never bubbled — the DB mutation is the source of truth.
+async function _sendDirectPush(toUserId, title, body, type) {
+  if (!toUserId) return;
+  try {
+    await fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/bright-processor', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
+      body: JSON.stringify({
+        to_uid: toUserId,
+        title: title,
+        body: body,
+        avatar_url: state.supabaseAvatarUrl || null,
+        type: type || 'challenge'
+      })
+    });
+  } catch (e) {
+    console.error('[challenge-push] fetch failed:', e);
+  }
+}
+
+// Read the HOW IT WORKS intro dismissal map. Returns an object like
+// { one_rep_max: true } — missing keys mean "not yet dismissed".
+function _getChallengeIntroDismissals() {
+  try {
+    const raw = localStorage.getItem(_CHALLENGE_INTRO_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  } catch (_) { return {}; }
+}
+
+// Mark the HOW IT WORKS intro as seen for a given challenge type.
+function _markChallengeIntroSeen(type) {
+  const map = _getChallengeIntroDismissals();
+  map[type] = true;
+  try { localStorage.setItem(_CHALLENGE_INTRO_KEY, JSON.stringify(map)); } catch (_) {}
+}
+
+// Returns the number of days remaining (rounded up) until a challenge's
+// end_date, clamped to >= 0.
+function _daysRemaining(endDateIso) {
+  if (!endDateIso) return 0;
+  const end = new Date(endDateIso).getTime();
+  if (isNaN(end)) return 0;
+  const diffMs = end - Date.now();
+  if (diffMs <= 0) return 0;
+  return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+}
+
+// HOW IT WORKS intro sheet. Explains the rules of a challenge type in
+// plain T&S voice, then the user taps GOT IT (marks seen + fires the
+// optional onContinue callback) or CLOSE (dismisses without marking).
+// The info icon in the CHALLENGES section calls this with a null
+// continuation so users can re-read the rules any time.
+function _openChallengeIntroSheet(type, onContinue) {
+  const existing = document.getElementById('challenge-intro-sheet');
+  if (existing) existing.remove();
+
+  // Copy lives here so we can tweak it without editing HTML. Only
+  // one_rep_max is supported right now — other types can add their own
+  // branch later.
+  let title = '1RM CHALLENGE';
+  let bullets = [];
+  if (type === 'one_rep_max') {
+    title = '1 REP MAX CHALLENGE';
+    bullets = [
+      { h: 'PICK YOUR LIFT',
+        b: "Choose one of the big 4 — squat, bench, deadlift, or overhead press. You and your opponent each pick your own lift. It doesn't have to match." },
+      { h: 'FIVE WEEKS ON THE CLOCK',
+        b: "Default window is 5 weeks. You can set it anywhere from 4 to 6. The clock starts the moment your opponent accepts." },
+      { h: 'PERCENT WINS, NOT POUNDS',
+        b: "Scoring is percentage improvement — not raw weight. That way a 135 lb bench can beat a 315 lb bench if you grew more. Fair fight." },
+      { h: 'LOG YOUR BEST SET',
+        b: "Each of you logs your top set during the window. We run it through Epley to estimate your 1 rep max. Highest percent gain wins." },
+      { h: 'CONSENT IS THE POINT',
+        b: "Your numbers stay yours. Sending a challenge reveals YOUR baseline. Accepting one reveals YOURS. If you decline, nothing is shared." },
+      { h: 'HISTORY IS LOCKED',
+        b: "While a challenge is active, you can't edit past workouts. Keeps everyone honest. Unlocks the second the challenge ends or is cancelled." }
+    ];
+  }
+
+  const bulletsHtml = bullets.map(item =>
+    '<div style="margin-bottom:14px;">'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:16px;color:#C0392B;letter-spacing:1.5px;margin-bottom:3px;">' + escapeHtml(item.h) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);line-height:1.4;">' + escapeHtml(item.b) + '</div>'
+    + '</div>'
+  ).join('');
+
+  const sheet = document.createElement('div');
+  sheet.id = 'challenge-intro-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  const buttonLabel = onContinue ? 'GOT IT — LET\u2019S GO' : 'CLOSE';
+  sheet.innerHTML = '<div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:88vh;overflow-y:auto;">'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:4px;">HOW IT WORKS</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:18px;">' + escapeHtml(title) + '</div>'
+    + bulletsHtml
+    + '<button id="challenge-intro-cta" style="width:100%;margin-top:12px;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' + escapeHtml(buttonLabel) + '</button>'
+    + '</div>';
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+  const cta = document.getElementById('challenge-intro-cta');
+  if (cta) {
+    cta.onclick = function() {
+      _markChallengeIntroSeen(type);
+      sheet.remove();
+      if (typeof onContinue === 'function') { try { onContinue(); } catch (e) { console.error('[challenge-intro] continue failed:', e); } }
+    };
+  }
+}
+
+// Render the CHALLENGES section inside the social modal. Pulls from
+// _challenges (may be stale) and then kicks off a background reload to
+// replace with fresh data. No-op if the section DOM isn't present.
+function _renderChallengesSection() {
+  const list = document.getElementById('challenges-list');
+  if (!list) return;
+  if (!state.supabaseUserId) {
+    list.innerHTML = '<div style="padding:8px 0 4px;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;">Sign in to start a challenge.</div>';
+    return;
+  }
+  _renderChallengesListHtml();
+  // Refresh in the background so the list updates as soon as the DB responds.
+  _loadChallenges().then(() => _renderChallengesListHtml());
+}
+
+// Render the _challenges cache into #challenges-list. Split from
+// _renderChallengesSection so it can be called on its own after a mutation.
+function _renderChallengesListHtml() {
+  const list = document.getElementById('challenges-list');
+  if (!list) return;
+  const rows = (_challenges || []).filter(c => c.status === 'pending' || c.status === 'active');
+  if (!rows.length) {
+    list.innerHTML = '<div style="padding:6px 0 8px;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;line-height:1.4;">No challenges yet. Tap the button below to throw down.</div>';
+    return;
+  }
+  list.innerHTML = rows.map(c => _challengeRowHtml(c)).join('');
+}
+
+// One row in the CHALLENGES list. Shows type, opponent, status chip,
+// and the key headline numbers based on who's looking and what stage
+// the challenge is in.
+function _challengeRowHtml(c) {
+  const meIsChallenger = c.challenger_id === state.supabaseUserId;
+  const oppId = _opponentUserId(c);
+  const oppLabel = _opponentLabel(oppId);
+  const me  = _myParticipantRow(c);
+  const opp = _opponentParticipantRow(c);
+
+  let statusChipBg = '#444', statusChipText = 'PENDING';
+  if (c.status === 'pending') {
+    if (meIsChallenger) { statusChipBg = '#444'; statusChipText = 'WAITING'; }
+    else                { statusChipBg = '#C0392B'; statusChipText = 'INCOMING'; }
+  } else if (c.status === 'active') {
+    statusChipBg = '#2ecc71'; statusChipText = 'ACTIVE';
+  }
+
+  // Sub-label: days remaining when active, lift summary when pending.
+  let sub = '';
+  if (c.status === 'active') {
+    const days = _daysRemaining(c.end_date);
+    sub = days > 0 ? (days + ' day' + (days === 1 ? '' : 's') + ' left') : 'Final day';
+  } else if (c.status === 'pending') {
+    if (meIsChallenger) {
+      sub = 'Sent \u00b7 waiting on @' + oppLabel;
+    } else {
+      sub = '@' + oppLabel + ' challenged you';
+    }
+  }
+
+  const myLiftLabel = me ? _challengeExerciseShort(me.exercise_name) : '';
+  const oppLiftLabel = opp ? _challengeExerciseShort(opp.exercise_name) : '';
+  const liftSummary = c.status === 'active' && myLiftLabel && oppLiftLabel
+    ? (myLiftLabel + ' vs ' + oppLiftLabel)
+    : (myLiftLabel ? ('Your lift: ' + myLiftLabel) : '');
+
+  return '<div onclick="_openChallengeDetailSheet(\'' + c.id + '\')" '
+    + 'style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;border-left:3px solid ' + (c.status === 'active' ? '#2ecc71' : '#C0392B') + ';">'
+    + '<div style="min-width:0;padding-right:10px;">'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:16px;color:var(--cream);letter-spacing:1.3px;line-height:1.1;">1RM \u00b7 @' + escapeHtml(oppLabel) + '</div>'
+    + (liftSummary ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);margin-top:3px;">' + escapeHtml(liftSummary) + '</div>' : '')
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:2px;">' + escapeHtml(sub) + '</div>'
+    + '</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:11px;letter-spacing:1.5px;background:' + statusChipBg + ';color:#fff;padding:4px 9px;border-radius:6px;flex-shrink:0;">' + statusChipText + '</div>'
+    + '</div>';
+}
+
+// Entry point: user tapped "START A 1RM CHALLENGE" in the social modal.
+// Gatekeeper — shows the HOW IT WORKS intro the first time for this
+// challenge type, then continues into the create flow. After the intro
+// has been dismissed once, this goes straight to the flow. The info
+// icon next to the section header lets the user re-open the intro.
+function _startNewChallenge() {
+  if (!state.supabaseUserId) { showToast('Sign in to start a challenge.'); return; }
+  const dismissals = _getChallengeIntroDismissals();
+  if (!dismissals.one_rep_max) {
+    _openChallengeIntroSheet('one_rep_max', _openNewChallengeFlow);
+  } else {
+    _openNewChallengeFlow();
+  }
+}
+
+// In-flight create-challenge draft. Held in module scope so each step's
+// submit handler can read what earlier steps captured. Cleared on sheet
+// close and on successful create.
+let _challengeDraft = null;
+
+// Open the multi-step create flow. Renders a full-screen sheet that
+// rebuilds its inner content for each step (friend pick → exercise pick
+// → duration → baseline → confirm). No routing — just state-in-draft.
+function _openNewChallengeFlow() {
+  _challengeDraft = {
+    step: 'friend',
+    friendId: null,
+    exerciseName: null,
+    durationWeeks: 5,
+    baselineWeight: '',
+    baselineReps: ''
+  };
+  const existing = document.getElementById('challenge-create-sheet');
+  if (existing) existing.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'challenge-create-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = '<div id="challenge-create-body" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 22px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:90vh;overflow-y:auto;"></div>';
+  sheet.addEventListener('click', e => { if (e.target === sheet) _closeChallengeCreateSheet(); });
+  document.body.appendChild(sheet);
+  _renderChallengeCreateStep();
+}
+
+function _closeChallengeCreateSheet() {
+  _challengeDraft = null;
+  const existing = document.getElementById('challenge-create-sheet');
+  if (existing) existing.remove();
+}
+
+// Header used by every create-flow step: step label + close X. The close
+// X is an explicit element because tapping outside the sheet (which also
+// closes it) can feel accidental on small screens.
+function _challengeCreateHeaderHtml(stepTitle) {
+  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">'
+    + '<div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">NEW 1RM CHALLENGE</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">' + escapeHtml(stepTitle) + '</div>'
+    + '</div>'
+    + '<button onclick="_closeChallengeCreateSheet()" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
+    + '</div>';
+}
+
+// Render whatever step _challengeDraft.step is currently on. Called on
+// open and after every step transition.
+async function _renderChallengeCreateStep() {
+  const body = document.getElementById('challenge-create-body');
+  if (!body || !_challengeDraft) return;
+  const step = _challengeDraft.step;
+  if (step === 'friend')    { body.innerHTML = _challengeCreateHeaderHtml('PICK A FRIEND') + '<div id="challenge-friend-picker"><div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">Loading friends...</div></div>'; await _renderChallengeFriendPicker(); return; }
+  if (step === 'exercise')  { body.innerHTML = _challengeCreateHeaderHtml('YOUR LIFT') + _challengeExercisePickerHtml(); return; }
+  if (step === 'duration')  { body.innerHTML = _challengeCreateHeaderHtml('DURATION') + _challengeDurationPickerHtml(); return; }
+  if (step === 'baseline')  { body.innerHTML = _challengeCreateHeaderHtml('YOUR BASELINE') + _challengeBaselinePickerHtml(); return; }
+  if (step === 'confirm')   { body.innerHTML = _challengeCreateHeaderHtml('REVIEW & SEND') + _challengeConfirmHtml(); return; }
+}
+
+// STEP 1 — Friend picker. Reads accepted friends from Supabase, shows a
+// tappable list. Tapping a row advances the draft to the exercise step.
+async function _renderChallengeFriendPicker() {
+  const container = document.getElementById('challenge-friend-picker');
+  if (!container) return;
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) {
+    container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">Sign in first.</div>';
+    return;
+  }
+  try {
+    const { data: rows } = await sb.from('friendships')
+      .select('requester_id, addressee_id')
+      .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
+      .eq('status', 'accepted');
+    if (!rows || !rows.length) {
+      container.innerHTML = '<div style="text-align:center;padding:22px 6px;"><div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">NO CREW YET</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);line-height:1.5;">Add a friend first — challenges need a sparring partner.</div></div>';
+      return;
+    }
+    const friendIds = rows.map(f => f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id);
+    const { data: users } = await sb.from('users')
+      .select('id, display_name, username, avatar_color, avatar_url')
+      .in('id', friendIds);
+    (users || []).forEach(u => { _friendCache[u.id] = u; });
+    if (!users || !users.length) {
+      container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">No friends found.</div>';
+      return;
+    }
+    container.innerHTML = users.map(u => {
+      const label = u.username || u.display_name || 'Friend';
+      return '<div onclick="_challengeDraft.friendId=\'' + u.id + '\';_challengeDraft.step=\'exercise\';_renderChallengeCreateStep()" '
+        + 'style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
+        + _avatarHtml(label, u.avatar_color, 36, u.avatar_url)
+        + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);">@' + escapeHtml(label) + '</div>'
+        + '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('[challenge-friend-picker] load failed:', e);
+    container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">Could not load friends. Try again.</div>';
+  }
+}
+
+// STEP 2 — Exercise picker. Big 4 as tiles. Tapping advances the draft.
+// Accept mode skips the preceding friend step, so no BACK is rendered.
+function _challengeExercisePickerHtml() {
+  const isAccept = _challengeDraft && _challengeDraft.mode === 'accept';
+  const intro = isAccept
+    ? 'Pick your own lift. Scoring is percent improvement, so your lift doesn\u2019t have to match theirs.'
+    : 'Your opponent will pick their own lift. Scoring is percent improvement, so mismatched lifts stay fair.';
+  const tiles = _CHALLENGE_EXERCISES.map(ex =>
+    '<div onclick="_challengeDraft.exerciseName=\'' + ex.id + '\';_challengeDraft.step=\'' + (isAccept ? 'baseline' : 'duration') + '\';_renderChallengeCreateStep()" '
+    + 'style="flex:1 1 calc(50% - 8px);background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:22px 8px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;line-height:1.1;">' + escapeHtml(ex.label) + '</div>'
+    + '</div>'
+  ).join('');
+  const backBtn = isAccept
+    ? ''
+    : '<button onclick="_challengeDraft.step=\'friend\';_renderChallengeCreateStep()" style="width:100%;margin-top:16px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
+  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:14px;">' + escapeHtml(intro) + '</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:10px;">' + tiles + '</div>'
+    + backBtn;
+}
+
+// STEP 3 — Duration picker. 4, 5, or 6 weeks. Defaults to 5. Tapping
+// advances the draft.
+function _challengeDurationPickerHtml() {
+  const options = [4, 5, 6];
+  const tiles = options.map(w => {
+    const isActive = _challengeDraft.durationWeeks === w;
+    return '<div onclick="_challengeDraft.durationWeeks=' + w + ';_challengeDraft.step=\'baseline\';_renderChallengeCreateStep()" '
+      + 'style="flex:1;background:' + (isActive ? '#C0392B' : '#1a1a1a') + ';border:1px solid ' + (isActive ? '#C0392B' : '#333') + ';border-radius:12px;padding:20px 8px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
+      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:28px;color:var(--cream);letter-spacing:1px;line-height:1;">' + w + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--cream);letter-spacing:1.5px;margin-top:3px;text-transform:uppercase;">WEEKS</div>'
+      + '</div>';
+  }).join('');
+  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:14px;">Pick a window. 5 weeks is the sweet spot for most lifts. The clock starts the second your opponent accepts.</div>'
+    + '<div style="display:flex;gap:10px;">' + tiles + '</div>'
+    + '<button onclick="_challengeDraft.step=\'exercise\';_renderChallengeCreateStep()" style="width:100%;margin-top:16px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
+}
+
+// STEP 4 — Baseline entry. Pre-fills from workout history when we have
+// a direct exId match (bench / ohp). Otherwise the user types it in.
+// Live e1RM preview updates as they type.
+function _challengeBaselinePickerHtml() {
+  const draft = _challengeDraft;
+  const ex = _CHALLENGE_EXERCISES.find(e => e.id === draft.exerciseName) || {};
+  let autoHint = '';
+  if (!draft.baselineWeight && !draft.baselineReps && ex.exIdHint) {
+    const recent = _findRecentBaselineByExId(ex.exIdHint);
+    if (recent) {
+      draft.baselineWeight = String(recent.weight);
+      draft.baselineReps   = String(recent.reps);
+      autoHint = 'Pre-filled from your recent top set.';
+    }
+  }
+  const e1rmPreview = _epley1RM(draft.baselineWeight, draft.baselineReps);
+  const e1rmText = e1rmPreview > 0 ? ('Estimated 1RM: ' + e1rmPreview + ' lbs') : 'Enter weight and reps to see your estimated 1RM.';
+  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:14px;">Log your most recent top set on <span style="color:var(--cream);">' + escapeHtml(ex.label || '') + '</span>. We use Epley to estimate your 1RM — that\u2019s your starting line.</div>'
+    + (autoHint ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#2ecc71;margin-bottom:10px;">' + escapeHtml(autoHint) + '</div>' : '')
+    + '<div style="display:flex;gap:10px;">'
+    + '<div style="flex:1;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">WEIGHT (LBS)</div>'
+    + '<input id="challenge-baseline-weight" type="number" step="0.5" inputmode="decimal" value="' + escapeHtml(draft.baselineWeight || '') + '" oninput="_onChallengeBaselineInput()" style="width:100%;box-sizing:border-box;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;color:var(--cream);padding:12px 14px;font-family:\'Barlow\',sans-serif;font-size:17px;outline:none;-webkit-appearance:none;">'
+    + '</div>'
+    + '<div style="flex:1;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">REPS</div>'
+    + '<input id="challenge-baseline-reps" type="number" inputmode="numeric" value="' + escapeHtml(draft.baselineReps || '') + '" oninput="_onChallengeBaselineInput()" style="width:100%;box-sizing:border-box;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;color:var(--cream);padding:12px 14px;font-family:\'Barlow\',sans-serif;font-size:17px;outline:none;-webkit-appearance:none;">'
+    + '</div>'
+    + '</div>'
+    + '<div id="challenge-baseline-e1rm" style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--cream);margin-top:14px;">' + escapeHtml(e1rmText) + '</div>'
+    + '<button id="challenge-baseline-next" onclick="_onChallengeBaselineContinue()" style="width:100%;margin-top:18px;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CONTINUE</button>'
+    + '<button onclick="_challengeDraft.step=\'' + (draft.mode === 'accept' ? 'exercise' : 'duration') + '\';_renderChallengeCreateStep()" style="width:100%;margin-top:8px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
+}
+
+// Called on input in the baseline weight/reps fields. Updates the live
+// e1RM preview line without re-rendering the whole step.
+function _onChallengeBaselineInput() {
+  if (!_challengeDraft) return;
+  const wEl = document.getElementById('challenge-baseline-weight');
+  const rEl = document.getElementById('challenge-baseline-reps');
+  if (wEl) _challengeDraft.baselineWeight = wEl.value;
+  if (rEl) _challengeDraft.baselineReps   = rEl.value;
+  const e1rm = _epley1RM(_challengeDraft.baselineWeight, _challengeDraft.baselineReps);
+  const out = document.getElementById('challenge-baseline-e1rm');
+  if (out) {
+    out.textContent = e1rm > 0 ? ('Estimated 1RM: ' + e1rm + ' lbs') : 'Enter weight and reps to see your estimated 1RM.';
+  }
+}
+
+// Validate + advance to confirm step.
+function _onChallengeBaselineContinue() {
+  if (!_challengeDraft) return;
+  const w = parseFloat(_challengeDraft.baselineWeight);
+  const r = parseInt(_challengeDraft.baselineReps, 10);
+  if (!w || w <= 0) { showToast('Enter a valid weight.'); return; }
+  if (!r || r < 1 || r > 20) { showToast('Reps must be between 1 and 20.'); return; }
+  _challengeDraft.step = 'confirm';
+  _renderChallengeCreateStep();
+}
+
+// STEP 5 — Review & send. Shared between create and accept flows.
+// Button label + trailing copy change based on draft.mode.
+function _challengeConfirmHtml() {
+  const d = _challengeDraft;
+  const isAccept = d.mode === 'accept';
+  const ex = _CHALLENGE_EXERCISES.find(e => e.id === d.exerciseName) || {};
+  const friend = _friendCache[d.friendId] || {};
+  const friendLabel = friend.username || friend.display_name || 'Friend';
+  const e1rm = _epley1RM(d.baselineWeight, d.baselineReps);
+  const buttonLabel = isAccept ? 'ACCEPT & START' : 'SEND CHALLENGE';
+  const consentCopy = isAccept
+    ? ('Accepting reveals YOUR baseline to @' + friendLabel + ' and starts the clock.')
+    : ('Sending this reveals YOUR baseline to @' + friendLabel + '. Their numbers stay hidden until they accept and log their own.');
+  return '<div style="background:#1a1a1a;border-radius:12px;padding:18px 16px;border-left:3px solid #C0392B;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">OPPONENT</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">@' + escapeHtml(friendLabel) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">YOUR LIFT</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1.5px;margin-bottom:12px;">' + escapeHtml(ex.label || '') + '</div>'
+    + '<div style="display:flex;gap:20px;margin-bottom:12px;">'
+    + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">BASELINE</div><div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1px;">' + escapeHtml(d.baselineWeight) + ' \u00d7 ' + escapeHtml(d.baselineReps) + '</div></div>'
+    + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">EST 1RM</div><div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1px;">' + e1rm + '</div></div>'
+    + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">WINDOW</div><div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1px;">' + d.durationWeeks + ' WKS</div></div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);line-height:1.5;margin-top:14px;">' + escapeHtml(consentCopy) + '</div>'
+    + '<button id="challenge-send-btn" onclick="_submitNewChallenge()" style="width:100%;margin-top:16px;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' + escapeHtml(buttonLabel) + '</button>'
+    + '<button onclick="_challengeDraft.step=\'baseline\';_renderChallengeCreateStep()" style="width:100%;margin-top:8px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
+}
+
+// Submit the draft → DB: insert challenge, insert the creator's
+// participant row, fire push to the opponent, refresh UI.
+// When draft.mode === 'accept' this delegates to _submitAcceptChallenge
+// instead — the confirm screen is shared between the two flows, only
+// the submission side differs.
+async function _submitNewChallenge() {
+  if (!_challengeDraft) return;
+  if (_challengeDraft.mode === 'accept') { return _submitAcceptChallenge(); }
+  const d = _challengeDraft;
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) { showToast('Sign in first.'); return; }
+  const btn = document.getElementById('challenge-send-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'SENDING...'; }
+  try {
+    const baselineE1rm = _epley1RM(d.baselineWeight, d.baselineReps);
+    const { data: ch, error: chErr } = await sb.from('challenges')
+      .insert({
+        challenger_id:  state.supabaseUserId,
+        challenged_id:  d.friendId,
+        challenge_type: 'one_rep_max',
+        duration_weeks: d.durationWeeks,
+        status:         'pending'
+      })
+      .select('*')
+      .single();
+    if (chErr || !ch) throw (chErr || new Error('create failed'));
+    const { error: pErr } = await sb.from('challenge_participants')
+      .insert({
+        challenge_id:    ch.id,
+        user_id:         state.supabaseUserId,
+        exercise_name:   d.exerciseName,
+        baseline_weight: parseFloat(d.baselineWeight),
+        baseline_reps:   parseInt(d.baselineReps, 10),
+        baseline_e1rm:   baselineE1rm
+      });
+    if (pErr) {
+      // Roll back the challenge row so we don't leave orphaned invites.
+      await sb.from('challenges').delete().eq('id', ch.id);
+      throw pErr;
+    }
+    const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+    _sendDirectPush(
+      d.friendId,
+      fromName + ' challenged you',
+      'Tap to see the 1RM challenge.',
+      'challenge'
+    );
+    showToast('Challenge sent');
+    _closeChallengeCreateSheet();
+    await _loadChallenges();
+    _renderChallengesListHtml();
+  } catch (e) {
+    console.error('[challenge-create] submit failed:', e);
+    showToast('Could not send challenge. Try again.');
+    if (btn) { btn.disabled = false; btn.textContent = 'SEND CHALLENGE'; }
+  }
+}
+
+// Open the detail sheet for a specific challenge. Different rendering
+// based on my role (challenger vs challenged) and status (pending vs
+// active vs completed). Reloads _challenges first if the entry isn't
+// in the cache yet.
+async function _openChallengeDetailSheet(challengeId) {
+  if (!challengeId) return;
+  let ch = (_challenges || []).find(c => c.id === challengeId);
+  if (!ch) {
+    await _loadChallenges();
+    ch = (_challenges || []).find(c => c.id === challengeId);
+  }
+  if (!ch) { showToast('Challenge not found.'); return; }
+
+  const existing = document.getElementById('challenge-detail-sheet');
+  if (existing) existing.remove();
+
+  const sheet = document.createElement('div');
+  sheet.id = 'challenge-detail-sheet';
+  sheet.dataset.challengeId = challengeId;
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = '<div id="challenge-detail-body" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 22px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:90vh;overflow-y:auto;"></div>';
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+  _renderChallengeDetailBody(ch);
+}
+
+function _closeChallengeDetailSheet() {
+  const existing = document.getElementById('challenge-detail-sheet');
+  if (existing) existing.remove();
+}
+
+// Refresh the detail sheet from the cache (after a mutation). No-op if
+// the sheet isn't open.
+async function _refreshChallengeDetailSheet() {
+  const sheet = document.getElementById('challenge-detail-sheet');
+  if (!sheet) return;
+  const id = sheet.dataset.challengeId;
+  if (!id) return;
+  await _loadChallenges();
+  const ch = (_challenges || []).find(c => c.id === id);
+  if (!ch) { sheet.remove(); return; }
+  _renderChallengeDetailBody(ch);
+}
+
+// Main detail-sheet renderer. Branches on (am I challenger?) × status.
+function _renderChallengeDetailBody(ch) {
+  const body = document.getElementById('challenge-detail-body');
+  if (!body) return;
+  const meIsChallenger = ch.challenger_id === state.supabaseUserId;
+  const oppId = _opponentUserId(ch);
+  const oppLabel = _opponentLabel(oppId);
+  const me = _myParticipantRow(ch);
+  const opp = _opponentParticipantRow(ch);
+
+  const headerHtml = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">'
+    + '<div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">1 REP MAX CHALLENGE</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">vs @' + escapeHtml(oppLabel) + '</div>'
+    + '</div>'
+    + '<button onclick="_closeChallengeDetailSheet()" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
+    + '</div>';
+
+  // A standard stat block for one participant.
+  function statBlock(label, row, isLocked) {
+    if (isLocked || !row) {
+      return '<div style="flex:1;background:#1a1a1a;border-radius:12px;padding:16px 14px;">'
+        + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + escapeHtml(label) + '</div>'
+        + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--gray);letter-spacing:1px;">HIDDEN</div>'
+        + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:4px;line-height:1.4;">Revealed when they accept.</div>'
+        + '</div>';
+    }
+    const liftLabel = _challengeExerciseLabel(row.exercise_name);
+    const base = row.baseline_weight + ' \u00d7 ' + row.baseline_reps + ' (e1RM ' + row.baseline_e1rm + ')';
+    const hasFinal = row.final_e1rm != null;
+    const finalTxt = hasFinal
+      ? (row.final_weight + ' \u00d7 ' + row.final_reps + ' (e1RM ' + row.final_e1rm + ')')
+      : 'Not logged yet';
+    const pctTxt = hasFinal ? (_improvementPct(row.baseline_e1rm, row.final_e1rm) + '%') : '\u2014';
+    return '<div style="flex:1;background:#1a1a1a;border-radius:12px;padding:16px 14px;">'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + escapeHtml(label) + '</div>'
+      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1px;line-height:1.1;margin-bottom:8px;">' + escapeHtml(liftLabel) + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;text-transform:uppercase;">BASELINE</div>'
+      + '<div style="font-family:\'Barlow\',sans-serif;font-size:13px;color:var(--cream);margin-bottom:6px;">' + escapeHtml(base) + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;text-transform:uppercase;">BEST LOG</div>'
+      + '<div style="font-family:\'Barlow\',sans-serif;font-size:13px;color:var(--cream);margin-bottom:6px;">' + escapeHtml(finalTxt) + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;text-transform:uppercase;">IMPROVEMENT</div>'
+      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:' + (hasFinal && _improvementPct(row.baseline_e1rm, row.final_e1rm) >= 0 ? '#2ecc71' : '#C0392B') + ';letter-spacing:1px;">' + pctTxt + '</div>'
+      + '</div>';
+  }
+
+  // Meta strip: status + duration + days-remaining.
+  let metaRight = '';
+  if (ch.status === 'pending')   metaRight = 'Pending';
+  if (ch.status === 'active')    metaRight = _daysRemaining(ch.end_date) + ' days left';
+  if (ch.status === 'completed') metaRight = 'Completed';
+  if (ch.status === 'cancelled') metaRight = 'Cancelled';
+  if (ch.status === 'declined')  metaRight = 'Declined';
+  const metaHtml = '<div style="display:flex;justify-content:space-between;align-items:center;background:#1a1a1a;border-radius:10px;padding:10px 14px;margin-bottom:12px;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">' + ch.duration_weeks + ' week window</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:13px;color:var(--cream);letter-spacing:1.5px;">' + escapeHtml(metaRight) + '</div>'
+    + '</div>';
+
+  // Stats layout — always show me on the left, opponent on the right.
+  // Opponent is locked if they haven't joined yet.
+  const statsHtml = '<div style="display:flex;gap:10px;margin-bottom:14px;">'
+    + statBlock('YOU', me, false)
+    + statBlock('@' + oppLabel, opp, !opp)
+    + '</div>';
+
+  // Action buttons vary by role + status.
+  let actionsHtml = '';
+  if (ch.status === 'pending' && !meIsChallenger) {
+    // Invitee pending: accept / decline
+    actionsHtml = '<button onclick="_openAcceptChallengeFlow(\'' + ch.id + '\')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:8px;">ACCEPT & PICK YOUR LIFT</button>'
+      + '<button onclick="_confirmDeclineChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DECLINE</button>';
+  } else if (ch.status === 'pending' && meIsChallenger) {
+    // Challenger pending: cancel only
+    actionsHtml = '<button onclick="_confirmCancelChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL CHALLENGE</button>';
+  } else if (ch.status === 'active') {
+    // Active: log result / cancel
+    actionsHtml = '<button onclick="_openLogResultFlow(\'' + ch.id + '\')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:8px;">LOG YOUR BEST SET</button>'
+      + '<button onclick="_confirmCancelChallenge(\'' + ch.id + '\')" style="width:100%;background:transparent;border:1px solid #444;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL CHALLENGE</button>';
+  } else if (ch.status === 'completed') {
+    // Completed: show winner banner
+    const myPct = me ? _improvementPct(me.baseline_e1rm, me.final_e1rm) : 0;
+    const oppPct = opp ? _improvementPct(opp.baseline_e1rm, opp.final_e1rm) : 0;
+    let banner = '';
+    if (ch.winner_id === state.supabaseUserId) {
+      banner = '<div style="background:#2ecc71;color:#111;font-family:\'Bebas Neue\',cursive;font-size:22px;letter-spacing:2px;text-align:center;padding:14px;border-radius:12px;margin-bottom:10px;">YOU WON \u00b7 ' + myPct + '%</div>';
+    } else if (ch.winner_id === oppId) {
+      banner = '<div style="background:#1a1a1a;border:1px solid #444;color:var(--cream);font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;text-align:center;padding:14px;border-radius:12px;margin-bottom:10px;">@' + escapeHtml(oppLabel) + ' WON \u00b7 ' + oppPct + '%</div>';
+    } else {
+      banner = '<div style="background:#1a1a1a;border:1px solid #444;color:var(--cream);font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;text-align:center;padding:14px;border-radius:12px;margin-bottom:10px;">TIE</div>';
+    }
+    actionsHtml = banner;
+  }
+
+  body.innerHTML = headerHtml + metaHtml + statsHtml + actionsHtml;
+}
+
+// Open the accept flow. This is essentially the create-flow's exercise
+// + baseline steps, except the friend is already fixed and the
+// submission becomes an "insert participant + activate" instead of
+// "create challenge". Reuses _challengeDraft for step state but includes
+// a `mode: 'accept'` so the submit handler can branch.
+async function _openAcceptChallengeFlow(challengeId) {
+  _closeChallengeDetailSheet();
+  const ch = (_challenges || []).find(c => c.id === challengeId);
+  if (!ch) { showToast('Challenge not found.'); return; }
+  _challengeDraft = {
+    mode: 'accept',
+    challengeId: challengeId,
+    step: 'exercise',
+    friendId: _opponentUserId(ch),
+    exerciseName: null,
+    durationWeeks: ch.duration_weeks,
+    baselineWeight: '',
+    baselineReps: ''
+  };
+  const existing = document.getElementById('challenge-create-sheet');
+  if (existing) existing.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'challenge-create-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = '<div id="challenge-create-body" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 22px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:90vh;overflow-y:auto;"></div>';
+  sheet.addEventListener('click', e => { if (e.target === sheet) _closeChallengeCreateSheet(); });
+  document.body.appendChild(sheet);
+  _renderChallengeCreateStep();
+}
+
+// Submit handler extension — wrap _submitNewChallenge to branch on
+// draft.mode. If accepting an existing challenge, insert the participant
+// row on the existing challenge_id and flip its status to 'active'.
+async function _submitAcceptChallenge() {
+  if (!_challengeDraft || _challengeDraft.mode !== 'accept') return;
+  const d = _challengeDraft;
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) { showToast('Sign in first.'); return; }
+  const btn = document.getElementById('challenge-send-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'JOINING...'; }
+  try {
+    const baselineE1rm = _epley1RM(d.baselineWeight, d.baselineReps);
+    const { error: pErr } = await sb.from('challenge_participants')
+      .insert({
+        challenge_id:    d.challengeId,
+        user_id:         state.supabaseUserId,
+        exercise_name:   d.exerciseName,
+        baseline_weight: parseFloat(d.baselineWeight),
+        baseline_reps:   parseInt(d.baselineReps, 10),
+        baseline_e1rm:   baselineE1rm
+      });
+    if (pErr) throw pErr;
+    // Flip status to active and set the window dates. RLS allows the
+    // challenged party to update their own challenge row.
+    const now = new Date();
+    const end = new Date(now.getTime() + d.durationWeeks * 7 * 24 * 60 * 60 * 1000);
+    const { error: uErr } = await sb.from('challenges').update({
+      status:     'active',
+      start_date: now.toISOString(),
+      end_date:   end.toISOString()
+    }).eq('id', d.challengeId);
+    if (uErr) throw uErr;
+    const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+    _sendDirectPush(
+      d.friendId,
+      fromName + ' accepted your challenge',
+      'The 1RM clock is running. Go get it.',
+      'challenge'
+    );
+    showToast('Challenge accepted');
+    _closeChallengeCreateSheet();
+    await _loadChallenges();
+    _renderChallengesListHtml();
+  } catch (e) {
+    console.error('[challenge-accept] submit failed:', e);
+    showToast('Could not accept. Try again.');
+    if (btn) { btn.disabled = false; btn.textContent = 'ACCEPT & START'; }
+  }
+}
+
+// Confirm + decline a pending invite. Updates status to 'declined'.
+// Fires a push to the challenger so they see it promptly.
+function _confirmDeclineChallenge(challengeId) {
+  if (!confirm('Decline this challenge?')) return;
+  _declineChallenge(challengeId);
+}
+async function _declineChallenge(challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const ch = (_challenges || []).find(c => c.id === challengeId);
+  try {
+    const { error } = await sb.from('challenges').update({ status: 'declined' }).eq('id', challengeId);
+    if (error) throw error;
+    if (ch) {
+      const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+      _sendDirectPush(ch.challenger_id, fromName + ' declined your challenge', 'Maybe next time.', 'challenge');
+    }
+    showToast('Declined');
+    _closeChallengeDetailSheet();
+    await _loadChallenges();
+    _renderChallengesListHtml();
+  } catch (e) {
+    console.error('[challenge-decline] failed:', e);
+    showToast('Could not decline. Try again.');
+  }
+}
+
+// Confirm + cancel a pending OR active challenge. Either participant
+// can cancel at any time. Fires a push to the opponent.
+function _confirmCancelChallenge(challengeId) {
+  if (!confirm('Cancel this challenge? Both of you will stop seeing it.')) return;
+  _cancelChallenge(challengeId);
+}
+async function _cancelChallenge(challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const ch = (_challenges || []).find(c => c.id === challengeId);
+  try {
+    const { error } = await sb.from('challenges').update({ status: 'cancelled' }).eq('id', challengeId);
+    if (error) throw error;
+    if (ch) {
+      const oppId = _opponentUserId(ch);
+      const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+      _sendDirectPush(oppId, fromName + ' cancelled the challenge', '', 'challenge');
+    }
+    showToast('Cancelled');
+    _closeChallengeDetailSheet();
+    await _loadChallenges();
+    _renderChallengesListHtml();
+    _renderActiveChallengeHomeCard();
+  } catch (e) {
+    console.error('[challenge-cancel] failed:', e);
+    showToast('Could not cancel. Try again.');
+  }
+}
+
+// Log result flow — the user enters a new top set during the active
+// window. Only stores it if the resulting e1RM is HIGHER than their
+// current best, so users can log multiple times without losing ground.
+function _openLogResultFlow(challengeId) {
+  const ch = (_challenges || []).find(c => c.id === challengeId);
+  if (!ch) { showToast('Challenge not found.'); return; }
+  const me = _myParticipantRow(ch);
+  if (!me) { showToast('You are not in this challenge.'); return; }
+  _closeChallengeDetailSheet();
+  const existing = document.getElementById('challenge-log-sheet');
+  if (existing) existing.remove();
+  const liftLabel = _challengeExerciseLabel(me.exercise_name);
+  const baselineTxt = me.baseline_weight + ' \u00d7 ' + me.baseline_reps + ' (e1RM ' + me.baseline_e1rm + ')';
+  const bestTxt = me.final_e1rm != null
+    ? (me.final_weight + ' \u00d7 ' + me.final_reps + ' (e1RM ' + me.final_e1rm + ')')
+    : 'Nothing logged yet';
+  const sheet = document.createElement('div');
+  sheet.id = 'challenge-log-sheet';
+  sheet.dataset.challengeId = challengeId;
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = '<div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 22px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:90vh;overflow-y:auto;">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">'
+    + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">LOG YOUR BEST SET</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">' + escapeHtml(liftLabel) + '</div></div>'
+    + '<button onclick="document.getElementById(\'challenge-log-sheet\').remove()" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
+    + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">BASELINE</div>'
+    + '<div style="font-family:\'Barlow\',sans-serif;font-size:13px;color:var(--cream);margin-bottom:8px;">' + escapeHtml(baselineTxt) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">CURRENT BEST</div>'
+    + '<div style="font-family:\'Barlow\',sans-serif;font-size:13px;color:var(--cream);margin-bottom:16px;">' + escapeHtml(bestTxt) + '</div>'
+    + '<div style="display:flex;gap:10px;">'
+    + '<div style="flex:1;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">WEIGHT (LBS)</div>'
+    + '<input id="challenge-log-weight" type="number" step="0.5" inputmode="decimal" oninput="_onChallengeLogInput()" style="width:100%;box-sizing:border-box;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;color:var(--cream);padding:12px 14px;font-family:\'Barlow\',sans-serif;font-size:17px;outline:none;-webkit-appearance:none;">'
+    + '</div>'
+    + '<div style="flex:1;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">REPS</div>'
+    + '<input id="challenge-log-reps" type="number" inputmode="numeric" oninput="_onChallengeLogInput()" style="width:100%;box-sizing:border-box;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;color:var(--cream);padding:12px 14px;font-family:\'Barlow\',sans-serif;font-size:17px;outline:none;-webkit-appearance:none;">'
+    + '</div>'
+    + '</div>'
+    + '<div id="challenge-log-e1rm" style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--cream);margin-top:14px;">Enter weight and reps to see your new estimate.</div>'
+    + '<button id="challenge-log-save" onclick="_submitChallengeLog(\'' + challengeId + '\')" style="width:100%;margin-top:18px;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SAVE LOG</button>'
+    + '</div>';
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+}
+
+function _onChallengeLogInput() {
+  const w = parseFloat(document.getElementById('challenge-log-weight')?.value);
+  const r = parseInt(document.getElementById('challenge-log-reps')?.value, 10);
+  const e1rm = _epley1RM(w, r);
+  const out = document.getElementById('challenge-log-e1rm');
+  if (out) out.textContent = e1rm > 0 ? ('New estimated 1RM: ' + e1rm + ' lbs') : 'Enter weight and reps to see your new estimate.';
+}
+
+// ── Home screen active challenge card ─────────────────────────────────────
+// Renders a compact banner on the home screen when the current user has
+// an active 1RM challenge. Tapping the banner opens the detail sheet.
+// Inserted above #deload-banner using the same dynamic pattern as the
+// pause / travel banners. Safe to call multiple times — idempotent.
+
+function _renderActiveChallengeHomeCard() {
+  // Only meaningful on the home screen. Find the anchor element that
+  // already exists in the static HTML.
+  const deloadBannerEl = document.getElementById('deload-banner');
+  if (!deloadBannerEl) return;
+
+  let el = document.getElementById('challenge-home-card');
+
+  // Find the most recent active challenge for this user. If there are
+  // several, show the one closest to its end date (creates urgency).
+  const active = (_challenges || [])
+    .filter(c => c.status === 'active')
+    .sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
+
+  if (!active.length) {
+    if (el) el.style.display = 'none';
+    return;
+  }
+
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'challenge-home-card';
+    deloadBannerEl.parentNode.insertBefore(el, deloadBannerEl);
+  }
+
+  const ch = active[0];
+  const oppId = _opponentUserId(ch);
+  const oppLabel = _opponentLabel(oppId);
+  const me = _myParticipantRow(ch);
+  const opp = _opponentParticipantRow(ch);
+  const daysLeft = _daysRemaining(ch.end_date);
+  const liftLabel = me ? _challengeExerciseShort(me.exercise_name) : '';
+  const myPct = (me && me.final_e1rm != null) ? _improvementPct(me.baseline_e1rm, me.final_e1rm) : null;
+  const oppPct = (opp && opp.final_e1rm != null) ? _improvementPct(opp.baseline_e1rm, opp.final_e1rm) : null;
+
+  // Leader glyph: \u25B2 up (you leading) / \u25BC down (opponent leading) / \u2014 tied.
+  let leaderLine = 'Log your best set to take the lead';
+  if (myPct != null || oppPct != null) {
+    const my = myPct != null ? myPct : 0;
+    const op = oppPct != null ? oppPct : 0;
+    if (my > op)      leaderLine = 'You lead \u00b7 ' + my + '% vs ' + (oppPct != null ? op + '%' : '\u2014');
+    else if (op > my) leaderLine = '@' + oppLabel + ' leads \u00b7 ' + op + '% vs ' + (myPct != null ? my + '%' : '\u2014');
+    else              leaderLine = 'Tied at ' + my + '%';
+  }
+
+  const daysTxt = daysLeft > 0 ? (daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' left') : 'Final day';
+
+  el.style.display = '';
+  el.style.cssText = 'margin-bottom:12px;background:#1a1414;border:1px solid #C0392B;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;';
+  el.onclick = () => _openChallengeDetailSheet(ch.id);
+  el.innerHTML = '<div style="width:40px;height:40px;background:rgba(192,57,43,0.18);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+    + '<svg viewBox="0 0 24 24" width="22" height="22" stroke="#C0392B" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>'
+    + '</div>'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:16px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;">1RM \u00b7 ' + escapeHtml(liftLabel) + ' vs @' + escapeHtml(oppLabel) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);margin-top:3px;">' + escapeHtml(leaderLine) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:1px;">' + escapeHtml(daysTxt) + '</div>'
+    + '</div>'
+    + '<svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+}
+
+async function _submitChallengeLog(challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const w = parseFloat(document.getElementById('challenge-log-weight')?.value);
+  const r = parseInt(document.getElementById('challenge-log-reps')?.value, 10);
+  if (!w || w <= 0) { showToast('Enter a valid weight.'); return; }
+  if (!r || r < 1 || r > 20) { showToast('Reps must be between 1 and 20.'); return; }
+  const btn = document.getElementById('challenge-log-save');
+  if (btn) { btn.disabled = true; btn.textContent = 'SAVING...'; }
+  try {
+    const e1rm = _epley1RM(w, r);
+    const ch = (_challenges || []).find(c => c.id === challengeId);
+    const me = ch ? _myParticipantRow(ch) : null;
+    // Only save if this e1RM beats the current best (or there is no best yet).
+    if (me && me.final_e1rm != null && e1rm <= me.final_e1rm) {
+      showToast('That doesn\u2019t beat your current best.');
+      if (btn) { btn.disabled = false; btn.textContent = 'SAVE LOG'; }
+      return;
+    }
+    const { error } = await sb.from('challenge_participants')
+      .update({ final_weight: w, final_reps: r, final_e1rm: e1rm })
+      .eq('challenge_id', challengeId)
+      .eq('user_id', state.supabaseUserId);
+    if (error) throw error;
+    document.getElementById('challenge-log-sheet')?.remove();
+    showToast('Logged');
+    // Notify opponent so they can see the new ceiling.
+    if (ch) {
+      const oppId = _opponentUserId(ch);
+      const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+      const pct = me ? _improvementPct(me.baseline_e1rm, e1rm) : 0;
+      _sendDirectPush(oppId, fromName + ' just logged a new best', pct + '% improvement so far.', 'challenge');
+    }
+    await _loadChallenges();
+    _renderChallengesListHtml();
+    _renderActiveChallengeHomeCard();
+    _openChallengeDetailSheet(challengeId);
+  } catch (e) {
+    console.error('[challenge-log] submit failed:', e);
+    showToast('Could not save. Try again.');
+    if (btn) { btn.disabled = false; btn.textContent = 'SAVE LOG'; }
+  }
+}
 
 
 async function _requestNotificationPermission() {
@@ -11910,6 +13025,13 @@ function _stopMidnightCheckInterval() {
 function renderHome() {
   _lastRenderedDate = new Date().toDateString();
   _startMidnightCheckInterval();
+
+  // Render the challenge home card from cache (may be empty on first
+  // paint), then refresh in the background so it's current.
+  _renderActiveChallengeHomeCard();
+  if (state.supabaseUserId) {
+    _loadChallenges().then(() => _renderActiveChallengeHomeCard()).catch(() => {});
+  }
 
   const realSessions = (state.history || []).filter(entry =>
     Object.values(entry.sets || {}).some(sets => sets.some(s => s.done))
@@ -20921,6 +22043,14 @@ function saveSongData(entryId) {
 }
 
 function confirmDeleteSession(entryId) {
+  // Active challenge lock — users cannot delete sessions while a 1RM
+  // challenge is in flight. Keeps everyone honest; unlocks on end /
+  // cancel. _challenges is populated on app open; defensive fallback
+  // to "not locked" if the cache hasn't loaded yet.
+  if (_hasActiveChallenge()) {
+    showToast('History is locked during an active challenge.');
+    return;
+  }
   const entry = state.history.find(e => String(e.id) === String(entryId));
   if (!entry) return;
   const d = new Date(entry.date);
@@ -20944,6 +22074,12 @@ function confirmDeleteSession(entryId) {
 }
 
 function deleteHistoryEntry(entryId) {
+  // Belt-and-suspenders: the confirm dialog already gates on active
+  // challenges, but block here too so any future call site is covered.
+  if (_hasActiveChallenge()) {
+    showToast('History is locked during an active challenge.');
+    return;
+  }
   const idx = state.history.findIndex(e => String(e.id) === String(entryId));
   if (idx === -1) return;
 
