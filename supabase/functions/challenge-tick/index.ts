@@ -62,12 +62,25 @@ Deno.serve(async (req) => {
   const pushUrl     = `${sbUrl}/functions/v1/bright-processor`;
   const pushHeaders = { 'content-type': 'application/json', 'apikey': pubKey || svcKey };
 
-  async function firePush(toUid: string, title: string, body: string): Promise<string | null> {
+  // Fire a challenge push via the existing bright-processor. When
+  // challengeId is provided, we pass it as `sid: "c:<uuid>"` so the
+  // Android TWA's native service (which appends sid as ?signal_id=
+  // to the deep-link URL) can carry it through without a native
+  // code change. The client side detects the "c:" prefix and routes
+  // the tap straight to the challenge detail sheet.
+  async function firePush(toUid: string, title: string, body: string, challengeId?: string): Promise<string | null> {
     try {
+      const payload: Record<string, string> = {
+        to_uid: toUid,
+        title,
+        body,
+        type: 'challenge',
+      };
+      if (challengeId) payload.sid = 'c:' + challengeId;
       await fetch(pushUrl, {
         method: 'POST',
         headers: pushHeaders,
-        body: JSON.stringify({ to_uid: toUid, title, body, type: 'challenge' })
+        body: JSON.stringify(payload)
       });
       return null;
     } catch (e) {
@@ -135,7 +148,7 @@ Deno.serve(async (req) => {
         const ch = chById[row.challenge_id];
         if (!ch) continue;
         const creatorLabel = creatorLabelById[ch.challenger_id] || 'Someone';
-        const pushErr = await firePush(row.user_id, creatorLabel + ' is waiting on you', 'Tap to accept the 1RM challenge.');
+        const pushErr = await firePush(row.user_id, creatorLabel + ' is waiting on you', 'Tap to accept the 1RM challenge.', row.challenge_id);
         if (pushErr) { report.errors.push({ reminder: true, id: row.id, detail: pushErr }); }
         // Stamp the row whether or not the push succeeded — we don't
         // want to retry pushes multiple times per day on error.
@@ -190,7 +203,7 @@ Deno.serve(async (req) => {
         if (!upd.ok) { report.errors.push({ id: ch.id, phase: 'auto-start', detail: await upd.text() }); continue; }
         report.autoStarted++;
         for (const p of joined) {
-          await firePush(p.user_id, 'Challenge started', 'The 1RM clock is running. Go get it.');
+          await firePush(p.user_id, 'Challenge started', 'The 1RM clock is running. Go get it.', ch.id);
         }
       } else {
         // Auto-cancel — nobody accepted.
@@ -204,7 +217,7 @@ Deno.serve(async (req) => {
         );
         if (!upd.ok) { report.errors.push({ id: ch.id, phase: 'auto-cancel', detail: await upd.text() }); continue; }
         report.autoCancelled++;
-        await firePush(ch.challenger_id, 'Nobody accepted your challenge', 'No takers this time. Invite a different crew?');
+        await firePush(ch.challenger_id, 'Nobody accepted your challenge', 'No takers this time. Invite a different crew?', ch.id);
       }
     }
   } catch (e) {
@@ -276,16 +289,16 @@ Deno.serve(async (req) => {
 
       if (tied) {
         for (const s of scored) {
-          await firePush(s.user_id, 'Challenge ended in a tie', 'Nobody pulled ahead. Run it back?');
+          await firePush(s.user_id, 'Challenge ended in a tie', 'Nobody pulled ahead. Run it back?', ch.id);
         }
       } else {
         for (const s of scored) {
           if (s.user_id === winnerId) {
-            await firePush(s.user_id, 'You won the challenge', `You finished at ${top.pct.toFixed(1)}% improvement.`);
+            await firePush(s.user_id, 'You won the challenge', `You finished at ${top.pct.toFixed(1)}% improvement.`, ch.id);
           } else if (s.status === 'left') {
-            await firePush(s.user_id, 'Challenge ended', 'You quit this one. Another challenge is waiting whenever you are.');
+            await firePush(s.user_id, 'Challenge ended', 'You quit this one. Another challenge is waiting whenever you are.', ch.id);
           } else {
-            await firePush(s.user_id, 'Challenge ended', 'Your challenge wrapped. Open the app to see the result.');
+            await firePush(s.user_id, 'Challenge ended', 'Your challenge wrapped. Open the app to see the result.', ch.id);
           }
         }
       }
