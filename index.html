@@ -8474,19 +8474,92 @@ async function _sendFriendRequest(addresseeId, btn) {
   if (delA?.error) console.warn('[friend request] stale delete A failed:', delA.error.message);
   if (delB?.error) console.warn('[friend request] stale delete B failed:', delB.error.message);
 
-  const { error } = await sb.from('friendships').insert({
+  const { data: inserted, error } = await sb.from('friendships').insert({
     requester_id: myId,
     addressee_id: addresseeId,
     status: 'pending'
-  });
+  }).select('id').single();
 
   if (error) {
     if (btn) { btn.disabled = false; btn.textContent = 'ADD FRIEND'; }
     showToast('Could not send request. Try again.');
     return;
   }
-  if (btn) { btn.textContent = 'SENT \u2713'; btn.style.background = '#333'; btn.style.color = 'var(--gray)'; }
+  // Remember this outgoing request so (a) the search re-renders show
+  // CANCEL instead of ADD FRIEND and (b) _cancelFriendRequest knows
+  // which row to delete without a re-fetch.
+  if (inserted?.id) _outgoingFriendRequests[addresseeId] = inserted.id;
+
+  // Replace the button in place with a CANCEL variant, matching what
+  // the search re-render would produce. Keeps the UI consistent across
+  // both paths (fresh render vs. in-place update after send).
+  const row = btn?.closest('[id^="friend-search-row-"]');
+  if (row) {
+    const newBtn = btn;
+    newBtn.disabled = false;
+    newBtn.textContent = 'CANCEL';
+    newBtn.style.background = 'transparent';
+    newBtn.style.border = '1px solid #444';
+    newBtn.style.color = 'var(--gray)';
+    newBtn.setAttribute('onclick', `_cancelFriendRequest('${addresseeId}',this)`);
+  }
+
+  // Fire a push notification to the recipient so they see the request
+  // immediately instead of waiting on the 60s social-dot poll. Uses the
+  // existing to_uid direct-send path (mutes don't apply — this is a
+  // social ping, not a workout fan-out).
+  try {
+    const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+    fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/bright-processor', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
+      body: JSON.stringify({
+        to_uid: addresseeId,
+        title: fromName + ' wants to be your friend',
+        body: 'Tap to accept or decline.',
+        avatar_url: state.supabaseAvatarUrl || null
+      })
+    }).catch(function() {});
+  } catch (_) {}
+
   showToast('Friend request sent');
+}
+
+// Cancel an outgoing friend request you haven't heard back on. Deletes
+// the pending row from the friendships table, clears the in-memory
+// outgoing map, and updates the search row button back to ADD FRIEND.
+async function _cancelFriendRequest(addresseeId, btn) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const rowId = _outgoingFriendRequests[addresseeId];
+  if (btn) btn.disabled = true;
+  let result;
+  if (rowId) {
+    result = await sb.from('friendships').delete().eq('id', rowId);
+  } else {
+    // Fallback: delete by composite key in case the map is stale.
+    result = await sb.from('friendships')
+      .delete()
+      .eq('requester_id', state.supabaseUserId)
+      .eq('addressee_id', addresseeId)
+      .eq('status', 'pending');
+  }
+  if (result?.error) {
+    if (btn) btn.disabled = false;
+    showToast('Could not cancel. Try again.');
+    return;
+  }
+  delete _outgoingFriendRequests[addresseeId];
+  // Revert the button back to ADD FRIEND in place.
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'ADD FRIEND';
+    btn.style.background = '#C0392B';
+    btn.style.border = 'none';
+    btn.style.color = '#fff';
+    btn.setAttribute('onclick', `_sendFriendRequest('${addresseeId}',this)`);
+  }
+  showToast('Request cancelled');
 }
 
 async function _loadPendingRequests() {
