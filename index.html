@@ -10049,34 +10049,54 @@ function _improvementPct(baselineE1rm, finalE1rm) {
   return Math.round(((f - b) / b) * 1000) / 10;
 }
 
-// Search state.history for the most recent top-e1RM set of the given
-// program exercise ID within the last 21 days. Returns { weight, reps,
-// e1rm } or null. Used to pre-fill the baseline input on the create and
-// accept flows for bench / ohp. Squat and deadlift have no exIdHint, so
-// callers fall back to manual entry.
+// Search state.history for the user's MOST RECENT session that
+// contains completed sets for this exId, and return the top set
+// (highest weight) from that session. 14-day window — that's the
+// loose baseline rule the product settled on ("1 session per week
+// is common, so 14 days gives a full two weeks of margin").
+//
+// Returns { weight, reps, e1rm, daysAgo } or null. `daysAgo` is 0
+// for today, 1 for yesterday, etc. — used by the auto-fill label
+// so we can say "from your last bench session (3 days ago)".
+//
+// Note: we use LAST session's top set, not "heaviest in window" —
+// the user wants "my last lift and reps" as the baseline, not
+// their all-time best over two weeks.
 function _findRecentBaselineByExId(exId) {
   if (!exId) return null;
-  const cutoff = Date.now() - 21 * 24 * 60 * 60 * 1000;
+  const cutoffMs = Date.now() - 14 * 24 * 60 * 60 * 1000;
   const history = state.history || [];
-  let best = null;
+  // Walk newest → oldest so the first match IS the most recent.
   for (let i = history.length - 1; i >= 0; i--) {
     const h = history[i];
     if (!h || !h.date) continue;
     const t = new Date(h.date).getTime();
-    if (isNaN(t) || t < cutoff) continue;
+    if (isNaN(t)) continue;
+    if (t < cutoffMs) return null; // past the window — nothing recent enough
     const sets = (h.sets && h.sets[exId]) || [];
+    if (!sets.length) continue;
+    // Find this session's top completed set (highest weight; tie-break
+    // on higher reps so 225x6 beats 225x5).
+    let best = null;
     for (const s of sets) {
       if (!s || !s.done) continue;
       const w = parseFloat(s.weight);
       const r = parseInt(s.reps, 10);
       if (!w || !r || r < 1 || r > 20) continue;
-      const e1rm = _epley1RM(w, r);
-      if (!best || e1rm > best.e1rm) {
-        best = { weight: w, reps: r, e1rm: e1rm };
+      if (!best || w > best.w || (w === best.w && r > best.r)) {
+        best = { w: w, r: r };
       }
     }
+    if (!best) continue; // session had no completed sets — keep walking
+    const daysAgo = Math.max(0, Math.floor((Date.now() - t) / (24 * 60 * 60 * 1000)));
+    return {
+      weight:  best.w,
+      reps:    best.r,
+      e1rm:    _epley1RM(best.w, best.r),
+      daysAgo: daysAgo
+    };
   }
-  return best;
+  return null;
 }
 
 // Returns true if the current user has at least one active challenge.
@@ -10727,28 +10747,45 @@ function _challengeDurationPickerHtml() {
     + '<button onclick="_challengeDraft.step=\'exercise\';_renderChallengeCreateStep()" style="width:100%;margin-top:16px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
 }
 
-// STEP 4 — Baseline entry. Pre-fills from workout history when we can
-// resolve the typed exercise name to a program exId (bench, ohp, etc.).
-// Otherwise the user types it in. Live e1RM preview updates as they type.
+// STEP 4 — Baseline entry.
+//
+// Auto-fill: if the typed lift resolves to a program exercise ID AND
+// the user trained it in the last 14 days, we pre-populate the weight
+// and reps from the TOP SET of their most recent session on that lift
+// and show a green "Auto-filled from your last <lift> session" line so
+// the user knows where the numbers came from.
+//
+// Soft warning: if we COULD resolve the lift but found no session in
+// the last 14 days (OR the lift didn't resolve at all — e.g. custom
+// name, squat, deadlift, anything outside the default program), show
+// a yellow line explaining briefly that we couldn't auto-fill and the
+// baseline is on the honor system. Never a hard block — users can
+// still participate.
 function _challengeBaselinePickerHtml() {
   const draft = _challengeDraft;
   const liftLabel = _challengeExerciseLabel(draft.exerciseName);
+  const liftShort = _challengeExerciseShort(draft.exerciseName);
   let autoHint = '';
+  let softWarning = '';
   if (!draft.baselineWeight && !draft.baselineReps) {
     const exId = _resolveExerciseToExId(draft.exerciseName);
-    if (exId) {
-      const recent = _findRecentBaselineByExId(exId);
-      if (recent) {
-        draft.baselineWeight = String(recent.weight);
-        draft.baselineReps   = String(recent.reps);
-        autoHint = 'Pre-filled from your recent top set.';
-      }
+    const recent = exId ? _findRecentBaselineByExId(exId) : null;
+    if (recent) {
+      draft.baselineWeight = String(recent.weight);
+      draft.baselineReps   = String(recent.reps);
+      const whenTxt = recent.daysAgo === 0
+        ? 'today'
+        : (recent.daysAgo === 1 ? 'yesterday' : (recent.daysAgo + ' days ago'));
+      autoHint = 'Auto-filled from your last ' + liftShort + ' session (' + whenTxt + '). You can change it.';
+    } else {
+      softWarning = 'We couldn\u2019t find a ' + liftShort + ' session in your last 14 days — enter your baseline honestly. You can still participate.';
     }
   }
   const e1rmPreview = _epley1RM(draft.baselineWeight, draft.baselineReps);
   const e1rmText = e1rmPreview > 0 ? ('Estimated 1RM: ' + e1rmPreview + ' lbs') : 'Enter weight and reps to see your estimated 1RM.';
   return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:14px;">Log your most recent top set on <span style="color:var(--cream);">' + escapeHtml(liftLabel) + '</span>. We use Epley to estimate your 1RM — that\u2019s your starting line.</div>'
-    + (autoHint ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#2ecc71;margin-bottom:10px;">' + escapeHtml(autoHint) + '</div>' : '')
+    + (autoHint ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#2ecc71;margin-bottom:10px;line-height:1.4;">' + escapeHtml(autoHint) + '</div>' : '')
+    + (softWarning ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#D4A843;margin-bottom:10px;line-height:1.4;">' + escapeHtml(softWarning) + '</div>' : '')
     + '<div style="display:flex;gap:10px;">'
     + '<div style="flex:1;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">WEIGHT (LBS)</div>'
     + '<input id="challenge-baseline-weight" type="number" step="0.5" inputmode="decimal" value="' + escapeHtml(draft.baselineWeight || '') + '" oninput="_onChallengeBaselineInput()" style="width:100%;box-sizing:border-box;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;color:var(--cream);padding:12px 14px;font-family:\'Barlow\',sans-serif;font-size:17px;outline:none;-webkit-appearance:none;">'
