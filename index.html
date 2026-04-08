@@ -9926,24 +9926,97 @@ async function _setNotifQuietTime(key, value) {
 //            his row is never written and Alice never sees his numbers.
 //            RLS on challenge_participants enforces both halves.
 
-// Big 4 exercise choices. `exIdHint` is the program exercise ID we use
-// for auto-baseline lookups (bench / ohp have direct matches; squat and
-// deadlift aren't in the default program so we fall back to manual entry).
-const _CHALLENGE_EXERCISES = [
-  { id: 'squat',    label: 'BACK SQUAT',      short: 'Squat',     exIdHint: null     },
-  { id: 'bench',    label: 'BENCH PRESS',     short: 'Bench',     exIdHint: 'bench'  },
-  { id: 'deadlift', label: 'DEADLIFT',        short: 'Deadlift',  exIdHint: null     },
-  { id: 'ohp',      label: 'OVERHEAD PRESS',  short: 'OHP',       exIdHint: 'ohp'    }
+// Suggestion chips shown in the exercise picker as quick-picks. Users
+// can tap one to fill the name field, or type anything they want. The
+// authoritative exercise_name is whatever text the user submits — no
+// enum, no whitelist.
+const _CHALLENGE_SUGGESTIONS = [
+  'Back Squat',
+  'Bench Press',
+  'Deadlift',
+  'Overhead Press',
+  'Front Squat',
+  'Incline Bench Press',
+  'Barbell Row',
+  'Weighted Pull-Up'
 ];
 
-// Human label lookup, used all over the UI.
-function _challengeExerciseLabel(id) {
-  const ex = _CHALLENGE_EXERCISES.find(e => e.id === id);
-  return ex ? ex.label : String(id || '').toUpperCase();
+// Legacy short labels for the four values migration 014 used to allow.
+// Any challenge_participants rows inserted before migration 015 will
+// still have these as their exercise_name. Display falls back to the
+// raw text for everything else.
+const _CHALLENGE_LEGACY_LABELS = {
+  squat:    { label: 'BACK SQUAT',     short: 'Squat'    },
+  bench:    { label: 'BENCH PRESS',    short: 'Bench'    },
+  deadlift: { label: 'DEADLIFT',       short: 'Deadlift' },
+  ohp:      { label: 'OVERHEAD PRESS', short: 'OHP'      }
+};
+
+// Title-case helper used by short display and auto-match normalization.
+function _titleCase(str) {
+  return String(str || '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
 }
-function _challengeExerciseShort(id) {
-  const ex = _CHALLENGE_EXERCISES.find(e => e.id === id);
-  return ex ? ex.short : (id || '');
+
+// Human label — big text style. Legacy values get their nice label;
+// everything else gets uppercased.
+function _challengeExerciseLabel(name) {
+  if (!name) return '';
+  const legacy = _CHALLENGE_LEGACY_LABELS[name];
+  if (legacy) return legacy.label;
+  return String(name).toUpperCase();
+}
+// Short label — mixed-case card / home-card style.
+function _challengeExerciseShort(name) {
+  if (!name) return '';
+  const legacy = _CHALLENGE_LEGACY_LABELS[name];
+  if (legacy) return legacy.short;
+  return _titleCase(name);
+}
+
+// Normalize a typed exercise name for comparison — lowercased, single-
+// spaced, trimmed, with common synonyms mapped to canonical forms.
+function _normExerciseName(str) {
+  return String(str || '')
+    .toLowerCase()
+    .replace(/[_\-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Built-once index: normalized exercise name -> program exercise id.
+// Used by the baseline auto-fill path to look up the user's history
+// when they type "Barbell Bench Press" etc. Only includes exercises
+// from DEFAULT_PROGRAM's main list (not the `alts` variants — those
+// don't have their own IDs in state.history anyway).
+let _challengeExerciseIndex = null;
+function _getChallengeExerciseIndex() {
+  if (_challengeExerciseIndex) return _challengeExerciseIndex;
+  const idx = {};
+  try {
+    (typeof DEFAULT_PROGRAM !== 'undefined' ? DEFAULT_PROGRAM : []).forEach(day => {
+      (day && day.exercises || []).forEach(ex => {
+        if (ex && ex.id && ex.name) {
+          idx[_normExerciseName(ex.name)] = ex.id;
+        }
+      });
+    });
+  } catch (_) {}
+  _challengeExerciseIndex = idx;
+  return idx;
+}
+
+// Try to resolve a user-typed exercise name to a program exercise id
+// so baseline auto-fill has something to look up. Returns the exId
+// or null if no match (caller falls back to manual entry).
+function _resolveExerciseToExId(name) {
+  const norm = _normExerciseName(name);
+  if (!norm) return null;
+  const idx = _getChallengeExerciseIndex();
+  return idx[norm] || null;
 }
 
 // In-memory cache of challenges the current user is involved in. Each entry
@@ -10152,8 +10225,8 @@ function _openChallengeIntroSheet(type, onContinue) {
   if (type === 'one_rep_max') {
     title = '1 REP MAX CHALLENGE';
     bullets = [
-      { h: 'PICK YOUR LIFT',
-        b: "Choose one of the big 4 — squat, bench, deadlift, or overhead press. You and your opponent each pick your own lift. It doesn't have to match." },
+      { h: 'PICK ANY LIFT',
+        b: "Pick the lift you actually train — bench, squat, curls, whatever. You and your opponent each pick your own. The lifts don't have to match." },
       { h: 'FIVE WEEKS ON THE CLOCK',
         b: "Default window is 5 weeks. You can set it anywhere from 4 to 6. The clock starts the moment your opponent accepts." },
       { h: 'PERCENT WINS, NOT POUNDS',
@@ -10389,25 +10462,77 @@ async function _renderChallengeFriendPicker() {
   }
 }
 
-// STEP 2 — Exercise picker. Big 4 as tiles. Tapping advances the draft.
-// Accept mode skips the preceding friend step, so no BACK is rendered.
+// STEP 2 — Exercise picker. Free-text input with suggestion chips for
+// quick picks. Users can type any lift they want; the chips are just
+// shortcuts for common ones. Accept mode skips the preceding friend
+// step so no BACK is rendered in that path.
 function _challengeExercisePickerHtml() {
   const isAccept = _challengeDraft && _challengeDraft.mode === 'accept';
   const intro = isAccept
-    ? 'Pick your own lift. Scoring is percent improvement, so your lift doesn\u2019t have to match theirs.'
-    : 'Your opponent will pick their own lift. Scoring is percent improvement, so mismatched lifts stay fair.';
-  const tiles = _CHALLENGE_EXERCISES.map(ex =>
-    '<div onclick="_challengeDraft.exerciseName=\'' + ex.id + '\';_challengeDraft.step=\'' + (isAccept ? 'baseline' : 'duration') + '\';_renderChallengeCreateStep()" '
-    + 'style="flex:1 1 calc(50% - 8px);background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:22px 8px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;line-height:1.1;">' + escapeHtml(ex.label) + '</div>'
-    + '</div>'
+    ? 'Pick the lift you actually train. Type anything — the chips are just shortcuts.'
+    : 'Pick the lift you want to train for. Type anything — the chips are just shortcuts. Your opponent picks their own when they accept.';
+  const currentVal = (_challengeDraft && _challengeDraft.exerciseName) ? _challengeDraft.exerciseName : '';
+  const chips = _CHALLENGE_SUGGESTIONS.map(name =>
+    '<button type="button" onclick="_setChallengeExerciseFromChip(this,\'' + escapeHtml(name).replace(/'/g,'&#39;') + '\')" '
+    + 'style="background:#1a1a1a;border:1px solid #333;color:var(--cream);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:0.5px;padding:10px 14px;border-radius:999px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
+    + escapeHtml(name)
+    + '</button>'
   ).join('');
   const backBtn = isAccept
     ? ''
-    : '<button onclick="_challengeDraft.step=\'friend\';_renderChallengeCreateStep()" style="width:100%;margin-top:16px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
+    : '<button onclick="_challengeDraft.step=\'friend\';_renderChallengeCreateStep()" style="width:100%;margin-top:8px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
   return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:14px;">' + escapeHtml(intro) + '</div>'
-    + '<div style="display:flex;flex-wrap:wrap;gap:10px;">' + tiles + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">YOUR LIFT</div>'
+    + '<input id="challenge-exercise-input" type="text" autocomplete="off" placeholder="e.g. Barbell Bench Press" value="' + escapeHtml(currentVal) + '" '
+    + 'oninput="_onChallengeExerciseInput()" '
+    + 'style="width:100%;box-sizing:border-box;background:var(--dark);border:1px solid var(--dark4);color:var(--cream);padding:14px 16px;border-radius:10px;font-family:\'Barlow\',sans-serif;font-size:17px;outline:none;-webkit-appearance:none;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin:14px 0 8px;">QUICK PICKS</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + chips + '</div>'
+    + '<button id="challenge-exercise-next" onclick="_onChallengeExerciseContinue()" ' + (currentVal ? '' : 'disabled ')
+    + 'style="width:100%;margin-top:18px;background:' + (currentVal ? '#C0392B' : '#333') + ';border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:' + (currentVal ? 'pointer' : 'not-allowed') + ';-webkit-tap-highlight-color:transparent;">CONTINUE</button>'
     + backBtn;
+}
+
+// Chip tap — fills the text input with the suggestion and immediately
+// advances to the next step. Equivalent of typing + tapping CONTINUE.
+function _setChallengeExerciseFromChip(btn, name) {
+  if (!_challengeDraft) return;
+  _challengeDraft.exerciseName = name;
+  _onChallengeExerciseContinue();
+}
+
+// Text input onchange — keeps draft.exerciseName in sync and flips
+// the CONTINUE button between enabled/disabled.
+function _onChallengeExerciseInput() {
+  const input = document.getElementById('challenge-exercise-input');
+  if (!input || !_challengeDraft) return;
+  const val = input.value.trim();
+  _challengeDraft.exerciseName = val;
+  const btn = document.getElementById('challenge-exercise-next');
+  if (btn) {
+    if (val) {
+      btn.disabled = false;
+      btn.style.background = '#C0392B';
+      btn.style.cursor = 'pointer';
+    } else {
+      btn.disabled = true;
+      btn.style.background = '#333';
+      btn.style.cursor = 'not-allowed';
+    }
+  }
+}
+
+// Advance from the exercise step. Trims the input value, blocks if
+// empty, then jumps to baseline (accept mode) or duration (create mode).
+function _onChallengeExerciseContinue() {
+  if (!_challengeDraft) return;
+  const input = document.getElementById('challenge-exercise-input');
+  const typed = input ? input.value.trim() : '';
+  const name = typed || _challengeDraft.exerciseName || '';
+  if (!name) { showToast('Enter a lift name.'); return; }
+  _challengeDraft.exerciseName = name;
+  _challengeDraft.step = _challengeDraft.mode === 'accept' ? 'baseline' : 'duration';
+  _renderChallengeCreateStep();
 }
 
 // STEP 3 — Duration picker. 4, 5, or 6 weeks. Defaults to 5. Tapping
@@ -10427,24 +10552,27 @@ function _challengeDurationPickerHtml() {
     + '<button onclick="_challengeDraft.step=\'exercise\';_renderChallengeCreateStep()" style="width:100%;margin-top:16px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
 }
 
-// STEP 4 — Baseline entry. Pre-fills from workout history when we have
-// a direct exId match (bench / ohp). Otherwise the user types it in.
-// Live e1RM preview updates as they type.
+// STEP 4 — Baseline entry. Pre-fills from workout history when we can
+// resolve the typed exercise name to a program exId (bench, ohp, etc.).
+// Otherwise the user types it in. Live e1RM preview updates as they type.
 function _challengeBaselinePickerHtml() {
   const draft = _challengeDraft;
-  const ex = _CHALLENGE_EXERCISES.find(e => e.id === draft.exerciseName) || {};
+  const liftLabel = _challengeExerciseLabel(draft.exerciseName);
   let autoHint = '';
-  if (!draft.baselineWeight && !draft.baselineReps && ex.exIdHint) {
-    const recent = _findRecentBaselineByExId(ex.exIdHint);
-    if (recent) {
-      draft.baselineWeight = String(recent.weight);
-      draft.baselineReps   = String(recent.reps);
-      autoHint = 'Pre-filled from your recent top set.';
+  if (!draft.baselineWeight && !draft.baselineReps) {
+    const exId = _resolveExerciseToExId(draft.exerciseName);
+    if (exId) {
+      const recent = _findRecentBaselineByExId(exId);
+      if (recent) {
+        draft.baselineWeight = String(recent.weight);
+        draft.baselineReps   = String(recent.reps);
+        autoHint = 'Pre-filled from your recent top set.';
+      }
     }
   }
   const e1rmPreview = _epley1RM(draft.baselineWeight, draft.baselineReps);
   const e1rmText = e1rmPreview > 0 ? ('Estimated 1RM: ' + e1rmPreview + ' lbs') : 'Enter weight and reps to see your estimated 1RM.';
-  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:14px;">Log your most recent top set on <span style="color:var(--cream);">' + escapeHtml(ex.label || '') + '</span>. We use Epley to estimate your 1RM — that\u2019s your starting line.</div>'
+  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:14px;">Log your most recent top set on <span style="color:var(--cream);">' + escapeHtml(liftLabel) + '</span>. We use Epley to estimate your 1RM — that\u2019s your starting line.</div>'
     + (autoHint ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#2ecc71;margin-bottom:10px;">' + escapeHtml(autoHint) + '</div>' : '')
     + '<div style="display:flex;gap:10px;">'
     + '<div style="flex:1;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">WEIGHT (LBS)</div>'
@@ -10490,7 +10618,7 @@ function _onChallengeBaselineContinue() {
 function _challengeConfirmHtml() {
   const d = _challengeDraft;
   const isAccept = d.mode === 'accept';
-  const ex = _CHALLENGE_EXERCISES.find(e => e.id === d.exerciseName) || {};
+  const liftLabel = _challengeExerciseLabel(d.exerciseName);
   const friend = _friendCache[d.friendId] || {};
   const friendLabel = friend.username || friend.display_name || 'Friend';
   const e1rm = _epley1RM(d.baselineWeight, d.baselineReps);
@@ -10502,7 +10630,7 @@ function _challengeConfirmHtml() {
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">OPPONENT</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">@' + escapeHtml(friendLabel) + '</div>'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">YOUR LIFT</div>'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1.5px;margin-bottom:12px;">' + escapeHtml(ex.label || '') + '</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1.5px;margin-bottom:12px;">' + escapeHtml(liftLabel) + '</div>'
     + '<div style="display:flex;gap:20px;margin-bottom:12px;">'
     + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">BASELINE</div><div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1px;">' + escapeHtml(d.baselineWeight) + ' \u00d7 ' + escapeHtml(d.baselineReps) + '</div></div>'
     + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">EST 1RM</div><div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:1px;">' + e1rm + '</div></div>'
