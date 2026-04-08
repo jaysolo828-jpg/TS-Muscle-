@@ -8496,8 +8496,11 @@ async function _loadRecentReactions() {
     }).join('');
     return `<div style="background:#1a1a1a;border-radius:12px;padding:12px 14px;margin-bottom:8px;border-left:3px solid #C0392B;">
       <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
-        <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1;">${escapeHtml(workoutName)}</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1;flex:1;min-width:0;">${escapeHtml(workoutName)}</div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">${when}</div>
+        <button onclick="_confirmClearReactions('${group.signalId}', ${group.reactions.length})" aria-label="Clear reactions for this workout" style="background:transparent;border:none;padding:4px;margin:-4px -4px -4px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+        </button>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:12px;">${chips}</div>
     </div>`;
@@ -8515,6 +8518,49 @@ async function _loadRecentReactions() {
     saveState();
     _updateSocialNotifyDot();
   }
+}
+
+// Show a confirmation sheet before clearing all reactions the current
+// user received on a specific workout signal. Called from the trash
+// icon in each recent-reactions group card. Count is for the message
+// ("Remove 3 reactions?") so the user knows the scope.
+function _confirmClearReactions(signalId, count) {
+  const existing = document.getElementById('clear-reactions-confirm-sheet');
+  if (existing) existing.remove();
+  const noun = count === 1 ? 'reaction' : 'reactions';
+  const sheet = document.createElement('div');
+  sheet.id = 'clear-reactions-confirm-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #333;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">REMOVE ${count} ${noun.toUpperCase()}?</div>
+      <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray);margin-bottom:24px;line-height:1.5;">This clears ${count === 1 ? 'this reaction' : 'these reactions'} from your list. The ${count === 1 ? 'sender' : 'senders'} won't be notified.</div>
+      <button onclick="_clearReactionsForSignal('${signalId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px;">REMOVE</button>
+      <button onclick="document.getElementById('clear-reactions-confirm-sheet').remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
+    </div>`;
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+}
+
+// Delete all reactions directed at the current user on a specific
+// workout signal, then re-render the recent-reactions section so the
+// card disappears. Relies on the reactions_to_me_delete RLS policy
+// added in migration 012.
+async function _clearReactionsForSignal(signalId) {
+  document.getElementById('clear-reactions-confirm-sheet')?.remove();
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const { error } = await sb.from('reactions')
+    .delete()
+    .eq('to_user_id', state.supabaseUserId)
+    .eq('signal_id', signalId);
+  if (error) {
+    showToast("Couldn't clear reactions. Try again.");
+    return;
+  }
+  // Re-fetch and re-render. Cheap — the section is small.
+  _loadRecentReactions();
+  _updateSocialNotifyDot();
 }
 
 function _friendsSearch(query) {
