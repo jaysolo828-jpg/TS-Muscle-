@@ -9400,6 +9400,34 @@ async function _confirmRemoveFriend(userId) {
 
   if (!r1.ok && !r2.ok) { showToast('Could not remove friend. Try again.'); return; }
 
+  // Auto-cancel any pending or active 1RM challenges between these two
+  // users — keeps the data in sync with the friendship, since a removed
+  // friend shouldn't be able to see the other's numbers anymore via the
+  // challenge detail sheet. Best-effort: logs but doesn't block the
+  // unfriend flow if it errors. Nested and() inside or() is PostgREST
+  // syntax for "(A and B) or (C and D)".
+  try {
+    const sb = _getSupabaseClient();
+    if (sb) {
+      await sb.from('challenges')
+        .update({ status: 'cancelled' })
+        .in('status', ['pending', 'active'])
+        .or(
+          'and(challenger_id.eq.' + myId + ',challenged_id.eq.' + userId + '),' +
+          'and(challenger_id.eq.' + userId + ',challenged_id.eq.' + myId + ')'
+        );
+    }
+  } catch (e) {
+    console.error('[unfriend] challenge auto-cancel failed:', e);
+  }
+  // Refresh the challenge cache + any UI surfaces it touches so the
+  // cancelled challenge vanishes immediately.
+  try {
+    await _loadChallenges();
+    _renderChallengesListHtml();
+    _renderActiveChallengeHomeCard();
+  } catch (_) {}
+
   document.getElementById('friend-activity-sheet')?.remove();
   showToast('Friend removed.');
   _renderFriendsSection();
