@@ -8810,8 +8810,8 @@ async function _openFriendActivity(userId, signalId) {
       </div>
       <div onclick="_toggleWorkoutMute('${userId}')" style="display:flex;align-items:center;justify-content:space-between;background:var(--dark2);border-radius:12px;padding:14px 16px;margin-top:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
         <div style="flex:1;min-width:0;padding-right:14px;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1.1;margin-bottom:3px;">TELL THEM WHEN I TRAIN</div>
-          <div id="workout-mute-sub-${userId}" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;line-height:1.3;">${_mutedFriends.has(userId) ? "They won't be notified — they can still see your workouts" : "They'll know when you start a workout"}</div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1.1;margin-bottom:3px;">SHARE WORKOUTS WITH THEM</div>
+          <div id="workout-mute-sub-${userId}" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;line-height:1.3;">${_mutedFriends.has(userId) ? "Hidden — they won't see any of your workouts" : "They see your workouts and know when you start"}</div>
         </div>
         <div id="workout-mute-toggle-${userId}" style="width:44px;height:26px;border-radius:13px;background:${_mutedFriends.has(userId) ? '#444' : '#2ecc71'};position:relative;transition:background 0.2s;flex-shrink:0;">
           <div style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(${_mutedFriends.has(userId) ? '0' : '18px'});"></div>
@@ -8888,7 +8888,7 @@ async function _openFriendActivity(userId, signalId) {
       if (knob) knob.style.transform = dbMuted ? 'translateX(0)' : 'translateX(18px)';
     }
     if (sub) {
-      sub.textContent = dbMuted ? "They won't be notified — they can still see your workouts" : "They'll know when you start a workout";
+      sub.textContent = dbMuted ? "Hidden — they won't see any of your workouts" : "They see your workouts and know when you start";
     }
   }
 
@@ -8976,7 +8976,7 @@ async function _toggleWorkoutMute(userId) {
     if (knob) knob.style.transform = willBeMuted ? 'translateX(0)' : 'translateX(18px)';
   }
   if (sub) {
-    sub.textContent = willBeMuted ? "They won't be notified — they can still see your workouts" : "They'll know when you start a workout";
+    sub.textContent = willBeMuted ? "Hidden — they won't see any of your workouts" : "They see your workouts and know when you start";
   }
 
   // ── Persist
@@ -9006,7 +9006,7 @@ async function _toggleWorkoutMute(userId) {
       if (knob) knob.style.transform = wasMuted ? 'translateX(0)' : 'translateX(18px)';
     }
     if (sub) {
-      sub.textContent = wasMuted ? "They won't be notified — they can still see your workouts" : "They'll know when you start a workout";
+      sub.textContent = wasMuted ? "Hidden — they won't see any of your workouts" : "They see your workouts and know when you start";
     }
     showToast("Couldn't update — try again");
     return;
