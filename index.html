@@ -4437,6 +4437,15 @@
     </div>
   </div>
 
+  <!-- Notification preferences (per-type + quiet hours) -->
+  <div class="settings-item" onclick="_openNotifPrefsSheet()" style="margin-top:2px;">
+    <div>
+      <div class="settings-label">Notifications</div>
+      <div class="settings-sub" id="notif-prefs-settings-sub">What you want to be pinged about</div>
+    </div>
+    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>
+
   <!-- Training Reminders -->
   <div class="settings-item" onclick="toggleTrainingReminders()" style="margin-top:2px;">
     <div>
@@ -7798,6 +7807,7 @@ async function _onSupabaseSignIn(user) {
     _updateSocialNotifyDot();
     _swStoreUserId(user.id);
     _requestNotificationPermission();
+    _loadNotifPrefs(); // eager load so settings sub-text is ready
     showToast("You're connected!");
     setTimeout(() => location.reload(), 1200);
   }
@@ -7958,6 +7968,7 @@ async function _checkSupabaseSession() {
       _updateSupabaseAuthCard();
       _swStoreUserId(session.user.id);
       _requestNotificationPermission();
+      _loadNotifPrefs(); // eager load so settings sub-text is ready
       _maybeHandlePendingNotifOpen();
       if (window._fcmToken) _saveFcmToken(window._fcmToken);
       // Refresh display name from DB so notifications show username not email
@@ -8851,7 +8862,8 @@ async function _sendFriendRequest(addresseeId, btn) {
         to_uid: addresseeId,
         title: fromName + ' wants to be your friend',
         body: 'Tap to accept or decline.',
-        avatar_url: state.supabaseAvatarUrl || null
+        avatar_url: state.supabaseAvatarUrl || null,
+        type: 'friend'
       })
     }).catch(function(e) { console.error('[friend-request-push] fetch failed:', e); });
   } catch (e) { console.error('[friend-request-push] exception:', e); }
@@ -8980,7 +8992,8 @@ async function _acceptFriendRequest(friendshipId, btn) {
           to_uid: fr.requester_id,
           title: fromName + ' accepted your friend request',
           body: "You're now training crew.",
-          avatar_url: state.supabaseAvatarUrl || null
+          avatar_url: state.supabaseAvatarUrl || null,
+          type: 'friend'
         })
       }).catch(function(e) { console.error('[friend-accept-push] fetch failed:', e); });
     } catch (e) { console.error('[friend-accept-push] exception:', e); }
@@ -9488,7 +9501,8 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
         to_uid: toUserId,
         title: fromName + ' reacted to your workout',
         body: 'They gave you a ' + _emoji,
-        avatar_url: state.supabaseAvatarUrl || null
+        avatar_url: state.supabaseAvatarUrl || null,
+        type: 'reaction'
       })
     }).catch(function(e) { console.error('[reaction-push] fetch failed:', e); });
   } catch (e) { console.error('[reaction-push] exception:', e); }
@@ -9577,7 +9591,8 @@ async function _sendWorkoutSignal(dayName) {
         displayName + ' is in the gym',
         'Go show some love.',
         signalId,
-        state.supabaseAvatarUrl || null
+        state.supabaseAvatarUrl || null,
+        'workout_start'
       );
     }, 0);
   } catch(e) {}
@@ -9604,7 +9619,8 @@ async function _completeWorkoutSignal() {
       displayName + ' finished',
       'They put in the work. Go show love.',
       signalId,
-      state.supabaseAvatarUrl || null
+      state.supabaseAvatarUrl || null,
+      'workout_complete'
     );
   } catch(e) {}
 }
@@ -9643,18 +9659,212 @@ async function _completeWorkoutSignal() {
 //   Uses state.supabaseDisplayName which is populated from the 'username' column
 //   in the public.users table on sign-in (not user.email — that was the original bug).
 // ──────────────────────────────────────────────────────────────────────────────
-async function _notifyFriends(title, body, signalId, avatarUrl) {
+async function _notifyFriends(title, body, signalId, avatarUrl, type) {
   if (!state.supabaseUserId) return;
   try {
     var _p = { uid: state.supabaseUserId, title: title, body: body };
     if (signalId) _p.sid = signalId;
     if (avatarUrl) _p.avatar_url = avatarUrl;
+    // `type` drives the recipient's per-type preference filter in the
+    // edge function. Defaults to 'workout_start' on the server side
+    // if omitted, so omitting still works for backwards compat.
+    if (type) _p.type = type;
     fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/bright-processor', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
       body: JSON.stringify(_p),
     }).catch(function(e) { console.error('[notify-friends] fetch failed:', e); });
   } catch(e) { console.error('[notify-friends] exception:', e); }
+}
+
+// ── Notification preferences (per-type + quiet hours) ─────────────────────
+// Stored in users.notif_prefs (JSONB) via migration 013. The edge function
+// reads them when fanning out pushes and filters recipients whose per-type
+// toggle is false or who are currently in their quiet-hours window.
+// Opt-out model: missing keys mean "notify".
+
+function _getDefaultNotifPrefs() {
+  let tz = 'UTC';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch(_) {}
+  return {
+    workout_start:    true,
+    workout_complete: true,
+    reaction:         true,
+    friend:           true,
+    quiet_enabled:    false,
+    quiet_start:      '22:00',
+    quiet_end:        '06:00',
+    timezone:         tz
+  };
+}
+
+async function _loadNotifPrefs() {
+  if (!state.supabaseUserId) return;
+  if (state.notifPrefs) return; // Already cached
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  try {
+    const { data } = await sb.from('users')
+      .select('notif_prefs')
+      .eq('id', state.supabaseUserId)
+      .single();
+    const dbPrefs = (data && data.notif_prefs) || {};
+    state.notifPrefs = Object.assign(_getDefaultNotifPrefs(), dbPrefs);
+    // Always make sure timezone is current (user may have traveled).
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz) state.notifPrefs.timezone = tz;
+    } catch (_) {}
+    saveState();
+    _updateNotifPrefsSettingsSub();
+  } catch (e) {
+    console.error('[notif-prefs] load failed:', e);
+    state.notifPrefs = _getDefaultNotifPrefs();
+    saveState();
+    _updateNotifPrefsSettingsSub();
+  }
+}
+
+async function _saveNotifPrefs(partial) {
+  if (!state.supabaseUserId) return;
+  const merged = Object.assign(
+    _getDefaultNotifPrefs(),
+    state.notifPrefs || {},
+    partial || {}
+  );
+  state.notifPrefs = merged;
+  saveState();
+  _updateNotifPrefsSettingsSub();
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  try {
+    const { error } = await sb.from('users')
+      .update({ notif_prefs: merged })
+      .eq('id', state.supabaseUserId);
+    if (error) console.error('[notif-prefs] save DB error:', error);
+  } catch (e) {
+    console.error('[notif-prefs] save exception:', e);
+  }
+}
+
+// Refresh the settings row's sub-text to summarize current prefs state.
+function _updateNotifPrefsSettingsSub() {
+  const sub = document.getElementById('notif-prefs-settings-sub');
+  if (!sub) return;
+  const p = state.notifPrefs || _getDefaultNotifPrefs();
+  const types = ['workout_start', 'workout_complete', 'reaction', 'friend'];
+  const onCount = types.filter(k => p[k] !== false).length;
+  const quietLabel = p.quiet_enabled
+    ? (p.quiet_start + '\u2013' + p.quiet_end)
+    : 'off';
+  sub.textContent = onCount + ' of 4 on \u00b7 Quiet ' + quietLabel;
+}
+
+// Open the notification preferences bottom sheet. Lazy-loads prefs
+// from the DB if they haven't been cached yet.
+async function _openNotifPrefsSheet() {
+  if (!state.supabaseUserId) {
+    showToast('Sign in to set notification preferences.');
+    return;
+  }
+  await _loadNotifPrefs();
+  const existing = document.getElementById('notif-prefs-sheet');
+  if (existing) existing.remove();
+
+  const p = state.notifPrefs || _getDefaultNotifPrefs();
+
+  const rows = [
+    { key: 'workout_start',    label: 'FRIEND STARTS A WORKOUT', sub: 'When a friend kicks off a session'      },
+    { key: 'workout_complete', label: 'FRIEND FINISHES A WORKOUT', sub: 'When a friend wraps one up'           },
+    { key: 'reaction',         label: 'REACTIONS TO MY WORKOUTS', sub: 'When someone reacts to your training' },
+    { key: 'friend',           label: 'FRIEND REQUESTS',          sub: 'New requests and acceptances'         }
+  ];
+
+  const renderToggle = (isOn) =>
+    '<div style="width:44px;height:26px;border-radius:13px;background:' + (isOn ? '#2ecc71' : '#444') + ';position:relative;transition:background 0.2s;flex-shrink:0;pointer-events:none;">'
+    + '<div style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(' + (isOn ? '18px' : '0') + ');"></div>'
+    + '</div>';
+
+  const typeRowsHtml = rows.map(r => {
+    const isOn = p[r.key] !== false;
+    return '<div onclick="_toggleNotifPref(\'' + r.key + '\')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--dark4);">'
+      + '<div style="flex:1;padding-right:14px;">'
+      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1.1;margin-bottom:2px;">' + r.label + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:0.5px;">' + r.sub + '</div>'
+      + '</div>'
+      + '<div id="notif-pref-toggle-' + r.key + '">' + renderToggle(isOn) + '</div>'
+      + '</div>';
+  }).join('');
+
+  const quietOn = p.quiet_enabled === true;
+
+  const sheet = document.createElement('div');
+  sheet.id = 'notif-prefs-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:88vh;overflow-y:auto;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:4px;">NOTIFY ME ABOUT</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Tap a toggle to mute that kind</div>
+      ${typeRowsHtml}
+      <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin:22px 0 4px;">QUIET HOURS</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Silence all pings during a time window</div>
+      <div onclick="_toggleNotifPref('quiet_enabled')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--dark4);">
+        <div style="flex:1;padding-right:14px;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;text-transform:uppercase;line-height:1.1;">ENABLE QUIET HOURS</div>
+        </div>
+        <div id="notif-pref-toggle-quiet_enabled">${renderToggle(quietOn)}</div>
+      </div>
+      <div id="notif-prefs-quiet-times" style="display:${quietOn ? 'flex' : 'none'};gap:10px;padding:14px 0 4px;">
+        <div style="flex:1;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">FROM</div>
+          <input type="time" value="${escapeHtml(p.quiet_start || '22:00')}" onchange="_setNotifQuietTime('quiet_start', this.value)" style="width:100%;box-sizing:border-box;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;color:var(--cream);padding:10px 12px;font-family:'Barlow',sans-serif;font-size:15px;outline:none;-webkit-appearance:none;">
+        </div>
+        <div style="flex:1;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">UNTIL</div>
+          <input type="time" value="${escapeHtml(p.quiet_end || '06:00')}" onchange="_setNotifQuietTime('quiet_end', this.value)" style="width:100%;box-sizing:border-box;background:var(--dark);border:1px solid var(--dark4);border-radius:10px;color:var(--cream);padding:10px 12px;font-family:'Barlow',sans-serif;font-size:15px;outline:none;-webkit-appearance:none;">
+        </div>
+      </div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:0.5px;margin-top:8px;">Timezone: ${escapeHtml(p.timezone || 'UTC')}</div>
+      <button onclick="document.getElementById('notif-prefs-sheet')?.remove()" style="width:100%;margin-top:24px;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DONE</button>
+    </div>`;
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+}
+
+// Flip a single pref toggle on/off + persist. Covers both the 4 type
+// toggles and the quiet_enabled toggle. Targeted DOM update on the
+// corresponding toggle element and (for quiet_enabled) show/hide
+// the time picker row.
+async function _toggleNotifPref(key) {
+  const p = state.notifPrefs || _getDefaultNotifPrefs();
+  const currentOn = p[key] !== false;
+  const nextOn = !currentOn;
+  // Optimistic: flip the visual immediately, then persist.
+  const toggleEl = document.getElementById('notif-pref-toggle-' + key);
+  if (toggleEl) {
+    toggleEl.innerHTML = '<div style="width:44px;height:26px;border-radius:13px;background:'
+      + (nextOn ? '#2ecc71' : '#444')
+      + ';position:relative;transition:background 0.2s;flex-shrink:0;pointer-events:none;">'
+      + '<div style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX('
+      + (nextOn ? '18px' : '0')
+      + ');"></div></div>';
+  }
+  if (key === 'quiet_enabled') {
+    const timesEl = document.getElementById('notif-prefs-quiet-times');
+    if (timesEl) timesEl.style.display = nextOn ? 'flex' : 'none';
+  }
+  const patch = {};
+  patch[key] = nextOn;
+  await _saveNotifPrefs(patch);
+}
+
+// Called by the time inputs in the quiet-hours section on change.
+async function _setNotifQuietTime(key, value) {
+  if (key !== 'quiet_start' && key !== 'quiet_end') return;
+  if (!value || !/^\d{2}:\d{2}$/.test(value)) return;
+  const patch = {};
+  patch[key] = value;
+  await _saveNotifPrefs(patch);
 }
 
 // ── Push Notifications (direct web push, no third-party SDK) ───────────────
