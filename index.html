@@ -8329,9 +8329,47 @@ const _recentReactionsCache = {};
 // to (a) skip the DB upsert when re-tapping the SAME reaction type
 // (no-op), (b) fire a push only when the type CHANGES, and (c) gate
 // rapid toggling between two types so each unique type only pushes once
-// per session per signal.
+// per signal.
 //   shape: { [signalId]: { current: 'fire' | null, pushed: Set<string> } }
+// Persisted to localStorage so the pushed-types history survives page
+// reloads — otherwise a user who reloads mid-session could re-fire
+// pushes for reaction types they already sent.
 const _signalReactionState = {};
+const _SIGNAL_RXN_STATE_KEY = 'ts-signal-rxn-state';
+
+function _saveSignalReactionState() {
+  try {
+    const serialized = {};
+    Object.keys(_signalReactionState).forEach(sid => {
+      const s = _signalReactionState[sid];
+      serialized[sid] = {
+        current: s.current,
+        pushed: Array.from(s.pushed || [])
+      };
+    });
+    localStorage.setItem(_SIGNAL_RXN_STATE_KEY, JSON.stringify(serialized));
+  } catch (e) {
+    console.error('[signal-rxn-state] save failed:', e);
+  }
+}
+
+function _loadSignalReactionState() {
+  try {
+    const raw = localStorage.getItem(_SIGNAL_RXN_STATE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    Object.keys(parsed || {}).forEach(sid => {
+      const s = parsed[sid];
+      if (!s) return;
+      _signalReactionState[sid] = {
+        current: s.current || null,
+        pushed: new Set(Array.isArray(s.pushed) ? s.pushed : [])
+      };
+    });
+  } catch (e) {
+    console.error('[signal-rxn-state] load failed:', e);
+  }
+}
 
 // SVG bell-off icon, used as a subtle "you've muted this friend from
 // your workout notifications" indicator next to the friend-row chevron.
@@ -8755,8 +8793,8 @@ async function _sendFriendRequest(addresseeId, btn) {
         body: 'Tap to accept or decline.',
         avatar_url: state.supabaseAvatarUrl || null
       })
-    }).catch(function() {});
-  } catch (_) {}
+    }).catch(function(e) { console.error('[friend-request-push] fetch failed:', e); });
+  } catch (e) { console.error('[friend-request-push] exception:', e); }
 
   showToast('Friend request sent');
 }
@@ -8838,6 +8876,15 @@ async function _acceptFriendRequest(friendshipId, btn) {
   const sb = _getSupabaseClient();
   if (!sb) return;
   if (btn) btn.disabled = true;
+
+  // Fetch the requester id before the update so we can notify them
+  // that their request was accepted. Done as a separate query because
+  // the update doesn't return columns by default.
+  const { data: fr } = await sb.from('friendships')
+    .select('requester_id')
+    .eq('id', friendshipId)
+    .single();
+
   const { error } = await sb.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId);
   if (error) {
     if (btn) btn.disabled = false;
@@ -8847,6 +8894,25 @@ async function _acceptFriendRequest(friendshipId, btn) {
   showToast("You're now connected");
   _renderFriendsSection();
   _updateSocialNotifyDot();
+
+  // Fire a push to the requester so they see the acceptance immediately
+  // instead of waiting on the 5-minute social-dot poll. Uses the to_uid
+  // direct-send path (mutes don't apply — this is a personal ping).
+  if (fr && fr.requester_id) {
+    try {
+      const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
+      fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/bright-processor', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
+        body: JSON.stringify({
+          to_uid: fr.requester_id,
+          title: fromName + ' accepted your friend request',
+          body: "You're now training crew.",
+          avatar_url: state.supabaseAvatarUrl || null
+        })
+      }).catch(function(e) { console.error('[friend-accept-push] fetch failed:', e); });
+    } catch (e) { console.error('[friend-accept-push] exception:', e); }
+  }
 }
 
 async function _declineFriendRequest(friendshipId, btn) {
@@ -9056,22 +9122,36 @@ async function _openFriendActivity(userId, signalId) {
 
   const reacted = {};
   // myRxns is the full list of the current user's reactions across all
-  // friends. Rebuild _signalReactionState from it so _sendReaction knows
-  // (a) the current persisted reaction type per signal (for the same-type
-  // skip) and (b) which types have already been pushed (for the per-type
-  // gate). The pushed Set is initialised with just the current type per
-  // signal — in-session push history is otherwise lost on sheet reopen,
-  // which is acceptable: re-sending a previously-tapped type after a
-  // reload is a tolerable edge case in exchange for keeping the state
-  // simple and DB-driven.
-  Object.keys(_signalReactionState).forEach(k => delete _signalReactionState[k]);
+  // friends. MERGE the DB state into _signalReactionState instead of
+  // clearing it — this preserves the `pushed` Set across sheet reopens
+  // and page reloads (via localStorage persistence), so the per-type
+  // push gate catches duplicates even after a reload. Prune entries
+  // for signals no longer in myRxns (deleted reactions).
+  const currentSignalIds = new Set();
   (myRxns || []).forEach(r => {
     reacted[r.signal_id] = r.reaction_type;
-    _signalReactionState[r.signal_id] = {
-      current: r.reaction_type,
-      pushed: new Set([r.reaction_type])
-    };
+    currentSignalIds.add(r.signal_id);
+    const existing = _signalReactionState[r.signal_id];
+    if (existing) {
+      existing.current = r.reaction_type;
+      // Ensure current type is in the pushed Set (it must have been
+      // pushed at some point if it's the persisted value in the DB).
+      existing.pushed.add(r.reaction_type);
+    } else {
+      _signalReactionState[r.signal_id] = {
+        current: r.reaction_type,
+        pushed: new Set([r.reaction_type])
+      };
+    }
   });
+  // Prune: drop state for signals whose reactions no longer exist in
+  // the DB (user deleted them via the Today's Reactions trash or ✕).
+  Object.keys(_signalReactionState).forEach(sid => {
+    if (!currentSignalIds.has(sid)) {
+      delete _signalReactionState[sid];
+    }
+  });
+  _saveSignalReactionState();
 
   const sigEl = document.getElementById('friend-activity-signals');
   if (!sigEl) return;
@@ -9288,6 +9368,7 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
     }
     // Persist the new current type so future taps know what's in the DB.
     signalState.current = reactionType;
+    _saveSignalReactionState();
   }
 
   // Pop animation on the selected button — celebratory feedback.
@@ -9315,10 +9396,12 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
   //      this session (so toggling 👍 → 🔥 → 👍 → 🔥 only fires twice,
   //      not four times).
   // After the gate, mark the type as pushed so future taps of the same
-  // type stay silent until the page reloads.
+  // type stay silent. Persisted to localStorage so the gate survives
+  // page reloads.
   if (isSameType) return;
   if (signalState.pushed.has(reactionType)) return;
   signalState.pushed.add(reactionType);
+  _saveSignalReactionState();
   try {
     const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
     const _rxnEmoji = {
@@ -9335,8 +9418,8 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
         body: 'They gave you a ' + _emoji,
         avatar_url: state.supabaseAvatarUrl || null
       })
-    }).catch(function() {});
-  } catch (e) {}
+    }).catch(function(e) { console.error('[reaction-push] fetch failed:', e); });
+  } catch (e) { console.error('[reaction-push] exception:', e); }
 }
 
 async function _updateLastActive() {
@@ -9498,8 +9581,8 @@ async function _notifyFriends(title, body, signalId, avatarUrl) {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
       body: JSON.stringify(_p),
-    }).catch(function() {});
-  } catch(e) {}
+    }).catch(function(e) { console.error('[notify-friends] fetch failed:', e); });
+  } catch(e) { console.error('[notify-friends] exception:', e); }
 }
 
 // ── Push Notifications (direct web push, no third-party SDK) ───────────────
@@ -25758,6 +25841,10 @@ function migratePeriodizationState() {
 let _obScrollListenerReady = false;
 try {
   loadState();
+  // Restore per-signal reaction push-gate state so the per-type push
+  // gate survives page reloads (otherwise a reload-then-retap of the
+  // same reaction type would re-fire a push that was already sent).
+  _loadSignalReactionState();
   _migrateEquipmentTags(); // ensure state.program has equipment tags even on old saves
   migrateSessionCount();
   migratePeriodizationState();
