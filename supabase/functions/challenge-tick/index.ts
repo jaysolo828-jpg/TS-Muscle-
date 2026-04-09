@@ -337,6 +337,189 @@ Deno.serve(async (req) => {
     report.errors.push({ phase: 'end', detail: String(e) });
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // D. CHAIN WEEKLY EVALUATION
+  //    For every active 'dont_break_chain' challenge, find the
+  //    week that just ended (Mon–Sun UTC) and evaluate whether
+  //    each joined participant hit their weekly_target.
+  //    Strict mode: ANY miss breaks the chain.
+  //    One-Strike mode: first miss is forgiven (forgiven_user_id
+  //    written to chain_weeks), second distinct week with a miss
+  //    breaks it. Results are written to chain_weeks (idempotent
+  //    via the UNIQUE constraint on challenge_id + week_number).
+  //    When the chain is broken, challenger.chain_broken_by_ids
+  //    is updated and status flips to 'completed'.
+  //    When the challenge's final week has been evaluated, also
+  //    flip to 'completed'.
+  // ─────────────────────────────────────────────────────────────
+  try {
+    const chainRes = await fetch(
+      `${sbUrl}/rest/v1/challenges?status=eq.active&challenge_type=eq.dont_break_chain&select=*,challenge_participants(*)`,
+      { headers }
+    );
+    if (!chainRes.ok) throw new Error('chain query failed: ' + await chainRes.text());
+    const chainChs: any[] = await chainRes.json();
+    report.chainWeeksEvaluated = 0;
+
+    for (const ch of chainChs) {
+      if (!ch.start_date) continue;
+      const startMs = new Date(ch.start_date).getTime();
+      const nowMs2 = Date.now();
+      const participants: any[] = ch.challenge_participants || [];
+      const joined = participants.filter((p: any) => p.status === 'joined');
+      const durationWeeks = ch.duration_weeks || 8;
+
+      // Determine which complete weeks (Mon 00:00 UTC → Sun 23:59 UTC) have
+      // ended since the challenge started but haven't been recorded yet.
+      // "Week 1" = first Mon on or after start_date.
+      // We evaluate in chronological order.
+      const startDate = new Date(ch.start_date);
+      // Find first Monday >= startDate
+      const startDay = startDate.getUTCDay(); // 0=Sun
+      const daysToMon = startDay === 0 ? 1 : (startDay === 1 ? 0 : 8 - startDay);
+      const firstMonMs = startMs + daysToMon * 86400000;
+
+      // Fetch already-evaluated weeks for this challenge
+      const evalRes = await fetch(
+        `${sbUrl}/rest/v1/chain_weeks?challenge_id=eq.${ch.id}&select=week_number,forgiven_user_id`,
+        { headers }
+      );
+      const evalledWeeks: any[] = evalRes.ok ? await evalRes.json() : [];
+      const evalledNums = new Set(evalledWeeks.map((w: any) => w.week_number));
+      const strikeUsed = evalledWeeks.some((w: any) => w.forgiven_user_id != null);
+
+      for (let wk = 1; wk <= durationWeeks; wk++) {
+        if (evalledNums.has(wk)) continue;
+        const weekStartMs = firstMonMs + (wk - 1) * 7 * 86400000;
+        const weekEndMs   = weekStartMs + 7 * 86400000;
+        // Only evaluate weeks that have fully ended
+        if (weekEndMs > nowMs2) break;
+
+        const weekStartIso = new Date(weekStartMs).toISOString();
+        const weekEndIso   = new Date(weekEndMs).toISOString();
+
+        // Fetch workout signals for each joined participant within this week
+        const userIds = joined.map((p: any) => p.user_id);
+        if (!userIds.length) break;
+
+        const sigRes = await fetch(
+          `${sbUrl}/rest/v1/workout_signals?user_id=in.(${userIds.map((u: string) => `"${u}"`).join(',')})&created_at=gte.${encodeURIComponent(weekStartIso)}&created_at=lt.${encodeURIComponent(weekEndIso)}&signal_type=in.("started","completed")&select=user_id,created_at`,
+          { headers }
+        );
+        const sigs: any[] = sigRes.ok ? await sigRes.json() : [];
+
+        // Count distinct session days per user
+        const sessionDaysByUser: Record<string, Set<string>> = {};
+        sigs.forEach((s: any) => {
+          if (!sessionDaysByUser[s.user_id]) sessionDaysByUser[s.user_id] = new Set();
+          // Day key: YYYY-MM-DD UTC
+          sessionDaysByUser[s.user_id].add(s.created_at.slice(0, 10));
+        });
+
+        // Identify missed users
+        const missedUserIds: string[] = [];
+        for (const p of joined) {
+          const done = (sessionDaysByUser[p.user_id] || new Set()).size;
+          const target = p.weekly_target || 3;
+          if (done < target) missedUserIds.push(p.user_id);
+        }
+
+        const chainSurvived = missedUserIds.length === 0
+          || (ch.chain_mode === 'one_strike' && !strikeUsed && missedUserIds.length > 0);
+        const forgivenUserId = (ch.chain_mode === 'one_strike' && !strikeUsed && missedUserIds.length > 0)
+          ? missedUserIds[0] : null;
+
+        // Insert chain_weeks row (idempotent — unique constraint on challenge_id+week_number)
+        const insRes = await fetch(
+          `${sbUrl}/rest/v1/chain_weeks`,
+          {
+            method: 'POST',
+            headers: { ...headers, 'Prefer': 'return=minimal,resolution=ignore-duplicates' },
+            body: JSON.stringify({
+              challenge_id: ch.id,
+              week_number: wk,
+              week_start: weekStartIso,
+              week_end: weekEndIso,
+              chain_survived: chainSurvived,
+              missed_user_ids: missedUserIds,
+              forgiven_user_id: forgivenUserId,
+            })
+          }
+        );
+        if (!insRes.ok) {
+          report.errors.push({ id: ch.id, phase: 'chain-week-insert', wk, detail: await insRes.text() });
+          continue;
+        }
+
+        // Update weeks_hit / weeks_total for each joined participant
+        for (const p of joined) {
+          const done = (sessionDaysByUser[p.user_id] || new Set()).size;
+          const target = p.weekly_target || 3;
+          const hit = done >= target;
+          await fetch(
+            `${sbUrl}/rest/v1/challenge_participants?challenge_id=eq.${ch.id}&user_id=eq.${p.user_id}`,
+            {
+              method: 'PATCH',
+              headers: { ...headers, 'Prefer': 'return=minimal' },
+              body: JSON.stringify({ weeks_total: (p.weeks_total || 0) + 1, weeks_hit: (p.weeks_hit || 0) + (hit ? 1 : 0) })
+            }
+          );
+        }
+
+        report.chainWeeksEvaluated++;
+
+        // Push notifications for week outcome
+        if (!chainSurvived) {
+          // Chain broken — notify everyone
+          for (const p of joined) {
+            await firePush(p.user_id, 'The chain is broken', 'Someone missed their weekly target. The streak is over.', ch.id);
+          }
+          // Update chain_broken_by_ids and flip to completed
+          const brokenPatch = await fetch(
+            `${sbUrl}/rest/v1/challenges?id=eq.${ch.id}`,
+            {
+              method: 'PATCH',
+              headers: { ...headers, 'Prefer': 'return=minimal' },
+              body: JSON.stringify({ chain_broken_by_ids: missedUserIds, status: 'completed' })
+            }
+          );
+          if (!brokenPatch.ok) report.errors.push({ id: ch.id, phase: 'chain-broken-patch', detail: await brokenPatch.text() });
+          report.completed++;
+          break; // no need to evaluate further weeks
+        } else if (forgivenUserId) {
+          // Strike used — warn the group
+          for (const p of joined) {
+            await firePush(p.user_id, 'Close call \u2014 strike used', 'Someone missed their target this week. One strike has been used. No more misses.', ch.id);
+          }
+        } else {
+          // All good this week
+          for (const p of joined) {
+            await firePush(p.user_id, 'Week ' + wk + ' complete \u2714', 'Everyone hit their target. Keep the chain alive.', ch.id);
+          }
+        }
+
+        // If this was the final week and chain survived, complete the challenge
+        if (wk === durationWeeks && chainSurvived) {
+          const donePatch = await fetch(
+            `${sbUrl}/rest/v1/challenges?id=eq.${ch.id}`,
+            {
+              method: 'PATCH',
+              headers: { ...headers, 'Prefer': 'return=minimal' },
+              body: JSON.stringify({ status: 'completed' })
+            }
+          );
+          if (!donePatch.ok) report.errors.push({ id: ch.id, phase: 'chain-complete-patch', detail: await donePatch.text() });
+          for (const p of joined) {
+            await firePush(p.user_id, '\uD83C\uDF89 Chain survived!', 'You all did it. The chain held for ' + durationWeeks + ' weeks.', ch.id);
+          }
+          report.completed++;
+        }
+      }
+    }
+  } catch (e) {
+    report.errors.push({ phase: 'chain', detail: String(e) });
+  }
+
   return new Response(JSON.stringify({ ok: true, ...report }), {
     headers: { ...CORS, 'content-type': 'application/json' }
   });
