@@ -520,6 +520,77 @@ Deno.serve(async (req) => {
     report.errors.push({ phase: 'chain', detail: String(e) });
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // E. CHAIN AT-RISK ALERTS
+  //    On Wednesday UTC (mid-week), fire a push to any joined
+  //    participant who is behind their weekly session target.
+  //    Message: "You need X more sessions before Sunday."
+  //    Only fires on Wednesday so each member gets at most one
+  //    alert per week on a daily cron schedule.
+  // ─────────────────────────────────────────────────────────────
+  try {
+    const nowDate = new Date();
+    const isWednesday = nowDate.getUTCDay() === 3;
+    if (isWednesday) {
+      const atRiskRes = await fetch(
+        `${sbUrl}/rest/v1/challenges?status=eq.active&challenge_type=eq.dont_break_chain&select=*,challenge_participants(*)`,
+        { headers }
+      );
+      if (atRiskRes.ok) {
+        const atRiskChs: any[] = await atRiskRes.json();
+        report.atRiskAlerts = 0;
+
+        for (const ch of atRiskChs) {
+          if (!ch.start_date) continue;
+          const participants: any[] = ch.challenge_participants || [];
+          const joined = participants.filter((p: any) => p.status === 'joined');
+          if (!joined.length) continue;
+
+          // Current week bounds (Mon 00:00 UTC to now)
+          const now2 = new Date();
+          const dow = now2.getUTCDay(); // 0=Sun, 1=Mon ... 3=Wed
+          const daysSinceMon = dow === 0 ? 6 : dow - 1;
+          const weekStartMs = now2.getTime() - daysSinceMon * 86400000;
+          const weekStartDate = new Date(weekStartMs);
+          weekStartDate.setUTCHours(0, 0, 0, 0);
+          const weekStartIso = weekStartDate.toISOString();
+
+          const userIds = joined.map((p: any) => p.user_id);
+          const sigRes = await fetch(
+            `${sbUrl}/rest/v1/workout_signals?user_id=in.(${userIds.map((u: string) => `"${u}"`).join(',')})&created_at=gte.${encodeURIComponent(weekStartIso)}&signal_type=in.("started","completed")&select=user_id,created_at`,
+            { headers }
+          );
+          const sigs: any[] = sigRes.ok ? await sigRes.json() : [];
+
+          const sessionDaysByUser: Record<string, Set<string>> = {};
+          sigs.forEach((s: any) => {
+            if (!sessionDaysByUser[s.user_id]) sessionDaysByUser[s.user_id] = new Set();
+            sessionDaysByUser[s.user_id].add(s.created_at.slice(0, 10));
+          });
+
+          for (const p of joined) {
+            const done = (sessionDaysByUser[p.user_id] || new Set()).size;
+            const target = p.weekly_target || 3;
+            if (done >= target) continue; // on track, no alert
+            const needed = target - done;
+            // Days left in week: Wed=3, so Sun=0 means 4 days left (Thu/Fri/Sat/Sun)
+            const daysLeft = 7 - (dow === 0 ? 7 : dow); // days until end of Sunday
+            const pushErr = await firePush(
+              p.user_id,
+              'At risk \u2014 don\u2019t break the chain',
+              'You need ' + needed + ' more ' + (needed === 1 ? 'session' : 'sessions') + ' before Sunday to keep the chain alive.',
+              ch.id
+            );
+            if (pushErr) report.errors.push({ phase: 'at-risk', uid: p.user_id, detail: pushErr });
+            else report.atRiskAlerts++;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    report.errors.push({ phase: 'at-risk', detail: String(e) });
+  }
+
   return new Response(JSON.stringify({ ok: true, ...report }), {
     headers: { ...CORS, 'content-type': 'application/json' }
   });
