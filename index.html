@@ -8468,14 +8468,14 @@ async function _renderFriendsSection() {
     </div>
 
     <div id="challenges-section" style="margin-bottom:14px;">
-      <div onclick="_openChallengePicker()" style="background:#181818;border:1px solid rgba(59,130,246,0.22);border-top:2px solid #3B82F6;border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <div onclick="_openChallengePicker()" style="background:#181818;border:1px solid rgba(255,255,255,0.1);border-top:2px solid var(--cream);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
           <div style="min-width:0;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:#3B82F6;letter-spacing:2px;line-height:1;">CHALLENGES</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:2px;line-height:1;">CHALLENGES</div>
             <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:1.8px;line-height:1.1;margin-top:3px;">START A CHALLENGE</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">1RM &nbsp;&middot;&nbsp; Don&apos;t Break the Chain</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Tap to choose a challenge type</div>
           </div>
-          <div style="font-size:22px;color:rgba(59,130,246,0.45);flex-shrink:0;line-height:1;">&rsaquo;</div>
+          <div style="font-size:22px;color:rgba(255,255,255,0.25);flex-shrink:0;line-height:1;">&rsaquo;</div>
         </div>
       </div>
       <div id="challenges-list"></div>
@@ -12387,7 +12387,7 @@ async function _submitNewChainChallenge() {
       });
       _sendDirectPush(friendIds[i], fromName + ' invited you to a challenge', "Don\u2019t Break the Chain \u2014 " + (d.durationWeeks || 8) + " weeks, " + (d.weeklyTarget || 3) + " sessions/wk.", 'challenge', cId);
     }
-    document.getElementById('chain-create-sheet')?.remove();
+    document.getElementById('challenge-create-sheet')?.remove();
     document.getElementById('challenge-picker-sheet')?.remove();
     _challengeDraft = null;
     showToast('Challenge launched!');
