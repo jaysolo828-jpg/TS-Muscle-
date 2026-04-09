@@ -10523,10 +10523,10 @@ function _openChallengeIntroSheet(type, onContinue) {
         b: 'Strict: any miss breaks it immediately. One Strike: each member can be forgiven once for the whole challenge. Use it wisely.' },
       { h: 'WATCH THE DOT GRID',
         b: 'Every training day lights up as your color dot on a shared grid. You can see at a glance who\u2019s on track and who needs to show up.' },
-      { h: 'PACE STATUS',
-        b: 'The detail sheet shows every member\u2019s current week pace \u2014 ahead, on track, one behind, or falling behind \u2014 at a glance.' },
-      { h: 'HISTORY LOCKS WHILE ACTIVE',
-        b: 'You can\u2019t delete past workouts while a chain challenge is running. Keeps the dot grid honest. Unlocks the moment it ends.' }
+      { h: 'AT RISK ALERTS',
+        b: 'When a member is behind pace, the detail sheet flags it \u2014 \u201cNeeds 2 more sessions in 3 days\u201d \u2014 so the group can hold each other accountable.' },
+      { h: 'RUN IT BACK',
+        b: 'Chain broke or survived? Tap Run It Back on the result screen to instantly re-challenge the same crew with the same settings.' }
     ];
   }
 
@@ -12570,11 +12570,22 @@ async function _renderChainDetailBody(ch) {
       const wt = p.weekly_target || 3;
       const pace = ch.status === 'active' ? _chainPaceStatus(weekDone, wt, dow) : null;
       const isMe = uid === state.supabaseUserId;
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">'
+      const daysLeftInWeek = Math.max(0, 7 - dow);
+      const needed = Math.max(0, wt - weekDone);
+      let alertLine = '';
+      if (pace && (pace.label === 'ONE BEHIND' || pace.label === 'FALLING BEHIND')) {
+        alertLine = daysLeftInWeek > 0
+          ? 'Needs ' + needed + ' more ' + (needed === 1 ? 'session' : 'sessions') + ' in ' + daysLeftInWeek + ' ' + (daysLeftInWeek === 1 ? 'day' : 'days')
+          : 'Missed target this week';
+      }
+      return '<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">'
+        + '<div style="display:flex;align-items:center;gap:10px;">'
         + '<div style="width:10px;height:10px;border-radius:50%;background:' + color + ';flex-shrink:0;"></div>'
         + '<div style="flex:1;min-width:0;"><div style="font-size:13px;color:var(--cream);font-weight:600;">' + name + (isMe ? ' (you)' : '') + '</div>'
         + '<div style="font-size:11px;color:var(--gray);">' + weekDone + ' / ' + wt + ' this week</div></div>'
         + (pace ? '<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:' + pace.color + ';white-space:nowrap;">' + pace.label + '</div>' : '')
+        + '</div>'
+        + (alertLine ? '<div style="font-size:11px;color:#E74C3C;margin-top:4px;margin-left:20px;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:0.3px;">\u26a0\ufe0f ' + alertLine + '</div>' : '')
         + '</div>';
     }).join('');
     const chainBroken = ch.chain_broken_by_ids && ch.chain_broken_by_ids.length > 0;
@@ -12606,6 +12617,13 @@ async function _renderChainDetailBody(ch) {
           : '<div style="font-size:12px;color:var(--gray);text-align:center;margin-top:12px;">Waiting for at least 1 friend to accept before you can start.</div>')
           + '<button onclick="_confirmCancelChallenge(\'' + ch.id + '\')" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--gray);font-family:\'Bebas Neue\',cursive;font-size:16px;letter-spacing:2px;padding:12px;border-radius:10px;cursor:pointer;">CANCEL</button>';
       }
+    } else if (ch.status === 'completed') {
+      const chainBrokenForBtn = ch.chain_broken_by_ids && ch.chain_broken_by_ids.length > 0;
+      const resultMsg = chainBrokenForBtn ? 'Chain broke. Run it with the same crew?' : 'Chain survived! Keep the streak going?';
+      actionHtml = '<div style="margin-top:16px;background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.15);border-radius:12px;padding:14px;text-align:center;">'
+        + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-bottom:12px;">' + resultMsg + '</div>'
+        + '<button onclick="_runItBack(\'' + ch.id + '\')" style="width:100%;background:#3B82F6;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">RUN IT BACK</button>'
+        + '</div>';
     }
     const invitedRows = participants.filter(p => p.status === 'invited').map(p => {
       const name = nameById[p.user_id] || 'Friend';
@@ -12753,6 +12771,34 @@ function _pastChainRowHtml(c) {
     + '<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:' + resultColor + ';">' + resultLabel + '</div>'
     + '</div>'
     + '</div>';
+}
+
+function _runItBack(challengeId) {
+  if (!state.supabaseUserId) return;
+  const ch = (_challenges || []).find(c => c.id === challengeId);
+  if (!ch) { showToast('Challenge not found.'); return; }
+  const myRow = (ch.challenge_participants || []).find(p => p.user_id === state.supabaseUserId);
+  // Re-invite everyone who was joined or left (they were real participants), excluding creator
+  const prevFriendIds = (ch.challenge_participants || [])
+    .filter(p => (p.status === 'joined' || p.status === 'left') && p.user_id !== state.supabaseUserId)
+    .map(p => p.user_id);
+  _challengeDraft = {
+    mode: 'chain',
+    step: 'confirm',
+    friendIds: prevFriendIds,
+    chainMode: ch.chain_mode || 'strict',
+    durationWeeks: ch.duration_weeks || 8,
+    weeklyTarget: myRow ? (myRow.weekly_target || 3) : 3,
+  };
+  const existing = document.getElementById('challenge-create-sheet');
+  if (existing) existing.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'challenge-create-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = '<div id="challenge-create-inner" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:22px 20px calc(28px + env(safe-area-inset-bottom));border-top:2px solid #3B82F6;max-height:92vh;overflow-y:auto;"></div>';
+  sheet.addEventListener('click', e => { if (e.target === sheet) _closeChallengeCreateSheet(); });
+  document.body.appendChild(sheet);
+  _renderChainCreateStep();
 }
 
 async function _submitChallengeLog(challengeId) {
