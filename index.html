@@ -12313,8 +12313,8 @@ function _onChainTargetContinue() {
 function _chainCreateConfirmHtml() {
   const d = _challengeDraft || {};
   const friendNames = (d.friendIds || []).map(id => {
-    const f = (_friendsList || []).find(x => x.id === id);
-    return f ? (f.username || f.display_name || 'Friend') : 'Friend';
+    const f = _friendCache[id] || {};
+    return f.username || f.display_name || 'Friend';
   });
   const modeLabel = d.chainMode === 'one_strike' ? 'One Strike' : 'Strict';
   const modeDesc = d.chainMode === 'one_strike'
