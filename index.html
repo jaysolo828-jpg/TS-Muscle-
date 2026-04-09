@@ -10482,42 +10482,47 @@ function _openChallengeIntroSheet(type, onContinue) {
   if (type === 'one_rep_max') {
     title = '1 REP MAX CHALLENGE';
     bullets = [
-      { h: 'CREATOR PICKS THE LIFT',
-        b: "Whoever starts the challenge picks one lift — bench, squat, curls, whatever. Everyone they invite trains that same lift for the window." },
-      { h: 'UP TO 4 PEOPLE',
-        b: "You can invite up to 3 friends per challenge, so you and your crew can all go at the same goal together." },
-      { h: 'FIVE WEEKS ON THE CLOCK',
-        b: "Default window is 5 weeks. You can set it anywhere from 4 to 6. After you send, you get a 48-hour grace period to collect invites before it auto-starts." },
+      { h: 'ONE LIFT, UP TO 4 PEOPLE',
+        b: 'Pick a lift and invite up to 3 friends. Everyone trains that same lift for the whole window.' },
+      { h: '4, 5, OR 6 WEEKS',
+        b: 'Pick your window when you create. The clock starts when you hit START — or auto-starts 48 hours after you send if you haven\u2019t yet.' },
       { h: 'PERCENT WINS, NOT POUNDS',
-        b: "Scoring is percentage improvement — not raw weight. That way a 135 lb bench can beat a 315 lb bench if you grew more. Fair fight across any strength level." },
+        b: 'Scoring is percent improvement on an Epley-estimated 1 rep max. A 135 lb bench can beat a 315 lb bench if you grew more. Fair at any strength level.' },
       { h: 'LOG YOUR BEST SET',
-        b: "Each of you logs your top set during the window. We run it through Epley to estimate your 1 rep max. Highest percent gain wins." },
-      { h: 'CONSENT IS THE POINT',
-        b: "Your numbers stay yours. Sending reveals YOUR baseline. Accepting reveals YOURS. Decline and nothing is shared." },
-      { h: 'HISTORY IS LOCKED',
-        b: "While a challenge is active, you can't delete past workouts. Keeps everyone honest. Unlocks the second the challenge ends or is cancelled." }
+        b: 'Log your top set any time during the window. Only a higher estimate replaces your previous best. Highest percent gain wins.' },
+      { h: 'YOUR NUMBERS STAY YOURS',
+        b: 'Sending the invite reveals YOUR baseline. Accepting reveals YOURS. Decline and nothing is shared either way.' },
+      { h: 'HISTORY LOCKS WHILE ACTIVE',
+        b: 'You can\u2019t delete past workouts while a challenge is running. Keeps everyone honest. Unlocks the moment it ends.' }
     ];
   }
 
   const bulletsHtml = bullets.map(item =>
-    '<div style="margin-bottom:14px;">'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:16px;color:#C0392B;letter-spacing:1.5px;margin-bottom:3px;">' + escapeHtml(item.h) + '</div>'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);line-height:1.4;">' + escapeHtml(item.b) + '</div>'
+    '<div style="margin-bottom:16px;">'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:15px;color:#C0392B;letter-spacing:1.8px;margin-bottom:4px;line-height:1.1;">' + escapeHtml(item.h) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);line-height:1.5;">' + escapeHtml(item.b) + '</div>'
     + '</div>'
   ).join('');
 
   const sheet = document.createElement('div');
   sheet.id = 'challenge-intro-sheet';
   sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
-  const buttonLabel = onContinue ? 'GOT IT — LET\u2019S GO' : 'CLOSE';
-  sheet.innerHTML = '<div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:88vh;overflow-y:auto;">'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:4px;">HOW IT WORKS</div>'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:18px;">' + escapeHtml(title) + '</div>'
+  const buttonLabel = onContinue ? 'GOT IT \u2014 LET\u2019S GO' : 'CLOSE';
+  sheet.innerHTML = '<div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 24px calc(28px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:88vh;overflow-y:auto;">'
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;">'
+    + '<div style="min-width:0;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.8px;text-transform:uppercase;line-height:1;">' + escapeHtml(title) + '</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:28px;color:var(--cream);letter-spacing:2px;line-height:1.05;margin-top:4px;">HOW IT WORKS</div>'
+    + '</div>'
+    + '<button id="challenge-intro-close" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
+    + '</div>'
     + bulletsHtml
-    + '<button id="challenge-intro-cta" style="width:100%;margin-top:12px;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' + escapeHtml(buttonLabel) + '</button>'
+    + '<button id="challenge-intro-cta" style="width:100%;margin-top:8px;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' + escapeHtml(buttonLabel) + '</button>'
     + '</div>';
   sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
   document.body.appendChild(sheet);
+  const closeBtn = document.getElementById('challenge-intro-close');
+  if (closeBtn) closeBtn.onclick = function() { sheet.remove(); };
   const cta = document.getElementById('challenge-intro-cta');
   if (cta) {
     cta.onclick = function() {
