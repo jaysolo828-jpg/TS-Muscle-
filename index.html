@@ -12387,7 +12387,7 @@ async function _submitNewChainChallenge() {
       });
       _sendDirectPush(friendIds[i], fromName + ' invited you to a challenge', "Don\u2019t Break the Chain \u2014 " + (d.durationWeeks || 8) + " weeks, " + (d.weeklyTarget || 3) + " sessions/wk.", 'challenge', cId);
     }
-    document.getElementById('chain-create-sheet')?.remove();
+    document.getElementById('challenge-create-sheet')?.remove();
     document.getElementById('challenge-picker-sheet')?.remove();
     _challengeDraft = null;
     showToast('Challenge launched!');
