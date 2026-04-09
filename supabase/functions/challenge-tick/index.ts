@@ -287,18 +287,48 @@ Deno.serve(async (req) => {
       if (!upd.ok) { report.errors.push({ id: ch.id, phase: 'end', detail: await upd.text() }); continue; }
       report.completed++;
 
+      // Resolve lift name for notifications. Pull from the creator's
+      // participant row; fall back to any participant that has one set.
+      const legacyLabels: Record<string, string> = {
+        squat: 'Back Squat', bench: 'Bench Press',
+        deadlift: 'Deadlift', ohp: 'Overhead Press'
+      };
+      const creatorPart = parts.find((p: any) => p.user_id === ch.challenger_id);
+      const rawLift = (creatorPart && creatorPart.exercise_name) || '';
+      const liftName = legacyLabels[rawLift] || rawLift || 'challenge';
+
       if (tied) {
         for (const s of scored) {
           await firePush(s.user_id, 'Challenge ended in a tie', 'Nobody pulled ahead. Run it back?', ch.id);
         }
       } else {
+        // Pre-fetch display names for all scored participants.
+        const nameById: Record<string, string> = {};
+        await Promise.all(scored.map(async s => {
+          const u = await fetchUser(s.user_id);
+          nameById[s.user_id] = labelFor(u);
+        }));
+        const winnerName = nameById[winnerId!] || 'Someone';
+
         for (const s of scored) {
           if (s.user_id === winnerId) {
-            await firePush(s.user_id, 'You won the challenge', `You finished at ${top.pct.toFixed(1)}% improvement.`, ch.id);
+            // Winner — list everyone they beat.
+            const beaten = scored
+              .filter(x => x.user_id !== winnerId)
+              .map(x => nameById[x.user_id] || 'Someone');
+            let beatLine = '';
+            if (beaten.length === 1) {
+              beatLine = 'You beat ' + beaten[0] + '.';
+            } else if (beaten.length >= 2) {
+              beatLine = 'You beat ' + beaten.slice(0, -1).join(', ') + ' and ' + beaten[beaten.length - 1] + '.';
+            }
+            await firePush(s.user_id, '\uD83E\uDD47 You won the ' + liftName + ' challenge', beatLine, ch.id);
           } else if (s.status === 'left') {
-            await firePush(s.user_id, 'Challenge ended', 'You quit this one. Another challenge is waiting whenever you are.', ch.id);
+            await firePush(s.user_id, liftName + ' challenge ended', 'You quit this one. ' + winnerName + ' took the win.', ch.id);
           } else {
-            await firePush(s.user_id, 'Challenge ended', 'Your challenge wrapped. Open the app to see the result.', ch.id);
+            // Loss — show the margin so it feels meaningful.
+            const margin = (top.pct - s.pct).toFixed(1);
+            await firePush(s.user_id, liftName + ' challenge complete', winnerName + ' won by ' + margin + '%. You finished at ' + s.pct.toFixed(1) + '%.', ch.id);
           }
         }
       }

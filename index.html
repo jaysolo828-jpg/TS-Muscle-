@@ -1793,6 +1793,17 @@
   70%  { transform: scale(1.8); opacity: 0; }
   100% { transform: scale(0.8); opacity: 0; }
 }
+@keyframes ch-win-shimmer {
+  from { background-position: -200% center; }
+  to   { background-position: 250% center; }
+}
+.ch-win-row {
+  background-color: rgba(212,168,67,0.06);
+  background-image: linear-gradient(90deg, transparent 0%, rgba(212,168,67,0.22) 50%, transparent 100%);
+  background-size: 300% 100%;
+  background-position: -200% center;
+  animation: ch-win-shimmer 1.0s ease-out 0.2s 1 forwards;
+}
 
 @keyframes slideUp {
     from { transform: translateY(100%); }
@@ -10554,11 +10565,80 @@ function _renderChallengesListHtml() {
   const list = document.getElementById('challenges-list');
   if (!list) return;
   const rows = (_challenges || []).filter(c => c.status === 'pending' || c.status === 'active');
-  if (!rows.length) {
+  const past = (_challenges || []).filter(c => c.status === 'completed');
+
+  if (!rows.length && !past.length) {
     list.innerHTML = '<div style="padding:6px 0 8px;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.5px;line-height:1.4;">No challenges yet. Tap the button below to throw down.</div>';
     return;
   }
+
   list.innerHTML = rows.map(c => _challengeRowHtml(c)).join('');
+
+  if (past.length) {
+    const wrapDiv = document.createElement('div');
+    wrapDiv.style.marginTop = rows.length ? '10px' : '0';
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.style.cssText = 'width:100%;padding:9px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--gray);border-radius:9px;font-family:"Barlow Condensed",sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;';
+    toggleBtn.textContent = '\u25be  PAST CHALLENGES (' + past.length + ')';
+
+    const pastList = document.createElement('div');
+    pastList.style.display = 'none';
+    pastList.style.marginTop = '6px';
+    pastList.innerHTML = past.map(c => _pastChallengeRowHtml(c)).join('');
+
+    toggleBtn.onclick = function() {
+      const isOpen = pastList.style.display !== 'none';
+      pastList.style.display = isOpen ? 'none' : 'block';
+      toggleBtn.textContent = (isOpen ? '\u25be' : '\u25b4') + '  PAST CHALLENGES (' + past.length + ')';
+    };
+
+    wrapDiv.appendChild(toggleBtn);
+    wrapDiv.appendChild(pastList);
+    list.appendChild(wrapDiv);
+  }
+}
+
+// One row for a completed challenge in the PAST CHALLENGES section.
+// Gold border + text for wins, muted purple for losses, neutral for ties.
+function _pastChallengeRowHtml(c) {
+  const me = _myParticipantRow(c);
+  const creatorRow = (c.participants || []).find(p => p.user_id === c.challenger_id);
+  const liftSrc = (creatorRow && creatorRow.exercise_name) || (me && me.exercise_name) || '';
+  const liftLabel = _challengeExerciseLabel(liftSrc) || '\u2014';
+  const isWin = c.winner_id === state.supabaseUserId;
+  const isTie = !c.winner_id;
+
+  let sub = '';
+  if (isWin) {
+    const beaten = (c.participants || [])
+      .filter(p => p.user_id !== state.supabaseUserId && (p.status === 'joined' || p.status === 'left'))
+      .map(p => _opponentLabel(p.user_id));
+    if (beaten.length === 1) sub = 'Beat ' + beaten[0];
+    else if (beaten.length >= 2) sub = 'Beat ' + beaten.slice(0, -1).join(', ') + ' & ' + beaten[beaten.length - 1];
+    else sub = 'You won';
+  } else if (isTie) {
+    sub = 'Ended in a tie';
+  } else {
+    sub = _opponentLabel(c.winner_id) + ' won';
+  }
+
+  const borderColor = isWin ? 'rgba(212,168,67,0.5)' : isTie ? 'rgba(255,255,255,0.1)' : 'rgba(123,111,160,0.4)';
+  const liftColor   = isWin ? '#D4A843'               : isTie ? 'var(--gray-light)'     : '#7B6FA0';
+  const chipBg      = isWin ? 'rgba(212,168,67,0.18)' : isTie ? 'rgba(255,255,255,0.08)': 'rgba(123,111,160,0.18)';
+  const chipColor   = isWin ? '#D4A843'               : isTie ? 'var(--gray)'           : '#7B6FA0';
+  const chipText    = isWin ? '🥇 WIN'                : isTie ? 'TIE'                   : 'LOSS';
+  const winClass    = isWin ? ' ch-win-row' : '';
+  const inlineBg    = isWin ? '' : 'background:' + (isTie ? 'rgba(255,255,255,0.03)' : 'rgba(123,111,160,0.07)') + ';';
+
+  return '<div class="' + winClass.trim() + '" onclick="_openChallengeDetailSheet(\'' + c.id + '\')" '
+    + 'style="display:flex;align-items:center;justify-content:space-between;padding:11px 13px;' + inlineBg + 'border:1px solid ' + borderColor + ';border-radius:9px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;gap:10px;">'
+    + '<div style="min-width:0;flex:1;">'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:14px;color:' + liftColor + ';letter-spacing:1.2px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">1RM \u00b7 ' + escapeHtml(liftLabel) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(sub) + '</div>'
+    + '</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:11px;letter-spacing:1.2px;background:' + chipBg + ';color:' + chipColor + ';padding:4px 9px;border-radius:6px;flex-shrink:0;">' + chipText + '</div>'
+    + '</div>';
 }
 
 // One row in the CHALLENGES list inside the social modal. Under
@@ -23323,6 +23403,96 @@ function renderHistory() {
     ));
   }
   container.appendChild(lifetimeCard);
+
+  // ── CHALLENGE RECORD ──────────────────────────────────────
+  {
+    const completedChs = (_challenges || []).filter(c => {
+      if (c.status !== 'completed') return false;
+      const me = (c.participants || []).find(p => p.user_id === state.supabaseUserId);
+      return !!me && (me.status === 'joined' || me.status === 'left');
+    });
+    if (completedChs.length > 0) {
+      const chWins   = completedChs.filter(c => c.winner_id === state.supabaseUserId).length;
+      const chLosses = completedChs.filter(c => c.winner_id && c.winner_id !== state.supabaseUserId).length;
+      const chTies   = completedChs.filter(c => !c.winner_id).length;
+
+      container.appendChild(mkLabel('CHALLENGE RECORD'));
+      const chRecCard = mkCard(16);
+
+      // W / L / T summary row
+      let wltHtml = '<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">';
+      wltHtml += '<div style="text-align:center;min-width:36px;">'
+        + '<div style="font-family:\'Bebas Neue\',cursive;font-size:28px;color:#D4A843;line-height:1;">' + chWins + '</div>'
+        + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1.5px;">WIN' + (chWins !== 1 ? 'S' : '') + '</div>'
+        + '</div>';
+      wltHtml += '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:rgba(255,255,255,0.18);">-</div>';
+      wltHtml += '<div style="text-align:center;min-width:36px;">'
+        + '<div style="font-family:\'Bebas Neue\',cursive;font-size:28px;color:#7B6FA0;line-height:1;">' + chLosses + '</div>'
+        + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1.5px;">LOSS' + (chLosses !== 1 ? 'ES' : '') + '</div>'
+        + '</div>';
+      if (chTies > 0) {
+        wltHtml += '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:rgba(255,255,255,0.18);">-</div>';
+        wltHtml += '<div style="text-align:center;min-width:36px;">'
+          + '<div style="font-family:\'Bebas Neue\',cursive;font-size:28px;color:var(--gray);line-height:1;">' + chTies + '</div>'
+          + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1.5px;">TIE' + (chTies !== 1 ? 'S' : '') + '</div>'
+          + '</div>';
+      }
+      // 1RM pill — right side
+      wltHtml += '<div style="margin-left:auto;font-family:\'Bebas Neue\',cursive;font-size:10px;letter-spacing:2px;color:#C0392B;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.3);padding:4px 8px;border-radius:5px;">1RM</div>';
+      wltHtml += '</div>';
+
+      // Per-challenge rows
+      let rowsHtml = '';
+      for (const ch of completedChs) {
+        const me = (ch.participants || []).find(p => p.user_id === state.supabaseUserId);
+        const creatorPart = (ch.participants || []).find(p => p.user_id === ch.challenger_id);
+        const liftSrc = (creatorPart && creatorPart.exercise_name) || (me && me.exercise_name) || '';
+        const liftLabel = _challengeExerciseLabel(liftSrc) || '\u2014';
+        const myPct = me ? _improvementPct(me.baseline_e1rm, me.final_e1rm) : 0;
+        const isWin = ch.winner_id === state.supabaseUserId;
+        const isTie = !ch.winner_id;
+
+        // Build result sub-line
+        let sub = '';
+        if (isWin) {
+          const beaten = (ch.participants || [])
+            .filter(p => p.user_id !== state.supabaseUserId && (p.status === 'joined' || p.status === 'left'))
+            .map(p => _opponentLabel(p.user_id));
+          if (beaten.length === 1) {
+            sub = 'Beat ' + beaten[0];
+          } else if (beaten.length >= 2) {
+            sub = 'Beat ' + beaten.slice(0, -1).join(', ') + ' & ' + beaten[beaten.length - 1];
+          }
+        } else if (isTie) {
+          sub = 'Tied';
+        } else {
+          const winnerName = _opponentLabel(ch.winner_id);
+          const winnerPart = (ch.participants || []).find(p => p.user_id === ch.winner_id);
+          const winnerPct = winnerPart ? _improvementPct(winnerPart.baseline_e1rm, winnerPart.final_e1rm) : 0;
+          sub = winnerName + ' won \u00b7 ' + winnerPct.toFixed(1) + '% vs your ' + myPct.toFixed(1) + '%';
+        }
+
+        const liftColor   = isWin ? '#D4A843' : isTie ? 'var(--cream)' : '#7B6FA0';
+        const borderColor = isWin ? 'rgba(212,168,67,0.35)' : isTie ? 'rgba(255,255,255,0.1)' : 'rgba(123,111,160,0.35)';
+        const pctColor    = myPct > 0 ? '#2ecc71' : myPct < 0 ? 'var(--red-text)' : 'var(--gray)';
+        const pctTxt      = (myPct > 0 ? '+' : '') + myPct.toFixed(1) + '%';
+        const winClass    = isWin ? ' ch-win-row' : '';
+        const inlineBg    = isWin ? '' : 'background:' + (isTie ? 'rgba(255,255,255,0.04)' : 'rgba(123,111,160,0.08)') + ';';
+
+        rowsHtml += '<div class="ch-rec-row' + winClass + '" onclick="_openChallengeDetailSheet(\'' + ch.id + '\')" '
+          + 'style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;' + inlineBg + 'border:1px solid ' + borderColor + ';border-radius:9px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;gap:10px;">'
+          + '<div style="min-width:0;flex:1;">'
+          + '<div style="font-family:\'Bebas Neue\',cursive;font-size:14px;color:' + liftColor + ';letter-spacing:1.2px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(liftLabel) + '</div>'
+          + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(sub) + '</div>'
+          + '</div>'
+          + '<div style="font-family:\'Bebas Neue\',cursive;font-size:15px;color:' + pctColor + ';flex-shrink:0;">' + pctTxt + '</div>'
+          + '</div>';
+      }
+
+      chRecCard.innerHTML = wltHtml + rowsHtml;
+      container.appendChild(chRecCard);
+    }
+  }
 
   // ── 2. TRAINING AGE ──────────────────────────────────────
   const completedCycles = Math.max(0, (state.cycleCount || 1) - 1);
