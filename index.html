@@ -10523,16 +10523,17 @@ function _openChallengeIntroSheet(type, onContinue) {
         b: 'Strict: any miss breaks it immediately. One Strike: each member can be forgiven once for the whole challenge. Use it wisely.' },
       { h: 'WATCH THE DOT GRID',
         b: 'Every training day lights up as your color dot on a shared grid. You can see at a glance who\u2019s on track and who needs to show up.' },
-      { h: 'AT RISK ALERTS',
-        b: 'When a member is behind pace, the app flags it \u2014 \u201cMike needs 2 more workouts in 3 days\u201d \u2014 so the group can hold each other accountable.' },
-      { h: 'RUN IT BACK',
-        b: 'Chain broke? The app offers an instant restart with the same crew. Your best chain record is saved forever.' }
+      { h: 'PACE STATUS',
+        b: 'The detail sheet shows every member\u2019s current week pace \u2014 ahead, on track, one behind, or falling behind \u2014 at a glance.' },
+      { h: 'HISTORY LOCKS WHILE ACTIVE',
+        b: 'You can\u2019t delete past workouts while a chain challenge is running. Keeps the dot grid honest. Unlocks the moment it ends.' }
     ];
   }
 
+  const accentColor = type === 'dont_break_chain' ? '#3B82F6' : '#C0392B';
   const bulletsHtml = bullets.map(item =>
     '<div style="margin-bottom:16px;">'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:15px;color:#C0392B;letter-spacing:1.8px;margin-bottom:4px;line-height:1.1;">' + escapeHtml(item.h) + '</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:15px;color:' + accentColor + ';letter-spacing:1.8px;margin-bottom:4px;line-height:1.1;">' + escapeHtml(item.h) + '</div>'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);line-height:1.5;">' + escapeHtml(item.b) + '</div>'
     + '</div>'
   ).join('');
@@ -10541,7 +10542,7 @@ function _openChallengeIntroSheet(type, onContinue) {
   sheet.id = 'challenge-intro-sheet';
   sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
   const buttonLabel = onContinue ? 'GOT IT \u2014 LET\u2019S GO' : 'CLOSE';
-  sheet.innerHTML = '<div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 24px calc(28px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:88vh;overflow-y:auto;">'
+  sheet.innerHTML = '<div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 24px calc(28px + env(safe-area-inset-bottom));border-top:2px solid ' + accentColor + ';max-height:88vh;overflow-y:auto;">'
     + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;">'
     + '<div style="min-width:0;">'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.8px;text-transform:uppercase;line-height:1;">' + escapeHtml(title) + '</div>'
@@ -10550,7 +10551,7 @@ function _openChallengeIntroSheet(type, onContinue) {
     + '<button id="challenge-intro-close" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
     + '</div>'
     + bulletsHtml
-    + '<button id="challenge-intro-cta" style="width:100%;margin-top:8px;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' + escapeHtml(buttonLabel) + '</button>'
+    + '<button id="challenge-intro-cta" style="width:100%;margin-top:8px;background:' + accentColor + ';border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' + escapeHtml(buttonLabel) + '</button>'
     + '</div>';
   sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
   document.body.appendChild(sheet);
@@ -12133,7 +12134,8 @@ function _renderChainCreateStep() {
 }
 
 function _chainFriendPickerHtml() {
-  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);line-height:1.45;margin-bottom:12px;">Pick up to 7 friends. Each person sets their own weekly goal when they accept.</div>'
+  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#3B82F6;letter-spacing:2px;margin-bottom:6px;">STEP 1 OF 4</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.45;margin-bottom:12px;">Pick up to 7 friends. Each person sets their own weekly goal when they accept.</div>'
     + '<div id="chain-friend-picker" style="min-height:60px;"></div>'
     + '<div id="chain-friend-counter" style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-align:center;margin:10px 0 4px;">0 OF 7 SELECTED</div>'
     + '<button id="chain-friend-next" onclick="_onChainFriendContinue()" disabled style="width:100%;margin-top:4px;background:#1e3a5f;border:1px solid #3B82F6;color:#3B82F6;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:not-allowed;-webkit-tap-highlight-color:transparent;opacity:0.5;">CONTINUE</button>';
@@ -12238,7 +12240,8 @@ function _chainSettingsHtml() {
       const sel = d.durationWeeks === w;
       return '<div onclick="_onChainDurSelect(' + w + ')" id="chain-dur-' + w + '" style="padding:9px 16px;border:1px solid ' + (sel ? '#3B82F6' : 'rgba(255,255,255,0.1)') + ';border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;background:' + (sel ? 'rgba(59,130,246,0.1)' : 'transparent') + ';font-family:\'Bebas Neue\',cursive;font-size:15px;color:' + (sel ? '#3B82F6' : 'var(--cream)') + ';letter-spacing:1px;">' + w + ' WKS</div>';
     }).join('') + '</div>';
-  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">MODE</div>'
+  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#3B82F6;letter-spacing:2px;margin-bottom:14px;">STEP 2 OF 4</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;margin-bottom:8px;">MODE</div>'
     + modesHtml
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;margin-top:14px;margin-bottom:8px;">DURATION</div>'
     + dursHtml
@@ -12416,14 +12419,18 @@ async function _openAcceptChainFlow(challengeId) {
   _challengeDraft = { challengeId, weeklyTarget: me.weekly_target || 3, step: 'accept_target' };
   const sheet = document.createElement('div');
   sheet.id = 'chain-accept-sheet';
-  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99998;display:flex;align-items:flex-end;';
-  sheet.innerHTML = '<div style="width:100%;background:#111;border-top:2px solid #3B82F6;border-radius:16px 16px 0 0;padding:20px;max-height:90vh;overflow-y:auto;">'
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = '<div style="width:100%;max-width:480px;background:#161414;border-top:2px solid #3B82F6;border-radius:20px 20px 0 0;padding:22px 20px calc(28px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto;">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:#3B82F6;letter-spacing:2px;">JOIN THE CHAIN</div>'
-    + '<button onclick="document.getElementById(\'chain-accept-sheet\')?.remove();_challengeDraft=null;" style="background:none;border:none;color:var(--gray);font-size:22px;cursor:pointer;">&#x2715;</button>'
+    + '<div style="min-width:0;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#3B82F6;letter-spacing:2px;line-height:1;">DON\u2019T BREAK THE CHAIN</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;line-height:1.05;margin-top:2px;">JOIN THE CHAIN</div>'
+    + '</div>'
+    + '<button onclick="document.getElementById(\'chain-accept-sheet\')?.remove();_challengeDraft=null;" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
     + '</div>'
     + '<div id="chain-accept-body"></div>'
     + '</div>';
+  sheet.addEventListener('click', e => { if (e.target === sheet) { sheet.remove(); _challengeDraft = null; } });
   document.body.appendChild(sheet);
   _renderChainAcceptStep(ch, me.weekly_target || 3);
 }
@@ -12609,15 +12616,18 @@ async function _renderChainDetailBody(ch) {
     }).join('');
     const modeLabel = ch.chain_mode === 'one_strike' ? 'ONE STRIKE' : 'STRICT';
     bodyEl.innerHTML = '<div style="padding:0 20px 30px;">'
-      + '<div style="text-align:center;margin-bottom:20px;">'
-      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#3B82F6;letter-spacing:2px;margin-bottom:4px;">DON\u2019T BREAK THE CHAIN</div>'
-      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:36px;color:' + chainStatusColor + ';letter-spacing:3px;">' + chainStatusLabel + '</div>'
-      + '<div style="font-size:12px;color:var(--gray);margin-top:4px;">' + modeLabel + ' \u00B7 ' + (ch.duration_weeks || 8) + ' weeks \u00B7 ' + ((myRow && myRow.weekly_target) || 3) + ' sessions/wk</div>'
+      + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;">'
+      + '<div style="min-width:0;">'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#3B82F6;letter-spacing:2px;line-height:1;">DON\u2019T BREAK THE CHAIN</div>'
+      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:30px;color:' + chainStatusColor + ';letter-spacing:2px;line-height:1.1;margin-top:4px;">' + chainStatusLabel + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);margin-top:4px;">' + modeLabel + ' \u00B7 ' + (ch.duration_weeks || 8) + ' weeks \u00B7 ' + ((myRow && myRow.weekly_target) || 3) + ' sessions/wk</div>'
+      + '</div>'
+      + '<button onclick="_closeChallengeDetailSheet()" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
       + '</div>'
       + (dotGridHtml ? '<div style="margin-bottom:20px;">' + dotGridHtml + '</div>' : '')
-      + '<div style="margin-bottom:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#3B82F6;letter-spacing:2px;">THIS WEEK</div>'
+      + '<div style="margin-bottom:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#3B82F6;letter-spacing:2px;">THIS WEEK</div>'
       + paceRows
-      + (invitedRows ? '<div style="margin-top:14px;margin-bottom:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:2px;">INVITED</div>' + invitedRows : '')
+      + (invitedRows ? '<div style="margin-top:14px;margin-bottom:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;">INVITED</div>' + invitedRows : '')
       + actionHtml
       + '</div>';
   } catch (e) {
@@ -12695,7 +12705,7 @@ function _renderActiveChainHomeCard() {
   card.style.cssText = 'background:linear-gradient(135deg,rgba(59,130,246,0.08) 0%,rgba(15,23,42,0.9) 100%);border:1px solid rgba(59,130,246,0.3);border-top:2px solid #3B82F6;border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;';
   card.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">'
     + '<div style="min-width:0;">'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:9px;color:#3B82F6;letter-spacing:2px;">DON\u2019T BREAK THE CHAIN</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#3B82F6;letter-spacing:2px;">DON\u2019T BREAK THE CHAIN</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:28px;color:var(--cream);letter-spacing:2px;line-height:1;">DAY ' + dayElapsed + ' <span style="font-size:14px;color:var(--gray);">/ ' + totalDays + '</span></div>'
     + '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;">'
     + '<div style="display:flex;gap:3px;">' + miniDots + '</div>'
@@ -12721,9 +12731,9 @@ function _chainRowHtml(c) {
   return '<div onclick="_openChallengeDetailSheet(\'' + c.id + '\')" style="background:#181818;border:1px solid rgba(59,130,246,0.2);border-left:3px solid #3B82F6;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;">'
     + '<div>'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:9px;color:#3B82F6;letter-spacing:2px;">DON\u2019T BREAK THE CHAIN</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#3B82F6;letter-spacing:2px;">DON\u2019T BREAK THE CHAIN</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1px;">' + statusLabel + '</div>'
-    + '<div style="font-size:11px;color:var(--gray);">' + others.length + ' others in chain \u00B7 ' + ((me && me.weekly_target) || '?') + ' sessions/wk</div>'
+    + '<div style="font-size:11px;color:var(--gray);">' + (others.length ? others.length + ' others' : 'waiting on others') + ' \u00B7 ' + ((me && me.weekly_target) || '?') + ' sessions/wk</div>'
     + '</div>'
     + (isInvited ? '<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#3B82F6;white-space:nowrap;">INVITED</div>' : '<div style="font-size:18px;color:rgba(59,130,246,0.4);">&#x203A;</div>')
     + '</div>'
@@ -12737,7 +12747,7 @@ function _pastChainRowHtml(c) {
   return '<div onclick="_openChallengeDetailSheet(\'' + c.id + '\')" style="background:#111;border:1px solid rgba(255,255,255,0.07);border-left:3px solid rgba(59,130,246,0.3);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;">'
     + '<div>'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:9px;color:rgba(59,130,246,0.5);letter-spacing:2px;">DON\u2019T BREAK THE CHAIN</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:rgba(59,130,246,0.5);letter-spacing:2px;">DON\u2019T BREAK THE CHAIN</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--gray);letter-spacing:1px;">' + (c.duration_weeks || 8) + ' WEEKS</div>'
     + '</div>'
     + '<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:' + resultColor + ';">' + resultLabel + '</div>'
