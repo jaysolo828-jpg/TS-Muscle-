@@ -9540,8 +9540,8 @@ async function _sendReaction(signalId, toUserId, reactionType, btn) {
       headers: { 'content-type': 'application/json', 'apikey': window.SUPABASE_PUBLISHABLE_KEY || '' },
       body: JSON.stringify({
         to_uid: toUserId,
-        title: fromName + ' reacted to your workout',
-        body: 'They gave you a ' + _emoji,
+        title: fromName + ' left you a ' + _emoji,
+        body: 'Your work got noticed.',
         avatar_url: state.supabaseAvatarUrl || null,
         type: 'reaction'
       })
