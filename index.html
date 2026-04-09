@@ -10741,12 +10741,7 @@ function _challengeRowHtml(c) {
 // icon next to the section header lets the user re-open the intro.
 function _startNewChallenge() {
   if (!state.supabaseUserId) { showToast('Sign in to start a challenge.'); return; }
-  const dismissals = _getChallengeIntroDismissals();
-  if (!dismissals.one_rep_max) {
-    _openChallengeIntroSheet('one_rep_max', _openNewChallengeFlow);
-  } else {
-    _openNewChallengeFlow();
-  }
+  _openChallengeIntroSheet('one_rep_max', _openNewChallengeFlow);
 }
 
 // In-flight create-challenge draft. Held in module scope so each step's
@@ -12093,12 +12088,7 @@ function _openChallengePicker() {
 
 function _startNewChainChallenge() {
   if (!state.supabaseUserId) { showToast('Sign in to start a challenge.'); return; }
-  const dismissals = _getChallengeIntroDismissals();
-  if (!dismissals.dont_break_chain) {
-    _openChallengeIntroSheet('dont_break_chain', _openNewChainChallengeFlow);
-  } else {
-    _openNewChainChallengeFlow();
-  }
+  _openChallengeIntroSheet('dont_break_chain', _openNewChainChallengeFlow);
 }
 
 function _openNewChainChallengeFlow() {
