@@ -8468,15 +8468,14 @@ async function _renderFriendsSection() {
     </div>
 
     <div id="challenges-section" style="margin-bottom:14px;">
-      <div onclick="_openChallengePicker()" style="background:#181818;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;overflow:hidden;">
-        <div style="height:2px;background:linear-gradient(90deg,#C0392B 50%,#3B82F6 50%);"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;">
+      <div onclick="_openChallengePicker()" style="background:#181818;border:1px solid rgba(255,255,255,0.1);border-top:2px solid var(--cream);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
           <div style="min-width:0;">
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:2px;line-height:1;">CHALLENGES</div>
             <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:1.8px;line-height:1.1;margin-top:3px;">START A CHALLENGE</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;margin-top:5px;letter-spacing:0.3px;"><span style="color:#C0392B;">1RM</span>&nbsp;&nbsp;<span style="color:rgba(255,255,255,0.2);">&middot;</span>&nbsp;&nbsp;<span style="color:#3B82F6;">Don&apos;t Break the Chain</span></div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Tap to choose a challenge type</div>
           </div>
-          <div style="font-size:22px;color:rgba(255,255,255,0.2);flex-shrink:0;line-height:1;">&rsaquo;</div>
+          <div style="font-size:22px;color:rgba(255,255,255,0.25);flex-shrink:0;line-height:1;">&rsaquo;</div>
         </div>
       </div>
       <div id="challenges-list"></div>
