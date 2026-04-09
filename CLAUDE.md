@@ -429,6 +429,188 @@ dot poll. Cancel flow exists via `_cancelFriendRequest` — the search
 result button flips between "ADD FRIEND" and "CANCEL" based on the
 `_outgoingFriendRequests` map populated on social-modal open.
 
+### 14. Notification preferences (per-type + quiet hours)
+
+Stored in `public.users.notif_prefs` (jsonb, migration 013). Shape:
+```json
+{
+  "workout_start": true, "workout_complete": true,
+  "reaction": true, "friend": true, "challenge": true,
+  "quiet_enabled": false, "quiet_start": "22:00", "quiet_end": "06:00",
+  "timezone": "America/New_York"
+}
+```
+Opt-out model: missing keys default to "notify".
+
+- Client: `_getDefaultNotifPrefs`, `_loadNotifPrefs`, `_saveNotifPrefs`,
+  `_openNotifPrefsSheet`, `_toggleNotifPref`, `_setNotifQuietTime` in
+  `index.html`. Entry point is the Notifications row in Settings.
+- Every push call site passes a `type` field in the `bright-processor`
+  request body. Valid values: `workout_start`, `workout_complete`,
+  `reaction`, `friend`, `challenge`. Missing type defaults server-side
+  to `workout_start` for backwards compat.
+- `supabase/functions/send-push/index.ts` has `isInQuietHours()` and
+  `shouldNotify()` helpers. It fetches each recipient's `notif_prefs`
+  in parallel with the subscriptions query and filters out recipients
+  whose per-type toggle is false OR who are currently in their quiet
+  window. Quiet hours uses `Intl.DateTimeFormat` with the stored
+  timezone so travel doesn't break it.
+- **Defensive fallback**: if the `notif_prefs` column doesn't exist
+  yet (migration 013 not applied), the users query returns an error
+  object. The function falls back to empty prefs so existing users
+  still get notified. Do not remove that fallback — it's what kept
+  things working when I merged migration 013 before the user applied
+  it.
+
+### 15. 1RM Challenges — multi-person contest (migrations 014–018)
+
+Friendly 4-6 week 1 Rep Max contest between up to 4 people (creator
+plus up to 3 invitees). One lift picked by the creator, everyone
+trains that same lift. Scoring is percent improvement on an Epley
+e1RM: `weight * (1 + reps/30)`. Highest percent gain wins.
+
+**Tables:**
+- `public.challenges` — creator in `challenger_id`. For new multi-
+  person rows `challenged_id` is NULL (drop_not_null in migration
+  016). `duration_weeks` + `auto_start_at` added in migration 016.
+  `challenge_type = 'one_rep_max'` (migration 014 added it to the
+  CHECK). `status` values: `pending`, `active`, `completed`,
+  `declined`, `cancelled` (migration 014 added `cancelled`).
+- `public.challenge_participants` — one row per person in a
+  challenge. `status` text column (migration 016) with CHECK on
+  `'invited' | 'joined' | 'declined' | 'left'`. Default `'joined'`
+  so legacy rows from the 014/015 era still read correctly.
+  `exercise_name` and `baseline_*` became NULLABLE in migration 016
+  because 'invited' rows are inserted before the invitee has picked
+  a lift or logged numbers. `last_reminded_at` throttles cron
+  reminder pushes. Migration 015 dropped the CHECK on `exercise_name`
+  so users can pick any lift (not just the original big 4).
+
+**Option B — everyone trains the same lift (do not regress to
+"each picks their own"):** The creator picks the lift during
+create. Invitees inherit it — the accept flow skips the exercise
+step entirely and pre-sets `draft.exerciseName` from the creator's
+participant row. When the invitee accepts, their row is UPDATED
+(not inserted) with the creator's `exercise_name` copied in.
+Detail sheet shows the lift ONCE at the top of the header, not
+per-row on the leaderboard. Home card shows the single lift. An
+earlier version had each participant pick their own lift with
+percent scoring equalizing the mismatch — the user rejected it as
+"why is the other person being prompted to pick a lift?" and we
+rewrote. Don't undo.
+
+**48-hour grace + manual start:** On create, `auto_start_at` is
+set to `now() + 48 hours`. The creator sees a START CHALLENGE
+button in the detail sheet as soon as at least one invitee has
+accepted. If they haven't started by 48h, `challenge-tick` cron
+auto-starts (or auto-cancels if nobody accepted). If only 1 of N
+invitees has accepted and the creator hits START, they get a
+confirm prompt ("Only 1 of N has accepted. Start anyway?").
+
+**Infinite recursion in RLS (migrations 017/018):** Migration 016's
+`participants_select` had a self-reference subquery, and 017's
+broadened `challenges_participant_select` had a cross-table
+subquery against `challenge_participants`. Between them they form
+an RLS cycle that Postgres's recursion detector rejects at plan
+time, even though runtime short-circuits would save it. **Do not
+write RLS subqueries that touch the same table or form a cycle
+with another table's policy.** Migration 018 fixed it by hoisting
+the membership check into a SECURITY DEFINER function:
+```sql
+create function public.ts_user_is_challenge_participant(cid uuid)
+returns boolean language sql security definer stable ...
+```
+SD runs as the owner, bypasses RLS, breaks the cycle. Both
+`participants_select` and `challenges_participant_select/update`
+call it. If you add new RLS on these tables, use the helper
+function pattern — don't put an inline exists-subquery against
+challenge_participants back in.
+
+**Challenge deep link via `sid: "c:<uuid>"` prefix:** The Android
+TWA's native FCM service only appends `to_user_id` as
+`?open_friend=` and `sid` as `?signal_id=` to the deep-link URL.
+To carry the challenge id through tap-to-open without a native
+code change, `_sendDirectPush` accepts an optional `challengeId`
+5th argument and passes it to the edge function as `sid: "c:" +
+challengeId`. Client-side, `_maybeHandlePendingNotifOpen` detects
+the `"c:"` prefix on `pending.signalId`, strips it, and routes to
+`_openChallengeDetailSheet` BEFORE the reaction-loop-close check
+(which would otherwise catch challenge taps because the recipient
+matches themselves and there's no workout signal_id). Don't
+remove the prefix, don't reorder the branches in
+`_maybeHandlePendingNotifOpen`.
+
+**`_openChallengeDetailSheet` creates its shell synchronously**
+(same technique `_openFriendActivity` uses) so cold-start deep
+links from a push don't flash the home screen before the sheet
+renders. The shell shows a LOADING placeholder, then the body
+fills in after the data fetch resolves. On stale-push fallback
+(cancelled / declined challenges filtered out by `_loadChallenges`),
+it does a direct unfiltered by-id fetch so the user still sees
+the result instead of "Challenge not found".
+
+**History delete lock:** `confirmDeleteSession` and
+`deleteHistoryEntry` (in `index.html`) both early-return with a
+"History is locked during an active challenge." toast if
+`_hasActiveChallenge()` returns true. Only DELETE is locked — note
+and song edits still work. The lock unlocks the moment the
+challenge flips to `completed` / `cancelled` / `declined`. Don't
+extend the lock to other edit paths without explicit user ask.
+
+**`challenge-tick` edge function (supabase/functions/challenge-tick/
+index.ts):** Runs on a Supabase cron schedule (set up in the
+dashboard; currently daily at midnight UTC). Three idempotent
+phases:
+- **Reminders**: any `status='invited'` row on a pending challenge
+  whose `last_reminded_at` is >=23h ago (or null) gets a nudge
+  push. Row is stamped regardless of push success so we don't
+  retry within the day.
+- **Auto-start / auto-cancel**: pending challenges past their
+  `auto_start_at` flip to `active` if >=2 joined participants
+  exist, else flip to `cancelled` with a "nobody accepted" push
+  to the creator.
+- **End detection**: active challenges past their `end_date` are
+  scored. `status='left'` participants score 0 (forfeit).
+  `status='invited'/'declined'` are excluded. Highest percent
+  improvement wins; tie leaves `winner_id` null. Result pushes
+  fire to every non-invited participant. All firePush calls pass
+  the challenge id so result pushes also deep-link.
+Function uses Service Role auth and bypasses RLS. Deploy through
+the dashboard (there's no CI); verify JWT should be OFF.
+
+**`_chErrMsg(e)` helper**: extracts Supabase error details
+(`message` / `details` / `hint` / `code`) into a toast-friendly
+string, truncated to 140 chars. Every challenge mutation catch
+block uses it to surface the specific error — silent failures on
+mobile (no devtools) can't be diagnosed without it. The original
+"RLS infinite recursion" bug was invisible until this helper
+started showing the actual error text in a toast.
+
+**Home screen challenge card**: `_renderActiveChallengeHomeCard()`
+inserts a styled banner above `#deload-banner` using the same
+dynamic pattern as the pause and travel banners. 2px brand-red
+border + subtle red-tinted diagonal gradient background — same
+prominence tier as the travel banner, differentiated by color.
+Pulls the lift from the creator's participant row (not the
+current user's, because late-joining invitees may still have a
+null exercise_name). Shows a days-left pill that flips color
+(cream → gold under 7 days → brand red on final day). Leader
+line dynamically colored green/red/cream based on position.
+
+**Module-level state:**
+- `_challenges` — cache of challenges the user is in, with embedded
+  `participants` array. Populated by `_loadChallenges()`.
+- `_challengeDraft` — in-flight create/accept flow state. Cleared
+  on sheet close.
+- `_CHALLENGE_MAX_INVITEES = 3` — enforced in the friend picker
+  toggle.
+- `_CHALLENGE_EXERCISE_ALIASES` — normalized lift name → program
+  exId map for the baseline auto-fill resolver. Includes chip
+  labels like "bench press" → `bench`, "overhead press" → `ohp`,
+  etc. The 4753e41 commit added this because the chip labels
+  didn't match DEFAULT_PROGRAM's full exercise names and no baseline
+  ever auto-filled.
+
 ---
 
 ## How notifications flow end-to-end
@@ -552,6 +734,31 @@ silently never applied and deletes appeared broken for hours.)
   updated to also exclude muted friends via NOT EXISTS subquery
 - `012_reactions_delete_to_me.sql` — `reactions_to_me_delete` RLS
   policy so recipients can clear reactions directed at them
+- `013_notif_prefs.sql` — `users.notif_prefs` JSONB column for
+  per-type notification toggles + quiet hours
+- `014_one_rep_max_challenges.sql` — initial 1RM challenge schema:
+  adds `'one_rep_max'` to `challenge_type` CHECK, `'cancelled'`
+  to `status` CHECK, `duration_weeks` column, and creates the
+  `challenge_participants` table with RLS
+- `015_challenge_any_exercise.sql` — drops the original CHECK on
+  `challenge_participants.exercise_name` so users can pick any
+  lift (not just the big 4)
+- `016_challenge_multi_person.sql` — multi-person rework: drops
+  NOT NULL on `challenges.challenged_id`, adds `auto_start_at`,
+  adds `challenge_participants.status` + `last_reminded_at`,
+  drops NOT NULL on baseline fields, rewrites
+  `participants_select` / `participants_insert` RLS for the new
+  model. **This migration introduced the RLS recursion bug —
+  migration 018 is what fixes it.**
+- `017_challenge_rls_participant_read.sql` — broadens
+  `challenges_participant_select` / `_update` so invitees can read
+  the parent challenge row via their participant row. Still had
+  the recursion cycle from 016 — fixed by 018.
+- `018_challenge_rls_fix_recursion.sql` — creates
+  `ts_user_is_challenge_participant(uuid)` SECURITY DEFINER
+  helper and rewrites both table's policies to call it instead
+  of doing inline exists subqueries. Breaks the RLS cycle. See
+  Critical section 15 for details.
 
 ---
 
@@ -657,6 +864,44 @@ These have been identified but intentionally left alone:
   several commits because I told the user it was "already applied"
   based on a commit message they never saw. The delete feature was
   broken until we caught this.
+- **Don't tell the user to "get the code from the repo" for
+  migrations or edge function deploys — they have repeatedly said
+  to paste the full contents in chat.** They deploy the edge
+  function by copy-paste into the Supabase dashboard. If you write
+  a migration or update an edge function, paste the whole thing in
+  your reply even if it's long.
+- Don't put each participant back on their own chosen lift for 1RM
+  challenges. See Critical section 15 — Option B means the creator
+  picks one lift and every invitee inherits it. The detail sheet
+  header shows the lift once, leaderboard rows don't repeat it,
+  and the accept flow skips the exercise step entirely.
+- Don't write RLS subqueries that reference the same table (self-
+  recursion) or form a cycle between two tables' policies. Postgres
+  rejects the query at plan time with "infinite recursion detected
+  in policy for relation ...". Use a SECURITY DEFINER helper
+  function (pattern: `ts_user_is_challenge_participant`) to hoist
+  the membership check out of the RLS body. See Critical section 15
+  and migration 018.
+- Don't remove the `"c:"` prefix on `sid` for challenge pushes, and
+  don't reorder the branches in `_maybeHandlePendingNotifOpen` so
+  the challenge-prefix check runs AFTER the "user matches self"
+  fallback. Challenge notifications have `to_user_id = recipient`
+  (their own id) which would otherwise hit the openSocialModal
+  branch and dump the user on the friends drawer instead of the
+  detail sheet.
+- Don't make `_findRecentBaselineByExId` `return null` on the first
+  out-of-window history entry. State.history is USUALLY sorted, but
+  an unsorted array (e.g. after a backup restore) would cause the
+  function to miss valid matches. Use `continue` so it keeps
+  scanning the whole history.
+- Don't early-return from `_openLogResultFlow` without checking that
+  `me.status === 'joined'` AND `me.baseline_e1rm` is set. Invited
+  rows (pending accept) have null baselines and would render
+  "null × null (e1RM null)" in the log sheet.
+- Don't remove the defensive `notif_prefs` fallback in
+  `send-push/index.ts`. If the query errors because the column
+  doesn't exist (migration 013 not applied), the function must
+  fall back to empty prefs so existing users still get pushes.
 
 ---
 
@@ -683,8 +928,40 @@ These have been identified but intentionally left alone:
   `_mutedFriends`, `_signalReactionState`, `_recentReactionsCache`,
   `_outgoingFriendRequests`, `_BELL_OFF_SVG`)
 - `sw.js` (push event handler + notificationclick deep link)
-- `supabase/functions/send-push/index.ts` (fan-out + mute filter)
-- `supabase/migrations/` — current latest is `012_reactions_delete_to_me.sql`;
-  see the Supabase migrations list above for the full history. The
-  next new migration goes in as `013_*.sql`.
+- `supabase/functions/send-push/index.ts` (fan-out + mute filter +
+  per-type prefs filter + quiet hours)
+- `supabase/functions/challenge-tick/index.ts` (daily cron — 1RM
+  challenge reminders / auto-start / end-detection)
+- `supabase/migrations/` — current latest is
+  `018_challenge_rls_fix_recursion.sql`; see the Supabase migrations
+  list above for the full history. The next new migration goes in
+  as `019_*.sql`.
+- Challenge-specific search terms in `index.html`:
+  `_openChallengeIntroSheet`, `_startNewChallenge`,
+  `_openNewChallengeFlow`, `_renderChallengeFriendPicker`,
+  `_onChallengeFriendContinue`, `_challengeExercisePickerHtml`,
+  `_onChallengeExerciseContinue`, `_challengeDurationPickerHtml`,
+  `_challengeBaselinePickerHtml`, `_onChallengeBaselineContinue`,
+  `_challengeConfirmHtml`, `_submitNewChallenge`,
+  `_openAcceptChallengeFlow`, `_submitAcceptChallenge`,
+  `_openChallengeDetailSheet`, `_renderChallengeDetailBody`,
+  `_confirmStartChallenge`, `_startChallengeNow`,
+  `_confirmCancelChallenge`, `_cancelChallenge`,
+  `_confirmQuitChallenge`, `_quitChallenge`,
+  `_confirmDeclineChallenge`, `_declineChallenge`,
+  `_openLogResultFlow`, `_submitChallengeLog`,
+  `_renderActiveChallengeHomeCard`, `_renderChallengesSection`,
+  `_renderChallengesListHtml`, `_challengeRowHtml`,
+  `_loadChallenges`, `_hasActiveChallenge`, `_findRecentBaselineByExId`,
+  `_resolveExerciseToExId`, `_CHALLENGE_EXERCISE_ALIASES`,
+  `_epley1RM`, `_improvementPct`, `_myParticipantRow`,
+  `_otherParticipantRows`, `_joinedParticipants`,
+  `_invitedParticipants`, `_declinedParticipants`, `_leftParticipants`,
+  `_originalInviteeCount`, `_isChallengeCreator`, `_sendDirectPush`,
+  `_chErrMsg`, `_challenges`, `_challengeDraft`,
+  `_CHALLENGE_MAX_INVITEES`.
+- Notification pref search terms in `index.html`:
+  `_getDefaultNotifPrefs`, `_loadNotifPrefs`, `_saveNotifPrefs`,
+  `_updateNotifPrefsSettingsSub`, `_openNotifPrefsSheet`,
+  `_toggleNotifPref`, `_setNotifQuietTime`, `state.notifPrefs`.
 - `.well-known/assetlinks.json`
