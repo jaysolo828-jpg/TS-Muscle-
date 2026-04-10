@@ -2,6 +2,11 @@
  * T&S Muscle — Chest Exercise Library
  * All chest exercises across every equipment category.
  *
+ * Dedup notes (duplicate IDs removed):
+ *   close-grip-bench-press — REMOVED from this file. Canonical entry lives in
+ *             exercise-library-triceps.js (primary mover is the tricep; the
+ *             narrow grip is the defining tricep compound movement).
+ *
  * Fields:
  *   id              – lowercase-hyphenated unique identifier
  *   name            – display name
@@ -13,6 +18,7 @@
  *   goldStar        – top pick per movement pattern (one true per similarityGroup)
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – true if this exercise appears in the default program
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
  */
 
 const CHEST_EXERCISE_LIBRARY = [
@@ -34,7 +40,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ysUTNll8JQ8',
     goldStar: true,
     similarityGroup: 'horizontal-press-barbell',
-    alsoInProgram: true   // id: 'bench'
+    alsoInProgram: true,   // id: 'bench'
+    tier: 'compound'
   },
   {
     id: 'decline-barbell-press',
@@ -51,7 +58,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/6fotcWsMb0c',
     goldStar: false,
     similarityGroup: 'decline-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'incline-barbell-press',
@@ -68,7 +76,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/DbFgADa2PL8',
     goldStar: true,
     similarityGroup: 'incline-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'floor-press-barbell',
@@ -85,24 +94,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/T2gXB8DvTvY',
     goldStar: false,
     similarityGroup: 'horizontal-press-barbell',
-    alsoInProgram: false
-  },
-  {
-    id: 'close-grip-bench-press',
-    name: 'Close-Grip Bench Press',
-    muscleGroup: 'chest',
-    equipment: 'Barbell',
-    snapshot: 'Narrow grip bench targets inner chest and triceps',
-    cues: [
-      'Grip shoulder-width or slightly inside — no need to go super narrow',
-      'Tuck elbows close to your torso throughout the press',
-      'Lower to the lower chest, same as a standard bench press',
-      'Pause at the bottom to eliminate momentum and maximise muscle tension'
-    ],
-    ytUrl: 'https://youtu.be/4yKLxOsrGfg',
-    goldStar: false,
-    similarityGroup: 'horizontal-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── DUMBBELL ─────────────────────────────────────────────────────────────
@@ -122,7 +115,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Y_7aHqXeCfQ',
     goldStar: true,
     similarityGroup: 'horizontal-press-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'incline-db-press',
@@ -139,7 +133,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/hChjZQhX1Ls',
     goldStar: true,
     similarityGroup: 'incline-press-db',
-    alsoInProgram: true   // id: 'incline'
+    alsoInProgram: true,   // id: 'incline'
+    tier: 'compound'
   },
   {
     id: 'decline-db-press',
@@ -156,7 +151,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/LfyQSUdqB60',
     goldStar: false,
     similarityGroup: 'decline-press-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-flye',
@@ -173,7 +169,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/eozdVDA78K0',
     goldStar: false,
     similarityGroup: 'flye-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'incline-db-flye',
@@ -190,7 +187,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/0G2_XV7slIg',
     goldStar: false,
     similarityGroup: 'flye-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-pullover',
@@ -207,7 +205,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/hpDAMhh4KNc',
     goldStar: false,
     similarityGroup: 'pullover',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── CABLE ────────────────────────────────────────────────────────────────
@@ -227,7 +226,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/fwN2ECQsvGg',
     goldStar: true,
     similarityGroup: 'cable-flye',
-    alsoInProgram: true   // id: 'flye'
+    alsoInProgram: true,   // id: 'flye'
+    tier: 'isolation'
   },
   {
     id: 'cable-flye-high',
@@ -244,7 +244,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/taI4XduLpTk',
     goldStar: false,
     similarityGroup: 'cable-flye',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-flye-low',
@@ -261,7 +262,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/taI4XduLpTk',
     goldStar: false,
     similarityGroup: 'cable-flye',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-chest-press',
@@ -278,7 +280,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/LNH_lPYJnpw',
     goldStar: false,
     similarityGroup: 'horizontal-press-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'cable-incline-press',
@@ -295,7 +298,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/LNH_lPYJnpw',
     goldStar: false,
     similarityGroup: 'incline-press-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'single-arm-cable-flye',
@@ -312,7 +316,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/fwN2ECQsvGg',
     goldStar: false,
     similarityGroup: 'cable-flye',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── MACHINE ──────────────────────────────────────────────────────────────
@@ -332,7 +337,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/NsEbXsTwas8',
     goldStar: true,
     similarityGroup: 'machine-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'pec-deck-flye',
@@ -349,7 +355,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Z57CtFmRMxA',
     goldStar: true,
     similarityGroup: 'machine-flye',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'smith-machine-bench',
@@ -366,7 +373,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/E4G-M8Vvzps',
     goldStar: false,
     similarityGroup: 'machine-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'smith-machine-incline',
@@ -383,7 +391,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/DbFgADa2PL8',
     goldStar: false,
     similarityGroup: 'incline-press-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'hammer-strength-incline',
@@ -400,7 +409,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/VesHgJR14E8',
     goldStar: false,
     similarityGroup: 'incline-press-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
@@ -420,7 +430,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/IODxDxX7oi4',
     goldStar: true,
     similarityGroup: 'bodyweight-horizontal-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'wide-grip-push-up',
@@ -437,7 +448,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/IODxDxX7oi4',
     goldStar: false,
     similarityGroup: 'bodyweight-horizontal-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'incline-push-up',
@@ -454,7 +466,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/IODxDxX7oi4',
     goldStar: false,
     similarityGroup: 'bodyweight-horizontal-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'decline-push-up',
@@ -471,7 +484,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/IODxDxX7oi4',
     goldStar: false,
     similarityGroup: 'bodyweight-decline-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'chest-dip',
@@ -488,7 +502,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/2z8JmcrW-As',
     goldStar: true,
     similarityGroup: 'bodyweight-dip',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'weighted-push-up',
@@ -505,7 +520,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/IODxDxX7oi4',
     goldStar: false,
     similarityGroup: 'bodyweight-horizontal-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
@@ -525,7 +541,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/8lDC4Ri9zAQ',
     goldStar: true,
     similarityGroup: 'band-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-flye',
@@ -542,7 +559,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/8lDC4Ri9zAQ',
     goldStar: false,
     similarityGroup: 'band-flye',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-push-up',
@@ -559,7 +577,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/8lDC4Ri9zAQ',
     goldStar: false,
     similarityGroup: 'bodyweight-horizontal-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-incline-press',
@@ -576,7 +595,8 @@ const CHEST_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/8lDC4Ri9zAQ',
     goldStar: false,
     similarityGroup: 'band-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   }
 
 ];

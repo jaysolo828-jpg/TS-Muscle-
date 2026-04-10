@@ -26,6 +26,9 @@
  *   goldStar        – top pick per movement pattern (one true per similarityGroup)
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – false for all (no core exercises currently in program)
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
+ *                     All core exercises are 'isolation' — they target core musculature
+ *                     specifically without loading primary movers in other muscle groups.
  */
 
 const CORE_EXERCISE_LIBRARY = [
@@ -47,7 +50,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/L78bRBGCAIo',
     goldStar: false,
     similarityGroup: 'rollout',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'landmine-rotation',
@@ -64,7 +68,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/nCKG7nMNhHs',
     goldStar: false,
     similarityGroup: 'rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'barbell-suitcase-carry',
@@ -81,7 +86,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/YzZ2fPBr1DE',
     goldStar: false,
     similarityGroup: 'carry',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── DUMBBELL ─────────────────────────────────────────────────────────────
@@ -101,7 +107,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/9FGilxCbdz8',
     goldStar: false,
     similarityGroup: 'spinal-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-russian-twist',
@@ -118,7 +125,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/wkD8rjkodUI',
     goldStar: false,
     similarityGroup: 'rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-side-bend',
@@ -135,7 +143,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/LQdgGEEgdEo',
     goldStar: false,
     similarityGroup: 'lateral-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-suitcase-carry',
@@ -152,7 +161,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/YzZ2fPBr1DE',
     goldStar: true,
     similarityGroup: 'carry',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── CABLE ────────────────────────────────────────────────────────────────
@@ -172,7 +182,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/2fbujeH3F0E',
     goldStar: true,
     similarityGroup: 'spinal-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-pallof-press',
@@ -189,7 +200,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/AabdomSpfZs',
     goldStar: true,
     similarityGroup: 'anti-rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-wood-chop',
@@ -206,7 +218,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/nCKG7nMNhHs',
     goldStar: true,
     similarityGroup: 'rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-reverse-wood-chop',
@@ -223,7 +236,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/nCKG7nMNhHs',
     goldStar: false,
     similarityGroup: 'rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-side-bend',
@@ -240,7 +254,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/LQdgGEEgdEo',
     goldStar: true,
     similarityGroup: 'lateral-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── MACHINE ──────────────────────────────────────────────────────────────
@@ -260,7 +275,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/2fbujeH3F0E',
     goldStar: false,
     similarityGroup: 'spinal-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'hyperextension',
@@ -277,7 +293,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ph3pddpKzzw',
     goldStar: true,
     similarityGroup: 'back-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'roman-chair-leg-raise',
@@ -294,7 +311,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Pr1ieGZ5atk',
     goldStar: false,
     similarityGroup: 'leg-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
@@ -314,7 +332,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ASdvN_XEl_c',
     goldStar: true,
     similarityGroup: 'plank',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'side-plank',
@@ -331,7 +350,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/wqzrb67Dwf8',
     goldStar: true,
     similarityGroup: 'side-plank',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'hanging-leg-raise',
@@ -348,7 +368,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Pr1ieGZ5atk',
     goldStar: true,
     similarityGroup: 'leg-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'ab-wheel-rollout',
@@ -365,7 +386,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/L78bRBGCAIo',
     goldStar: true,
     similarityGroup: 'rollout',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'dead-bug',
@@ -382,7 +404,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/4XLEnwUr1d8',
     goldStar: true,
     similarityGroup: 'dead-bug',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'bicycle-crunch',
@@ -399,7 +422,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/9FGilxCbdz8',
     goldStar: false,
     similarityGroup: 'spinal-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
@@ -419,7 +443,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/AabdomSpfZs',
     goldStar: false,
     similarityGroup: 'anti-rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-wood-chop',
@@ -436,7 +461,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/nCKG7nMNhHs',
     goldStar: false,
     similarityGroup: 'rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-dead-bug',
@@ -453,7 +479,8 @@ const CORE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/4XLEnwUr1d8',
     goldStar: false,
     similarityGroup: 'dead-bug',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   }
 
 ];

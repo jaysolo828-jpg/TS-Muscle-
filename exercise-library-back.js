@@ -1,6 +1,5 @@
 /**
  * T&S Muscle — Back Exercise Library
- * All back exercises across every equipment category.
  *
  * Fields:
  *   id              – lowercase-hyphenated unique identifier
@@ -13,7 +12,16 @@
  *   goldStar        – top pick per movement pattern (one true per similarityGroup)
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – true if this exercise appears in the default program
- *                     (cross-referenced: chest-row, pulldown, db-row, pull-through)
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
+ *
+ * Dedup notes:
+ *   cable-pull-through  → lives in hamstrings (alsoInProgram: true there)
+ *   cable-face-pull     → lives in shoulders
+ *   barbell-good-morning → lives in hamstrings
+ *   band-good-morning   → lives in hamstrings
+ *   chin-up             → canonical entry lives here; removed from biceps
+ *   conventional-deadlift → canonical entry lives here (id: 'conventional-deadlift');
+ *                           duplicate 'barbell-conventional-deadlift' removed from hamstrings
  */
 
 const BACK_EXERCISE_LIBRARY = [
@@ -35,7 +43,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/G8l_8chR5BE',
     goldStar: true,
     similarityGroup: 'horizontal-row-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'pendlay-row',
@@ -52,7 +61,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Weu9HMHdiDA',
     goldStar: false,
     similarityGroup: 'horizontal-row-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'conventional-deadlift',
@@ -69,7 +79,26 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/op9kVnSso6Q',
     goldStar: true,
     similarityGroup: 'hip-hinge-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
+  },
+  {
+    id: 'trap-bar-deadlift',
+    name: 'Trap Bar Deadlift',
+    muscleGroup: 'back',
+    equipment: 'Barbell',
+    snapshot: 'Stand inside hex bar and lift to full lockout',
+    cues: [
+      'Stand in the centre of the trap bar with feet hip-width and grip the neutral handles',
+      'Hinge your hips back and down until your shins are nearly vertical — more upright than a conventional deadlift',
+      'Drive through your full foot, extend hips and knees simultaneously, and stand tall',
+      'The neutral grip and upright torso make this the most joint-friendly heavy hinge variation for beginners'
+    ],
+    ytUrl: 'https://youtu.be/op9kVnSso6Q',
+    goldStar: false,
+    similarityGroup: 'hip-hinge-barbell',
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-shrug',
@@ -86,24 +115,26 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/NAqCVe2mwzM',
     goldStar: true,
     similarityGroup: 'trap-shrug',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
-    id: 'barbell-good-morning',
-    name: 'Barbell Good Morning',
+    id: 't-bar-row',
+    name: 'T-Bar Row',
     muscleGroup: 'back',
     equipment: 'Barbell',
-    snapshot: 'Hinge forward with bar on back, erectors under load',
+    snapshot: 'Straddle anchored barbell and row sleeve to chest',
     cues: [
-      'Bar sits on your upper traps, not your neck — same as a squat',
-      'Push your hips back as you hinge, maintaining a neutral spine throughout',
-      'Keep a slight bend in the knees — this is a hip hinge, not a squat',
-      'Return to upright by squeezing glutes and driving hips forward'
+      'Straddle the barbell end and hinge your torso to about 45 degrees with your back flat',
+      'Use a V-handle or grip the sleeve and pull toward your lower chest, driving elbows back',
+      'Squeeze your shoulder blades together hard at the top of every rep',
+      'Lower under control until your arms are fully extended — do not let the weight drop'
     ],
-    ytUrl: 'https://youtu.be/YA-h3n9L4YU',
+    ytUrl: 'https://youtu.be/G8l_8chR5BE',
     goldStar: false,
-    similarityGroup: 'spinal-erector-barbell',
-    alsoInProgram: false
+    similarityGroup: 'horizontal-row-barbell',
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── DUMBBELL ─────────────────────────────────────────────────────────────
@@ -123,7 +154,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/sUqz6oaISkQ',
     goldStar: true,
     similarityGroup: 'horizontal-row-db',
-    alsoInProgram: true   // id: 'db-row'
+    alsoInProgram: true,   // id: 'db-row'
+    tier: 'compound'
   },
   {
     id: 'db-bent-over-row',
@@ -140,7 +172,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/sUqz6oaISkQ',
     goldStar: false,
     similarityGroup: 'horizontal-row-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'chest-supported-db-row',
@@ -157,7 +190,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/d_Ron-Ia880',
     goldStar: false,
     similarityGroup: 'horizontal-row-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-shrug',
@@ -174,7 +208,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/g6qbq4Lf1FI',
     goldStar: false,
     similarityGroup: 'trap-shrug',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-pullover-back',
@@ -191,7 +226,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/hpDAMhh4KNc',
     goldStar: false,
     similarityGroup: 'pullover',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── CABLE ────────────────────────────────────────────────────────────────
@@ -211,7 +247,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/CAwf7n6Luuc',
     goldStar: true,
     similarityGroup: 'vertical-pull-cable',
-    alsoInProgram: true   // id: 'pulldown'
+    alsoInProgram: true,   // id: 'pulldown'
+    tier: 'compound'
   },
   {
     id: 'close-grip-pulldown',
@@ -228,7 +265,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/CAwf7n6Luuc',
     goldStar: false,
     similarityGroup: 'vertical-pull-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'seated-cable-row',
@@ -245,24 +283,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/GZbfZ033f74',
     goldStar: true,
     similarityGroup: 'horizontal-row-cable',
-    alsoInProgram: false
-  },
-  {
-    id: 'cable-pull-through',
-    name: 'Cable Pull-Through',
-    muscleGroup: 'back',
-    equipment: 'Cable',
-    snapshot: 'Hip hinge pulling rope cable through legs behind you',
-    cues: [
-      'Stand facing away from the cable, rope handle between your legs',
-      'Hinge at the hips and push them back — keep your spine neutral throughout',
-      'Drive hips forward to stand and squeeze your glutes hard at the top',
-      'Let the cable pull your arms back through your legs on the way down'
-    ],
-    ytUrl: 'https://youtu.be/pv8e6OSyETE',
-    goldStar: true,
-    similarityGroup: 'hip-hinge-cable',
-    alsoInProgram: true   // id: 'pull-through'
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'straight-arm-pulldown',
@@ -279,7 +301,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/14Se-ENHBkM',
     goldStar: true,
     similarityGroup: 'straight-arm-pulldown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'single-arm-cable-row',
@@ -296,24 +319,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/GZbfZ033f74',
     goldStar: false,
     similarityGroup: 'horizontal-row-cable',
-    alsoInProgram: false
-  },
-  {
-    id: 'cable-face-pull',
-    name: 'Cable Face Pull',
-    muscleGroup: 'back',
-    equipment: 'Cable',
-    snapshot: 'Pull rope to face to target rear delts and mid traps',
-    cues: [
-      'Set the pulley at forehead height and use a rope attachment',
-      'Pull the rope to your face, spreading the ends apart as you pull in',
-      'Elbows stay high and flare outward — do not let them drop below shoulder level',
-      'Pause at full contraction and squeeze the rear delts and mid traps hard'
-    ],
-    ytUrl: 'https://youtu.be/rep-qVOkqgk',
-    goldStar: true,
-    similarityGroup: 'rear-delt-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── MACHINE ──────────────────────────────────────────────────────────────
@@ -333,7 +340,26 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/axoeDmW0oAY',
     goldStar: true,
     similarityGroup: 'horizontal-row-machine',
-    alsoInProgram: true   // id: 'chest-row'
+    alsoInProgram: true,   // id: 'chest-row'
+    tier: 'compound'
+  },
+  {
+    id: 'chest-supported-t-bar-row',
+    name: 'Chest-Supported T-Bar Row',
+    muscleGroup: 'back',
+    equipment: 'Machine',
+    snapshot: 'Lie chest-down on T-bar station and row to chest',
+    cues: [
+      'Set the chest pad so you can grip handles with arms fully extended at the bottom',
+      'Keep your chest firmly on the pad throughout — support removes all lower back involvement',
+      'Pull handles to your chest by driving elbows back and squeezing shoulder blades hard',
+      'Lower slowly to a full arm extension before the next rep — do not shortchange the stretch'
+    ],
+    ytUrl: 'https://youtu.be/axoeDmW0oAY',
+    goldStar: false,
+    similarityGroup: 'horizontal-row-machine',
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'machine-lat-pulldown',
@@ -350,7 +376,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/CAwf7n6Luuc',
     goldStar: false,
     similarityGroup: 'vertical-pull-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'seated-machine-row',
@@ -367,7 +394,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/GZbfZ033f74',
     goldStar: false,
     similarityGroup: 'horizontal-row-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'hammer-strength-row',
@@ -384,7 +412,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/axoeDmW0oAY',
     goldStar: false,
     similarityGroup: 'horizontal-row-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'assisted-pull-up-machine',
@@ -401,7 +430,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/CAwf7n6Luuc',
     goldStar: false,
     similarityGroup: 'vertical-pull-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
@@ -421,7 +451,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/eGo4IYlbE5g',
     goldStar: true,
     similarityGroup: 'vertical-pull-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'chin-up',
@@ -438,7 +469,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/eGo4IYlbE5g',
     goldStar: false,
     similarityGroup: 'vertical-pull-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'inverted-row',
@@ -455,7 +487,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/7Fd7-3RUAss',
     goldStar: true,
     similarityGroup: 'horizontal-row-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'wide-grip-pull-up',
@@ -472,7 +505,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/eGo4IYlbE5g',
     goldStar: false,
     similarityGroup: 'vertical-pull-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'scapular-pull-up',
@@ -489,7 +523,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/nbpSNCYSBkg',
     goldStar: false,
     similarityGroup: 'vertical-pull-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
@@ -509,7 +544,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/9YKBLkqo9bw',
     goldStar: true,
     similarityGroup: 'rear-delt-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-row',
@@ -526,7 +562,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/9YKBLkqo9bw',
     goldStar: true,
     similarityGroup: 'horizontal-row-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-pulldown',
@@ -543,24 +580,8 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/9YKBLkqo9bw',
     goldStar: true,
     similarityGroup: 'vertical-pull-band',
-    alsoInProgram: false
-  },
-  {
-    id: 'band-good-morning',
-    name: 'Resistance Band Good Morning',
-    muscleGroup: 'back',
-    equipment: 'Resistance Band',
-    snapshot: 'Step on band and loop it behind neck, hinge forward',
-    cues: [
-      'Stand on the band and loop it over your neck like a barbell good morning',
-      'Keep your lower back neutral and push hips back as you hinge forward',
-      'Go only as low as you can with a flat back — stop before the spine rounds',
-      'Drive hips forward to stand and squeeze glutes at the top'
-    ],
-    ytUrl: 'https://youtu.be/YA-h3n9L4YU',
-    goldStar: false,
-    similarityGroup: 'spinal-erector-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-straight-arm-pulldown',
@@ -577,12 +598,12 @@ const BACK_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/14Se-ENHBkM',
     goldStar: false,
     similarityGroup: 'straight-arm-pulldown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   }
 
 ];
 
-// Export for use in other modules or directly in index.html
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { BACK_EXERCISE_LIBRARY };
 }

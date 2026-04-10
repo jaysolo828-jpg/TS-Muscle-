@@ -2,6 +2,11 @@
  * T&S Muscle — Tricep Exercise Library
  * All tricep exercises across every equipment category.
  *
+ * Dedup notes (canonical entries kept here):
+ *   close-grip-bench-press — CANONICAL entry in this file. Removed from
+ *             exercise-library-chest.js. Primary mover is the tricep when
+ *             using a narrow grip with elbows tucked.
+ *
  * Fields:
  *   id              – lowercase-hyphenated unique identifier
  *   name            – display name
@@ -13,6 +18,7 @@
  *   goldStar        – top pick per movement pattern (one true per similarityGroup)
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – true if this exercise appears in the default program
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
  */
 
 const TRICEP_EXERCISE_LIBRARY = [
@@ -34,7 +40,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ZLIKPa4Iunc',
     goldStar: true,
     similarityGroup: 'lying-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'close-grip-bench-press',
@@ -51,7 +58,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/4yKLxOsrGfg',
     goldStar: true,
     similarityGroup: 'compound-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-overhead-extension',
@@ -68,7 +76,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ZLIKPa4Iunc',
     goldStar: true,
     similarityGroup: 'overhead-extension-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── DUMBBELL ─────────────────────────────────────────────────────────────
@@ -88,7 +97,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/popGXI-qs98',
     goldStar: false,
     similarityGroup: 'overhead-extension-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'single-arm-db-overhead-extension',
@@ -105,7 +115,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/popGXI-qs98',
     goldStar: true,
     similarityGroup: 'overhead-extension-db',
-    alsoInProgram: true   // id: 'overhead-tri'
+    alsoInProgram: true,   // id: 'overhead-tri'
+    tier: 'isolation'
   },
   {
     id: 'db-skull-crusher',
@@ -122,7 +133,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ZLIKPa4Iunc',
     goldStar: false,
     similarityGroup: 'lying-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-kickback',
@@ -139,7 +151,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/6SS6K3lAwZ8',
     goldStar: false,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-tate-press',
@@ -156,7 +169,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/9Ark9S11uXw',
     goldStar: false,
     similarityGroup: 'lying-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── CABLE ────────────────────────────────────────────────────────────────
@@ -176,7 +190,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/_w-HpW70nSQ',
     goldStar: false,
     similarityGroup: 'pushdown',
-    alsoInProgram: true   // id: 'pushdown'
+    alsoInProgram: true,   // id: 'pushdown'
+    tier: 'isolation'
   },
   {
     id: 'cable-rope-pushdown',
@@ -193,7 +208,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/kiuVA0gs3EI',
     goldStar: true,
     similarityGroup: 'pushdown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-reverse-grip-pushdown',
@@ -210,7 +226,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/OJniFg2ijRk',
     goldStar: false,
     similarityGroup: 'pushdown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-single-arm-pushdown',
@@ -227,7 +244,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/_w-HpW70nSQ',
     goldStar: false,
     similarityGroup: 'pushdown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-overhead-extension',
@@ -244,7 +262,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/9Ark9S11uXw',
     goldStar: true,
     similarityGroup: 'overhead-extension-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-kickback',
@@ -261,7 +280,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/6SS6K3lAwZ8',
     goldStar: true,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── MACHINE ──────────────────────────────────────────────────────────────
@@ -281,7 +301,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/NNyuuN2sJb0',
     goldStar: true,
     similarityGroup: 'machine-tricep-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'machine-overhead-extension',
@@ -298,7 +319,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/popGXI-qs98',
     goldStar: true,
     similarityGroup: 'overhead-extension-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'tricep-dip-machine',
@@ -315,7 +337,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/NNyuuN2sJb0',
     goldStar: false,
     similarityGroup: 'compound-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
@@ -335,7 +358,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/wjUmnZH528Y',
     goldStar: true,
     similarityGroup: 'compound-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'bench-dips',
@@ -352,7 +376,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/c3ZGl4pnLZs',
     goldStar: false,
     similarityGroup: 'compound-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'diamond-push-ups',
@@ -369,7 +394,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/J0DnG1_S92I',
     goldStar: false,
     similarityGroup: 'compound-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
@@ -389,7 +415,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/PtHlGbiCglY',
     goldStar: false,
     similarityGroup: 'pushdown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-overhead-extension',
@@ -406,10 +433,11 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/9Ark9S11uXw',
     goldStar: true,
     similarityGroup: 'overhead-extension-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
-    id: 'band-kickback',
+    id: 'band-tricep-kickback',
     name: 'Band Kickback',
     muscleGroup: 'triceps',
     equipment: 'Resistance Band',
@@ -423,7 +451,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/6SS6K3lAwZ8',
     goldStar: false,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-skull-crusher',
@@ -440,7 +469,8 @@ const TRICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ZLIKPa4Iunc',
     goldStar: false,
     similarityGroup: 'lying-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   }
 
 ];

@@ -7,8 +7,9 @@
  *
  * Muscle groups: chest · back · shoulders · biceps · triceps
  *                quads · hamstrings · glutes · calves · core
+ *                forearms · adductors
  *
- * Total exercises: 257
+ * Total exercises: 275
  *
  * Fields per exercise:
  *   id              – lowercase-hyphenated unique identifier
@@ -21,15 +22,14 @@
  *   goldStar        – top pick per movement pattern per muscle group
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – true if exercise appears in the default program
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
  */
 
 const EXERCISE_LIBRARY = [
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
   // CHEST
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── BARBELL ──────────────────────────────────────────────────────────────
-
+  // ────────────────────────────────────────────────────────────────────────
   {
     id: 'barbell-bench-press',
     name: 'Barbell Bench Press',
@@ -40,12 +40,13 @@ const EXERCISE_LIBRARY = [
       'Retract your shoulder blades and keep them pinched throughout the set',
       'Plant your feet flat and drive them into the floor for a stable base',
       'Lower the bar to the lower half of your chest, not your neck',
-      'Keep your wrists stacked over your elbows as you press'
+      'Keep your wrists stacked over your elbows as you press',
     ],
     ytUrl: 'https://youtu.be/ysUTNll8JQ8',
     goldStar: true,
     similarityGroup: 'horizontal-press-barbell',
-    alsoInProgram: true   // id: 'bench'
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'decline-barbell-press',
@@ -57,12 +58,13 @@ const EXERCISE_LIBRARY = [
       'Lock your feet securely under the pads before unracking',
       'Lower the bar to your lower chest, just above the sternum base',
       'Keep elbows at roughly 75 degrees — not flared out wide',
-      'Press in a slight arc back toward your lower face at lockout'
+      'Press in a slight arc back toward your lower face at lockout',
     ],
     ytUrl: 'https://youtu.be/6fotcWsMb0c',
     goldStar: false,
     similarityGroup: 'decline-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'incline-barbell-press',
@@ -74,12 +76,13 @@ const EXERCISE_LIBRARY = [
       'Set the bench to 30-45 degrees — steeper shifts work to front delts',
       'Keep your back flat against the pad, no excessive arch',
       'Lower the bar to your upper chest, not your chin or throat',
-      'Drive the bar straight up and slightly back to lockout'
+      'Drive the bar straight up and slightly back to lockout',
     ],
     ytUrl: 'https://youtu.be/DbFgADa2PL8',
     goldStar: true,
     similarityGroup: 'incline-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'floor-press-barbell',
@@ -91,33 +94,14 @@ const EXERCISE_LIBRARY = [
       'Keep your legs flat or bent — either works, choose what is stable',
       'Lower until your triceps touch the floor, pause briefly, then press',
       'This shortened range reduces shoulder stress at the bottom',
-      'Squeeze the bar hard and tuck elbows slightly to protect the joint'
+      'Squeeze the bar hard and tuck elbows slightly to protect the joint',
     ],
     ytUrl: 'https://youtu.be/T2gXB8DvTvY',
     goldStar: false,
     similarityGroup: 'horizontal-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-  {
-    id: 'close-grip-bench-press',
-    name: 'Close-Grip Bench Press',
-    muscleGroup: 'chest',
-    equipment: 'Barbell',
-    snapshot: 'Narrow grip bench targets inner chest and triceps',
-    cues: [
-      'Grip shoulder-width or slightly inside — no need to go super narrow',
-      'Tuck elbows close to your torso throughout the press',
-      'Lower to the lower chest, same as a standard bench press',
-      'Pause at the bottom to eliminate momentum and maximise muscle tension'
-    ],
-    ytUrl: 'https://youtu.be/4yKLxOsrGfg',
-    goldStar: false,
-    similarityGroup: 'horizontal-press-barbell',
-    alsoInProgram: false
-  },
-
-  // ─── DUMBBELL ─────────────────────────────────────────────────────────────
-
   {
     id: 'db-bench-press',
     name: 'Dumbbell Bench Press',
@@ -128,12 +112,13 @@ const EXERCISE_LIBRARY = [
       'Start with dumbbells at chest height, palms facing forward',
       'Allow a natural arc — the dumbbells can drift slightly inward at the top',
       'Lower until you feel a good stretch without losing shoulder position',
-      'Keep your core tight and lower back from lifting off the bench'
+      'Keep your core tight and lower back from lifting off the bench',
     ],
     ytUrl: 'https://youtu.be/Y_7aHqXeCfQ',
     goldStar: true,
     similarityGroup: 'horizontal-press-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'incline-db-press',
@@ -145,12 +130,13 @@ const EXERCISE_LIBRARY = [
       'Set bench to 30-45 degrees — this angle is the sweet spot for upper chest',
       'Lower dumbbells until they are level with your upper chest',
       'Keep elbows just under wrists throughout the movement',
-      'Press up and slightly inward, following a natural arc'
+      'Press up and slightly inward, following a natural arc',
     ],
     ytUrl: 'https://youtu.be/hChjZQhX1Ls',
     goldStar: true,
     similarityGroup: 'incline-press-db',
-    alsoInProgram: true   // id: 'incline'
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'decline-db-press',
@@ -162,12 +148,13 @@ const EXERCISE_LIBRARY = [
       'Secure feet firmly before starting — decline is unforgiving if you slip',
       'Lower dumbbells to the outer lower chest, elbows at 60-75 degrees',
       'Press straight up and touch the dumbbells lightly at the top',
-      'Control the descent over 2-3 seconds for maximum tension'
+      'Control the descent over 2-3 seconds for maximum tension',
     ],
     ytUrl: 'https://youtu.be/LfyQSUdqB60',
     goldStar: false,
     similarityGroup: 'decline-press-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-flye',
@@ -179,12 +166,13 @@ const EXERCISE_LIBRARY = [
       'Maintain a slight bend in your elbows throughout — never lock them out',
       'Think of hugging a big tree as you arc the weights back up',
       'Stop at chest level on the way down — going too deep strains the shoulder',
-      'Squeeze the chest hard at the top but do not crash the weights together'
+      'Squeeze the chest hard at the top but do not crash the weights together',
     ],
     ytUrl: 'https://youtu.be/eozdVDA78K0',
     goldStar: false,
     similarityGroup: 'flye-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'incline-db-flye',
@@ -196,12 +184,13 @@ const EXERCISE_LIBRARY = [
       'Set bench to 30 degrees — steeper shifts too much tension to front delts',
       'Keep a consistent slight bend in the elbows all the way through',
       'Lower dumbbells until you feel a deep stretch in the upper chest',
-      'Initiate the upward squeeze by thinking chest first, not arms'
+      'Initiate the upward squeeze by thinking chest first, not arms',
     ],
     ytUrl: 'https://youtu.be/0G2_XV7slIg',
     goldStar: false,
     similarityGroup: 'flye-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-pullover',
@@ -213,16 +202,14 @@ const EXERCISE_LIBRARY = [
       'Keep hips low — this keeps stretch on the chest rather than lats',
       'Maintain a slight elbow bend and hold it constant throughout',
       'Lower the dumbbell until you feel the chest and ribcage fully stretched',
-      'Pull back by squeezing your chest and pec minor, not your lats'
+      'Pull back by squeezing your chest and pec minor, not your lats',
     ],
     ytUrl: 'https://youtu.be/hpDAMhh4KNc',
     goldStar: false,
     similarityGroup: 'pullover',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── CABLE ────────────────────────────────────────────────────────────────
-
   {
     id: 'cable-flye-mid',
     name: 'Cable Flye (Mid)',
@@ -233,12 +220,13 @@ const EXERCISE_LIBRARY = [
       'Set pulleys at shoulder height and step forward into a stagger stance',
       'Maintain a slight bend in the elbows and keep it consistent',
       'Lead with your elbows and think about squeezing the chest inward',
-      'Control the return — the stretch under load is where the gains are'
+      'Control the return — the stretch under load is where the gains are',
     ],
     ytUrl: 'https://youtu.be/fwN2ECQsvGg',
     goldStar: true,
     similarityGroup: 'cable-flye',
-    alsoInProgram: true   // id: 'flye'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'cable-flye-high',
@@ -250,12 +238,13 @@ const EXERCISE_LIBRARY = [
       'Set pulleys above head height and lean slightly forward',
       'Pull handles down and inward in an arc, ending at hip level',
       'Keep elbows soft and let the shoulder blade move naturally',
-      'Pause and squeeze hard when hands cross at the bottom'
+      'Pause and squeeze hard when hands cross at the bottom',
     ],
     ytUrl: 'https://youtu.be/taI4XduLpTk',
     goldStar: false,
     similarityGroup: 'cable-flye',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-flye-low',
@@ -267,12 +256,13 @@ const EXERCISE_LIBRARY = [
       'Set pulleys at ankle or hip height and lean slightly forward',
       'Pull handles up and inward, finishing at chest or chin height',
       'Focus on driving the motion from the upper chest, not shoulders',
-      'Squeeze the upper chest at the top and hold for one count'
+      'Squeeze the upper chest at the top and hold for one count',
     ],
     ytUrl: 'https://youtu.be/taI4XduLpTk',
     goldStar: false,
     similarityGroup: 'cable-flye',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-chest-press',
@@ -284,12 +274,13 @@ const EXERCISE_LIBRARY = [
       'Stand in a stagger stance and brace your core before pressing',
       'Keep elbows at roughly 60-75 degrees — not flared to 90',
       'Press straight out and let hands travel slightly inward at extension',
-      'Control the return slowly — cables keep tension through the whole rep'
+      'Control the return slowly — cables keep tension through the whole rep',
     ],
     ytUrl: 'https://youtu.be/LNH_lPYJnpw',
     goldStar: false,
     similarityGroup: 'horizontal-press-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'cable-incline-press',
@@ -301,12 +292,13 @@ const EXERCISE_LIBRARY = [
       'Set pulleys low, sit or stand angled away, and press up at 45 degrees',
       'Focus on driving from the upper chest, avoid shrugging the shoulders',
       'Squeeze at the top when hands are nearly together',
-      'Return slowly for maximum upper chest stretch under load'
+      'Return slowly for maximum upper chest stretch under load',
     ],
     ytUrl: 'https://youtu.be/LNH_lPYJnpw',
     goldStar: false,
     similarityGroup: 'incline-press-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'single-arm-cable-flye',
@@ -318,16 +310,14 @@ const EXERCISE_LIBRARY = [
       'Stand side-on to the pulley and brace with your free hand on the frame',
       'Arc the handle across your body while keeping the elbow angle fixed',
       'Focus on feeling the stretch at the start and squeeze at the end',
-      'Complete all reps on the weaker side first, then match on the stronger'
+      'Complete all reps on the weaker side first, then match on the stronger',
     ],
     ytUrl: 'https://youtu.be/fwN2ECQsvGg',
     goldStar: false,
     similarityGroup: 'cable-flye',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── MACHINE ──────────────────────────────────────────────────────────────
-
   {
     id: 'machine-chest-press',
     name: 'Machine Chest Press',
@@ -338,12 +328,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat so handles are at mid-chest height when gripped',
       'Keep your back flat against the pad throughout every rep',
       'Press to just short of full lockout to maintain chest tension',
-      'Lower slowly and feel the chest stretch before driving the next rep'
+      'Lower slowly and feel the chest stretch before driving the next rep',
     ],
     ytUrl: 'https://youtu.be/NsEbXsTwas8',
     goldStar: true,
     similarityGroup: 'machine-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'pec-deck-flye',
@@ -355,12 +346,13 @@ const EXERCISE_LIBRARY = [
       'Adjust seat so your elbows are level with your shoulders on the pads',
       'Lead with your elbows and think of squeezing your chest inward',
       'Stop just before your forearms meet — keep tension rather than resting',
-      'Control the return and feel a full stretch before the next rep'
+      'Control the return and feel a full stretch before the next rep',
     ],
     ytUrl: 'https://youtu.be/Z57CtFmRMxA',
     goldStar: true,
     similarityGroup: 'machine-flye',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'smith-machine-bench',
@@ -372,12 +364,13 @@ const EXERCISE_LIBRARY = [
       'Position the bench so the bar touches your lower chest at the bottom',
       'Keep your feet planted and maintain your natural arch throughout',
       'The fixed path means you can push more weight safely solo',
-      'Lower fully to the chest — do not half-rep just because it feels heavier'
+      'Lower fully to the chest — do not half-rep just because it feels heavier',
     ],
     ytUrl: 'https://youtu.be/E4G-M8Vvzps',
     goldStar: false,
     similarityGroup: 'machine-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'smith-machine-incline',
@@ -389,12 +382,13 @@ const EXERCISE_LIBRARY = [
       'Set bench to 30-45 degrees and position so bar hits upper chest at bottom',
       'Do not let the fixed bar path force your elbows to flare unnaturally',
       'Drive straight up — the fixed path handles any lateral stability for you',
-      'Use a full range of motion; do not cut the movement short'
+      'Use a full range of motion; do not cut the movement short',
     ],
     ytUrl: 'https://youtu.be/DbFgADa2PL8',
     goldStar: false,
     similarityGroup: 'incline-press-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'hammer-strength-incline',
@@ -406,16 +400,14 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat height so hands start at upper chest level',
       'Drive through the chest — resist the urge to use shoulder momentum',
       'Neutral grip reduces shoulder impingement compared to barbell incline',
-      'Pause at the bottom for one count to eliminate stored elastic energy'
+      'Pause at the bottom for one count to eliminate stored elastic energy',
     ],
     ytUrl: 'https://youtu.be/VesHgJR14E8',
     goldStar: false,
     similarityGroup: 'incline-press-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
-
   {
     id: 'push-up',
     name: 'Push-Up',
@@ -426,12 +418,13 @@ const EXERCISE_LIBRARY = [
       'Keep your body in a straight line from head to heels — no sagging hips',
       'Place hands slightly wider than shoulder-width and point fingers forward',
       'Lower until your chest nearly touches the floor for full range',
-      'Squeeze your glutes and core to prevent your lower back from arching'
+      'Squeeze your glutes and core to prevent your lower back from arching',
     ],
     ytUrl: 'https://youtu.be/IODxDxX7oi4',
     goldStar: true,
     similarityGroup: 'bodyweight-horizontal-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'wide-grip-push-up',
@@ -443,12 +436,13 @@ const EXERCISE_LIBRARY = [
       'Place hands much wider than shoulder-width — roughly 1.5x shoulder width',
       'Elbows will flare more; keep this intentional and controlled',
       'Lower chest between your hands, not in front of them',
-      'Body stays rigid — place a resistance band across your back to feel sagging'
+      'Body stays rigid — place a resistance band across your back to feel sagging',
     ],
     ytUrl: 'https://youtu.be/IODxDxX7oi4',
     goldStar: false,
     similarityGroup: 'bodyweight-horizontal-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'incline-push-up',
@@ -460,12 +454,13 @@ const EXERCISE_LIBRARY = [
       'The higher the surface, the less bodyweight you press — use to scale down',
       'Keep the same straight line from head to heels as a standard push-up',
       'Lower your chest to the surface for a full range of motion',
-      'Good for learning the pattern before progressing to a flat push-up'
+      'Good for learning the pattern before progressing to a flat push-up',
     ],
     ytUrl: 'https://youtu.be/IODxDxX7oi4',
     goldStar: false,
     similarityGroup: 'bodyweight-horizontal-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'decline-push-up',
@@ -477,12 +472,13 @@ const EXERCISE_LIBRARY = [
       'Place feet on a bench or box — higher feet shifts more work to upper chest',
       'Keep your core braced to prevent your lower back from hyperextending',
       'Hands stay at shoulder width or slightly wider for comfort',
-      'Lower your chest toward the floor — do not stop halfway down'
+      'Lower your chest toward the floor — do not stop halfway down',
     ],
     ytUrl: 'https://youtu.be/IODxDxX7oi4',
     goldStar: false,
     similarityGroup: 'bodyweight-decline-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'chest-dip',
@@ -494,12 +490,13 @@ const EXERCISE_LIBRARY = [
       'Lean your torso forward throughout — upright posture shifts focus to triceps',
       'Lower until your upper arms are roughly parallel to the floor',
       'Keep elbows slightly flared outward rather than tucked tight',
-      'Press back up by squeezing the chest and think of pushing the bars apart'
+      'Press back up by squeezing the chest and think of pushing the bars apart',
     ],
     ytUrl: 'https://youtu.be/2z8JmcrW-As',
     goldStar: true,
     similarityGroup: 'bodyweight-dip',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'weighted-push-up',
@@ -511,16 +508,14 @@ const EXERCISE_LIBRARY = [
       'Place a weight plate on your upper back or wear a weighted vest',
       'Have a training partner place the plate to keep your form intact',
       'All standard push-up cues apply — rigid body, full range, chest to floor',
-      'Progress by adding 5 lb increments rather than changing form'
+      'Progress by adding 5 lb increments rather than changing form',
     ],
     ytUrl: 'https://youtu.be/IODxDxX7oi4',
     goldStar: false,
     similarityGroup: 'bodyweight-horizontal-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
-
   {
     id: 'band-chest-press',
     name: 'Resistance Band Chest Press',
@@ -531,12 +526,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the band behind you at chest height and step forward for tension',
       'Keep elbows at 60-75 degrees — do not let them flare to 90 degrees',
       'Press straight out, let hands drift slightly inward at full extension',
-      'Control the return — bands increase tension as you stretch them more'
+      'Control the return — bands increase tension as you stretch them more',
     ],
     ytUrl: 'https://youtu.be/8lDC4Ri9zAQ',
     goldStar: true,
     similarityGroup: 'band-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-flye',
@@ -548,12 +544,13 @@ const EXERCISE_LIBRARY = [
       'Anchor band behind you and hold handles with a slight elbow bend',
       'Bring handles together in an arc, squeezing the chest at the front',
       'Keep your core tight — do not let the band pull you backward',
-      'Use a band with enough resistance that the last two reps are a challenge'
+      'Use a band with enough resistance that the last two reps are a challenge',
     ],
     ytUrl: 'https://youtu.be/8lDC4Ri9zAQ',
     goldStar: false,
     similarityGroup: 'band-flye',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-push-up',
@@ -565,12 +562,13 @@ const EXERCISE_LIBRARY = [
       'Thread the band under your palms and loop it across your upper back',
       'The band adds resistance at the top where push-ups are normally easiest',
       'Keep all standard push-up cues — rigid body, full range of motion',
-      'Choose a band tension that makes the last two reps genuinely hard'
+      'Choose a band tension that makes the last two reps genuinely hard',
     ],
     ytUrl: 'https://youtu.be/8lDC4Ri9zAQ',
     goldStar: false,
     similarityGroup: 'bodyweight-horizontal-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-incline-press',
@@ -582,19 +580,18 @@ const EXERCISE_LIBRARY = [
       'Anchor band low, step forward, and press at a 45-degree upward angle',
       'Focus on driving from the upper chest, not the front shoulder',
       'Maintain tension in the band at the bottom — do not let it go slack',
-      'Squeeze at the top and hold one second before returning'
+      'Squeeze at the top and hold one second before returning',
     ],
     ytUrl: 'https://youtu.be/8lDC4Ri9zAQ',
     goldStar: false,
     similarityGroup: 'band-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
   // BACK
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── BARBELL ──────────────────────────────────────────────────────────────
-
+  // ────────────────────────────────────────────────────────────────────────
   {
     id: 'barbell-bent-over-row',
     name: 'Barbell Bent-Over Row',
@@ -605,12 +602,13 @@ const EXERCISE_LIBRARY = [
       'Hinge to roughly 45 degrees and keep your chest up throughout',
       'Pull the bar to your lower ribcage — not your belly or upper chest',
       'Drive your elbows back and squeeze shoulder blades together at the top',
-      'Keep your lower back neutral — no rounding as the weight gets heavy'
+      'Keep your lower back neutral — no rounding as the weight gets heavy',
     ],
     ytUrl: 'https://youtu.be/G8l_8chR5BE',
     goldStar: true,
     similarityGroup: 'horizontal-row-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'pendlay-row',
@@ -622,12 +620,13 @@ const EXERCISE_LIBRARY = [
       'Start each rep from a dead stop on the floor — no bouncing the weight',
       'Torso is nearly parallel to the floor, more horizontal than a standard row',
       'Explode the bar to your chest using full back engagement',
-      'Lower the bar all the way back to the floor under control after each rep'
+      'Lower the bar all the way back to the floor under control after each rep',
     ],
     ytUrl: 'https://youtu.be/Weu9HMHdiDA',
     goldStar: false,
     similarityGroup: 'horizontal-row-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'conventional-deadlift',
@@ -639,12 +638,31 @@ const EXERCISE_LIBRARY = [
       'Set hips above knees but below shoulders before you pull',
       'Take the slack out of the bar by squeezing the handle before lifting',
       'Push the floor away rather than thinking about pulling the bar up',
-      'Lock hips out fully at the top — do not hyperextend the lower back'
+      'Lock hips out fully at the top — do not hyperextend the lower back',
     ],
     ytUrl: 'https://youtu.be/op9kVnSso6Q',
     goldStar: true,
     similarityGroup: 'hip-hinge-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
+  },
+  {
+    id: 'trap-bar-deadlift',
+    name: 'Trap Bar Deadlift',
+    muscleGroup: 'back',
+    equipment: 'Barbell',
+    snapshot: 'Stand inside hex bar and lift to full lockout',
+    cues: [
+      'Stand in the centre of the trap bar with feet hip-width and grip the neutral handles',
+      'Hinge your hips back and down until your shins are nearly vertical — more upright than a conventional deadlift',
+      'Drive through your full foot, extend hips and knees simultaneously, and stand tall',
+      'The neutral grip and upright torso make this the most joint-friendly heavy hinge variation for beginners',
+    ],
+    ytUrl: 'https://youtu.be/op9kVnSso6Q',
+    goldStar: false,
+    similarityGroup: 'hip-hinge-barbell',
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-shrug',
@@ -656,33 +674,32 @@ const EXERCISE_LIBRARY = [
       'Hold the bar at hip height with a shoulder-width grip',
       'Shrug straight up — no rolling the shoulders backward or forward',
       'Pause at the top for one second with full trap contraction',
-      'Lower slowly over two counts rather than letting the weight drop'
+      'Lower slowly over two counts rather than letting the weight drop',
     ],
     ytUrl: 'https://youtu.be/NAqCVe2mwzM',
     goldStar: true,
     similarityGroup: 'trap-shrug',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
-    id: 'barbell-good-morning',
-    name: 'Barbell Good Morning',
+    id: 't-bar-row',
+    name: 'T-Bar Row',
     muscleGroup: 'back',
     equipment: 'Barbell',
-    snapshot: 'Hinge forward with bar on back, erectors under load',
+    snapshot: 'Straddle anchored barbell and row sleeve to chest',
     cues: [
-      'Bar sits on your upper traps, not your neck — same as a squat',
-      'Push your hips back as you hinge, maintaining a neutral spine throughout',
-      'Keep a slight bend in the knees — this is a hip hinge, not a squat',
-      'Return to upright by squeezing glutes and driving hips forward'
+      'Straddle the barbell end and hinge your torso to about 45 degrees with your back flat',
+      'Use a V-handle or grip the sleeve and pull toward your lower chest, driving elbows back',
+      'Squeeze your shoulder blades together hard at the top of every rep',
+      'Lower under control until your arms are fully extended — do not let the weight drop',
     ],
-    ytUrl: 'https://youtu.be/YA-h3n9L4YU',
+    ytUrl: 'https://youtu.be/G8l_8chR5BE',
     goldStar: false,
-    similarityGroup: 'spinal-erector-barbell',
-    alsoInProgram: false
+    similarityGroup: 'horizontal-row-barbell',
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── DUMBBELL ─────────────────────────────────────────────────────────────
-
   {
     id: 'single-arm-db-row',
     name: 'Single-Arm Dumbbell Row',
@@ -693,12 +710,13 @@ const EXERCISE_LIBRARY = [
       'Support yourself on the bench so your back is flat and parallel to the floor',
       'Pull elbow straight up past your hip — not flared out to the side',
       'Let your arm hang fully at the bottom every rep to get the full stretch',
-      'Do not twist your torso to help lift — keep the movement isolated to the lat'
+      'Do not twist your torso to help lift — keep the movement isolated to the lat',
     ],
     ytUrl: 'https://youtu.be/sUqz6oaISkQ',
     goldStar: true,
     similarityGroup: 'horizontal-row-db',
-    alsoInProgram: true   // id: 'db-row'
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'db-bent-over-row',
@@ -710,12 +728,13 @@ const EXERCISE_LIBRARY = [
       'Hinge to 45 degrees with chest up and lower back neutral',
       'Pull both dumbbells toward your lower ribs at the same time',
       'Squeeze shoulder blades together hard at the top of each rep',
-      'Lower the dumbbells until arms are straight before the next rep'
+      'Lower the dumbbells until arms are straight before the next rep',
     ],
     ytUrl: 'https://youtu.be/sUqz6oaISkQ',
     goldStar: false,
     similarityGroup: 'horizontal-row-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'chest-supported-db-row',
@@ -727,12 +746,13 @@ const EXERCISE_LIBRARY = [
       'Set the bench to 30-45 degrees and lie face-down so your chest is fully supported',
       'Let the dumbbells hang at full arm extension before each rep',
       'Pull elbows back and up until upper arms are parallel with your torso',
-      'Squeeze shoulder blades together at the top and hold for one second'
+      'Squeeze shoulder blades together at the top and hold for one second',
     ],
     ytUrl: 'https://youtu.be/d_Ron-Ia880',
     goldStar: false,
     similarityGroup: 'horizontal-row-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-shrug',
@@ -744,12 +764,13 @@ const EXERCISE_LIBRARY = [
       'Hold dumbbells at your sides with a neutral grip, arms fully extended',
       'Shrug straight up — think of trying to touch your ears with your shoulders',
       'No rolling, no bouncing — pure vertical elevation of the shoulder girdle',
-      'Pause at the top for one second then lower slowly'
+      'Pause at the top for one second then lower slowly',
     ],
     ytUrl: 'https://youtu.be/g6qbq4Lf1FI',
     goldStar: false,
     similarityGroup: 'trap-shrug',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-pullover-back',
@@ -761,16 +782,14 @@ const EXERCISE_LIBRARY = [
       'Lie across a bench with hips low — this position targets lats over chest',
       'Keep your arms nearly straight with only a very slight elbow bend',
       'Lower the dumbbell until you feel a deep stretch in the lats and ribcage',
-      'Pull back by driving your elbows toward your hips, not by pushing with your arms'
+      'Pull back by driving your elbows toward your hips, not by pushing with your arms',
     ],
     ytUrl: 'https://youtu.be/hpDAMhh4KNc',
     goldStar: false,
     similarityGroup: 'pullover',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── CABLE ────────────────────────────────────────────────────────────────
-
   {
     id: 'lat-pulldown',
     name: 'Lat Pulldown',
@@ -781,12 +800,13 @@ const EXERCISE_LIBRARY = [
       'Grip just outside shoulder width with palms facing away from you',
       'Lean back slightly — a natural, comfortable angle not an aggressive lean',
       'Drive your elbows straight down toward your hips as you pull',
-      'Let your arms extend fully at the top every rep to stretch the lats'
+      'Let your arms extend fully at the top every rep to stretch the lats',
     ],
     ytUrl: 'https://youtu.be/CAwf7n6Luuc',
     goldStar: true,
     similarityGroup: 'vertical-pull-cable',
-    alsoInProgram: true   // id: 'pulldown'
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'close-grip-pulldown',
@@ -798,12 +818,13 @@ const EXERCISE_LIBRARY = [
       'Use a narrow neutral-grip attachment and sit tall under the cable',
       'Pull the handle to your upper chest while keeping your elbows close to your torso',
       'Think of driving elbows down toward your hips to engage the lower lats',
-      'Fully extend at the top every single rep — no partial reps'
+      'Fully extend at the top every single rep — no partial reps',
     ],
     ytUrl: 'https://youtu.be/CAwf7n6Luuc',
     goldStar: false,
     similarityGroup: 'vertical-pull-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'seated-cable-row',
@@ -815,29 +836,13 @@ const EXERCISE_LIBRARY = [
       'Keep your torso upright and still — do not rock back to generate momentum',
       'Pull the handle to your lower ribs, elbows tracking close to your sides',
       'Squeeze your shoulder blades together hard at the end of the pull',
-      'Let arms extend fully between reps to get the full lat stretch'
+      'Let arms extend fully between reps to get the full lat stretch',
     ],
     ytUrl: 'https://youtu.be/GZbfZ033f74',
     goldStar: true,
     similarityGroup: 'horizontal-row-cable',
-    alsoInProgram: false
-  },
-  {
-    id: 'cable-pull-through',
-    name: 'Cable Pull-Through',
-    muscleGroup: 'back',
-    equipment: 'Cable',
-    snapshot: 'Hip hinge pulling rope cable through legs behind you',
-    cues: [
-      'Stand facing away from the cable, rope handle between your legs',
-      'Hinge at the hips and push them back — keep your spine neutral throughout',
-      'Drive hips forward to stand and squeeze your glutes hard at the top',
-      'Let the cable pull your arms back through your legs on the way down'
-    ],
-    ytUrl: 'https://youtu.be/pv8e6OSyETE',
-    goldStar: true,
-    similarityGroup: 'hip-hinge-cable',
-    alsoInProgram: true   // id: 'pull-through'
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'straight-arm-pulldown',
@@ -849,12 +854,13 @@ const EXERCISE_LIBRARY = [
       'Stand a step back from the cable and keep a slight bend in your elbows fixed',
       'Initiate the motion by driving the elbows toward your hips, not pulling with hands',
       'Keep your core braced — do not let your lower back round during the pull',
-      'Control the return until arms are fully extended overhead before the next rep'
+      'Control the return until arms are fully extended overhead before the next rep',
     ],
     ytUrl: 'https://youtu.be/14Se-ENHBkM',
     goldStar: true,
     similarityGroup: 'straight-arm-pulldown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'single-arm-cable-row',
@@ -866,33 +872,14 @@ const EXERCISE_LIBRARY = [
       'Sit or stand and brace your core before each rep',
       'Pull the handle to your lower rib on the same side as the working arm',
       'Allow a natural slight trunk rotation — do not restrict it completely',
-      'Complete all reps on the weaker side first, then match on the stronger'
+      'Complete all reps on the weaker side first, then match on the stronger',
     ],
     ytUrl: 'https://youtu.be/GZbfZ033f74',
     goldStar: false,
     similarityGroup: 'horizontal-row-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-  {
-    id: 'cable-face-pull',
-    name: 'Cable Face Pull',
-    muscleGroup: 'back',
-    equipment: 'Cable',
-    snapshot: 'Pull rope to face to target rear delts and mid traps',
-    cues: [
-      'Set the pulley at forehead height and use a rope attachment',
-      'Pull the rope to your face, spreading the ends apart as you pull in',
-      'Elbows stay high and flare outward — do not let them drop below shoulder level',
-      'Pause at full contraction and squeeze the rear delts and mid traps hard'
-    ],
-    ytUrl: 'https://youtu.be/rep-qVOkqgk',
-    goldStar: true,
-    similarityGroup: 'rear-delt-cable',
-    alsoInProgram: false
-  },
-
-  // ─── MACHINE ──────────────────────────────────────────────────────────────
-
   {
     id: 'chest-supported-row',
     name: 'Chest-Supported Machine Row',
@@ -903,12 +890,31 @@ const EXERCISE_LIBRARY = [
       'Keep your chest flat against the pad the entire set — do not lift off',
       'Pull handles straight back, driving elbows behind your body',
       'Squeeze shoulder blades together hard at the peak of each rep',
-      'Let arms extend fully at the bottom for a complete lat stretch'
+      'Let arms extend fully at the bottom for a complete lat stretch',
     ],
     ytUrl: 'https://youtu.be/axoeDmW0oAY',
     goldStar: true,
     similarityGroup: 'horizontal-row-machine',
-    alsoInProgram: true   // id: 'chest-row'
+    alsoInProgram: true,
+    tier: 'compound'
+  },
+  {
+    id: 'chest-supported-t-bar-row',
+    name: 'Chest-Supported T-Bar Row',
+    muscleGroup: 'back',
+    equipment: 'Machine',
+    snapshot: 'Lie chest-down on T-bar station and row to chest',
+    cues: [
+      'Set the chest pad so you can grip handles with arms fully extended at the bottom',
+      'Keep your chest firmly on the pad throughout — support removes all lower back involvement',
+      'Pull handles to your chest by driving elbows back and squeezing shoulder blades hard',
+      'Lower slowly to a full arm extension before the next rep — do not shortchange the stretch',
+    ],
+    ytUrl: 'https://youtu.be/axoeDmW0oAY',
+    goldStar: false,
+    similarityGroup: 'horizontal-row-machine',
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'machine-lat-pulldown',
@@ -920,12 +926,13 @@ const EXERCISE_LIBRARY = [
       'Adjust knee pads so your legs are anchored firmly throughout the set',
       'Pull the handles down to your upper chest while driving elbows toward hips',
       'Keep a natural slight lean back — avoid aggressive leaning',
-      'Extend arms fully at the top every rep to maximise the lat stretch'
+      'Extend arms fully at the top every rep to maximise the lat stretch',
     ],
     ytUrl: 'https://youtu.be/CAwf7n6Luuc',
     goldStar: false,
     similarityGroup: 'vertical-pull-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'seated-machine-row',
@@ -937,12 +944,13 @@ const EXERCISE_LIBRARY = [
       'Adjust chest pad height so arms are parallel to the floor at full extension',
       'Pull handles back while keeping your chest lightly in contact with the pad',
       'Drive elbows back past your torso for a full range of motion',
-      'Control the return — do not let the stack crash between reps'
+      'Control the return — do not let the stack crash between reps',
     ],
     ytUrl: 'https://youtu.be/GZbfZ033f74',
     goldStar: false,
     similarityGroup: 'horizontal-row-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'hammer-strength-row',
@@ -954,12 +962,13 @@ const EXERCISE_LIBRARY = [
       'Lie chest-down on the pad and grip the neutral handles at full extension',
       'Pull both handles back simultaneously, elbows tracking close to the torso',
       'Squeeze the shoulder blades together hard at the top of every rep',
-      'Independent handles correct left-right imbalances — let each side work alone'
+      'Independent handles correct left-right imbalances — let each side work alone',
     ],
     ytUrl: 'https://youtu.be/axoeDmW0oAY',
     goldStar: false,
     similarityGroup: 'horizontal-row-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'assisted-pull-up-machine',
@@ -971,16 +980,14 @@ const EXERCISE_LIBRARY = [
       'Higher assistance weight means less effort — use just enough to complete clean reps',
       'Grip just outside shoulder width with palms facing away',
       'Pull until your chin clears the bar, driving elbows down and back',
-      'Lower under full control — the eccentric builds real pull-up strength'
+      'Lower under full control — the eccentric builds real pull-up strength',
     ],
     ytUrl: 'https://youtu.be/CAwf7n6Luuc',
     goldStar: false,
     similarityGroup: 'vertical-pull-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
-
   {
     id: 'pull-up',
     name: 'Pull-Up',
@@ -991,12 +998,13 @@ const EXERCISE_LIBRARY = [
       'Start from a dead hang with arms fully extended — no partial reps',
       'Grip just outside shoulder width with palms facing away from you',
       'Drive your elbows down toward your hips as you pull your chin over the bar',
-      'Lower slowly and controlled all the way back to a full hang'
+      'Lower slowly and controlled all the way back to a full hang',
     ],
     ytUrl: 'https://youtu.be/eGo4IYlbE5g',
     goldStar: true,
     similarityGroup: 'vertical-pull-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'chin-up',
@@ -1008,12 +1016,13 @@ const EXERCISE_LIBRARY = [
       'Use a shoulder-width underhand grip — palms facing toward you',
       'Pull yourself up until your chin clearly clears the bar',
       'Keep your elbows close to your torso throughout the pull',
-      'Lower slowly to a full dead hang — do not let gravity do it for you'
+      'Lower slowly to a full dead hang — do not let gravity do it for you',
     ],
     ytUrl: 'https://youtu.be/eGo4IYlbE5g',
     goldStar: false,
     similarityGroup: 'vertical-pull-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'inverted-row',
@@ -1025,12 +1034,13 @@ const EXERCISE_LIBRARY = [
       'Set bar at hip height and hang underneath it with heels on the floor',
       'Keep your body in a rigid plank from head to heels — no sagging hips',
       'Pull your chest up to the bar by driving elbows back and squeezing shoulder blades',
-      'Make it harder by lowering the bar or elevating your feet on a bench'
+      'Make it harder by lowering the bar or elevating your feet on a bench',
     ],
     ytUrl: 'https://youtu.be/7Fd7-3RUAss',
     goldStar: true,
     similarityGroup: 'horizontal-row-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'wide-grip-pull-up',
@@ -1042,12 +1052,13 @@ const EXERCISE_LIBRARY = [
       'Grip wider than shoulder width — roughly 1.5 times shoulder width',
       'Pull your chest toward the bar rather than your chin, for a deeper squeeze',
       'The wider grip reduces the range of motion — compensate by squeezing hard at top',
-      'Lower to a complete dead hang every rep'
+      'Lower to a complete dead hang every rep',
     ],
     ytUrl: 'https://youtu.be/eGo4IYlbE5g',
     goldStar: false,
     similarityGroup: 'vertical-pull-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'scapular-pull-up',
@@ -1059,16 +1070,14 @@ const EXERCISE_LIBRARY = [
       'Hang from a bar with straight arms and a relaxed shoulder girdle',
       'Pull your shoulder blades down and back without bending your elbows at all',
       'Your body will rise an inch or two from this shoulder blade movement alone',
-      'This builds the foundation for full pull-ups and protects the shoulder joint'
+      'This builds the foundation for full pull-ups and protects the shoulder joint',
     ],
     ytUrl: 'https://youtu.be/nbpSNCYSBkg',
     goldStar: false,
     similarityGroup: 'vertical-pull-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
-
   {
     id: 'band-pull-apart',
     name: 'Band Pull-Apart',
@@ -1079,12 +1088,13 @@ const EXERCISE_LIBRARY = [
       'Hold the band at chest height with arms straight in front of you',
       'Pull the band apart until it touches your chest, squeezing shoulder blades together',
       'Keep arms straight throughout — this is not a row, do not bend elbows',
-      'Control the return — do not let the band snap back quickly'
+      'Control the return — do not let the band snap back quickly',
     ],
     ytUrl: 'https://youtu.be/9YKBLkqo9bw',
     goldStar: true,
     similarityGroup: 'rear-delt-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-row',
@@ -1096,12 +1106,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the band at lower chest height and sit or stand back for tension',
       'Pull handles toward your lower ribs while keeping your torso upright',
       'Squeeze shoulder blades together at the end of the pull',
-      'Control the stretch back out — bands increase tension as you pull them more'
+      'Control the stretch back out — bands increase tension as you pull them more',
     ],
     ytUrl: 'https://youtu.be/9YKBLkqo9bw',
     goldStar: true,
     similarityGroup: 'horizontal-row-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-pulldown',
@@ -1113,29 +1124,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the band above you and kneel or stand back to create tension',
       'Pull the band down toward your chest while driving elbows down toward your hips',
       'Keep your core braced to prevent your back from arching excessively',
-      'Let arms extend fully overhead again before the next rep'
+      'Let arms extend fully overhead again before the next rep',
     ],
     ytUrl: 'https://youtu.be/9YKBLkqo9bw',
     goldStar: true,
     similarityGroup: 'vertical-pull-band',
-    alsoInProgram: false
-  },
-  {
-    id: 'band-good-morning',
-    name: 'Resistance Band Good Morning',
-    muscleGroup: 'back',
-    equipment: 'Resistance Band',
-    snapshot: 'Step on band and loop it behind neck, hinge forward',
-    cues: [
-      'Stand on the band and loop it over your neck like a barbell good morning',
-      'Keep your lower back neutral and push hips back as you hinge forward',
-      'Go only as low as you can with a flat back — stop before the spine rounds',
-      'Drive hips forward to stand and squeeze glutes at the top'
-    ],
-    ytUrl: 'https://youtu.be/YA-h3n9L4YU',
-    goldStar: false,
-    similarityGroup: 'spinal-erector-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-straight-arm-pulldown',
@@ -1147,19 +1142,18 @@ const EXERCISE_LIBRARY = [
       'Anchor the band above your head and hold with straight arms in front',
       'Keep the elbow angle fixed — this movement comes from the shoulder joint only',
       'Drive the band down toward your hips by squeezing the lats',
-      'Control the return until arms are fully extended before the next rep'
+      'Control the return until arms are fully extended before the next rep',
     ],
     ytUrl: 'https://youtu.be/14Se-ENHBkM',
     goldStar: false,
     similarityGroup: 'straight-arm-pulldown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
   // SHOULDERS
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── BARBELL ──────────────────────────────────────────────────────────────
-
+  // ────────────────────────────────────────────────────────────────────────
   {
     id: 'barbell-ohp',
     name: 'Barbell Overhead Press',
@@ -1170,12 +1164,13 @@ const EXERCISE_LIBRARY = [
       'Grip just outside shoulder-width and rest the bar on your upper chest before pressing',
       'Brace your core and squeeze your glutes hard — this protects your lower back',
       'Press straight up, move your head back slightly as the bar passes your face',
-      'Shrug slightly at the top to lock the bar out over your mid-foot'
+      'Shrug slightly at the top to lock the bar out over your mid-foot',
     ],
     ytUrl: 'https://youtu.be/wol7Hko8RhY',
     goldStar: true,
     similarityGroup: 'overhead-press-barbell',
-    alsoInProgram: true   // id: 'ohp'
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'seated-barbell-ohp',
@@ -1187,12 +1182,13 @@ const EXERCISE_LIBRARY = [
       'Set the bench to 90 degrees and sit tall with your back firmly against the pad',
       'Unrack with a controlled pull and hold the bar just in front of your chin',
       'Press straight up without letting your lower back hyperextend off the pad',
-      'Lower back to chin height under control — do not bounce off your chest'
+      'Lower back to chin height under control — do not bounce off your chest',
     ],
     ytUrl: 'https://youtu.be/0JfYxMRsUCQ',
     goldStar: false,
     similarityGroup: 'overhead-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-push-press',
@@ -1204,12 +1200,13 @@ const EXERCISE_LIBRARY = [
       'Dip your knees about 10-15 degrees — this is a quick athletic dip, not a squat',
       'Drive hard through your legs and transfer that force directly into the bar',
       'Once the bar is moving, press hard to full lockout overhead',
-      'Lower the bar back to your chest under control — the eccentric still counts'
+      'Lower the bar back to your chest under control — the eccentric still counts',
     ],
     ytUrl: 'https://youtu.be/X6-DMh-t4nQ',
     goldStar: false,
     similarityGroup: 'overhead-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-upright-row',
@@ -1221,12 +1218,13 @@ const EXERCISE_LIBRARY = [
       'Use a shoulder-width or slightly wider grip — narrow grips stress the wrist and shoulder joints',
       'Lead with your elbows and pull them up and out to the sides',
       'Stop when your elbows reach shoulder height — going higher impinges the shoulder',
-      'Lower slowly and with control, keeping the bar close to your body'
+      'Lower slowly and with control, keeping the bar close to your body',
     ],
     ytUrl: 'https://youtu.be/AWsGWt-VMl8',
     goldStar: false,
     similarityGroup: 'upright-row',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-front-raise',
@@ -1238,16 +1236,14 @@ const EXERCISE_LIBRARY = [
       'Stand tall with a pronated grip, hands just inside shoulder-width',
       'Keep a slight, fixed bend in your elbows throughout — do not swing',
       'Raise to shoulder height only — going higher loads the traps, not the front delts',
-      'Lower on a slow 3-count — the front delt is heavily loaded on the way down'
+      'Lower on a slow 3-count — the front delt is heavily loaded on the way down',
     ],
     ytUrl: 'https://youtu.be/qhdMn1VBpPQ',
     goldStar: false,
     similarityGroup: 'front-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── DUMBBELL ─────────────────────────────────────────────────────────────
-
   {
     id: 'db-shoulder-press',
     name: 'Dumbbell Shoulder Press',
@@ -1258,12 +1254,13 @@ const EXERCISE_LIBRARY = [
       'Start with dumbbells at ear height, elbows at 90 degrees and slightly in front of your body',
       'Press up and in slightly so the dumbbells meet over your head without clashing',
       'Do not let your lower back arch away from the seat — keep your core braced',
-      'Lower slowly back to ear height for a full range of motion on every rep'
+      'Lower slowly back to ear height for a full range of motion on every rep',
     ],
     ytUrl: 'https://youtu.be/GFblCmuEE18',
     goldStar: true,
     similarityGroup: 'overhead-press-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'arnold-press',
@@ -1275,12 +1272,13 @@ const EXERCISE_LIBRARY = [
       'Start with palms facing you and elbows low, like the top of a curl',
       'Rotate your palms outward as you press — finish with palms facing forward at the top',
       'Keep the rotation and press happening simultaneously — one smooth motion',
-      'Reverse the rotation on the way down to return to the curl position'
+      'Reverse the rotation on the way down to return to the curl position',
     ],
     ytUrl: 'https://youtu.be/pzqeWbFP1ck',
     goldStar: false,
     similarityGroup: 'overhead-press-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-lateral-raise',
@@ -1292,12 +1290,13 @@ const EXERCISE_LIBRARY = [
       'Hinge slightly forward at the hips and keep a soft, fixed bend in your elbows',
       'Lead with your elbows, not your hands — think of pouring a pitcher of water',
       'Stop at shoulder height — going higher shifts work to your upper traps',
-      'Lower on a slow 3-count — the side delt is under tension on the way down too'
+      'Lower on a slow 3-count — the side delt is under tension on the way down too',
     ],
     ytUrl: 'https://youtu.be/v_ZkxWzYnMc',
     goldStar: false,
     similarityGroup: 'lateral-raise-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'leaning-db-lateral-raise',
@@ -1309,12 +1308,13 @@ const EXERCISE_LIBRARY = [
       'Hold a sturdy upright with one hand and lean your body away at an angle',
       'This lean creates tension at the bottom of the range — use a lighter weight',
       'Raise the dumbbell out to the side to shoulder height with a soft elbow bend',
-      'Lower slowly and feel the stretch at the bottom before the next rep'
+      'Lower slowly and feel the stretch at the bottom before the next rep',
     ],
     ytUrl: 'https://youtu.be/qWif_7SOYpQ',
     goldStar: true,
     similarityGroup: 'lateral-raise-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-rear-delt-raise',
@@ -1326,12 +1326,13 @@ const EXERCISE_LIBRARY = [
       'Hinge at the hips until your torso is nearly parallel to the floor',
       'Keep a soft, fixed bend in your elbows — do not curl the dumbbells up',
       'Lead with your elbows and raise them to shoulder height, squeezing rear delts at the top',
-      'Control the descent — do not let gravity pull the weights back down'
+      'Control the descent — do not let gravity pull the weights back down',
     ],
     ytUrl: 'https://youtu.be/ttvfGg9d76c',
     goldStar: true,
     similarityGroup: 'rear-delt-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-front-raise',
@@ -1343,16 +1344,14 @@ const EXERCISE_LIBRARY = [
       'Stand tall with dumbbells at your thighs, palms facing down or inward',
       'Raise one arm at a time with a slight, fixed elbow bend — no swinging',
       'Stop at shoulder height for peak front delt tension without trapping over',
-      'Lower under control and alternate arms to keep form consistent each side'
+      'Lower under control and alternate arms to keep form consistent each side',
     ],
     ytUrl: 'https://youtu.be/UPaXKcTf5TE',
     goldStar: false,
     similarityGroup: 'front-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── CABLE ────────────────────────────────────────────────────────────────
-
   {
     id: 'cable-lateral-raise',
     name: 'Cable Lateral Raise',
@@ -1363,12 +1362,13 @@ const EXERCISE_LIBRARY = [
       'Set the pulley to the lowest position and stand with the cable crossing in front of you',
       'Keep a soft, fixed elbow bend and lead with your elbow — not your hand',
       'Raise to shoulder height and pause briefly before lowering',
-      'Lower on a slow 3-count — cables keep tension at the bottom unlike dumbbells'
+      'Lower on a slow 3-count — cables keep tension at the bottom unlike dumbbells',
     ],
     ytUrl: 'https://youtu.be/v_ZkxWzYnMc',
     goldStar: true,
     similarityGroup: 'lateral-raise-cable',
-    alsoInProgram: true   // id: 'lateral'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'cable-shoulder-press',
@@ -1380,12 +1380,13 @@ const EXERCISE_LIBRARY = [
       'Set pulleys to just below shoulder height and use a split stance for balance',
       'Keep your core braced — the cable will pull you back if you let your guard down',
       'Press straight up and slightly in, meeting the handles overhead at lockout',
-      'Lower slowly back to start — constant cable tension makes the eccentric demanding'
+      'Lower slowly back to start — constant cable tension makes the eccentric demanding',
     ],
     ytUrl: 'https://youtu.be/GFblCmuEE18',
     goldStar: true,
     similarityGroup: 'overhead-press-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'cable-upright-row',
@@ -1397,12 +1398,13 @@ const EXERCISE_LIBRARY = [
       'Use a straight bar or rope attachment set at the lowest pulley',
       'Lead with your elbows — drive them up and out to the sides',
       'Stop when your elbows reach shoulder height to avoid shoulder impingement',
-      'Return the bar slowly and keep tension on the cable at the bottom'
+      'Return the bar slowly and keep tension on the cable at the bottom',
     ],
     ytUrl: 'https://youtu.be/FjlQ9Bpo0YA',
     goldStar: true,
     similarityGroup: 'upright-row',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'cable-rear-delt-flye',
@@ -1414,12 +1416,13 @@ const EXERCISE_LIBRARY = [
       'Set both pulleys at shoulder height and cross the cables, grabbing the opposite handle each side',
       'Hinge slightly forward at the hips to target the rear delt directly',
       'Pull your arms apart and back, squeezing your rear delts at the end range',
-      'Return slowly under control — do not let the cables yank your arms forward'
+      'Return slowly under control — do not let the cables yank your arms forward',
     ],
     ytUrl: 'https://youtu.be/o-SxXUES-To',
     goldStar: true,
     similarityGroup: 'rear-delt-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-face-pull',
@@ -1431,12 +1434,13 @@ const EXERCISE_LIBRARY = [
       'Set the pulley at upper-chest or eye height and use a rope attachment',
       'Pull the rope toward your face and separate the handles at the end, like a double bicep pose',
       'Keep your elbows high — parallel to the floor or slightly above',
-      'Pause with external rotation fully expressed, then return slowly'
+      'Pause with external rotation fully expressed, then return slowly',
     ],
     ytUrl: 'https://youtu.be/rep-qVOkqgk',
     goldStar: false,
     similarityGroup: 'rear-delt-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-front-raise',
@@ -1448,16 +1452,14 @@ const EXERCISE_LIBRARY = [
       'Set the pulley to the lowest position and stand facing away from the machine',
       'Keep a slight, fixed elbow bend and avoid swinging your torso for momentum',
       'Raise to shoulder height — constant cable tension makes this more effective than dumbbells',
-      'Lower slowly on a 3-count — the front delt is loaded throughout the descent'
+      'Lower slowly on a 3-count — the front delt is loaded throughout the descent',
     ],
     ytUrl: 'https://youtu.be/K2I7g8_fnc0',
     goldStar: true,
     similarityGroup: 'front-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── MACHINE ──────────────────────────────────────────────────────────────
-
   {
     id: 'machine-shoulder-press',
     name: 'Machine Shoulder Press',
@@ -1468,12 +1470,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat so handles start at shoulder height — not lower or higher',
       'Keep your back flat against the pad throughout — do not arch away from it',
       'Press to full extension overhead, then lower under control',
-      'Do not slam the stack at the bottom — keep tension on the muscle throughout'
+      'Do not slam the stack at the bottom — keep tension on the muscle throughout',
     ],
     ytUrl: 'https://youtu.be/WvLMauqrnK8',
     goldStar: true,
     similarityGroup: 'overhead-press-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'smith-machine-ohp',
@@ -1485,12 +1488,13 @@ const EXERCISE_LIBRARY = [
       'Sit or stand close to the bar — you want a nearly vertical pressing path',
       'Grip just outside shoulder-width and unrack by rotating the bar out of the hooks',
       'Lower to upper chest or chin level and press back to full lockout',
-      'The fixed path means you can safely go closer to failure than with a free bar'
+      'The fixed path means you can safely go closer to failure than with a free bar',
     ],
     ytUrl: 'https://youtu.be/YfMpXa0RQKQ',
     goldStar: false,
     similarityGroup: 'overhead-press-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'landmine-press',
@@ -1502,12 +1506,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the bar in a landmine attachment or a sturdy corner and load the free end',
       'Hold the sleeve with both hands or one hand at chest height',
       'Press along the natural arc of the bar — it goes up and slightly away from you',
-      'This arc is much easier on the shoulder joint than a strict vertical press'
+      'This arc is much easier on the shoulder joint than a strict vertical press',
     ],
     ytUrl: 'https://youtu.be/gH7PDepHNck',
     goldStar: false,
     similarityGroup: 'landmine-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'machine-lateral-raise',
@@ -1519,12 +1524,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat height so the machine axis lines up with your shoulder joint',
       'Rest your elbows against the pads — do not grip the handles tightly',
       'Raise to shoulder height and squeeze the side delt briefly at the top',
-      'Lower slowly on a 3-count — the eccentric phase on a machine is highly effective'
+      'Lower slowly on a 3-count — the eccentric phase on a machine is highly effective',
     ],
     ytUrl: 'https://youtu.be/v_ZkxWzYnMc',
     goldStar: true,
     similarityGroup: 'lateral-raise-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'pec-deck-rear-delt',
@@ -1536,16 +1542,14 @@ const EXERCISE_LIBRARY = [
       'Face the machine and set the handles so your arms are parallel to the floor at the start',
       'Use a neutral or overhand grip and keep a soft, fixed elbow bend throughout',
       'Pull your arms back and apart, squeezing your rear delts hard at the end range',
-      'Return slowly — do not let the weight plates slam together at the front'
+      'Return slowly — do not let the weight plates slam together at the front',
     ],
     ytUrl: 'https://youtu.be/o-SxXUES-To',
     goldStar: true,
     similarityGroup: 'rear-delt-machine',
-    alsoInProgram: true   // id: 'rear-delt'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
-
-  // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
-
   {
     id: 'pike-push-up',
     name: 'Pike Push-Up',
@@ -1556,12 +1560,13 @@ const EXERCISE_LIBRARY = [
       'Form an inverted V with your hips high so your torso is nearly vertical',
       'The more vertical your torso, the more deltoid involvement you get',
       'Lower the top of your head toward the floor between your hands',
-      'Press back to the start by driving your hands into the floor — keep hips up throughout'
+      'Press back to the start by driving your hands into the floor — keep hips up throughout',
     ],
     ytUrl: 'https://youtu.be/x7_I5SUAd00',
     goldStar: true,
     similarityGroup: 'overhead-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'wall-handstand-push-up',
@@ -1573,12 +1578,13 @@ const EXERCISE_LIBRARY = [
       'Kick up to the wall with your chest or back facing it and get comfortable before starting',
       'Lower your head toward the floor in a controlled way — do not just drop',
       'Keep your core tight and your body in a straight line from hands to feet',
-      'Press back to lockout explosively — range of motion beats momentum for shoulder development'
+      'Press back to lockout explosively — range of motion beats momentum for shoulder development',
     ],
     ytUrl: 'https://youtu.be/TlCuKKcLDwo',
     goldStar: false,
     similarityGroup: 'overhead-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'prone-yt-raise',
@@ -1590,16 +1596,14 @@ const EXERCISE_LIBRARY = [
       'Lie face down on the floor or an incline bench and squeeze your shoulder blades back and down',
       'For the Y, raise your arms above your head at a 45-degree angle from your body',
       'For the T, raise your arms straight out to the sides at shoulder height',
-      'Use no weight or very light plates — these are small muscles and form breaks fast'
+      'Use no weight or very light plates — these are small muscles and form breaks fast',
     ],
     ytUrl: 'https://youtu.be/oV_C5-KMRMU',
     goldStar: true,
     similarityGroup: 'rear-delt-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
-
   {
     id: 'band-overhead-press',
     name: 'Band Overhead Press',
@@ -1610,12 +1614,13 @@ const EXERCISE_LIBRARY = [
       'Stand on the middle of the band and hold both ends at shoulder height',
       'Keep your core braced — the band will try to pull you forward at the top',
       'Press to full lockout and hold briefly before lowering',
-      'Control the descent slowly — band resistance increases overhead so the eccentric is loaded'
+      'Control the descent slowly — band resistance increases overhead so the eccentric is loaded',
     ],
     ytUrl: 'https://youtu.be/WcHpAMbOGGk',
     goldStar: true,
     similarityGroup: 'overhead-press-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-lateral-raise',
@@ -1627,12 +1632,13 @@ const EXERCISE_LIBRARY = [
       'Stand on the band with the same foot as the arm you are raising',
       'Keep a soft, fixed elbow bend and lead with your elbow on the way up',
       'Raise to shoulder height — band tension increases the higher you go',
-      'Lower slowly to feel the constant tension throughout the range of motion'
+      'Lower slowly to feel the constant tension throughout the range of motion',
     ],
     ytUrl: 'https://youtu.be/3N1uPbKMNSo',
     goldStar: true,
     similarityGroup: 'lateral-raise-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-rear-delt-flye',
@@ -1644,12 +1650,13 @@ const EXERCISE_LIBRARY = [
       'Hold the band in front of you at chest height with both hands, palms facing down',
       'Hinge slightly forward at the hips to put the rear delt in a stronger pulling position',
       'Pull the band apart by driving your elbows back and out to the sides',
-      'Squeeze your rear delts at the end range before returning slowly'
+      'Squeeze your rear delts at the end range before returning slowly',
     ],
     ytUrl: 'https://youtu.be/vMBLDt0BOhA',
     goldStar: true,
     similarityGroup: 'rear-delt-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-face-pull',
@@ -1661,12 +1668,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the band at eye level on a door or sturdy post',
       'Pull toward your face and spread the band apart, like a double bicep pose',
       'Keep your elbows high — at or above shoulder height throughout the movement',
-      'Pause at full external rotation for a moment before returning slowly'
+      'Pause at full external rotation for a moment before returning slowly',
     ],
     ytUrl: 'https://youtu.be/d6wR7TxSvT8',
     goldStar: false,
     similarityGroup: 'rear-delt-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-upright-row',
@@ -1678,12 +1686,13 @@ const EXERCISE_LIBRARY = [
       'Stand on the band with feet hip-width and hold both ends with an overhand grip',
       'Lead with your elbows and pull them up and out to the sides',
       'Stop when your elbows reach shoulder height — going higher stresses the shoulder joint',
-      'Lower back down under control before your next rep'
+      'Lower back down under control before your next rep',
     ],
     ytUrl: 'https://youtu.be/YGdFHMqVxFU',
     goldStar: false,
     similarityGroup: 'upright-row',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-front-raise',
@@ -1695,19 +1704,18 @@ const EXERCISE_LIBRARY = [
       'Stand on the middle of the band with feet together and hold both ends with palms facing down',
       'Keep a slight, fixed elbow bend — do not swing your torso for momentum',
       'Raise to shoulder height only — constant band tension makes this very effective at low loads',
-      'Lower slowly on a 3-count and repeat without bouncing at the bottom'
+      'Lower slowly on a 3-count and repeat without bouncing at the bottom',
     ],
     ytUrl: 'https://youtu.be/p_tJJ1CJmZE',
     goldStar: false,
     similarityGroup: 'front-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
   // BICEPS
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── BARBELL ──────────────────────────────────────────────────────────────
-
+  // ────────────────────────────────────────────────────────────────────────
   {
     id: 'ez-bar-curl',
     name: 'EZ Bar Curl',
@@ -1718,12 +1726,13 @@ const EXERCISE_LIBRARY = [
       'Pin your elbows to your sides — they should not drift forward as the bar rises',
       'The angled grip takes wrist and elbow stress off compared to a straight bar',
       'Curl all the way to chin height for a full contraction, then lower slowly',
-      'Take 3 seconds on the way down — the eccentric phase is where most growth happens'
+      'Take 3 seconds on the way down — the eccentric phase is where most growth happens',
     ],
     ytUrl: 'https://youtu.be/QZEqB6wUPxQ',
     goldStar: true,
     similarityGroup: 'standing-curl-barbell',
-    alsoInProgram: true   // id: 'ez-curl'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'barbell-curl',
@@ -1735,12 +1744,13 @@ const EXERCISE_LIBRARY = [
       'Use a shoulder-width grip — going too wide shifts emphasis away from the bicep peak',
       'Keep your elbows pinned to your sides throughout the entire rep',
       'Do not lean back to get the weight up — that is your lower back doing the work',
-      'Lower under control on a slow 3-count and feel the stretch at the bottom'
+      'Lower under control on a slow 3-count and feel the stretch at the bottom',
     ],
     ytUrl: 'https://youtu.be/ykJmrZ5v0Oo',
     goldStar: false,
     similarityGroup: 'standing-curl-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'ez-bar-preacher-curl',
@@ -1752,12 +1762,13 @@ const EXERCISE_LIBRARY = [
       'Set the pad height so your armpits sit just above the top edge — not on top of it',
       'Lower the bar slowly until your arms are almost fully extended — do not drop it',
       'Curl to the top without letting your elbows lift off the pad at any point',
-      'Squeeze hard at the top before lowering — the pad removes your ability to cheat'
+      'Squeeze hard at the top before lowering — the pad removes your ability to cheat',
     ],
     ytUrl: 'https://youtu.be/nbcgEmZ0Be4',
     goldStar: false,
     similarityGroup: 'preacher-curl',
-    alsoInProgram: true   // id: 'preacher'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'barbell-reverse-curl',
@@ -1769,16 +1780,14 @@ const EXERCISE_LIBRARY = [
       'Use an overhand grip with your palms facing the floor throughout the movement',
       'Keep your wrists straight and neutral — do not let them curl downward under load',
       'Elbows stay pinned to your sides — this movement is shorter range than a regular curl',
-      'Use a lighter weight than your standard curl — this is a forearm and brachialis builder'
+      'Use a lighter weight than your standard curl — this is a forearm and brachialis builder',
     ],
     ytUrl: 'https://youtu.be/Dd1wdWUqIGo',
     goldStar: false,
     similarityGroup: 'reverse-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── DUMBBELL ─────────────────────────────────────────────────────────────
-
   {
     id: 'db-curl',
     name: 'Dumbbell Curl',
@@ -1789,12 +1798,13 @@ const EXERCISE_LIBRARY = [
       'Start with palms facing each other and rotate them upward as you curl — this supination recruits the bicep fully',
       'Keep your elbows pinned to your sides and do not swing your torso back',
       'Alternate arms or do both at once — both work, alternating allows better focus per side',
-      'Lower slowly and fully — let your arm extend all the way down before the next rep'
+      'Lower slowly and fully — let your arm extend all the way down before the next rep',
     ],
     ytUrl: 'https://youtu.be/ykJmrZ5v0Oo',
     goldStar: true,
     similarityGroup: 'standing-curl-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'hammer-curl',
@@ -1806,12 +1816,13 @@ const EXERCISE_LIBRARY = [
       'Keep your palms facing each other throughout — do not rotate like a standard curl',
       'This neutral grip targets the brachialis under the bicep and the brachioradialis in the forearm',
       'Pin your elbows tight to your sides and curl straight up without swinging',
-      'Lower slowly — the brachialis responds very well to controlled eccentric loading'
+      'Lower slowly — the brachialis responds very well to controlled eccentric loading',
     ],
     ytUrl: 'https://youtu.be/zC3nLlEvin4',
     goldStar: false,
     similarityGroup: 'hammer-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'incline-db-curl',
@@ -1823,12 +1834,13 @@ const EXERCISE_LIBRARY = [
       'Set the bench to 45-60 degrees and lie back so your arms hang freely behind your body',
       'This arm-behind-body position creates a deep stretch on the long head of the bicep at the start',
       'Curl up slowly and supinate your wrists as you go — do not rush through the stretch',
-      'Lower all the way back to a full hang — the stretch is the entire point of this exercise'
+      'Lower all the way back to a full hang — the stretch is the entire point of this exercise',
     ],
     ytUrl: 'https://youtu.be/sAq_ocpRh_I',
     goldStar: true,
     similarityGroup: 'incline-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'concentration-curl',
@@ -1840,12 +1852,13 @@ const EXERCISE_LIBRARY = [
       'Sit on a bench and brace the back of your upper arm on your inner thigh for a fixed anchor',
       'Curl slowly and twist your wrist outward slightly at the top to get full bicep contraction',
       'Do not rock your torso to help — the point is to isolate the bicep completely',
-      'Lower all the way to a full extension every rep — partial reps miss the peak stretch'
+      'Lower all the way to a full extension every rep — partial reps miss the peak stretch',
     ],
     ytUrl: 'https://youtu.be/0AUGkch3tzc',
     goldStar: true,
     similarityGroup: 'concentration-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-preacher-curl',
@@ -1857,12 +1870,13 @@ const EXERCISE_LIBRARY = [
       'Use one arm at a time so you can focus on full range of motion each side',
       'Lower the dumbbell slowly until your arm is nearly fully extended — do not drop it',
       'Curl to the top without letting your elbow lift off the pad',
-      'Supinate your wrist slightly at the top for a peak squeeze before lowering'
+      'Supinate your wrist slightly at the top for a peak squeeze before lowering',
     ],
     ytUrl: 'https://youtu.be/nbcgEmZ0Be4',
     goldStar: false,
     similarityGroup: 'preacher-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'spider-curl',
@@ -1874,12 +1888,13 @@ const EXERCISE_LIBRARY = [
       'Lie face down on an incline bench set to 45 degrees and let your arms hang straight down',
       'Curl the dumbbells up toward your shoulders — your upper arms should not move at all',
       'Squeeze hard at the top then lower slowly — gravity is working against you the whole time',
-      'Use a lighter weight than a standing curl — the short head is isolated with no cheating possible'
+      'Use a lighter weight than a standing curl — the short head is isolated with no cheating possible',
     ],
     ytUrl: 'https://youtu.be/ivS3G35bapw',
     goldStar: true,
     similarityGroup: 'spider-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'zottman-curl',
@@ -1891,16 +1906,14 @@ const EXERCISE_LIBRARY = [
       'Curl up with palms facing up like a standard dumbbell curl',
       'At the top, rotate your wrists so palms face the floor before lowering',
       'Lower slowly on the way down — the pronated eccentric hammers the brachioradialis and forearms',
-      'Rotate back to the supinated start position before the next rep'
+      'Rotate back to the supinated start position before the next rep',
     ],
     ytUrl: 'https://youtu.be/OLhqRXNYKMY',
     goldStar: true,
     similarityGroup: 'zottman-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── CABLE ────────────────────────────────────────────────────────────────
-
   {
     id: 'cable-curl',
     name: 'Cable Curl',
@@ -1911,12 +1924,13 @@ const EXERCISE_LIBRARY = [
       'Set the pulley to the lowest position and use a straight bar or EZ attachment',
       'Pin your elbows to your sides — cables pull from a fixed angle so stay disciplined',
       'Cable maintains tension at the bottom of the range where dumbbells go slack',
-      'Lower on a 3-count and let your arms fully extend before the next rep'
+      'Lower on a 3-count and let your arms fully extend before the next rep',
     ],
     ytUrl: 'https://youtu.be/NFzTWp2qpiE',
     goldStar: true,
     similarityGroup: 'standing-curl-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-rope-hammer-curl',
@@ -1928,12 +1942,13 @@ const EXERCISE_LIBRARY = [
       'Attach a rope to the low pulley and hold each end with a neutral thumbs-up grip',
       'Keep your elbows pinned to your sides and curl the rope up to shoulder height',
       'At the top, pull the rope ends apart slightly to feel the brachialis contract hard',
-      'Lower slowly and fully — the cable keeps constant tension even at the bottom'
+      'Lower slowly and fully — the cable keeps constant tension even at the bottom',
     ],
     ytUrl: 'https://youtu.be/zC3nLlEvin4',
     goldStar: true,
     similarityGroup: 'hammer-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-preacher-curl',
@@ -1945,12 +1960,13 @@ const EXERCISE_LIBRARY = [
       'Set the low pulley next to a preacher bench and sit so the cable comes straight to your arm',
       'The cable keeps tension at the bottom where the EZ bar goes completely slack',
       'Lower all the way to near full extension — do not stop halfway down',
-      'Curl to the top and squeeze before returning slowly — no swinging, the pad eliminates it'
+      'Curl to the top and squeeze before returning slowly — no swinging, the pad eliminates it',
     ],
     ytUrl: 'https://youtu.be/NFzTWp2qpiE',
     goldStar: true,
     similarityGroup: 'preacher-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-reverse-curl',
@@ -1962,12 +1978,13 @@ const EXERCISE_LIBRARY = [
       'Use a straight bar on the low pulley and grip it with palms facing the floor',
       'Keep your wrists flat and neutral — curling the wrists takes the forearms out of the movement',
       'Pin your elbows to your sides and curl to shoulder height with control',
-      'The constant cable tension at the bottom makes this more effective than the barbell version'
+      'The constant cable tension at the bottom makes this more effective than the barbell version',
     ],
     ytUrl: 'https://youtu.be/Dd1wdWUqIGo',
     goldStar: true,
     similarityGroup: 'reverse-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-overhead-curl',
@@ -1979,16 +1996,14 @@ const EXERCISE_LIBRARY = [
       'Set the pulley to shoulder height and stand facing away, holding the handle with one hand',
       'Your upper arm is behind your body — this stretches the long head just like an incline curl',
       'Curl your hand toward your head without letting your elbow drift forward',
-      'Lower slowly back to the fully stretched position — the stretch is the key benefit here'
+      'Lower slowly back to the fully stretched position — the stretch is the key benefit here',
     ],
     ytUrl: 'https://youtu.be/sAq_ocpRh_I',
     goldStar: false,
     similarityGroup: 'incline-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── MACHINE ──────────────────────────────────────────────────────────────
-
   {
     id: 'machine-arm-curl',
     name: 'Machine Arm Curl',
@@ -1999,12 +2014,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat so your elbows line up with the machine axis point — this is critical for joint health',
       'Curl to the top slowly and squeeze the bicep hard before lowering',
       'Lower all the way down to a full extension — do not stop halfway and bounce back up',
-      'The machine removes stabilizer demand, so slow it down and focus on feel instead'
+      'The machine removes stabilizer demand, so slow it down and focus on feel instead',
     ],
     ytUrl: 'https://youtu.be/ykJmrZ5v0Oo',
     goldStar: true,
     similarityGroup: 'machine-arm-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'machine-preacher-curl',
@@ -2016,12 +2032,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat so your upper arms rest flat on the pad with your elbows at the pivot',
       'Grip the handles lightly — squeezing too hard recruits your forearms instead of your biceps',
       'Curl to full contraction and hold briefly before lowering',
-      'Lower all the way until your arms are nearly straight — short reps mean half the growth'
+      'Lower all the way until your arms are nearly straight — short reps mean half the growth',
     ],
     ytUrl: 'https://youtu.be/nbcgEmZ0Be4',
     goldStar: false,
     similarityGroup: 'preacher-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'assisted-chin-up-machine',
@@ -2033,32 +2050,13 @@ const EXERCISE_LIBRARY = [
       'Use an underhand shoulder-width grip — supinated grip recruits the bicep much more than overhand',
       'Set the assistance weight so you can do 8-12 clean reps — reduce it as you get stronger',
       'Pull your chin over the bar by driving your elbows down and back, not by shrugging',
-      'Lower slowly on the way down — even with assistance, a controlled eccentric builds strength faster'
+      'Lower slowly on the way down — even with assistance, a controlled eccentric builds strength faster',
     ],
     ytUrl: 'https://youtu.be/ePFNOFMiMxs',
     goldStar: false,
     similarityGroup: 'chin-up',
-    alsoInProgram: false
-  },
-
-  // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
-
-  {
-    id: 'chin-up',
-    name: 'Chin-Up',
-    muscleGroup: 'biceps',
-    equipment: 'Bodyweight',
-    snapshot: 'Pull body up to bar with underhand shoulder-width grip',
-    cues: [
-      'Use a supinated grip with your hands shoulder-width apart — this is what separates a chin-up from a pull-up',
-      'Pull your elbows down toward your hips, not just up — this keeps the bicep driving the movement',
-      'Get your chin fully over the bar on every rep, not just your nose to bar level',
-      'Lower yourself fully on each rep — stopping halfway down cuts the range and the results'
-    ],
-    ytUrl: 'https://youtu.be/brhRXlOhsAM',
-    goldStar: true,
-    similarityGroup: 'chin-up',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'negative-chin-up',
@@ -2070,12 +2068,13 @@ const EXERCISE_LIBRARY = [
       'Jump or use a box to get your chin over the bar in the top position',
       'Lower yourself as slowly as possible — aim for a 5-10 second descent per rep',
       'Keep your body in a straight line — do not kick or swing your legs during the descent',
-      'Stop when your arms are fully extended and repeat — this builds chin-up strength faster than any other method'
+      'Stop when your arms are fully extended and repeat — this builds chin-up strength faster than any other method',
     ],
     ytUrl: 'https://youtu.be/TlCuKKcLDwo',
     goldStar: false,
     similarityGroup: 'chin-up',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'inverted-row-underhand',
@@ -2087,16 +2086,14 @@ const EXERCISE_LIBRARY = [
       'Set a bar at hip height and hang underneath it with a supinated underhand grip',
       'Keep your body in a straight plank — do not let your hips sag toward the floor',
       'Pull your chest to the bar by driving your elbows back and squeezing your shoulder blades',
-      'Adjust difficulty by changing your foot position — feet further out makes it harder'
+      'Adjust difficulty by changing your foot position — feet further out makes it harder',
     ],
     ytUrl: 'https://youtu.be/LMdNTHH6G8I',
     goldStar: false,
     similarityGroup: 'chin-up',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
-
   {
     id: 'band-curl',
     name: 'Band Curl',
@@ -2107,12 +2104,13 @@ const EXERCISE_LIBRARY = [
       'Stand on the middle of the band with feet shoulder-width and hold each end with palms facing up',
       'Pin your elbows to your sides and curl just like a standard dumbbell curl',
       'Band resistance increases as you curl higher — the top of the movement is where it is hardest',
-      'Lower slowly all the way to full extension before repeating'
+      'Lower slowly all the way to full extension before repeating',
     ],
     ytUrl: 'https://youtu.be/NFzTWp2qpiE',
     goldStar: true,
     similarityGroup: 'band-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-hammer-curl',
@@ -2124,12 +2122,13 @@ const EXERCISE_LIBRARY = [
       'Stand on the band and grip each end with palms facing each other throughout',
       'Keep your elbows pinned to your sides — do not let them swing forward',
       'Curl to shoulder height and squeeze the brachialis before lowering',
-      'Lower slowly to full extension — band tension means the eccentric is working even at the bottom'
+      'Lower slowly to full extension — band tension means the eccentric is working even at the bottom',
     ],
     ytUrl: 'https://youtu.be/zC3nLlEvin4',
     goldStar: false,
     similarityGroup: 'hammer-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-preacher-curl',
@@ -2141,12 +2140,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the band to a low point and set up on a preacher bench facing the anchor',
       'The band provides increasing resistance as you curl — hardest at the top where you are strongest',
       'Keep your elbows flat on the pad throughout — do not lift them to assist the curl',
-      'Lower slowly all the way to near full extension before the next rep'
+      'Lower slowly all the way to near full extension before the next rep',
     ],
     ytUrl: 'https://youtu.be/nbcgEmZ0Be4',
     goldStar: false,
     similarityGroup: 'preacher-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-reverse-curl',
@@ -2158,19 +2158,18 @@ const EXERCISE_LIBRARY = [
       'Stand on the band and hold each end with an overhand pronated grip',
       'Keep your wrists flat and neutral throughout — do not let them curl under load',
       'Curl to shoulder height, keeping elbows pinned to your sides',
-      'Lower fully on a slow 3-count — this works the brachialis and forearms more than the bicep peak'
+      'Lower fully on a slow 3-count — this works the brachialis and forearms more than the bicep peak',
     ],
     ytUrl: 'https://youtu.be/Dd1wdWUqIGo',
     goldStar: false,
     similarityGroup: 'reverse-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
   // TRICEPS
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── BARBELL ──────────────────────────────────────────────────────────────
-
+  // ────────────────────────────────────────────────────────────────────────
   {
     id: 'skull-crushers',
     name: 'Skull Crushers (EZ Bar)',
@@ -2181,12 +2180,13 @@ const EXERCISE_LIBRARY = [
       'Lie flat on the bench and hold the EZ bar with an overhand grip, arms straight up',
       'Only your forearms move — hinge at the elbow and lower the bar toward your forehead or just behind it',
       'Keep your upper arms completely vertical and stationary throughout each rep',
-      'Press back to straight arms slowly — the long head of the tricep is under maximum stretch here'
+      'Press back to straight arms slowly — the long head of the tricep is under maximum stretch here',
     ],
     ytUrl: 'https://youtu.be/ZLIKPa4Iunc',
     goldStar: true,
     similarityGroup: 'lying-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'close-grip-bench-press',
@@ -2198,12 +2198,13 @@ const EXERCISE_LIBRARY = [
       'Grip the bar just inside shoulder-width — going too narrow stresses your wrists without adding benefit',
       'Tuck your elbows close to your sides as you lower the bar — this is what shifts emphasis from chest to triceps',
       'Lower to your lower chest under control and press to full lockout',
-      'Squeeze your triceps hard at the top of each rep before lowering again'
+      'Squeeze your triceps hard at the top of each rep before lowering again',
     ],
     ytUrl: 'https://youtu.be/4yKLxOsrGfg',
     goldStar: true,
     similarityGroup: 'compound-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-overhead-extension',
@@ -2215,16 +2216,14 @@ const EXERCISE_LIBRARY = [
       'Grip the bar close together and press it overhead until your arms are fully extended',
       'Hinge only at the elbows and lower the bar behind your head — keep your upper arms pointing straight up',
       'Brace your core hard — this overhead position puts your lower back at risk if you let it arch',
-      'Extend back to lockout slowly and squeeze the long head of the tricep at the top'
+      'Extend back to lockout slowly and squeeze the long head of the tricep at the top',
     ],
     ytUrl: 'https://youtu.be/ZLIKPa4Iunc',
     goldStar: true,
     similarityGroup: 'overhead-extension-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── DUMBBELL ─────────────────────────────────────────────────────────────
-
   {
     id: 'db-overhead-extension',
     name: 'Dumbbell Overhead Extension (Two-Arm)',
@@ -2235,12 +2234,13 @@ const EXERCISE_LIBRARY = [
       'Hold one dumbbell with both hands underneath the top plate and press it straight overhead',
       'Lower the dumbbell behind your head by hinging at the elbows — upper arms stay vertical',
       'Brace your core and avoid flaring your ribs — keep your torso neutral throughout',
-      'Extend back to full lockout for a complete tricep contraction before lowering again'
+      'Extend back to full lockout for a complete tricep contraction before lowering again',
     ],
     ytUrl: 'https://youtu.be/popGXI-qs98',
     goldStar: false,
     similarityGroup: 'overhead-extension-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'single-arm-db-overhead-extension',
@@ -2252,12 +2252,13 @@ const EXERCISE_LIBRARY = [
       'Press one dumbbell overhead and support your working elbow lightly with your free hand',
       'Lower the dumbbell behind your head by hinging at the elbow only — upper arm stays vertical',
       'One arm at a time allows a deeper range of motion and corrects any strength imbalances between sides',
-      'Extend fully to lockout and squeeze the long head hard before lowering for the next rep'
+      'Extend fully to lockout and squeeze the long head hard before lowering for the next rep',
     ],
     ytUrl: 'https://youtu.be/popGXI-qs98',
     goldStar: true,
     similarityGroup: 'overhead-extension-db',
-    alsoInProgram: true   // id: 'overhead-tri'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'db-skull-crusher',
@@ -2269,12 +2270,13 @@ const EXERCISE_LIBRARY = [
       'Lie flat on the bench and hold the dumbbells with palms facing each other, arms straight up',
       'Hinge only at the elbows and lower the dumbbells toward your temples or ears — not straight back',
       'Neutral grip reduces wrist strain compared to the barbell version — a key advantage',
-      'Press back to straight arms and feel the full tricep stretch at the bottom of each rep'
+      'Press back to straight arms and feel the full tricep stretch at the bottom of each rep',
     ],
     ytUrl: 'https://youtu.be/ZLIKPa4Iunc',
     goldStar: false,
     similarityGroup: 'lying-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-kickback',
@@ -2286,12 +2288,13 @@ const EXERCISE_LIBRARY = [
       'Hinge your torso forward until it is nearly parallel to the floor and brace your core',
       'Raise your upper arm until it is parallel to your torso — this position stays fixed throughout',
       'Extend your forearm back and up until your arm is completely straight',
-      'Hold briefly at full extension — there is zero tension at the bottom so the peak squeeze is everything'
+      'Hold briefly at full extension — there is zero tension at the bottom so the peak squeeze is everything',
     ],
     ytUrl: 'https://youtu.be/6SS6K3lAwZ8',
     goldStar: false,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-tate-press',
@@ -2303,16 +2306,14 @@ const EXERCISE_LIBRARY = [
       'Lie flat on the bench and hold dumbbells over your chest with elbows pointing straight out to the sides',
       'Lower the dumbbells by letting your elbows flare wide toward your chest — not tucking them in',
       'Touch the dumbbells lightly to your chest then press them back by extending your elbows',
-      'Keep the movement controlled — this is an isolation exercise, not a press, so go lighter than you think'
+      'Keep the movement controlled — this is an isolation exercise, not a press, so go lighter than you think',
     ],
     ytUrl: 'https://youtu.be/9Ark9S11uXw',
     goldStar: false,
     similarityGroup: 'lying-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── CABLE ────────────────────────────────────────────────────────────────
-
   {
     id: 'cable-pushdown',
     name: 'Tricep Cable Pushdown',
@@ -2323,12 +2324,13 @@ const EXERCISE_LIBRARY = [
       'Set the pulley high and use a straight bar or angled bar attachment',
       'Keep your elbows pinned to your sides — they should not move forward or back during the set',
       'Push down to full lockout and squeeze your triceps hard before letting the bar rise',
-      'Control the return — do not let the stack pull your arms back up without resistance'
+      'Control the return — do not let the stack pull your arms back up without resistance',
     ],
     ytUrl: 'https://youtu.be/_w-HpW70nSQ',
     goldStar: false,
     similarityGroup: 'pushdown',
-    alsoInProgram: true   // id: 'pushdown'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'cable-rope-pushdown',
@@ -2340,12 +2342,13 @@ const EXERCISE_LIBRARY = [
       'Attach a rope to the high pulley and hold each end with your palms facing each other',
       'Pin your elbows to your sides and push the rope down to full extension',
       'At the bottom, flare the rope ends apart and outward — this extra motion adds full tricep contraction',
-      'Lower the rope back slowly under control before the next rep'
+      'Lower the rope back slowly under control before the next rep',
     ],
     ytUrl: 'https://youtu.be/kiuVA0gs3EI',
     goldStar: true,
     similarityGroup: 'pushdown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-reverse-grip-pushdown',
@@ -2357,12 +2360,13 @@ const EXERCISE_LIBRARY = [
       'Use a straight bar and flip your grip so your palms face upward throughout',
       'This supinated grip shifts more emphasis onto the medial head of the tricep',
       'Keep your elbows pinned to your sides just like a standard pushdown',
-      'Push to full lockout and squeeze — use a lighter weight than your regular pushdown'
+      'Push to full lockout and squeeze — use a lighter weight than your regular pushdown',
     ],
     ytUrl: 'https://youtu.be/OJniFg2ijRk',
     goldStar: false,
     similarityGroup: 'pushdown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-single-arm-pushdown',
@@ -2374,12 +2378,13 @@ const EXERCISE_LIBRARY = [
       'Use a single D-handle on the high pulley and work one arm at a time',
       'Place your free hand on your hip or thigh — do not brace it against the cable stack',
       'Pin your working elbow to your side and push to full lockout before returning',
-      'One side at a time reveals and fixes any strength imbalances between your triceps'
+      'One side at a time reveals and fixes any strength imbalances between your triceps',
     ],
     ytUrl: 'https://youtu.be/_w-HpW70nSQ',
     goldStar: false,
     similarityGroup: 'pushdown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-overhead-extension',
@@ -2391,12 +2396,13 @@ const EXERCISE_LIBRARY = [
       'Attach a rope to the low pulley, face away, and hold both ends behind your head',
       'Your upper arms should be pointing forward and up — only your forearms move',
       'Extend your arms forward and up to full lockout — the cable keeps tension at the bottom unlike dumbbells',
-      'Lower slowly to get the full stretch on the long head before pressing into the next rep'
+      'Lower slowly to get the full stretch on the long head before pressing into the next rep',
     ],
     ytUrl: 'https://youtu.be/9Ark9S11uXw',
     goldStar: true,
     similarityGroup: 'overhead-extension-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-kickback',
@@ -2408,16 +2414,14 @@ const EXERCISE_LIBRARY = [
       'Set the pulley low and hinge your torso forward until nearly parallel to the floor',
       'Raise your upper arm to parallel with your torso and hold it there — it does not move',
       'Extend your forearm back to full lockout by straightening your elbow',
-      'Cable maintains tension throughout the range — the dumbbell version has zero tension at the bottom'
+      'Cable maintains tension throughout the range — the dumbbell version has zero tension at the bottom',
     ],
     ytUrl: 'https://youtu.be/6SS6K3lAwZ8',
     goldStar: true,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── MACHINE ──────────────────────────────────────────────────────────────
-
   {
     id: 'machine-tricep-extension',
     name: 'Machine Tricep Extension',
@@ -2428,12 +2432,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat so your elbows line up with the machine axis point — misalignment causes joint stress',
       'Keep your elbows on the pads throughout — lifting them off turns this into a press',
       'Push to full lockout and squeeze hard before returning slowly',
-      'Use a slow 3-count on the way up — eccentric loading on the tricep machine builds size fast'
+      'Use a slow 3-count on the way up — eccentric loading on the tricep machine builds size fast',
     ],
     ytUrl: 'https://youtu.be/NNyuuN2sJb0',
     goldStar: true,
     similarityGroup: 'machine-tricep-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'machine-overhead-extension',
@@ -2445,12 +2450,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat so the handles start behind your head at a comfortable depth',
       'Your upper arms should point straight up — only your forearms move during the rep',
       'Press to full lockout overhead and squeeze your triceps at the top',
-      'Lower slowly all the way back to the start position — the long head stretch is the whole point'
+      'Lower slowly all the way back to the start position — the long head stretch is the whole point',
     ],
     ytUrl: 'https://youtu.be/popGXI-qs98',
     goldStar: true,
     similarityGroup: 'overhead-extension-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'tricep-dip-machine',
@@ -2462,16 +2468,14 @@ const EXERCISE_LIBRARY = [
       'Sit upright and grip the handles at shoulder width — keep your torso vertical to target triceps',
       'Push the handles down to full extension and lock out your elbows at the bottom',
       'Do not lean forward — staying upright is what separates a tricep focus from a chest focus',
-      'Return slowly under control — do not let the stack slam at the top between reps'
+      'Return slowly under control — do not let the stack slam at the top between reps',
     ],
     ytUrl: 'https://youtu.be/NNyuuN2sJb0',
     goldStar: false,
     similarityGroup: 'compound-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
-
   {
     id: 'tricep-dips',
     name: 'Tricep Dips',
@@ -2482,12 +2486,13 @@ const EXERCISE_LIBRARY = [
       'Stay upright — leaning forward shifts work to the chest, so keep your torso as vertical as possible',
       'Lower yourself until your upper arms are parallel to the floor, then press back up to full lockout',
       'Keep your elbows pointing back, not out wide, to keep the focus on the tricep',
-      'Add weight with a dip belt once bodyweight becomes easy — dips scale very well with load'
+      'Add weight with a dip belt once bodyweight becomes easy — dips scale very well with load',
     ],
     ytUrl: 'https://youtu.be/wjUmnZH528Y',
     goldStar: true,
     similarityGroup: 'compound-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'bench-dips',
@@ -2499,12 +2504,13 @@ const EXERCISE_LIBRARY = [
       'Place your hands on the edge of a bench behind you with fingers pointing forward',
       'Keep your hips close to the bench — walking your feet far out makes this harder on your shoulders',
       'Lower until your elbows reach about 90 degrees, then press back up to full lockout',
-      'Add a weight plate on your lap to progress — bodyweight alone gets easy quickly'
+      'Add a weight plate on your lap to progress — bodyweight alone gets easy quickly',
     ],
     ytUrl: 'https://youtu.be/c3ZGl4pnLZs',
     goldStar: false,
     similarityGroup: 'compound-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'diamond-push-ups',
@@ -2516,16 +2522,14 @@ const EXERCISE_LIBRARY = [
       'Place your hands together under your chest with thumbs and forefingers touching to form a diamond shape',
       'Keep your elbows tucked close to your sides as you lower — do not let them flare wide',
       'Lower your chest to your hands with full control, then press back to lockout',
-      'Keep your body in a straight plank throughout — do not let your hips sag or pike up'
+      'Keep your body in a straight plank throughout — do not let your hips sag or pike up',
     ],
     ytUrl: 'https://youtu.be/J0DnG1_S92I',
     goldStar: false,
     similarityGroup: 'compound-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
-
   {
     id: 'band-pushdown',
     name: 'Band Pushdown',
@@ -2536,12 +2540,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the band at head height or above on a door or rack',
       'Pin your elbows to your sides — they should not drift forward or back',
       'Push down to full extension and squeeze hard at the bottom before the band pulls you back',
-      'Control the return — band resistance increases as you push down so the eccentric is loaded at the top'
+      'Control the return — band resistance increases as you push down so the eccentric is loaded at the top',
     ],
     ytUrl: 'https://youtu.be/PtHlGbiCglY',
     goldStar: false,
     similarityGroup: 'pushdown',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-overhead-extension',
@@ -2553,15 +2558,16 @@ const EXERCISE_LIBRARY = [
       'Step on the middle of the band and hold both ends behind your head with elbows pointing up',
       'Your upper arms should stay pointed at the ceiling — only your forearms move',
       'Extend to full lockout overhead and squeeze before lowering back behind your head',
-      'The band gets harder as you extend — resistance is highest at lockout where you are strongest'
+      'The band gets harder as you extend — resistance is highest at lockout where you are strongest',
     ],
     ytUrl: 'https://youtu.be/9Ark9S11uXw',
     goldStar: true,
     similarityGroup: 'overhead-extension-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
-    id: 'band-kickback',
+    id: 'band-tricep-kickback',
     name: 'Band Kickback',
     muscleGroup: 'triceps',
     equipment: 'Resistance Band',
@@ -2570,12 +2576,13 @@ const EXERCISE_LIBRARY = [
       'Step on the band with one foot and hinge your torso forward until nearly parallel',
       'Raise your upper arm to parallel with your torso — this position holds for the entire set',
       'Extend your forearm back to full lockout against the band tension',
-      'Keep the motion slow and controlled — the band provides resistance throughout unlike the dumbbell version'
+      'Keep the motion slow and controlled — the band provides resistance throughout unlike the dumbbell version',
     ],
     ytUrl: 'https://youtu.be/6SS6K3lAwZ8',
     goldStar: false,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-skull-crusher',
@@ -2587,19 +2594,18 @@ const EXERCISE_LIBRARY = [
       'Anchor the band behind you at floor level and lie down so the band runs over your head',
       'Hold the band with both hands and start with arms pointing straight up overhead',
       'Lower your hands toward your forehead by hinging at the elbows only',
-      'Extend back to straight arms under full band tension — hardest at lockout where you are strongest'
+      'Extend back to straight arms under full band tension — hardest at lockout where you are strongest',
     ],
     ytUrl: 'https://youtu.be/ZLIKPa4Iunc',
     goldStar: false,
     similarityGroup: 'lying-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
   // QUADS
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── BARBELL ──────────────────────────────────────────────────────────────
-
+  // ────────────────────────────────────────────────────────────────────────
   {
     id: 'barbell-back-squat',
     name: 'Barbell Back Squat',
@@ -2610,12 +2616,13 @@ const EXERCISE_LIBRARY = [
       'Keep your chest tall and brace your core before you unrack — do not start loose',
       'Push your knees out in the direction of your toes as you descend',
       'Hit at least parallel — thighs level with the floor — before driving back up',
-      'Drive through your whole foot and think about pushing the floor away from you'
+      'Drive through your whole foot and think about pushing the floor away from you',
     ],
     ytUrl: 'https://youtu.be/Dy28eq2PjcM',
     goldStar: false,
     similarityGroup: 'squat-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-front-squat',
@@ -2627,12 +2634,13 @@ const EXERCISE_LIBRARY = [
       'Rest the bar in the groove of your front shoulders and keep your elbows high — they cannot drop',
       'The upright torso this forces is what makes this the most quad-dominant barbell squat',
       'Descend slowly and keep your knees tracking over your toes throughout',
-      'Drive straight up from the bottom — the bar position self-corrects if your torso leans forward'
+      'Drive straight up from the bottom — the bar position self-corrects if your torso leans forward',
     ],
     ytUrl: 'https://youtu.be/m4ytmcZ_Jkw',
     goldStar: true,
     similarityGroup: 'squat-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-walking-lunge',
@@ -2644,12 +2652,13 @@ const EXERCISE_LIBRARY = [
       'Place the bar on your upper back like a back squat and take controlled steps forward',
       'Step far enough that your front shin stays vertical when your knee is at 90 degrees',
       'Lower your back knee toward the floor without letting it slam down',
-      'Drive through your front heel to stand and bring your feet together before the next step'
+      'Drive through your front heel to stand and bring your feet together before the next step',
     ],
     ytUrl: 'https://youtu.be/D7KaRcUTQeE',
     goldStar: false,
     similarityGroup: 'lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-bulgarian-split-squat',
@@ -2661,16 +2670,14 @@ const EXERCISE_LIBRARY = [
       'Place the bar on your upper back and elevate your rear foot on a bench behind you',
       'Stand far enough from the bench so your front shin stays vertical at the bottom',
       'Lower until your front thigh is parallel to the floor — keep your torso upright for more quad emphasis',
-      'Drive through your front heel to stand — let the rear leg be a passenger, not a driver'
+      'Drive through your front heel to stand — let the rear leg be a passenger, not a driver',
     ],
     ytUrl: 'https://youtu.be/2C-uNgKwPLE',
     goldStar: false,
     similarityGroup: 'bulgarian-split-squat',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── DUMBBELL ─────────────────────────────────────────────────────────────
-
   {
     id: 'goblet-squat',
     name: 'Goblet Squat',
@@ -2681,12 +2688,13 @@ const EXERCISE_LIBRARY = [
       'Hold the dumbbell vertically at your chest with both hands cupped under the top end',
       'The counterweight pulls you into an upright torso automatically — lean into it',
       'Squat as deep as your mobility allows — the goblet position makes it easier to hit depth',
-      'Drive your knees out and push through your whole foot to stand'
+      'Drive your knees out and push through your whole foot to stand',
     ],
     ytUrl: 'https://youtu.be/MeIiIdhvXT4',
     goldStar: true,
     similarityGroup: 'squat-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-reverse-lunge',
@@ -2698,12 +2706,13 @@ const EXERCISE_LIBRARY = [
       'Hold dumbbells at your sides and step one foot directly backward onto your toes',
       'Lower your back knee toward the floor while keeping your front shin vertical',
       'Push exclusively through your front heel to return to standing — the rear leg assists minimally',
-      'Reverse lunging reduces anterior knee shear compared to forward lunging — kinder on the knee joint'
+      'Reverse lunging reduces anterior knee shear compared to forward lunging — kinder on the knee joint',
     ],
     ytUrl: 'https://youtu.be/J9MpoAQCjos',
     goldStar: true,
     similarityGroup: 'lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-walking-lunge',
@@ -2715,12 +2724,13 @@ const EXERCISE_LIBRARY = [
       'Hold dumbbells at your sides and take a controlled step forward — not too short',
       'Lower your back knee toward the floor while keeping your front shin vertical',
       'Drive through your front heel to bring your rear foot forward for the next step',
-      'Keep your torso tall throughout — rounding forward shifts the load away from your quads'
+      'Keep your torso tall throughout — rounding forward shifts the load away from your quads',
     ],
     ytUrl: 'https://youtu.be/D7KaRcUTQeE',
     goldStar: false,
     similarityGroup: 'lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-step-up',
@@ -2732,12 +2742,13 @@ const EXERCISE_LIBRARY = [
       'Use a bench or box at roughly knee height and place your full foot flat on the surface',
       'Drive through the heel of your elevated foot — avoid pushing off your trailing leg on the floor',
       'Stand tall at the top with a brief pause before stepping back down with control',
-      'The higher the box, the more glute involvement — lower box keeps emphasis on quads'
+      'The higher the box, the more glute involvement — lower box keeps emphasis on quads',
     ],
     ytUrl: 'https://youtu.be/dQqApCGd5Ss',
     goldStar: true,
     similarityGroup: 'step-up',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-bulgarian-split-squat',
@@ -2749,16 +2760,14 @@ const EXERCISE_LIBRARY = [
       'Hold dumbbells at your sides and place your rear foot on a bench behind you',
       'Position your front foot far enough forward that your shin stays vertical at the bottom',
       'Lower until your front thigh is parallel to the floor — keep your torso upright to maximize quad drive',
-      'Drive through your front heel to stand — complete all reps on one side before switching'
+      'Drive through your front heel to stand — complete all reps on one side before switching',
     ],
     ytUrl: 'https://youtu.be/2C-uNgKwPLE',
     goldStar: true,
     similarityGroup: 'bulgarian-split-squat',
-    alsoInProgram: true   // id: 'bss'
+    alsoInProgram: true,
+    tier: 'compound'
   },
-
-  // ─── CABLE ────────────────────────────────────────────────────────────────
-
   {
     id: 'cable-squat',
     name: 'Cable Squat',
@@ -2769,12 +2778,13 @@ const EXERCISE_LIBRARY = [
       'Set the pulley low, hold the rope or handle at chest height, and stand far enough for cable tension',
       'The cable pulls you slightly forward which counterbalances your weight and allows a very upright torso',
       'Squat as deep as your mobility allows — cable squats are excellent for learning depth',
-      'Drive through your full foot to stand and keep the cable taut throughout the set'
+      'Drive through your full foot to stand and keep the cable taut throughout the set',
     ],
     ytUrl: 'https://youtu.be/MeIiIdhvXT4',
     goldStar: true,
     similarityGroup: 'squat-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'cable-reverse-lunge',
@@ -2786,12 +2796,13 @@ const EXERCISE_LIBRARY = [
       'Attach a belt or use a D-handle at hip height and stand facing away from the pulley',
       'Step one foot directly backward while the cable provides forward tension on your torso',
       'Lower your back knee toward the floor with your front shin vertical',
-      'Drive through your front heel to return — the cable adds constant tension that dumbbells cannot replicate at this angle'
+      'Drive through your front heel to return — the cable adds constant tension that dumbbells cannot replicate at this angle',
     ],
     ytUrl: 'https://youtu.be/J9MpoAQCjos',
     goldStar: false,
     similarityGroup: 'lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'cable-leg-extension',
@@ -2803,16 +2814,14 @@ const EXERCISE_LIBRARY = [
       'Attach an ankle cuff to the low pulley and face away from the machine',
       'Bend the working knee slightly and extend it forward and up in a controlled kick',
       'Keep your thigh still — only your lower leg moves from the knee down',
-      'Lower slowly under cable tension — the eccentric here is often the hardest part'
+      'Lower slowly under cable tension — the eccentric here is often the hardest part',
     ],
     ytUrl: 'https://youtu.be/IhuboUEej7Y',
     goldStar: false,
     similarityGroup: 'leg-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── MACHINE ──────────────────────────────────────────────────────────────
-
   {
     id: 'leg-press-mid-foot',
     name: 'Leg Press (Mid-Foot, Moderate Stance)',
@@ -2823,12 +2832,13 @@ const EXERCISE_LIBRARY = [
       'Place your feet at mid-height on the platform, hip to shoulder-width apart',
       'Lower the platform until your knees reach 90 degrees — do not compress past that point',
       'Press through your whole foot — not just your toes or just your heels',
-      'Do not lock out your knees fully at the top — keep a soft bend to maintain tension'
+      'Do not lock out your knees fully at the top — keep a soft bend to maintain tension',
     ],
     ytUrl: 'https://youtu.be/K_BXb4e9ljo',
     goldStar: true,
     similarityGroup: 'leg-press',
-    alsoInProgram: true   // id: 'legpress-a'
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'leg-press-high-foot',
@@ -2840,12 +2850,13 @@ const EXERCISE_LIBRARY = [
       'Place your feet high on the platform and take a wide stance with toes angled out',
       'This foot position shifts emphasis toward the hamstrings, glutes, and inner quads',
       'Lower to a depth where your lower back stays flat against the pad — do not let it curl',
-      'Press through your heels — the high foot placement naturally moves pressure toward the heel'
+      'Press through your heels — the high foot placement naturally moves pressure toward the heel',
     ],
     ytUrl: 'https://youtu.be/K_BXb4e9ljo',
     goldStar: false,
     similarityGroup: 'leg-press',
-    alsoInProgram: true   // id: 'legpress-b'
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'single-leg-press',
@@ -2857,12 +2868,13 @@ const EXERCISE_LIBRARY = [
       'Use roughly half your bilateral leg press weight as your starting point for one leg',
       'Place your single foot at mid-height on the platform, centered or slightly toward the working side',
       'Lower to 90 degrees and press back without locking out the knee fully at the top',
-      'Single leg work reveals and corrects strength imbalances between your left and right quad'
+      'Single leg work reveals and corrects strength imbalances between your left and right quad',
     ],
     ytUrl: 'https://youtu.be/K_BXb4e9ljo',
     goldStar: true,
     similarityGroup: 'leg-press-unilateral',
-    alsoInProgram: true   // id: 'single-legpress'
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'hack-squat',
@@ -2874,12 +2886,13 @@ const EXERCISE_LIBRARY = [
       'Place your feet low and close on the platform to maximize quad recruitment over glute',
       'Keep your back flat against the pad throughout — the machine supports your spine so use it',
       'Descend until your thighs break parallel before pressing back up',
-      'Drive through your full foot and keep your knees tracking over your toes the whole way'
+      'Drive through your full foot and keep your knees tracking over your toes the whole way',
     ],
     ytUrl: 'https://youtu.be/m2DiSYKPzqk',
     goldStar: true,
     similarityGroup: 'squat-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'smith-machine-squat',
@@ -2891,12 +2904,13 @@ const EXERCISE_LIBRARY = [
       'Position your feet slightly in front of the bar — not directly under it like a free squat',
       'The fixed bar path means you can go deeper and closer to failure safely than with a free barbell',
       'Keep your chest tall and push your knees out as you descend',
-      'Rotate the bar out of the safeties before starting and back in at the end of every set'
+      'Rotate the bar out of the safeties before starting and back in at the end of every set',
     ],
     ytUrl: 'https://youtu.be/m2DiSYKPzqk',
     goldStar: false,
     similarityGroup: 'squat-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'machine-leg-extension',
@@ -2908,16 +2922,14 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat so your knee joint lines up exactly with the machine axis — misalignment causes joint stress',
       'Extend to full lockout and hold for one second — you need that peak contraction for isolation work',
       'Lower on a slow 3-count and do not let the stack slam at the bottom between reps',
-      'Avoid swinging or leaning back to help — if you are doing that, reduce the weight'
+      'Avoid swinging or leaning back to help — if you are doing that, reduce the weight',
     ],
     ytUrl: 'https://youtu.be/IhuboUEej7Y',
     goldStar: true,
     similarityGroup: 'leg-extension',
-    alsoInProgram: true   // id: 'leg-ext-a' and 'leg-ext-b'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
-
-  // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
-
   {
     id: 'bodyweight-squat',
     name: 'Bodyweight Squat',
@@ -2928,12 +2940,13 @@ const EXERCISE_LIBRARY = [
       'Stand with feet shoulder-width and toes turned out slightly — find a stance that feels natural',
       'Keep your chest tall and push your knees outward as you lower',
       'Squat until your thighs are at least parallel to the floor before standing back up',
-      'Add tempo to increase difficulty — try a 3-second descent and 1-second pause at the bottom'
+      'Add tempo to increase difficulty — try a 3-second descent and 1-second pause at the bottom',
     ],
     ytUrl: 'https://youtu.be/Dy28eq2PjcM',
     goldStar: true,
     similarityGroup: 'squat-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'sissy-squat',
@@ -2945,12 +2958,13 @@ const EXERCISE_LIBRARY = [
       'Hold something sturdy for balance and stand with your heels slightly elevated on a plate or wedge',
       'Let your knees travel far forward while leaning your torso back — your body forms a straight line from knees to shoulders',
       'Lower until your thighs are near parallel to the floor then drive back up by extending your knees',
-      'This is an advanced move — build up slowly and stop if you feel sharp knee pain rather than burn'
+      'This is an advanced move — build up slowly and stop if you feel sharp knee pain rather than burn',
     ],
     ytUrl: 'https://youtu.be/AYN-U5nZieY',
     goldStar: true,
     similarityGroup: 'sissy-squat',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'wall-sit',
@@ -2962,12 +2976,13 @@ const EXERCISE_LIBRARY = [
       'Slide your back down a flat wall until your thighs are parallel to the floor',
       'Your shins should be vertical and your knees directly over your ankles — adjust your foot position if needed',
       'Keep your back completely flat against the wall — do not let your lower back arch away',
-      'Build hold time progressively — aim for 60 seconds before adding a weight plate on your thighs'
+      'Build hold time progressively — aim for 60 seconds before adding a weight plate on your thighs',
     ],
     ytUrl: 'https://youtu.be/y-wV4Venusw',
     goldStar: true,
     similarityGroup: 'wall-sit',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'pistol-squat',
@@ -2979,16 +2994,14 @@ const EXERCISE_LIBRARY = [
       'Hold a door frame or TRX strap with one hand for balance — reduce assistance as you get stronger',
       'Extend one leg forward and lower on the standing leg as deep as your mobility allows',
       'Keep your standing heel flat on the floor throughout — if it rises you need to work on ankle mobility',
-      'Drive through your heel to stand — this is one of the hardest bodyweight leg exercises so progress patiently'
+      'Drive through your heel to stand — this is one of the hardest bodyweight leg exercises so progress patiently',
     ],
     ytUrl: 'https://youtu.be/bH3mRwnAN88',
     goldStar: false,
     similarityGroup: 'squat-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
-
   {
     id: 'band-squat',
     name: 'Band Squat',
@@ -2999,12 +3012,13 @@ const EXERCISE_LIBRARY = [
       'Stand on the middle of the band with feet shoulder-width and loop both ends over your shoulders',
       'The band increases resistance as you stand — hardest at the top where you are strongest',
       'Keep your chest tall, push your knees out, and squat to at least parallel',
-      'Control the descent — band deceleration on the way down is easy to rush so slow it down'
+      'Control the descent — band deceleration on the way down is easy to rush so slow it down',
     ],
     ytUrl: 'https://youtu.be/Dy28eq2PjcM',
     goldStar: true,
     similarityGroup: 'squat-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-step-up',
@@ -3016,12 +3030,13 @@ const EXERCISE_LIBRARY = [
       'Stand on the band with both feet and loop it over your shoulders for resistance',
       'Place one foot fully on the box or bench and drive through that heel to step up',
       'Stand tall at the top with hips fully extended before stepping back down slowly',
-      'The band makes the top of the movement hardest — pause briefly there to feel the peak quad contraction'
+      'The band makes the top of the movement hardest — pause briefly there to feel the peak quad contraction',
     ],
     ytUrl: 'https://youtu.be/dQqApCGd5Ss',
     goldStar: false,
     similarityGroup: 'step-up',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-tke',
@@ -3033,19 +3048,18 @@ const EXERCISE_LIBRARY = [
       'Anchor the band at knee height behind you and loop it around the back of one knee',
       'Stand with a very slight bend in the working knee — this is your start position',
       'Straighten your knee fully against the band by contracting your quad — do not lock it aggressively',
-      'This small-range exercise is excellent for VMO activation and knee rehab — high reps and light band work best'
+      'This small-range exercise is excellent for VMO activation and knee rehab — high reps and light band work best',
     ],
     ytUrl: 'https://youtu.be/yE7sFjtnmZE',
     goldStar: true,
     similarityGroup: 'band-tke',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
   // HAMSTRINGS
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── BARBELL ──────────────────────────────────────────────────────────────
-
+  // ────────────────────────────────────────────────────────────────────────
   {
     id: 'barbell-rdl',
     name: 'Romanian Deadlift',
@@ -3056,29 +3070,13 @@ const EXERCISE_LIBRARY = [
       'Push your hips straight back — this is a hip hinge, not a squat, so your knees stay soft and mostly still',
       'Keep the bar dragging close to your shins and thighs the entire way down',
       'Lower until you feel a strong stretch in your hamstrings — depth depends on your mobility, not a fixed point',
-      'Drive your hips forward to stand and squeeze your glutes hard at the top'
+      'Drive your hips forward to stand and squeeze your glutes hard at the top',
     ],
     ytUrl: 'https://youtu.be/QR6HDEmBQNo',
     goldStar: true,
     similarityGroup: 'rdl-bilateral',
-    alsoInProgram: true   // id: 'rdl'
-  },
-  {
-    id: 'barbell-conventional-deadlift',
-    name: 'Conventional Deadlift',
-    muscleGroup: 'hamstrings',
-    equipment: 'Barbell',
-    snapshot: 'Pull bar from floor to lockout hips and knees',
-    cues: [
-      'Set your hips between a squat and a hinge — not too low, not too high',
-      'Keep your chest up and your back flat from the moment the bar leaves the floor',
-      'Drive your feet into the floor and think about pushing the earth away rather than pulling the bar up',
-      'Lock out by driving your hips forward at the top — do not hyperextend your lower back'
-    ],
-    ytUrl: 'https://youtu.be/ytGaGIn3SjE',
-    goldStar: false,
-    similarityGroup: 'rdl-bilateral',
-    alsoInProgram: false
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'barbell-stiff-leg-deadlift',
@@ -3090,12 +3088,13 @@ const EXERCISE_LIBRARY = [
       'Keep your legs nearly straight with just a slight, fixed knee bend — not fully locked',
       'Hinge from the hips and lower the bar down your legs, keeping it close to your body',
       'Feel a deeper hamstring stretch than a standard RDL since your knees are more extended',
-      'Keep your lower back flat throughout — rounding is the main risk when knees are straight'
+      'Keep your lower back flat throughout — rounding is the main risk when knees are straight',
     ],
     ytUrl: 'https://youtu.be/1uDiW5--rAE',
     goldStar: false,
     similarityGroup: 'rdl-bilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-good-morning',
@@ -3107,16 +3106,14 @@ const EXERCISE_LIBRARY = [
       'Place the bar on your upper back like a squat and stand with soft knees',
       'Hinge your hips back and lean your torso forward until it is near parallel to the floor',
       'Keep your back flat and your chest up — this is the same hip hinge as an RDL but with bar on your back',
-      'Drive your hips forward to return to standing and squeeze your glutes at the top'
+      'Drive your hips forward to return to standing and squeeze your glutes at the top',
     ],
     ytUrl: 'https://youtu.be/YA-h3n9L4YU',
     goldStar: true,
     similarityGroup: 'good-morning',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── DUMBBELL ─────────────────────────────────────────────────────────────
-
   {
     id: 'db-rdl',
     name: 'Dumbbell Romanian Deadlift',
@@ -3127,12 +3124,13 @@ const EXERCISE_LIBRARY = [
       'Hold dumbbells in front of your thighs and push your hips straight back to start the hinge',
       'Lower the dumbbells along your legs — they should stay in contact with your body the whole way',
       'Stop when you feel a strong hamstring stretch — most people reach mid-shin depending on their mobility',
-      'Drive your hips forward to stand and squeeze your glutes — do not hyperextend at the top'
+      'Drive your hips forward to stand and squeeze your glutes — do not hyperextend at the top',
     ],
     ytUrl: 'https://youtu.be/QR6HDEmBQNo',
     goldStar: false,
     similarityGroup: 'rdl-bilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-sumo-deadlift',
@@ -3144,12 +3142,13 @@ const EXERCISE_LIBRARY = [
       'Stand wide with toes turned out and hold one dumbbell vertically between your legs',
       'Hinge your hips back and bend your knees to lower the dumbbell toward the floor',
       'Keep your chest tall and back flat — the wide stance shifts work toward the inner hamstrings and adductors',
-      'Drive through your heels and squeeze your glutes hard at the top of every rep'
+      'Drive through your heels and squeeze your glutes hard at the top of every rep',
     ],
     ytUrl: 'https://youtu.be/LGIS9vs65Sk',
     goldStar: false,
     similarityGroup: 'rdl-bilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-single-leg-rdl',
@@ -3161,12 +3160,13 @@ const EXERCISE_LIBRARY = [
       'Hold a dumbbell in the opposite hand to your standing leg — this helps your balance',
       'Hinge from your hip and let your rear leg float straight back as a counterweight',
       'Lower until your torso and rear leg form a straight line parallel to the floor',
-      'Drive through your standing heel to return upright — complete all reps on one side before switching'
+      'Drive through your standing heel to return upright — complete all reps on one side before switching',
     ],
     ytUrl: 'https://youtu.be/Zfr6wizR8rs',
     goldStar: true,
     similarityGroup: 'rdl-unilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-prone-curl',
@@ -3178,16 +3178,14 @@ const EXERCISE_LIBRARY = [
       'Lie face down on a bench and hold a dumbbell between the soles of both feet',
       'Curl your heels toward your glutes by bending your knees — do not let your hips lift off the bench',
       'Squeeze your hamstrings hard at the top before lowering slowly',
-      'Use a lighter weight than you think — holding a dumbbell with your feet is unstable and requires control'
+      'Use a lighter weight than you think — holding a dumbbell with your feet is unstable and requires control',
     ],
     ytUrl: 'https://youtu.be/ELOCsoDSmrg',
     goldStar: false,
     similarityGroup: 'lying-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── CABLE ────────────────────────────────────────────────────────────────
-
   {
     id: 'cable-pull-through',
     name: 'Cable Pull-Through',
@@ -3198,12 +3196,13 @@ const EXERCISE_LIBRARY = [
       'Set the pulley low, attach a rope, and stand facing away with the rope between your legs',
       'Hinge your hips back until you feel a strong hamstring stretch — let the cable tension pull you into a good hip hinge',
       'Drive your hips forward and squeeze your glutes to stand — this is a hip thrust pattern, not a squat',
-      'Keep your arms relaxed — they are just holding the rope, your hips are doing all the work'
+      'Keep your arms relaxed — they are just holding the rope, your hips are doing all the work',
     ],
     ytUrl: 'https://youtu.be/pv8e6OSyETE',
     goldStar: true,
     similarityGroup: 'cable-pull-through',
-    alsoInProgram: false
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'cable-standing-curl',
@@ -3215,12 +3214,13 @@ const EXERCISE_LIBRARY = [
       'Attach an ankle cuff to the low pulley and face the machine with one foot on the floor',
       'Hold the machine frame lightly for balance and curl your working heel up toward your glute',
       'Keep your thigh vertical and stationary — only your lower leg moves from the knee down',
-      'Lower slowly against the cable tension — constant resistance throughout is the key advantage over the machine'
+      'Lower slowly against the cable tension — constant resistance throughout is the key advantage over the machine',
     ],
     ytUrl: 'https://youtu.be/1Tq3QdYUuHs',
     goldStar: true,
     similarityGroup: 'cable-standing-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-single-leg-rdl',
@@ -3232,16 +3232,14 @@ const EXERCISE_LIBRARY = [
       'Set the pulley low and hold the handle in the opposite hand to your standing leg',
       'Hinge from your hip and let your rear leg float back as a counterweight to your torso',
       'The cable provides constant tension at the stretched position — better stimulus than a dumbbell which goes slack',
-      'Drive through your standing heel to return and squeeze your glute at the top'
+      'Drive through your standing heel to return and squeeze your glute at the top',
     ],
     ytUrl: 'https://youtu.be/Zfr6wizR8rs',
     goldStar: false,
     similarityGroup: 'rdl-unilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── MACHINE ──────────────────────────────────────────────────────────────
-
   {
     id: 'machine-lying-curl',
     name: 'Lying Hamstring Curl',
@@ -3252,12 +3250,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the pad so it sits just above your heels — not at your ankles or calves',
       'Curl your heels toward your glutes without letting your hips rise off the bench',
       'Squeeze your hamstrings hard at the peak and hold for one second before lowering',
-      'Lower on a slow 3-count — the eccentric phase under load is where most of the growth stimulus comes from'
+      'Lower on a slow 3-count — the eccentric phase under load is where most of the growth stimulus comes from',
     ],
     ytUrl: 'https://youtu.be/1Tq3QdYUuHs',
     goldStar: true,
     similarityGroup: 'lying-curl',
-    alsoInProgram: true   // id: 'ham-curl-a'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'machine-seated-curl',
@@ -3269,12 +3268,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat back so your hips are flexed — this keeps the hamstring in a stretched position throughout the set',
       'The seated position provides a better lengthened stimulus than lying curl, which current science shows drives more growth',
       'Pull your heels all the way down toward the floor for a full range of motion',
-      'Return slowly — the hamstring is most loaded in the lengthened position on the way back up'
+      'Return slowly — the hamstring is most loaded in the lengthened position on the way back up',
     ],
     ytUrl: 'https://youtu.be/ELOCsoDSmrg',
     goldStar: true,
     similarityGroup: 'seated-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'machine-single-leg-curl',
@@ -3286,12 +3286,13 @@ const EXERCISE_LIBRARY = [
       'Use the same setup as the bilateral lying curl but work one leg at a time',
       'Reduce the weight significantly — one hamstring cannot curl what two can',
       'Keep your non-working leg still and flat against the bench pad',
-      'One leg at a time reveals strength imbalances and forces each hamstring to do its fair share'
+      'One leg at a time reveals strength imbalances and forces each hamstring to do its fair share',
     ],
     ytUrl: 'https://youtu.be/1Tq3QdYUuHs',
     goldStar: false,
     similarityGroup: 'lying-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'smith-rdl',
@@ -3303,16 +3304,14 @@ const EXERCISE_LIBRARY = [
       'Position the Smith bar at mid-thigh height and stand close enough that it drags along your legs',
       'Unlock the bar and hinge your hips straight back — the fixed path helps beginners learn the movement',
       'Lower until you feel a strong hamstring stretch, keeping your back flat throughout',
-      'Drive your hips forward to stand and re-rack by rotating the bar at the top'
+      'Drive your hips forward to stand and re-rack by rotating the bar at the top',
     ],
     ytUrl: 'https://youtu.be/QR6HDEmBQNo',
     goldStar: false,
     similarityGroup: 'rdl-bilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
-
   {
     id: 'nordic-curl',
     name: 'Nordic Hamstring Curl',
@@ -3323,12 +3322,13 @@ const EXERCISE_LIBRARY = [
       'Kneel on a pad with your feet anchored under a bar, bench, or held by a partner',
       'Lower your torso toward the floor as slowly as possible by letting your knees extend — keep your hips straight',
       'Use your hands to catch yourself at the bottom if needed, then use them to push back to the start',
-      'The eccentric phase is everything here — even beginners who cannot do a full rep get massive benefit from just the lowering'
+      'The eccentric phase is everything here — even beginners who cannot do a full rep get massive benefit from just the lowering',
     ],
     ytUrl: 'https://youtu.be/8zWDuWKdBZU',
     goldStar: true,
     similarityGroup: 'nordic-style-curl',
-    alsoInProgram: true   // id: 'ham-curl-b'
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'glute-ham-raise',
@@ -3340,12 +3340,13 @@ const EXERCISE_LIBRARY = [
       'Set up on the GHR machine with your knees just behind the pad and feet secured in the footplate',
       'Lower your torso forward and down toward the floor with your hips fully extended — not bent',
       'Curl your body back up by flexing your knees and driving your hips into the pad',
-      'Keep your torso rigid throughout — the movement comes from knee flexion and hip extension, not from bending at the waist'
+      'Keep your torso rigid throughout — the movement comes from knee flexion and hip extension, not from bending at the waist',
     ],
     ytUrl: 'https://youtu.be/c2pWqsHR7FU',
     goldStar: false,
     similarityGroup: 'nordic-style-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'stability-ball-curl',
@@ -3357,16 +3358,14 @@ const EXERCISE_LIBRARY = [
       'Lie on your back and place both heels on top of a stability ball with your legs straight',
       'Bridge your hips up so your body forms a straight line from shoulders to heels',
       'Roll the ball toward your glutes by curling your heels in — keep your hips high throughout',
-      'Roll back slowly to the straight-leg position before the next rep — do not let your hips drop'
+      'Roll back slowly to the straight-leg position before the next rep — do not let your hips drop',
     ],
     ytUrl: 'https://youtu.be/1Tq3QdYUuHs',
     goldStar: true,
     similarityGroup: 'stability-ball-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
-
   {
     id: 'band-lying-curl',
     name: 'Band Lying Hamstring Curl',
@@ -3377,12 +3376,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the band at a low point, loop it around one ankle, and lie face down on the floor',
       'Curl your heel toward your glute against the band tension — keep your hips flat on the floor',
       'Squeeze hard at the top before lowering slowly — the band increases resistance the higher you curl',
-      'This is a great at-home substitute for the lying curl machine when equipment is unavailable'
+      'This is a great at-home substitute for the lying curl machine when equipment is unavailable',
     ],
     ytUrl: 'https://youtu.be/1Tq3QdYUuHs',
     goldStar: false,
     similarityGroup: 'lying-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-pull-through',
@@ -3394,12 +3394,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the band at a low point behind you, step over it, and hold both ends between your legs',
       'Hinge your hips back until you feel a strong hamstring stretch — let the band tension guide you',
       'Drive your hips forward and squeeze your glutes to stand — same hip pattern as a cable pull-through',
-      'Use a band with enough tension that you feel resistance throughout the entire range of motion'
+      'Use a band with enough tension that you feel resistance throughout the entire range of motion',
     ],
     ytUrl: 'https://youtu.be/pv8e6OSyETE',
     goldStar: false,
     similarityGroup: 'cable-pull-through',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-good-morning',
@@ -3411,19 +3412,18 @@ const EXERCISE_LIBRARY = [
       'Stand on the middle of the band with both feet and loop the ends over the back of your neck and shoulders',
       'Hinge your hips back and lean your torso forward with soft knees — keep your back completely flat',
       'Lower until your torso is near parallel to the floor and you feel a deep hamstring stretch',
-      'Drive your hips forward to return to standing — band resistance increases as you stand up'
+      'Drive your hips forward to return to standing — band resistance increases as you stand up',
     ],
     ytUrl: 'https://youtu.be/YA-h3n9L4YU',
     goldStar: false,
     similarityGroup: 'good-morning',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
   // GLUTES
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── BARBELL ──────────────────────────────────────────────────────────────
-
+  // ────────────────────────────────────────────────────────────────────────
   {
     id: 'barbell-hip-thrust',
     name: 'Barbell Hip Thrust',
@@ -3434,12 +3434,13 @@ const EXERCISE_LIBRARY = [
       'Sit with your upper back against a bench and the bar over your hip crease — use a pad for comfort',
       'Drive through your heels and squeeze your glutes hard at the top until your body forms a straight line from knees to shoulders',
       'Do not hyperextend your lower back at the top — tuck your chin and think about leveling your pelvis',
-      'Lower with control and reset your brace before every rep — do not bounce off the bottom'
+      'Lower with control and reset your brace before every rep — do not bounce off the bottom',
     ],
     ytUrl: 'https://youtu.be/0od5lwWMGV8',
     goldStar: true,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: true   // id: 'hip-thrust-a'
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'barbell-glute-bridge',
@@ -3451,12 +3452,13 @@ const EXERCISE_LIBRARY = [
       'Lie flat on the floor with the bar over your hip crease and knees bent at about 90 degrees',
       'Drive through your heels and squeeze your glutes to lift your hips straight up',
       'Squeeze hard at the top and hold for one second before lowering — the floor limits your range compared to a hip thrust',
-      'Progress to a hip thrust when the floor version becomes easy — the bench elevation adds significant range of motion'
+      'Progress to a hip thrust when the floor version becomes easy — the bench elevation adds significant range of motion',
     ],
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-sumo-deadlift',
@@ -3468,16 +3470,14 @@ const EXERCISE_LIBRARY = [
       'Stand with feet wider than shoulder-width, toes pointed out to about 45 degrees',
       'Grip the bar just inside your legs and keep your torso more upright than a conventional deadlift',
       'Drive your knees out hard as you pull — this is what recruits the glutes and inner hamstrings over the lower back',
-      'Lock out by squeezing your glutes at the top — do not lean back aggressively'
+      'Lock out by squeezing your glutes at the top — do not lean back aggressively',
     ],
     ytUrl: 'https://youtu.be/LGIS9vs65Sk',
     goldStar: true,
     similarityGroup: 'sumo-deadlift',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── DUMBBELL ─────────────────────────────────────────────────────────────
-
   {
     id: 'db-hip-thrust',
     name: 'Dumbbell Hip Thrust',
@@ -3488,12 +3488,13 @@ const EXERCISE_LIBRARY = [
       'Place a dumbbell horizontally across your hip crease and hold it in place with both hands',
       'Drive through your heels and squeeze your glutes to push your hips up to a flat bridge position',
       'Hold the top for one second and squeeze hard — dumbbell load is lighter than a barbell so use peak squeeze to compensate',
-      'Lower under control and reset before repeating — do not rush the bottom of the rep'
+      'Lower under control and reset before repeating — do not rush the bottom of the rep',
     ],
     ytUrl: 'https://youtu.be/0od5lwWMGV8',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-sumo-squat',
@@ -3505,12 +3506,13 @@ const EXERCISE_LIBRARY = [
       'Stand wide with toes turned out and hold one dumbbell vertically with both hands between your legs',
       'Keep your chest tall and push your knees outward in the direction of your toes as you descend',
       'Squat until your thighs are at least parallel to the floor for a full glute stretch',
-      'Drive through your heels to stand and squeeze your glutes at the top'
+      'Drive through your heels to stand and squeeze your glutes at the top',
     ],
     ytUrl: 'https://youtu.be/sQ-lwJtpwUc',
     goldStar: false,
     similarityGroup: 'sumo-deadlift',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-curtsy-lunge',
@@ -3522,12 +3524,13 @@ const EXERCISE_LIBRARY = [
       'Hold dumbbells at your sides and step one foot diagonally behind and across your body — like a curtsy',
       'Lower your back knee toward the floor while keeping your front knee tracking over your toes',
       'The cross-behind motion targets the glute medius on your front leg more than a standard lunge',
-      'Drive through your front heel to return to standing and repeat on the same side or alternate'
+      'Drive through your front heel to return to standing and repeat on the same side or alternate',
     ],
     ytUrl: 'https://youtu.be/bH3mRwnAN88',
     goldStar: true,
     similarityGroup: 'curtsy-lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-lateral-lunge',
@@ -3539,16 +3542,14 @@ const EXERCISE_LIBRARY = [
       'Hold dumbbells at your sides and take a wide step directly to one side',
       'Sink into the side you stepped onto by pushing your hips back and bending that knee — keep the other leg straight',
       'Keep your chest up and your bent knee tracking over your foot — do not let it cave inward',
-      'Drive through your bent leg heel to return to center and repeat on the same side or alternate'
+      'Drive through your bent leg heel to return to center and repeat on the same side or alternate',
     ],
     ytUrl: 'https://youtu.be/R8jArZG2J6Q',
     goldStar: true,
     similarityGroup: 'lateral-lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
-
-  // ─── CABLE ────────────────────────────────────────────────────────────────
-
   {
     id: 'cable-donkey-kick',
     name: 'Cable Donkey Kick',
@@ -3559,12 +3560,13 @@ const EXERCISE_LIBRARY = [
       'Attach an ankle cuff to the low pulley and get on all fours facing the machine',
       'Keep your knee bent at 90 degrees and drive your heel straight back and up toward the ceiling',
       'Stop when your thigh is parallel to the floor — going higher arches your lower back, not your glute',
-      'Squeeze hard at the top and lower slowly — the cable keeps tension throughout unlike bodyweight versions'
+      'Squeeze hard at the top and lower slowly — the cable keeps tension throughout unlike bodyweight versions',
     ],
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: true,
     similarityGroup: 'kickback',
-    alsoInProgram: true   // id: 'donkey-kick'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'cable-standing-kickback',
@@ -3576,12 +3578,13 @@ const EXERCISE_LIBRARY = [
       'Attach an ankle cuff to the low pulley and face the machine, holding the frame for balance',
       'Keep a slight lean forward from your hips and kick your working leg straight back',
       'Focus on squeezing the glute at the peak — the movement is small, not a big swing',
-      'Lower slowly and controlled — rushing kills the tension that makes this exercise work'
+      'Lower slowly and controlled — rushing kills the tension that makes this exercise work',
     ],
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: false,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-hip-abduction',
@@ -3593,33 +3596,14 @@ const EXERCISE_LIBRARY = [
       'Attach an ankle cuff to the low pulley and stand sideways to the machine',
       'Hold the machine frame for balance and lift your outside leg out to the side',
       'Keep your torso completely still — movement comes only from your hip, not a sideways lean',
-      'Lower slowly under cable tension rather than letting your leg drop — the eccentric is equally valuable'
+      'Lower slowly under cable tension rather than letting your leg drop — the eccentric is equally valuable',
     ],
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: false,
     similarityGroup: 'hip-abduction',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-  {
-    id: 'cable-pull-through',
-    name: 'Cable Pull-Through',
-    muscleGroup: 'glutes',
-    equipment: 'Cable',
-    snapshot: 'Rope between legs hinge forward drive hips through',
-    cues: [
-      'Set the pulley low, attach a rope, and stand facing away holding the rope between your legs',
-      'Hinge your hips back until you feel a glute and hamstring stretch — let the cable create the tension',
-      'Drive your hips forward and squeeze your glutes explosively to stand — this is not a squat, it is a pure hip hinge',
-      'The cable keeps tension in the stretched position unlike a kettlebell swing — control the hinge on the way back'
-    ],
-    ytUrl: 'https://youtu.be/pv8e6OSyETE',
-    goldStar: true,
-    similarityGroup: 'pull-through',
-    alsoInProgram: false
-  },
-
-  // ─── MACHINE ──────────────────────────────────────────────────────────────
-
   {
     id: 'machine-hip-abduction',
     name: 'Hip Abduction Machine',
@@ -3630,12 +3614,13 @@ const EXERCISE_LIBRARY = [
       'Sit tall with your back against the pad and feet resting on the footrests',
       'Push your legs outward against the pads in a slow, controlled motion — do not slam them open',
       'Hold at the widest point for one second to maximize glute medius contraction',
-      'Return slowly by resisting the pads coming back together — the adductor also works on the return'
+      'Return slowly by resisting the pads coming back together — the adductor also works on the return',
     ],
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: true,
     similarityGroup: 'hip-abduction',
-    alsoInProgram: true   // id: 'hip-abduction'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'machine-hip-thrust',
@@ -3647,12 +3632,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the machine so the hip pad sits across your hip crease — not your stomach or thighs',
       'Drive your hips forward and up against the pad by squeezing your glutes hard',
       'Hold the fully extended position for one second before returning — the machine removes setup so use the extra focus for better contractions',
-      'Lower under control — do not let the machine push your hips back without resistance'
+      'Lower under control — do not let the machine push your hips back without resistance',
     ],
     ytUrl: 'https://youtu.be/0od5lwWMGV8',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'smith-hip-thrust',
@@ -3664,12 +3650,13 @@ const EXERCISE_LIBRARY = [
       'Set the Smith bar low enough to sit the bar over your hip crease when your back is against a bench',
       'The fixed bar path makes setup easier and allows you to focus fully on the glute contraction',
       'Drive through your heels and squeeze hard at the top — the Smith is more stable than a free barbell so really feel the peak',
-      'Rotate the bar to re-rack at the end of your set rather than trying to hold it still'
+      'Rotate the bar to re-rack at the end of your set rather than trying to hold it still',
     ],
     ytUrl: 'https://youtu.be/0od5lwWMGV8',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'glute-iso-machine',
@@ -3681,16 +3668,14 @@ const EXERCISE_LIBRARY = [
       'Kneel on the padded platform and position the working leg with your foot hooked under the roller pad',
       'Keep your hips square to the machine throughout — rotating your hip means your glute is not doing the work',
       'Drive your heel back and up against the pad in a controlled arc, squeezing your glute at the top',
-      'Lower slowly under resistance — the machine provides resistance in both directions so use both'
+      'Lower slowly under resistance — the machine provides resistance in both directions so use both',
     ],
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: true,
     similarityGroup: 'glute-iso-machine',
-    alsoInProgram: true   // id: 'glute-iso'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
-
-  // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
-
   {
     id: 'glute-bridge',
     name: 'Glute Bridge',
@@ -3701,12 +3686,13 @@ const EXERCISE_LIBRARY = [
       'Lie on your back with knees bent and feet flat on the floor hip-width apart',
       'Drive through your heels and squeeze your glutes to lift your hips until your body forms a straight line',
       'Hold the top for two full seconds with a hard glute squeeze before lowering',
-      'Add a dumbbell or plate on your hips once bodyweight alone stops feeling challenging'
+      'Add a dumbbell or plate on your hips once bodyweight alone stops feeling challenging',
     ],
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'single-leg-hip-thrust',
@@ -3718,12 +3704,13 @@ const EXERCISE_LIBRARY = [
       'Set up the same as a standard hip thrust with your upper back on the bench',
       'Extend one leg straight out and drive your hips up using only the grounded leg',
       'Keep your hips level — do not let the unsupported side drop during the movement',
-      'Complete all reps on one side before switching — unilateral work reveals and corrects glute imbalances'
+      'Complete all reps on one side before switching — unilateral work reveals and corrects glute imbalances',
     ],
     ytUrl: 'https://youtu.be/0od5lwWMGV8',
     goldStar: true,
     similarityGroup: 'hip-thrust-unilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'donkey-kick-bodyweight',
@@ -3735,12 +3722,13 @@ const EXERCISE_LIBRARY = [
       'Get on all fours with your wrists under your shoulders and knees under your hips',
       'Keep your knee bent at 90 degrees and drive your heel straight toward the ceiling',
       'Stop when your thigh is parallel to the floor — going higher arches your lower back instead of working your glute',
-      'Add a resistance band around your thighs when bodyweight alone no longer challenges you'
+      'Add a resistance band around your thighs when bodyweight alone no longer challenges you',
     ],
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: false,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'frog-pump',
@@ -3752,16 +3740,14 @@ const EXERCISE_LIBRARY = [
       'Lie on your back and bring the soles of your feet together with your knees flared wide like a butterfly stretch',
       'Drive your hips straight up by squeezing your glutes — the externally rotated leg position changes the angle of glute recruitment',
       'Hold at the top for one second then lower under control before pumping back up',
-      'Use high reps and a band across your hips for added resistance once bodyweight becomes easy'
+      'Use high reps and a band across your hips for added resistance once bodyweight becomes easy',
     ],
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: true,
     similarityGroup: 'frog-pump',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
-
   {
     id: 'banded-clamshell',
     name: 'Banded Clamshell',
@@ -3772,12 +3758,13 @@ const EXERCISE_LIBRARY = [
       'Lie on your side with a band around your thighs, knees bent at 45 degrees and feet stacked',
       'Rotate your top knee up toward the ceiling like a clamshell opening — keep your feet together',
       'Only open as far as your glute medius allows without your pelvis rotating backward',
-      'Hold at the top for one second and lower slowly — the band creates resistance in both directions'
+      'Hold at the top for one second and lower slowly — the band creates resistance in both directions',
     ],
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: true,
     similarityGroup: 'clamshell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-lateral-walk',
@@ -3789,15 +3776,16 @@ const EXERCISE_LIBRARY = [
       'Place a band around your ankles and get into a quarter-squat position — stay low throughout',
       'Step sideways by leading with one foot then bringing the other foot to hip-width — do not let them touch',
       'Keep constant tension in the band — do not let your feet come close enough to reduce resistance',
-      'Keep your toes forward and avoid hiking your hip up on the stepping side — that is your hip flexor, not your glute medius'
+      'Keep your toes forward and avoid hiking your hip up on the stepping side — that is your hip flexor, not your glute medius',
     ],
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: true,
     similarityGroup: 'lateral-walk',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
-    id: 'band-kickback',
+    id: 'band-glute-kickback',
     name: 'Banded Kickback',
     muscleGroup: 'glutes',
     equipment: 'Resistance Band',
@@ -3806,12 +3794,13 @@ const EXERCISE_LIBRARY = [
       'Loop a band around one ankle and anchor the other end at a low point in front of you',
       'Stand or get on all fours and kick your working leg straight back against the band tension',
       'Keep your hips square — rotating to get more range takes the glute out of the movement',
-      'Lower slowly and feel the band resist the return — both directions count for growth'
+      'Lower slowly and feel the band resist the return — both directions count for growth',
     ],
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: false,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-glute-bridge',
@@ -3823,12 +3812,13 @@ const EXERCISE_LIBRARY = [
       'Lie on your back with a band anchored to something heavy across your hips or looped under your feet',
       'Drive through your heels and squeeze your glutes to lift your hips against the band tension',
       'Hold the top for two seconds with a hard glute squeeze — the band peaks in resistance right where you need it most',
-      'Lower slowly under band resistance before the next rep'
+      'Lower slowly under band resistance before the next rep',
     ],
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-hip-abduction',
@@ -3840,19 +3830,18 @@ const EXERCISE_LIBRARY = [
       'Place a band around your thighs and lie on your side with your legs stacked and straight',
       'Lift your top leg upward against the band tension — keep your toes pointing forward, not toward the ceiling',
       'Raise as high as you can without your pelvis rotating — the movement is small and controlled',
-      'Lower slowly to just above the bottom leg before raising again — do not rest between reps'
+      'Lower slowly to just above the bottom leg before raising again — do not rest between reps',
     ],
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: false,
     similarityGroup: 'hip-abduction',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
   // CALVES
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── BARBELL ──────────────────────────────────────────────────────────────
-
+  // ────────────────────────────────────────────────────────────────────────
   {
     id: 'barbell-standing-calf-raise',
     name: 'Barbell Standing Calf Raise',
@@ -3863,12 +3852,13 @@ const EXERCISE_LIBRARY = [
       'Position the bar on your upper back like a squat and stand with the balls of your feet on a plate or step',
       'Lower your heels as far below the step as your ankle mobility allows — the full stretch at the bottom is critical for growth',
       'Rise onto your toes as high as possible and pause for one second at the peak',
-      'Lower on a slow 3-count — rushing the descent is the most common mistake that limits calf development'
+      'Lower on a slow 3-count — rushing the descent is the most common mistake that limits calf development',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'barbell-seated-calf-raise',
@@ -3880,16 +3870,14 @@ const EXERCISE_LIBRARY = [
       'Sit on a bench with the balls of your feet on a step and rest a padded barbell across your lower thighs — just above your knees',
       'Your knees bent at 90 degrees switches emphasis to the soleus, which the gastrocnemius cannot override',
       'Lower your heels to a full stretch below the step, then rise to full height',
-      'Use a towel or pad under the bar — the load across bare thighs will cut the set short before your calves are done'
+      'Use a towel or pad under the bar — the load across bare thighs will cut the set short before your calves are done',
     ],
     ytUrl: 'https://youtu.be/JbyjNymZOt0',
     goldStar: false,
     similarityGroup: 'seated-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── DUMBBELL ─────────────────────────────────────────────────────────────
-
   {
     id: 'db-standing-calf-raise',
     name: 'Dumbbell Standing Calf Raise',
@@ -3900,12 +3888,13 @@ const EXERCISE_LIBRARY = [
       'Hold a dumbbell in one hand and use the other hand to hold something for light balance support',
       'Stand with the ball of your foot on a step and lower your heel to a full stretch before each rep',
       'Rise to your absolute maximum height — partial reps keep the calf in its comfortable mid-range and limit growth',
-      'Lower on a slow 3-count every single rep — calves adapt fast to sloppy technique'
+      'Lower on a slow 3-count every single rep — calves adapt fast to sloppy technique',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-single-leg-calf-raise',
@@ -3917,12 +3906,13 @@ const EXERCISE_LIBRARY = [
       'Hold a dumbbell on the same side as your working leg and rest your non-working foot behind your ankle',
       'Lower your heel as far below the step as possible for a full gastrocnemius stretch',
       'Rise onto your toes as high as you can and squeeze at the top for one full second',
-      'Do all reps on one side before switching — unilateral work forces each calf to work at full capacity'
+      'Do all reps on one side before switching — unilateral work forces each calf to work at full capacity',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'single-leg-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-seated-calf-raise',
@@ -3934,16 +3924,14 @@ const EXERCISE_LIBRARY = [
       'Sit on a bench with the balls of your feet on a step and a dumbbell balanced on each knee',
       'The bent-knee position targets the soleus — the deeper calf muscle that gives the calf width and thickness',
       'Lower your heels below the step for a full stretch, then rise to full height on each rep',
-      'Move slowly — the soleus responds better to controlled time under tension than to fast reps'
+      'Move slowly — the soleus responds better to controlled time under tension than to fast reps',
     ],
     ytUrl: 'https://youtu.be/JbyjNymZOt0',
     goldStar: false,
     similarityGroup: 'seated-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── CABLE ────────────────────────────────────────────────────────────────
-
   {
     id: 'cable-standing-calf-raise',
     name: 'Cable Standing Calf Raise',
@@ -3954,12 +3942,13 @@ const EXERCISE_LIBRARY = [
       'Attach a straight bar to a high pulley and drape it across your shoulders like a yoke, or use a low pulley between your legs for upward tension',
       'Stand with the balls of your feet on a plate or step so your heels can drop freely',
       'Lower to a full stretch, then rise to full height — the cable maintains constant tension unlike a barbell',
-      'Lower on a slow 3-count and pause at the bottom stretch before rising again'
+      'Lower on a slow 3-count and pause at the bottom stretch before rising again',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-seated-calf-raise',
@@ -3971,16 +3960,14 @@ const EXERCISE_LIBRARY = [
       'Sit facing a low pulley and attach the cable to a belt or wrap it around a plate resting on your knees',
       'Your knees are bent at 90 degrees which targets the soleus — the cable keeps resistance constant through the full range',
       'Push your toes forward and down against the cable, hold the peak, then return slowly',
-      'The cable version provides resistance at the very bottom stretch unlike most seated calf machines'
+      'The cable version provides resistance at the very bottom stretch unlike most seated calf machines',
     ],
     ytUrl: 'https://youtu.be/JbyjNymZOt0',
     goldStar: false,
     similarityGroup: 'seated-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── MACHINE ──────────────────────────────────────────────────────────────
-
   {
     id: 'machine-standing-calf-raise',
     name: 'Standing Calf Raise Machine',
@@ -3991,12 +3978,13 @@ const EXERCISE_LIBRARY = [
       'Position the shoulder pads on your upper traps and stand with the balls of your feet on the step',
       'Lower your heels as far below the step as your ankle mobility allows — this full stretch is what separates results from spinning your wheels',
       'Rise to your absolute maximum height and hold for one second at the top',
-      'Lower on a slow 3-count for every rep — calves have a high proportion of slow-twitch fibers that respond to time under tension'
+      'Lower on a slow 3-count for every rep — calves have a high proportion of slow-twitch fibers that respond to time under tension',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: true,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: true   // id: 'calf-a'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'machine-seated-calf-raise',
@@ -4008,12 +3996,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the knee pad so it sits just above your knees — too high stresses the knee, too low slips off',
       'The 90-degree knee position isolates the soleus which cannot be adequately trained with standing raises alone',
       'Lower your heels to a full stretch below the footplate, then press up to maximum height',
-      'Pause one second at the bottom stretch before rising — the stretch stimulus at long muscle length is highly effective for soleus hypertrophy'
+      'Pause one second at the bottom stretch before rising — the stretch stimulus at long muscle length is highly effective for soleus hypertrophy',
     ],
     ytUrl: 'https://youtu.be/JbyjNymZOt0',
     goldStar: true,
     similarityGroup: 'seated-calf-raise',
-    alsoInProgram: true   // id: 'calf-b'
+    alsoInProgram: true,
+    tier: 'isolation'
   },
   {
     id: 'leg-press-calf-raise',
@@ -4025,12 +4014,13 @@ const EXERCISE_LIBRARY = [
       'After finishing your leg press set, move your feet to the very bottom edge of the platform with just the balls of your feet on it',
       'Keep your legs only slightly bent — enough to unlock the knees but not enough to engage the soleus significantly',
       'Push through your toes to extend your ankles fully, hold one second, then lower with control',
-      'This is an excellent way to add heavy calf volume without needing a separate machine — use the weight already loaded'
+      'This is an excellent way to add heavy calf volume without needing a separate machine — use the weight already loaded',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: true,
     similarityGroup: 'leg-press-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'smith-machine-calf-raise',
@@ -4042,12 +4032,13 @@ const EXERCISE_LIBRARY = [
       'Set the Smith bar at shoulder height and stand with the balls of your feet on a plate or step under the bar',
       'The fixed bar path means you can load heavier and focus entirely on ankle range of motion',
       'Lower your heels to a full stretch below the step before each rep',
-      'Rise to maximum height, pause one second, and lower on a 3-count — the Smith removes all balance demand so there is no excuse for sloppy reps'
+      'Rise to maximum height, pause one second, and lower on a 3-count — the Smith removes all balance demand so there is no excuse for sloppy reps',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'donkey-calf-raise',
@@ -4059,16 +4050,14 @@ const EXERCISE_LIBRARY = [
       'Hinge forward at the hips about 90 degrees and rest your forearms on a bench or the machine pad',
       'This hip-flexed position stretches the gastrocnemius across both the knee and ankle simultaneously for maximum range',
       'Lower your heels as far below the step as possible, then rise to maximum height',
-      'The donkey position provides a deeper calf stretch than a standing raise — use it when you plateau on standard calf raises'
+      'The donkey position provides a deeper calf stretch than a standing raise — use it when you plateau on standard calf raises',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: true,
     similarityGroup: 'donkey-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
-
   {
     id: 'standing-calf-raise-bodyweight',
     name: 'Bodyweight Standing Calf Raise',
@@ -4079,12 +4068,13 @@ const EXERCISE_LIBRARY = [
       'Stand with the balls of both feet on a step or curb and lower your heels below the step level',
       'Rise to maximum height and hold one second before lowering — without load, the pause and squeeze matter more',
       'Lower on a slow 4-count — making the bodyweight version harder through tempo is more effective than rushing higher reps',
-      'Progress to the single leg version once you can do 20 or more reps with perfect form'
+      'Progress to the single leg version once you can do 20 or more reps with perfect form',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'single-leg-calf-raise-step',
@@ -4096,12 +4086,13 @@ const EXERCISE_LIBRARY = [
       'Stand on one foot on the edge of a step with the other foot crossed behind your ankle for balance',
       'Lower your heel as far below the step as possible — the full stretch at long muscle length is where growth happens',
       'Rise onto your toes as high as you can and pause for one second at the peak',
-      'Lower on a slow 3-4 count every rep — this is one of the most effective calf exercises available at any level of training'
+      'Lower on a slow 3-4 count every rep — this is one of the most effective calf exercises available at any level of training',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: true,
     similarityGroup: 'single-leg-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'jump-rope',
@@ -4113,16 +4104,14 @@ const EXERCISE_LIBRARY = [
       'Stay on the balls of your feet throughout — landing on your heels defeats the purpose and risks ankle injury',
       'Keep jumps small and controlled — you only need to clear the rope, not jump for height',
       'Use this as a calf finisher for 2-3 minutes after your main calf sets for endurance and blood flow',
-      'The fast repetition rate trains calf endurance and the Achilles tendon in a way that slow raises cannot replicate'
+      'The fast repetition rate trains calf endurance and the Achilles tendon in a way that slow raises cannot replicate',
     ],
     ytUrl: 'https://youtu.be/FJmRQ5iTXKE',
     goldStar: true,
     similarityGroup: 'jump-rope',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
-
   {
     id: 'band-standing-calf-raise',
     name: 'Band Standing Calf Raise',
@@ -4133,12 +4122,13 @@ const EXERCISE_LIBRARY = [
       'Stand on the middle of the band with the balls of your feet on a step and loop both ends over your shoulders',
       'The band increases resistance as you rise — hardest at the top where you are strongest',
       'Lower your heels to a full stretch at the bottom before each rep',
-      'Use a heavy enough band that the top of the movement is genuinely challenging — bands for calves need real tension'
+      'Use a heavy enough band that the top of the movement is genuinely challenging — bands for calves need real tension',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-seated-calf-raise',
@@ -4150,12 +4140,13 @@ const EXERCISE_LIBRARY = [
       'Sit on a bench with the balls of your feet on a step and loop a heavy band across your lower thighs',
       'Anchor the band to something behind you so it pulls your knees down while you press up against it',
       'The bent-knee position targets the soleus — this is your seated calf raise substitute when no machine is available',
-      'Lower to a full heel stretch and rise to full height on every rep — do not shorten the range to manage band tension'
+      'Lower to a full heel stretch and rise to full height on every rep — do not shorten the range to manage band tension',
     ],
     ytUrl: 'https://youtu.be/JbyjNymZOt0',
     goldStar: false,
     similarityGroup: 'seated-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-single-leg-calf-raise',
@@ -4167,19 +4158,18 @@ const EXERCISE_LIBRARY = [
       'Stand on the band with one foot and loop both ends over the shoulder of the same side',
       'Stand with the ball of your foot on a step and lower your heel to a full stretch',
       'Rise to maximum height against the band tension — one leg at a time forces each calf to its full capacity',
-      'Hold the top for one second and lower slowly — the band provides progressive resistance that peaks at your strongest point'
+      'Hold the top for one second and lower slowly — the band provides progressive resistance that peaks at your strongest point',
     ],
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'single-leg-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
-  // ──────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────
   // CORE
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── BARBELL ──────────────────────────────────────────────────────────────
-
+  // ────────────────────────────────────────────────────────────────────────
   {
     id: 'barbell-rollout',
     name: 'Barbell Rollout',
@@ -4190,12 +4180,13 @@ const EXERCISE_LIBRARY = [
       'Load a small amount of weight on each side to keep the bar from sliding and kneel on a pad',
       'Brace your core hard before you move — your spine must stay neutral the entire time',
       'Roll the bar forward as far as you can without your hips sagging or your lower back arching',
-      'Pull the bar back by driving your elbows toward your knees — your abs do the pulling, not your arms'
+      'Pull the bar back by driving your elbows toward your knees — your abs do the pulling, not your arms',
     ],
     ytUrl: 'https://youtu.be/L78bRBGCAIo',
     goldStar: false,
     similarityGroup: 'rollout',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'landmine-rotation',
@@ -4207,12 +4198,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the bar in a landmine or corner and hold the sleeve with both hands at chest height',
       'Keep your arms straight and rotate your torso to sweep the bar from one hip to the other in a controlled arc',
       'Your hips should rotate slightly — this is a full rotational movement, not just an arm swing',
-      'Control the arc both ways — the eccentric return against rotation is where the oblique work happens'
+      'Control the arc both ways — the eccentric return against rotation is where the oblique work happens',
     ],
     ytUrl: 'https://youtu.be/nCKG7nMNhHs',
     goldStar: false,
     similarityGroup: 'rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'barbell-suitcase-carry',
@@ -4224,16 +4216,14 @@ const EXERCISE_LIBRARY = [
       'Hold a loaded barbell in one hand at your side and walk for distance or time',
       'Resist the urge to lean toward the weight — your core must fight to keep your torso completely upright',
       'Keep your shoulder on the loaded side packed down and back, not shrugged up toward your ear',
-      'Short steps, tall posture, deliberate breathing — this is a core stability drill, not a race'
+      'Short steps, tall posture, deliberate breathing — this is a core stability drill, not a race',
     ],
     ytUrl: 'https://youtu.be/YzZ2fPBr1DE',
     goldStar: false,
     similarityGroup: 'carry',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── DUMBBELL ─────────────────────────────────────────────────────────────
-
   {
     id: 'weighted-crunch',
     name: 'Weighted Crunch',
@@ -4244,12 +4234,13 @@ const EXERCISE_LIBRARY = [
       'Hold a dumbbell or plate against your chest and lie on your back with knees bent',
       'Curl your shoulders off the floor by contracting your abs — your lower back stays in contact with the floor',
       'Do not pull on your neck or use momentum — the movement is small and controlled',
-      'Pause at the top of the crunch for one second before lowering slowly — the slow eccentric adds more stimulus than the upward crunch'
+      'Pause at the top of the crunch for one second before lowering slowly — the slow eccentric adds more stimulus than the upward crunch',
     ],
     ytUrl: 'https://youtu.be/9FGilxCbdz8',
     goldStar: false,
     similarityGroup: 'spinal-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-russian-twist',
@@ -4261,12 +4252,13 @@ const EXERCISE_LIBRARY = [
       'Sit on the floor with knees bent, heels slightly raised, and lean back until you feel your abs engage',
       'Hold a dumbbell with both hands and rotate your torso to touch it to the floor on each side',
       'The rotation comes from your ribcage twisting — do not just swing your arms across',
-      'Keep your lower back from rounding — if it collapses, raise your feet less or use a lighter weight'
+      'Keep your lower back from rounding — if it collapses, raise your feet less or use a lighter weight',
     ],
     ytUrl: 'https://youtu.be/wkD8rjkodUI',
     goldStar: false,
     similarityGroup: 'rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-side-bend',
@@ -4278,12 +4270,13 @@ const EXERCISE_LIBRARY = [
       'Hold a dumbbell in one hand at your side and stand tall with your other hand behind your head',
       'Bend directly to the side — not forward or backward — and feel the stretch on the opposite oblique',
       'Drive back to upright by contracting the oblique on the weighted side',
-      'Do not use momentum — a slow, deliberate side bend is far more effective than swinging the weight'
+      'Do not use momentum — a slow, deliberate side bend is far more effective than swinging the weight',
     ],
     ytUrl: 'https://youtu.be/LQdgGEEgdEo',
     goldStar: false,
     similarityGroup: 'lateral-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-suitcase-carry',
@@ -4295,16 +4288,14 @@ const EXERCISE_LIBRARY = [
       'Hold a heavy dumbbell in one hand at your side and walk with purpose for 20-40 meters',
       'Keep your torso completely upright — do not lean toward or away from the weight',
       'Your obliques and QL are working hard to resist the lateral pull — that is the entire point',
-      'Keep your loaded shoulder depressed and your chin up — collapsing the shoulder transfers stress to your neck and traps'
+      'Keep your loaded shoulder depressed and your chin up — collapsing the shoulder transfers stress to your neck and traps',
     ],
     ytUrl: 'https://youtu.be/YzZ2fPBr1DE',
     goldStar: true,
     similarityGroup: 'carry',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── CABLE ────────────────────────────────────────────────────────────────
-
   {
     id: 'cable-crunch',
     name: 'Cable Crunch',
@@ -4315,12 +4306,13 @@ const EXERCISE_LIBRARY = [
       'Attach a rope to a high pulley, kneel on a pad, and hold the rope behind your head or beside your ears',
       'Crunch your ribcage toward your pelvis — do not pull down with your arms or flex at the hip',
       'Keep your hips locked in place throughout — if your hips move, the resistance is being shared with your hip flexors',
-      'Lower slowly back to the start for a full stretch — the loaded eccentric is a major advantage over bodyweight crunches'
+      'Lower slowly back to the start for a full stretch — the loaded eccentric is a major advantage over bodyweight crunches',
     ],
     ytUrl: 'https://youtu.be/2fbujeH3F0E',
     goldStar: true,
     similarityGroup: 'spinal-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-pallof-press',
@@ -4332,12 +4324,13 @@ const EXERCISE_LIBRARY = [
       'Set the pulley at chest height and stand sideways to the machine, holding the handle with both hands at your sternum',
       'Press the handle straight out in front of you and hold for two seconds — resist any rotation toward the cable',
       'The further you press the handle out, the harder your core works to resist the rotational pull',
-      'Return the handle to your chest under control — do not let the cable yank your torso toward the machine'
+      'Return the handle to your chest under control — do not let the cable yank your torso toward the machine',
     ],
     ytUrl: 'https://youtu.be/AabdomSpfZs',
     goldStar: true,
     similarityGroup: 'anti-rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-wood-chop',
@@ -4349,12 +4342,13 @@ const EXERCISE_LIBRARY = [
       'Set the pulley high and stand sideways to the machine, holding the handle with both hands',
       'Pull the handle diagonally across your body from high outside your shoulder down to your opposite hip',
       'Your torso rotates through the movement — think of throwing a punch from high to low',
-      'Control the return against the cable tension — the obliques work just as hard resisting the return'
+      'Control the return against the cable tension — the obliques work just as hard resisting the return',
     ],
     ytUrl: 'https://youtu.be/nCKG7nMNhHs',
     goldStar: true,
     similarityGroup: 'rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-reverse-wood-chop',
@@ -4366,12 +4360,13 @@ const EXERCISE_LIBRARY = [
       'Set the pulley low and stand sideways to the machine, holding the handle with both hands at your outer hip',
       'Pull diagonally upward across your body from your outer hip to your opposite shoulder overhead',
       'Rotate your torso and extend your arms as you go — this hits the external oblique of the upper side',
-      'Return slowly against the cable — control the movement in both directions for full oblique development'
+      'Return slowly against the cable — control the movement in both directions for full oblique development',
     ],
     ytUrl: 'https://youtu.be/nCKG7nMNhHs',
     goldStar: false,
     similarityGroup: 'rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-side-bend',
@@ -4383,16 +4378,14 @@ const EXERCISE_LIBRARY = [
       'Set the pulley low and stand sideways to the machine holding the handle in the nearest hand',
       'Bend your torso directly away from the cable — the cable provides constant resistance through the full lateral range',
       'Return to upright slowly by contracting the oblique on the cable side — do not lean past upright',
-      'The cable maintains tension at the start where a dumbbell has none — this makes it superior to the dumbbell side bend'
+      'The cable maintains tension at the start where a dumbbell has none — this makes it superior to the dumbbell side bend',
     ],
     ytUrl: 'https://youtu.be/LQdgGEEgdEo',
     goldStar: true,
     similarityGroup: 'lateral-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── MACHINE ──────────────────────────────────────────────────────────────
-
   {
     id: 'machine-crunch',
     name: 'Machine Crunch',
@@ -4403,12 +4396,13 @@ const EXERCISE_LIBRARY = [
       'Adjust the seat so the axis of the machine aligns with your upper abs, not your hips',
       'Cross your arms over the pads and crunch your ribcage toward your pelvis — your hips stay planted',
       'Squeeze at the bottom of the crunch for one full second before returning',
-      'Lower slowly under control — the machine provides resistance on the way back up which most people waste by letting it snap back'
+      'Lower slowly under control — the machine provides resistance on the way back up which most people waste by letting it snap back',
     ],
     ytUrl: 'https://youtu.be/2fbujeH3F0E',
     goldStar: false,
     similarityGroup: 'spinal-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'hyperextension',
@@ -4420,12 +4414,13 @@ const EXERCISE_LIBRARY = [
       'Position the pad just below your hip bones so you can hinge freely at the hip',
       'Cross your arms at your chest or hold a plate and lower your torso toward the floor by hinging at the hips',
       'Extend back to straight — do not hyperextend past neutral, which compresses the lumbar spine',
-      'Add a plate or dumbbell at your chest once bodyweight alone becomes easy for more erector stimulus'
+      'Add a plate or dumbbell at your chest once bodyweight alone becomes easy for more erector stimulus',
     ],
     ytUrl: 'https://youtu.be/ph3pddpKzzw',
     goldStar: true,
     similarityGroup: 'back-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'roman-chair-leg-raise',
@@ -4437,16 +4432,14 @@ const EXERCISE_LIBRARY = [
       'Press your back flat against the back pad and support your weight on your forearms on the arm rests',
       'Raise your legs by curling your pelvis upward — do not just swing your legs forward, which turns this into a hip flexor exercise',
       'Raise until your thighs are parallel to the floor or higher if your strength allows, squeezing your lower abs',
-      'Lower slowly — do not let your legs drop, which removes all tension and risks lower back strain'
+      'Lower slowly — do not let your legs drop, which removes all tension and risks lower back strain',
     ],
     ytUrl: 'https://youtu.be/Pr1ieGZ5atk',
     goldStar: false,
     similarityGroup: 'leg-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
-
   {
     id: 'plank',
     name: 'Plank',
@@ -4457,12 +4450,13 @@ const EXERCISE_LIBRARY = [
       'Hold yourself on forearms and toes with your body forming a completely straight line from head to heels',
       'Squeeze your glutes and brace your abs as hard as you can — a proper plank is maximally contracted, not passively held',
       'Do not let your hips pike up or sag down — both positions unload the core',
-      'Build hold time gradually, but quality beats duration — 30 seconds of full tension beats 2 minutes of sagging'
+      'Build hold time gradually, but quality beats duration — 30 seconds of full tension beats 2 minutes of sagging',
     ],
     ytUrl: 'https://youtu.be/ASdvN_XEl_c',
     goldStar: true,
     similarityGroup: 'plank',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'side-plank',
@@ -4474,12 +4468,13 @@ const EXERCISE_LIBRARY = [
       'Stack your feet or stagger them for more stability and hold yourself up on one forearm with your elbow under your shoulder',
       'Drive your hips upward so your body forms a straight diagonal line — sagging hips remove all the lateral core challenge',
       'Squeeze your glutes and brace your entire core — this is not just an oblique exercise when done correctly',
-      'Elevate your top arm toward the ceiling to increase the balance demand once the basic version becomes easy'
+      'Elevate your top arm toward the ceiling to increase the balance demand once the basic version becomes easy',
     ],
     ytUrl: 'https://youtu.be/wqzrb67Dwf8',
     goldStar: true,
     similarityGroup: 'side-plank',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'hanging-leg-raise',
@@ -4491,12 +4486,13 @@ const EXERCISE_LIBRARY = [
       'Hang from a pull-up bar with a firm grip and dead hang before starting — let your body stop swinging',
       'Raise your legs by posteriorly tilting your pelvis — curl your hips up and forward, not just lifting your legs forward',
       'Raise until your thighs reach at least parallel to the floor — the lower abs are only challenged when the pelvis tilts',
-      'Lower under control on a slow 3-count — do not drop your legs, which creates a pendulum swing that makes the next rep easier but less effective'
+      'Lower under control on a slow 3-count — do not drop your legs, which creates a pendulum swing that makes the next rep easier but less effective',
     ],
     ytUrl: 'https://youtu.be/Pr1ieGZ5atk',
     goldStar: true,
     similarityGroup: 'leg-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'ab-wheel-rollout',
@@ -4508,12 +4504,13 @@ const EXERCISE_LIBRARY = [
       'Kneel on a pad, grip the ab wheel handles, and brace your core as hard as you can before moving',
       'Roll forward slowly while keeping your back flat — your hips should not pike up or your lower back arch',
       'Go only as far as you can keep perfect form — a short rollout with a rigid spine beats a full rollout with a sagging back',
-      'Pull the wheel back by driving your elbows toward your knees using your abs, not your hip flexors'
+      'Pull the wheel back by driving your elbows toward your knees using your abs, not your hip flexors',
     ],
     ytUrl: 'https://youtu.be/L78bRBGCAIo',
     goldStar: true,
     similarityGroup: 'rollout',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'dead-bug',
@@ -4525,12 +4522,13 @@ const EXERCISE_LIBRARY = [
       'Lie on your back with arms pointing at the ceiling and knees bent at 90 degrees above your hips',
       'Press your lower back firmly into the floor and keep it there for the entire set — this is the whole challenge',
       'Slowly lower one arm overhead and the opposite leg toward the floor simultaneously, taking 3-4 seconds',
-      'Return and repeat on the other side — if your lower back lifts off the floor even slightly, reduce your range of motion'
+      'Return and repeat on the other side — if your lower back lifts off the floor even slightly, reduce your range of motion',
     ],
     ytUrl: 'https://youtu.be/4XLEnwUr1d8',
     goldStar: true,
     similarityGroup: 'dead-bug',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'bicycle-crunch',
@@ -4542,16 +4540,14 @@ const EXERCISE_LIBRARY = [
       'Lie on your back with hands lightly behind your ears — do not pull on your neck',
       'Curl one shoulder toward the opposite knee while extending the other leg straight out',
       'Rotate through your ribcage — your shoulder moves toward the knee, not just your elbow',
-      'Move slowly and deliberately — fast sloppy bicycle crunches are mostly hip flexor work, not oblique work'
+      'Move slowly and deliberately — fast sloppy bicycle crunches are mostly hip flexor work, not oblique work',
     ],
     ytUrl: 'https://youtu.be/9FGilxCbdz8',
     goldStar: false,
     similarityGroup: 'spinal-flexion',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
-
-  // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
-
   {
     id: 'band-pallof-press',
     name: 'Band Pallof Press',
@@ -4562,12 +4558,13 @@ const EXERCISE_LIBRARY = [
       'Anchor a band at chest height to a rack or door and stand sideways holding it with both hands at your sternum',
       'Press your hands straight out in front of you and hold for two seconds — resist the band pulling you toward the anchor',
       'The further you press out, the harder the anti-rotation challenge becomes',
-      'Return the band to your chest under control before repeating — do not let it snap you back'
+      'Return the band to your chest under control before repeating — do not let it snap you back',
     ],
     ytUrl: 'https://youtu.be/AabdomSpfZs',
     goldStar: false,
     similarityGroup: 'anti-rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-wood-chop',
@@ -4579,12 +4576,13 @@ const EXERCISE_LIBRARY = [
       'Anchor the band high and stand sideways, holding it with both hands at shoulder height on the anchor side',
       'Pull the band diagonally across your body from high to low, rotating your torso through the movement',
       'Your arms follow your torso — the power comes from the rotation, not the pull',
-      'Control the return against the band tension — the oblique works on the way back just as hard'
+      'Control the return against the band tension — the oblique works on the way back just as hard',
     ],
     ytUrl: 'https://youtu.be/nCKG7nMNhHs',
     goldStar: false,
     similarityGroup: 'rotation',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-dead-bug',
@@ -4596,17 +4594,440 @@ const EXERCISE_LIBRARY = [
       'Anchor the band overhead and hold it with both arms pointing at the ceiling in the dead bug start position',
       'Lower one arm overhead against the band tension while lowering the opposite leg — the band adds difficulty to the arm component',
       'Keep your lower back pressed into the floor throughout — the band makes this significantly harder than bodyweight',
-      'Return both limbs slowly and repeat on the other side — this is one of the best deep core stability exercises available'
+      'Return both limbs slowly and repeat on the other side — this is one of the best deep core stability exercises available',
     ],
     ytUrl: 'https://youtu.be/4XLEnwUr1d8',
     goldStar: false,
     similarityGroup: 'dead-bug',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+
+  // ────────────────────────────────────────────────────────────────────────
+  // FOREARMS
+  // ────────────────────────────────────────────────────────────────────────
+  {
+    id: 'barbell-wrist-curl',
+    name: 'Barbell Wrist Curl',
+    muscleGroup: 'forearms',
+    equipment: 'Barbell',
+    snapshot: 'Forearms on bench curl bar up with wrists only',
+    cues: [
+      'Rest your forearms on a bench or your thighs with your wrists hanging off the edge and palms facing up',
+      'Let the bar roll to your fingertips at the bottom — this full stretch is critical for wrist flexor development',
+      'Curl your wrists upward as high as they will go and squeeze the flexors at the peak',
+      'Lower slowly on a 3-count — the eccentric is where the wrist flexors are most loaded',
+    ],
+    ytUrl: 'https://youtu.be/pO2W6cTG-Wc',
+    goldStar: true,
+    similarityGroup: 'wrist-curl-barbell',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'barbell-reverse-wrist-curl',
+    name: 'Barbell Reverse Wrist Curl',
+    muscleGroup: 'forearms',
+    equipment: 'Barbell',
+    snapshot: 'Forearms on bench extend bar up with palms down',
+    cues: [
+      'Rest your forearms on a bench with your wrists hanging off the edge and palms facing down',
+      'Lower your wrists toward the floor for a full extensor stretch, then raise them as high as possible',
+      'The wrist extensors are significantly weaker than the flexors — use about half the weight',
+      'Move slowly in both directions — wrist extensors are prone to strain if loaded carelessly',
+    ],
+    ytUrl: 'https://youtu.be/pO2W6cTG-Wc',
+    goldStar: false,
+    similarityGroup: 'wrist-extension-barbell',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'behind-back-wrist-curl',
+    name: 'Behind-the-Back Barbell Wrist Curl',
+    muscleGroup: 'forearms',
+    equipment: 'Barbell',
+    snapshot: 'Hold bar behind back and curl wrists upward',
+    cues: [
+      'Stand holding a barbell behind your body with a pronated grip at arm length',
+      'Let the bar roll to your fingertips, then curl your wrists upward against gravity',
+      'The behind-body position allows a longer range of motion than the bench-supported version',
+      'Keep your forearms still — only your wrists move throughout the entire set',
+    ],
+    ytUrl: 'https://youtu.be/pO2W6cTG-Wc',
+    goldStar: false,
+    similarityGroup: 'wrist-curl-barbell',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'db-wrist-curl',
+    name: 'Dumbbell Wrist Curl',
+    muscleGroup: 'forearms',
+    equipment: 'Dumbbell',
+    snapshot: 'Single dumbbell wrist curl forearm resting on thigh',
+    cues: [
+      'Sit on a bench and rest one forearm on your thigh with your wrist hanging off your knee',
+      'Hold the dumbbell with a supinated grip and lower it until you feel a full flexor stretch',
+      'Curl your wrist upward as far as possible and squeeze at the peak before lowering',
+      'One arm at a time lets you focus on range of motion and feel for each side independently',
+    ],
+    ytUrl: 'https://youtu.be/pO2W6cTG-Wc',
+    goldStar: false,
+    similarityGroup: 'wrist-curl-db',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'db-reverse-wrist-curl',
+    name: 'Dumbbell Reverse Wrist Curl',
+    muscleGroup: 'forearms',
+    equipment: 'Dumbbell',
+    snapshot: 'Forearm on thigh extend wrist up with palm facing down',
+    cues: [
+      'Rest one forearm on your thigh with your wrist hanging off your knee, palm facing down',
+      'Lower your wrist toward the floor for a full extensor stretch before raising',
+      'Raise your wrist as high as possible — the range of motion here is smaller than a flexion curl',
+      'Use very light weight — wrist extensors fatigue quickly and are easily strained by excessive load',
+    ],
+    ytUrl: 'https://youtu.be/pO2W6cTG-Wc',
+    goldStar: true,
+    similarityGroup: 'wrist-extension-db',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'farmers-carry',
+    name: 'Farmer\'s Carry',
+    muscleGroup: 'forearms',
+    equipment: 'Dumbbell',
+    snapshot: 'Walk heavy dumbbells at sides gripping hard',
+    cues: [
+      'Pick up the heaviest dumbbells you can hold and walk with purpose for 20-40 meters',
+      'Stand tall with your shoulders packed back and down — do not let the weight pull them forward',
+      'Grip as hard as you can throughout — this is the point, the forearm and hand are under constant isometric load',
+      'Walk in a straight controlled line — this also trains core stability and posture under load',
+    ],
+    ytUrl: 'https://youtu.be/rt0MR6CTCGE',
+    goldStar: true,
+    similarityGroup: 'loaded-carry',
+    alsoInProgram: false,
+    tier: 'compound'
+  },
+  {
+    id: 'cable-wrist-curl',
+    name: 'Cable Wrist Curl',
+    muscleGroup: 'forearms',
+    equipment: 'Cable',
+    snapshot: 'Forearm on pad curl cable handle with wrist',
+    cues: [
+      'Set the pulley low and kneel or sit facing it with your forearm resting on a pad or your thigh',
+      'Hold the handle with a supinated grip and let your wrist drop to a full stretch before each rep',
+      'Curl your wrist upward against the cable — the constant tension at the bottom stretch is the advantage over dumbbells',
+      'Lower slowly on every rep — the cable resists throughout the full range in both directions',
+    ],
+    ytUrl: 'https://youtu.be/pO2W6cTG-Wc',
+    goldStar: false,
+    similarityGroup: 'wrist-curl-cable',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'cable-reverse-wrist-curl',
+    name: 'Cable Reverse Wrist Curl',
+    muscleGroup: 'forearms',
+    equipment: 'Cable',
+    snapshot: 'Forearm on pad extend wrist against low cable',
+    cues: [
+      'Set the pulley low and rest your forearm on a pad with your palm facing down, holding the handle',
+      'Lower your wrist toward the floor then extend it upward as high as possible against the cable',
+      'The cable maintains tension at the fully extended position — a key advantage over the barbell version',
+      'Use light weight and controlled movement — wrist extensors are more vulnerable to overuse than flexors',
+    ],
+    ytUrl: 'https://youtu.be/pO2W6cTG-Wc',
+    goldStar: true,
+    similarityGroup: 'wrist-extension-cable',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'wrist-roller',
+    name: 'Wrist Roller',
+    muscleGroup: 'forearms',
+    equipment: 'Machine',
+    snapshot: 'Roll weight up and down on rope alternating hands',
+    cues: [
+      'Hold the wrist roller at shoulder height with arms extended straight in front of you',
+      'Alternate wrist curling each hand to wind the rope and raise the weight plate',
+      'Once fully wound, reverse the winding to lower the plate back down — both directions count',
+      'Keep your arms parallel to the floor throughout — letting them drop shifts the load away from your forearms',
+    ],
+    ytUrl: 'https://youtu.be/gZMiLNfNDN0',
+    goldStar: true,
+    similarityGroup: 'wrist-roller',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'plate-pinch',
+    name: 'Plate Pinch',
+    muscleGroup: 'forearms',
+    equipment: 'Bodyweight',
+    snapshot: 'Pinch two plates together between fingers and thumb',
+    cues: [
+      'Hold two weight plates together smooth-side out with only your fingers and thumb — no palm contact',
+      'Stand tall and hold for time — typically 20-45 seconds per set',
+      'The pinch grip isolates the finger flexors and thumb in a way that bar-grip exercises cannot replicate',
+      'Progress by using a single thicker plate or by increasing hold time',
+    ],
+    ytUrl: 'https://youtu.be/jt4DJIxwMac',
+    goldStar: true,
+    similarityGroup: 'grip-strength',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'dead-hang',
+    name: 'Dead Hang',
+    muscleGroup: 'forearms',
+    equipment: 'Bodyweight',
+    snapshot: 'Hang from pull-up bar at full arm extension',
+    cues: [
+      'Jump or step to a bar and hang with fully extended arms and a relaxed shoulder girdle',
+      'Grip the bar as hard as you can throughout the hold — passive hanging defeats the purpose',
+      'Keep your body as still as possible — swinging reduces the grip demand and also stresses the shoulder',
+      'Build hold time progressively — 60 seconds is a good initial target for grip endurance',
+    ],
+    ytUrl: 'https://youtu.be/t-Qb14N9gYM',
+    goldStar: false,
+    similarityGroup: 'grip-strength',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'towel-pull-up',
+    name: 'Towel Pull-Up',
+    muscleGroup: 'forearms',
+    equipment: 'Bodyweight',
+    snapshot: 'Drape towels over bar and pull up gripping cloth',
+    cues: [
+      'Drape two towels over a pull-up bar and grip each towel near the bar — not at the ends',
+      'The unstable cloth requires your grip and forearms to work far harder than gripping a solid bar',
+      'Pull up with the same mechanics as a standard pull-up — elbows toward hips, chin over bar',
+      'If you cannot complete a full rep, use the towels for dead hangs first to build grip endurance',
+    ],
+    ytUrl: 'https://youtu.be/t-Qb14N9gYM',
+    goldStar: false,
+    similarityGroup: 'grip-strength',
+    alsoInProgram: false,
+    tier: 'compound'
+  },
+  {
+    id: 'band-wrist-curl',
+    name: 'Band Wrist Curl',
+    muscleGroup: 'forearms',
+    equipment: 'Resistance Band',
+    snapshot: 'Step on band and curl wrist upward seated',
+    cues: [
+      'Sit on a bench and step on the band, holding the other end with a supinated grip, forearm resting on your thigh',
+      'Lower your wrist to a full stretch then curl it upward against the band tension',
+      'The band provides increasing resistance as you curl — hardest at peak wrist flexion',
+      'Move slowly in both directions — band resistance is active throughout the full range unlike a plate at rest',
+    ],
+    ytUrl: 'https://youtu.be/pO2W6cTG-Wc',
+    goldStar: false,
+    similarityGroup: 'wrist-curl-band',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'band-wrist-extension',
+    name: 'Band Wrist Extension',
+    muscleGroup: 'forearms',
+    equipment: 'Resistance Band',
+    snapshot: 'Anchor band low and extend wrist against resistance',
+    cues: [
+      'Anchor the band at floor level and hold it with a pronated grip, forearm resting on your thigh',
+      'Lower your wrist toward the floor then extend it upward against the band',
+      'The band keeps tension at the stretched position, which is critical for wrist extensor development',
+      'Use a light band — wrist extensors are a small muscle group and will fatigue quickly under heavy load',
+    ],
+    ytUrl: 'https://youtu.be/pO2W6cTG-Wc',
+    goldStar: false,
+    similarityGroup: 'wrist-extension-band',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+
+  // ────────────────────────────────────────────────────────────────────────
+  // ADDUCTORS
+  // ────────────────────────────────────────────────────────────────────────
+  {
+    id: 'cable-hip-adduction',
+    name: 'Cable Hip Adduction',
+    muscleGroup: 'adductors',
+    equipment: 'Cable',
+    snapshot: 'Stand sideways and pull cable leg across body',
+    cues: [
+      'Set the pulley at ankle height, attach an ankle cuff, and stand side-on with the working leg away from the machine',
+      'Keep a slight bend in the working knee and sweep the leg across your body in a smooth arc — do not let the hip hike',
+      'Hold a light contraction at peak adduction before releasing slowly — this eccentric is where the adductors are most loaded',
+      'Keep your torso upright and avoid leaning away from the machine — that shifts the load to your hip flexors',
+    ],
+    ytUrl: 'https://youtu.be/3I3KQN1UKds',
+    goldStar: true,
+    similarityGroup: 'standing-adduction',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'machine-hip-adduction',
+    name: 'Machine Hip Adduction',
+    muscleGroup: 'adductors',
+    equipment: 'Machine',
+    snapshot: 'Sit on adductor machine and squeeze legs together',
+    cues: [
+      'Set the pads to the widest range you can reach without feeling a groin pull — the stretch at the open position is the most productive part',
+      'Squeeze your legs together with controlled force and hold a 1-second peak contraction before releasing',
+      'Lower the weight slowly on a 3-count — the eccentric portion of this movement is critically important for adductor development',
+      'Sit upright throughout — do not round or lean forward, which takes tension off the adductors',
+    ],
+    ytUrl: 'https://youtu.be/c2O-4SLQnjo',
+    goldStar: true,
+    similarityGroup: 'machine-adduction',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'copenhagen-plank',
+    name: 'Copenhagen Plank',
+    muscleGroup: 'adductors',
+    equipment: 'Bodyweight',
+    snapshot: 'Side plank with top leg on bench adductors braced',
+    cues: [
+      'Set up in a side plank with your top foot resting on a bench and your bottom leg hanging freely below it',
+      'Drive your top leg into the bench while simultaneously lifting your bottom leg to meet it — both legs squeeze together at the top',
+      'Hold for 2-3 seconds at peak then lower slowly — this is a loaded isometric for the adductors, not a dynamic rep',
+      'Beginners: rest the top knee (not foot) on the bench to shorten the lever arm until you build adequate hip strength',
+    ],
+    ytUrl: 'https://youtu.be/YR_j8-ZBfgM',
+    goldStar: true,
+    similarityGroup: 'copenhagen-plank',
+    alsoInProgram: false,
+    tier: 'compound'
+  },
+  {
+    id: 'side-lying-hip-adduction',
+    name: 'Side-Lying Hip Adduction',
+    muscleGroup: 'adductors',
+    equipment: 'Bodyweight',
+    snapshot: 'Lie on side and lift bottom leg up toward top',
+    cues: [
+      'Lie on your side with your top leg crossed in front of the bottom leg, foot flat on the floor for balance',
+      'Lift your bottom leg upward toward the ceiling — the adductors of the bottom leg are fully working against gravity in this position',
+      'Pause at the top of the range and lower slowly — the adductors fire hardest in the lower half of the lift',
+      'Add an ankle weight or resistance band around both ankles to progress beyond bodyweight once this becomes easy',
+    ],
+    ytUrl: 'https://youtu.be/J4lfVOR-Vkg',
+    goldStar: false,
+    similarityGroup: 'side-lying-adduction',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'band-hip-adduction-standing',
+    name: 'Band Standing Hip Adduction',
+    muscleGroup: 'adductors',
+    equipment: 'Resistance Band',
+    snapshot: 'Anchor band at ankle and sweep leg across body',
+    cues: [
+      'Anchor a resistance band at ankle height and loop it around the ankle of the leg closest to the anchor point',
+      'Step laterally away from the anchor until the band has tension at the start position with your legs shoulder-width apart',
+      'Sweep the banded leg across your midline in a controlled arc — the band resists throughout the full range',
+      'Balance on the supporting leg — if balance is an issue, hold a wall lightly until you build stability',
+    ],
+    ytUrl: 'https://youtu.be/3I3KQN1UKds',
+    goldStar: false,
+    similarityGroup: 'standing-adduction',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'band-adductor-squeeze',
+    name: 'Band Adductor Squeeze',
+    muscleGroup: 'adductors',
+    equipment: 'Resistance Band',
+    snapshot: 'Sit with band around knees and squeeze legs together',
+    cues: [
+      'Sit upright on a bench or chair with a resistance band looped around both knees just above the joint',
+      'Push your knees outward against the band to create pre-tension, then squeeze your knees together against band resistance',
+      'Hold the peak squeeze for 2 seconds before releasing slowly — the adductors fire hardest at full adduction',
+      'Use a band with enough resistance that 15-20 reps produces a clear burn in the inner thigh',
+    ],
+    ytUrl: 'https://youtu.be/c2O-4SLQnjo',
+    goldStar: false,
+    similarityGroup: 'adductor-squeeze',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'band-copenhagen-plank',
+    name: 'Band Copenhagen Plank',
+    muscleGroup: 'adductors',
+    equipment: 'Resistance Band',
+    snapshot: 'Copenhagen plank with band adding squeeze resistance',
+    cues: [
+      'Set up in a standard Copenhagen plank position (side plank, top foot on bench)',
+      'Loop a resistance band around both ankles so the band is taut when your legs are together at the top',
+      'Drive your top leg into the bench and pull your bottom leg up to meet it — the band adds extra adductor load at peak squeeze',
+      'This variation bridges bodyweight and weighted Copenhagen planks — use it as a progression before adding dumbbell weight',
+    ],
+    ytUrl: 'https://youtu.be/YR_j8-ZBfgM',
+    goldStar: false,
+    similarityGroup: 'copenhagen-plank',
+    alsoInProgram: false,
+    tier: 'compound'
+  },
+  {
+    id: 'weighted-adductor-squeeze',
+    name: 'Weighted Adductor Squeeze',
+    muscleGroup: 'adductors',
+    equipment: 'Dumbbell',
+    snapshot: 'Sit with dumbbell between knees and squeeze',
+    cues: [
+      'Sit on the edge of a bench and place a dumbbell vertically between your knees, gripping it only with your inner thighs',
+      'Squeeze your knees together hard enough to hold the dumbbell in place for sets of 10-20 seconds or rhythmic reps',
+      'Use a dumbbell you can squeeze without tilting your pelvis or leaning — the torso stays straight throughout',
+      'Progress by using a heavier dumbbell or by squeezing for longer holds — this is purely isometric adductor work',
+    ],
+    ytUrl: 'https://youtu.be/c2O-4SLQnjo',
+    goldStar: true,
+    similarityGroup: 'adductor-squeeze',
+    alsoInProgram: false,
+    tier: 'isolation'
+  },
+  {
+    id: 'weighted-copenhagen-plank',
+    name: 'Weighted Copenhagen Plank',
+    muscleGroup: 'adductors',
+    equipment: 'Dumbbell',
+    snapshot: 'Copenhagen plank holding dumbbell between ankles',
+    cues: [
+      'Set up in a Copenhagen plank with your top foot on the bench, then place a light dumbbell between your ankles',
+      'Grip the dumbbell with both ankles as you perform the plank — both the squeeze and the static hold load the adductors',
+      'Keep the dumbbell from dropping by actively squeezing the legs together throughout the entire set',
+      'This is an advanced variation — master the bodyweight Copenhagen plank for 30+ seconds before adding weight',
+    ],
+    ytUrl: 'https://youtu.be/YR_j8-ZBfgM',
+    goldStar: false,
+    similarityGroup: 'copenhagen-plank',
+    alsoInProgram: false,
+    tier: 'compound'
   }
 
 ];
 
-// Export for use in main app
+// Export for use in other modules or testing
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { EXERCISE_LIBRARY };
 }
