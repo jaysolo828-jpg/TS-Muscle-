@@ -147,17 +147,21 @@ class HealthConnectSyncActivity : Activity() {
 
     private fun checkPermissionsAndSync() {
         scope.launch {
-            val granted = client.permissionController.getGrantedPermissions()
-            if (granted.containsAll(requiredPerms)) {
-                scheduleBackgroundSync()
-                doSync()
-            } else {
-                // Launch the Health Connect permission UI via startActivityForResult
-                // so we can handle the result in onActivityResult without needing
-                // ComponentActivity / registerForActivityResult.
-                val permIntent = permContract.createIntent(this@HealthConnectSyncActivity, requiredPerms)
-                @Suppress("DEPRECATION")
-                startActivityForResult(permIntent, HC_PERM_REQUEST_CODE)
+            try {
+                val granted = client.permissionController.getGrantedPermissions()
+                if (granted.containsAll(requiredPerms)) {
+                    scheduleBackgroundSync()
+                    doSync()
+                } else {
+                    // Launch the Health Connect permission UI via startActivityForResult
+                    // so we can handle the result in onActivityResult without needing
+                    // ComponentActivity / registerForActivityResult.
+                    val permIntent = permContract.createIntent(this@HealthConnectSyncActivity, requiredPerms)
+                    @Suppress("DEPRECATION")
+                    startActivityForResult(permIntent, HC_PERM_REQUEST_CODE)
+                }
+            } catch (_: Exception) {
+                withContext(Dispatchers.Main) { finish() }
             }
         }
     }
@@ -169,7 +173,9 @@ class HealthConnectSyncActivity : Activity() {
             val granted = permContract.parseResult(resultCode, data)
             if (granted.containsAll(requiredPerms)) {
                 scheduleBackgroundSync()
-                scope.launch { doSync() }
+                scope.launch {
+                    try { doSync() } catch (_: Exception) { finish() }
+                }
             } else {
                 showDialog(
                     title   = "Permission needed",
