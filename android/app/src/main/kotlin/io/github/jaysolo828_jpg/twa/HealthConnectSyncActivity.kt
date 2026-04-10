@@ -81,7 +81,7 @@ class HealthConnectSyncActivity : Activity() {
         val data = intent?.data ?: run { finish(); return }
         jwt          = data.getQueryParameter("jwt")          ?: run { finish(); return }
         userId       = data.getQueryParameter("user_id")      ?: run { finish(); return }
-        challengeId  = data.getQueryParameter("challenge_id") ?: run { finish(); return }
+        challengeId  = data.getQueryParameter("challenge_id") ?: ""
         sbUrl        = data.getQueryParameter("sb_url")       ?: run { finish(); return }
         apiKey       = data.getQueryParameter("apikey")       ?: run { finish(); return }
         lookbackDays = data.getQueryParameter("days")?.toLongOrNull() ?: 7L
@@ -198,7 +198,7 @@ class HealthConnectSyncActivity : Activity() {
                     val loggedAt = session.endTime.toString()
 
                     val body = JSONObject().apply {
-                        put("challenge_id",  challengeId)
+                        if (challengeId.isNotEmpty()) put("challenge_id", challengeId)
                         put("user_id",       userId)
                         put("logged_at",     loggedAt)
                         put("minutes",       minutes)
