@@ -3181,12 +3181,22 @@
       <div id="cardio-treadmill-extras" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
         <div>
           <div style="font-size:12px;color:var(--gray-light);letter-spacing:1px;margin-bottom:6px;">SPEED (MPH)</div>
-          <input type="number" id="cardio-speed" placeholder="0.0" step="0.1" oninput="_calcCardioCalories()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
+          <input type="number" id="cardio-speed" placeholder="0.0" step="0.1" oninput="_calcCardioCalories();_updateCalorieHint()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
         </div>
         <div>
           <div style="font-size:12px;color:var(--gray-light);letter-spacing:1px;margin-bottom:6px;">INCLINE (%)</div>
-          <input type="number" id="cardio-incline" placeholder="0" oninput="_calcCardioCalories()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
+          <input type="number" id="cardio-incline" placeholder="0" oninput="_calcCardioCalories();_updateCalorieHint()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
         </div>
+      </div>
+      <!-- Calories — all types. Placeholder shows live estimate; user can override with their own number (e.g. from treadmill display or fitness app). -->
+      <div id="cardio-calories-row" style="margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--gray-light);letter-spacing:1px;margin-bottom:6px;">CALORIES</div>
+        <input type="number" id="cardio-calories-input" placeholder="—" min="0" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
+      </div>
+      <!-- Steps — walks only. Hidden for treadmill/run/jog since live tracking or HC covers those. -->
+      <div id="cardio-steps-row" style="display:none;">
+        <div style="font-size:12px;color:var(--gray-light);letter-spacing:1px;margin-bottom:6px;">STEPS</div>
+        <input type="number" id="cardio-manual-steps" placeholder="0" min="0" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="numeric"/>
       </div>
     </div>
 
@@ -3228,17 +3238,23 @@
       <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);line-height:1.4;">Counts toward your <strong>Clear Your Head</strong> challenge</span>
     </div>
 
-    <!-- HC sync -->
-    <div id="cardio-hc-row" style="display:none;margin-bottom:14px;">
-      <button onclick="_cardioHCSync()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--gray-light);padding:13px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent;">
+    <!-- Save -->
+    <button onclick="saveCardioSession()" style="width:100%;background:transparent;border:2px solid var(--cream);color:var(--cream);padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;cursor:pointer;margin-bottom:28px;-webkit-tap-highlight-color:transparent;">SAVE SESSION</button>
+
+  </div>
+
+  <!-- ═══ IMPORT FROM HEALTH CONNECT (Android only — shown by JS) ═══ -->
+  <div id="cardio-hc-section" style="display:none;margin-bottom:28px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">IMPORT FROM HEALTH CONNECT</div>
+    <div style="background:var(--dark2);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;margin-bottom:10px;">Already tracked your workout with a fitness app or watch? Pull those sessions in here. Works with Samsung Health, Google Fit, Strava, Garmin Connect, and any app connected to Health Connect.</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);margin-bottom:4px;">Pulls walks and runs of 10+ minutes from the past 7 days.</div>
+      <div id="cardio-hc-sync-time" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);margin-bottom:16px;"></div>
+      <button onclick="_cardioHCSync()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.18);color:var(--cream);padding:14px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent;">
         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
         SYNC FROM HEALTH CONNECT
       </button>
     </div>
-
-    <!-- Save -->
-    <button onclick="saveCardioSession()" style="width:100%;background:transparent;border:2px solid var(--cream);color:var(--cream);padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;cursor:pointer;margin-bottom:28px;-webkit-tap-highlight-color:transparent;">SAVE SESSION</button>
-
   </div>
 
   <!-- HISTORY HEADER with collapse toggle -->
@@ -13519,6 +13535,7 @@ document.addEventListener('visibilitychange', async () => {
   // Import any newly synced sessions into the local cardio history.
   await _importCYHLogsToCardioHistory();
   localStorage.setItem('cardio_hc_last_sync', String(Date.now()));
+  _updateHCSyncStatus();
   renderCardioHistory();
 });
 
@@ -34117,8 +34134,13 @@ function selectCardioType(type) {
   // Treadmill extras (speed + incline)
   const tmExtras = document.getElementById('cardio-treadmill-extras');
   if (tmExtras) tmExtras.style.display = type === 'treadmill' ? 'grid' : 'none';
+  // Steps field — walks only (treadmill has live tracking, runs don't need manual steps)
+  const stepsRow = document.getElementById('cardio-steps-row');
+  if (stepsRow) stepsRow.style.display = (type === 'walk' || type === 'briskwalk') ? 'block' : 'none';
   // Pace row — outdoor and jog only
   _updatePaceDisplay();
+  // Refresh calorie estimate placeholder for the new activity type
+  _updateCalorieHint();
   _updateCYHNote();
 }
 
@@ -34157,6 +34179,7 @@ function _onDurationInput() {
   _calcCardioCalories();
   _updateCYHNote();
   _updatePaceDisplay();
+  _updateCalorieHint();
 }
 
 function _toggleCardioLiveTimer() {
@@ -34392,6 +34415,7 @@ function _calcCardioCalories() {
 function _onDistanceInput() {
   _updatePaceDisplay();
   _calcCardioCalories();
+  _updateCalorieHint();
 }
 
 function _updatePaceDisplay() {
@@ -34417,18 +34441,15 @@ function _updatePaceDisplay() {
 
 function _updateCYHNote() {
   const note = document.getElementById('cardio-cyh-note');
-  const hcRow = document.getElementById('cardio-hc-row');
   if (!note) return;
   const qualifyingTypes = ['walk','briskwalk','outdoor','jog'];
   const mins = _getElapsedMins();
   const hasCYH = (_challenges || []).some(c => c.status === 'active' && c.challenge_type === 'clear_your_head');
   const qualifies = qualifyingTypes.includes(cardioType) && mins >= 10 && hasCYH;
   note.style.display = qualifies ? 'flex' : 'none';
-  // HC sync button — Android only (works with or without a CYH challenge)
-  if (hcRow) {
-    const isAndroid = !!window._fcmToken;
-    hcRow.style.display = isAndroid ? 'block' : 'none';
-  }
+  // HC import section — Android only, independent of CYH
+  const hcSection = document.getElementById('cardio-hc-section');
+  if (hcSection) hcSection.style.display = !!window._fcmToken ? 'block' : 'none';
 }
 
 async function _cardioHCSync() {
@@ -34436,6 +34457,47 @@ async function _cardioHCSync() {
     ch.challenge_type === 'clear_your_head' && ch.status === 'active'
   );
   await _triggerHCSync(activeCYH ? activeCYH.id : '');
+}
+
+// ── Calorie hint ──────────────────────────────────────────────────────────────
+
+// Updates the calorie input placeholder with a live MET-based estimate.
+// Never overwrites a value the user has already typed — only touches the placeholder.
+function _updateCalorieHint() {
+  const el = document.getElementById('cardio-calories-input');
+  if (!el) return;
+  if (el.value !== '') return; // user has entered their own number — leave it
+  const calc = _calcCardioCalories();
+  if (calc > 0) {
+    el.placeholder = calc + ' (estimated)';
+  } else {
+    const hasBw = !!(parseFloat(state.profile?.bodyweight) || 0);
+    el.placeholder = hasBw ? '—' : 'set bodyweight in profile for estimate';
+  }
+}
+
+// ── HC sync status ────────────────────────────────────────────────────────────
+
+function _formatRelativeTime(ms) {
+  const diff = Date.now() - ms;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 2)  return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)  return hrs + 'h ago';
+  const days = Math.floor(hrs / 24);
+  return days === 1 ? 'yesterday' : days + ' days ago';
+}
+
+function _updateHCSyncStatus() {
+  const el = document.getElementById('cardio-hc-sync-time');
+  if (!el) return;
+  const ts = parseInt(localStorage.getItem('cardio_hc_last_sync') || '0');
+  if (ts) {
+    el.textContent = 'Last synced: ' + _formatRelativeTime(ts);
+  } else {
+    el.textContent = 'Never synced on this device';
+  }
 }
 
 async function _cyhAutoCount(durationMins) {
@@ -34479,9 +34541,15 @@ function saveCardioSession() {
   const speed = parseFloat(document.getElementById('cardio-speed')?.value) || 0;
   const incline = parseFloat(document.getElementById('cardio-incline')?.value) || 0;
   const notes = document.getElementById('cardio-notes')?.value || '';
-  const calories = _calcCardioCalories();
+  // Calories: use what the user typed (e.g. from treadmill display or fitness app),
+  // otherwise fall back to the MET-based estimate.
+  const calInput = parseFloat(document.getElementById('cardio-calories-input')?.value) || 0;
+  const calories = calInput > 0 ? calInput : _calcCardioCalories();
   let details = { distance: dist || '', calories: calories || '', notes };
-  if (_cardioTrackedSteps > 0) details.steps = _cardioTrackedSteps;
+  // Steps: prefer live-tracked (hardware sensor), then manual entry, then omit.
+  const manualSteps = parseInt(document.getElementById('cardio-manual-steps')?.value) || 0;
+  const stepsToSave = _cardioTrackedSteps > 0 ? _cardioTrackedSteps : manualSteps;
+  if (stepsToSave > 0) details.steps = stepsToSave;
   _cardioTrackedSteps = 0;
   if (cardioType === 'treadmill') {
     details.speed = speed || '';
@@ -34510,11 +34578,12 @@ function saveCardioSession() {
   resetCardioTimer();
   _cardioRpe = null;
   document.querySelectorAll('.cardio-rpe-btn').forEach(b => b.classList.remove('active'));
-  const clearIds = ['cardio-distance','cardio-speed','cardio-incline','cardio-notes'];
+  const clearIds = ['cardio-distance','cardio-speed','cardio-incline','cardio-notes','cardio-calories-input','cardio-manual-steps'];
   clearIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('timer-mins').value = '30';
   _updateCYHNote();
   _updatePaceDisplay();
+  _updateCalorieHint();
   renderCardioHistory();
   const cyhActive = (_challenges || []).some(c => c.status === 'active' && c.challenge_type === 'clear_your_head');
   const qualifies = ['walk','briskwalk','outdoor','jog'].includes(cardioType) && duration >= 10 && cyhActive;
@@ -34570,6 +34639,7 @@ function _toggleCardioHistory() {
 function renderCardioHistory() {
   renderCardioWeeklySummary();
   _updateCYHNote();
+  _updateHCSyncStatus();
   const container = document.getElementById('cardio-history-list');
   if (!container) return;
   const countEl = document.getElementById('cardio-history-count');
