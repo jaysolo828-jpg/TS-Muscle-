@@ -10,9 +10,15 @@ import androidx.annotation.RequiresApi
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,6 +30,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.TimeUnit
 
 // java.time APIs (Instant, ChronoUnit) require API 26+. Health Connect itself
 // only returns SDK_AVAILABLE on API 26+ devices, so doSync() is never reached
@@ -45,15 +52,25 @@ class HealthConnectSyncActivity : Activity() {
     private val MIN_SESSION_MINUTES = 10L
     private val HC_PERM_REQUEST_CODE = 1001
 
-    private var jwt = ""
-    private var userId = ""
-    private var challengeId = ""
-    private var sbUrl = ""
-    private var apiKey = ""
+    private var jwt          = ""
+    private var userId       = ""
+    private var challengeId  = ""
+    private var sbUrl        = ""
+    private var apiKey       = ""
     private var lookbackDays = 7L
+    private var refreshToken = ""
 
     private lateinit var client: HealthConnectClient
-    private lateinit var readPerm: String
+
+    // All four permissions needed for rich data (exercise sessions + distance +
+    // calories + steps). Declared as a set so permission checks and requests
+    // are always consistent.
+    private val requiredPerms = setOf(
+        HealthPermission.getReadPermission(ExerciseSessionRecord::class),
+        HealthPermission.getReadPermission(DistanceRecord::class),
+        HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
+        HealthPermission.getReadPermission(StepsRecord::class),
+    )
 
     // The permission contract lets us build the intent and parse the result
     // using the old startActivityForResult pattern, which works on plain
@@ -79,14 +96,24 @@ class HealthConnectSyncActivity : Activity() {
         }
 
         val data = intent?.data ?: run { finish(); return }
-        jwt          = data.getQueryParameter("jwt")          ?: run { finish(); return }
-        userId       = data.getQueryParameter("user_id")      ?: run { finish(); return }
-        challengeId  = data.getQueryParameter("challenge_id") ?: ""
-        sbUrl        = data.getQueryParameter("sb_url")       ?: run { finish(); return }
-        apiKey       = data.getQueryParameter("apikey")       ?: run { finish(); return }
+        jwt          = data.getQueryParameter("jwt")           ?: run { finish(); return }
+        userId       = data.getQueryParameter("user_id")       ?: run { finish(); return }
+        challengeId  = data.getQueryParameter("challenge_id")  ?: ""
+        sbUrl        = data.getQueryParameter("sb_url")        ?: run { finish(); return }
+        apiKey       = data.getQueryParameter("apikey")        ?: run { finish(); return }
         lookbackDays = data.getQueryParameter("days")?.toLongOrNull() ?: 7L
+        refreshToken = data.getQueryParameter("refresh_token") ?: ""
 
-        readPerm = HealthPermission.getReadPermission(ExerciseSessionRecord::class)
+        // Persist session credentials for the background WorkManager sync so
+        // it can refresh the JWT without launching a browser activity.
+        if (refreshToken.isNotEmpty()) {
+            getSharedPreferences("ts_muscle_prefs", MODE_PRIVATE).edit()
+                .putString("sb_user_id",       userId)
+                .putString("sb_refresh_token", refreshToken)
+                .putString("sb_url",           sbUrl)
+                .putString("sb_apikey",        apiKey)
+                .apply()
+        }
 
         val status = HealthConnectClient.getSdkStatus(this, "com.google.android.apps.healthdata")
         when (status) {
@@ -121,16 +148,14 @@ class HealthConnectSyncActivity : Activity() {
     private fun checkPermissionsAndSync() {
         scope.launch {
             val granted = client.permissionController.getGrantedPermissions()
-            if (readPerm in granted) {
+            if (granted.containsAll(requiredPerms)) {
+                scheduleBackgroundSync()
                 doSync()
             } else {
                 // Launch the Health Connect permission UI via startActivityForResult
                 // so we can handle the result in onActivityResult without needing
                 // ComponentActivity / registerForActivityResult.
-                val permIntent = permContract.createIntent(
-                    this@HealthConnectSyncActivity,
-                    setOf(readPerm)
-                )
+                val permIntent = permContract.createIntent(this@HealthConnectSyncActivity, requiredPerms)
                 @Suppress("DEPRECATION")
                 startActivityForResult(permIntent, HC_PERM_REQUEST_CODE)
             }
@@ -142,7 +167,8 @@ class HealthConnectSyncActivity : Activity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == HC_PERM_REQUEST_CODE) {
             val granted = permContract.parseResult(resultCode, data)
-            if (readPerm in granted) {
+            if (granted.containsAll(requiredPerms)) {
+                scheduleBackgroundSync()
                 scope.launch { doSync() }
             } else {
                 showDialog(
@@ -158,17 +184,27 @@ class HealthConnectSyncActivity : Activity() {
         }
     }
 
+    // Enqueue a recurring background sync every 6 hours. KEEP policy means
+    // repeated calls are no-ops — safe to call on every manual sync.
+    private fun scheduleBackgroundSync() {
+        val request = PeriodicWorkRequestBuilder<HCSyncWorker>(6, TimeUnit.HOURS).build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            HCSyncWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
     private suspend fun doSync() {
         withContext(Dispatchers.IO) {
             try {
                 val now   = Instant.now()
                 val start = now.minus(lookbackDays, ChronoUnit.DAYS)
 
-                val request = ReadRecordsRequest(
+                val response = client.readRecords(ReadRecordsRequest(
                     recordType      = ExerciseSessionRecord::class,
                     timeRangeFilter = TimeRangeFilter.between(start, now),
-                )
-                val response   = client.readRecords(request)
+                ))
                 val qualifying = response.records.filter { session ->
                     session.exerciseType in CARDIO_TYPES &&
                     ChronoUnit.MINUTES.between(session.startTime, session.endTime) >= MIN_SESSION_MINUTES
@@ -193,6 +229,31 @@ class HealthConnectSyncActivity : Activity() {
                 }
 
                 for (session in qualifying) {
+                    val timeRange = TimeRangeFilter.between(session.startTime, session.endTime)
+
+                    val distMeters = try {
+                        client.readRecords(ReadRecordsRequest(DistanceRecord::class, timeRange))
+                            .records.sumOf { it.distance.inMeters }
+                    } catch (_: Exception) { 0.0 }
+
+                    val calories = try {
+                        client.readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, timeRange))
+                            .records.sumOf { it.energy.inKilocalories }.toInt()
+                    } catch (_: Exception) { 0 }
+
+                    val steps = try {
+                        client.readRecords(ReadRecordsRequest(StepsRecord::class, timeRange))
+                            .records.sumOf { it.count }
+                    } catch (_: Exception) { 0L }
+
+                    val exerciseTypeStr = when (session.exerciseType) {
+                        ExerciseSessionRecord.EXERCISE_TYPE_WALKING,
+                        ExerciseSessionRecord.EXERCISE_TYPE_HIKING  -> "walk"
+                        ExerciseSessionRecord.EXERCISE_TYPE_RUNNING -> "outdoor"
+                        ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL -> "treadmill"
+                        else -> "walk"
+                    }
+
                     val minutes  = ChronoUnit.MINUTES.between(session.startTime, session.endTime).toInt()
                     val hcId     = session.metadata.id
                     val loggedAt = session.endTime.toString()
@@ -203,6 +264,10 @@ class HealthConnectSyncActivity : Activity() {
                         put("logged_at",     loggedAt)
                         put("minutes",       minutes)
                         put("hc_session_id", hcId)
+                        put("exercise_type", exerciseTypeStr)
+                        if (distMeters > 0) put("distance_meters", distMeters)
+                        if (calories > 0)   put("calories",        calories)
+                        if (steps > 0)      put("steps",           steps)
                     }.toString()
 
                     postToSupabase(body)

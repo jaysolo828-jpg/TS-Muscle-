@@ -1,7 +1,11 @@
 package io.github.jaysolo828_jpg.twa
 
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.androidbrowserhelper.trusted.LauncherActivity
 import com.google.firebase.messaging.FirebaseMessaging
 import java.util.concurrent.CountDownLatch
@@ -58,6 +62,24 @@ class MainActivity : LauncherActivity() {
                         prefs.edit().putString(FCM_KEY, token).apply()
                     }
                 }
+        }
+
+        // If the user has previously granted Health Connect permissions (indicated
+        // by a stored refresh token), keep the background sync job alive across
+        // app updates and device reboots. The KEEP policy is a no-op when the
+        // job is already enqueued, so this is safe to call on every launch.
+        // Guard is required because HCSyncWorker uses java.time (API 26+).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val refreshToken = prefs.getString("sb_refresh_token", null)
+            if (!refreshToken.isNullOrEmpty()) {
+                @Suppress("NewApi")
+                val request = PeriodicWorkRequestBuilder<HCSyncWorker>(6, TimeUnit.HOURS).build()
+                WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                    HCSyncWorker.WORK_NAME,
+                    ExistingPeriodicWorkPolicy.KEEP,
+                    request
+                )
+            }
         }
 
         // NOTE: We intentionally do NOT call ActivityCompat.requestPermissions
