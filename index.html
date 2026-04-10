@@ -7595,16 +7595,41 @@ async function supabaseSignOut() {
   showToast('Signed out.');
 }
 
-function supabaseChangeEmail() {
-  const current = state.supabaseDisplayName || '';
-  const newEmail = prompt('Enter your new email address:');
-  if (!newEmail || !newEmail.includes('@')) { showToast('Enter a valid email.'); return; }
+async function supabaseChangeEmail() {
   const sb = _getSupabaseClient();
   if (!sb) return;
-  sb.auth.updateUser({ email: newEmail }).then(({ error }) => {
-    if (error) { showToast('Error: ' + (error.message || 'Could not update email.')); return; }
-    showToast('Check your new email for a confirmation link.');
-  });
+  const { data: { session } } = await sb.auth.getSession();
+  const currentEmail = session?.user?.email || '';
+
+  const existing = document.getElementById('change-email-sheet');
+  if (existing) { existing.remove(); return; }
+  const sheet = document.createElement('div');
+  sheet.id = 'change-email-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = '<div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #C0392B;">'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">CHANGE EMAIL</div>'
+    + (currentEmail ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);letter-spacing:0.5px;margin-bottom:18px;">Current: ' + escapeHtml(currentEmail) + '</div>' : '<div style="margin-bottom:18px;"></div>')
+    + '<input id="ce-new-email" type="email" placeholder="New email address" autocomplete="email" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:\'Barlow\',sans-serif;font-size:16px;padding:13px 14px;border-radius:10px;outline:none;margin-bottom:16px;">'
+    + '<button onclick="_submitNewEmail()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SEND CONFIRMATION</button>'
+    + '<button onclick="document.getElementById(\'change-email-sheet\').remove()" style="width:100%;background:none;border:none;color:#666;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1px;padding:10px;margin-top:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>'
+    + '</div>';
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+  setTimeout(() => document.getElementById('ce-new-email')?.focus(), 80);
+}
+
+async function _submitNewEmail() {
+  const newEmail = (document.getElementById('ce-new-email')?.value || '').trim();
+  if (!newEmail || !newEmail.includes('@') || !newEmail.includes('.')) {
+    showToast('Enter a valid email address.');
+    return;
+  }
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  const { error } = await sb.auth.updateUser({ email: newEmail });
+  if (error) { showToast('Error: ' + (error.message || 'Could not update email.')); return; }
+  document.getElementById('change-email-sheet')?.remove();
+  showToast('Check ' + newEmail + ' for a confirmation link.');
 }
 
 function supabaseChangePassword() {
