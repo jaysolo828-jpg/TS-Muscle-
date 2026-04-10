@@ -20239,7 +20239,7 @@ function _buildBonusGroups() {
     });
   });
   // Sort groups in a readable order
-  const ORDER = ['CHEST', 'BACK', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'QUADS', 'HAMSTRINGS', 'GLUTES', 'CALVES', 'CORE', 'MOBILITY'];
+  const ORDER = ['CHEST', 'BACK', 'SHOULDERS', 'BICEPS', 'TRICEPS', 'QUADS', 'HAMSTRINGS', 'GLUTES', 'CALVES', 'CORE', 'FOREARMS', 'ADDUCTORS', 'MOBILITY'];
   return ORDER
     .filter(g => groups[g]?.length)
     .map(g => ({ group: g, items: groups[g] }))
