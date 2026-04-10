@@ -3129,7 +3129,11 @@
   <div id="cardio-active-view" style="display:none;margin-bottom:22px;">
     <div style="background:var(--dark2);border:1px solid rgba(204,32,39,0.3);border-radius:16px;padding:24px;text-align:center;">
       <div id="cardio-active-label" style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--red);letter-spacing:3px;margin-bottom:6px;">TREADMILL IN PROGRESS</div>
-      <div id="cardio-live-timer" style="font-family:'Bebas Neue',cursive;font-size:72px;color:var(--cream);letter-spacing:2px;line-height:1;margin-bottom:20px;">0:00</div>
+      <div id="cardio-live-timer" style="font-family:'Bebas Neue',cursive;font-size:72px;color:var(--cream);letter-spacing:2px;line-height:1;margin-bottom:8px;">0:00</div>
+      <div id="cardio-live-steps" style="display:none;margin-bottom:16px;">
+        <span id="cardio-steps-count" style="font-family:'Bebas Neue',cursive;font-size:36px;color:var(--cream);letter-spacing:1px;line-height:1;">0</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--gray-light);letter-spacing:2px;margin-left:8px;">STEPS</span>
+      </div>
       <div style="display:flex;gap:10px;justify-content:center;">
         <button id="cardio-pause-btn" onclick="_pauseTrackingWorkout()" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">PAUSE</button>
         <button onclick="_finishTrackingWorkout()" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;box-shadow:0 2px 10px rgba(204,32,39,0.35);-webkit-tap-highlight-color:transparent;">FINISH</button>
@@ -34081,6 +34085,8 @@ let _cardioTrackingActive = false;
 let _cardioTrackingPaused = false;
 let _cardioTrackingSeconds = 0;
 let _cardioTrackingInterval = null;
+let _cardioTrackedSteps = 0;
+let _cardioStepPollInterval = null;
 
 function _setCardioRpe(btn) {
   document.querySelectorAll('.cardio-rpe-btn').forEach(b => b.classList.remove('active'));
@@ -34179,18 +34185,53 @@ function _startTrackingWorkout() {
   _cardioTrackingActive = true;
   _cardioTrackingPaused = false;
   _cardioTrackingSeconds = 0;
+  _cardioTrackedSteps = 0;
   const labelEl = document.getElementById('cardio-active-label');
   const typeNames = { treadmill:'TREADMILL', outdoor:'RUN', walk:'WALK', briskwalk:'BRISK WALK', jog:'JOG' };
   if (labelEl) labelEl.textContent = (typeNames[cardioType] || cardioType.toUpperCase()) + ' IN PROGRESS';
   document.getElementById('cardio-idle-view').style.display = 'none';
   document.getElementById('cardio-active-view').style.display = 'block';
   document.getElementById('cardio-log-section').style.display = 'none';
+  // Reset steps display
+  const stepsCount = document.getElementById('cardio-steps-count');
+  const stepsRow = document.getElementById('cardio-live-steps');
+  if (stepsCount) stepsCount.textContent = '0';
+  if (stepsRow) stepsRow.style.display = 'none';
   _updateTrackingDisplay();
   _cardioTrackingInterval = setInterval(() => {
     if (!_cardioTrackingPaused) {
       _cardioTrackingSeconds++;
       _updateTrackingDisplay();
     }
+  }, 1000);
+  // On Android: launch StepCounterService via native bridge, then start polling
+  if (!!window._fcmToken) {
+    window.location.href = 'intent://start#Intent;scheme=ts-muscle-step-start;package=io.github.jaysolo828_jpg.twa;end';
+    setTimeout(_startStepPolling, 2000);
+  }
+}
+
+function _startStepPolling() {
+  if (_cardioStepPollInterval) return;
+  _cardioStepPollInterval = setInterval(async () => {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 800);
+      const r = await fetch('http://localhost:8765/steps', {signal: ctrl.signal});
+      clearTimeout(timer);
+      const j = await r.json();
+      if (j.has_sensor === false) {
+        // Device has no hardware step counter — stop polling, keep timer running
+        clearInterval(_cardioStepPollInterval);
+        _cardioStepPollInterval = null;
+        return;
+      }
+      _cardioTrackedSteps = j.steps || 0;
+      const stepsCount = document.getElementById('cardio-steps-count');
+      const stepsRow = document.getElementById('cardio-live-steps');
+      if (stepsCount) stepsCount.textContent = _cardioTrackedSteps.toLocaleString();
+      if (stepsRow && stepsRow.style.display === 'none') stepsRow.style.display = 'block';
+    } catch (_) {}
   }, 1000);
 }
 
@@ -34202,6 +34243,14 @@ function _pauseTrackingWorkout() {
 }
 
 function _finishTrackingWorkout() {
+  // Stop step polling and shut down the native step counter service
+  clearInterval(_cardioStepPollInterval);
+  _cardioStepPollInterval = null;
+  const stepsRow = document.getElementById('cardio-live-steps');
+  if (stepsRow) stepsRow.style.display = 'none';
+  if (!!window._fcmToken) {
+    fetch('http://localhost:8765/stop', {method: 'POST'}).catch(() => {});
+  }
   haptic(HAPTIC.success);
   clearInterval(_cardioTrackingInterval);
   _cardioTrackingInterval = null;
@@ -34432,6 +34481,8 @@ function saveCardioSession() {
   const notes = document.getElementById('cardio-notes')?.value || '';
   const calories = _calcCardioCalories();
   let details = { distance: dist || '', calories: calories || '', notes };
+  if (_cardioTrackedSteps > 0) details.steps = _cardioTrackedSteps;
+  _cardioTrackedSteps = 0;
   if (cardioType === 'treadmill') {
     details.speed = speed || '';
     details.incline = incline || '';
