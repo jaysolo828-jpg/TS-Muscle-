@@ -12832,6 +12832,11 @@ async function _triggerHCSync(challengeId) {
 
 // When the user returns to this tab after the Health Connect activity finishes,
 // refresh challenge data so the new sessions appear immediately.
+// We don't know how many (if any) sessions synced — Health Connect may be
+// unavailable, no fitness apps may be connected, or there may be no new
+// sessions in the lookback window. So we just reload and let the UI update
+// speak for itself. No toast — a toast saying "synced" when nothing synced
+// is worse than no toast at all.
 document.addEventListener('visibilitychange', async () => {
   if (document.hidden) return;
   const pendingId = sessionStorage.getItem('hc_sync_pending');
@@ -12841,7 +12846,6 @@ document.addEventListener('visibilitychange', async () => {
   await new Promise(r => setTimeout(r, 1200));
   await _loadChallenges();
   _refreshChallengeDetailSheet();
-  showToast('Health Connect sessions synced.');
 });
 
 // ─── END HEALTH CONNECT BRIDGE ──────────────────────────────────────────────
