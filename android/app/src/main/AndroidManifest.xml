@@ -5,12 +5,17 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="com.android.vending.BILLING" />
 
+    <!-- Health Connect: read walking/running exercise sessions -->
+    <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="https" />
         </intent>
+        <!-- Health Connect app package (required on Android 9–13) -->
+        <package android:name="com.google.android.apps.healthdata" />
     </queries>
 
     <application
@@ -78,6 +83,31 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="ts-muscle-enable-notifs" />
+            </intent-filter>
+        </activity>
+
+        <!-- Health Connect sync bridge. Triggered from the web page via a
+             custom-scheme intent URL. Reads exercise sessions from Health
+             Connect and posts them directly to Supabase using the user's
+             JWT, then finishes — returning the user to the Chrome tab. -->
+        <activity
+            android:name=".HealthConnectSyncActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ts-muscle-hc-sync" />
+            </intent-filter>
+            <!-- Required by Play Store for apps using Health Connect permissions.
+                 This intent lets Health Connect show users which data your app
+                 accesses from the Health Connect permissions screen. -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
         </activity>
 

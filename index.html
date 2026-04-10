@@ -12791,6 +12791,61 @@ function _runItBack(challengeId) {
   _renderChainCreateStep();
 }
 
+// ─── HEALTH CONNECT BRIDGE ──────────────────────────────────────────────────
+// Triggers the native HealthConnectSyncActivity via a custom-scheme intent
+// URL. The activity reads qualifying exercise sessions (walking/running,
+// >= 10 min) from Health Connect for the past 7 days and posts them to
+// Supabase cyh_logs. It then finishes, returning the user to this tab.
+// On visibility return, we reload challenges and refresh the detail sheet.
+//
+// Only callable on the Android TWA (detected via window._fcmToken presence).
+// Silently no-ops on iOS/desktop — those users log sessions manually.
+
+async function _triggerHCSync(challengeId) {
+  if (!window._fcmToken) {
+    showToast('Health Connect is only available on Android.');
+    return;
+  }
+  if (!state.supabaseUserId) { showToast('Sign in required.'); return; }
+  const jwt = await _getJwt();
+  if (!jwt) { showToast('Could not get session. Try signing out and back in.'); return; }
+
+  const params = new URLSearchParams({
+    jwt,
+    user_id:      state.supabaseUserId,
+    challenge_id: challengeId,
+    sb_url:       window.SUPABASE_URL       || '',
+    apikey:       window.SUPABASE_PUBLISHABLE_KEY || '',
+    days:         '7',
+  });
+
+  // Mark sync pending so the visibilitychange handler knows to refresh.
+  sessionStorage.setItem('hc_sync_pending', challengeId);
+
+  // Launch HealthConnectSyncActivity. Chrome drops plain custom-scheme hrefs
+  // inside a TWA, so we use the intent:// format (same pattern as the
+  // notification permission bridge in EnableNotificationsActivity).
+  window.location.href =
+    'intent://run?' + params.toString() +
+    '#Intent;scheme=ts-muscle-hc-sync;package=io.github.jaysolo828_jpg.twa;end';
+}
+
+// When the user returns to this tab after the Health Connect activity finishes,
+// refresh challenge data so the new sessions appear immediately.
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden) return;
+  const pendingId = sessionStorage.getItem('hc_sync_pending');
+  if (!pendingId) return;
+  sessionStorage.removeItem('hc_sync_pending');
+  // Brief pause to let Supabase writes propagate before we query.
+  await new Promise(r => setTimeout(r, 1200));
+  await _loadChallenges();
+  _refreshChallengeDetailSheet();
+  showToast('Health Connect sessions synced.');
+});
+
+// ─── END HEALTH CONNECT BRIDGE ──────────────────────────────────────────────
+
 async function _submitChallengeLog(challengeId) {
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
