@@ -3060,260 +3060,197 @@
 
 <div id="screen-cardio" class="screen">
 
-  <!-- Tab header -->
-  <div style="margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.05);">
-    <div style="font-family:'Bebas Neue',cursive; font-size:28px; letter-spacing:3px; color:var(--cream); line-height:1;">CARDIO <span style="color:var(--red);">TRACKER</span></div>
-    <div style="font-size:12px; color:var(--gray); letter-spacing:0.6px; margin-top:5px;">Log sessions. See your week. Keep the momentum.</div>
+  <!-- PAGE HEADER -->
+  <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.05);">
+    <div style="font-family:'Bebas Neue',cursive;font-size:28px;letter-spacing:3px;color:var(--cream);line-height:1;">CARDIO</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:0.5px;margin-top:5px;">Every session. Every minute. All yours.</div>
   </div>
 
-  <!-- HEALTH CONNECT SECTION (Android only — shown via JS on init) -->
-  <div id="cardio-hc-section" style="display:none; margin-bottom:4px;">
-    <div class="card" style="border:1px solid rgba(192,57,43,0.25); background:linear-gradient(135deg, rgba(192,57,43,0.07) 0%, var(--dark2) 60%); padding:16px; margin-bottom:16px;">
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-        <div style="flex-shrink:0; width:38px; height:38px; background:rgba(192,57,43,0.15); border-radius:10px; display:flex; align-items:center; justify-content:center;">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#C0392B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-12.5A5 5 0 0 1 12 4a5 5 0 0 1 8 4.5C20 13.5 12 21 12 21z"/></svg>
-        </div>
-        <div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; color:var(--cream); letter-spacing:1.5px;">HEALTH CONNECT</div>
-          <div style="font-size:12px; color:var(--gray); margin-top:2px; line-height:1.4;">Import walks &amp; runs directly from Android Health Connect</div>
-        </div>
+  <!-- WEEKLY STRIP — always visible, even at zero -->
+  <div style="background:var(--dark2);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px 18px;margin-bottom:22px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);letter-spacing:2px;margin-bottom:10px;">THIS WEEK</div>
+    <div style="display:flex;align-items:baseline;gap:20px;flex-wrap:wrap;">
+      <div>
+        <span id="cw-sessions" style="font-family:'Bebas Neue',cursive;font-size:34px;color:var(--cream);letter-spacing:1px;line-height:1;">0</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;margin-left:5px;">SESSIONS</span>
       </div>
-      <div id="cardio-hc-sync-status" style="font-size:12px; color:var(--gray); margin-bottom:12px; line-height:1.5; min-height:16px;"></div>
-      <button id="cardio-hc-sync-btn" onclick="_cardioHCSync()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Bebas Neue',cursive; font-size:17px; letter-spacing:2px; padding:13px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">SYNC FROM HEALTH CONNECT</button>
-      <div id="cardio-hc-no-challenge" style="display:none; margin-top:10px; background:rgba(255,255,255,0.04); border-radius:8px; padding:10px 12px; font-size:12px; color:var(--gray); line-height:1.6; text-align:center;">Sync links to your active <strong style="color:var(--cream);">Clear Your Head</strong> challenge.<br>Join or start one in the Challenges tab to enable.</div>
+      <div>
+        <span id="cw-mins" style="font-family:'Bebas Neue',cursive;font-size:34px;color:var(--cream);letter-spacing:1px;line-height:1;">0</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;margin-left:5px;">MIN</span>
+      </div>
+      <div id="cw-cal-block" style="display:none;">
+        <span id="cw-cal" style="font-family:'Bebas Neue',cursive;font-size:34px;color:var(--cream);letter-spacing:1px;line-height:1;">0</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;margin-left:5px;">CAL</span>
+      </div>
     </div>
-    <!-- Divider -->
-    <div style="display:flex; align-items:center; gap:10px; margin:4px 0 20px;">
-      <div style="flex:1; height:1px; background:rgba(255,255,255,0.07);"></div>
-      <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:var(--gray); letter-spacing:2px; white-space:nowrap;">OR LOG MANUALLY</div>
-      <div style="flex:1; height:1px; background:rgba(255,255,255,0.07);"></div>
-    </div>
+    <div id="cardio-week-breakdown" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);margin-top:8px;letter-spacing:0.3px;line-height:1.4;"></div>
   </div>
 
-  <!-- ACTIVITY TYPE SELECTOR -->
-  <div style="margin-bottom:16px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px;">SELECT ACTIVITY</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-      <button id="btn-treadmill" onclick="selectCardioType('treadmill')" class="cardio-type-btn active-cardio-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="14" width="20" height="3" rx="1"/><path d="M5 14V9l3-4h4l2 4v5"/><line x1="9" y1="5" x2="9" y2="14"/><circle cx="17" cy="6" r="2"/><path d="M15 14l2-5 3 2"/></svg>TREADMILL</button>
-      <button id="btn-outdoor" onclick="selectCardioType('outdoor')" class="cardio-type-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 20 8 10 13 15 17 8 21 20"/><line x1="3" y1="20" x2="21" y2="20"/></svg>OUTDOOR</button>
-      <button id="btn-walk" onclick="selectCardioType('walk')" class="cardio-type-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="1.5"/><path d="M10 21l1.5-5-2-3 4-3 2 4h3"/><path d="M7 21l3-5"/><path d="M11 9l-4 4"/></svg>WALK</button>
-      <button id="btn-briskwalk" onclick="selectCardioType('briskwalk')" class="cardio-type-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="1.5"/><path d="M10 21l1.5-5-2-3 4-3 2 4h3"/><path d="M7 21l3-5"/><path d="M11 9l-4 4"/><line x1="3" y1="11" x2="5" y2="10"/><line x1="3" y1="14" x2="5" y2="13"/></svg>BRISK WALK</button>
-      <button id="btn-jog" onclick="selectCardioType('jog')" class="cardio-type-btn" style="grid-column:1/-1;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/></svg>JOG</button>
-    </div>
+  <!-- LOG A SESSION -->
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:12px;">LOG A SESSION</div>
+
+  <!-- ACTIVITY TILES: 2x2 grid -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+
+    <button id="ctype-treadmill" onclick="selectCardioType('treadmill')" class="cardio-type-btn active-cardio-btn" style="padding:16px 10px;gap:8px;">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="14" width="20" height="3" rx="1"/><path d="M5 14V9l3-4h4l2 4v5"/><line x1="9" y1="5" x2="9" y2="14"/><circle cx="17" cy="6" r="2"/><path d="M15 14l2-5 3 2"/></svg>
+      <span style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;">TREADMILL</span>
+    </button>
+
+    <button id="ctype-outdoor" onclick="selectCardioType('outdoor')" class="cardio-type-btn" style="padding:16px 10px;gap:8px;">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="1.5"/><path d="M10 21l1.5-5-2-3 4-3 2 4h3"/><path d="M7 21l3-5"/><path d="M11 9l-4 4"/></svg>
+      <span style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;">RUN</span>
+    </button>
+
+    <button id="ctype-walk" onclick="selectCardioType('walk')" class="cardio-type-btn" style="padding:16px 10px;gap:8px;">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M7 14l2-3M17 14l-2-3"/></svg>
+      <span style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;">WALK</span>
+    </button>
+
+    <button id="ctype-jog" onclick="selectCardioType('jog')" class="cardio-type-btn" style="padding:16px 10px;gap:8px;">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/></svg>
+      <span style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;">JOG</span>
+    </button>
+
   </div>
 
-  <!-- TIMER -->
-  <div class="card" style="text-align:center; margin-bottom:16px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:4px;">DURATION</div>
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); opacity:0.7; margin-bottom:12px;">Use the timer — or just enter minutes for a past session</div>
+  <!-- WALK MODE SUB-TOGGLE — only visible when WALK is selected -->
+  <div id="cardio-walk-mode" style="display:none;margin-bottom:14px;">
+    <div style="display:flex;gap:6px;">
+      <button id="walkmode-leisurely" onclick="_setWalkMode('walk')" style="flex:1;padding:10px 6px;border-radius:10px;border:1px solid rgba(204,32,39,0.4);background:rgba(204,32,39,0.1);color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LEISURELY</button>
+      <button id="walkmode-brisk" onclick="_setWalkMode('briskwalk')" style="flex:1;padding:10px 6px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BRISK</button>
+    </div>
+    <div id="cardio-walk-desc" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);margin-top:6px;padding:0 2px;">Leisurely pace \u2014 under 2.5 mph. Great for active recovery.</div>
+  </div>
+
+  <!-- DURATION CARD -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:14px;">DURATION</div>
     <!-- Quick presets -->
-    <div style="display:flex; justify-content:center; gap:8px; margin-bottom:14px;">
-      <button onclick="setTimerPreset(20)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">20 min</button>
-      <button onclick="setTimerPreset(30)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">30 min</button>
-      <button onclick="setTimerPreset(45)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">45 min</button>
-      <button onclick="setTimerPreset(60)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">60 min</button>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button onclick="setTimerPreset(20)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">20</button>
+      <button onclick="setTimerPreset(30)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">30</button>
+      <button onclick="setTimerPreset(45)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">45</button>
+      <button onclick="setTimerPreset(60)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">60</button>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);align-self:center;white-space:nowrap;padding-left:2px;">min</span>
     </div>
-    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:12px;">
-      <div style="text-align:center;">
-        <input type="number" id="timer-mins" value="30" min="0" max="999" style="width:64px; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Bebas Neue',cursive; font-size:36px; text-align:center; border-radius:10px; padding:8px 4px;" inputmode="decimal"/>
-        <div style="font-size:12px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">MIN</div>
+    <!-- Manual input -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <input type="number" id="timer-mins" value="30" min="0" max="999" placeholder="30" oninput="_onDurationInput()" style="width:80px;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);font-family:'Bebas Neue',cursive;font-size:36px;text-align:center;border-radius:10px;padding:8px 4px;-webkit-tap-highlight-color:transparent;" inputmode="decimal"/>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray);letter-spacing:1px;">MIN</span>
+      <input type="number" id="timer-secs" value="00" min="0" max="59" style="display:none;" inputmode="decimal"/>
+    </div>
+    <!-- Live timer display (hidden until started) -->
+    <div id="timer-display" style="font-family:'Bebas Neue',cursive;font-size:56px;color:var(--cream);letter-spacing:2px;text-align:center;display:none;margin-bottom:8px;">30:00</div>
+    <!-- Live timer toggle + controls -->
+    <div id="cardio-timer-section" style="display:none;">
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button onclick="startCardioTimer()" id="timer-start-btn" style="background:var(--red);color:white;border:none;border-radius:12px;padding:10px 24px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">START</button>
+        <button onclick="pauseCardioTimer()" id="timer-pause-btn" style="display:none;background:var(--dark3);color:var(--cream);border:1px solid var(--dark4);border-radius:12px;padding:10px 24px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">PAUSE</button>
+        <button onclick="resetCardioTimer()" id="timer-reset-btn" style="display:none;background:var(--dark3);color:var(--gray-light);border:1px solid var(--dark4);border-radius:12px;padding:10px 24px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">RESET</button>
       </div>
-      <div id="timer-colon" style="font-family:'Bebas Neue',cursive; font-size:36px; color:var(--red-text); padding-top:8px;">:</div>
-      <div style="text-align:center;">
-        <input type="number" id="timer-secs" value="00" min="0" max="59" style="width:64px; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Bebas Neue',cursive; font-size:36px; text-align:center; border-radius:10px; padding:8px 4px;" inputmode="decimal"/>
-        <div style="font-size:12px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">SEC</div>
-      </div>
     </div>
-    <div id="timer-display" style="font-family:'Bebas Neue',cursive; font-size:56px; color:var(--cream); letter-spacing:2px; display:none;">30:00</div>
-    <div style="display:flex; gap:10px; justify-content:center; margin-top:8px;">
-      <button onclick="startCardioTimer()" id="timer-start-btn" style="background:var(--red); color:white; border:none; border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">START</button>
-      <button onclick="pauseCardioTimer()" id="timer-pause-btn" style="display:none; background:var(--dark3); color:var(--cream); border:1px solid var(--dark4); border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">PAUSE</button>
-      <button onclick="resetCardioTimer()" id="timer-reset-btn" style="display:none; background:var(--dark3); color:var(--gray-light); border:1px solid var(--dark4); border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">RESET</button>
-    </div>
+    <button onclick="_toggleCardioLiveTimer()" id="cardio-timer-toggle" style="width:100%;margin-top:4px;background:transparent;border:none;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;padding:8px 0 0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:4px;">
+      <svg id="cardio-timer-toggle-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="cardio-timer-toggle-label">USE LIVE TIMER</span>
+    </button>
   </div>
 
-  <!-- TREADMILL INPUTS -->
-  <div id="cardio-inputs-treadmill" class="card" style="margin-bottom:16px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;">TREADMILL DETAILS</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+  <!-- DETAILS CARD — unified, fields shown/hidden per activity type -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:14px;">DETAILS <span style="opacity:0.5;font-size:10px;letter-spacing:1px;">optional</span></div>
+
+    <!-- Distance — all types -->
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:6px;">DISTANCE (MI)</div>
+      <input type="number" id="cardio-distance" placeholder="0.0" step="0.1" oninput="_onDistanceInput()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
+    </div>
+
+    <!-- Pace — outdoor run and jog only -->
+    <div id="cardio-pace-row" style="display:none;margin-bottom:12px;background:var(--dark3);border-radius:10px;padding:10px 14px;">
+      <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:2px;">AVG PACE</div>
+      <div id="cardio-pace-value" style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;">--:-- /MI</div>
+    </div>
+
+    <!-- Treadmill extras — speed + incline -->
+    <div id="cardio-treadmill-extras" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
       <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">SPEED (MPH)</div>
-        <input type="number" id="tm-speed" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
+        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:6px;">SPEED (MPH)</div>
+        <input type="number" id="cardio-speed" placeholder="0.0" step="0.1" oninput="_calcCardioCalories()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
       </div>
       <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">INCLINE (%)</div>
-        <input type="number" id="tm-incline" placeholder="0" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
-      </div>
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
-        <input type="number" id="tm-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
-      </div>
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
-        <input type="number" id="tm-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcTMCalories()" inputmode="decimal"/>
-      </div>
-      <div style="grid-column:1/-1;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES <span style="opacity:0.6; font-size:11px;">(auto)</span></div>
-        <input type="number" id="tm-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
+        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:6px;">INCLINE (%)</div>
+        <input type="number" id="cardio-incline" placeholder="0" oninput="_calcCardioCalories()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
       </div>
     </div>
-    <div style="margin-top:10px;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES <span style="opacity:0.6; font-size:11px;">optional</span></div>
-      <textarea id="tm-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
-    </div>
+
   </div>
 
-  <!-- OUTDOOR INPUTS -->
-  <div id="cardio-inputs-outdoor" class="card" style="margin-bottom:14px; display:none;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;">OUTDOOR RUN DETAILS</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
-        <input type="number" id="od-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
-      </div>
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
-        <input type="number" id="od-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcODCalories()" inputmode="decimal"/>
-      </div>
-      <div style="grid-column:1/-1;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES <span style="opacity:0.6; font-size:11px;">(auto)</span></div>
-        <input type="number" id="od-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
-      </div>
+  <!-- EFFORT (RPE) CARD -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;">EFFORT</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);opacity:0.55;letter-spacing:0.5px;">optional</div>
     </div>
-    <div id="pace-display" style="margin-top:10px; background:var(--dark3); border-radius:10px; padding:10px 14px; display:none;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px;">AVG PACE</div>
-      <div id="pace-value" style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:2px;">--:-- /MI</div>
-    </div>
-    <div style="margin-top:10px;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES <span style="opacity:0.6; font-size:11px;">optional</span></div>
-      <textarea id="od-notes" class="notes-input" placeholder="Route, conditions, how it felt..." style="min-height:60px;"></textarea>
-    </div>
-  </div>
-
-  <!-- WALK INPUTS -->
-  <div id="cardio-inputs-walk" class="card" style="margin-bottom:14px; display:none;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M7 14l2-3M17 14l-2-3"/></svg>WALK DETAILS</div>
-    <div style="background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:13px; color:var(--gray-light);">Leisurely pace: under 2.5 mph. Great for active recovery and low-impact cardio.</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
-        <input type="number" id="wk-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
-      </div>
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
-        <input type="number" id="wk-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('walk')" inputmode="decimal"/>
-      </div>
-      <div style="grid-column:1/-1;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES <span style="opacity:0.6; font-size:11px;">(auto)</span></div>
-        <input type="number" id="wk-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
-      </div>
-    </div>
-    <div style="margin-top:10px;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES <span style="opacity:0.6; font-size:11px;">optional</span></div>
-      <textarea id="wk-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
-    </div>
-  </div>
-
-  <!-- BRISK WALK INPUTS -->
-  <div id="cardio-inputs-briskwalk" class="card" style="margin-bottom:14px; display:none;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M6 14l3-3M18 14l-3-3"/></svg>BRISK WALK DETAILS</div>
-    <div style="background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:13px; color:var(--gray-light);">Purposeful pace: 2.5 to 3.5 mph. Elevates heart rate without joint stress.</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
-        <input type="number" id="bw-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
-      </div>
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
-        <input type="number" id="bw-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('briskwalk')" inputmode="decimal"/>
-      </div>
-      <div style="grid-column:1/-1;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES <span style="opacity:0.6; font-size:11px;">(auto)</span></div>
-        <input type="number" id="bw-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
-      </div>
-    </div>
-    <div style="margin-top:10px;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES <span style="opacity:0.6; font-size:11px;">optional</span></div>
-      <textarea id="bw-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
-    </div>
-  </div>
-
-  <!-- JOG INPUTS -->
-  <div id="cardio-inputs-jog" class="card" style="margin-bottom:14px; display:none;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:12px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M7 8l2 3h5l2-3M9 11l-2 5h2l1-2 2 2h2l-2-5"/></svg>JOG DETAILS</div>
-    <div style="background:var(--dark3); border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:13px; color:var(--gray-light);">Easy running pace: 3.5 to 5 mph. Builds aerobic base without maxing out effort.</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">DISTANCE (MI)</div>
-        <input type="number" id="jg-distance" placeholder="0.0" step="0.1" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" inputmode="decimal"/>
-      </div>
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
-        <input type="number" id="jg-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('jog')" inputmode="decimal"/>
-      </div>
-      <div style="grid-column:1/-1;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES <span style="opacity:0.6; font-size:11px;">(auto)</span></div>
-        <input type="number" id="jg-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
-      </div>
-    </div>
-    <div style="margin-top:10px;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES <span style="opacity:0.6; font-size:11px;">optional</span></div>
-      <textarea id="jg-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
-    </div>
-  </div>
-
-  <!-- RPE -->
-  <div class="card" style="margin-bottom:16px;">
-    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;">EFFORT (RPE)</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);opacity:0.6;">optional</div>
-    </div>
-    <div style="display:flex;gap:4px;">
+    <!-- Row 1: 1-5 -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px;">
       <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="1">1</button>
       <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="2">2</button>
       <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="3">3</button>
       <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="4">4</button>
       <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="5">5</button>
+    </div>
+    <!-- Row 2: 6-10 -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
       <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="6">6</button>
       <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="7">7</button>
       <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="8">8</button>
       <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="9">9</button>
       <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="10">10</button>
     </div>
-    <div style="display:flex;justify-content:space-between;margin-top:5px;">
+    <div style="display:flex;justify-content:space-between;margin-top:6px;">
       <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">Easy</span>
       <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">Max effort</span>
     </div>
   </div>
 
+  <!-- NOTES CARD -->
+  <div class="card" style="margin-bottom:16px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:10px;">NOTES <span style="opacity:0.5;font-size:10px;letter-spacing:1px;">optional</span></div>
+    <textarea id="cardio-notes" class="notes-input" placeholder="How did it feel? Route, conditions, anything worth remembering." style="min-height:64px;width:100%;"></textarea>
+  </div>
+
+  <!-- CYH INTEGRATION NOTE — shows when qualifying session + active CYH challenge -->
+  <div id="cardio-cyh-note" style="display:none;align-items:center;gap:10px;background:rgba(192,57,43,0.07);border:1px solid rgba(192,57,43,0.22);border-radius:10px;padding:10px 14px;margin-bottom:14px;">
+    <svg viewBox="0 0 24 24" width="16" height="16" stroke="#C0392B" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+    <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);line-height:1.4;">Counts toward your <strong>Clear Your Head</strong> challenge</span>
+  </div>
+
+  <!-- HC SYNC BUTTON — Android + active CYH only -->
+  <div id="cardio-hc-row" style="display:none;margin-bottom:14px;">
+    <button onclick="_cardioHCSync()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--gray-light);padding:13px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent;">
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      SYNC FROM HEALTH CONNECT
+    </button>
+  </div>
+
   <!-- SAVE BUTTON -->
-  <button onclick="saveCardioSession()" style="width:100%; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:20px; letter-spacing:2px; cursor:pointer; margin-bottom:20px; box-shadow:0 4px 16px rgba(204,32,39,0.4); -webkit-tap-highlight-color:transparent;">SAVE CARDIO SESSION</button>
+  <button onclick="saveCardioSession()" style="width:100%;background:var(--red);border:none;color:white;padding:16px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;cursor:pointer;margin-bottom:28px;box-shadow:0 4px 16px rgba(204,32,39,0.35);-webkit-tap-highlight-color:transparent;">SAVE SESSION</button>
 
-  <!-- WEEKLY SUMMARY -->
-  <div id="cardio-weekly-summary" style="display:none; margin-bottom:16px;">
-    <div class="section-title">THIS <span>WEEK</span></div>
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:4px;">
-      <div class="stat-box">
-        <div class="stat-num" id="cardio-week-sessions">0</div>
-        <div class="stat-label">Sessions</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-num" id="cardio-week-minutes">0</div>
-        <div class="stat-label">Minutes</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-num" id="cardio-week-calories">0</div>
-        <div class="stat-label">Calories</div>
-      </div>
+  <!-- HISTORY HEADER with collapse toggle -->
+  <button id="cardio-history-toggle-btn" onclick="_toggleCardioHistory()" style="width:100%;background:transparent;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;-webkit-tap-highlight-color:transparent;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;">HISTORY</div>
+      <div id="cardio-history-count" style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);opacity:0.6;letter-spacing:1px;"></div>
     </div>
-    <div id="cardio-week-breakdown" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);text-align:center;margin-top:6px;letter-spacing:0.3px;"></div>
+    <svg id="cardio-history-chevron" viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
+  </button>
+
+  <!-- HISTORY LIST -->
+  <div id="cardio-history-list">
+    <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" width="36" height="36" stroke="var(--gray)" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/></svg></div><div class="empty-state-text">No sessions yet. Log your first one above.</div></div>
   </div>
 
-  <!-- CARDIO HISTORY -->
-  <div class="section-title">CARDIO <span>HISTORY</span></div>
-  <div id="cardio-history-list">
-    <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" width="36" height="36" stroke="var(--gray)" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/></svg></div><div class="empty-state-text">No cardio yet. Track your first session above.</div></div>
-  </div>
 </div>
 
 <div id="screen-mindset" class="screen">
@@ -34138,6 +34075,8 @@ let cardioTimerSeconds = 0;
 let cardioTimerRunning = false;
 let cardioTimerOriginal = 0;
 let _cardioRpe = null;
+let _cardioHistoryOpen = true;
+let _cardioTimerOpen = false;
 
 function _setCardioRpe(btn) {
   document.querySelectorAll('.cardio-rpe-btn').forEach(b => b.classList.remove('active'));
@@ -34145,29 +34084,77 @@ function _setCardioRpe(btn) {
   _cardioRpe = parseInt(btn.dataset.rpe);
 }
 
+// ── Activity type selector ─────────────────────────────────────────────────
+
 function selectCardioType(type) {
   cardioType = type;
-  const allTypes = ['treadmill', 'outdoor', 'walk', 'briskwalk', 'jog'];
-  allTypes.forEach(t => {
-    const btn = document.getElementById('btn-' + t);
-    const panel = document.getElementById('cardio-inputs-' + t);
-    if (btn) { btn.classList.toggle('active-cardio-btn', t === type); }
-    if (panel) panel.style.display = t === type ? 'block' : 'none';
+  // Which tile is active — walk and briskwalk both light the WALK tile
+  const typeToTile = { treadmill:'treadmill', outdoor:'outdoor', walk:'walk', briskwalk:'walk', jog:'jog' };
+  const activeTile = typeToTile[type] || type;
+  ['treadmill','outdoor','walk','jog'].forEach(tile => {
+    const btn = document.getElementById('ctype-' + tile);
+    if (!btn) return;
+    const on = tile === activeTile;
+    btn.classList.toggle('active-cardio-btn', on);
   });
-
-  // Auto-fill bodyweight from profile if weight field is empty
-  const bw = state.profile?.bodyweight;
-  if (bw) {
-    const weightFields = { treadmill:'tm-weight', outdoor:'od-weight', walk:'wk-weight', briskwalk:'bw-weight', jog:'jg-weight' };
-    const field = document.getElementById(weightFields[type]);
-    if (field && !field.value) field.value = bw;
+  // Walk sub-mode toggle
+  const walkMode = document.getElementById('cardio-walk-mode');
+  if (walkMode) {
+    const isWalk = type === 'walk' || type === 'briskwalk';
+    walkMode.style.display = isWalk ? 'block' : 'none';
+    if (isWalk) _setWalkMode(type);
   }
+  // Treadmill extras (speed + incline)
+  const tmExtras = document.getElementById('cardio-treadmill-extras');
+  if (tmExtras) tmExtras.style.display = type === 'treadmill' ? 'grid' : 'none';
+  // Pace row — outdoor and jog only
+  _updatePaceDisplay();
+  _updateCYHNote();
 }
+
+function _setWalkMode(mode) {
+  cardioType = mode;
+  const lBtn = document.getElementById('walkmode-leisurely');
+  const bBtn = document.getElementById('walkmode-brisk');
+  const desc = document.getElementById('cardio-walk-desc');
+  const onL = mode === 'walk';
+  if (lBtn) {
+    lBtn.style.background = onL ? 'rgba(204,32,39,0.1)' : 'transparent';
+    lBtn.style.color = onL ? 'var(--cream)' : 'var(--gray)';
+    lBtn.style.borderColor = onL ? 'rgba(204,32,39,0.4)' : 'rgba(255,255,255,0.1)';
+  }
+  if (bBtn) {
+    bBtn.style.background = onL ? 'transparent' : 'rgba(204,32,39,0.1)';
+    bBtn.style.color = onL ? 'var(--gray)' : 'var(--cream)';
+    bBtn.style.borderColor = onL ? 'rgba(255,255,255,0.1)' : 'rgba(204,32,39,0.4)';
+  }
+  if (desc) desc.textContent = onL
+    ? 'Leisurely pace \u2014 under 2.5 mph. Great for active recovery.'
+    : 'Brisk pace \u2014 2.5 to 3.5 mph. Elevates heart rate without joint stress.';
+  _updateCYHNote();
+}
+
+// ── Timer ──────────────────────────────────────────────────────────────────
 
 function setTimerPreset(mins) {
   haptic(HAPTIC.tap);
   document.getElementById('timer-mins').value = mins;
-  document.getElementById('timer-secs').value = '00';
+  _calcCardioCalories();
+  _updateCYHNote();
+}
+
+function _onDurationInput() {
+  _calcCardioCalories();
+  _updateCYHNote();
+  _updatePaceDisplay();
+}
+
+function _toggleCardioLiveTimer() {
+  _cardioTimerOpen = !_cardioTimerOpen;
+  const section = document.getElementById('cardio-timer-section');
+  const label = document.getElementById('cardio-timer-toggle-label');
+  if (section) section.style.display = _cardioTimerOpen ? 'block' : 'none';
+  if (label) label.textContent = _cardioTimerOpen ? 'HIDE TIMER' : 'USE LIVE TIMER';
 }
 
 function startCardioTimer() {
@@ -34175,31 +34162,27 @@ function startCardioTimer() {
   const secs = parseInt(document.getElementById('timer-secs').value) || 0;
   cardioTimerSeconds = mins * 60 + secs;
   cardioTimerOriginal = cardioTimerSeconds;
-  if (cardioTimerSeconds <= 0) { showToast('Set a time first!'); return; }
+  if (cardioTimerSeconds <= 0) { showToast('Set a time first.'); return; }
   haptic(HAPTIC.start);
-
   document.getElementById('timer-mins').style.display = 'none';
-  document.getElementById('timer-secs').style.display = 'none';
-  document.getElementById('timer-colon').style.display = 'none';
   document.getElementById('timer-display').style.display = 'block';
   document.getElementById('timer-start-btn').style.display = 'none';
   document.getElementById('timer-pause-btn').style.display = 'inline-block';
   document.getElementById('timer-reset-btn').style.display = 'inline-block';
-
   if (cardioTimerInterval) clearInterval(cardioTimerInterval);
   cardioTimerRunning = true;
   cardioTimerInterval = setInterval(() => {
     if (cardioTimerSeconds <= 0) {
       clearInterval(cardioTimerInterval);
       cardioTimerRunning = false;
-      document.getElementById('timer-display').textContent = 'DONE! 💪';
+      document.getElementById('timer-display').textContent = 'DONE!';
       document.getElementById('timer-display').style.color = 'var(--red)';
       haptic(HAPTIC.milestone);
-      showToast('Cardio timer complete! 🔥');
+      showToast('Session complete. Save it below.');
       return;
     }
     cardioTimerSeconds--;
-    updateTimerDisplay();
+    _updateTimerDisplay();
   }, 1000);
 }
 
@@ -34215,13 +34198,14 @@ function pauseCardioTimer() {
     cardioTimerInterval = setInterval(() => {
       if (cardioTimerSeconds <= 0) {
         clearInterval(cardioTimerInterval);
-        document.getElementById('timer-display').textContent = 'DONE! 💪';
+        cardioTimerRunning = false;
+        document.getElementById('timer-display').textContent = 'DONE!';
         document.getElementById('timer-display').style.color = 'var(--red)';
         haptic(HAPTIC.milestone);
         return;
       }
       cardioTimerSeconds--;
-      updateTimerDisplay();
+      _updateTimerDisplay();
     }, 1000);
   }
 }
@@ -34232,71 +34216,130 @@ function resetCardioTimer() {
   cardioTimerRunning = false;
   cardioTimerSeconds = 0;
   cardioTimerOriginal = 0;
-  document.getElementById('timer-display').style.display = 'none';
-  document.getElementById('timer-display').style.color = 'var(--cream)';
-  document.getElementById('timer-mins').style.display = 'inline-block';
-  document.getElementById('timer-secs').style.display = 'inline-block';
-  document.getElementById('timer-colon').style.display = '';
-  document.getElementById('timer-start-btn').style.display = 'inline-block';
-  document.getElementById('timer-pause-btn').style.display = 'none';
-  document.getElementById('timer-pause-btn').textContent = 'PAUSE';
-  document.getElementById('timer-reset-btn').style.display = 'none';
+  const disp = document.getElementById('timer-display');
+  if (disp) { disp.style.display = 'none'; disp.style.color = 'var(--cream)'; }
+  const minsEl = document.getElementById('timer-mins');
+  if (minsEl) minsEl.style.display = 'inline-block';
+  const startBtn = document.getElementById('timer-start-btn');
+  if (startBtn) startBtn.style.display = 'inline-block';
+  const pauseBtn = document.getElementById('timer-pause-btn');
+  if (pauseBtn) { pauseBtn.style.display = 'none'; pauseBtn.textContent = 'PAUSE'; }
+  const resetBtn = document.getElementById('timer-reset-btn');
+  if (resetBtn) resetBtn.style.display = 'none';
 }
 
-function updateTimerDisplay() {
+function _updateTimerDisplay() {
   const m = Math.floor(cardioTimerSeconds / 60);
   const s = cardioTimerSeconds % 60;
-  document.getElementById('timer-display').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  document.getElementById('timer-display').style.color = cardioTimerSeconds < 60 ? 'var(--red)' : 'var(--cream)';
-  // Recalculate calories on each tick
-  if (cardioType === 'treadmill') calcTMCalories();
-  else if (cardioType === 'outdoor') calcODCalories();
-  else calcWalkCalories(cardioType);
+  const disp = document.getElementById('timer-display');
+  if (!disp) return;
+  disp.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  disp.style.color = cardioTimerSeconds < 60 ? 'var(--red)' : 'var(--cream)';
+  _calcCardioCalories();
 }
 
-function calcTMCalories() {
-  const weight = parseFloat(document.getElementById('tm-weight')?.value) || 0;
-  const speed = parseFloat(document.getElementById('tm-speed')?.value) || 0;
-  const incline = parseFloat(document.getElementById('tm-incline')?.value) || 0;
-  const duration = cardioTimerOriginal > 0
-    ? Math.round((cardioTimerOriginal - cardioTimerSeconds) / 60)
-    : parseInt(document.getElementById('timer-mins')?.value) || 0;
-  if (!weight || !duration) return;
-  const kg = weight * 0.453592;
-  const hours = duration / 60;
-  let MET = speed < 3.5 ? 3.5 : speed < 5 ? 5 : speed < 6 ? 8 : 10;
-  MET += incline * 0.1;
-  document.getElementById('tm-calories').value = Math.round(MET * kg * hours);
+// ── Calorie calc — reads profile bodyweight silently, no weight input field ─
+
+function _getElapsedMins() {
+  if (cardioTimerOriginal > 0) return Math.round((cardioTimerOriginal - cardioTimerSeconds) / 60);
+  return parseInt(document.getElementById('timer-mins')?.value) || 0;
 }
 
-function calcODCalories() {
-  const weight = parseFloat(document.getElementById('od-weight')?.value) || 0;
-  const distance = parseFloat(document.getElementById('od-distance')?.value) || 0;
-  const duration = cardioTimerOriginal > 0
-    ? Math.round((cardioTimerOriginal - cardioTimerSeconds) / 60)
-    : parseInt(document.getElementById('timer-mins')?.value) || 0;
-  if (!weight || !duration) return;
-  const kg = weight * 0.453592;
-  const hours = duration / 60;
-  const speed = duration > 0 && distance > 0 ? (distance / hours) : 0;
-  const MET = speed < 4 ? 6 : speed < 6 ? 8.5 : 11;
-  document.getElementById('od-calories').value = Math.round(MET * kg * hours);
+function _calcCardioCalories() {
+  const bw = parseFloat(state.profile?.bodyweight) || 0;
+  if (!bw) return 0;
+  const kg = bw * 0.453592;
+  const mins = _getElapsedMins();
+  if (!mins) return 0;
+  const hours = mins / 60;
+  let MET = 3.5;
+  if (cardioType === 'treadmill') {
+    const speed = parseFloat(document.getElementById('cardio-speed')?.value) || 0;
+    const incline = parseFloat(document.getElementById('cardio-incline')?.value) || 0;
+    MET = speed < 3.5 ? 3.5 : speed < 5 ? 5 : speed < 6 ? 8 : 10;
+    MET += incline * 0.1;
+  } else if (cardioType === 'outdoor') {
+    const dist = parseFloat(document.getElementById('cardio-distance')?.value) || 0;
+    const speed = hours > 0 && dist > 0 ? (dist / hours) : 0;
+    MET = speed < 4 ? 6 : speed < 6 ? 8.5 : 11;
+  } else if (cardioType === 'jog') {
+    MET = 7.0;
+  } else if (cardioType === 'briskwalk') {
+    MET = 3.8;
+  } else {
+    MET = 2.8; // walk
+  }
+  return Math.round(MET * kg * hours);
 }
 
-// MET values: Walk ~2.8, Brisk Walk ~3.8, Jog ~7.0 (ACSM/Compendium of Physical Activities)
-function calcWalkCalories(mode) {
-  const prefixes = { walk: 'wk', briskwalk: 'bw', jog: 'jg' };
-  const METs = { walk: 2.8, briskwalk: 3.8, jog: 7.0 };
-  const prefix = prefixes[mode];
-  if (!prefix) return;
-  const weight = parseFloat(document.getElementById(prefix + '-weight')?.value) || 0;
-  const duration = cardioTimerOriginal > 0
-    ? Math.round((cardioTimerOriginal - cardioTimerSeconds) / 60)
-    : parseInt(document.getElementById('timer-mins')?.value) || 0;
-  if (!weight || !duration) return;
-  const kg = weight * 0.453592;
-  const hours = duration / 60;
-  document.getElementById(prefix + '-calories').value = Math.round(METs[mode] * kg * hours);
+// ── Pace display ────────────────────────────────────────────────────────────
+
+function _onDistanceInput() {
+  _updatePaceDisplay();
+  _calcCardioCalories();
+}
+
+function _updatePaceDisplay() {
+  const paceRow = document.getElementById('cardio-pace-row');
+  const paceVal = document.getElementById('cardio-pace-value');
+  if (!paceRow || !paceVal) return;
+  const showPace = cardioType === 'outdoor' || cardioType === 'jog';
+  paceRow.style.display = showPace ? 'block' : 'none';
+  if (!showPace) return;
+  const dist = parseFloat(document.getElementById('cardio-distance')?.value) || 0;
+  const mins = _getElapsedMins();
+  if (dist > 0 && mins > 0) {
+    const pace = mins / dist;
+    const pm = Math.floor(pace);
+    const ps = Math.round((pace % 1) * 60);
+    paceVal.textContent = pm + ':' + String(ps).padStart(2,'0') + ' /MI';
+  } else {
+    paceVal.textContent = '--:-- /MI';
+  }
+}
+
+// ── CYH integration ────────────────────────────────────────────────────────
+
+function _updateCYHNote() {
+  const note = document.getElementById('cardio-cyh-note');
+  const hcRow = document.getElementById('cardio-hc-row');
+  if (!note) return;
+  const qualifyingTypes = ['walk','briskwalk','outdoor','jog'];
+  const mins = _getElapsedMins();
+  const hasCYH = (_challenges || []).some(c => c.status === 'active' && c.challenge_type === 'clear_your_head');
+  const qualifies = qualifyingTypes.includes(cardioType) && mins >= 10 && hasCYH;
+  note.style.display = qualifies ? 'flex' : 'none';
+  // HC sync button — Android only, CYH only
+  if (hcRow) {
+    const isAndroid = !!window._fcmToken;
+    hcRow.style.display = (isAndroid && hasCYH) ? 'block' : 'none';
+  }
+}
+
+async function _cardioHCSync() {
+  const activeCYH = (_challenges || []).find(ch =>
+    ch.challenge_type === 'clear_your_head' && ch.status === 'active'
+  );
+  await _triggerHCSync(activeCYH ? activeCYH.id : '');
+}
+
+async function _cyhAutoCount(durationMins) {
+  if (!state.supabaseUserId || durationMins < 10) return;
+  const cyh = (_challenges || []).find(c => c.status === 'active' && c.challenge_type === 'clear_your_head');
+  if (!cyh) return;
+  const qualifyingTypes = ['walk','briskwalk','outdoor','jog'];
+  if (!qualifyingTypes.includes(cardioType)) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+  try {
+    await sb.from('cyh_logs').insert({
+      challenge_id: cyh.id,
+      user_id: state.supabaseUserId,
+      minutes: durationMins,
+    });
+  } catch (e) {
+    console.warn('[cyh-auto-count]', e);
+  }
 }
 
 
@@ -34311,43 +34354,28 @@ function shakeField(el) {
 
 function saveCardioSession() {
   haptic(HAPTIC.success);
-  // Validate weight + distance before saving
-  const weightFieldIds = { treadmill: 'tm-weight', outdoor: 'od-weight', walk: 'wk-weight', briskwalk: 'bw-weight', jog: 'jg-weight' };
-  const distFieldIds   = { treadmill: 'tm-distance', outdoor: 'od-distance', walk: 'wk-distance', briskwalk: 'bw-distance', jog: 'jg-distance' };
-  const wField = document.getElementById(weightFieldIds[cardioType]);
-  const dField = document.getElementById(distFieldIds[cardioType]);
-  let valid = true;
-  if (wField && !wField.value) { shakeField(wField); valid = false; }
-  if (dField && !dField.value) { shakeField(dField); valid = false; }
-  if (!valid) { showToast('Enter weight and distance to calculate calories', 'error'); return; }
-
-  const duration = cardioTimerOriginal > 0
-    ? Math.round((cardioTimerOriginal - cardioTimerSeconds) / 60)
-    : parseInt(document.getElementById('timer-mins').value) || 0;
-
-  const _cPfx = { treadmill: 'tm', outdoor: 'od', walk: 'wk', briskwalk: 'bw', jog: 'jg' }[cardioType] || 'od';
-  let details = {};
-  if (cardioType === 'treadmill') {
-    details = {
-      weight: document.getElementById('tm-weight').value,
-      speed: document.getElementById('tm-speed').value,
-      incline: document.getElementById('tm-incline').value,
-      distance: document.getElementById('tm-distance').value,
-      calories: document.getElementById('tm-calories').value,
-      notes: document.getElementById('tm-notes').value,
-    };
-  } else {
-    const dist = parseFloat(document.getElementById(_cPfx + '-distance').value) || 0;
-    const pace = cardioType === 'outdoor' && duration > 0 && dist > 0 ? (duration / dist) : 0;
-    details = {
-      weight: document.getElementById(_cPfx + '-weight').value,
-      distance: document.getElementById(_cPfx + '-distance').value,
-      calories: document.getElementById(_cPfx + '-calories').value,
-      ...(cardioType === 'outdoor' ? { pace: pace > 0 ? `${Math.floor(pace)}:${String(Math.round((pace % 1) * 60)).padStart(2,'0')}` : '--' } : {}),
-      notes: document.getElementById(_cPfx + '-notes').value,
-    };
+  const duration = _getElapsedMins();
+  if (!duration || duration <= 0) {
+    showToast('Set a duration first.');
+    shakeField(document.getElementById('timer-mins'));
+    return;
   }
-
+  const dist = parseFloat(document.getElementById('cardio-distance')?.value) || 0;
+  const speed = parseFloat(document.getElementById('cardio-speed')?.value) || 0;
+  const incline = parseFloat(document.getElementById('cardio-incline')?.value) || 0;
+  const notes = document.getElementById('cardio-notes')?.value || '';
+  const calories = _calcCardioCalories();
+  let details = { distance: dist || '', calories: calories || '', notes };
+  if (cardioType === 'treadmill') {
+    details.speed = speed || '';
+    details.incline = incline || '';
+  }
+  if ((cardioType === 'outdoor' || cardioType === 'jog') && dist > 0) {
+    const pace = duration / dist;
+    const pm = Math.floor(pace);
+    const ps = Math.round((pace % 1) * 60);
+    details.pace = pm + ':' + String(ps).padStart(2,'0');
+  }
   const session = {
     id: Date.now(),
     type: cardioType,
@@ -34356,117 +34384,114 @@ function saveCardioSession() {
     date: new Date().toISOString(),
     details,
   };
-
   if (!state.cardioHistory) state.cardioHistory = [];
   state.cardioHistory.push(session);
   saveState();
+  // Auto-count toward CYH if qualifying — fire and forget
+  _cyhAutoCount(duration);
+  // Reset form
   resetCardioTimer();
-  // Clear RPE selection
   _cardioRpe = null;
   document.querySelectorAll('.cardio-rpe-btn').forEach(b => b.classList.remove('active'));
+  const clearIds = ['cardio-distance','cardio-speed','cardio-incline','cardio-notes'];
+  clearIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('timer-mins').value = '30';
+  _updateCYHNote();
+  _updatePaceDisplay();
   renderCardioHistory();
-  showToast('Cardio session saved! 🔥');
-
-  // Clear inputs, then re-apply bodyweight pre-fill for convenience
-  ['tm-speed','tm-incline','tm-distance','tm-calories','tm-notes','tm-weight','od-distance','od-calories','od-notes','od-weight','wk-distance','wk-calories','wk-notes','wk-weight','bw-distance','bw-calories','bw-notes','bw-weight','jg-distance','jg-calories','jg-notes','jg-weight'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  const _bwAfterSave = state.profile?.bodyweight;
-  if (_bwAfterSave) {
-    const _bwFields = { treadmill:'tm-weight', outdoor:'od-weight', walk:'wk-weight', briskwalk:'bw-weight', jog:'jg-weight' };
-    const _bwEl = document.getElementById(_bwFields[cardioType]);
-    if (_bwEl) _bwEl.value = _bwAfterSave;
-  }
+  const cyhActive = (_challenges || []).some(c => c.status === 'active' && c.challenge_type === 'clear_your_head');
+  const qualifies = ['walk','briskwalk','outdoor','jog'].includes(cardioType) && duration >= 10 && cyhActive;
+  showToast(qualifies ? 'Session saved \u2014 counted toward your challenge.' : 'Session saved.');
 }
 
-function renderCardioWeeklySummary() {
-  const summary = document.getElementById('cardio-weekly-summary');
-  if (!summary || !state.cardioHistory || state.cardioHistory.length === 0) {
-    if (summary) summary.style.display = 'none';
-    return;
-  }
+// ── Weekly strip ────────────────────────────────────────────────────────────
 
-  // Get start of current week (Monday)
+function renderCardioWeeklySummary() {
+  // Always visible — show zeroes if nothing logged this week
   const now = new Date();
-  const dayOfWeek = (now.getDay() + 6) % 7; // Mon=0 ... Sun=6
+  const dayOfWeek = (now.getDay() + 6) % 7; // Mon=0
   const weekStart = new Date(now);
   weekStart.setDate(now.getDate() - dayOfWeek);
   weekStart.setHours(0, 0, 0, 0);
-
-  const thisWeek = state.cardioHistory.filter(s => new Date(s.date) >= weekStart);
-
-  if (thisWeek.length === 0) {
-    summary.style.display = 'none';
-    return;
-  }
-
+  const history = state.cardioHistory || [];
+  const thisWeek = history.filter(s => new Date(s.date) >= weekStart);
   const totalMins = thisWeek.reduce((sum, s) => sum + (parseInt(s.duration) || 0), 0);
   const totalCal = thisWeek.reduce((sum, s) => sum + (parseFloat(s.details?.calories) || 0), 0);
-
-  document.getElementById('cardio-week-sessions').textContent = thisWeek.length;
-  document.getElementById('cardio-week-minutes').textContent = totalMins;
-  document.getElementById('cardio-week-calories').textContent = Math.round(totalCal) || '—';
-
-  // Breakdown by activity type
-  const typeNames = { treadmill: 'Treadmill', outdoor: 'Outdoor run', walk: 'Walk', briskwalk: 'Brisk walk', jog: 'Jog', hc_import: 'Health Connect' };
-  const counts = {};
-  thisWeek.forEach(s => { counts[s.type] = (counts[s.type] || 0) + 1; });
-  const breakdown = Object.entries(counts).map(([t, n]) => `${n} ${(typeNames[t] || t).toLowerCase()}${n > 1 ? 's' : ''}`).join(' · ');
+  const sesEl = document.getElementById('cw-sessions');
+  const minEl = document.getElementById('cw-mins');
+  const calEl = document.getElementById('cw-cal');
+  const calBlock = document.getElementById('cw-cal-block');
   const bdEl = document.getElementById('cardio-week-breakdown');
-  if (bdEl) bdEl.textContent = breakdown;
+  if (sesEl) sesEl.textContent = thisWeek.length;
+  if (minEl) minEl.textContent = totalMins;
+  if (calEl) calEl.textContent = Math.round(totalCal) || 0;
+  if (calBlock) calBlock.style.display = (totalCal > 0) ? 'block' : 'none';
+  if (bdEl) {
+    if (thisWeek.length > 0) {
+      const typeNames = { treadmill:'Treadmill', outdoor:'Run', walk:'Walk', briskwalk:'Brisk walk', jog:'Jog' };
+      const counts = {};
+      thisWeek.forEach(s => { counts[s.type] = (counts[s.type] || 0) + 1; });
+      bdEl.textContent = Object.entries(counts)
+        .map(([t, n]) => n + '\u00a0' + (typeNames[t] || t) + (n > 1 ? 's' : ''))
+        .join(' \u00b7 ');
+    } else {
+      bdEl.textContent = 'No sessions logged yet this week.';
+    }
+  }
+}
 
-  summary.style.display = 'block';
+// ── History ─────────────────────────────────────────────────────────────────
+
+function _toggleCardioHistory() {
+  _cardioHistoryOpen = !_cardioHistoryOpen;
+  const list = document.getElementById('cardio-history-list');
+  const chevron = document.getElementById('cardio-history-chevron');
+  if (list) list.style.display = _cardioHistoryOpen ? 'block' : 'none';
+  if (chevron) chevron.style.transform = _cardioHistoryOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
 
 function renderCardioHistory() {
-  _initCardioHCSection();
   renderCardioWeeklySummary();
-  // Auto-fill bodyweight for the active type on every render (covers initial tab open)
-  const _bwPrefill = state.profile?.bodyweight;
-  if (_bwPrefill) {
-    const _bwMap = { treadmill:'tm-weight', outdoor:'od-weight', walk:'wk-weight', briskwalk:'bw-weight', jog:'jg-weight' };
-    const _bwField = document.getElementById(_bwMap[cardioType]);
-    if (_bwField && !_bwField.value) _bwField.value = _bwPrefill;
-  }
+  _updateCYHNote();
   const container = document.getElementById('cardio-history-list');
   if (!container) return;
-  if (!state.cardioHistory || state.cardioHistory.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" width="36" height="36" stroke="var(--gray)" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/></svg></div><div class="empty-state-text">No cardio sessions yet. Track your first session above.</div></div>';
+  const countEl = document.getElementById('cardio-history-count');
+  const history = state.cardioHistory || [];
+  if (countEl) countEl.textContent = history.length ? '(' + history.length + ')' : '';
+  if (!history.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" width="36" height="36" stroke="var(--gray)" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/></svg></div><div class="empty-state-text">No sessions yet. Log your first one above.</div></div>';
     return;
   }
-  const hcIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#C0392B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M12 21s-8-7.5-8-12.5A5 5 0 0 1 12 4a5 5 0 0 1 8 4.5C20 13.5 12 21 12 21z"/></svg>';
-  const hcSubLabels = { walk: 'WALK', outdoor: 'OUTDOOR RUN', treadmill: 'TREADMILL' };
-  container.innerHTML = [...state.cardioHistory].reverse().slice(0, 20).map(s => {
-    const date = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const typeLabelMap = {
-      treadmill: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M7 8l2 3h5l2-3M9 11l-2 5h2l1-2 2 2h2l-2-5"/><line x1="5" y1="19" x2="19" y2="19"/></svg>TREADMILL',
-      outdoor: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M8 8l2 2-2 5h2l1.5-3 2 3h2l-2.5-5 1.5-2-1-2-3 2z"/></svg>OUTDOOR RUN',
-      walk: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M7 14l2-3M17 14l-2-3"/></svg>WALK',
-      briskwalk: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M6 14l3-3M18 14l-3-3"/></svg>BRISK WALK',
-      jog: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M7 8l2 3h5l2-3M9 11l-2 5h2l1-2 2 2h2l-2-5"/></svg>JOG',
-      hc_import: hcIconSvg + '<span style="color:#C0392B;">' + (hcSubLabels[s.hcType || 'walk'] || 'HEALTH CONNECT') + '</span>'
-    };
-    const typeLabel = typeLabelMap[s.type] || s.type.toUpperCase();
-    const dist    = s.details?.distance ? `${s.details.distance} mi` : '';
-    const cal     = s.details?.calories ? `${s.details.calories} cal` : '';
-    const steps   = s.details?.steps    ? s.details.steps.toLocaleString() + ' steps' : '';
-    const pace    = s.details?.pace && s.details.pace !== '--' ? `${s.details.pace}/mi` : '';
-    const speed   = s.details?.speed   ? `${s.details.speed} mph` : '';
-    const incline = s.details?.incline  ? `${s.details.incline}% incline` : '';
-    const rpeStr  = s.rpe ? `RPE ${s.rpe}` : '';
-    const meta = [dist, cal, steps, pace, speed, incline, rpeStr].filter(Boolean).join(' · ');
-    return `<div class="history-item" style="cursor:default;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
-      <div style="flex:1;min-width:0;">
-        <div class="history-date">${date}</div>
-        <div class="history-day" style="font-size:15px;">${typeLabel}</div>
-        <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">${s.duration} min${meta ? ' · ' + meta : ''}</div>
-        ${s.details?.notes ? `<div style="font-size:12px; color:var(--gray-light); margin-top:6px; padding-left:10px; border-left:2px solid var(--dark4);">${s.details.notes}</div>` : ''}
-      </div>
-      <button onclick="event.stopPropagation();confirmDeleteCardioSession('${s.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--gray);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Delete session">
-        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      </button>
-    </div>`;
+  const typeIconMap = {
+    treadmill: '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><rect x="2" y="14" width="20" height="3" rx="1"/><path d="M5 14V9l3-4h4l2 4v5"/><circle cx="17" cy="6" r="2"/><path d="M15 14l2-5 3 2"/></svg>TREADMILL',
+    outdoor:   '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="4" r="1.5"/><path d="M10 21l1.5-5-2-3 4-3 2 4h3"/><path d="M7 21l3-5"/><path d="M11 9l-4 4"/></svg>RUN',
+    walk:      '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M7 14l2-3M17 14l-2-3"/></svg>WALK',
+    briskwalk: '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M6 14l3-3M18 14l-3-3"/></svg>BRISK WALK',
+    jog:       '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/></svg>JOG',
+    hc_import: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#C0392B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M12 21s-8-7.5-8-12.5A5 5 0 0 1 12 4a5 5 0 0 1 8 4.5C20 13.5 12 21 12 21z"/></svg><span style=\'color:#C0392B;\'>HEALTH CONNECT</span>',
+  };
+  container.innerHTML = [...history].reverse().slice(0, 30).map(s => {
+    const date = new Date(s.date).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+    const typeLabel = typeIconMap[s.type] || s.type.toUpperCase();
+    const dist = s.details?.distance ? s.details.distance + ' mi' : '';
+    const cal  = s.details?.calories ? s.details.calories + ' cal' : '';
+    const pace = s.details?.pace && s.details.pace !== '--' ? s.details.pace + '/mi' : '';
+    const spd  = s.details?.speed ? s.details.speed + ' mph' : '';
+    const inc  = s.details?.incline ? s.details.incline + '% incline' : '';
+    const rpe  = s.rpe ? 'RPE\u00a0' + s.rpe : '';
+    const steps = s.details?.steps ? s.details.steps.toLocaleString() + ' steps' : '';
+    const meta = [dist, cal, steps, pace, spd, inc, rpe].filter(Boolean).join(' \u00b7 ');
+    return '<div class="history-item" style="cursor:default;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div class="history-date">' + date + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:700;color:var(--cream);letter-spacing:0.5px;margin-top:2px;">' + typeLabel + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:4px;line-height:1.4;">' + s.duration + ' min' + (meta ? ' \u00b7 ' + meta : '') + '</div>'
+      + (s.details?.notes ? '<div style="font-size:12px;color:var(--gray-light);margin-top:6px;padding-left:10px;border-left:2px solid var(--dark4);">' + escapeHtml(s.details.notes) + '</div>' : '')
+      + '</div>'
+      + '<button onclick="event.stopPropagation();confirmDeleteCardioSession(\'' + s.id + '\')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--gray);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">'
+      + '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>'
+      + '</button>'
+      + '</div>';
   }).join('');
 }
 
@@ -34500,6 +34525,7 @@ function deleteCardioSession(sessionId) {
   renderCardioHistory();
   showToast('Cardio session removed ✓');
 }
+
 
 // ─── HEALTH CONNECT → CARDIO HISTORY ─────────────────────────────────────────
 
@@ -34565,61 +34591,11 @@ async function _importCYHLogsToCardioHistory() {
   return added;
 }
 
-// Shows/hides the HC section and updates sync button state based on whether
-// an active CYH challenge exists. Called by renderCardioHistory().
-function _initCardioHCSection() {
-  const section = document.getElementById('cardio-hc-section');
-  if (!section) return;
-  if (!window._fcmToken) { section.style.display = 'none'; return; }
-  section.style.display = 'block';
-  // Button is always active — standalone sync works without a challenge.
-  const noChallenge = document.getElementById('cardio-hc-no-challenge');
-  const btn = document.getElementById('cardio-hc-sync-btn');
-  if (noChallenge) noChallenge.style.display = 'none';
-  if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = ''; }
-  const statusEl = document.getElementById('cardio-hc-sync-status');
-  if (statusEl) {
-    const lastSync = localStorage.getItem('cardio_hc_last_sync');
-    if (lastSync) {
-      const d = new Date(parseInt(lastSync, 10));
-      statusEl.textContent = 'Last synced: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    } else {
-      statusEl.textContent = 'Never synced — tap to import your recent sessions.';
-    }
-  }
-}
 
-// Entry point for the cardio tab HC sync button. Works with or without a CYH
-// challenge — if one is active the sessions also count toward it; otherwise
-// they land as standalone cardio history entries.
-async function _cardioHCSync() {
-  const activeCYH = (_challenges || []).find(ch =>
-    ch.challenge_type === 'clear_your_head' && ch.status === 'active'
-  );
-  await _triggerHCSync(activeCYH ? activeCYH.id : '');
-}
 
-// ─── END HEALTH CONNECT → CARDIO HISTORY ────────────────────────────────────
-
-function calcPace() {
-  const dist = parseFloat(document.getElementById('od-distance').value) || 0;
-  const mins = parseInt(document.getElementById('timer-mins').value) || 0;
-  if (dist > 0 && mins > 0) {
-    const pace = mins / dist;
-    const pm = Math.floor(pace);
-    const ps = Math.round((pace % 1) * 60);
-    document.getElementById('pace-display').style.display = 'block';
-    document.getElementById('pace-value').textContent = `${pm}:${String(ps).padStart(2,'0')} /MI`;
-  }
-}
-
-// Pace auto-calc for outdoor
 document.addEventListener('DOMContentLoaded', () => {
-  ['od-distance'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', calcPace);
-  });
   renderCardioHistory();
+  selectCardioType('treadmill');
   _purgeLegacyMoodLogs();
   renderValuesCard();
   renderBarrierHistory();
@@ -34653,6 +34629,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (footerVer) footerVer.textContent = 'T\u0026S MUSCLE v' + APP_VERSION + ' · THERAPY & SNEAKERS';
 
 });
+
 
 /* ── NAV PILL + GLOW RESTART ── */
 (function() {
