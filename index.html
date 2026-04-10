@@ -3747,7 +3747,18 @@
     <!-- STEP 3: Split -->
     <div id="onboard-step-3" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR SPLIT</div>
-      <div style="font-size:13px; color:var(--gray-light); margin-bottom:24px; line-height:1.6;">How do you want to organize your training days? Tap one to see a full description.</div>
+      <div style="font-size:13px; color:var(--gray-light); margin-bottom:16px; line-height:1.6;">How you organize your training across the week. Tap any split to see details.</div>
+
+      <!-- Recommendation card — populated dynamically by renderSplitRecommendation() -->
+      <div id="ob-split-recommendation" style="display:none; margin-bottom:16px; background:rgba(204,32,39,0.08); border:1.5px solid rgba(204,32,39,0.4); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; color:var(--red-text); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; margin-bottom:6px;">&#9733; RECOMMENDED FOR YOU</div>
+        <div id="ob-split-rec-name" style="font-size:16px; font-weight:700; color:var(--cream); margin-bottom:5px;"></div>
+        <div id="ob-split-rec-reason" style="font-size:13px; color:var(--gray-light); line-height:1.5; margin-bottom:10px;"></div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div style="font-size:12px; color:var(--gray); line-height:1.4; flex:1;">You can pick any split below — this is just our suggestion based on your goal and experience.</div>
+          <button id="ob-split-rec-btn" onclick="" style="flex-shrink:0; background:var(--red); border:none; color:white; padding:9px 16px; border-radius:9px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer; -webkit-tap-highlight-color:transparent;">USE THIS →</button>
+        </div>
+      </div>
 
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
         <button class="onboard-select-btn" onclick="selectSplitOnboard('ul', this)"
@@ -32104,6 +32115,7 @@ function onboardNext(step) {
   if (step === 3) {
     // Validate step 2: goal
     if (!document.getElementById('ob-goal').value) { showToast('Please select your training goal'); return; }
+    renderSplitRecommendation();
   }
   if (step === 4) {
     // Validate step 3: split — then prep training days display
@@ -32285,6 +32297,65 @@ function getSplitAwareDayExplanation(n) {
     },
   };
   return tables[split]?.[n] || tables.ul[n] || '';
+}
+
+function getRecommendedSplit(experience, goal) {
+  const names = {
+    ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body',
+    bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull',
+    full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist Split',
+    lul: 'Lower / Upper / Lower', ts: 'T&S Split',
+  };
+  let key, reason;
+  if (goal === 'wellness') {
+    key = 'ts';
+    reason = 'Three full-body sessions, moderate effort — built for consistency and mental health.';
+  } else if (experience === 'beginner') {
+    key = 'ul';
+    reason = 'Upper/Lower trains every muscle twice a week with full recovery built in — the best starting point for beginners.';
+  } else if (experience === 'intermediate') {
+    if (goal === 'strength') {
+      key = 'ul';
+      reason = 'Upper/Lower is the gold standard for intermediate strength — high frequency, balanced recovery, full program.';
+    } else {
+      key = 'ppl';
+      reason = 'Push/Pull/Legs lets you focus more volume into each muscle group as you move past the beginner stage.';
+    }
+  } else {
+    if (goal === 'strength') {
+      key = 'ul';
+      reason = 'Upper/Lower keeps frequency and recovery in balance even at advanced training ages.';
+    } else {
+      key = 'ppl';
+      reason = 'PPL gives advanced lifters the most focused per-session volume for continued hypertrophy.';
+    }
+  }
+  return { key, name: names[key], reason };
+}
+
+function renderSplitRecommendation() {
+  const exp = document.getElementById('ob-experience').value;
+  const goal = document.getElementById('ob-goal').value;
+  if (!exp || !goal) return;
+  const rec = getRecommendedSplit(exp, goal);
+  const card = document.getElementById('ob-split-recommendation');
+  if (!card) return;
+  document.getElementById('ob-split-rec-name').textContent = rec.name;
+  document.getElementById('ob-split-rec-reason').textContent = rec.reason;
+  document.getElementById('ob-split-rec-btn').setAttribute('onclick', "useRecommendedSplit('" + rec.key + "')");
+  card.style.display = 'block';
+}
+
+function useRecommendedSplit(key) {
+  const btns = document.querySelectorAll('#onboard-step-3 .onboard-select-btn');
+  for (const btn of btns) {
+    const oc = btn.getAttribute('onclick') || '';
+    if (oc.includes("'" + key + "'")) {
+      selectSplitOnboard(key, btn);
+      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+  }
 }
 
 function selectSplitOnboard(type, btn) {
