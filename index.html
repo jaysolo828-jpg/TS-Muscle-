@@ -10524,13 +10524,29 @@ function _openChallengeIntroSheet(type, onContinue) {
       { h: 'WATCH THE DOT GRID',
         b: 'Every training day lights up as your color dot on a shared grid. You can see at a glance who\u2019s on track and who needs to show up.' },
       { h: 'AT RISK ALERTS',
-        b: 'When a member is behind pace, the detail sheet flags it \u2014 \u201cNeeds 2 more sessions in 3 days\u201d \u2014 so the group can hold each other accountable.' },
+        b: 'When a member is behind pace, the detail sheet flags it \u2014 "Needs 2 more sessions in 3 days" \u2014 so the group can hold each other accountable.' },
       { h: 'RUN IT BACK',
         b: 'Chain broke or survived? Tap Run It Back on the result screen to instantly re-challenge the same crew with the same settings.' }
     ];
+  } else if (type === 'clear_your_head') {
+    title = 'CLEAR YOUR HEAD';
+    bullets = [
+      { h: 'MOVE TOGETHER, UP TO 4 PEOPLE',
+        b: 'Invite up to 3 friends. Each person logs walking, hiking, or running sessions \u2014 10 minutes or more count toward the group goal.' },
+      { h: 'WEEKLY MINUTES GOAL',
+        b: 'Set a shared weekly movement goal at the start. Everyone is working toward the same target independently.' },
+      { h: 'SYNC OR LOG MANUALLY',
+        b: 'On Android, pull sessions directly from Health Connect. No phone? Log manually with a single tap. Both paths count the same.' },
+      { h: 'SIMPLE LEADERBOARD',
+        b: 'See total minutes logged by each person. Highest total across the full challenge wins. Consistency beats intensity here.' },
+      { h: 'LOG YOUR MOOD',
+        b: 'After each session, optionally note how you felt \u2014 better, same, or worse. No data is shared; it is just for you.' },
+      { h: 'MOVEMENT PROTECTS YOUR STREAK',
+        b: 'Any qualifying cardio session from Health Connect can also count toward your active workout challenge. Getting outside IS training.' }
+    ];
   }
 
-  const accentColor = type === 'dont_break_chain' ? '#3B82F6' : '#C0392B';
+  const accentColor = type === 'dont_break_chain' ? '#3B82F6' : type === 'clear_your_head' ? '#C0392B' : '#E67E22';
   const bulletsHtml = bullets.map(item =>
     '<div style="margin-bottom:16px;">'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:15px;color:' + accentColor + ';letter-spacing:1.8px;margin-bottom:4px;line-height:1.1;">' + escapeHtml(item.h) + '</div>'
@@ -10595,7 +10611,7 @@ function _renderChallengesListHtml() {
     return;
   }
 
-  list.innerHTML = rows.map(c => c.challenge_type === 'dont_break_chain' ? _chainRowHtml(c) : _challengeRowHtml(c)).join('');
+  list.innerHTML = rows.map(c => c.challenge_type === 'dont_break_chain' ? _chainRowHtml(c) : c.challenge_type === 'clear_your_head' ? _cyhRowHtml(c) : _challengeRowHtml(c)).join('');
 
   if (past.length) {
     const wrapDiv = document.createElement('div');
@@ -10608,7 +10624,7 @@ function _renderChallengesListHtml() {
     const pastList = document.createElement('div');
     pastList.style.display = 'none';
     pastList.style.marginTop = '6px';
-    pastList.innerHTML = past.map(c => c.challenge_type === 'dont_break_chain' ? _pastChainRowHtml(c) : _pastChallengeRowHtml(c)).join('');
+    pastList.innerHTML = past.map(c => c.challenge_type === 'dont_break_chain' ? _pastChainRowHtml(c) : c.challenge_type === 'clear_your_head' ? _pastCYHRowHtml(c) : _pastChallengeRowHtml(c)).join('');
 
     toggleBtn.onclick = function() {
       const isOpen = pastList.style.display !== 'none';
@@ -10770,7 +10786,7 @@ function _openNewChallengeFlow() {
   const sheet = document.createElement('div');
   sheet.id = 'challenge-create-sheet';
   sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
-  sheet.innerHTML = '<div id="challenge-create-body" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 22px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:90vh;overflow-y:auto;"></div>';
+  sheet.innerHTML = '<div id="challenge-create-body" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 22px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #E67E22;max-height:90vh;overflow-y:auto;"></div>';
   sheet.addEventListener('click', e => { if (e.target === sheet) _closeChallengeCreateSheet(); });
   document.body.appendChild(sheet);
   _renderChallengeCreateStep();
@@ -10858,10 +10874,10 @@ function _challengeFriendRowHtml(u) {
   const label = u.username || u.display_name || 'Friend';
   const selected = (_challengeDraft && _challengeDraft.friendIds || []).indexOf(u.id) !== -1;
   return '<div data-friend-id="' + u.id + '" data-friend-row="1" onclick="_toggleChallengeFriendPick(\'' + u.id + '\')" '
-    + 'style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:' + (selected ? '#2a1414' : '#1a1a1a') + ';border:1px solid ' + (selected ? '#C0392B' : 'transparent') + ';border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
+    + 'style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:' + (selected ? '#2a1808' : '#1a1a1a') + ';border:1px solid ' + (selected ? '#E67E22' : 'transparent') + ';border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
     + _avatarHtml(label, u.avatar_color, 36, u.avatar_url)
     + '<div style="flex:1;font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);">@' + escapeHtml(label) + '</div>'
-    + '<div style="width:22px;height:22px;border-radius:6px;border:2px solid ' + (selected ? '#C0392B' : '#555') + ';background:' + (selected ? '#C0392B' : 'transparent') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+    + '<div style="width:22px;height:22px;border-radius:6px;border:2px solid ' + (selected ? '#E67E22' : '#555') + ';background:' + (selected ? '#E67E22' : 'transparent') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
     + (selected ? '<svg viewBox="0 0 24 24" width="14" height="14" stroke="#fff" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '')
     + '</div>'
     + '</div>';
@@ -10903,7 +10919,7 @@ function _refreshChallengeFriendPickerUi() {
   if (btn) {
     if (picked.length > 0) {
       btn.disabled = false;
-      btn.style.background = '#C0392B';
+      btn.style.background = '#E67E22';
       btn.style.cursor = 'pointer';
     } else {
       btn.disabled = true;
@@ -10950,7 +10966,7 @@ function _challengeExercisePickerHtml() {
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin:14px 0 8px;">QUICK PICKS</div>'
     + '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + chips + '</div>'
     + '<button id="challenge-exercise-next" onclick="_onChallengeExerciseContinue()" ' + (currentVal ? '' : 'disabled ')
-    + 'style="width:100%;margin-top:18px;background:' + (currentVal ? '#C0392B' : '#333') + ';border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:' + (currentVal ? 'pointer' : 'not-allowed') + ';-webkit-tap-highlight-color:transparent;">CONTINUE</button>'
+    + 'style="width:100%;margin-top:18px;background:' + (currentVal ? '#E67E22' : '#333') + ';border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:' + (currentVal ? 'pointer' : 'not-allowed') + ';-webkit-tap-highlight-color:transparent;">CONTINUE</button>'
     + backBtn;
 }
 
@@ -10973,7 +10989,7 @@ function _onChallengeExerciseInput() {
   if (btn) {
     if (val) {
       btn.disabled = false;
-      btn.style.background = '#C0392B';
+      btn.style.background = '#E67E22';
       btn.style.cursor = 'pointer';
     } else {
       btn.disabled = true;
@@ -11012,7 +11028,7 @@ function _challengeDurationPickerHtml() {
   const tiles = options.map(w => {
     const isActive = _challengeDraft.durationWeeks === w;
     return '<div onclick="_challengeDraft.durationWeeks=' + w + ';_challengeDraft.step=\'baseline\';_renderChallengeCreateStep()" '
-      + 'style="flex:1;background:' + (isActive ? '#C0392B' : '#1a1a1a') + ';border:1px solid ' + (isActive ? '#C0392B' : '#333') + ';border-radius:12px;padding:20px 8px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
+      + 'style="flex:1;background:' + (isActive ? '#E67E22' : '#1a1a1a') + ';border:1px solid ' + (isActive ? '#E67E22' : '#333') + ';border-radius:12px;padding:20px 8px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
       + '<div style="font-family:\'Bebas Neue\',cursive;font-size:28px;color:var(--cream);letter-spacing:1px;line-height:1;">' + w + '</div>'
       + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--cream);letter-spacing:1.5px;margin-top:3px;text-transform:uppercase;">WEEKS</div>'
       + '</div>';
@@ -11070,7 +11086,7 @@ function _challengeBaselinePickerHtml() {
     + '</div>'
     + '</div>'
     + '<div id="challenge-baseline-e1rm" style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--cream);margin-top:14px;">' + escapeHtml(e1rmText) + '</div>'
-    + '<button id="challenge-baseline-next" onclick="_onChallengeBaselineContinue()" style="width:100%;margin-top:18px;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CONTINUE</button>'
+    + '<button id="challenge-baseline-next" onclick="_onChallengeBaselineContinue()" style="width:100%;margin-top:18px;background:#E67E22;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CONTINUE</button>'
     // BACK only makes sense in the CREATE flow. Accept mode enters the
     // baseline step directly (no friend/exercise/duration before it) so
     // the header close X is the only way to back out — a BACK button
@@ -11268,9 +11284,9 @@ async function _openChallengeDetailSheet(challengeId) {
   sheet.id = 'challenge-detail-sheet';
   sheet.dataset.challengeId = challengeId;
   sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
-  sheet.innerHTML = '<div id="challenge-detail-body" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 22px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:90vh;overflow-y:auto;">'
+  sheet.innerHTML = '<div id="challenge-detail-body" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 22px calc(40px + env(safe-area-inset-bottom));border-top:2px solid rgba(255,255,255,0.12);max-height:90vh;overflow-y:auto;">'
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">'
-    + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">1 REP MAX CHALLENGE</div>'
+    + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">CHALLENGE</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">LOADING...</div></div>'
     + '<button onclick="_closeChallengeDetailSheet()" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
     + '</div>'
@@ -11320,7 +11336,13 @@ async function _openChallengeDetailSheet(challengeId) {
     const bodyEl = document.getElementById('challenge-detail-body');
     if (bodyEl) bodyEl.style.borderTopColor = '#3B82F6';
     _renderChainDetailBody(ch);
+  } else if (ch.challenge_type === 'clear_your_head') {
+    const bodyEl = document.getElementById('challenge-detail-body');
+    if (bodyEl) bodyEl.style.borderTopColor = '#C0392B';
+    _renderCYHDetailBody(ch);
   } else {
+    const bodyEl = document.getElementById('challenge-detail-body');
+    if (bodyEl) bodyEl.style.borderTopColor = '#E67E22';
     _renderChallengeDetailBody(ch);
   }
 }
@@ -11340,7 +11362,7 @@ async function _refreshChallengeDetailSheet() {
   await _loadChallenges();
   const ch = (_challenges || []).find(c => c.id === id);
   if (!ch) { sheet.remove(); return; }
-  if (ch.challenge_type === 'dont_break_chain') { _renderChainDetailBody(ch); } else { _renderChallengeDetailBody(ch); }
+  if (ch.challenge_type === 'dont_break_chain') { _renderChainDetailBody(ch); } else if (ch.challenge_type === 'clear_your_head') { _renderCYHDetailBody(ch); } else { _renderChallengeDetailBody(ch); }
 }
 
 // Main detail-sheet renderer. Leaderboard style — one row per
@@ -11573,7 +11595,7 @@ async function _openAcceptChallengeFlow(challengeId) {
   const sheet = document.createElement('div');
   sheet.id = 'challenge-create-sheet';
   sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
-  sheet.innerHTML = '<div id="challenge-create-body" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 22px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;max-height:90vh;overflow-y:auto;"></div>';
+  sheet.innerHTML = '<div id="challenge-create-body" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 22px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #E67E22;max-height:90vh;overflow-y:auto;"></div>';
   sheet.addEventListener('click', e => { if (e.target === sheet) _closeChallengeCreateSheet(); });
   document.body.appendChild(sheet);
   _renderChallengeCreateStep();
@@ -11924,8 +11946,9 @@ function _renderActiveChallengeHomeCard() {
 
   // Find the most recent active challenge for this user. If there are
   // several, show the one closest to its end date (creates urgency).
+  _renderActiveCYHHomeCard();
   const active = (_challenges || [])
-    .filter(c => c.status === 'active' && c.challenge_type !== 'dont_break_chain')
+    .filter(c => c.status === 'active' && c.challenge_type !== 'dont_break_chain' && c.challenge_type !== 'clear_your_head')
     .sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
 
   if (!active.length) {
@@ -12029,14 +12052,14 @@ function _renderActiveChallengeHomeCard() {
   // prominence tier of the travel banner. Different colored border =
   // clearly a different banner type, but same shape / radius / padding
   // as every other home card so it feels intentional, not bolted-on.
-  el.style.cssText = 'margin-bottom:12px;background:linear-gradient(135deg,rgba(192,57,43,0.12) 0%,rgba(192,57,43,0.04) 100%);border:2px solid rgba(192,57,43,0.55);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;';
+  el.style.cssText = 'margin-bottom:12px;background:linear-gradient(135deg,rgba(230,126,34,0.12) 0%,rgba(230,126,34,0.04) 100%);border:2px solid rgba(230,126,34,0.55);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;';
   el.onclick = () => _openChallengeDetailSheet(ch.id);
-  el.innerHTML = '<div style="width:44px;height:44px;background:rgba(192,57,43,0.22);border:1px solid rgba(192,57,43,0.4);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-    + '<svg viewBox="0 0 24 24" width="22" height="22" stroke="#C0392B" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>'
+  el.innerHTML = '<div style="width:44px;height:44px;background:rgba(230,126,34,0.22);border:1px solid rgba(230,126,34,0.4);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+    + '<svg viewBox="0 0 24 24" width="22" height="22" stroke="#E67E22" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>'
     + '</div>'
     + '<div style="flex:1;min-width:0;">'
     + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#C0392B;letter-spacing:1.8px;text-transform:uppercase;font-weight:700;">1RM CHALLENGE</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#E67E22;letter-spacing:1.8px;text-transform:uppercase;font-weight:700;">1RM CHALLENGE</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:10px;letter-spacing:1.2px;background:' + daysPillBg + ';color:' + daysPillFg + ';padding:3px 8px;border-radius:999px;flex-shrink:0;">' + daysPillText + '</div>'
     + '</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:19px;color:var(--cream);letter-spacing:1.8px;line-height:1.1;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(liftLabel || '\u2014') + '</div>'
@@ -12069,16 +12092,30 @@ function _openChallengePicker() {
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;">CHOOSE A CHALLENGE</div>'
     + '<button onclick="document.getElementById(\'challenge-picker-sheet\').remove()" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
     + '</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
-    + '<div onclick="document.getElementById(\'challenge-picker-sheet\').remove();_startNewChallenge();" style="background:rgba(192,57,43,0.08);border:1px solid rgba(192,57,43,0.3);border-top:3px solid #C0392B;border-radius:12px;padding:16px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#C0392B;letter-spacing:2px;margin-bottom:6px;">STRENGTH</div>'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;margin-bottom:8px;">1 REP MAX</div>'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);line-height:1.4;">Highest % gain wins. Up to 4 people.</div>'
+    + '<div style="display:flex;flex-direction:column;gap:10px;">'
+    + '<div onclick="document.getElementById(\'challenge-picker-sheet\').remove();_startNewChallenge();" style="background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.3);border-left:3px solid #E67E22;border-radius:12px;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:14px;">'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#E67E22;letter-spacing:2px;margin-bottom:3px;">STRENGTH</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;margin-bottom:4px;">1 REP MAX</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);line-height:1.4;">Highest % improvement wins. Up to 4 people.</div>'
     + '</div>'
-    + '<div onclick="document.getElementById(\'challenge-picker-sheet\').remove();_startNewChainChallenge();" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-top:3px solid #3B82F6;border-radius:12px;padding:16px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#3B82F6;letter-spacing:2px;margin-bottom:6px;">CONSISTENCY</div>'
-    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;margin-bottom:8px;">DON\u2019T BREAK THE CHAIN</div>'
+    + '<svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>'
+    + '</div>'
+    + '<div onclick="document.getElementById(\'challenge-picker-sheet\').remove();_startNewChainChallenge();" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-left:3px solid #3B82F6;border-radius:12px;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:14px;">'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#3B82F6;letter-spacing:2px;margin-bottom:3px;">CONSISTENCY</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;margin-bottom:4px;">DON\u2019T BREAK THE CHAIN</div>'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);line-height:1.4;">Keep the streak alive. Up to 8 people.</div>'
+    + '</div>'
+    + '<svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>'
+    + '</div>'
+    + '<div onclick="document.getElementById(\'challenge-picker-sheet\').remove();_startNewCYHChallenge();" style="background:rgba(192,57,43,0.08);border:1px solid rgba(192,57,43,0.3);border-left:3px solid #C0392B;border-radius:12px;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:14px;">'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#C0392B;letter-spacing:2px;margin-bottom:3px;">MOVEMENT</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;margin-bottom:4px;">CLEAR YOUR HEAD</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);line-height:1.4;">Log cardio minutes together. HC auto-sync on Android.</div>'
+    + '</div>'
+    + '<svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>'
     + '</div>'
     + '</div>'
     + '</div>';
@@ -24273,7 +24310,7 @@ function renderHistory() {
           + '</div>';
       }
       // 1RM pill — right side
-      wltHtml += '<div style="margin-left:auto;font-family:\'Bebas Neue\',cursive;font-size:10px;letter-spacing:2px;color:#C0392B;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.3);padding:4px 8px;border-radius:5px;">1RM</div>';
+      wltHtml += '<div style="margin-left:auto;font-family:\'Bebas Neue\',cursive;font-size:10px;letter-spacing:2px;color:#E67E22;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.3);padding:4px 8px;border-radius:5px;">1RM</div>';
       wltHtml += '</div>';
 
       // Per-challenge rows
