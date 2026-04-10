@@ -2,6 +2,11 @@
  * T&S Muscle — Glute Exercise Library
  * All glute exercises across every equipment category.
  *
+ * Dedup notes (duplicate IDs removed):
+ *   cable-pull-through — REMOVED from this file. Canonical entry lives in
+ *             exercise-library-hamstrings.js (primary mover is the hamstring
+ *             in the hip hinge pattern; glutes are synergist).
+ *
  * Fields:
  *   id              – lowercase-hyphenated unique identifier
  *   name            – display name
@@ -13,6 +18,7 @@
  *   goldStar        – top pick per movement pattern (one true per similarityGroup)
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – true if this exercise appears in the default program
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
  */
 
 const GLUTE_EXERCISE_LIBRARY = [
@@ -34,7 +40,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/0od5lwWMGV8',
     goldStar: true,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: true   // id: 'hip-thrust-a'
+    alsoInProgram: true,   // id: 'hip-thrust-a'
+    tier: 'compound'
   },
   {
     id: 'barbell-glute-bridge',
@@ -51,7 +58,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-sumo-deadlift',
@@ -68,7 +76,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/LGIS9vs65Sk',
     goldStar: true,
     similarityGroup: 'sumo-deadlift',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── DUMBBELL ─────────────────────────────────────────────────────────────
@@ -88,7 +97,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/0od5lwWMGV8',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-sumo-squat',
@@ -105,7 +115,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/sQ-lwJtpwUc',
     goldStar: false,
     similarityGroup: 'sumo-deadlift',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-curtsy-lunge',
@@ -122,7 +133,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/bH3mRwnAN88',
     goldStar: true,
     similarityGroup: 'curtsy-lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-lateral-lunge',
@@ -139,7 +151,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/R8jArZG2J6Q',
     goldStar: true,
     similarityGroup: 'lateral-lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── CABLE ────────────────────────────────────────────────────────────────
@@ -159,7 +172,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: true,
     similarityGroup: 'kickback',
-    alsoInProgram: true   // id: 'donkey-kick'
+    alsoInProgram: true,   // id: 'donkey-kick'
+    tier: 'isolation'
   },
   {
     id: 'cable-standing-kickback',
@@ -176,7 +190,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: false,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-hip-abduction',
@@ -193,24 +208,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: false,
     similarityGroup: 'hip-abduction',
-    alsoInProgram: false
-  },
-  {
-    id: 'cable-pull-through',
-    name: 'Cable Pull-Through',
-    muscleGroup: 'glutes',
-    equipment: 'Cable',
-    snapshot: 'Rope between legs hinge forward drive hips through',
-    cues: [
-      'Set the pulley low, attach a rope, and stand facing away holding the rope between your legs',
-      'Hinge your hips back until you feel a glute and hamstring stretch — let the cable create the tension',
-      'Drive your hips forward and squeeze your glutes explosively to stand — this is not a squat, it is a pure hip hinge',
-      'The cable keeps tension in the stretched position unlike a kettlebell swing — control the hinge on the way back'
-    ],
-    ytUrl: 'https://youtu.be/pv8e6OSyETE',
-    goldStar: true,
-    similarityGroup: 'pull-through',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── MACHINE ──────────────────────────────────────────────────────────────
@@ -230,7 +229,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: true,
     similarityGroup: 'hip-abduction',
-    alsoInProgram: true   // id: 'hip-abduction'
+    alsoInProgram: true,   // id: 'hip-abduction'
+    tier: 'isolation'
   },
   {
     id: 'machine-hip-thrust',
@@ -247,7 +247,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/0od5lwWMGV8',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'smith-hip-thrust',
@@ -264,7 +265,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/0od5lwWMGV8',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'glute-iso-machine',
@@ -281,7 +283,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: true,
     similarityGroup: 'glute-iso-machine',
-    alsoInProgram: true   // id: 'glute-iso'
+    alsoInProgram: true,   // id: 'glute-iso'
+    tier: 'isolation'
   },
 
   // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
@@ -301,7 +304,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'single-leg-hip-thrust',
@@ -318,7 +322,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/0od5lwWMGV8',
     goldStar: true,
     similarityGroup: 'hip-thrust-unilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'donkey-kick-bodyweight',
@@ -335,7 +340,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: false,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'frog-pump',
@@ -352,7 +358,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: true,
     similarityGroup: 'frog-pump',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
@@ -372,7 +379,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: true,
     similarityGroup: 'clamshell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-lateral-walk',
@@ -389,10 +397,11 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: true,
     similarityGroup: 'lateral-walk',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
-    id: 'band-kickback',
+    id: 'band-glute-kickback',
     name: 'Banded Kickback',
     muscleGroup: 'glutes',
     equipment: 'Resistance Band',
@@ -406,7 +415,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/SqO-VUEak2M',
     goldStar: false,
     similarityGroup: 'kickback',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-glute-bridge',
@@ -423,7 +433,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: false,
     similarityGroup: 'hip-thrust',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-hip-abduction',
@@ -440,7 +451,8 @@ const GLUTE_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/OUgsJ8-Vi0E',
     goldStar: false,
     similarityGroup: 'hip-abduction',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   }
 
 ];

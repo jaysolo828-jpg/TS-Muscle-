@@ -20,6 +20,9 @@
  *   goldStar        – top pick per movement pattern (one true per similarityGroup)
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – true if this exercise appears in the default program
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
+ *                     All calf raises are 'isolation' (ankle plantarflexion only).
+ *                     jump-rope is also isolation — cardiovascular but single-joint ankle work.
  */
 
 const CALF_EXERCISE_LIBRARY = [
@@ -41,7 +44,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'barbell-seated-calf-raise',
@@ -58,7 +62,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/JbyjNymZOt0',
     goldStar: false,
     similarityGroup: 'seated-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── DUMBBELL ─────────────────────────────────────────────────────────────
@@ -78,7 +83,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-single-leg-calf-raise',
@@ -95,7 +101,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'single-leg-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-seated-calf-raise',
@@ -112,7 +119,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/JbyjNymZOt0',
     goldStar: false,
     similarityGroup: 'seated-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── CABLE ────────────────────────────────────────────────────────────────
@@ -132,7 +140,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-seated-calf-raise',
@@ -149,7 +158,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/JbyjNymZOt0',
     goldStar: false,
     similarityGroup: 'seated-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── MACHINE ──────────────────────────────────────────────────────────────
@@ -169,7 +179,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: true,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: true   // id: 'calf-a'
+    alsoInProgram: true,   // id: 'calf-a'
+    tier: 'isolation'
   },
   {
     id: 'machine-seated-calf-raise',
@@ -186,7 +197,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/JbyjNymZOt0',
     goldStar: true,
     similarityGroup: 'seated-calf-raise',
-    alsoInProgram: true   // id: 'calf-b'
+    alsoInProgram: true,   // id: 'calf-b'
+    tier: 'isolation'
   },
   {
     id: 'leg-press-calf-raise',
@@ -203,7 +215,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: true,
     similarityGroup: 'leg-press-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'smith-machine-calf-raise',
@@ -220,7 +233,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'donkey-calf-raise',
@@ -237,7 +251,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: true,
     similarityGroup: 'donkey-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
@@ -257,7 +272,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'single-leg-calf-raise-step',
@@ -274,7 +290,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: true,
     similarityGroup: 'single-leg-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'jump-rope',
@@ -291,7 +308,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/FJmRQ5iTXKE',
     goldStar: true,
     similarityGroup: 'jump-rope',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
@@ -311,7 +329,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'standing-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-seated-calf-raise',
@@ -328,7 +347,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/JbyjNymZOt0',
     goldStar: false,
     similarityGroup: 'seated-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-single-leg-calf-raise',
@@ -345,7 +365,8 @@ const CALF_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/lUeI-IwVXFM',
     goldStar: false,
     similarityGroup: 'single-leg-calf-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   }
 
 ];

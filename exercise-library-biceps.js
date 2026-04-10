@@ -2,6 +2,12 @@
  * T&S Muscle — Bicep Exercise Library
  * All bicep exercises across every equipment category.
  *
+ * Dedup notes (canonical entries moved elsewhere):
+ *   chin-up — REMOVED from this file. Canonical entry lives in exercise-library-back.js
+ *             (primary mover is the lats/upper back; biceps are synergist).
+ *             assisted-chin-up-machine, negative-chin-up, and inverted-row-underhand remain
+ *             here because they are most commonly thought of as bicep assistance work.
+ *
  * Fields:
  *   id              – lowercase-hyphenated unique identifier
  *   name            – display name
@@ -13,6 +19,7 @@
  *   goldStar        – top pick per movement pattern (one true per similarityGroup)
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – true if this exercise appears in the default program
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
  */
 
 const BICEP_EXERCISE_LIBRARY = [
@@ -34,7 +41,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/QZEqB6wUPxQ',
     goldStar: true,
     similarityGroup: 'standing-curl-barbell',
-    alsoInProgram: true   // id: 'ez-curl'
+    alsoInProgram: true,   // id: 'ez-curl'
+    tier: 'isolation'
   },
   {
     id: 'barbell-curl',
@@ -51,7 +59,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ykJmrZ5v0Oo',
     goldStar: false,
     similarityGroup: 'standing-curl-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'ez-bar-preacher-curl',
@@ -68,7 +77,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/nbcgEmZ0Be4',
     goldStar: false,
     similarityGroup: 'preacher-curl',
-    alsoInProgram: true   // id: 'preacher'
+    alsoInProgram: true,   // id: 'preacher'
+    tier: 'isolation'
   },
   {
     id: 'barbell-reverse-curl',
@@ -85,7 +95,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Dd1wdWUqIGo',
     goldStar: false,
     similarityGroup: 'reverse-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── DUMBBELL ─────────────────────────────────────────────────────────────
@@ -105,7 +116,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ykJmrZ5v0Oo',
     goldStar: true,
     similarityGroup: 'standing-curl-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'hammer-curl',
@@ -122,7 +134,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/zC3nLlEvin4',
     goldStar: false,
     similarityGroup: 'hammer-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'incline-db-curl',
@@ -139,7 +152,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/sAq_ocpRh_I',
     goldStar: true,
     similarityGroup: 'incline-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'concentration-curl',
@@ -156,7 +170,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/0AUGkch3tzc',
     goldStar: true,
     similarityGroup: 'concentration-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-preacher-curl',
@@ -173,7 +188,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/nbcgEmZ0Be4',
     goldStar: false,
     similarityGroup: 'preacher-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'spider-curl',
@@ -190,7 +206,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ivS3G35bapw',
     goldStar: true,
     similarityGroup: 'spider-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'zottman-curl',
@@ -207,7 +224,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/OLhqRXNYKMY',
     goldStar: true,
     similarityGroup: 'zottman-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── CABLE ────────────────────────────────────────────────────────────────
@@ -227,7 +245,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/NFzTWp2qpiE',
     goldStar: true,
     similarityGroup: 'standing-curl-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-rope-hammer-curl',
@@ -244,7 +263,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/zC3nLlEvin4',
     goldStar: true,
     similarityGroup: 'hammer-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-preacher-curl',
@@ -261,7 +281,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/NFzTWp2qpiE',
     goldStar: true,
     similarityGroup: 'preacher-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-reverse-curl',
@@ -278,7 +299,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Dd1wdWUqIGo',
     goldStar: true,
     similarityGroup: 'reverse-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-overhead-curl',
@@ -295,7 +317,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/sAq_ocpRh_I',
     goldStar: false,
     similarityGroup: 'incline-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── MACHINE ──────────────────────────────────────────────────────────────
@@ -315,7 +338,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ykJmrZ5v0Oo',
     goldStar: true,
     similarityGroup: 'machine-arm-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'machine-preacher-curl',
@@ -332,7 +356,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/nbcgEmZ0Be4',
     goldStar: false,
     similarityGroup: 'preacher-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'assisted-chin-up-machine',
@@ -349,28 +374,12 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ePFNOFMiMxs',
     goldStar: false,
     similarityGroup: 'chin-up',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
 
-  {
-    id: 'chin-up',
-    name: 'Chin-Up',
-    muscleGroup: 'biceps',
-    equipment: 'Bodyweight',
-    snapshot: 'Pull body up to bar with underhand shoulder-width grip',
-    cues: [
-      'Use a supinated grip with your hands shoulder-width apart — this is what separates a chin-up from a pull-up',
-      'Pull your elbows down toward your hips, not just up — this keeps the bicep driving the movement',
-      'Get your chin fully over the bar on every rep, not just your nose to bar level',
-      'Lower yourself fully on each rep — stopping halfway down cuts the range and the results'
-    ],
-    ytUrl: 'https://youtu.be/brhRXlOhsAM',
-    goldStar: true,
-    similarityGroup: 'chin-up',
-    alsoInProgram: false
-  },
   {
     id: 'negative-chin-up',
     name: 'Negative Chin-Up',
@@ -386,7 +395,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/TlCuKKcLDwo',
     goldStar: false,
     similarityGroup: 'chin-up',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'inverted-row-underhand',
@@ -403,7 +413,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/LMdNTHH6G8I',
     goldStar: false,
     similarityGroup: 'chin-up',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
@@ -423,7 +434,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/NFzTWp2qpiE',
     goldStar: true,
     similarityGroup: 'band-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-hammer-curl',
@@ -440,7 +452,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/zC3nLlEvin4',
     goldStar: false,
     similarityGroup: 'hammer-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-preacher-curl',
@@ -457,7 +470,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/nbcgEmZ0Be4',
     goldStar: false,
     similarityGroup: 'preacher-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-reverse-curl',
@@ -474,7 +488,8 @@ const BICEP_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Dd1wdWUqIGo',
     goldStar: false,
     similarityGroup: 'reverse-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   }
 
 ];

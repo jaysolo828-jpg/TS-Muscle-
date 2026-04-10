@@ -2,6 +2,15 @@
  * T&S Muscle — Hamstring Exercise Library
  * All hamstring exercises across every equipment category.
  *
+ * Dedup notes (duplicate IDs removed):
+ *   barbell-conventional-deadlift — REMOVED from this file. Canonical entry lives in
+ *             exercise-library-back.js under id 'conventional-deadlift'. The back
+ *             version is the authoritative entry (full posterior chain compound).
+ *   cable-pull-through — CANONICAL entry. Removed from exercise-library-back.js and
+ *             exercise-library-glutes.js. alsoInProgram set to true to match the
+ *             back.js version (which had alsoInProgram: true).
+ *   barbell-good-morning — CANONICAL entry. Removed from exercise-library-back.js.
+ *
  * Fields:
  *   id              – lowercase-hyphenated unique identifier
  *   name            – display name
@@ -13,6 +22,7 @@
  *   goldStar        – top pick per movement pattern (one true per similarityGroup)
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – true if this exercise appears in the default program
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
  */
 
 const HAMSTRING_EXERCISE_LIBRARY = [
@@ -34,24 +44,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/QR6HDEmBQNo',
     goldStar: true,
     similarityGroup: 'rdl-bilateral',
-    alsoInProgram: true   // id: 'rdl'
-  },
-  {
-    id: 'barbell-conventional-deadlift',
-    name: 'Conventional Deadlift',
-    muscleGroup: 'hamstrings',
-    equipment: 'Barbell',
-    snapshot: 'Pull bar from floor to lockout hips and knees',
-    cues: [
-      'Set your hips between a squat and a hinge — not too low, not too high',
-      'Keep your chest up and your back flat from the moment the bar leaves the floor',
-      'Drive your feet into the floor and think about pushing the earth away rather than pulling the bar up',
-      'Lock out by driving your hips forward at the top — do not hyperextend your lower back'
-    ],
-    ytUrl: 'https://youtu.be/ytGaGIn3SjE',
-    goldStar: false,
-    similarityGroup: 'rdl-bilateral',
-    alsoInProgram: false
+    alsoInProgram: true,   // id: 'rdl'
+    tier: 'compound'
   },
   {
     id: 'barbell-stiff-leg-deadlift',
@@ -68,7 +62,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/1uDiW5--rAE',
     goldStar: false,
     similarityGroup: 'rdl-bilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-good-morning',
@@ -85,7 +80,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/YA-h3n9L4YU',
     goldStar: true,
     similarityGroup: 'good-morning',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── DUMBBELL ─────────────────────────────────────────────────────────────
@@ -105,7 +101,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/QR6HDEmBQNo',
     goldStar: false,
     similarityGroup: 'rdl-bilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-sumo-deadlift',
@@ -122,7 +119,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/LGIS9vs65Sk',
     goldStar: false,
     similarityGroup: 'rdl-bilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-single-leg-rdl',
@@ -139,7 +137,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Zfr6wizR8rs',
     goldStar: true,
     similarityGroup: 'rdl-unilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-prone-curl',
@@ -156,7 +155,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ELOCsoDSmrg',
     goldStar: false,
     similarityGroup: 'lying-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── CABLE ────────────────────────────────────────────────────────────────
@@ -176,7 +176,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/pv8e6OSyETE',
     goldStar: true,
     similarityGroup: 'cable-pull-through',
-    alsoInProgram: false
+    alsoInProgram: true,
+    tier: 'compound'
   },
   {
     id: 'cable-standing-curl',
@@ -193,7 +194,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/1Tq3QdYUuHs',
     goldStar: true,
     similarityGroup: 'cable-standing-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-single-leg-rdl',
@@ -210,7 +212,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Zfr6wizR8rs',
     goldStar: false,
     similarityGroup: 'rdl-unilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── MACHINE ──────────────────────────────────────────────────────────────
@@ -230,7 +233,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/1Tq3QdYUuHs',
     goldStar: true,
     similarityGroup: 'lying-curl',
-    alsoInProgram: true   // id: 'ham-curl-a'
+    alsoInProgram: true,   // id: 'ham-curl-a'
+    tier: 'isolation'
   },
   {
     id: 'machine-seated-curl',
@@ -247,7 +251,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ELOCsoDSmrg',
     goldStar: true,
     similarityGroup: 'seated-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'machine-single-leg-curl',
@@ -264,7 +269,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/1Tq3QdYUuHs',
     goldStar: false,
     similarityGroup: 'lying-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'smith-rdl',
@@ -281,7 +287,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/QR6HDEmBQNo',
     goldStar: false,
     similarityGroup: 'rdl-bilateral',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
@@ -301,7 +308,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/8zWDuWKdBZU',
     goldStar: true,
     similarityGroup: 'nordic-style-curl',
-    alsoInProgram: true   // id: 'ham-curl-b'
+    alsoInProgram: true,   // id: 'ham-curl-b'
+    tier: 'compound'
   },
   {
     id: 'glute-ham-raise',
@@ -318,7 +326,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/c2pWqsHR7FU',
     goldStar: false,
     similarityGroup: 'nordic-style-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'stability-ball-curl',
@@ -335,7 +344,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/1Tq3QdYUuHs',
     goldStar: true,
     similarityGroup: 'stability-ball-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
@@ -355,7 +365,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/1Tq3QdYUuHs',
     goldStar: false,
     similarityGroup: 'lying-curl',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-pull-through',
@@ -372,7 +383,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/pv8e6OSyETE',
     goldStar: false,
     similarityGroup: 'cable-pull-through',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-good-morning',
@@ -389,7 +401,8 @@ const HAMSTRING_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/YA-h3n9L4YU',
     goldStar: false,
     similarityGroup: 'good-morning',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   }
 
 ];

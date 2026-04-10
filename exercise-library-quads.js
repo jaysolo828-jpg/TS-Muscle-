@@ -13,6 +13,7 @@
  *   goldStar        – top pick per movement pattern (one true per similarityGroup)
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – true if this exercise appears in the default program
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
  */
 
 const QUAD_EXERCISE_LIBRARY = [
@@ -34,7 +35,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Dy28eq2PjcM',
     goldStar: false,
     similarityGroup: 'squat-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-front-squat',
@@ -51,7 +53,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/m4ytmcZ_Jkw',
     goldStar: true,
     similarityGroup: 'squat-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-walking-lunge',
@@ -68,7 +71,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/D7KaRcUTQeE',
     goldStar: false,
     similarityGroup: 'lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-bulgarian-split-squat',
@@ -85,7 +89,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/2C-uNgKwPLE',
     goldStar: false,
     similarityGroup: 'bulgarian-split-squat',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── DUMBBELL ─────────────────────────────────────────────────────────────
@@ -105,7 +110,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/MeIiIdhvXT4',
     goldStar: true,
     similarityGroup: 'squat-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-reverse-lunge',
@@ -122,7 +128,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/J9MpoAQCjos',
     goldStar: true,
     similarityGroup: 'lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-walking-lunge',
@@ -139,7 +146,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/D7KaRcUTQeE',
     goldStar: false,
     similarityGroup: 'lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-step-up',
@@ -156,7 +164,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/dQqApCGd5Ss',
     goldStar: true,
     similarityGroup: 'step-up',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-bulgarian-split-squat',
@@ -173,7 +182,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/2C-uNgKwPLE',
     goldStar: true,
     similarityGroup: 'bulgarian-split-squat',
-    alsoInProgram: true   // id: 'bss'
+    alsoInProgram: true,   // id: 'bss'
+    tier: 'compound'
   },
 
   // ─── CABLE ────────────────────────────────────────────────────────────────
@@ -193,7 +203,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/MeIiIdhvXT4',
     goldStar: true,
     similarityGroup: 'squat-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'cable-reverse-lunge',
@@ -210,7 +221,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/J9MpoAQCjos',
     goldStar: false,
     similarityGroup: 'lunge',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'cable-leg-extension',
@@ -227,7 +239,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/IhuboUEej7Y',
     goldStar: false,
     similarityGroup: 'leg-extension',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── MACHINE ──────────────────────────────────────────────────────────────
@@ -247,7 +260,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/K_BXb4e9ljo',
     goldStar: true,
     similarityGroup: 'leg-press',
-    alsoInProgram: true   // id: 'legpress-a'
+    alsoInProgram: true,   // id: 'legpress-a'
+    tier: 'compound'
   },
   {
     id: 'leg-press-high-foot',
@@ -264,7 +278,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/K_BXb4e9ljo',
     goldStar: false,
     similarityGroup: 'leg-press',
-    alsoInProgram: true   // id: 'legpress-b'
+    alsoInProgram: true,   // id: 'legpress-b'
+    tier: 'compound'
   },
   {
     id: 'single-leg-press',
@@ -281,7 +296,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/K_BXb4e9ljo',
     goldStar: true,
     similarityGroup: 'leg-press-unilateral',
-    alsoInProgram: true   // id: 'single-legpress'
+    alsoInProgram: true,   // id: 'single-legpress'
+    tier: 'compound'
   },
   {
     id: 'hack-squat',
@@ -298,7 +314,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/m2DiSYKPzqk',
     goldStar: true,
     similarityGroup: 'squat-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'smith-machine-squat',
@@ -315,7 +332,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/m2DiSYKPzqk',
     goldStar: false,
     similarityGroup: 'squat-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'machine-leg-extension',
@@ -332,7 +350,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/IhuboUEej7Y',
     goldStar: true,
     similarityGroup: 'leg-extension',
-    alsoInProgram: true   // id: 'leg-ext-a' and 'leg-ext-b'
+    alsoInProgram: true,   // id: 'leg-ext-a' and 'leg-ext-b'
+    tier: 'isolation'
   },
 
   // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
@@ -352,7 +371,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Dy28eq2PjcM',
     goldStar: true,
     similarityGroup: 'squat-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'sissy-squat',
@@ -369,7 +389,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/AYN-U5nZieY',
     goldStar: true,
     similarityGroup: 'sissy-squat',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'wall-sit',
@@ -386,7 +407,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/y-wV4Venusw',
     goldStar: true,
     similarityGroup: 'wall-sit',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'pistol-squat',
@@ -403,7 +425,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/bH3mRwnAN88',
     goldStar: false,
     similarityGroup: 'squat-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
 
   // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
@@ -423,7 +446,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/Dy28eq2PjcM',
     goldStar: true,
     similarityGroup: 'squat-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-step-up',
@@ -440,7 +464,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/dQqApCGd5Ss',
     goldStar: false,
     similarityGroup: 'step-up',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-tke',
@@ -457,7 +482,8 @@ const QUAD_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/yE7sFjtnmZE',
     goldStar: true,
     similarityGroup: 'band-tke',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   }
 
 ];

@@ -13,6 +13,7 @@
  *   goldStar        – top pick per movement pattern (one true per similarityGroup)
  *   similarityGroup – movement pattern bucket for grouping/swapping
  *   alsoInProgram   – true if this exercise appears in the default program
+ *   tier            – 'compound' (multi-joint) or 'isolation' (single-joint)
  */
 
 const SHOULDER_EXERCISE_LIBRARY = [
@@ -34,7 +35,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/wol7Hko8RhY',
     goldStar: true,
     similarityGroup: 'overhead-press-barbell',
-    alsoInProgram: true   // id: 'ohp'
+    alsoInProgram: true,   // id: 'ohp'
+    tier: 'compound'
   },
   {
     id: 'seated-barbell-ohp',
@@ -51,7 +53,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/0JfYxMRsUCQ',
     goldStar: false,
     similarityGroup: 'overhead-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-push-press',
@@ -68,7 +71,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/X6-DMh-t4nQ',
     goldStar: false,
     similarityGroup: 'overhead-press-barbell',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-upright-row',
@@ -85,7 +89,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/AWsGWt-VMl8',
     goldStar: false,
     similarityGroup: 'upright-row',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'barbell-front-raise',
@@ -102,7 +107,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/qhdMn1VBpPQ',
     goldStar: false,
     similarityGroup: 'front-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── DUMBBELL ─────────────────────────────────────────────────────────────
@@ -122,7 +128,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/GFblCmuEE18',
     goldStar: true,
     similarityGroup: 'overhead-press-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'arnold-press',
@@ -139,7 +146,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/pzqeWbFP1ck',
     goldStar: false,
     similarityGroup: 'overhead-press-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'db-lateral-raise',
@@ -156,7 +164,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/v_ZkxWzYnMc',
     goldStar: false,
     similarityGroup: 'lateral-raise-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'leaning-db-lateral-raise',
@@ -173,7 +182,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/qWif_7SOYpQ',
     goldStar: true,
     similarityGroup: 'lateral-raise-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-rear-delt-raise',
@@ -190,7 +200,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/ttvfGg9d76c',
     goldStar: true,
     similarityGroup: 'rear-delt-db',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'db-front-raise',
@@ -207,7 +218,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/UPaXKcTf5TE',
     goldStar: false,
     similarityGroup: 'front-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── CABLE ────────────────────────────────────────────────────────────────
@@ -227,7 +239,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/v_ZkxWzYnMc',
     goldStar: true,
     similarityGroup: 'lateral-raise-cable',
-    alsoInProgram: true   // id: 'lateral'
+    alsoInProgram: true,   // id: 'lateral'
+    tier: 'isolation'
   },
   {
     id: 'cable-shoulder-press',
@@ -244,7 +257,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/GFblCmuEE18',
     goldStar: true,
     similarityGroup: 'overhead-press-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'cable-upright-row',
@@ -261,7 +275,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/FjlQ9Bpo0YA',
     goldStar: true,
     similarityGroup: 'upright-row',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'cable-rear-delt-flye',
@@ -278,7 +293,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/o-SxXUES-To',
     goldStar: true,
     similarityGroup: 'rear-delt-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-face-pull',
@@ -295,7 +311,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/rep-qVOkqgk',
     goldStar: false,
     similarityGroup: 'rear-delt-cable',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'cable-front-raise',
@@ -312,7 +329,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/K2I7g8_fnc0',
     goldStar: true,
     similarityGroup: 'front-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── MACHINE ──────────────────────────────────────────────────────────────
@@ -332,7 +350,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/WvLMauqrnK8',
     goldStar: true,
     similarityGroup: 'overhead-press-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'smith-machine-ohp',
@@ -349,7 +368,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/YfMpXa0RQKQ',
     goldStar: false,
     similarityGroup: 'overhead-press-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'landmine-press',
@@ -366,7 +386,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/gH7PDepHNck',
     goldStar: false,
     similarityGroup: 'landmine-press',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'machine-lateral-raise',
@@ -383,7 +404,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/v_ZkxWzYnMc',
     goldStar: true,
     similarityGroup: 'lateral-raise-machine',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'pec-deck-rear-delt',
@@ -400,7 +422,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/o-SxXUES-To',
     goldStar: true,
     similarityGroup: 'rear-delt-machine',
-    alsoInProgram: true   // id: 'rear-delt'
+    alsoInProgram: true,   // id: 'rear-delt'
+    tier: 'isolation'
   },
 
   // ─── BODYWEIGHT ───────────────────────────────────────────────────────────
@@ -420,7 +443,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/x7_I5SUAd00',
     goldStar: true,
     similarityGroup: 'overhead-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'wall-handstand-push-up',
@@ -437,7 +461,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/TlCuKKcLDwo',
     goldStar: false,
     similarityGroup: 'overhead-press-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'prone-yt-raise',
@@ -454,7 +479,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/oV_C5-KMRMU',
     goldStar: true,
     similarityGroup: 'rear-delt-bodyweight',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
 
   // ─── RESISTANCE BAND ──────────────────────────────────────────────────────
@@ -474,7 +500,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/WcHpAMbOGGk',
     goldStar: true,
     similarityGroup: 'overhead-press-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-lateral-raise',
@@ -491,7 +518,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/3N1uPbKMNSo',
     goldStar: true,
     similarityGroup: 'lateral-raise-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-rear-delt-flye',
@@ -508,7 +536,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/vMBLDt0BOhA',
     goldStar: true,
     similarityGroup: 'rear-delt-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-face-pull',
@@ -525,7 +554,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/d6wR7TxSvT8',
     goldStar: false,
     similarityGroup: 'rear-delt-band',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   },
   {
     id: 'band-upright-row',
@@ -542,7 +572,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/YGdFHMqVxFU',
     goldStar: false,
     similarityGroup: 'upright-row',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'compound'
   },
   {
     id: 'band-front-raise',
@@ -559,7 +590,8 @@ const SHOULDER_EXERCISE_LIBRARY = [
     ytUrl: 'https://youtu.be/p_tJJ1CJmZE',
     goldStar: false,
     similarityGroup: 'front-raise',
-    alsoInProgram: false
+    alsoInProgram: false,
+    tier: 'isolation'
   }
 
 ];
