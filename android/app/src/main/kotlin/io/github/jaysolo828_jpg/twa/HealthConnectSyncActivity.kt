@@ -97,7 +97,7 @@ class HealthConnectSyncActivity : Activity() {
         apiKey       = data.getQueryParameter("apikey")       ?: run { finish(); return }
         lookbackDays = data.getQueryParameter("days")?.toLongOrNull() ?: 7L
 
-        val status = HealthConnectClient.getSdkStatus(this)
+        val status = HealthConnectClient.getSdkStatus(this, "com.google.android.apps.healthdata")
         when (status) {
             HealthConnectClient.SDK_AVAILABLE -> {
                 // All good — proceed.
