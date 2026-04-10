@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
     // rows. A single nested query would be cleaner but PostgREST
     // filters are simpler when split.
     const pendingRes = await fetch(
-      `${sbUrl}/rest/v1/challenges?status=eq.pending&challenge_type=in.(one_rep_max,clear_your_head)&select=id,challenger_id,challenge_type`,
+      `${sbUrl}/rest/v1/challenges?status=eq.pending&challenge_type=in.(one_rep_max,control_the_aux,clear_your_head)&select=id,challenger_id,challenge_type`,
       { headers }
     );
     if (!pendingRes.ok) throw new Error('pending query failed: ' + await pendingRes.text());
@@ -148,9 +148,9 @@ Deno.serve(async (req) => {
         const ch = chById[row.challenge_id];
         if (!ch) continue;
         const creatorLabel = creatorLabelById[ch.challenger_id] || 'Someone';
-        const chType = chById[row.challenge_id]?.challenge_type || 'one_rep_max';
-        const reminderBody = chType === 'clear_your_head' ? 'Tap to accept the Clear Your Head challenge.' : 'Tap to accept the 1RM challenge.';
-        const pushErr = await firePush(row.user_id, creatorLabel + ' is waiting on you', reminderBody, row.challenge_id);
+        const chType = ch.challenge_type || 'one_rep_max';
+        const challengeLabel = chType === 'clear_your_head' ? 'Clear Your Head challenge' : (chType === 'control_the_aux' ? 'Control the Aux challenge' : '1RM challenge');
+        const pushErr = await firePush(row.user_id, creatorLabel + ' is waiting on you', 'Tap to accept the ' + challengeLabel + '.', row.challenge_id);
         if (pushErr) { report.errors.push({ reminder: true, id: row.id, detail: pushErr }); }
         // Stamp the row whether or not the push succeeded — we don't
         // want to retry pushes multiple times per day on error.
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
   // ─────────────────────────────────────────────────────────────
   try {
     const dueRes = await fetch(
-      `${sbUrl}/rest/v1/challenges?status=eq.pending&challenge_type=in.(one_rep_max,clear_your_head)&auto_start_at=not.is.null&auto_start_at=lt.${encodeURIComponent(nowIso)}&select=*`,
+      `${sbUrl}/rest/v1/challenges?status=eq.pending&challenge_type=in.(one_rep_max,control_the_aux,clear_your_head)&auto_start_at=not.is.null&auto_start_at=lt.${encodeURIComponent(nowIso)}&select=*`,
       { headers }
     );
     if (!dueRes.ok) throw new Error('auto-start query failed: ' + await dueRes.text());
@@ -204,11 +204,13 @@ Deno.serve(async (req) => {
         );
         if (!upd.ok) { report.errors.push({ id: ch.id, phase: 'auto-start', detail: await upd.text() }); continue; }
         report.autoStarted++;
-        const startedBody = ch.challenge_type === 'clear_your_head'
+        const startBody = ch.challenge_type === 'clear_your_head'
           ? 'Clear Your Head is live. Get outside.'
-          : 'The 1RM clock is running. Go get it.';
+          : (ch.challenge_type === 'control_the_aux'
+            ? 'The aux battle is live. Start logging songs after your workouts.'
+            : 'The 1RM clock is running. Go get it.');
         for (const p of joined) {
-          await firePush(p.user_id, 'Challenge started', startedBody, ch.id);
+          await firePush(p.user_id, 'Challenge started', startBody, ch.id);
         }
       } else {
         // Auto-cancel — nobody accepted.
@@ -614,7 +616,6 @@ Deno.serve(async (req) => {
       const participants: any[] = ch.challenge_participants || [];
       const scored = participants.filter((p: any) => p.status === 'joined' || p.status === 'left');
 
-      // Fetch total minutes per user from cyh_logs
       const logsRes = await fetch(
         `${sbUrl}/rest/v1/cyh_logs?challenge_id=eq.${ch.id}&select=user_id,minutes`,
         { headers }
@@ -623,7 +624,6 @@ Deno.serve(async (req) => {
       const minutesByUser: Record<string, number> = {};
       logs.forEach((l: any) => { minutesByUser[l.user_id] = (minutesByUser[l.user_id] || 0) + (l.minutes || 0); });
 
-      // left = 0 minutes (forfeit)
       const withMins = scored.map((p: any) => ({
         user_id: p.user_id,
         status: p.status,
@@ -631,47 +631,118 @@ Deno.serve(async (req) => {
       }));
       withMins.sort((a: any, b: any) => b.mins - a.mins);
 
-      const top = withMins[0];
-      const second = withMins[1] || null;
-      const tied = second && second.mins === top.mins && top.mins > 0;
-      const winnerId = !top || (tied) ? null : top.user_id;
+      const cyhTop = withMins[0];
+      const cyhSecond = withMins[1] || null;
+      const cyhTied = cyhSecond && cyhSecond.mins === cyhTop.mins && cyhTop.mins > 0;
+      const cyhWinnerId = !cyhTop || cyhTied ? null : cyhTop.user_id;
 
-      const upd = await fetch(
+      const cyhUpd = await fetch(
         `${sbUrl}/rest/v1/challenges?id=eq.${ch.id}`,
-        {
-          method: 'PATCH',
-          headers: { ...headers, 'Prefer': 'return=minimal' },
-          body: JSON.stringify({ status: 'completed', winner_id: winnerId })
-        }
+        { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ status: 'completed', winner_id: cyhWinnerId }) }
       );
-      if (!upd.ok) { report.errors.push({ id: ch.id, phase: 'cyh-end', detail: await upd.text() }); continue; }
+      if (!cyhUpd.ok) { report.errors.push({ id: ch.id, phase: 'cyh-end', detail: await cyhUpd.text() }); continue; }
       report.completed++;
 
-      // Fetch names for notifications
-      const nameById: Record<string, string> = {};
-      await Promise.all(withMins.map(async (s: any) => {
-        const u = await fetchUser(s.user_id);
-        nameById[s.user_id] = labelFor(u);
-      }));
+      const cyhNames: Record<string, string> = {};
+      await Promise.all(withMins.map(async (s: any) => { const u = await fetchUser(s.user_id); cyhNames[s.user_id] = labelFor(u); }));
 
       if (!withMins.length) continue;
-      if (tied || !winnerId) {
-        for (const s of withMins) {
-          await firePush(s.user_id, 'Clear Your Head ended in a tie', 'You all logged the same minutes. Nice work.', ch.id);
-        }
+      if (cyhTied || !cyhWinnerId) {
+        for (const s of withMins) { await firePush(s.user_id, 'Clear Your Head ended in a tie', 'You all logged the same minutes. Nice work.', ch.id); }
       } else {
-        const winnerName = nameById[winnerId] || 'Someone';
+        const cyhWinnerName = cyhNames[cyhWinnerId] || 'Someone';
         for (const s of withMins) {
-          if (s.user_id === winnerId) {
+          if (s.user_id === cyhWinnerId) {
             await firePush(s.user_id, '\uD83E\uDD47 You won Clear Your Head', 'Highest total minutes. You earned it.', ch.id);
           } else {
-            await firePush(s.user_id, 'Clear Your Head complete', winnerName + ' logged the most minutes. Great effort.', ch.id);
+            await firePush(s.user_id, 'Clear Your Head complete', cyhWinnerName + ' logged the most minutes. Great effort.', ch.id);
           }
         }
       }
     }
   } catch (e) {
     report.errors.push({ phase: 'cyh-end', detail: String(e) });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // G. AUX CHALLENGE END DETECTION
+  //    Active 'control_the_aux' challenges whose end_date has passed.
+  //    Score: reaction received = 1 pt, use received = 5 pts.
+  //    Highest score wins; tie leaves winner_id null.
+  // ─────────────────────────────────────────────────────────────
+  try {
+    const auxEndedRes = await fetch(
+      `${sbUrl}/rest/v1/challenges?status=eq.active&challenge_type=eq.control_the_aux&end_date=lt.${encodeURIComponent(nowIso)}&select=*`,
+      { headers }
+    );
+    if (!auxEndedRes.ok) throw new Error('aux-end query failed: ' + await auxEndedRes.text());
+    const auxEndedChs: any[] = await auxEndedRes.json();
+
+    for (const ch of auxEndedChs) {
+      const partsRes = await fetch(`${sbUrl}/rest/v1/challenge_participants?challenge_id=eq.${ch.id}&select=*`, { headers });
+      const parts: any[] = partsRes.ok ? await partsRes.json() : [];
+      const joined = parts.filter(p => p.status === 'joined' || p.status === 'left');
+
+      const songsRes = await fetch(`${sbUrl}/rest/v1/aux_songs?challenge_id=eq.${ch.id}&select=id,user_id`, { headers });
+      const songs: any[] = songsRes.ok ? await songsRes.json() : [];
+      const songIds = songs.map(s => s.id);
+
+      const scoreById: Record<string, number> = {};
+      for (const p of joined) scoreById[p.user_id] = 0;
+
+      if (songIds.length > 0) {
+        const idsParam = songIds.map(id => `"${id}"`).join(',');
+        const rxnRes = await fetch(`${sbUrl}/rest/v1/aux_reactions?song_id=in.(${idsParam})&select=song_id,user_id`, { headers });
+        const rxns: any[] = rxnRes.ok ? await rxnRes.json() : [];
+        for (const r of rxns) {
+          const song = songs.find(s => s.id === r.song_id);
+          if (!song || song.user_id === r.user_id) continue;
+          if (scoreById[song.user_id] !== undefined) scoreById[song.user_id]++;
+        }
+        const usesRes = await fetch(`${sbUrl}/rest/v1/aux_uses?song_id=in.(${idsParam})&select=song_id,user_id`, { headers });
+        const uses: any[] = usesRes.ok ? await usesRes.json() : [];
+        for (const u of uses) {
+          const song = songs.find(s => s.id === u.song_id);
+          if (!song || song.user_id === u.user_id) continue;
+          if (scoreById[song.user_id] !== undefined) scoreById[song.user_id] += 5;
+        }
+      }
+
+      const auxScored = joined.map(p => ({ user_id: p.user_id, score: scoreById[p.user_id] || 0 }));
+      auxScored.sort((a, b) => b.score - a.score);
+
+      const auxTop = auxScored[0];
+      const auxSecond = auxScored[1] || null;
+      const auxTied = auxTop && auxSecond && auxSecond.score === auxTop.score;
+      const auxWinnerId = (!auxTop || auxTied) ? null : auxTop.user_id;
+
+      const auxUpd = await fetch(
+        `${sbUrl}/rest/v1/challenges?id=eq.${ch.id}`,
+        { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ status: 'completed', winner_id: auxWinnerId }) }
+      );
+      if (!auxUpd.ok) { report.errors.push({ id: ch.id, phase: 'aux-end', detail: await auxUpd.text() }); continue; }
+      report.completed++;
+
+      const auxNames: Record<string, string> = {};
+      await Promise.all(auxScored.map(async s => { const u = await fetchUser(s.user_id); auxNames[s.user_id] = labelFor(u); }));
+
+      if (!auxTop || auxScored.every(s => s.score === 0)) {
+        for (const p of joined) { await firePush(p.user_id, 'Aux challenge over', 'No songs were reacted to. Run it back with more fire.', ch.id); }
+      } else if (auxTied) {
+        for (const s of auxScored) { await firePush(s.user_id, 'Aux challenge ended in a tie', 'Two aux gods, equal clout. Run it back?', ch.id); }
+      } else {
+        const auxWinnerName = auxNames[auxWinnerId!] || 'Someone';
+        for (const s of auxScored) {
+          if (s.user_id === auxWinnerId) {
+            await firePush(s.user_id, '\uD83C\uDFB5 You controlled the aux', 'Your songs had the most heat. The aux is yours.', ch.id);
+          } else {
+            await firePush(s.user_id, 'Aux challenge complete', auxWinnerName + ' controlled the aux with ' + auxTop.score + ' pts. You scored ' + s.score + '.', ch.id);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    report.errors.push({ phase: 'aux-end', detail: String(e) });
   }
 
   return new Response(JSON.stringify({ ok: true, ...report }), {
