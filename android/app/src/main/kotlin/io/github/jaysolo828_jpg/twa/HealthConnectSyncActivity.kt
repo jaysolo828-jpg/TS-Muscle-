@@ -43,6 +43,7 @@ class HealthConnectSyncActivity : Activity() {
     )
 
     private val MIN_SESSION_MINUTES = 10L
+    private val HC_PERM_REQUEST_CODE = 1001
 
     private var jwt = ""
     private var userId = ""
@@ -52,24 +53,12 @@ class HealthConnectSyncActivity : Activity() {
     private var lookbackDays = 7L
 
     private lateinit var client: HealthConnectClient
+    private lateinit var readPerm: String
 
-    private val requestPermissions =
-        registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
-            if (HealthPermission.getReadPermission(ExerciseSessionRecord::class) in granted) {
-                scope.launch { doSync() }
-            } else {
-                // User denied the permission — explain how to fix it.
-                showDialog(
-                    title   = "Permission needed",
-                    message = "TS Muscle needs access to your exercise sessions in Health Connect. " +
-                              "You can grant it in Health Connect \u2192 App permissions.",
-                    positive        = "Open Health Connect",
-                    positiveAction  = { openHealthConnectSettings() },
-                    negative        = "Not now",
-                    negativeAction  = { finish() }
-                )
-            }
-        }
+    // The permission contract lets us build the intent and parse the result
+    // using the old startActivityForResult pattern, which works on plain
+    // android.app.Activity (registerForActivityResult requires ComponentActivity).
+    private val permContract = PermissionController.createRequestPermissionResultContract()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +72,7 @@ class HealthConnectSyncActivity : Activity() {
                           "to automatically track progress in group movement challenges. " +
                           "Only sessions of 10 minutes or more are counted. " +
                           "No data is shared with third parties.",
-                positive = "Got it",
+                positive       = "Got it",
                 positiveAction = { finish() }
             )
             return
@@ -97,16 +86,16 @@ class HealthConnectSyncActivity : Activity() {
         apiKey       = data.getQueryParameter("apikey")       ?: run { finish(); return }
         lookbackDays = data.getQueryParameter("days")?.toLongOrNull() ?: 7L
 
+        readPerm = HealthPermission.getReadPermission(ExerciseSessionRecord::class)
+
         val status = HealthConnectClient.getSdkStatus(this, "com.google.android.apps.healthdata")
         when (status) {
             HealthConnectClient.SDK_AVAILABLE -> {
-                // All good — proceed.
                 client = HealthConnectClient.getOrCreate(this)
                 checkPermissionsAndSync()
             }
             HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
-                // Health Connect app is not installed (Android 9–13 only).
-                // Prompt to install it from the Play Store.
+                // Health Connect app not installed (Android 9–13).
                 showDialog(
                     title   = "Health Connect required",
                     message = "This feature uses Health Connect to read your walking and running " +
@@ -123,8 +112,7 @@ class HealthConnectSyncActivity : Activity() {
                 )
             }
             else -> {
-                // SDK_UNAVAILABLE — device doesn't support Health Connect at all
-                // (pre-Android 9). Finish silently; no point prompting.
+                // SDK_UNAVAILABLE — pre-Android 9, finish silently.
                 finish()
             }
         }
@@ -132,12 +120,40 @@ class HealthConnectSyncActivity : Activity() {
 
     private fun checkPermissionsAndSync() {
         scope.launch {
-            val granted  = client.permissionController.getGrantedPermissions()
-            val readPerm = HealthPermission.getReadPermission(ExerciseSessionRecord::class)
+            val granted = client.permissionController.getGrantedPermissions()
             if (readPerm in granted) {
                 doSync()
             } else {
-                requestPermissions.launch(setOf(readPerm))
+                // Launch the Health Connect permission UI via startActivityForResult
+                // so we can handle the result in onActivityResult without needing
+                // ComponentActivity / registerForActivityResult.
+                val permIntent = permContract.createIntent(
+                    this@HealthConnectSyncActivity,
+                    setOf(readPerm)
+                )
+                @Suppress("DEPRECATION")
+                startActivityForResult(permIntent, HC_PERM_REQUEST_CODE)
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == HC_PERM_REQUEST_CODE) {
+            val granted = permContract.parseResult(resultCode, data)
+            if (readPerm in granted) {
+                scope.launch { doSync() }
+            } else {
+                showDialog(
+                    title   = "Permission needed",
+                    message = "TS Muscle needs access to your exercise sessions in Health Connect. " +
+                              "You can grant it in Health Connect \u2192 App permissions.",
+                    positive       = "Open Health Connect",
+                    positiveAction = { openHealthConnectSettings() },
+                    negative       = "Not now",
+                    negativeAction = { finish() }
+                )
             }
         }
     }
@@ -152,15 +168,13 @@ class HealthConnectSyncActivity : Activity() {
                     recordType      = ExerciseSessionRecord::class,
                     timeRangeFilter = TimeRangeFilter.between(start, now),
                 )
-                val response  = client.readRecords(request)
+                val response   = client.readRecords(request)
                 val qualifying = response.records.filter { session ->
                     session.exerciseType in CARDIO_TYPES &&
                     ChronoUnit.MINUTES.between(session.startTime, session.endTime) >= MIN_SESSION_MINUTES
                 }
 
                 if (qualifying.isEmpty()) {
-                    // Nothing found — could be no connected apps, or just no
-                    // qualifying sessions this week. Tell the user either way.
                     withContext(Dispatchers.Main) {
                         showDialog(
                             title   = "No sessions found",
@@ -169,10 +183,10 @@ class HealthConnectSyncActivity : Activity() {
                                       "Make sure a fitness app like Google Fit, Strava, or " +
                                       "Samsung Health is connected to Health Connect and has " +
                                       "recorded your sessions.",
-                            positive        = "Open Health Connect",
-                            positiveAction  = { openHealthConnectSettings(); finish() },
-                            negative        = "OK",
-                            negativeAction  = { finish() }
+                            positive       = "Open Health Connect",
+                            positiveAction = { openHealthConnectSettings(); finish() },
+                            negative       = "OK",
+                            negativeAction = { finish() }
                         )
                     }
                     return@withContext
@@ -194,7 +208,7 @@ class HealthConnectSyncActivity : Activity() {
                     postToSupabase(body)
                 }
             } catch (_: Exception) {
-                // Network/HC read error — finish silently. The user can retry.
+                // Network/HC read error — finish silently, user can retry.
             } finally {
                 withContext(Dispatchers.Main) { finish() }
             }
@@ -221,19 +235,15 @@ class HealthConnectSyncActivity : Activity() {
         }
     }
 
-    // Opens the Health Connect main settings screen where users can see
-    // connected apps and manage permissions.
     private fun openHealthConnectSettings() {
         try {
             startActivity(Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS))
         } catch (_: Exception) {
-            // Fallback: open the HC Play Store listing if settings can't launch.
             startActivity(Intent(Intent.ACTION_VIEW,
                 Uri.parse("market://details?id=com.google.android.apps.healthdata")))
         }
     }
 
-    // Convenience wrapper so every dialog has the same structure.
     private fun showDialog(
         title: String,
         message: String,
