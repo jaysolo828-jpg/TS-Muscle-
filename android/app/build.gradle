@@ -31,7 +31,6 @@ android {
     }
 
     compileOptions {
-        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -42,7 +41,6 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring 'com.android.tools.desugar.jdk.libs:desugar_jdk_libs:2.0.4'
     implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
     implementation 'com.android.billingclient:billing:6.1.0'
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'

@@ -4,7 +4,9 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import androidx.annotation.RequiresApi
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
@@ -23,6 +25,11 @@ import java.net.URL
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
+// java.time APIs (Instant, ChronoUnit) require API 26+. Health Connect itself
+// only returns SDK_AVAILABLE on API 26+ devices, so doSync() is never reached
+// on older devices. The @RequiresApi annotation satisfies the compiler without
+// needing core library desugaring.
+@RequiresApi(Build.VERSION_CODES.O)
 class HealthConnectSyncActivity : Activity() {
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
