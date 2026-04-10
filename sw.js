@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v225';
+const CACHE_NAME = 'ts-muscle-v226';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './badge-dumbbell.png', './manifest.json'];
 
@@ -139,11 +139,14 @@ self.addEventListener('notificationclick', function(event) {
   );
 });
 
-// On fetch: network first, fall back to cache so app loads after restart with no internet.
-// For HTML requests use cache:'no-store' to bypass the browser's HTTP cache — without this
-// the browser's own cache can silently serve a stale index.html, preventing version banners.
-// config.js is always fetched fresh — it is served by a Netlify Edge Function that injects
-// the API key at runtime. It must never be served from cache.
+// On fetch:
+// - config.js files (Netlify Edge Functions with injected env vars): always network, never cache.
+// - API endpoints (no file extension, not HTML): always network, never cache.
+// - HTML navigation requests: stale-while-revalidate — serve cached index.html immediately
+//   so the app opens without a Chrome loading screen after overnight, then update cache
+//   in the background. The SW update mechanism (new cache name → controllerchange → reload)
+//   handles delivering new versions, so serving stale HTML on first paint is safe.
+// - All other same-origin assets (JS, images, etc.): cache-first with network fallback.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
@@ -169,8 +172,7 @@ self.addEventListener('fetch', e => {
     url.pathname.endsWith('.html') ||
     url.pathname === '/';
 
-  // API endpoints (no file extension) are never cached — only serve from network.
-  // This prevents stale HTML from being cached if an edge function didn't exist yet.
+  // API endpoints (no file extension, not HTML): always network, never cache.
   const hasExtension = /\.[a-zA-Z0-9]+(\?|$)/.test(url.pathname);
   if (!hasExtension && !isHTML) {
     e.respondWith(
@@ -180,14 +182,35 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  const req = isHTML ? new Request(e.request, { cache: 'no-store' }) : e.request;
+  if (isHTML) {
+    // Stale-while-revalidate for navigation: return cached index.html immediately
+    // (no Chrome loading screen), fetch fresh copy in background to update cache.
+    e.respondWith(
+      caches.open(CACHE_NAME).then(cache =>
+        cache.match('./index.html').then(cached => {
+          const networkFetch = fetch(new Request(e.request, { cache: 'no-store' }))
+            .then(resp => {
+              if (resp && resp.status === 200) cache.put('./index.html', resp.clone());
+              return resp;
+            })
+            .catch(() => null);
+          return cached || networkFetch;
+        })
+      )
+    );
+    return;
+  }
+
+  // All other same-origin assets: cache-first, network fallback.
   e.respondWith(
-    fetch(req).then(response => {
-      if (response && response.status === 200 && response.type !== 'opaque') {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone)).catch(() => {});
-      }
-      return response;
-    }).catch(() => caches.match(e.request).then(r => r || new Response('', { status: 503 })))
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      return fetch(e.request).then(resp => {
+        if (resp && resp.status === 200 && resp.type !== 'opaque') {
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, resp.clone())).catch(() => {});
+        }
+        return resp;
+      }).catch(() => new Response('', { status: 503 }));
+    })
   );
 });
