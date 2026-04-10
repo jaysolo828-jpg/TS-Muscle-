@@ -3086,35 +3086,30 @@
     <div id="cardio-week-breakdown" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);margin-top:8px;letter-spacing:0.3px;line-height:1.4;"></div>
   </div>
 
-  <!-- LOG A SESSION -->
-  <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:12px;">LOG A SESSION</div>
+  <!-- ═══ TRACK A WORKOUT ═══ -->
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:12px;">TRACK A WORKOUT</div>
 
-  <!-- ACTIVITY TILES: 2x2 grid -->
+  <!-- Activity tiles — shared by track + log -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
-
     <button id="ctype-treadmill" onclick="selectCardioType('treadmill')" class="cardio-type-btn active-cardio-btn" style="padding:16px 10px;gap:8px;">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="14" width="20" height="3" rx="1"/><path d="M5 14V9l3-4h4l2 4v5"/><line x1="9" y1="5" x2="9" y2="14"/><circle cx="17" cy="6" r="2"/><path d="M15 14l2-5 3 2"/></svg>
       <span style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;">TREADMILL</span>
     </button>
-
     <button id="ctype-outdoor" onclick="selectCardioType('outdoor')" class="cardio-type-btn" style="padding:16px 10px;gap:8px;">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="1.5"/><path d="M10 21l1.5-5-2-3 4-3 2 4h3"/><path d="M7 21l3-5"/><path d="M11 9l-4 4"/></svg>
       <span style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;">RUN</span>
     </button>
-
     <button id="ctype-walk" onclick="selectCardioType('walk')" class="cardio-type-btn" style="padding:16px 10px;gap:8px;">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M7 14l2-3M17 14l-2-3"/></svg>
       <span style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;">WALK</span>
     </button>
-
     <button id="ctype-jog" onclick="selectCardioType('jog')" class="cardio-type-btn" style="padding:16px 10px;gap:8px;">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/></svg>
       <span style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;">JOG</span>
     </button>
-
   </div>
 
-  <!-- WALK MODE SUB-TOGGLE — only visible when WALK is selected -->
+  <!-- Walk sub-toggle -->
   <div id="cardio-walk-mode" style="display:none;margin-bottom:14px;">
     <div style="display:flex;gap:6px;">
       <button id="walkmode-leisurely" onclick="_setWalkMode('walk')" style="flex:1;padding:10px 6px;border-radius:10px;border:1px solid rgba(204,32,39,0.4);background:rgba(204,32,39,0.1);color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LEISURELY</button>
@@ -3123,119 +3118,125 @@
     <div id="cardio-walk-desc" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);margin-top:6px;padding:0 2px;">Leisurely pace \u2014 under 2.5 mph. Great for active recovery.</div>
   </div>
 
-  <!-- DURATION CARD -->
-  <div class="card" style="margin-bottom:12px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:14px;">DURATION</div>
-    <!-- Quick presets -->
-    <div style="display:flex;gap:8px;margin-bottom:16px;">
-      <button onclick="setTimerPreset(20)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">20</button>
-      <button onclick="setTimerPreset(30)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">30</button>
-      <button onclick="setTimerPreset(45)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">45</button>
-      <button onclick="setTimerPreset(60)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">60</button>
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);align-self:center;white-space:nowrap;padding-left:2px;">min</span>
-    </div>
-    <!-- Manual input -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-      <input type="number" id="timer-mins" value="30" min="0" max="999" placeholder="30" oninput="_onDurationInput()" style="width:80px;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);font-family:'Bebas Neue',cursive;font-size:36px;text-align:center;border-radius:10px;padding:8px 4px;-webkit-tap-highlight-color:transparent;" inputmode="decimal"/>
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray);letter-spacing:1px;">MIN</span>
-      <input type="number" id="timer-secs" value="00" min="0" max="59" style="display:none;" inputmode="decimal"/>
-    </div>
-    <!-- Live timer display (hidden until started) -->
-    <div id="timer-display" style="font-family:'Bebas Neue',cursive;font-size:56px;color:var(--cream);letter-spacing:2px;text-align:center;display:none;margin-bottom:8px;">30:00</div>
-    <!-- Live timer toggle + controls -->
-    <div id="cardio-timer-section" style="display:none;">
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button onclick="startCardioTimer()" id="timer-start-btn" style="background:var(--red);color:white;border:none;border-radius:12px;padding:10px 24px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">START</button>
-        <button onclick="pauseCardioTimer()" id="timer-pause-btn" style="display:none;background:var(--dark3);color:var(--cream);border:1px solid var(--dark4);border-radius:12px;padding:10px 24px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">PAUSE</button>
-        <button onclick="resetCardioTimer()" id="timer-reset-btn" style="display:none;background:var(--dark3);color:var(--gray-light);border:1px solid var(--dark4);border-radius:12px;padding:10px 24px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">RESET</button>
-      </div>
-    </div>
-    <button onclick="_toggleCardioLiveTimer()" id="cardio-timer-toggle" style="width:100%;margin-top:4px;background:transparent;border:none;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;padding:8px 0 0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:4px;">
-      <svg id="cardio-timer-toggle-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      <span id="cardio-timer-toggle-label">USE LIVE TIMER</span>
+  <!-- IDLE: START button -->
+  <div id="cardio-idle-view">
+    <button onclick="_startTrackingWorkout()" style="width:100%;background:var(--red);border:none;color:white;padding:18px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:3px;cursor:pointer;box-shadow:0 4px 20px rgba(204,32,39,0.4);-webkit-tap-highlight-color:transparent;margin-bottom:22px;">
+      START WORKOUT
     </button>
   </div>
 
-  <!-- DETAILS CARD — unified, fields shown/hidden per activity type -->
-  <div class="card" style="margin-bottom:12px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:14px;">DETAILS <span style="opacity:0.5;font-size:10px;letter-spacing:1px;">optional</span></div>
-
-    <!-- Distance — all types -->
-    <div style="margin-bottom:12px;">
-      <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:6px;">DISTANCE (MI)</div>
-      <input type="number" id="cardio-distance" placeholder="0.0" step="0.1" oninput="_onDistanceInput()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
-    </div>
-
-    <!-- Pace — outdoor run and jog only -->
-    <div id="cardio-pace-row" style="display:none;margin-bottom:12px;background:var(--dark3);border-radius:10px;padding:10px 14px;">
-      <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:2px;">AVG PACE</div>
-      <div id="cardio-pace-value" style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;">--:-- /MI</div>
-    </div>
-
-    <!-- Treadmill extras — speed + incline -->
-    <div id="cardio-treadmill-extras" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-      <div>
-        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:6px;">SPEED (MPH)</div>
-        <input type="number" id="cardio-speed" placeholder="0.0" step="0.1" oninput="_calcCardioCalories()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
-      </div>
-      <div>
-        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:6px;">INCLINE (%)</div>
-        <input type="number" id="cardio-incline" placeholder="0" oninput="_calcCardioCalories()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
+  <!-- ACTIVE: live tracking view (hidden until START) -->
+  <div id="cardio-active-view" style="display:none;margin-bottom:22px;">
+    <div style="background:var(--dark2);border:1px solid rgba(204,32,39,0.3);border-radius:16px;padding:24px;text-align:center;">
+      <div id="cardio-active-label" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--red);letter-spacing:3px;margin-bottom:6px;">TREADMILL IN PROGRESS</div>
+      <div id="cardio-live-timer" style="font-family:'Bebas Neue',cursive;font-size:72px;color:var(--cream);letter-spacing:2px;line-height:1;margin-bottom:20px;">0:00</div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button id="cardio-pause-btn" onclick="_pauseTrackingWorkout()" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">PAUSE</button>
+        <button onclick="_finishTrackingWorkout()" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;box-shadow:0 2px 10px rgba(204,32,39,0.35);-webkit-tap-highlight-color:transparent;">FINISH</button>
       </div>
     </div>
-
   </div>
 
-  <!-- EFFORT (RPE) CARD -->
-  <div class="card" style="margin-bottom:12px;">
-    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;">EFFORT</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);opacity:0.55;letter-spacing:0.5px;">optional</div>
+  <!-- DIVIDER -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;white-space:nowrap;">OR LOG MANUALLY</div>
+    <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
+  </div>
+
+  <!-- ═══ LOG MANUALLY ═══ -->
+  <div id="cardio-log-section">
+
+    <!-- Duration -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:14px;">DURATION</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button onclick="setTimerPreset(20)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">20</button>
+        <button onclick="setTimerPreset(30)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">30</button>
+        <button onclick="setTimerPreset(45)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">45</button>
+        <button onclick="setTimerPreset(60)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--gray-light);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">60</button>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);align-self:center;white-space:nowrap;padding-left:2px;">min</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="number" id="timer-mins" value="" min="0" max="999" placeholder="0" oninput="_onDurationInput()" style="width:80px;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);font-family:'Bebas Neue',cursive;font-size:36px;text-align:center;border-radius:10px;padding:8px 4px;-webkit-tap-highlight-color:transparent;" inputmode="decimal"/>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray);letter-spacing:1px;">MIN</span>
+        <input type="number" id="timer-secs" value="00" min="0" max="59" style="display:none;" inputmode="decimal"/>
+      </div>
     </div>
-    <!-- Row 1: 1-5 -->
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px;">
-      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="1">1</button>
-      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="2">2</button>
-      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="3">3</button>
-      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="4">4</button>
-      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="5">5</button>
+
+    <!-- Details -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:14px;">DETAILS <span style="opacity:0.5;font-size:10px;letter-spacing:1px;">optional</span></div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:6px;">DISTANCE (MI)</div>
+        <input type="number" id="cardio-distance" placeholder="0.0" step="0.1" oninput="_onDistanceInput()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
+      </div>
+      <div id="cardio-pace-row" style="display:none;margin-bottom:12px;background:var(--dark3);border-radius:10px;padding:10px 14px;">
+        <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:2px;">AVG PACE</div>
+        <div id="cardio-pace-value" style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;">--:-- /MI</div>
+      </div>
+      <div id="cardio-treadmill-extras" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:6px;">SPEED (MPH)</div>
+          <input type="number" id="cardio-speed" placeholder="0.0" step="0.1" oninput="_calcCardioCalories()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:6px;">INCLINE (%)</div>
+          <input type="number" id="cardio-incline" placeholder="0" oninput="_calcCardioCalories()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
+        </div>
+      </div>
     </div>
-    <!-- Row 2: 6-10 -->
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
-      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="6">6</button>
-      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="7">7</button>
-      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="8">8</button>
-      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="9">9</button>
-      <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="10">10</button>
+
+    <!-- Effort -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;">EFFORT</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--gray);opacity:0.55;letter-spacing:0.5px;">optional</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px;">
+        <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="1">1</button>
+        <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="2">2</button>
+        <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="3">3</button>
+        <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="4">4</button>
+        <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="5">5</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
+        <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="6">6</button>
+        <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="7">7</button>
+        <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="8">8</button>
+        <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="9">9</button>
+        <button class="cardio-rpe-btn" onclick="_setCardioRpe(this)" data-rpe="10">10</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;">
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">Easy</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">Max effort</span>
+      </div>
     </div>
-    <div style="display:flex;justify-content:space-between;margin-top:6px;">
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">Easy</span>
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);">Max effort</span>
+
+    <!-- Notes -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:10px;">NOTES <span style="opacity:0.5;font-size:10px;letter-spacing:1px;">optional</span></div>
+      <textarea id="cardio-notes" class="notes-input" placeholder="How did it feel? Route, conditions, anything worth remembering." style="min-height:64px;width:100%;"></textarea>
     </div>
-  </div>
 
-  <!-- NOTES CARD -->
-  <div class="card" style="margin-bottom:16px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gray);letter-spacing:2px;margin-bottom:10px;">NOTES <span style="opacity:0.5;font-size:10px;letter-spacing:1px;">optional</span></div>
-    <textarea id="cardio-notes" class="notes-input" placeholder="How did it feel? Route, conditions, anything worth remembering." style="min-height:64px;width:100%;"></textarea>
-  </div>
+    <!-- CYH note -->
+    <div id="cardio-cyh-note" style="display:none;align-items:center;gap:10px;background:rgba(192,57,43,0.07);border:1px solid rgba(192,57,43,0.22);border-radius:10px;padding:10px 14px;margin-bottom:14px;">
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="#C0392B" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);line-height:1.4;">Counts toward your <strong>Clear Your Head</strong> challenge</span>
+    </div>
 
-  <!-- CYH INTEGRATION NOTE — shows when qualifying session + active CYH challenge -->
-  <div id="cardio-cyh-note" style="display:none;align-items:center;gap:10px;background:rgba(192,57,43,0.07);border:1px solid rgba(192,57,43,0.22);border-radius:10px;padding:10px 14px;margin-bottom:14px;">
-    <svg viewBox="0 0 24 24" width="16" height="16" stroke="#C0392B" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
-    <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--cream);line-height:1.4;">Counts toward your <strong>Clear Your Head</strong> challenge</span>
-  </div>
+    <!-- HC sync -->
+    <div id="cardio-hc-row" style="display:none;margin-bottom:14px;">
+      <button onclick="_cardioHCSync()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--gray-light);padding:13px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent;">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        SYNC FROM HEALTH CONNECT
+      </button>
+    </div>
 
-  <!-- HC SYNC BUTTON — Android + active CYH only -->
-  <div id="cardio-hc-row" style="display:none;margin-bottom:14px;">
-    <button onclick="_cardioHCSync()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--gray-light);padding:13px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent;">
-      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-      SYNC FROM HEALTH CONNECT
-    </button>
-  </div>
+    <!-- Save -->
+    <button onclick="saveCardioSession()" style="width:100%;background:var(--dark2);border:1px solid rgba(255,255,255,0.12);color:var(--cream);padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:19px;letter-spacing:2px;cursor:pointer;margin-bottom:28px;-webkit-tap-highlight-color:transparent;">SAVE SESSION</button>
 
-  <!-- SAVE BUTTON -->
-  <button onclick="saveCardioSession()" style="width:100%;background:var(--red);border:none;color:white;padding:16px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;cursor:pointer;margin-bottom:28px;box-shadow:0 4px 16px rgba(204,32,39,0.35);-webkit-tap-highlight-color:transparent;">SAVE SESSION</button>
+  </div>
 
   <!-- HISTORY HEADER with collapse toggle -->
   <button id="cardio-history-toggle-btn" onclick="_toggleCardioHistory()" style="width:100%;background:transparent;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;-webkit-tap-highlight-color:transparent;">
@@ -34077,6 +34078,10 @@ let cardioTimerOriginal = 0;
 let _cardioRpe = null;
 let _cardioHistoryOpen = true;
 let _cardioTimerOpen = false;
+let _cardioTrackingActive = false;
+let _cardioTrackingPaused = false;
+let _cardioTrackingSeconds = 0;
+let _cardioTrackingInterval = null;
 
 function _setCardioRpe(btn) {
   document.querySelectorAll('.cardio-rpe-btn').forEach(b => b.classList.remove('active'));
@@ -34155,6 +34160,68 @@ function _toggleCardioLiveTimer() {
   const label = document.getElementById('cardio-timer-toggle-label');
   if (section) section.style.display = _cardioTimerOpen ? 'block' : 'none';
   if (label) label.textContent = _cardioTimerOpen ? 'HIDE TIMER' : 'USE LIVE TIMER';
+}
+
+// ── Active workout tracking ────────────────────────────────────────────────
+
+function _updateTrackingDisplay() {
+  const el = document.getElementById('cardio-live-timer');
+  if (!el) return;
+  const h = Math.floor(_cardioTrackingSeconds / 3600);
+  const m = Math.floor((_cardioTrackingSeconds % 3600) / 60);
+  const s = _cardioTrackingSeconds % 60;
+  el.textContent = h > 0
+    ? h + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0')
+    : m + ':' + String(s).padStart(2,'0');
+}
+
+function _startTrackingWorkout() {
+  haptic(HAPTIC.start);
+  _cardioTrackingActive = true;
+  _cardioTrackingPaused = false;
+  _cardioTrackingSeconds = 0;
+  const labelEl = document.getElementById('cardio-active-label');
+  const typeNames = { treadmill:'TREADMILL', outdoor:'RUN', walk:'WALK', briskwalk:'BRISK WALK', jog:'JOG' };
+  if (labelEl) labelEl.textContent = (typeNames[cardioType] || cardioType.toUpperCase()) + ' IN PROGRESS';
+  document.getElementById('cardio-idle-view').style.display = 'none';
+  document.getElementById('cardio-active-view').style.display = 'block';
+  document.getElementById('cardio-log-section').style.display = 'none';
+  _updateTrackingDisplay();
+  _cardioTrackingInterval = setInterval(() => {
+    if (!_cardioTrackingPaused) {
+      _cardioTrackingSeconds++;
+      _updateTrackingDisplay();
+    }
+  }, 1000);
+}
+
+function _pauseTrackingWorkout() {
+  _cardioTrackingPaused = !_cardioTrackingPaused;
+  const btn = document.getElementById('cardio-pause-btn');
+  if (btn) btn.textContent = _cardioTrackingPaused ? 'RESUME' : 'PAUSE';
+  haptic(HAPTIC.light);
+}
+
+function _finishTrackingWorkout() {
+  haptic(HAPTIC.success);
+  clearInterval(_cardioTrackingInterval);
+  _cardioTrackingInterval = null;
+  _cardioTrackingActive = false;
+  const totalMins = Math.round(_cardioTrackingSeconds / 60);
+  // Pre-fill the manual log duration with elapsed time, then save
+  const minsEl = document.getElementById('timer-mins');
+  if (minsEl) minsEl.value = totalMins > 0 ? totalMins : 1;
+  document.getElementById('cardio-idle-view').style.display = 'block';
+  document.getElementById('cardio-active-view').style.display = 'none';
+  document.getElementById('cardio-log-section').style.display = 'block';
+  _cardioTrackingSeconds = 0;
+  _cardioTrackingPaused = false;
+  const pauseBtn = document.getElementById('cardio-pause-btn');
+  if (pauseBtn) pauseBtn.textContent = 'PAUSE';
+  // Auto-save if there was actual time
+  if (totalMins > 0) {
+    saveCardioSession();
+  }
 }
 
 function startCardioTimer() {
