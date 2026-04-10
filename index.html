@@ -3059,9 +3059,38 @@
 </div>
 
 <div id="screen-cardio" class="screen">
-  <div class="section-title">CARDIO <span>TRACKER</span></div>
 
-  <!-- CARDIO TYPE SELECTOR -->
+  <!-- Tab header -->
+  <div style="margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.05);">
+    <div style="font-family:'Bebas Neue',cursive; font-size:28px; letter-spacing:3px; color:var(--cream); line-height:1;">CARDIO <span style="color:var(--red);">TRACKER</span></div>
+    <div style="font-size:12px; color:var(--gray); letter-spacing:0.6px; margin-top:5px;">Log sessions. See your week. Keep the momentum.</div>
+  </div>
+
+  <!-- HEALTH CONNECT SECTION (Android only — shown via JS on init) -->
+  <div id="cardio-hc-section" style="display:none; margin-bottom:4px;">
+    <div class="card" style="border:1px solid rgba(192,57,43,0.25); background:linear-gradient(135deg, rgba(192,57,43,0.07) 0%, var(--dark2) 60%); padding:16px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+        <div style="flex-shrink:0; width:38px; height:38px; background:rgba(192,57,43,0.15); border-radius:10px; display:flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#C0392B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-12.5A5 5 0 0 1 12 4a5 5 0 0 1 8 4.5C20 13.5 12 21 12 21z"/></svg>
+        </div>
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; color:var(--cream); letter-spacing:1.5px;">HEALTH CONNECT</div>
+          <div style="font-size:12px; color:var(--gray); margin-top:2px; line-height:1.4;">Import walks &amp; runs directly from Android Health Connect</div>
+        </div>
+      </div>
+      <div id="cardio-hc-sync-status" style="font-size:12px; color:var(--gray); margin-bottom:12px; line-height:1.5; min-height:16px;"></div>
+      <button id="cardio-hc-sync-btn" onclick="_cardioHCSync()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Bebas Neue',cursive; font-size:17px; letter-spacing:2px; padding:13px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent;">SYNC FROM HEALTH CONNECT</button>
+      <div id="cardio-hc-no-challenge" style="display:none; margin-top:10px; background:rgba(255,255,255,0.04); border-radius:8px; padding:10px 12px; font-size:12px; color:var(--gray); line-height:1.6; text-align:center;">Sync links to your active <strong style="color:var(--cream);">Clear Your Head</strong> challenge.<br>Join or start one in the Challenges tab to enable.</div>
+    </div>
+    <!-- Divider -->
+    <div style="display:flex; align-items:center; gap:10px; margin:4px 0 20px;">
+      <div style="flex:1; height:1px; background:rgba(255,255,255,0.07);"></div>
+      <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:var(--gray); letter-spacing:2px; white-space:nowrap;">OR LOG MANUALLY</div>
+      <div style="flex:1; height:1px; background:rgba(255,255,255,0.07);"></div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY TYPE SELECTOR -->
   <div style="margin-bottom:16px;">
     <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:1.5px; margin-bottom:10px;">SELECT ACTIVITY</div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
@@ -3075,21 +3104,21 @@
 
   <!-- TIMER -->
   <div class="card" style="text-align:center; margin-bottom:16px;">
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:2px;">DURATION</div>
-    <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); margin-bottom:8px;">Use the timer <span style="opacity:0.6;">or just enter minutes manually to log a past session</span></div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:4px;">DURATION</div>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); opacity:0.7; margin-bottom:12px;">Use the timer — or just enter minutes for a past session</div>
     <!-- Quick presets -->
-    <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
-      <button onclick="setTimerPreset(20)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px;">20 min</button>
-      <button onclick="setTimerPreset(30)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px;">30 min</button>
-      <button onclick="setTimerPreset(45)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px;">45 min</button>
-      <button onclick="setTimerPreset(60)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px;">60 min</button>
+    <div style="display:flex; justify-content:center; gap:8px; margin-bottom:14px;">
+      <button onclick="setTimerPreset(20)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">20 min</button>
+      <button onclick="setTimerPreset(30)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">30 min</button>
+      <button onclick="setTimerPreset(45)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">45 min</button>
+      <button onclick="setTimerPreset(60)" style="background:var(--dark3); border:1px solid var(--dark4); color:var(--gray-light); padding:11px 14px; border-radius:20px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">60 min</button>
     </div>
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:12px;">
       <div style="text-align:center;">
         <input type="number" id="timer-mins" value="30" min="0" max="999" style="width:64px; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Bebas Neue',cursive; font-size:36px; text-align:center; border-radius:10px; padding:8px 4px;" inputmode="decimal"/>
         <div style="font-size:12px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">MIN</div>
       </div>
-      <div style="font-family:'Bebas Neue',cursive; font-size:36px; color:var(--red-text); padding-top:8px;">:</div>
+      <div id="timer-colon" style="font-family:'Bebas Neue',cursive; font-size:36px; color:var(--red-text); padding-top:8px;">:</div>
       <div style="text-align:center;">
         <input type="number" id="timer-secs" value="00" min="0" max="59" style="width:64px; background:var(--dark3); border:1px solid var(--dark4); color:var(--cream); font-family:'Bebas Neue',cursive; font-size:36px; text-align:center; border-radius:10px; padding:8px 4px;" inputmode="decimal"/>
         <div style="font-size:12px; color:var(--gray-light); margin-top:4px; letter-spacing:1px;">SEC</div>
@@ -3097,9 +3126,9 @@
     </div>
     <div id="timer-display" style="font-family:'Bebas Neue',cursive; font-size:56px; color:var(--cream); letter-spacing:2px; display:none;">30:00</div>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:8px;">
-      <button onclick="startCardioTimer()" id="timer-start-btn" style="background:var(--red); color:white; border:none; border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer; min-height:44px;">START</button>
-      <button onclick="pauseCardioTimer()" id="timer-pause-btn" style="display:none; background:var(--dark3); color:var(--cream); border:1px solid var(--dark4); border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer; min-height:44px;">PAUSE</button>
-      <button onclick="resetCardioTimer()" id="timer-reset-btn" style="display:none; background:var(--dark3); color:var(--gray-light); border:1px solid var(--dark4); border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer; min-height:44px;">RESET</button>
+      <button onclick="startCardioTimer()" id="timer-start-btn" style="background:var(--red); color:white; border:none; border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">START</button>
+      <button onclick="pauseCardioTimer()" id="timer-pause-btn" style="display:none; background:var(--dark3); color:var(--cream); border:1px solid var(--dark4); border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">PAUSE</button>
+      <button onclick="resetCardioTimer()" id="timer-reset-btn" style="display:none; background:var(--dark3); color:var(--gray-light); border:1px solid var(--dark4); border-radius:12px; padding:10px 24px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:1px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">RESET</button>
     </div>
   </div>
 
@@ -3123,13 +3152,13 @@
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
         <input type="number" id="tm-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcTMCalories()" inputmode="decimal"/>
       </div>
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
+      <div style="grid-column:1/-1;">
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES <span style="opacity:0.6; font-size:11px;">(auto)</span></div>
         <input type="number" id="tm-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES <span style="opacity:0.6; font-size:11px;">optional</span></div>
       <textarea id="tm-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -3146,8 +3175,8 @@
         <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">WEIGHT (LBS)</div>
         <input type="number" id="od-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcODCalories()" inputmode="decimal"/>
       </div>
-      <div>
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
+      <div style="grid-column:1/-1;">
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES <span style="opacity:0.6; font-size:11px;">(auto)</span></div>
         <input type="number" id="od-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
       </div>
     </div>
@@ -3156,7 +3185,7 @@
       <div id="pace-value" style="font-family:'Bebas Neue',cursive; font-size:28px; color:var(--cream); letter-spacing:2px;">--:-- /MI</div>
     </div>
     <div style="margin-top:10px;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES <span style="opacity:0.6; font-size:11px;">optional</span></div>
       <textarea id="od-notes" class="notes-input" placeholder="Route, conditions, how it felt..." style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -3175,12 +3204,12 @@
         <input type="number" id="wk-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('walk')" inputmode="decimal"/>
       </div>
       <div style="grid-column:1/-1;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES <span style="opacity:0.6; font-size:11px;">(auto)</span></div>
         <input type="number" id="wk-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES <span style="opacity:0.6; font-size:11px;">optional</span></div>
       <textarea id="wk-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -3199,12 +3228,12 @@
         <input type="number" id="bw-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('briskwalk')" inputmode="decimal"/>
       </div>
       <div style="grid-column:1/-1;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES <span style="opacity:0.6; font-size:11px;">(auto)</span></div>
         <input type="number" id="bw-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES <span style="opacity:0.6; font-size:11px;">optional</span></div>
       <textarea id="bw-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -3223,12 +3252,12 @@
         <input type="number" id="jg-weight" placeholder="e.g. 185" class="set-input" style="width:100%; text-align:left; padding:10px 12px;" oninput="calcWalkCalories('jog')" inputmode="decimal"/>
       </div>
       <div style="grid-column:1/-1;">
-        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES (AUTO)</div>
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">CALORIES <span style="opacity:0.6; font-size:11px;">(auto)</span></div>
         <input type="number" id="jg-calories" placeholder="auto" class="set-input" style="width:100%; text-align:left; padding:10px 12px; background:var(--dark3); opacity:1;" readonly inputmode="decimal"/>
       </div>
     </div>
     <div style="margin-top:10px;">
-      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES</div>
+      <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:4px;">NOTES <span style="opacity:0.6; font-size:11px;">optional</span></div>
       <textarea id="jg-notes" class="notes-input" placeholder="How did it feel?" style="min-height:60px;"></textarea>
     </div>
   </div>
@@ -3258,7 +3287,7 @@
   </div>
 
   <!-- SAVE BUTTON -->
-  <button onclick="saveCardioSession()" style="width:100%; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:20px; letter-spacing:2px; cursor:pointer; margin-bottom:20px; box-shadow:0 4px 16px rgba(204,32,39,0.4);">SAVE CARDIO SESSION</button>
+  <button onclick="saveCardioSession()" style="width:100%; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:20px; letter-spacing:2px; cursor:pointer; margin-bottom:20px; box-shadow:0 4px 16px rgba(204,32,39,0.4); -webkit-tap-highlight-color:transparent;">SAVE CARDIO SESSION</button>
 
   <!-- WEEKLY SUMMARY -->
   <div id="cardio-weekly-summary" style="display:none; margin-bottom:16px;">
@@ -13536,6 +13565,10 @@ document.addEventListener('visibilitychange', async () => {
   await new Promise(r => setTimeout(r, 1200));
   await _loadChallenges();
   _refreshChallengeDetailSheet();
+  // Import any newly synced sessions into the local cardio history.
+  await _importCYHLogsToCardioHistory();
+  localStorage.setItem('cardio_hc_last_sync', String(Date.now()));
+  renderCardioHistory();
 });
 
 // ─── END HEALTH CONNECT BRIDGE ──────────────────────────────────────────────
@@ -34128,7 +34161,7 @@ function startCardioTimer() {
 
   document.getElementById('timer-mins').style.display = 'none';
   document.getElementById('timer-secs').style.display = 'none';
-  document.querySelector('.card div[style*="justify-content:center"]').querySelector('div:nth-child(2)').style.display = 'none';
+  document.getElementById('timer-colon').style.display = 'none';
   document.getElementById('timer-display').style.display = 'block';
   document.getElementById('timer-start-btn').style.display = 'none';
   document.getElementById('timer-pause-btn').style.display = 'inline-block';
@@ -34184,6 +34217,7 @@ function resetCardioTimer() {
   document.getElementById('timer-display').style.color = 'var(--cream)';
   document.getElementById('timer-mins').style.display = 'inline-block';
   document.getElementById('timer-secs').style.display = 'inline-block';
+  document.getElementById('timer-colon').style.display = '';
   document.getElementById('timer-start-btn').style.display = 'inline-block';
   document.getElementById('timer-pause-btn').style.display = 'none';
   document.getElementById('timer-pause-btn').textContent = 'PAUSE';
@@ -34356,7 +34390,7 @@ function renderCardioWeeklySummary() {
   document.getElementById('cardio-week-calories').textContent = Math.round(totalCal) || '—';
 
   // Breakdown by activity type
-  const typeNames = { treadmill: 'Treadmill', outdoor: 'Outdoor run', walk: 'Walk', briskwalk: 'Brisk walk', jog: 'Jog' };
+  const typeNames = { treadmill: 'Treadmill', outdoor: 'Outdoor run', walk: 'Walk', briskwalk: 'Brisk walk', jog: 'Jog', hc_import: 'Health Connect' };
   const counts = {};
   thisWeek.forEach(s => { counts[s.type] = (counts[s.type] || 0) + 1; });
   const breakdown = Object.entries(counts).map(([t, n]) => `${n} ${(typeNames[t] || t).toLowerCase()}${n > 1 ? 's' : ''}`).join(' · ');
@@ -34367,6 +34401,7 @@ function renderCardioWeeklySummary() {
 }
 
 function renderCardioHistory() {
+  _initCardioHCSection();
   renderCardioWeeklySummary();
   // Auto-fill bodyweight for the active type on every render (covers initial tab open)
   const _bwPrefill = state.profile?.bodyweight;
@@ -34381,15 +34416,23 @@ function renderCardioHistory() {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" width="36" height="36" stroke="var(--gray)" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/></svg></div><div class="empty-state-text">No cardio sessions yet. Track your first session above.</div></div>';
     return;
   }
-  container.innerHTML = [...state.cardioHistory].reverse().slice(0, 10).map(s => {
+  const hcIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#C0392B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M12 21s-8-7.5-8-12.5A5 5 0 0 1 12 4a5 5 0 0 1 8 4.5C20 13.5 12 21 12 21z"/></svg>';
+  container.innerHTML = [...state.cardioHistory].reverse().slice(0, 20).map(s => {
     const date = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const typeLabelMap = { treadmill: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M7 8l2 3h5l2-3M9 11l-2 5h2l1-2 2 2h2l-2-5"/><line x1="5" y1="19" x2="19" y2="19"/></svg>TREADMILL', outdoor: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M8 8l2 2-2 5h2l1.5-3 2 3h2l-2.5-5 1.5-2-1-2-3 2z"/></svg>OUTDOOR RUN', walk: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M7 14l2-3M17 14l-2-3"/></svg>WALK', briskwalk: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M6 14l3-3M18 14l-3-3"/></svg>BRISK WALK', jog: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M7 8l2 3h5l2-3M9 11l-2 5h2l1-2 2 2h2l-2-5"/></svg>JOG' };
+    const typeLabelMap = {
+      treadmill: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M7 8l2 3h5l2-3M9 11l-2 5h2l1-2 2 2h2l-2-5"/><line x1="5" y1="19" x2="19" y2="19"/></svg>TREADMILL',
+      outdoor: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M8 8l2 2-2 5h2l1.5-3 2 3h2l-2.5-5 1.5-2-1-2-3 2z"/></svg>OUTDOOR RUN',
+      walk: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M7 14l2-3M17 14l-2-3"/></svg>WALK',
+      briskwalk: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M6 14l3-3M18 14l-3-3"/></svg>BRISK WALK',
+      jog: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M7 8l2 3h5l2-3M9 11l-2 5h2l1-2 2 2h2l-2-5"/></svg>JOG',
+      hc_import: hcIconSvg + '<span style="color:#C0392B;">HEALTH CONNECT</span>'
+    };
     const typeLabel = typeLabelMap[s.type] || s.type.toUpperCase();
-    const dist = s.details.distance ? `${s.details.distance} mi` : '';
-    const cal = s.details.calories ? `${s.details.calories} cal` : '';
-    const pace = s.details.pace && s.details.pace !== '--' ? `${s.details.pace}/mi` : '';
-    const speed = s.details.speed ? `${s.details.speed} mph` : '';
-    const incline = s.details.incline ? `${s.details.incline}% incline` : '';
+    const dist = s.details?.distance ? `${s.details.distance} mi` : '';
+    const cal = s.details?.calories ? `${s.details.calories} cal` : '';
+    const pace = s.details?.pace && s.details.pace !== '--' ? `${s.details.pace}/mi` : '';
+    const speed = s.details?.speed ? `${s.details.speed} mph` : '';
+    const incline = s.details?.incline ? `${s.details.incline}% incline` : '';
     const rpeStr = s.rpe ? `RPE ${s.rpe}` : '';
     const meta = [dist, cal, pace, speed, incline, rpeStr].filter(Boolean).join(' · ');
     return `<div class="history-item" style="cursor:default;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
@@ -34397,7 +34440,7 @@ function renderCardioHistory() {
         <div class="history-date">${date}</div>
         <div class="history-day" style="font-size:15px;">${typeLabel}</div>
         <div style="font-size:13px; color:var(--gray); margin-top:5px; line-height:1.5;">${s.duration} min${meta ? ' · ' + meta : ''}</div>
-        ${s.details.notes ? `<div style="font-size:12px; color:var(--gray-light); margin-top:6px; padding-left:10px; border-left:2px solid var(--dark4);">${s.details.notes}</div>` : ''}
+        ${s.details?.notes ? `<div style="font-size:12px; color:var(--gray-light); margin-top:6px; padding-left:10px; border-left:2px solid var(--dark4);">${s.details.notes}</div>` : ''}
       </div>
       <button onclick="event.stopPropagation();confirmDeleteCardioSession('${s.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--gray);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Delete session">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
@@ -34410,7 +34453,7 @@ function confirmDeleteCardioSession(sessionId) {
   const entry = (state.cardioHistory || []).find(s => String(s.id) === String(sessionId));
   if (!entry) return;
   const dateStr = new Date(entry.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  const typeLabelMap = { treadmill: 'Treadmill', outdoor: 'Outdoor Run', walk: 'Walk', briskwalk: 'Brisk Walk', jog: 'Jog' };
+  const typeLabelMap = { treadmill: 'Treadmill', outdoor: 'Outdoor Run', walk: 'Walk', briskwalk: 'Brisk Walk', jog: 'Jog', hc_import: 'Health Connect' };
   const typeLabel = typeLabelMap[entry.type] || entry.type;
 
   const modal = document.createElement('div');
@@ -34436,6 +34479,94 @@ function deleteCardioSession(sessionId) {
   renderCardioHistory();
   showToast('Cardio session removed ✓');
 }
+
+// ─── HEALTH CONNECT → CARDIO HISTORY ─────────────────────────────────────────
+
+// Queries cyh_logs for the user's active CYH challenge and merges any
+// HC-synced rows (hc_session_id non-null) into state.cardioHistory.
+// Returns the count of newly added entries.
+async function _importCYHLogsToCardioHistory() {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return 0;
+  const activeCYH = (_challenges || []).find(ch =>
+    ch.challenge_type === 'clear_your_head' && ch.status === 'active'
+  );
+  if (!activeCYH) return 0;
+  const { data: logs, error } = await sb
+    .from('cyh_logs')
+    .select('id, logged_at, minutes, mood, hc_session_id')
+    .eq('challenge_id', activeCYH.id)
+    .eq('user_id', state.supabaseUserId)
+    .not('hc_session_id', 'is', null);
+  if (error || !logs || logs.length === 0) return 0;
+  if (!state.cardioHistory) state.cardioHistory = [];
+  const existingHCIds = new Set(
+    state.cardioHistory.filter(s => s.hcSessionId).map(s => s.hcSessionId)
+  );
+  let added = 0;
+  const moodLabel = { better: 'Better', same: 'Same', worse: 'Worse' };
+  for (const log of logs) {
+    if (existingHCIds.has(log.hc_session_id)) continue;
+    state.cardioHistory.push({
+      id: 'hc_' + log.id,
+      type: 'hc_import',
+      duration: log.minutes,
+      rpe: null,
+      date: log.logged_at,
+      hcSessionId: log.hc_session_id,
+      details: { notes: log.mood ? 'Mood after: ' + (moodLabel[log.mood] || log.mood) : '', calories: null }
+    });
+    existingHCIds.add(log.hc_session_id);
+    added++;
+  }
+  if (added > 0) saveState();
+  return added;
+}
+
+// Shows/hides the HC section and updates sync button state based on whether
+// an active CYH challenge exists. Called by renderCardioHistory().
+function _initCardioHCSection() {
+  const section = document.getElementById('cardio-hc-section');
+  if (!section) return;
+  if (!window._fcmToken) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  const activeCYH = (_challenges || []).find(ch =>
+    ch.challenge_type === 'clear_your_head' && ch.status === 'active'
+  );
+  const noChallenge = document.getElementById('cardio-hc-no-challenge');
+  const btn = document.getElementById('cardio-hc-sync-btn');
+  if (activeCYH) {
+    if (noChallenge) noChallenge.style.display = 'none';
+    if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = ''; }
+  } else {
+    if (noChallenge) noChallenge.style.display = 'block';
+    if (btn) { btn.style.opacity = '0.45'; btn.style.pointerEvents = 'none'; }
+  }
+  const statusEl = document.getElementById('cardio-hc-sync-status');
+  if (statusEl) {
+    const lastSync = localStorage.getItem('cardio_hc_last_sync');
+    if (lastSync) {
+      const d = new Date(parseInt(lastSync, 10));
+      statusEl.textContent = 'Last synced: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } else {
+      statusEl.textContent = 'Never synced — tap to import your recent sessions.';
+    }
+  }
+}
+
+// Entry point for the cardio tab HC sync button.
+async function _cardioHCSync() {
+  const activeCYH = (_challenges || []).find(ch =>
+    ch.challenge_type === 'clear_your_head' && ch.status === 'active'
+  );
+  if (!activeCYH) {
+    showToast('Join a Clear Your Head challenge first to sync from Health Connect.');
+    return;
+  }
+  await _triggerHCSync(activeCYH.id);
+}
+
+// ─── END HEALTH CONNECT → CARDIO HISTORY ────────────────────────────────────
 
 function calcPace() {
   const dist = parseFloat(document.getElementById('od-distance').value) || 0;
