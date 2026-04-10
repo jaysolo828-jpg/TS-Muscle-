@@ -34309,10 +34309,10 @@ function _updateCYHNote() {
   const hasCYH = (_challenges || []).some(c => c.status === 'active' && c.challenge_type === 'clear_your_head');
   const qualifies = qualifyingTypes.includes(cardioType) && mins >= 10 && hasCYH;
   note.style.display = qualifies ? 'flex' : 'none';
-  // HC sync button — Android only, CYH only
+  // HC sync button — Android only (works with or without a CYH challenge)
   if (hcRow) {
     const isAndroid = !!window._fcmToken;
-    hcRow.style.display = (isAndroid && hasCYH) ? 'block' : 'none';
+    hcRow.style.display = isAndroid ? 'block' : 'none';
   }
 }
 
