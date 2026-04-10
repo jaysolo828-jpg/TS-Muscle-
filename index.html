@@ -10530,9 +10530,23 @@ function _openChallengeIntroSheet(type, onContinue) {
       { h: 'MOVEMENT PROTECTS YOUR STREAK',
         b: 'Any qualifying cardio session from Health Connect can also count toward your active workout challenge. Getting outside IS training.' }
     ];
+  } else if (type === 'control_the_aux') {
+    title = 'CONTROL THE AUX';
+    bullets = [
+      { h: 'UP TO 4 PEOPLE, WEEKLY ROUNDS',
+        b: 'Invite up to 3 friends. Every week you can submit up to 3 songs \u2014 the ones that actually fueled your sessions.' },
+      { h: 'REACT OR GET LEFT BEHIND',
+        b: 'React to your crew\u2019s submissions with \uD83D\uDD25 FIRE, \uD83D\uDCAA FUEL, or \u2728 VIBE. Each reaction you receive = 1 point for you.' },
+      { h: 'USE THEIR SONG, GIVE THEM 5 PTS',
+        b: 'If you actually played someone\u2019s pick during a workout, hit USE. That\u2019s 5 points for the submitter \u2014 the ultimate co-sign.' },
+      { h: 'ANY STREAMING PLATFORM',
+        b: 'Paste a link from Spotify, Apple Music, YouTube, or anywhere. The app resolves it to a universal card that everyone can open in their preferred app.' },
+      { h: 'THE AUX GOES TO THE MOST INFLUENTIAL',
+        b: 'Whoever earns the most points across the challenge window wins. High reaction count is good. Getting your songs used in workouts is elite.' }
+    ];
   }
 
-  const accentColor = type === 'dont_break_chain' ? '#3B82F6' : type === 'clear_your_head' ? '#C0392B' : '#E67E22';
+  const accentColor = type === 'dont_break_chain' ? '#3B82F6' : type === 'clear_your_head' ? '#C0392B' : type === 'control_the_aux' ? '#9333EA' : '#E67E22';
   const bulletsHtml = bullets.map(item =>
     '<div style="margin-bottom:16px;">'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:15px;color:' + accentColor + ';letter-spacing:1.8px;margin-bottom:4px;line-height:1.1;">' + escapeHtml(item.h) + '</div>'
@@ -10597,7 +10611,7 @@ function _renderChallengesListHtml() {
     return;
   }
 
-  list.innerHTML = rows.map(c => c.challenge_type === 'dont_break_chain' ? _chainRowHtml(c) : c.challenge_type === 'clear_your_head' ? _cyhRowHtml(c) : _challengeRowHtml(c)).join('');
+  list.innerHTML = rows.map(c => c.challenge_type === 'dont_break_chain' ? _chainRowHtml(c) : c.challenge_type === 'clear_your_head' ? _cyhRowHtml(c) : c.challenge_type === 'control_the_aux' ? _auxRowHtml(c) : _challengeRowHtml(c)).join('');
 
   if (past.length) {
     const wrapDiv = document.createElement('div');
@@ -10610,7 +10624,7 @@ function _renderChallengesListHtml() {
     const pastList = document.createElement('div');
     pastList.style.display = 'none';
     pastList.style.marginTop = '6px';
-    pastList.innerHTML = past.map(c => c.challenge_type === 'dont_break_chain' ? _pastChainRowHtml(c) : c.challenge_type === 'clear_your_head' ? _pastCYHRowHtml(c) : _pastChallengeRowHtml(c)).join('');
+    pastList.innerHTML = past.map(c => c.challenge_type === 'dont_break_chain' ? _pastChainRowHtml(c) : c.challenge_type === 'clear_your_head' ? _pastCYHRowHtml(c) : c.challenge_type === 'control_the_aux' ? _pastAuxRowHtml(c) : _pastChallengeRowHtml(c)).join('');
 
     toggleBtn.onclick = function() {
       const isOpen = pastList.style.display !== 'none';
@@ -11326,6 +11340,10 @@ async function _openChallengeDetailSheet(challengeId) {
     const bodyEl = document.getElementById('challenge-detail-body');
     if (bodyEl) bodyEl.style.borderTopColor = '#C0392B';
     _renderCYHDetailBody(ch);
+  } else if (ch.challenge_type === 'control_the_aux') {
+    const bodyEl = document.getElementById('challenge-detail-body');
+    if (bodyEl) bodyEl.style.borderTopColor = _AUX_COLOR;
+    _renderAuxDetailBody(ch);
   } else {
     const bodyEl = document.getElementById('challenge-detail-body');
     if (bodyEl) bodyEl.style.borderTopColor = '#E67E22';
@@ -11348,7 +11366,7 @@ async function _refreshChallengeDetailSheet() {
   await _loadChallenges();
   const ch = (_challenges || []).find(c => c.id === id);
   if (!ch) { sheet.remove(); return; }
-  if (ch.challenge_type === 'dont_break_chain') { _renderChainDetailBody(ch); } else if (ch.challenge_type === 'clear_your_head') { _renderCYHDetailBody(ch); } else { _renderChallengeDetailBody(ch); }
+  if (ch.challenge_type === 'dont_break_chain') { _renderChainDetailBody(ch); } else if (ch.challenge_type === 'clear_your_head') { _renderCYHDetailBody(ch); } else if (ch.challenge_type === 'control_the_aux') { _renderAuxDetailBody(ch); } else { _renderChallengeDetailBody(ch); }
 }
 
 // Main detail-sheet renderer. Leaderboard style — one row per
@@ -11930,11 +11948,21 @@ function _renderActiveChallengeHomeCard() {
 
   let el = document.getElementById('challenge-home-card');
 
-  // Find the most recent active challenge for this user. If there are
-  // several, show the one closest to its end date (creates urgency).
+  // CYH challenges get their own home card.
   _renderActiveCYHHomeCard();
+
+  // Aux challenges get their own async home card. Render each separately.
+  const auxActive = (_challenges || []).filter(c => c.status === 'active' && c.challenge_type === 'control_the_aux');
+  for (const auxCh of auxActive) { _renderActiveAuxHomeCard(auxCh); }
+  // Remove stale aux cards for challenges no longer active
+  document.querySelectorAll('[id^="aux-home-card-"]').forEach(el => {
+    const cid = el.id.replace('aux-home-card-', '');
+    if (!auxActive.find(c => c.id === cid)) el.remove();
+  });
+
+  // Find the most recent active 1RM challenge for this user.
   const active = (_challenges || [])
-    .filter(c => c.status === 'active' && c.challenge_type !== 'dont_break_chain' && c.challenge_type !== 'clear_your_head')
+    .filter(c => c.status === 'active' && c.challenge_type === 'one_rep_max')
     .sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
 
   if (!active.length) {
@@ -12100,6 +12128,14 @@ function _openChallengePicker() {
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#C0392B;letter-spacing:2px;margin-bottom:3px;">MOVEMENT</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;margin-bottom:4px;">CLEAR YOUR HEAD</div>'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);line-height:1.4;">Log cardio minutes together. HC auto-sync on Android.</div>'
+    + '</div>'
+    + '<svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>'
+    + '</div>'
+    + '<div onclick="document.getElementById(\'challenge-picker-sheet\').remove();_startNewAuxChallenge();" style="background:rgba(147,51,234,0.08);border:1px solid rgba(147,51,234,0.3);border-left:3px solid #9333EA;border-radius:12px;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:14px;">'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#9333EA;letter-spacing:2px;margin-bottom:3px;">CULTURE</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;margin-bottom:4px;">CONTROL THE AUX</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);line-height:1.4;">Submit workout songs, earn points when your crew reacts and uses them. Most influence wins.</div>'
     + '</div>'
     + '<svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>'
     + '</div>'
@@ -13465,6 +13501,845 @@ function _runItBack(challengeId) {
   sheet.addEventListener('click', e => { if (e.target === sheet) _closeChallengeCreateSheet(); });
   document.body.appendChild(sheet);
   _renderChainCreateStep();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CONTROL THE AUX CHALLENGE
+// Purple accent: #9333EA
+// Scoring: reaction received = 1 pt, use received = 5 pts
+// Max 3 song submissions per user per ISO week
+// ══════════════════════════════════════════════════════════════════════════════
+
+const _AUX_COLOR = '#9333EA';
+const _AUX_MAX_INVITEES = 3;
+const _AUX_MAX_SONGS_PER_WEEK = 3;
+
+// ISO week helper — returns { week, year } where year is ISO week-year
+// (can differ from calendar year in the first/last days of January).
+function _getISOWeekAndYear(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return { week, year: date.getUTCFullYear() };
+}
+
+// ── CREATE FLOW ───────────────────────────────────────────────────────────────
+
+function _startNewAuxChallenge() {
+  if (!state.supabaseUserId) { showToast('Sign in to start a challenge.'); return; }
+  _openChallengeIntroSheet('control_the_aux', _openNewAuxChallengeFlow);
+}
+
+function _openNewAuxChallengeFlow() {
+  _challengeDraft = { mode: 'aux', step: 'friend', friendIds: [], durationWeeks: 5 };
+  const existing = document.getElementById('challenge-create-sheet');
+  if (existing) existing.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'challenge-create-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = '<div id="challenge-create-inner" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:22px 20px calc(28px + env(safe-area-inset-bottom));border-top:2px solid ' + _AUX_COLOR + ';max-height:92vh;overflow-y:auto;"></div>';
+  sheet.addEventListener('click', e => { if (e.target === sheet) _closeChallengeCreateSheet(); });
+  document.body.appendChild(sheet);
+  _renderAuxCreateStep();
+}
+
+function _renderAuxCreateStep() {
+  const inner = document.getElementById('challenge-create-inner');
+  if (!inner || !_challengeDraft) return;
+  const d = _challengeDraft;
+  const labels = { friend: 'INVITE YOUR CREW', duration: 'DURATION', confirm: 'REVIEW & SEND' };
+  const hdr = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">'
+    + '<div style="min-width:0;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:' + _AUX_COLOR + ';letter-spacing:2px;">CONTROL THE AUX</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;line-height:1.05;margin-top:2px;">' + (labels[d.step] || '') + '</div></div>'
+    + '<button onclick="_closeChallengeCreateSheet()" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
+    + '</div>';
+  let body = '';
+  if (d.step === 'friend')   body = _auxFriendPickerHtml();
+  else if (d.step === 'duration') body = _auxDurationPickerHtml();
+  else if (d.step === 'confirm')  body = _auxConfirmHtml();
+  inner.innerHTML = hdr + body;
+  if (d.step === 'friend') _renderAuxFriendList();
+}
+
+function _auxFriendPickerHtml() {
+  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:' + _AUX_COLOR + ';letter-spacing:2px;margin-bottom:6px;">STEP 1 OF 3</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.45;margin-bottom:12px;">Pick up to 3 friends. You all battle for aux control week by week.</div>'
+    + '<div id="aux-friend-picker" style="min-height:60px;"></div>'
+    + '<div id="aux-friend-counter" style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);letter-spacing:1px;text-align:center;margin:10px 0 4px;">0 OF 3 SELECTED</div>'
+    + '<button id="aux-friend-next" onclick="_onAuxFriendContinue()" disabled style="width:100%;margin-top:4px;background:rgba(147,51,234,0.2);border:1px solid ' + _AUX_COLOR + ';color:' + _AUX_COLOR + ';font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:not-allowed;-webkit-tap-highlight-color:transparent;opacity:0.5;">CONTINUE</button>';
+}
+
+async function _renderAuxFriendList() {
+  const container = document.getElementById('aux-friend-picker');
+  if (!container) return;
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) { container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">Sign in first.</div>'; return; }
+  try {
+    const { data: rows } = await sb.from('friendships')
+      .select('requester_id, addressee_id')
+      .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
+      .eq('status', 'accepted');
+    if (!rows || !rows.length) {
+      container.innerHTML = '<div style="text-align:center;padding:22px 6px;"><div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">NO CREW YET</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);line-height:1.5;">Add a friend first \u2014 challenges need people.</div></div>';
+      return;
+    }
+    const friendIds = rows.map(f => f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id);
+    const { data: users } = await sb.from('users').select('id, display_name, username, avatar_color, avatar_url').in('id', friendIds);
+    (users || []).forEach(u => { _friendCache[u.id] = u; });
+    if (!users || !users.length) { container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">No friends found.</div>'; return; }
+    container.innerHTML = users.map(u => {
+      const name = u.username || u.display_name || 'Unknown';
+      const initials = (u.display_name || u.username || '?').charAt(0).toUpperCase();
+      const avatarHtml = u.avatar_url
+        ? '<img src="' + escapeHtml(u.avatar_url) + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;" />'
+        : '<div style="width:36px;height:36px;border-radius:50%;background:' + (u.avatar_color || '#444') + ';display:flex;align-items:center;justify-content:center;font-family:\'Bebas Neue\',cursive;font-size:16px;color:#fff;flex-shrink:0;">' + escapeHtml(initials) + '</div>';
+      return '<div id="aux-fr-' + u.id + '" onclick="_onAuxFriendToggle(\'' + u.id + '\')" style="display:flex;align-items:center;gap:12px;padding:10px 4px;cursor:pointer;-webkit-tap-highlight-color:transparent;border-bottom:1px solid rgba(255,255,255,0.05);">'
+        + avatarHtml
+        + '<div style="flex:1;min-width:0;font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);font-weight:700;">@' + escapeHtml(name) + '</div>'
+        + '<div id="aux-fr-check-' + u.id + '" style="width:22px;height:22px;border-radius:50%;border:2px solid rgba(147,51,234,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>'
+        + '</div>';
+    }).join('');
+    _refreshAuxFriendPickerUi();
+  } catch (e) {
+    container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:13px;padding:10px 0;">Could not load friends.</div>';
+  }
+}
+
+function _onAuxFriendToggle(userId) {
+  const d = _challengeDraft;
+  if (!d) return;
+  const idx = d.friendIds.indexOf(userId);
+  if (idx >= 0) { d.friendIds.splice(idx, 1); }
+  else { if (d.friendIds.length >= _AUX_MAX_INVITEES) { showToast('Max 3 friends per aux challenge.'); return; } d.friendIds.push(userId); }
+  _refreshAuxFriendPickerUi();
+}
+
+function _refreshAuxFriendPickerUi() {
+  const d = _challengeDraft;
+  if (!d) return;
+  const selected = new Set(d.friendIds);
+  document.querySelectorAll('[id^="aux-fr-"]').forEach(el => {
+    if (el.id.startsWith('aux-fr-check-')) return;
+    const uid = el.id.replace('aux-fr-', '');
+    const isSel = selected.has(uid);
+    el.style.background = isSel ? 'rgba(147,51,234,0.08)' : '';
+    const check = document.getElementById('aux-fr-check-' + uid);
+    if (check) {
+      check.style.background = isSel ? _AUX_COLOR : '';
+      check.style.borderColor = isSel ? _AUX_COLOR : 'rgba(147,51,234,0.4)';
+      check.innerHTML = isSel ? '<svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="#fff" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg>' : '';
+    }
+  });
+  const counter = document.getElementById('aux-friend-counter');
+  if (counter) counter.textContent = d.friendIds.length + ' OF 3 SELECTED';
+  const btn = document.getElementById('aux-friend-next');
+  if (btn) {
+    btn.disabled = d.friendIds.length === 0;
+    btn.style.opacity = d.friendIds.length === 0 ? '0.5' : '1';
+    btn.style.cursor = d.friendIds.length === 0 ? 'not-allowed' : 'pointer';
+    btn.style.background = d.friendIds.length === 0 ? 'rgba(147,51,234,0.2)' : _AUX_COLOR;
+    btn.style.color = '#fff';
+  }
+}
+
+function _onAuxFriendContinue() {
+  const d = _challengeDraft;
+  if (!d || !d.friendIds.length) { showToast('Select at least 1 friend.'); return; }
+  d.step = 'duration';
+  _renderAuxCreateStep();
+}
+
+function _auxDurationPickerHtml() {
+  const d = _challengeDraft;
+  const opts = [4, 5, 6, 8];
+  const optHtml = opts.map(w => {
+    const sel = d.durationWeeks === w;
+    return '<div onclick="_challengeDraft.durationWeeks=' + w + ';_renderAuxCreateStep()" '
+      + 'style="padding:14px 16px;border:1px solid ' + (sel ? _AUX_COLOR : 'rgba(255,255,255,0.1)') + ';border-radius:10px;cursor:pointer;background:' + (sel ? 'rgba(147,51,234,0.1)' : 'transparent') + ';margin-bottom:8px;-webkit-tap-highlight-color:transparent;">'
+      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:' + (sel ? _AUX_COLOR : 'var(--cream)') + ';letter-spacing:1.5px;">' + w + ' WEEKS</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:2px;">' + (w * _AUX_MAX_SONGS_PER_WEEK) + ' songs max per person total</div>'
+      + '</div>';
+  }).join('');
+  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:' + _AUX_COLOR + ';letter-spacing:2px;margin-bottom:6px;">STEP 2 OF 3</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.45;margin-bottom:14px;">Up to 3 songs per person per week. Pick your window.</div>'
+    + optHtml
+    + '<button onclick="_challengeDraft.step=\'confirm\';_renderAuxCreateStep()" style="width:100%;margin-top:8px;background:' + _AUX_COLOR + ';border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CONTINUE</button>'
+    + '<button onclick="_challengeDraft.step=\'friend\';_renderAuxCreateStep()" style="width:100%;margin-top:8px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
+}
+
+function _auxConfirmHtml() {
+  const d = _challengeDraft;
+  const friendNames = d.friendIds.map(id => {
+    const u = _friendCache[id];
+    return u ? ('@' + (u.username || u.display_name || 'Unknown')) : id;
+  });
+  const rows = friendNames.map(n => '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">' + escapeHtml(n) + '</div>').join('');
+  return '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:' + _AUX_COLOR + ';letter-spacing:2px;margin-bottom:6px;">STEP 3 OF 3</div>'
+    + '<div style="background:#1a1a1a;border-radius:10px;padding:12px 14px;margin-bottom:14px;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);letter-spacing:1.5px;margin-bottom:6px;">INVITING</div>'
+    + rows
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">DURATION</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:16px;color:var(--cream);">' + d.durationWeeks + ' WEEKS</div>'
+    + '</div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1px;">SONGS/WEEK</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:16px;color:var(--cream);">' + _AUX_MAX_SONGS_PER_WEEK + ' PER PERSON</div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);line-height:1.5;margin-bottom:16px;">Invitees have 48 hours to accept. The challenge auto-starts at the 48h mark if at least one person accepted. You can start it manually as soon as someone accepts.</div>'
+    + '<button onclick="_submitNewAuxChallenge()" id="aux-submit-btn" style="width:100%;background:' + _AUX_COLOR + ';border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:22px;letter-spacing:2px;padding:16px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SEND INVITES</button>'
+    + '<button onclick="_challengeDraft.step=\'duration\';_renderAuxCreateStep()" style="width:100%;margin-top:8px;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BACK</button>';
+}
+
+async function _submitNewAuxChallenge() {
+  const d = _challengeDraft;
+  if (!d || !d.friendIds.length) return;
+  const btn = document.getElementById('aux-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'SENDING...'; }
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) { showToast('Not signed in.'); if (btn) { btn.disabled = false; btn.textContent = 'SEND INVITES'; } return; }
+  try {
+    const autoStart = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    const { data: ch, error: chErr } = await sb.from('challenges').insert({
+      challenger_id: state.supabaseUserId,
+      challenge_type: 'control_the_aux',
+      status: 'pending',
+      duration_weeks: d.durationWeeks,
+      auto_start_at: autoStart,
+    }).select().single();
+    if (chErr || !ch) throw chErr || new Error('Challenge insert failed');
+
+    // Creator participant row
+    await sb.from('challenge_participants').insert({ challenge_id: ch.id, user_id: state.supabaseUserId, status: 'joined' });
+
+    // Invitee rows + push notifications
+    for (const friendId of d.friendIds) {
+      await sb.from('challenge_participants').insert({ challenge_id: ch.id, user_id: friendId, status: 'invited' });
+      const myName = state.supabaseUsername || state.supabaseDisplayName || 'Someone';
+      _sendDirectPush(friendId, myName + ' challenged you to Control the Aux', 'Submit songs from your workouts. Most influence wins. Tap to accept.', 'challenge', ch.id);
+    }
+
+    await _loadChallenges();
+    _renderChallengesListHtml();
+    _renderActiveChallengeHomeCard();
+    _closeChallengeCreateSheet();
+    showToast('Invites sent!');
+  } catch (e) {
+    showToast('Could not create challenge: ' + _chErrMsg(e));
+    if (btn) { btn.disabled = false; btn.textContent = 'SEND INVITES'; }
+  }
+}
+
+// ── DATA LOADING ─────────────────────────────────────────────────────────────
+
+// Load all songs, reactions, and uses for one aux challenge in parallel.
+// Returns { songs, reactions, uses } — empty arrays on error.
+async function _loadAuxData(challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb) return { songs: [], reactions: [], uses: [] };
+  try {
+    const { data: songsData } = await sb.from('aux_songs').select('*').eq('challenge_id', challengeId).order('created_at', { ascending: false });
+    const songs = songsData || [];
+    const songIds = songs.map(s => s.id);
+    let reactions = [];
+    let uses = [];
+    if (songIds.length) {
+      const [rxnRes, useRes] = await Promise.all([
+        sb.from('aux_reactions').select('id,song_id,user_id,reaction_type').in('song_id', songIds),
+        sb.from('aux_uses').select('id,song_id,user_id').in('song_id', songIds),
+      ]);
+      reactions = rxnRes.data || [];
+      uses = useRes.data || [];
+    }
+    return { songs, reactions, uses };
+  } catch (_) { return { songs: [], reactions: [], uses: [] }; }
+}
+
+// Tally points per user_id from the submitter's perspective.
+// reaction received by submitter = 1 pt, use received = 5 pts.
+function _calcAuxScores(songs, reactions, uses) {
+  const scores = {};
+  for (const r of reactions) {
+    const song = songs.find(s => s.id === r.song_id);
+    if (!song || song.user_id === r.user_id) continue;
+    scores[song.user_id] = (scores[song.user_id] || 0) + 1;
+  }
+  for (const u of uses) {
+    const song = songs.find(s => s.id === u.song_id);
+    if (!song || song.user_id === u.user_id) continue;
+    scores[song.user_id] = (scores[song.user_id] || 0) + 5;
+  }
+  return scores;
+}
+
+// ── DETAIL SHEET RENDERER ─────────────────────────────────────────────────────
+
+async function _renderAuxDetailBody(ch) {
+  const body = document.getElementById('challenge-detail-body');
+  if (!body) return;
+  const myId = state.supabaseUserId;
+  const me = _myParticipantRow(ch);
+  const meIsCreator = _isChallengeCreator(ch);
+  const joined = _joinedParticipants(ch);
+  const daysLeft = _daysRemaining(ch.end_date);
+
+  // Fetch live data
+  const { songs, reactions, uses } = await _loadAuxData(ch.id);
+  const scores = _calcAuxScores(songs, reactions, uses);
+
+  // Leaderboard — sort joined by score desc
+  const ranked = joined.map(p => ({ ...p, score: scores[p.user_id] || 0 }))
+    .sort((a, b) => b.score - a.score);
+
+  // Current week submissions count for "me"
+  const { week: curWeek, year: curYear } = _getISOWeekAndYear(new Date());
+  const myWeekSongs = songs.filter(s => s.user_id === myId && s.week_number === curWeek && s.week_year === curYear).length;
+  const canSubmit = ch.status === 'active' && me && me.status === 'joined' && myWeekSongs < _AUX_MAX_SONGS_PER_WEEK;
+
+  // Header
+  const statusPill = ch.status === 'pending'
+    ? '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#999;letter-spacing:1.5px;background:rgba(255,255,255,0.06);padding:3px 8px;border-radius:999px;">PENDING</span>'
+    : (ch.status === 'active'
+      ? '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:' + _AUX_COLOR + ';letter-spacing:1.5px;background:rgba(147,51,234,0.1);padding:3px 8px;border-radius:999px;">' + (daysLeft > 0 ? daysLeft + 'D LEFT' : 'FINAL DAY') + '</span>'
+      : '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#999;letter-spacing:1.5px;background:rgba(255,255,255,0.06);padding:3px 8px;border-radius:999px;">' + ch.status.toUpperCase() + '</span>');
+
+  // Leaderboard rows
+  const lbRows = ranked.map((p, i) => {
+    const u = _friendCache[p.user_id] || {};
+    const name = p.user_id === myId ? 'You' : ('@' + (u.username || u.display_name || '...'));
+    const medal = i === 0 ? '\uD83E\uDD47' : (i === 1 ? '\uD83E\uDD48' : (i === 2 ? '\uD83E\uDD49' : (i + 1) + '.'));
+    const isWinner = ch.status === 'completed' && ch.winner_id === p.user_id;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">'
+      + '<div style="font-size:16px;width:26px;text-align:center;flex-shrink:0;">' + medal + '</div>'
+      + '<div style="flex:1;min-width:0;font-family:\'Barlow Condensed\',sans-serif;font-size:15px;color:' + (isWinner ? '#FFD700' : 'var(--cream)') + ';font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(name) + '</div>'
+      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:' + _AUX_COLOR + ';letter-spacing:1px;">' + p.score + '<span style="font-size:11px;color:var(--gray);letter-spacing:0.5px;"> pts</span></div>'
+      + '</div>';
+  }).join('');
+
+  // Song cards for this week
+  const thisWeekSongs = songs.filter(s => s.week_number === curWeek && s.week_year === curYear);
+  const songCardsHtml = thisWeekSongs.length
+    ? thisWeekSongs.map(s => _auxSongCardHtml(s, reactions, uses, myId, ch)).join('')
+    : '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);padding:12px 0;text-align:center;">No songs submitted this week yet.</div>';
+
+  // Past weeks accordion (songs not in current week)
+  const pastSongs = songs.filter(s => !(s.week_number === curWeek && s.week_year === curYear));
+  const pastByWeek = {};
+  for (const s of pastSongs) {
+    const key = s.week_year + '-' + s.week_number;
+    if (!pastByWeek[key]) pastByWeek[key] = { week: s.week_number, year: s.week_year, songs: [] };
+    pastByWeek[key].songs.push(s);
+  }
+  const pastWeekKeys = Object.keys(pastByWeek).sort().reverse();
+  const pastAccordionHtml = pastWeekKeys.length
+    ? '<div style="margin-top:14px;">'
+      + pastWeekKeys.map((k, ki) => {
+          const wk = pastByWeek[k];
+          const wcards = wk.songs.map(s => _auxSongCardHtml(s, reactions, uses, myId, ch)).join('');
+          return '<details style="margin-bottom:6px;">'
+            + '<summary style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:1.5px;cursor:pointer;padding:8px 0;list-style:none;-webkit-tap-highlight-color:transparent;">WEEK ' + wk.week + ' (' + wk.songs.length + ' song' + (wk.songs.length > 1 ? 's' : '') + ')</summary>'
+            + '<div style="padding-top:6px;">' + wcards + '</div>'
+            + '</details>';
+        }).join('')
+      + '</div>'
+    : '';
+
+  // Accept / decline / start buttons
+  let actionsHtml = '';
+  if (me && me.status === 'invited') {
+    actionsHtml = '<div style="display:flex;gap:10px;margin-top:16px;">'
+      + '<button onclick="_submitAcceptAuxChallenge(\'' + ch.id + '\')" style="flex:1;background:' + _AUX_COLOR + ';border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">ACCEPT</button>'
+      + '<button onclick="_confirmDeclineChallenge(\'' + ch.id + '\')" style="flex:1;background:transparent;border:1px solid #333;color:var(--gray-light);font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DECLINE</button>'
+      + '</div>';
+  } else if (ch.status === 'pending' && meIsCreator) {
+    const joinedCount = joined.length;
+    const startBtn = joinedCount >= 2
+      ? '<button onclick="_confirmStartChallenge(\'' + ch.id + '\')" style="width:100%;margin-top:16px;background:' + _AUX_COLOR + ';border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">START CHALLENGE</button>'
+      : '';
+    actionsHtml = startBtn
+      + '<button onclick="_confirmCancelChallenge(\'' + ch.id + '\')" style="width:100%;margin-top:8px;background:transparent;border:1px solid #333;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL CHALLENGE</button>';
+  } else if (ch.status === 'active' && me && me.status === 'joined') {
+    actionsHtml = '<button onclick="_confirmQuitChallenge(\'' + ch.id + '\')" style="width:100%;margin-top:16px;background:transparent;border:1px solid #333;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">QUIT CHALLENGE</button>';
+  }
+
+  // Submit song button
+  const submitBtn = canSubmit
+    ? '<button onclick="_openAuxSongSubmitSheet(\'' + ch.id + '\')" style="width:100%;margin-bottom:16px;background:' + _AUX_COLOR + ';border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">\uD83C\uDFB5 SUBMIT A SONG (' + myWeekSongs + '/' + _AUX_MAX_SONGS_PER_WEEK + ' THIS WEEK)</button>'
+    : (ch.status === 'active' && me && me.status === 'joined' && myWeekSongs >= _AUX_MAX_SONGS_PER_WEEK
+      ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);text-align:center;margin-bottom:16px;">Max ' + _AUX_MAX_SONGS_PER_WEEK + ' songs submitted this week. New week starts Monday.</div>'
+      : '');
+
+  body.innerHTML = '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">'
+    + '<div style="min-width:0;padding-right:10px;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:' + _AUX_COLOR + ';letter-spacing:1.5px;text-transform:uppercase;">CONTROL THE AUX</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">LEADERBOARD</div>'
+    + '<div style="margin-top:6px;">' + statusPill + '</div>'
+    + '</div>'
+    + '<button onclick="_closeChallengeDetailSheet()" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
+    + '</div>'
+    + lbRows
+    + submitBtn
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:' + _AUX_COLOR + ';letter-spacing:2px;margin:14px 0 6px;">THIS WEEK\'S SONGS</div>'
+    + songCardsHtml
+    + pastAccordionHtml
+    + actionsHtml;
+
+  // Pre-fetch user data for names we don't have yet
+  const unknownIds = joined.map(p => p.user_id).filter(id => id !== myId && !_friendCache[id]);
+  if (unknownIds.length) {
+    const sb = _getSupabaseClient();
+    if (sb) {
+      sb.from('users').select('id,display_name,username,avatar_color,avatar_url').in('id', unknownIds)
+        .then(({ data }) => {
+          if (data) { data.forEach(u => { _friendCache[u.id] = u; }); _renderAuxDetailBody(ch); }
+        }).catch(() => {});
+    }
+  }
+}
+
+// One song card with react / use buttons.
+// ch is passed so we can gate buttons on challenge status.
+function _auxSongCardHtml(song, reactions, uses, myId, ch) {
+  const myRxn = reactions.find(r => r.song_id === song.id && r.user_id === myId);
+  const myUse = uses.find(u => u.song_id === song.id && u.user_id === myId);
+  const isOwnSong = song.user_id === myId;
+  const rxnCount = reactions.filter(r => r.song_id === song.id).length;
+  const useCount = uses.filter(u => u.song_id === song.id).length;
+  const canInteract = ch.status === 'active' && !isOwnSong;
+
+  const artHtml = song.artwork_url
+    ? '<img src="' + escapeHtml(song.artwork_url) + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;" />'
+    : '<div style="width:48px;height:48px;border-radius:6px;background:rgba(147,51,234,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">\uD83C\uDFB5</div>';
+
+  const submitterU = _friendCache[song.user_id] || {};
+  const submitterName = song.user_id === myId ? 'You' : ('@' + (submitterU.username || submitterU.display_name || '...'));
+
+  // Platform link buttons — show up to 3 most common
+  const platMap = { spotify: { label: 'Spotify', color: '#1DB954' }, appleMusic: { label: 'Apple', color: '#FC3C44' }, youtubeMusic: { label: 'YouTube', color: '#FF0000' }, tidal: { label: 'Tidal', color: '#00FFFF' } };
+  const links = song.platform_links || {};
+  const platBtns = Object.keys(platMap).filter(k => links[k]).slice(0, 3).map(k => {
+    const p = platMap[k];
+    return '<a href="' + escapeHtml(links[k]) + '" target="_blank" rel="noopener" style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:' + p.color + ';border:1px solid ' + p.color + ';border-radius:999px;padding:2px 8px;text-decoration:none;white-space:nowrap;">' + p.label + '</a>';
+  }).join('');
+  // Fallback to original URL
+  const openLink = platBtns || ('<a href="' + escapeHtml(song.original_url) + '" target="_blank" rel="noopener" style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:' + _AUX_COLOR + ';border:1px solid ' + _AUX_COLOR + ';border-radius:999px;padding:2px 8px;text-decoration:none;">Open</a>');
+
+  // Reaction buttons: fire, fuel, vibe
+  const rxnEmoji = { fire: '\uD83D\uDD25', fuel: '\uD83D\uDCAA', vibe: '\u2728' };
+  const rxnBtns = canInteract
+    ? Object.entries(rxnEmoji).map(([type, emoji]) => {
+        const active = myRxn && myRxn.reaction_type === type;
+        const bg = active ? 'rgba(147,51,234,0.18)' : 'rgba(255,255,255,0.05)';
+        const border = active ? ('1px solid ' + _AUX_COLOR) : '1px solid rgba(255,255,255,0.1)';
+        const fn = active ? ('_removeAuxReaction(\'' + song.id + '\',\'' + ch.id + '\')') : ('_reactToAuxSong(\'' + song.id + '\',\'' + type + '\',\'' + ch.id + '\')');
+        return '<button onclick="' + fn + '" style="background:' + bg + ';border:' + border + ';border-radius:999px;padding:5px 10px;font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' + emoji + '</button>';
+      }).join('')
+    : '';
+
+  const useBtnHtml = canInteract
+    ? (myUse
+      ? '<button onclick="_removeAuxUse(\'' + song.id + '\',\'' + ch.id + '\')" style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:#2ecc71;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:999px;padding:5px 12px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;">\u2713 USED</button>'
+      : '<button onclick="_useAuxSong(\'' + song.id + '\',\'' + ch.id + '\')" style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--cream);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:999px;padding:5px 12px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;">USE (+5)</button>')
+    : '';
+
+  const rxnTotal = rxnCount + (useCount * 5);
+
+  return '<div style="background:#1c1c1c;border-radius:10px;padding:12px;margin-bottom:10px;">'
+    + '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;">'
+    + artHtml
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(song.title) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(song.artist) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--gray);margin-top:2px;">' + escapeHtml(submitterName) + ' \u00B7 ' + rxnCount + ' rxn' + (rxnCount !== 1 ? 's' : '') + ' \u00B7 ' + useCount + ' use' + (useCount !== 1 ? 's' : '') + ' \u00B7 ' + rxnTotal + ' pts</div>'
+    + '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">' + openLink + '</div>'
+    + '</div>'
+    + '</div>'
+    + (rxnBtns || useBtnHtml
+      ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' + rxnBtns + (rxnBtns && useBtnHtml ? '<div style="flex:1;"></div>' : '') + useBtnHtml + '</div>'
+      : '');
+}
+
+// Accept an aux challenge invite (no baseline step needed)
+async function _submitAcceptAuxChallenge(challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  try {
+    const { error } = await sb.from('challenge_participants')
+      .update({ status: 'joined' })
+      .eq('challenge_id', challengeId)
+      .eq('user_id', state.supabaseUserId);
+    if (error) throw error;
+    await _loadChallenges();
+    const ch = (_challenges || []).find(c => c.id === challengeId);
+    if (ch) _renderAuxDetailBody(ch);
+    _renderChallengesListHtml();
+    _renderActiveChallengeHomeCard();
+    showToast('Challenge accepted!');
+  } catch (e) {
+    showToast('Could not accept: ' + _chErrMsg(e));
+  }
+}
+
+// ── SONG SUBMISSION ───────────────────────────────────────────────────────────
+
+// Resolve a streaming URL via odesli.co. Returns null on failure.
+// Response shape (relevant fields only):
+//   { title, artistName, thumbnailUrl, linksByPlatform: { spotify: {url}, appleMusic: {url}, ... } }
+async function _resolveOdesli(url) {
+  try {
+    const resp = await fetch('https://api.odesli.co/resolve?url=' + encodeURIComponent(url));
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (!data || (!data.title && !data.artistName)) return null;
+    const links = {};
+    for (const [platform, info] of Object.entries(data.linksByPlatform || {})) {
+      if (info && info.url) links[platform] = info.url;
+    }
+    return {
+      title: data.title || 'Unknown Title',
+      artist: data.artistName || '',
+      artwork_url: data.thumbnailUrl || null,
+      platform_links: links,
+      odesli_key: data.entityUniqueId || null,
+    };
+  } catch (_) { return null; }
+}
+
+function _openAuxSongSubmitSheet(challengeId) {
+  const existing = document.getElementById('aux-submit-sheet');
+  if (existing) existing.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'aux-submit-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = '<div id="aux-submit-body" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:22px 20px calc(32px + env(safe-area-inset-bottom));border-top:2px solid ' + _AUX_COLOR + ';max-height:90vh;overflow-y:auto;">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
+    + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:' + _AUX_COLOR + ';letter-spacing:2px;">CONTROL THE AUX</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">SUBMIT A SONG</div></div>'
+    + '<button onclick="document.getElementById(\'aux-submit-sheet\').remove()" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
+    + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.45;margin-bottom:12px;">Paste a link from Spotify, Apple Music, YouTube Music, or any streaming service. The app will resolve it to a universal card.</div>'
+    + '<input id="aux-song-url" type="url" placeholder="https://open.spotify.com/track/..." style="width:100%;box-sizing:border-box;background:#222;border:1px solid #444;border-radius:10px;color:var(--cream);font-family:\'Barlow Condensed\',sans-serif;font-size:14px;padding:12px 14px;outline:none;margin-bottom:10px;" />'
+    + '<div id="aux-song-preview" style="margin-bottom:10px;"></div>'
+    + '<button id="aux-song-resolve-btn" onclick="_onAuxSongUrlResolve(\'' + challengeId + '\')" style="width:100%;background:' + _AUX_COLOR + ';border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LOOK UP SONG</button>'
+    + '</div>';
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+  setTimeout(() => { const inp = document.getElementById('aux-song-url'); if (inp) inp.focus(); }, 100);
+}
+
+async function _onAuxSongUrlResolve(challengeId) {
+  const urlInp = document.getElementById('aux-song-url');
+  const preview = document.getElementById('aux-song-preview');
+  const btn = document.getElementById('aux-song-resolve-btn');
+  if (!urlInp || !preview || !btn) return;
+  const url = urlInp.value.trim();
+  if (!url) { showToast('Paste a song link first.'); return; }
+  btn.disabled = true; btn.textContent = 'LOOKING UP...';
+  preview.innerHTML = '';
+  const resolved = await _resolveOdesli(url);
+  if (!resolved) {
+    // Fall back to manual entry — just use the URL as-is with a bare card
+    preview.innerHTML = '<div style="background:#222;border-radius:8px;padding:10px 12px;font-family:\'Barlow Condensed\',sans-serif;">'
+      + '<div style="font-size:12px;color:var(--gray);margin-bottom:6px;">Could not auto-resolve. You can still submit the link as-is.</div>'
+      + '<input id="aux-manual-title" type="text" placeholder="Song title" style="width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid #444;border-radius:8px;color:var(--cream);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;padding:8px 10px;outline:none;margin-bottom:6px;" />'
+      + '<input id="aux-manual-artist" type="text" placeholder="Artist name" style="width:100%;box-sizing:border-box;background:#1a1a1a;border:1px solid #444;border-radius:8px;color:var(--cream);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;padding:8px 10px;outline:none;" />'
+      + '</div>';
+    btn.textContent = 'SUBMIT SONG';
+    btn.onclick = () => _submitAuxSongManual(challengeId, url);
+    btn.disabled = false;
+    return;
+  }
+
+  // Show preview card
+  const artHtml = resolved.artwork_url
+    ? '<img src="' + escapeHtml(resolved.artwork_url) + '" style="width:52px;height:52px;border-radius:6px;object-fit:cover;flex-shrink:0;" />'
+    : '<div style="width:52px;height:52px;border-radius:6px;background:rgba(147,51,234,0.15);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">\uD83C\uDFB5</div>';
+  const platCount = Object.keys(resolved.platform_links).length;
+  preview.innerHTML = '<div style="background:#222;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;">'
+    + artHtml
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(resolved.title) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(resolved.artist) + '</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:' + _AUX_COLOR + ';margin-top:2px;">' + platCount + ' platform' + (platCount !== 1 ? 's' : '') + ' resolved</div>'
+    + '</div>'
+    + '</div>';
+
+  btn.textContent = 'SUBMIT SONG';
+  btn.onclick = () => _submitAuxSong(challengeId, resolved, url);
+  btn.disabled = false;
+}
+
+async function _submitAuxSong(challengeId, resolved, originalUrl) {
+  await _doSubmitAuxSong(challengeId, resolved.title, resolved.artist, resolved.artwork_url, originalUrl, resolved.odesli_key, resolved.platform_links);
+}
+
+async function _submitAuxSongManual(challengeId, originalUrl) {
+  const titleInp = document.getElementById('aux-manual-title');
+  const artistInp = document.getElementById('aux-manual-artist');
+  const title = titleInp ? titleInp.value.trim() : '';
+  const artist = artistInp ? artistInp.value.trim() : '';
+  if (!title) { showToast('Enter a song title.'); return; }
+  await _doSubmitAuxSong(challengeId, title, artist, null, originalUrl, null, {});
+}
+
+async function _doSubmitAuxSong(challengeId, title, artist, artworkUrl, originalUrl, odesliKey, platformLinks) {
+  const btn = document.getElementById('aux-song-resolve-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'SAVING...'; }
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) { showToast('Not signed in.'); if (btn) { btn.disabled = false; } return; }
+
+  const { week, year } = _getISOWeekAndYear(new Date());
+
+  // Check weekly limit
+  const { count } = await sb.from('aux_songs')
+    .select('id', { count: 'exact', head: true })
+    .eq('challenge_id', challengeId)
+    .eq('user_id', state.supabaseUserId)
+    .eq('week_number', week)
+    .eq('week_year', year);
+  if (count >= _AUX_MAX_SONGS_PER_WEEK) {
+    showToast('Max ' + _AUX_MAX_SONGS_PER_WEEK + ' songs per week reached.');
+    if (btn) { btn.disabled = false; btn.textContent = 'SUBMIT SONG'; }
+    return;
+  }
+
+  try {
+    const { error } = await sb.from('aux_songs').insert({
+      challenge_id: challengeId,
+      user_id: state.supabaseUserId,
+      title,
+      artist: artist || '',
+      artwork_url: artworkUrl || null,
+      original_url: originalUrl,
+      odesli_key: odesliKey || null,
+      platform_links: platformLinks || {},
+      week_number: week,
+      week_year: year,
+    });
+    if (error) throw error;
+    document.getElementById('aux-submit-sheet')?.remove();
+    delete _auxHomeDataCache[challengeId];
+    showToast('Song submitted!');
+    // Notify challenge crew
+    const ch = (_challenges || []).find(c => c.id === challengeId);
+    if (ch) {
+      const myName = state.supabaseUsername || state.supabaseDisplayName || 'Someone';
+      for (const p of _joinedParticipants(ch)) {
+        if (p.user_id !== state.supabaseUserId) {
+          _sendDirectPush(p.user_id, myName + ' submitted a song', title + (artist ? ' \u2014 ' + artist : ''), 'challenge', challengeId);
+        }
+      }
+      _renderAuxDetailBody(ch);
+    }
+    _renderActiveChallengeHomeCard();
+  } catch (e) {
+    showToast('Could not submit: ' + _chErrMsg(e));
+    if (btn) { btn.disabled = false; btn.textContent = 'SUBMIT SONG'; }
+  }
+}
+
+// ── REACTIONS AND USES ────────────────────────────────────────────────────────
+
+async function _reactToAuxSong(songId, reactionType, challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  try {
+    await sb.from('aux_reactions').upsert(
+      { song_id: songId, user_id: state.supabaseUserId, reaction_type: reactionType },
+      { onConflict: 'song_id,user_id' }
+    );
+    delete _auxHomeDataCache[challengeId];
+    const ch = (_challenges || []).find(c => c.id === challengeId);
+    if (ch) _renderAuxDetailBody(ch);
+    _renderActiveChallengeHomeCard();
+  } catch (e) { showToast('Could not react: ' + _chErrMsg(e)); }
+}
+
+async function _removeAuxReaction(songId, challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  try {
+    await sb.from('aux_reactions').delete().eq('song_id', songId).eq('user_id', state.supabaseUserId);
+    delete _auxHomeDataCache[challengeId];
+    const ch = (_challenges || []).find(c => c.id === challengeId);
+    if (ch) _renderAuxDetailBody(ch);
+    _renderActiveChallengeHomeCard();
+  } catch (e) { showToast('Could not remove reaction: ' + _chErrMsg(e)); }
+}
+
+async function _useAuxSong(songId, challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  try {
+    await sb.from('aux_uses').insert({ song_id: songId, user_id: state.supabaseUserId });
+    showToast('+5 pts to that submitter!');
+    delete _auxHomeDataCache[challengeId];
+    const ch = (_challenges || []).find(c => c.id === challengeId);
+    if (ch) _renderAuxDetailBody(ch);
+    _renderActiveChallengeHomeCard();
+  } catch (e) {
+    if (String(e).includes('unique') || _chErrMsg(e).includes('duplicate')) {
+      showToast('Already marked as used.');
+    } else {
+      showToast('Could not mark as used: ' + _chErrMsg(e));
+    }
+  }
+}
+
+async function _removeAuxUse(songId, challengeId) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  try {
+    await sb.from('aux_uses').delete().eq('song_id', songId).eq('user_id', state.supabaseUserId);
+    delete _auxHomeDataCache[challengeId];
+    const ch = (_challenges || []).find(c => c.id === challengeId);
+    if (ch) _renderAuxDetailBody(ch);
+    _renderActiveChallengeHomeCard();
+  } catch (e) { showToast('Could not remove use: ' + _chErrMsg(e)); }
+}
+
+// ── HOME CARD ─────────────────────────────────────────────────────────────────
+
+// Renders (or removes) the aux home card above the deload banner.
+// Called after _loadChallenges and after any mutation that changes aux data.
+// The card shows the current leader + most-reacted song this week, plus
+// inline react/use buttons so users can engage without opening the detail sheet.
+let _auxHomeDataCache = {}; // { [challengeId]: { songs, reactions, uses } }
+
+async function _renderActiveAuxHomeCard(ch) {
+  const anchorEl = document.getElementById('deload-banner') || document.getElementById('home-main');
+  if (!anchorEl) return;
+
+  const cardId = 'aux-home-card-' + ch.id;
+  let el = document.getElementById(cardId);
+
+  if (ch.status !== 'active') { if (el) el.remove(); return; }
+
+  if (!el) {
+    el = document.createElement('div');
+    el.id = cardId;
+    anchorEl.parentNode.insertBefore(el, anchorEl);
+  }
+
+  const myId = state.supabaseUserId;
+  const daysLeft = _daysRemaining(ch.end_date);
+  const joined = _joinedParticipants(ch);
+
+  // Placeholder while we fetch
+  el.style.cssText = 'background:linear-gradient(135deg,rgba(147,51,234,0.08) 0%,rgba(15,10,25,0.9) 100%);border:1px solid rgba(147,51,234,0.3);border-top:2px solid ' + _AUX_COLOR + ';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;';
+  el.onclick = () => _openChallengeDetailSheet(ch.id);
+
+  if (!_auxHomeDataCache[ch.id]) {
+    el.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:' + _AUX_COLOR + ';letter-spacing:2px;">CONTROL THE AUX</div>'
+      + '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;">LOADING...</div>';
+    const auxData = await _loadAuxData(ch.id);
+    _auxHomeDataCache[ch.id] = auxData;
+  }
+
+  const { songs, reactions, uses } = _auxHomeDataCache[ch.id];
+  const scores = _calcAuxScores(songs, reactions, uses);
+  const ranked = joined.map(p => ({ ...p, score: scores[p.user_id] || 0 })).sort((a, b) => b.score - a.score);
+  const leader = ranked[0];
+  const leaderU = leader ? (_friendCache[leader.user_id] || {}) : null;
+  const leaderName = leader
+    ? (leader.user_id === myId ? 'You' : ('@' + (leaderU.username || leaderU.display_name || '...')))
+    : '';
+
+  // Featured song: most reacted-to song this week that is NOT by current user (so they can react)
+  const { week: curWeek, year: curYear } = _getISOWeekAndYear(new Date());
+  const thisWeekSongs = songs.filter(s => s.week_number === curWeek && s.week_year === curYear);
+  const scoredSongs = thisWeekSongs.map(s => ({
+    ...s,
+    pts: reactions.filter(r => r.song_id === s.id).length + uses.filter(u => u.song_id === s.id).length * 5
+  })).sort((a, b) => b.pts - a.pts);
+  // Pick the highest-scoring song not by the current user, fallback to any song
+  const featuredSong = scoredSongs.find(s => s.user_id !== myId) || scoredSongs[0] || null;
+
+  const artHtml = featuredSong && featuredSong.artwork_url
+    ? '<img src="' + escapeHtml(featuredSong.artwork_url) + '" style="width:44px;height:44px;border-radius:6px;object-fit:cover;flex-shrink:0;" />'
+    : (featuredSong ? '<div style="width:44px;height:44px;border-radius:6px;background:rgba(147,51,234,0.15);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">\uD83C\uDFB5</div>' : '');
+
+  // Inline reaction buttons for the featured song
+  let rxnBtnsHtml = '';
+  if (featuredSong && featuredSong.user_id !== myId) {
+    const myRxn = reactions.find(r => r.song_id === featuredSong.id && r.user_id === myId);
+    const myUse = uses.find(u => u.song_id === featuredSong.id && u.user_id === myId);
+    const rxnEmoji = { fire: '\uD83D\uDD25', fuel: '\uD83D\uDCAA', vibe: '\u2728' };
+    const rxnBtns = Object.entries(rxnEmoji).map(([type, emoji]) => {
+      const active = myRxn && myRxn.reaction_type === type;
+      const fn = active
+        ? ('_removeAuxReaction(\'' + featuredSong.id + '\',\'' + ch.id + '\');event.stopPropagation()')
+        : ('_reactToAuxSong(\'' + featuredSong.id + '\',\'' + type + '\',\'' + ch.id + '\');event.stopPropagation()');
+      return '<button onclick="' + fn + '" style="background:' + (active ? 'rgba(147,51,234,0.2)' : 'rgba(255,255,255,0.06)') + ';border:1px solid ' + (active ? _AUX_COLOR : 'rgba(255,255,255,0.12)') + ';border-radius:999px;padding:4px 9px;font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' + emoji + '</button>';
+    }).join('');
+    const useBtn = myUse
+      ? '<button onclick="_removeAuxUse(\'' + featuredSong.id + '\',\'' + ch.id + '\');event.stopPropagation()" style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:#2ecc71;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:999px;padding:4px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;">\u2713 USED</button>'
+      : '<button onclick="_useAuxSong(\'' + featuredSong.id + '\',\'' + ch.id + '\');event.stopPropagation()" style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:var(--cream);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:999px;padding:4px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;">USE (+5)</button>';
+    rxnBtnsHtml = '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:8px;" onclick="event.stopPropagation()">' + rxnBtns + '<div style="flex:1;min-width:6px;"></div>' + useBtn + '</div>';
+  }
+
+  const leaderLine = leader
+    ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);margin-top:4px;">\uD83E\uDD47 ' + escapeHtml(leaderName) + ' leads with ' + leader.score + ' pts</div>'
+    : '';
+
+  const songSection = featuredSong
+    ? '<div style="display:flex;align-items:flex-start;gap:10px;margin-top:10px;background:rgba(0,0,0,0.25);border-radius:8px;padding:8px;">'
+      + artHtml
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;color:' + _AUX_COLOR + ';letter-spacing:1.5px;margin-bottom:2px;">FEATURED THIS WEEK</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--cream);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(featuredSong.title) + '</div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(featuredSong.artist) + '</div>'
+      + rxnBtnsHtml
+      + '</div>'
+      + '</div>'
+    : '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);margin-top:8px;">No songs this week yet. Tap to submit one.</div>';
+
+  el.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+    + '<div style="min-width:0;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:' + _AUX_COLOR + ';letter-spacing:2px;">CONTROL THE AUX</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;line-height:1.1;">' + (daysLeft > 0 ? daysLeft + ' DAYS LEFT' : 'FINAL DAY') + '</div>'
+    + leaderLine
+    + '</div>'
+    + '<div style="font-size:26px;color:rgba(147,51,234,0.4);">\uD83C\uDFB5</div>'
+    + '</div>'
+    + songSection;
+}
+
+// ── ROW RENDERERS ─────────────────────────────────────────────────────────────
+
+function _auxRowHtml(c) {
+  const me = (c.challenge_participants || []).find(p => p.user_id === state.supabaseUserId);
+  const isInvited = me && me.status === 'invited';
+  const daysLeft = c.status === 'active' ? _daysRemaining(c.end_date) : null;
+  const statusLabel = c.status === 'pending' ? 'PENDING' : (daysLeft !== null ? daysLeft + 'D LEFT' : c.status.toUpperCase());
+  const others = (c.challenge_participants || []).filter(p => p.status === 'joined' && p.user_id !== state.supabaseUserId);
+  return '<div onclick="_openChallengeDetailSheet(\'' + c.id + '\')" style="background:#181818;border:1px solid rgba(147,51,234,0.2);border-left:3px solid ' + _AUX_COLOR + ';border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+    + '<div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:' + _AUX_COLOR + ';letter-spacing:2px;">CONTROL THE AUX</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--cream);letter-spacing:1px;">' + statusLabel + '</div>'
+    + '<div style="font-size:11px;color:var(--gray);">' + (others.length ? others.length + ' others' : 'waiting on others') + ' \u00B7 3 songs/wk</div>'
+    + '</div>'
+    + (isInvited ? '<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:' + _AUX_COLOR + ';white-space:nowrap;">INVITED</div>' : '<div style="font-size:18px;color:rgba(147,51,234,0.4);">&#x203A;</div>')
+    + '</div>'
+    + '</div>';
+}
+
+function _pastAuxRowHtml(c) {
+  const won = c.winner_id === state.supabaseUserId;
+  const resultColor = won ? '#FFD700' : 'var(--gray)';
+  const resultLabel = won ? 'WON' : (c.winner_id ? 'LOST' : 'TIE');
+  return '<div onclick="_openChallengeDetailSheet(\'' + c.id + '\')" style="background:#111;border:1px solid rgba(255,255,255,0.07);border-left:3px solid rgba(147,51,234,0.3);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+    + '<div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:rgba(147,51,234,0.5);letter-spacing:2px;">CONTROL THE AUX</div>'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:18px;color:var(--gray);letter-spacing:1px;">' + (c.duration_weeks || 4) + ' WEEKS</div>'
+    + '</div>'
+    + '<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:' + resultColor + ';">' + resultLabel + '</div>'
+    + '</div>'
+    + '</div>';
 }
 
 // ─── HEALTH CONNECT BRIDGE ──────────────────────────────────────────────────
