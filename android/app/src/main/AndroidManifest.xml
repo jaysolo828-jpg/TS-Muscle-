@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Health Connect declares minSdk 26 in its own manifest. We override
+         that here because our HealthConnectSyncActivity gates every HC call
+         behind getSdkStatus() — devices below API 26 hit SDK_UNAVAILABLE
+         and finish silently, so there is no runtime risk. -->
+    <uses-sdk tools:overrideLibrary="androidx.health.connect.client" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
