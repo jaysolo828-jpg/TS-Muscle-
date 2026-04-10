@@ -48,5 +48,5 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
     implementation platform('com.google.firebase:firebase-bom:33.1.0')
     implementation 'com.google.firebase:firebase-messaging-ktx'
-    implementation 'androidx.health.connect:connect-client:1.1.0-rc01'
+    implementation 'androidx.health.connect:connect-client:1.1.0-alpha06'
 }
