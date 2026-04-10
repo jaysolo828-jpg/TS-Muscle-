@@ -33175,7 +33175,11 @@ function confirmHardReset() {
   document.body.appendChild(modal);
 }
 
-function hardResetApp() {
+async function hardResetApp() {
+  try {
+    const sb = _getSupabaseClient();
+    if (sb) await sb.auth.signOut();
+  } catch(_) {}
   localStorage.clear();
   sessionStorage.clear();
   window.location.reload();
