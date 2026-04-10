@@ -13529,14 +13529,24 @@ async function _triggerHCSync(challengeId) {
   const jwt = await _getJwt();
   if (!jwt) { showToast('Could not get session. Try signing out and back in.'); return; }
 
+  // Pass the refresh token so HealthConnectSyncActivity can store it for
+  // the WorkManager background sync (which needs to refresh the JWT
+  // without launching a browser activity).
+  let refreshToken = '';
+  try {
+    const { data: { session: s } } = await _getSupabaseClient().auth.getSession();
+    refreshToken = s?.refresh_token || '';
+  } catch (_) {}
+
   const params = new URLSearchParams({
     jwt,
-    user_id:      state.supabaseUserId,
-    challenge_id: challengeId,
-    sb_url:       window.SUPABASE_URL       || '',
-    apikey:       window.SUPABASE_PUBLISHABLE_KEY || '',
-    days:         '7',
+    user_id:       state.supabaseUserId,
+    challenge_id:  challengeId,
+    sb_url:        window.SUPABASE_URL            || '',
+    apikey:        window.SUPABASE_PUBLISHABLE_KEY || '',
+    days:          '7',
   });
+  if (refreshToken) params.set('refresh_token', refreshToken);
 
   // Mark sync pending so the visibilitychange handler knows to refresh.
   sessionStorage.setItem('hc_sync_pending', challengeId || 'standalone');
@@ -14020,7 +14030,16 @@ function showScreen(name, el) {
 
   if (name === 'history') { renderHistory(); renderProgress(); renderProgressChart(); }
 
-  if (name === 'cardio') renderCardioHistory();
+  if (name === 'cardio') {
+    renderCardioHistory();
+    // Pull in any sessions added by the WorkManager background sync since last visit.
+    _importCYHLogsToCardioHistory().then(added => {
+      if (added > 0) {
+        localStorage.setItem('cardio_hc_last_sync', String(Date.now()));
+        renderCardioHistory();
+      }
+    });
+  }
   if (name === 'mindset') { _purgeLegacyMoodLogs(); renderValuesCard(); _mwSpinOnNext = true; renderMoodWheel(); renderMoodCheckinLabel(); renderMindsetStats(); renderHardDayCollection(); renderMindsetActivity(); }
 
   if (name === 'settings') {
@@ -34417,6 +34436,7 @@ function renderCardioHistory() {
     return;
   }
   const hcIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#C0392B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M12 21s-8-7.5-8-12.5A5 5 0 0 1 12 4a5 5 0 0 1 8 4.5C20 13.5 12 21 12 21z"/></svg>';
+  const hcSubLabels = { walk: 'WALK', outdoor: 'OUTDOOR RUN', treadmill: 'TREADMILL' };
   container.innerHTML = [...state.cardioHistory].reverse().slice(0, 20).map(s => {
     const date = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const typeLabelMap = {
@@ -34425,16 +34445,17 @@ function renderCardioHistory() {
       walk: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M7 14l2-3M17 14l-2-3"/></svg>WALK',
       briskwalk: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="4" r="1.5"/><path d="M9 9l3 2 3-2M8 20l2-5 2 3 2-3 2 5"/><path d="M6 14l3-3M18 14l-3-3"/></svg>BRISK WALK',
       jog: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="13" cy="4" r="1.5"/><path d="M7 8l2 3h5l2-3M9 11l-2 5h2l1-2 2 2h2l-2-5"/></svg>JOG',
-      hc_import: hcIconSvg + '<span style="color:#C0392B;">HEALTH CONNECT</span>'
+      hc_import: hcIconSvg + '<span style="color:#C0392B;">' + (hcSubLabels[s.hcType || 'walk'] || 'HEALTH CONNECT') + '</span>'
     };
     const typeLabel = typeLabelMap[s.type] || s.type.toUpperCase();
-    const dist = s.details?.distance ? `${s.details.distance} mi` : '';
-    const cal = s.details?.calories ? `${s.details.calories} cal` : '';
-    const pace = s.details?.pace && s.details.pace !== '--' ? `${s.details.pace}/mi` : '';
-    const speed = s.details?.speed ? `${s.details.speed} mph` : '';
-    const incline = s.details?.incline ? `${s.details.incline}% incline` : '';
-    const rpeStr = s.rpe ? `RPE ${s.rpe}` : '';
-    const meta = [dist, cal, pace, speed, incline, rpeStr].filter(Boolean).join(' · ');
+    const dist    = s.details?.distance ? `${s.details.distance} mi` : '';
+    const cal     = s.details?.calories ? `${s.details.calories} cal` : '';
+    const steps   = s.details?.steps    ? s.details.steps.toLocaleString() + ' steps' : '';
+    const pace    = s.details?.pace && s.details.pace !== '--' ? `${s.details.pace}/mi` : '';
+    const speed   = s.details?.speed   ? `${s.details.speed} mph` : '';
+    const incline = s.details?.incline  ? `${s.details.incline}% incline` : '';
+    const rpeStr  = s.rpe ? `RPE ${s.rpe}` : '';
+    const meta = [dist, cal, steps, pace, speed, incline, rpeStr].filter(Boolean).join(' · ');
     return `<div class="history-item" style="cursor:default;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
       <div style="flex:1;min-width:0;">
         <div class="history-date">${date}</div>
@@ -34492,9 +34513,10 @@ async function _importCYHLogsToCardioHistory() {
   const activeCYH = (_challenges || []).find(ch =>
     ch.challenge_type === 'clear_your_head' && ch.status === 'active'
   );
+  const sel = 'id, logged_at, minutes, hc_session_id, distance_meters, calories, steps, exercise_type';
   const queries = [
     sb.from('cyh_logs')
-      .select('id, logged_at, minutes, mood, hc_session_id')
+      .select(sel)
       .is('challenge_id', null)
       .eq('user_id', state.supabaseUserId)
       .not('hc_session_id', 'is', null)
@@ -34502,7 +34524,7 @@ async function _importCYHLogsToCardioHistory() {
   if (activeCYH) {
     queries.push(
       sb.from('cyh_logs')
-        .select('id, logged_at, minutes, mood, hc_session_id')
+        .select(sel)
         .eq('challenge_id', activeCYH.id)
         .eq('user_id', state.supabaseUserId)
         .not('hc_session_id', 'is', null)
@@ -34516,17 +34538,25 @@ async function _importCYHLogsToCardioHistory() {
     state.cardioHistory.filter(s => s.hcSessionId).map(s => s.hcSessionId)
   );
   let added = 0;
-  const moodLabel = { better: 'Better', same: 'Same', worse: 'Worse' };
   for (const log of allLogs) {
     if (existingHCIds.has(log.hc_session_id)) continue;
+    const distMiles = log.distance_meters
+      ? parseFloat((log.distance_meters * 0.000621371).toFixed(2))
+      : null;
     state.cardioHistory.push({
-      id: 'hc_' + log.id,
-      type: 'hc_import',
-      duration: log.minutes,
-      rpe: null,
-      date: log.logged_at,
+      id:         'hc_' + log.id,
+      type:       'hc_import',
+      hcType:     log.exercise_type || 'walk',
+      duration:   log.minutes,
+      rpe:        null,
+      date:       log.logged_at,
       hcSessionId: log.hc_session_id,
-      details: { notes: log.mood ? 'Mood after: ' + (moodLabel[log.mood] || log.mood) : '', calories: null }
+      details: {
+        distance: distMiles,
+        calories: log.calories  || null,
+        steps:    log.steps     || null,
+        notes:    '',
+      }
     });
     existingHCIds.add(log.hc_session_id);
     added++;
