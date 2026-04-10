@@ -11,6 +11,15 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- FOREGROUND_SERVICE_HEALTH required on Android 14+ when foregroundServiceType="health" -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH"
+        android:minSdkVersion="34" />
+    <!-- ACTIVITY_RECOGNITION required on Android 10+ to read TYPE_STEP_COUNTER -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
+    <!-- Step counter hardware is optional — app works without it (timer still runs) -->
+    <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
 
     <!-- Health Connect: exercise sessions, distance, calories, and steps -->
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
@@ -120,6 +129,31 @@
                 <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
         </activity>
+
+        <!-- Step counter bridge. Launched from the web page via:
+             intent://start#Intent;scheme=ts-muscle-step-start;...;end
+             Requests ACTIVITY_RECOGNITION, then starts StepCounterService. -->
+        <activity
+            android:name=".StepPermissionActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ts-muscle-step-start" />
+            </intent-filter>
+        </activity>
+
+        <!-- Foreground service that reads TYPE_STEP_COUNTER and serves step
+             count over http://localhost:8765/steps for the web page to poll. -->
+        <service
+            android:name=".StepCounterService"
+            android:exported="false"
+            android:foregroundServiceType="health" />
 
         <service
             android:name=".TSFirebaseMessagingService"
