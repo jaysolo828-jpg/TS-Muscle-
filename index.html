@@ -255,6 +255,27 @@
   .onboard-select-btn.selected::after {
     animation: ob-check-in 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
   }
+  /* Priority body-part chips — pill shape, no floating checkmark */
+  .ob-priority-btn {
+    border-radius: 20px !important;
+    padding: 8px 18px !important;
+    width: auto !important;
+    text-align: center !important;
+    font-family: 'Barlow Condensed', sans-serif !important;
+    font-size: 15px !important;
+    letter-spacing: 1px !important;
+    color: var(--gray) !important;
+    border-color: #3a3a3a !important;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s !important;
+  }
+  .ob-priority-btn.selected {
+    background: var(--red) !important;
+    border-color: var(--red) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 10px rgba(204,32,39,0.35) !important;
+  }
+  .ob-priority-btn.selected::after { display: none !important; }
+  .ob-priority-btn:active { transform: scale(0.94) !important; }
   /* Recommendation + echo cards fade in when revealed by JS */
   #ob-split-recommendation,
   #ob-goal-echo { animation: ob-step-in 0.2s ease-out; }
@@ -3835,20 +3856,20 @@
       <!-- Priority + days context pickers — feed into recommendation, update on tap -->
       <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:14px; display:flex; flex-direction:column; gap:14px;">
         <div>
-          <div style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
-            <span style="color:var(--gray);">ANY PRIORITY AREAS?</span>
-            <span style="color:var(--red-text); font-size:11px; letter-spacing:1px;">OPTIONAL</span>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+            <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">ANY PRIORITY AREAS?</span>
+            <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
           </div>
-          <div style="font-size:12px; color:#888; margin-bottom:10px;">Select any that apply. Tap again to remove.</div>
+          <div style="font-size:13px; color:#888; margin-bottom:12px; line-height:1.5;">A muscle you want to bring up. We add extra sets for it on the right training days.</div>
           <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('chest', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Chest</button>
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('back', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Back</button>
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('shoulders', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Shoulders</button>
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('arms', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Arms</button>
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('glutes', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Glutes</button>
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('hamstrings', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Hamstrings</button>
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('quads', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Quads</button>
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('calves', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Calves</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('chest', this)">Chest</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('back', this)">Back</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('shoulders', this)">Shoulders</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('arms', this)">Arms</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('glutes', this)">Glutes</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('hamstrings', this)">Hamstrings</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('quads', this)">Quads</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('calves', this)">Calves</button>
           </div>
           <input type="hidden" id="ob-priority" value=""/>
         </div>
