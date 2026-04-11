@@ -3544,7 +3544,7 @@
     <!-- Header -->
     <div style="text-align:center; margin-bottom:28px; padding-top:20px;">
       <div style="font-family:'Bebas Neue',cursive; font-size:36px; color:var(--cream); letter-spacing:3px;">T&amp;S MUSCLE</div>
-      <div style="font-size:14px; color:var(--gray-light); letter-spacing:2px; margin-top:4px;">LET'S SET YOU UP RIGHT</div>
+      <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--gray-light); letter-spacing:2.5px; margin-top:6px;">LET'S SET YOU UP RIGHT</div>
     </div>
 
     <!-- Progress dots (steps 1–8) -->
@@ -3593,7 +3593,10 @@
             <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
             <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
           </div>
-          <button onclick="introSlideNext(2)" class="onboard-next-btn">NEXT →</button>
+          <div style="display:flex; gap:10px;">
+            <button onclick="onboardBackToWelcome()" class="onboard-back-btn">← BACK</button>
+            <button onclick="introSlideNext(2)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
+          </div>
         </div>
       </div>
       <!-- Slide 2: The one thing to know (RPE) -->
@@ -3686,6 +3689,9 @@
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:3px; margin-bottom:10px;">THERAPY &amp; SNEAKERS</div>
         <div style="font-family:'Bebas Neue',cursive; font-size:42px; color:var(--cream); letter-spacing:3px; line-height:1.05;">T&amp;S MUSCLE</div>
         <div style="font-size:15px; color:#d0cbc6; margin-top:10px; line-height:1.5;">Train your body.<br>Train your mind.<br>Same place.</div>
+        <div style="margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);">
+          <div style="font-size:14px; color:#d0cbc6; line-height:1.65; max-width:290px; margin:0 auto;">Built by <strong style="color:var(--cream);">Jay Wilson, LCSW</strong> — a licensed clinical social worker from NC. T&amp;S is where getting stronger physically and steadier mentally happen in the same place.</div>
+        </div>
       </div>
       <div style="display:flex; flex-direction:column; gap:12px;">
         <button class="onboard-select-btn" onclick="onboardShowIntro()" style="padding:20px 16px;">
@@ -3828,7 +3834,10 @@
     <!-- STEP 3: Split -->
     <div id="onboard-step-3" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:34px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR SPLIT</div>
-      <div style="font-size:15px; color:#d0cbc6; margin-bottom:16px; line-height:1.6;">How you organize your training. Answer two questions and we'll point you in the right direction.</div>
+      <div style="font-size:15px; color:#d0cbc6; margin-bottom:6px; line-height:1.6;">How your training is organized across the week.</div>
+      <div style="background:rgba(204,32,39,0.08); border-left:3px solid var(--red); border-radius:8px; padding:10px 14px; font-size:14px; color:#d0cbc6; margin-bottom:16px; line-height:1.6;">
+        <strong style="color:var(--cream);">Don't know what a split is? That's fine.</strong> Just answer the two questions below and tap <strong style="color:var(--cream);">USE THIS →</strong> on the recommendation. You're done.
+      </div>
 
       <!-- Priority + days context pickers — feed into recommendation, update on tap -->
       <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:14px; display:flex; flex-direction:column; gap:14px;">
@@ -3878,6 +3887,11 @@
         </div>
       </div>
 
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--gray); letter-spacing:2px;">OR CHOOSE YOUR OWN</div>
+        <div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div>
+      </div>
       <div id="ob-split-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
         <button class="onboard-select-btn" onclick="selectSplitOnboard('ul', this)"
           data-short="Alternate upper and lower body days. Every muscle trained twice a week. 4 days ideal.">
@@ -32389,6 +32403,14 @@ function onboardShowIntro() {
   document.getElementById('onboard-step-intro').style.display = 'block';
   document.querySelectorAll('.intro-slide').forEach(s => s.style.display = 'none');
   document.getElementById('intro-slide-1').style.display = 'block';
+  document.getElementById('onboarding-modal').scrollTop = 0;
+}
+
+function onboardBackToWelcome() {
+  document.getElementById('onboard-step-intro').style.display = 'none';
+  document.querySelectorAll('.intro-slide').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
+  document.getElementById('onboard-step-0').style.display = 'block';
   document.getElementById('onboarding-modal').scrollTop = 0;
 }
 
