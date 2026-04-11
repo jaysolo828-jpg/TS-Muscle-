@@ -9549,7 +9549,7 @@ function _removeFriend(userId) {
     <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #333;">
       <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">REMOVE FRIEND?</div>
       <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray);margin-bottom:24px;line-height:1.5;">You won't see each other's activity or be able to react to workouts.</div>
-      <button onclick="this.classList.add('btn-confirming');_confirmRemoveFriend('${userId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px;">REMOVE</button>
+      <button onclick="this.disabled=true;this.textContent='REMOVING...';_confirmRemoveFriend('${userId}')" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px;">REMOVE</button>
       <button onclick="document.getElementById('remove-friend-confirm-sheet').remove()" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>
     </div>`;
   sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
@@ -9576,7 +9576,7 @@ async function _confirmRemoveFriend(userId) {
     }),
   ]);
 
-  if (!r1.ok && !r2.ok) { showToast('Could not remove friend. Try again.'); return; }
+  if (!r1.ok || !r2.ok) { showToast('Could not remove friend. Try again.'); return; }
 
   // Auto-cancel any pending or active 1RM challenges between these two
   // users — keeps the data in sync with the friendship, since a removed
@@ -11801,7 +11801,14 @@ async function _submitAcceptChallenge() {
     const baselineE1rm = _epley1RM(d.baselineWeight, d.baselineReps);
     const ch = (_challenges || []).find(c => c.id === d.challengeId);
     const existingRow = ch ? _myParticipantRow(ch) : null;
-    const creatorId = ch ? ch.challenger_id : d.friendId;
+    // Prefer the in-cache challenger_id; fall back to a fresh DB lookup
+    // so the accept push always reaches the real creator, not d.friendId
+    // (which in multi-person challenges is the first opponent, not the creator).
+    let creatorId = ch ? ch.challenger_id : null;
+    if (!creatorId) {
+      const { data: chRow } = await sb.from('challenges').select('challenger_id').eq('id', d.challengeId).single();
+      creatorId = chRow?.challenger_id || null;
+    }
 
     if (existingRow && existingRow.status === 'invited') {
       // Multi-person flow — update the invited row in place.
@@ -11974,23 +11981,25 @@ async function _quitChallenge(challengeId) {
       .eq('challenge_id', challengeId)
       .eq('user_id', state.supabaseUserId);
     if (qErr) throw qErr;
-    // Re-evaluate: if fewer than 2 joined remain, cancel the whole
-    // challenge. Local cache update first so the count is accurate.
+    // Re-query the DB for current participant state so the auto-cancel
+    // decision is based on truth, not a potentially stale local cache.
+    const { data: freshParts } = await sb
+      .from('challenge_participants')
+      .select('user_id, status')
+      .eq('challenge_id', challengeId);
+    const liveParts = freshParts || [];
+    const joinedLeft = liveParts.filter(p => p.status === 'joined' && p.user_id !== state.supabaseUserId).length;
+    if (joinedLeft < 1) {
+      await sb.from('challenges').update({ status: 'cancelled' }).eq('id', challengeId);
+    }
     if (ch) {
-      const updatedParts = (ch.participants || []).map(p =>
-        p.user_id === state.supabaseUserId ? { ...p, status: 'left' } : p
-      );
-      const joinedLeft = updatedParts.filter(p => p.status === 'joined').length;
-      if (joinedLeft < 2) {
-        await sb.from('challenges').update({ status: 'cancelled' }).eq('id', challengeId);
-      }
       const fromName = state.supabaseDisplayName || state.displayName || 'Someone';
       // Notify every other joined/invited participant that this person quit.
-      const others = updatedParts
+      const others = liveParts
         .filter(p => p.user_id !== state.supabaseUserId && (p.status === 'joined' || p.status === 'invited'))
         .map(p => p.user_id);
       others.forEach(uid => {
-        _sendDirectPush(uid, fromName + ' quit the challenge', joinedLeft < 2 ? 'Not enough players — challenge ended.' : 'The rest keeps going.', 'challenge', challengeId);
+        _sendDirectPush(uid, fromName + ' quit the challenge', joinedLeft < 1 ? 'Not enough players — challenge ended.' : 'The rest keeps going.', 'challenge', challengeId);
       });
     }
     showToast('You quit the challenge');
@@ -12029,6 +12038,10 @@ async function _startChallengeNow(challengeId) {
   if (!sb || !state.supabaseUserId) return;
   const ch = (_challenges || []).find(c => c.id === challengeId);
   if (!ch) return;
+  // Disable the start button for the duration of the async call to prevent
+  // double-taps on slow networks.
+  const _startBtn = document.querySelector('button[onclick*="_confirmStartChallenge"]');
+  if (_startBtn) { _startBtn.disabled = true; _startBtn.textContent = 'STARTING...'; }
   try {
     const now = new Date();
     const end = new Date(now.getTime() + (ch.duration_weeks || 5) * 7 * 24 * 60 * 60 * 1000);
@@ -12053,6 +12066,7 @@ async function _startChallengeNow(challengeId) {
     _renderActiveChallengeHomeCard();
     _renderActiveChainHomeCard();
   } catch (e) {
+    if (_startBtn) { _startBtn.disabled = false; _startBtn.textContent = 'START CHALLENGE'; }
     console.error('[challenge-start] failed:', e);
     showToast('Start failed: ' + (_chErrMsg(e) || 'try again'));
   }
@@ -14605,7 +14619,7 @@ async function _submitChallengeLog(challengeId) {
   const w = parseFloat(document.getElementById('challenge-log-weight')?.value);
   const r = parseInt(document.getElementById('challenge-log-reps')?.value, 10);
   if (!w || w <= 0) { showToast('Enter a valid weight.'); return; }
-  if (!r || r < 1 || r > 20) { showToast('Reps must be between 1 and 20.'); return; }
+  if (!r || r < 1 || r > 30) { showToast('Reps must be between 1 and 30.'); return; }
   haptic(HAPTIC.success);
   const btn = document.getElementById('challenge-log-save');
   if (btn) { btn.disabled = true; btn.textContent = 'SAVING...'; }
@@ -14613,9 +14627,12 @@ async function _submitChallengeLog(challengeId) {
     const e1rm = _epley1RM(w, r);
     const ch = (_challenges || []).find(c => c.id === challengeId);
     const me = ch ? _myParticipantRow(ch) : null;
-    // Only save if this e1RM beats the current best (or there is no best yet).
-    if (me && me.final_e1rm != null && e1rm <= me.final_e1rm) {
-      showToast('That doesn\u2019t beat your current best.');
+    // Only save if this e1RM strictly beats the current best (or there is no best yet).
+    if (me && me.final_e1rm != null && e1rm < me.final_e1rm) {
+      const bestDesc = me.final_weight && me.final_reps
+        ? me.final_weight + ' \u00d7 ' + me.final_reps + ' (e1RM ' + me.final_e1rm + ')'
+        : 'e1RM ' + me.final_e1rm;
+      showToast('Log a heavier set to beat your best: ' + bestDesc);
       if (btn) { btn.disabled = false; btn.textContent = 'SAVE LOG'; }
       return;
     }
