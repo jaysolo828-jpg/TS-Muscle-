@@ -3854,13 +3854,13 @@
       </div>
 
       <!-- Priority + days context pickers — feed into recommendation, update on tap -->
-      <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:14px; display:flex; flex-direction:column; gap:14px;">
+      <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:14px; display:flex; flex-direction:column; gap:16px;">
         <div id="ob-priority-section">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
             <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">ANY PRIORITY AREAS?</span>
             <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
           </div>
-          <div style="font-size:13px; color:#888; margin-bottom:12px; line-height:1.5;">A muscle you want to bring up. We add extra sets for it on the right training days, starting week 2.</div>
+          <div style="font-size:13px; color:#888; margin-bottom:10px; line-height:1.5;">A muscle you want to bring up — we add extra sets on the right training days from Week 2.</div>
           <div style="display:flex; flex-wrap:wrap; gap:8px;">
             <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('chest', this)">Chest</button>
             <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('back', this)">Back</button>
@@ -3874,7 +3874,11 @@
           <input type="hidden" id="ob-priority" value=""/>
         </div>
         <div>
-          <div style="font-size:13px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:8px;">DAYS PER WEEK?</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">DAYS PER WEEK?</span>
+            <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
+          </div>
+          <div style="font-size:13px; color:#888; margin-bottom:10px; line-height:1.5;">Helps us match the recommendation to a split that fits your schedule.</div>
           <div style="display:flex; gap:8px;">
             <button class="onboard-select-btn ob-rec-days-btn" onclick="selectObRecDays(2, this)" style="flex:1; padding:10px 6px; text-align:center; font-weight:bold; font-size:15px;">2</button>
             <button class="onboard-select-btn ob-rec-days-btn" onclick="selectObRecDays(3, this)" style="flex:1; padding:10px 6px; text-align:center; font-weight:bold; font-size:15px;">3</button>
@@ -3885,14 +3889,15 @@
           <input type="hidden" id="ob-rec-days" value=""/>
         </div>
         <div>
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-            <span style="font-size:13px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif;">TIME PER SESSION?</span>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">TIME PER SESSION?</span>
             <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
           </div>
+          <div style="font-size:13px; color:#888; margin-bottom:10px; line-height:1.5;">Some splits ask more per session than others — this keeps the recommendation realistic.</div>
           <div style="display:flex; gap:8px;">
             <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('short', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">&lt;45 min</button>
-            <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('medium', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">45–60</button>
-            <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('long', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">60–75</button>
+            <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('medium', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">45–60 min</button>
+            <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('long', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">60–75 min</button>
             <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('extended', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">75+ min</button>
           </div>
           <input type="hidden" id="ob-session-length" value=""/>
@@ -33180,11 +33185,12 @@ function getRecommendedSplit(experience, goal, priority, days, session) {
       if (!days || days <= 3) return rec('glute', 'The Glute Priority split dedicates two days to hip thrusts, RDLs, and isolation work — the most direct path to glute development.');
       return rec('ul', 'Upper/Lower trains lower body twice a week — extra glute sets get added on both lower days through the priority boost.');
     }
-    // Arms (with or without other upper) → Bro Split if enough days and time, else PPL
+    // Arms (with or without other upper) → Bro Split only at 5+ days with time; PPL otherwise
     if (hasArms && hasUpperOnly) {
       if (!days || days <= 3 || isShort) return rec('ppl', isShort
         ? 'PPL keeps each session focused on one category — push, pull, or legs. Arms get hit on both push and pull days, no long sessions needed.'
         : 'PPL gives arms two dedicated sessions per week — triceps on push day, biceps on pull day — plus a full leg day.');
+      if (days === 4) return rec('ul', 'Upper/Lower trains arms twice a week — triceps on push-heavy upper days, biceps on pull-heavy upper days. Hits them with more frequency than Bro Split at four days.');
       return rec('bro', 'The Bro Split gives arms their own dedicated session with direct bicep and tricep volume. You\'ll want a full hour for those days.');
     }
     // Upper only (chest, back, shoulders — no arms leading)
@@ -33204,11 +33210,14 @@ function getRecommendedSplit(experience, goal, priority, days, session) {
         if (!days || days <= 3) return rec('glute', `The Glute Priority split hits ${muscleList} twice per week with dedicated hip hinge and isolation work.`);
         return rec('ul', `Upper/Lower trains lower body twice a week — extra ${muscleList} sets get layered in through the priority boost.`);
       }
+      if (days === 2) return rec('full2', `Two full-body sessions — ${muscleList} gets hit each time, kept manageable with the priority boost adding focused work on top.`);
       if (!days || days <= 3) return rec('lul', `Lower/Upper/Lower trains ${muscleList} twice per week — two dedicated lower days bookend one upper session.`);
       return rec('ul', `Upper/Lower dedicates two full days to ${muscleList} each week — the most balanced way to bring up your lower body.`);
     }
     // Mix of upper and lower
     if (hasUpper && hasLower) {
+      if (days === 2) return rec('full2', 'Two full-body sessions — both your upper and lower priority areas get hit each session.');
+      if (days === 3) return rec('full3', 'Three full-body sessions — every priority area gets touched each session with manageable volume.');
       return rec('ul', 'Upper/Lower trains both your upper and lower body twice per week — the most balanced structure for multiple priority areas.');
     }
   }
