@@ -33013,7 +33013,7 @@ function selectExerciseMode(mode, btn) {
 function buildObManualSlots() {
   const panel = document.getElementById('ob-manual-select');
   const currentSplit = document.getElementById('ob-split-type')?.value || 'ul';
-  let html = '<div style="background:linear-gradient(135deg,#081a10,#0a1e12);border:1.5px solid rgba(80,200,130,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:14px;color:var(--gray-light);line-height:1.6;">These are your <strong style="color:var(--cream);">Cycle 1 exercises</strong>. When Cycle 1 ends (~8 weeks), the app will prompt you to swap one or two: same muscle, different angle. You\'ll also see a reminder at <strong style="color:var(--cream);">Week 5 of Cycle 2</strong>. Pick what works best for your gym now.<br><br><span style="color:var(--gray);">The <span style="color:var(--cream);">★</span> option is pre-selected as a proven default. Tap <span style="color:var(--red-text);font-size:13px;">▶</span> to watch a tutorial before picking.</span></div>';
+  let html = '<div style="background:linear-gradient(135deg,#081a10,#0a1e12);border:1.5px solid rgba(80,200,130,0.3);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:14px;color:var(--gray-light);line-height:1.5;"><span style="color:var(--cream);">★</span> = default pick &nbsp;·&nbsp; Tap <span style="color:var(--red-text);">▶</span> to watch a form tutorial &nbsp;·&nbsp; Change anything anytime from Settings.</div>';
   OB_PRIMARY_SLOTS.filter(slot => !slot.splitFilter || slot.splitFilter.includes(currentSplit)).forEach(slot => {
     const safeId = slot.id.replace('-', '_');
     let optBtns = slot.options.map((opt, i) => {
@@ -33026,10 +33026,9 @@ function buildObManualSlots() {
       return `<button class="ob-slot-opt${sel}" onclick="selectSlotOption('${slot.id}','${escaped}',this)">${label}${ytSpan}</button>`;
     }).join('');
     html += `
-      <div style="background:var(--dark3); border-radius:12px; padding:14px; margin-bottom:12px;">
-        <div style="font-size:13px; color:var(--red-text); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:4px;">${slot.label}</div>
-        <div style="font-size:14px; color:var(--gray-light); margin-bottom:10px;">${slot.desc}</div>
-        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;" id="ob-slot-${safeId}-btns">${optBtns}</div>
+      <div style="background:var(--dark3); border-radius:12px; padding:12px 14px; margin-bottom:10px;">
+        <div style="font-size:13px; color:var(--red-text); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-bottom:8px;">${slot.label}</div>
+        <div style="display:flex; flex-wrap:nowrap; overflow-x:auto; gap:6px; margin-bottom:10px; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none;" id="ob-slot-${safeId}-btns">${optBtns}</div>
         <div style="position:relative;">
           <input type="text" class="set-input" id="ob-slot-${safeId}-custom"
             placeholder="Or type your own exercise name…"
