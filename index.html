@@ -352,6 +352,7 @@
     color: var(--cream) !important;
   }
   .active-cardio-btn svg { stroke: var(--red) !important; }
+  .active-cardio-btn span { color: var(--red) !important; }
 
   .cardio-rpe-btn {
     background: var(--dark3);
@@ -3082,12 +3083,13 @@
   <!-- PAGE HEADER -->
   <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.05);">
     <div style="font-family:'Bebas Neue',cursive;font-size:28px;letter-spacing:3px;color:var(--cream);line-height:1;">CARDIO</div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);letter-spacing:0.5px;margin-top:5px;">Every session. Every minute. All yours.</div>
+    <div style="width:36px;height:2px;background:var(--red);border-radius:2px;margin:6px 0 8px;"></div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);letter-spacing:0.5px;">Every session. Every minute. All yours.</div>
   </div>
 
   <!-- WEEKLY STRIP — always visible, even at zero -->
-  <div style="background:var(--dark2);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px 18px;margin-bottom:22px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:2px;margin-bottom:10px;">THIS WEEK</div>
+  <div style="background:var(--dark2);border:1px solid rgba(204,32,39,0.2);border-radius:14px;padding:16px 18px;margin-bottom:22px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--gray-light);letter-spacing:2px;margin-bottom:12px;">THIS WEEK</div>
     <div style="display:flex;align-items:baseline;gap:20px;flex-wrap:wrap;">
       <div>
         <span id="cw-sessions" style="font-family:'Bebas Neue',cursive;font-size:34px;color:var(--cream);letter-spacing:1px;line-height:1;">0</span>
@@ -3172,7 +3174,7 @@
 
     <!-- Duration -->
     <div class="card" style="margin-bottom:12px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--gray-light);letter-spacing:2px;margin-bottom:14px;">DURATION</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--cream);letter-spacing:2px;margin-bottom:14px;">DURATION</div>
       <div style="display:flex;gap:8px;margin-bottom:16px;">
         <button onclick="setTimerPreset(20)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">20m</button>
         <button onclick="setTimerPreset(30)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">30m</button>
@@ -3188,7 +3190,7 @@
 
     <!-- Details -->
     <div class="card" style="margin-bottom:12px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--gray-light);letter-spacing:2px;margin-bottom:14px;">DETAILS <span style="opacity:0.65;font-size:13px;letter-spacing:1px;">optional</span></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--cream);letter-spacing:2px;margin-bottom:14px;">DETAILS <span style="opacity:0.5;font-size:12px;letter-spacing:1px;">optional</span></div>
       <div style="margin-bottom:12px;">
         <div style="font-size:13px;color:var(--gray-light);letter-spacing:1px;margin-bottom:6px;">DISTANCE (MI)</div>
         <input type="number" id="cardio-distance" placeholder="0.0" step="0.1" oninput="_onDistanceInput()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
@@ -3222,7 +3224,7 @@
     <!-- Effort -->
     <div class="card" style="margin-bottom:12px;">
       <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--gray-light);letter-spacing:2px;">EFFORT</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--cream);letter-spacing:2px;">EFFORT</div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);opacity:0.7;letter-spacing:0.5px;">optional</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px;">
@@ -3247,7 +3249,7 @@
 
     <!-- Notes -->
     <div class="card" style="margin-bottom:16px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--gray-light);letter-spacing:2px;margin-bottom:10px;">NOTES <span style="opacity:0.65;font-size:13px;letter-spacing:1px;">optional</span></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">NOTES <span style="opacity:0.5;font-size:12px;letter-spacing:1px;">optional</span></div>
       <textarea id="cardio-notes" class="notes-input" placeholder="How did it feel? Route, conditions, anything worth remembering." style="min-height:64px;width:100%;"></textarea>
     </div>
 
@@ -35700,6 +35702,7 @@ function _pauseTrackingWorkout() {
 }
 
 function _finishTrackingWorkout() {
+  if (!_cardioTrackingActive) return;
   // Stop step polling and shut down the native step counter service
   clearInterval(_cardioStepPollInterval);
   _cardioStepPollInterval = null;
@@ -36091,6 +36094,7 @@ function renderCardioHistory() {
     jog:       '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><polyline points="2 12 6 12 8 5 11 19 13 9 15 15 17 12 22 12"/></svg>JOG',
     hc_import: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#C0392B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M12 21s-8-7.5-8-12.5A5 5 0 0 1 12 4a5 5 0 0 1 8 4.5C20 13.5 12 21 12 21z"/></svg><span style=\'color:#C0392B;\'>HEALTH CONNECT</span>',
   };
+  const _typeAccent = { treadmill:'#cc2027', outdoor:'#f39c12', walk:'#2ecc71', briskwalk:'#27ae60', jog:'#e67e22', hc_import:'#5b8dee' };
   container.innerHTML = [...history].reverse().slice(0, 30).map(s => {
     const date = new Date(s.date).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
     const typeLabel = typeIconMap[s.type] || s.type.toUpperCase();
@@ -36102,7 +36106,8 @@ function renderCardioHistory() {
     const rpe  = s.rpe ? 'RPE\u00a0' + s.rpe : '';
     const steps = s.details?.steps ? s.details.steps.toLocaleString() + ' steps' : '';
     const meta = [dist, cal, steps, pace, spd, inc, rpe].filter(Boolean).join(' \u00b7 ');
-    return '<div class="history-item" style="cursor:default;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">'
+    const accent = _typeAccent[s.type] || 'var(--gray)';
+    return '<div class="history-item" style="cursor:default;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;box-shadow:inset 3px 0 0 ' + accent + ';">'
       + '<div style="flex:1;min-width:0;">'
       + '<div class="history-date">' + date + '</div>'
       + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:700;color:var(--cream);letter-spacing:0.5px;margin-top:2px;">' + typeLabel + '</div>'
