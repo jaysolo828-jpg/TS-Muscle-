@@ -7921,9 +7921,11 @@ async function _onSupabaseSignIn(user) {
   if (!state.supabaseAvatarColor) state.supabaseAvatarColor = '#C0392B';
   state.supabaseDismissed = false;
 
-  // If onboarding hasn't been completed in this browser context, skip it —
-  // Google sign-in users are never fresh installs needing the full setup flow.
-  if (!state.onboardingComplete) {
+  // If onboarding hasn't been completed in this browser context AND the user
+  // already has a local profile, skip it — this handles session restoration
+  // for users who already set up the app. Do NOT skip if state was just wiped
+  // (e.g. hard reset) — those users need to go through setup from scratch.
+  if (!state.onboardingComplete && state.profile && state.profile.name) {
     state.onboardingComplete = true;
     const modal = document.getElementById('onboarding-modal');
     if (modal) modal.style.display = 'none';
