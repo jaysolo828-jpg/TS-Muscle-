@@ -34280,6 +34280,15 @@ function resetOnboarding() {
       const dayBtn = document.getElementById('ob-day-btn-' + days);
       if (dayBtn) dayBtn.classList.add('selected');
     }
+    if (bk.priorityMuscles && bk.profile.experience !== 'beginner') {
+      document.getElementById('ob-priority').value = bk.priorityMuscles;
+      const saved = bk.priorityMuscles.split(',').filter(Boolean);
+      document.querySelectorAll('.ob-priority-btn').forEach(function(b) {
+        const oc = b.getAttribute('onclick') || '';
+        const match = oc.match(/selectObPriority\('([^']+)'/);
+        if (match && saved.includes(match[1])) b.classList.add('selected');
+      });
+    }
   }
 
   // Reset steps
