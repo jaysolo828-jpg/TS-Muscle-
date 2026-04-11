@@ -3647,7 +3647,8 @@
     <!-- STEP 1: Profile (name, bodyweight, experience, age, sex, why you train) -->
     <div id="onboard-step-1" class="onboard-step">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TELL US ABOUT YOU</div>
-      <div style="font-size:13px; color:var(--gray-light); margin-bottom:24px;">This personalizes your program, pre-fills your weights, and powers your T&amp;S Strength Score.</div>
+      <div style="font-size:13px; color:var(--gray-light); margin-bottom:10px;">This personalizes your program, pre-fills your weights, and powers your T&amp;S Strength Score.</div>
+      <div style="font-size:13px; color:rgba(160,155,150,0.65); margin-bottom:24px; line-height:1.65;">The programming is built on training volume research. The app tracks how much work each muscle needs each week, reads your effort after every set, and adjusts automatically. You train. The app adapts.</div>
 
       <div style="display:flex; gap:10px; margin-bottom:16px;">
         <div style="flex:1;">
@@ -22100,7 +22101,7 @@ function _checkAndShowDynamicSetSuggestion(exId) {
   card.innerHTML =
     '<div style="flex:1;min-width:0;">' +
       '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--cream);font-weight:600;letter-spacing:0.3px;line-height:1.2;margin-bottom:2px;">Add a set?</div>' +
-      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.2px;line-height:1.3;">Your volume target supports it this week</div>' +
+      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray-light);letter-spacing:0.2px;line-height:1.3;">Still short of your weekly target for this muscle. One more set counts.</div>' +
     '</div>' +
     '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">' +
       '<button onclick="skipDynamicSet(\'' + exId + '\')" style="background:none;border:none;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:0.5px;cursor:pointer;padding:4px;-webkit-tap-highlight-color:transparent;">SKIP</button>' +
@@ -26452,12 +26453,17 @@ function renderHistory() {
         const target     = getRPEAdjustedVolumeTarget(muscle, _wn) || 1;
         const _sl        = getScaledVolumeLandmarks(muscle) || VOLUME_LANDMARKS[muscle];
         const mrv        = _sl.mrv;
+        const mev        = _sl.mev || 0;
+        const mav        = _sl.mav || mrv;
+        const mevPct     = Math.round(Math.min(mev / mrv, 1) * 100);
+        const mavPct     = Math.round(Math.min(mav / mrv, 1) * 100);
         const mcolor     = MUSCLE_COLORS[muscle] || 'var(--red-text)';
         const fillPct    = Math.round(Math.min(actual / mrv, 1) * 100);
         const targetPct  = Math.round(Math.min(target / mrv, 1) * 100);
         const nearMRV    = actual >= Math.round(mrv * 0.9);
         const atTarget   = actual >= target;
         const label      = muscle.charAt(0) + muscle.slice(1).toLowerCase();
+        const _lbl       = `<div style="position:relative;height:14px;margin-top:3px;pointer-events:none;"><div style="position:absolute;left:${mevPct}%;transform:translateX(-50%);font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.5px;color:rgba(155,150,145,0.4);">MEV</div><div style="position:absolute;left:${mavPct}%;transform:translateX(-50%);font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.5px;color:rgba(155,150,145,0.4);">MAV</div><div style="position:absolute;right:0;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.5px;color:rgba(155,150,145,0.4);">MRV</div></div>`;
 
         if (notDone) {
           return `<div style="margin-bottom:14px;opacity:0.45;">
@@ -26469,6 +26475,7 @@ function renderHistory() {
               <div style="position:absolute;inset:0;background:rgba(255,255,255,0.07);border-radius:6px;"></div>
               <div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,0.18);border-radius:1px;left:calc(${targetPct}% - 1px);"></div>
             </div>
+            ${_lbl}
           </div>`;
         }
 
@@ -26494,6 +26501,7 @@ function renderHistory() {
             </div>
             <div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,0.32);border-radius:1px;left:calc(${targetPct}% - 1px);pointer-events:none;"></div>
           </div>
+          ${_lbl}
         </div>`;
       }
 
