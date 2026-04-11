@@ -3873,7 +3873,7 @@
         <div id="ob-split-rec-boost" style="display:none; margin-bottom:10px; padding:8px 10px; background:rgba(204,32,39,0.12); border-radius:8px; font-size:13px; color:var(--red-text); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px; line-height:1.4;"></div>
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
           <div style="font-size:13px; color:var(--gray); line-height:1.4; flex:1;">You can pick any split below — this is just our suggestion based on your answers.</div>
-          <button id="ob-split-rec-btn" onclick="" style="flex-shrink:0; background:var(--red); border:none; color:white; padding:9px 16px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer; -webkit-tap-highlight-color:transparent;">USE THIS →</button>
+          <button id="ob-split-rec-btn" onclick="" style="flex-shrink:0; background:var(--red); border:none; color:white; padding:9px 16px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer; -webkit-tap-highlight-color:transparent;">YES, THIS ONE →</button>
         </div>
       </div>
 
@@ -6187,17 +6187,17 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
 // of the split recommendation — the split is the structure, the boost is extra
 // targeted volume for that specific muscle.
 const PRIORITY_BOOST_EXERCISES = {
-  chest:      { id: 'priority-chest',     name: 'Pec Deck Flye',           sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/Z57CtFmRMxA', _priorityBoost: true },
-  back:       { id: 'priority-back',      name: 'Chest-Supported DB Row',  sets: 3, reps: '10\u201312', rest: '90 sec', ytLink: 'https://youtu.be/zQ7hVDaY3vA', _priorityBoost: true },
-  shoulders:  { id: 'priority-shoulders', name: 'Face Pull',               sets: 3, reps: '15',         rest: '60 sec', ytLink: 'https://youtu.be/VdnHXklRQW8', _priorityBoost: true },
+  chest:      { id: 'priority-chest',     name: 'Pec Deck Flye',           sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/Z57CtFmRMxA', equipment: 'machine',    _priorityBoost: true },
+  back:       { id: 'priority-back',      name: 'Chest-Supported DB Row',  sets: 3, reps: '10\u201312', rest: '90 sec', ytLink: 'https://youtu.be/zQ7hVDaY3vA', equipment: 'dumbbell',   _priorityBoost: true },
+  shoulders:  { id: 'priority-shoulders', name: 'Face Pull',               sets: 3, reps: '15',         rest: '60 sec', ytLink: 'https://youtu.be/VdnHXklRQW8', equipment: 'cable',      _priorityBoost: true },
   arms: [
-    { id: 'priority-biceps',  name: 'Incline DB Curl',  sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/soxrZlIl35U', _priorityBoost: true },
-    { id: 'priority-triceps', name: 'Skull Crushers',   sets: 3, reps: '10\u201312', rest: '60 sec', ytLink: 'https://youtu.be/ZLIKPa4Iunc', _priorityBoost: true }
+    { id: 'priority-biceps',  name: 'Incline DB Curl',  sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/soxrZlIl35U', equipment: 'dumbbell', _priorityBoost: true },
+    { id: 'priority-triceps', name: 'Skull Crushers',   sets: 3, reps: '10\u201312', rest: '60 sec', ytLink: 'https://youtu.be/ZLIKPa4Iunc', equipment: 'barbell',  _priorityBoost: true }
   ],
-  glutes:     { id: 'priority-glutes',     name: 'Cable Kickback',         sets: 3, reps: '15',         rest: '60 sec', ytLink: 'https://youtu.be/p5eSWRlMjq4', _priorityBoost: true },
-  hamstrings: { id: 'priority-hamstrings', name: 'Seated Leg Curl',        sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/KXLX5vCYEoI', _priorityBoost: true },
-  quads:      { id: 'priority-quads',      name: 'Leg Extension (High Rep)',sets: 4, reps: '15\u201320', rest: '60 sec', ytLink: 'https://youtu.be/m0FOpMEgero', _priorityBoost: true },
-  calves:     { id: 'priority-calves',     name: 'Seated Calf Raise',      sets: 4, reps: '15\u201320', rest: '45 sec', ytLink: 'https://youtu.be/jIRSxjCF_GA', _priorityBoost: true }
+  glutes:     { id: 'priority-glutes',     name: 'Cable Kickback',          sets: 3, reps: '15',         rest: '60 sec', ytLink: 'https://youtu.be/p5eSWRlMjq4', equipment: 'cable',      _priorityBoost: true },
+  hamstrings: { id: 'priority-hamstrings', name: 'Seated Leg Curl',         sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/KXLX5vCYEoI', equipment: 'machine',    _priorityBoost: true },
+  quads:      { id: 'priority-quads',      name: 'Leg Extension (High Rep)', sets: 4, reps: '15\u201320', rest: '60 sec', ytLink: 'https://youtu.be/m0FOpMEgero', equipment: 'machine',   _priorityBoost: true },
+  calves:     { id: 'priority-calves',     name: 'Seated Calf Raise',       sets: 4, reps: '15\u201320', rest: '45 sec', ytLink: 'https://youtu.be/jIRSxjCF_GA', equipment: 'machine',    _priorityBoost: true }
 };
 // Which existing exercise IDs signal that a training day already works this muscle group
 const PRIORITY_DAY_INDICATORS = {
@@ -6231,6 +6231,11 @@ var _TRAVEL_EX_EQ = {
   'legpress-b':'machine','single-legpress':'machine','leg-ext-b':'machine',
   'ham-curl-b':'bodyweight','pull-through':'cable','calf-b':'machine',
   'bss':'dumbbell','hip-abduction':'machine','donkey-kick':'cable','glute-iso':'machine',
+  // Priority boost exercises
+  'priority-chest':'machine','priority-back':'dumbbell','priority-shoulders':'cable',
+  'priority-biceps':'dumbbell','priority-triceps':'barbell',
+  'priority-glutes':'cable','priority-hamstrings':'machine',
+  'priority-quads':'machine','priority-calves':'machine',
 };
 var _TRAVEL_ALT_EQ = {
     // chest
@@ -6387,6 +6392,11 @@ const MUSCLE_MAP = {
   'hip-thrust-a': 'GLUTES', 'pull-through': 'GLUTES',
   'bss': 'GLUTES', 'hip-abduction': 'GLUTES', 'donkey-kick': 'GLUTES', 'glute-iso': 'GLUTES',
   'calf-a': 'CALVES', 'calf-b': 'CALVES',
+  // Priority boost exercises
+  'priority-chest': 'CHEST', 'priority-back': 'BACK', 'priority-shoulders': 'SHOULDERS',
+  'priority-biceps': 'BICEPS', 'priority-triceps': 'TRICEPS',
+  'priority-glutes': 'GLUTES', 'priority-hamstrings': 'HAMSTRINGS',
+  'priority-quads': 'QUADS', 'priority-calves': 'CALVES',
 };
 const MUSCLE_COLORS = {
   CHEST: '#5b9cf6', BACK: '#3bbfb8', QUADS: '#e07b54',
@@ -7043,6 +7053,16 @@ const GOAL_REPS = {
   'hip-abduction':   { strength: '12–15', size: '15–20', both: '12–17', wellness: '15–20' },
   'donkey-kick':     { strength: '12–15', size: '15',    both: '12–15', wellness: '12–15' },
   'glute-iso':       { strength: '10–12', size: '12–15', both: '10–13', wellness: '12–15' },
+  // ── Priority boost exercises ───────────────────────────────
+  'priority-chest':      { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'priority-back':       { strength: '5–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'priority-shoulders':  { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'priority-biceps':     { strength: '6–8',   size: '12–15', both: '10–13', wellness: '12–15' },
+  'priority-triceps':    { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'priority-glutes':     { strength: '12–15', size: '15',    both: '12–15', wellness: '12–15' },
+  'priority-hamstrings': { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'priority-quads':      { strength: '10–12', size: '15–20', both: '12–17', wellness: '15–20' },
+  'priority-calves':     { strength: '10–12', size: '15–20', both: '12–17', wellness: '15–20' },
 };
 
 // Goal-aligned set counts per exercise
@@ -7084,6 +7104,16 @@ const GOAL_SETS = {
   'hip-abduction':   { strength: 3, size: 4, both: 3, wellness: 3 },
   'donkey-kick':     { strength: 3, size: 4, both: 3, wellness: 3 },
   'glute-iso':       { strength: 3, size: 4, both: 3, wellness: 3 },
+  // ── Priority boost exercises ───────────────────────────────
+  'priority-chest':      { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-back':       { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-shoulders':  { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-biceps':     { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-triceps':    { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-glutes':     { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-hamstrings': { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-quads':      { strength: 3, size: 4, both: 4, wellness: 3 },
+  'priority-calves':     { strength: 3, size: 4, both: 3, wellness: 3 },
 };
 
 // Returns the goal-adjusted set count for an exercise.
@@ -32579,6 +32609,16 @@ const ALL_EXERCISE_DEFAULTS = {
   'bss':            { beginner: 20,  intermediate: 40,  advanced: 60  },
   'hip-abduction':  { beginner: 50,  intermediate: 90,  advanced: 130 },
   'donkey-kick':    { beginner: 20,  intermediate: 40,  advanced: 60  },
+  // Priority boost exercises
+  'priority-chest':      { beginner: 50,  intermediate: 70,  advanced: 90  },
+  'priority-back':       { beginner: 25,  intermediate: 40,  advanced: 60  },
+  'priority-shoulders':  { beginner: 30,  intermediate: 45,  advanced: 60  },
+  'priority-biceps':     { beginner: 15,  intermediate: 25,  advanced: 35  },
+  'priority-triceps':    { beginner: 45,  intermediate: 65,  advanced: 85  },
+  'priority-glutes':     { beginner: 20,  intermediate: 35,  advanced: 50  },
+  'priority-hamstrings': { beginner: 50,  intermediate: 80,  advanced: 110 },
+  'priority-quads':      { beginner: 50,  intermediate: 80,  advanced: 110 },
+  'priority-calves':     { beginner: 45,  intermediate: 80,  advanced: 115 },
 };
 
 function applyAllDefaults() {
@@ -33106,15 +33146,17 @@ function selectObRecDays(days, btn) {
 }
 
 function useRecommendedSplit(key) {
+  // Find and activate the matching split button in the list (for visual consistency)
   const btns = document.querySelectorAll('#ob-split-list .onboard-select-btn');
   for (const btn of btns) {
     const oc = btn.getAttribute('onclick') || '';
     if (oc.includes("'" + key + "'")) {
       selectSplitOnboard(key, btn);
-      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      return;
+      break;
     }
   }
+  // Advance directly to the next step — no need to scroll through the full split list
+  onboardNext(4);
 }
 
 function selectSplitOnboard(type, btn) {
