@@ -3705,6 +3705,25 @@
         <input type="text" id="ob-why-train" class="set-input" placeholder="e.g. To feel stronger and show up for the people I love" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
 
+      <div style="margin-bottom:24px;">
+        <div style="font-size:12px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">WHERE DO YOU TRAIN?</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="onboard-select-btn selected" id="ob-gym-full-btn" onclick="selectObGym('full')">
+            <div style="font-weight:bold;">Full Gym</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">Barbells, cables, machines — everything. You get the full recommended program.</div>
+          </button>
+          <button class="onboard-select-btn" id="ob-gym-dumbbells-cable-btn" onclick="selectObGym('dumbbells-cable')">
+            <div style="font-weight:bold;">Dumbbells + Cable</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">No barbell or rack. Home gym or commercial gym without a squat rack.</div>
+          </button>
+          <button class="onboard-select-btn" id="ob-gym-dumbbells-btn" onclick="selectObGym('dumbbells')">
+            <div style="font-weight:bold;">Dumbbells Only</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">DB-only setup. All barbell and cable exercises will be swapped automatically.</div>
+          </button>
+        </div>
+        <input type="hidden" id="ob-gym-equipment" value="full"/>
+      </div>
+
       <div class="ob-button-row">
         <button onclick="onboardNext(2)" class="onboard-next-btn">NEXT →</button>
       </div>
@@ -5419,6 +5438,7 @@ const DEFAULT_PROGRAM = [
           { name: 'Nordic Curl', note: 'Bodyweight, elite hamstring builder', ytLink: 'https://youtu.be/8zWDuWKdBZU' },
           { name: 'Stability Ball Curl', note: 'Core + hamstring combo', ytLink: 'https://youtu.be/1Tq3QdYUuHs' },
           { name: 'DB Hamstring Curl (Prone)', note: 'DB between feet variation', ytLink: 'https://youtu.be/ELOCsoDSmrg' },
+          { name: 'Standing Cable Leg Curl', note: 'Cable cuff on ankle, curl toward glutes standing', ytLink: 'https://youtu.be/OA7c_8HfdOw' },
           { name: 'Single Leg Lying Curl', note: 'Unilateral for imbalance correction', ytLink: 'https://youtu.be/1Tq3QdYUuHs' },
           { name: 'Banded Hamstring Curl', note: 'Band around ankle, home-friendly', ytLink: 'https://youtu.be/erpy11GrhsE' },
           { name: 'Glute-Ham Raise', note: 'Elite eccentric hamstring builder', ytLink: 'https://youtu.be/c2pWqsHR7FU' }
@@ -5741,6 +5761,7 @@ const HIP_ABDUCTION_EXERCISE = {
   ytLink: 'https://youtu.be/OUgsJ8-Vi0E',
   alts: [
     { name: 'Cable Hip Abduction (Standing)', note: 'Constant tension, excellent glute medius isolation', ytLink: 'https://youtu.be/SqO-VUEak2M' },
+    { name: 'Lateral Lunge (DB)',            note: 'Loaded side movement hits glute medius and outer hip', ytLink: 'https://youtu.be/R8jArZG2J6Q' },
     { name: 'Banded Clamshell',              note: 'Floor variation, great for activation',             ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
     { name: 'Side-Lying Hip Abduction',      note: 'No equipment needed, great for beginners',         ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
     { name: 'Banded Lateral Walk',           note: 'Band around ankles, lateral steps',                ytLink: 'https://youtu.be/OUgsJ8-Vi0E' },
@@ -6126,6 +6147,7 @@ var _TRAVEL_ALT_EQ = {
     'Terminal Knee Extension (Band)':'bands','Spanish Squat (Band)':'bands',
     'Seated Hamstring Curl':'machine','Nordic Curl':'bodyweight',
     'Stability Ball Curl':'bodyweight','DB Hamstring Curl (Prone)':'dumbbell',
+    'Standing Cable Leg Curl':'cable',
     'Single Leg Lying Curl':'machine','Banded Hamstring Curl':'bands',
     'Glute-Ham Raise':'machine',
     'Machine Hip Thrust':'machine','Glute Bridge (Floor)':'dumbbell',
@@ -7149,6 +7171,7 @@ let state = {
   growthHistory: [],           // [{ balance, state, date }] snapshots, max 100
   growthState: 'inactive',     // gaining|holding|declining|regaining|plateau|slow_decay|inactive
   cycleEmphasis: [],           // muscles to push toward MRV this cycle — set at cycle-complete modal
+  gymEquipment: 'full',        // 'full' | 'dumbbells-cable' | 'dumbbells' — set at onboarding
 };
 
 let activeSession = null;
@@ -15033,6 +15056,13 @@ function selectObSex(val) {
   document.getElementById('ob-sex').value = val;
   document.getElementById('ob-sex-male-btn')?.classList.toggle('selected', val === 'male');
   document.getElementById('ob-sex-female-btn')?.classList.toggle('selected', val === 'female');
+}
+
+function selectObGym(val) {
+  document.getElementById('ob-gym-equipment').value = val;
+  document.getElementById('ob-gym-full-btn')?.classList.toggle('selected', val === 'full');
+  document.getElementById('ob-gym-dumbbells-cable-btn')?.classList.toggle('selected', val === 'dumbbells-cable');
+  document.getElementById('ob-gym-dumbbells-btn')?.classList.toggle('selected', val === 'dumbbells');
 }
 
 function openProfileModal() {
@@ -32221,6 +32251,7 @@ function onboardNext(step) {
     if (!exp) { showToast('Please select your experience level'); return; }
     if (!age) { showToast('Please enter your age'); return; }
     if (!sex) { showToast('Please select your biological sex'); return; }
+    state.gymEquipment = document.getElementById('ob-gym-equipment')?.value || 'full';
   }
   if (step === 3) {
     // Validate step 2: goal
@@ -32251,7 +32282,8 @@ function onboardNext(step) {
   }
   // Step 6 → 7: informational, no validation
   if (step === 7) {
-    // Prepare starting weights list
+    // Apply equipment substitutions before rendering starting weights so names match
+    _applyEquipmentSubstitutions();
     buildExerciseList();
   }
   if (step === 8) {
@@ -32844,6 +32876,36 @@ function applyObExerciseSelections() {
   });
 }
 
+// Permanently substitute incompatible exercises in state.program based on gymEquipment.
+// Called at onboarding completion so the program only contains exercises the user can do.
+function _applyEquipmentSubstitutions() {
+  const tier = state.gymEquipment;
+  if (!tier || tier === 'full') return;
+  const validEquip = _getTravelTierEquipment(tier);
+  if (!validEquip || !validEquip.length) return;
+  const _priority = { dumbbell: 0, cable: 0, machine: 0, smith: 0, bands: 1, bodyweight: 2 };
+  (state.program || []).forEach(day => {
+    (day.exercises || []).forEach(ex => {
+      // Ensure equipment tags are present (defensive — should already be tagged by _tagEquipment IIFE)
+      if (!ex.equipment && _TRAVEL_EX_EQ[ex.id]) ex.equipment = _TRAVEL_EX_EQ[ex.id];
+      (ex.alts || []).forEach(alt => {
+        if (!alt.equipment && _TRAVEL_ALT_EQ[alt.name]) alt.equipment = _TRAVEL_ALT_EQ[alt.name];
+      });
+      // If primary is already compatible, leave it
+      if (ex.equipment && validEquip.includes(ex.equipment)) return;
+      // Find best compatible alt ranked by equipment preference
+      const validAlts = (ex.alts || []).filter(a => a.equipment && validEquip.includes(a.equipment));
+      if (!validAlts.length) return;
+      validAlts.sort((a, b) => (_priority[a.equipment] ?? 99) - (_priority[b.equipment] ?? 99));
+      const best = validAlts[0];
+      ex.name = best.name;
+      if (best.ytLink) ex.ytLink = best.ytLink;
+      if (best.note) ex.note = best.note;
+      ex.equipment = best.equipment;
+    });
+  });
+}
+
 function updateDayButtonsForSplit(type) {
   const descriptions = {
     ul: {
@@ -33238,6 +33300,10 @@ function completeOnboarding() {
   state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[_splitType] || DEFAULT_PROGRAM));
   // Re-apply any exercise selections made during onboarding (manual mode or rotation review)
   applyObExerciseSelections();
+  // Permanently substitute exercises that don't match the user's equipment
+  const _obGymEq = document.getElementById('ob-gym-equipment')?.value;
+  if (_obGymEq) state.gymEquipment = _obGymEq;
+  _applyEquipmentSubstitutions();
   // Fill in all isolation defaults for any exercises not entered by user
   applyAllDefaults();
   // Stamp new users' exercises so rotation suggestions start after cycle 1
