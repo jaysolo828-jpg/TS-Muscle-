@@ -22,11 +22,15 @@
     Content-Type = "application/json"
     Cache-Control = "no-cache"
 
-# assetlinks.json must never be cached — stale data breaks TWA full-screen mode.
+# assetlinks.json: long cache so Chrome reuses its DAL verification result
+# instead of making a live network request on every cold launch. A live
+# request on device wakeup can race with network readiness and fail, causing
+# the "disconnected from Play Store" banner. Signing keys rarely change; if
+# they do, bump the file and the old cache expires within 7 days anyway.
 [[headers]]
   for = "/.well-known/assetlinks.json"
   [headers.values]
     Content-Type = "application/json"
-    Cache-Control = "no-cache"
+    Cache-Control = "public, max-age=604800"
     Access-Control-Allow-Origin = "*"
 

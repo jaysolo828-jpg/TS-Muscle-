@@ -1,8 +1,11 @@
 package io.github.jaysolo828_jpg.twa
 
+import android.content.ComponentName
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import androidx.browser.customtabs.CustomTabsClient
+import androidx.browser.customtabs.CustomTabsServiceConnection
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -21,6 +24,27 @@ class MainActivity : LauncherActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Warm up Chrome's Custom Tabs service as early as possible so DAL
+        // verification gets maximum lead time before the TWA shell paints.
+        // On device wakeup the network comes up slowly; this head start
+        // prevents the race that shows the "disconnected from Play Store" banner.
+        try {
+            CustomTabsClient.bindCustomTabsService(
+                this, "com.android.chrome",
+                object : CustomTabsServiceConnection() {
+                    override fun onCustomTabsServiceConnected(
+                        name: ComponentName, client: CustomTabsClient
+                    ) {
+                        try {
+                            client.warmup(0L)
+                            client.newSession(null)?.prepareCall(super@MainActivity.getLaunchingUrl())
+                        } catch (_: Exception) {}
+                    }
+                    override fun onServiceDisconnected(name: ComponentName) {}
+                }
+            )
+        } catch (_: Exception) {}
+
         val prefs        = getSharedPreferences(PREFS, MODE_PRIVATE)
         val cachedToken  = prefs.getString(FCM_KEY, null)
 
