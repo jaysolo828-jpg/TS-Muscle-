@@ -3713,6 +3713,7 @@
           </div>
         </button>
       </div>
+      <div style="height:calc(80px + env(safe-area-inset-bottom));"></div>
     </div>
 
     <!-- Hidden file input for onboarding restore path (inside modal for iOS compatibility) -->
@@ -3842,7 +3843,11 @@
       <!-- Priority + days context pickers — feed into recommendation, update on tap -->
       <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:14px; display:flex; flex-direction:column; gap:14px;">
         <div>
-          <div style="font-size:13px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:8px;">ANY PRIORITY AREAS?</div>
+          <div style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+            <span style="color:var(--gray);">ANY PRIORITY AREAS?</span>
+            <span style="color:var(--red-text); font-size:11px; letter-spacing:1px;">OPTIONAL</span>
+          </div>
+          <div style="font-size:12px; color:#888; margin-bottom:8px;">Tap to select, tap again to remove.</div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('balanced', this)" style="padding:10px 12px; text-align:left;">
               <div style="font-weight:bold; font-size:14px;">Balanced</div>
@@ -4028,10 +4033,9 @@
             <span style="font-size:22px; line-height:1;">✅</span>
             <div>
               <div style="font-weight:bold; font-size:16px;">Pick For Me</div>
-              <div style="font-size:14px; color:#bbb; margin-top:4px;">Our recommended lineup. Review and swap anything before you start.</div>
+              <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Best lineup for your split. You can swap anything before you start.</div>
             </div>
           </div>
-          <div id="ob-pick-for-me-preview" style="font-size:14px; color:#bbb; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07); letter-spacing:0.3px;">Bench &nbsp;·&nbsp; Overhead Press &nbsp;·&nbsp; Machine Row &nbsp;·&nbsp; Leg Press &nbsp;·&nbsp; Romanian Deadlift</div>
         </button>
         <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)">
           <div style="display:flex; align-items:center; gap:10px;">
@@ -4041,7 +4045,6 @@
               <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Pick exactly what you want to train. One exercise per movement slot.</div>
             </div>
           </div>
-          <div style="font-size:14px; color:#bbb; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);">Squat &nbsp;·&nbsp; Hinge &nbsp;·&nbsp; Push &nbsp;·&nbsp; Pull &nbsp;·&nbsp; and more — you pick each one</div>
         </button>
       </div>
 
@@ -32741,6 +32744,14 @@ function renderSplitRecommendation() {
 
 function selectObPriority(value, btn) {
   haptic(HAPTIC.tap);
+  if (btn.classList.contains('selected')) {
+    btn.classList.remove('selected');
+    btn.style.borderColor = '';
+    btn.style.background = '';
+    document.getElementById('ob-priority').value = '';
+    renderSplitRecommendation();
+    return;
+  }
   document.getElementById('ob-priority').value = value;
   document.querySelectorAll('.ob-priority-btn').forEach(b => { b.classList.remove('selected'); b.style.borderColor = ''; b.style.background = ''; });
   btn.classList.add('selected');
