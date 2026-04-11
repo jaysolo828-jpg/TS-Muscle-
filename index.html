@@ -10340,7 +10340,7 @@ const _CHALLENGE_INTRO_KEY = 'ts-challenge-intro-seen';
 function _epley1RM(weight, reps) {
   const w = parseFloat(weight);
   const r = parseInt(reps, 10);
-  if (!w || !r || r < 1 || r > 20) return 0;
+  if (!w || !r || r < 1 || r > 30) return 0;
   return Math.round(w * (1 + r / 30) * 10) / 10;
 }
 
@@ -10349,7 +10349,7 @@ function _epley1RM(weight, reps) {
 function _improvementPct(baselineE1rm, finalE1rm) {
   const b = parseFloat(baselineE1rm);
   const f = parseFloat(finalE1rm);
-  if (!b || !f) return 0;
+  if (isNaN(b) || isNaN(f) || b <= 0 || f <= 0) return 0;
   return Math.round(((f - b) / b) * 1000) / 10;
 }
 
@@ -10389,7 +10389,7 @@ function _findRecentBaselineByExId(exId) {
       if (!s || !s.done) continue;
       const w = parseFloat(s.weight);
       const r = parseInt(s.reps, 10);
-      if (!w || !r || r < 1 || r > 20) continue;
+      if (!w || !r || r < 1 || r > 30) continue;
       if (!best || w > best.w || (w === best.w && r > best.r)) {
         best = { w: w, r: r };
       }
@@ -20792,6 +20792,12 @@ function toggleSetDone(exId, setIndex) {
       if (capturedWeight !== '') set.weight = capturedWeight;
       if (capturedReps   !== '') set.reps   = capturedReps;
     }
+    // Block marking done if weight or reps is still missing/zero — prevents
+    // corrupted "done" sets from silently persisting until the end-session screen.
+    if (!(parseFloat(set.weight) > 0) || !(parseInt(set.reps, 10) > 0)) {
+      showToast('Add weight and reps before checking off.');
+      return;
+    }
   }
 
   // ── Data write ─────────────────────────────────────────────────────────────
@@ -24307,7 +24313,7 @@ function finalizeEndSession(save) {
           .filter(e => !e.isDeload)
           .reduce((t, e) =>
             t + Object.values(e.sets || {}).reduce((s, sets) =>
-              s + sets.filter(s2 => s2.done)
+              s + sets.filter(s2 => s2.done && !s2.coachRemoved)
                       .reduce((s3, s2) => s3 + (parseFloat(s2.weight)||0) * (parseInt(s2.reps)||0), 0)
             , 0), 0);
         // Average RPE across all logged sets
@@ -35232,6 +35238,13 @@ function resetCycleAfterGap() {
   state.cycleCount = (state.cycleCount || 1) + 1;
   state.isDeloadWeek = false;
   state.isRestWeek = false;
+  // If a deload was in progress when the user went on a gap, restore full
+  // working weights before clearing deload state — otherwise startingWeights
+  // stays at the reduced deload values for the entire new cycle.
+  if (state.deloadBaseWeights) {
+    state.startingWeights = { ...state.deloadBaseWeights };
+    delete state.deloadBaseWeights;
+  }
   // Anchor the new cycle's week counter to Sunday of the current calendar week
   const _now = new Date();
   const _sun = new Date(_now);
