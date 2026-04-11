@@ -3884,6 +3884,19 @@
           </div>
           <input type="hidden" id="ob-rec-days" value=""/>
         </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span style="font-size:13px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif;">TIME PER SESSION?</span>
+            <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('short', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">&lt;45 min</button>
+            <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('medium', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">45–60</button>
+            <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('long', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">60–75</button>
+            <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('extended', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">75+ min</button>
+          </div>
+          <input type="hidden" id="ob-session-length" value=""/>
+        </div>
       </div>
 
       <!-- Recommendation card — populated dynamically by renderSplitRecommendation() -->
@@ -33134,7 +33147,7 @@ function getSplitAwareDayExplanation(n) {
   return tables[split]?.[n] || tables.ul[n] || '';
 }
 
-function getRecommendedSplit(experience, goal, priority, days) {
+function getRecommendedSplit(experience, goal, priority, days, session) {
   const names = {
     ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body',
     bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull',
@@ -33142,6 +33155,10 @@ function getRecommendedSplit(experience, goal, priority, days) {
     lul: 'Lower / Upper / Lower', ts: 'T&S Split',
   };
   function rec(key, reason) { return { key, name: names[key], reason }; }
+
+  const isShort    = session === 'short';                              // < 45 min
+  const isExtended = session === 'extended';                           // 75+ min
+  const hasTime    = session === 'long' || session === 'extended';     // 60+ min
 
   // Wellness always routes to T&S Split
   if (goal === 'wellness') return rec('ts', 'Three full-body sessions, moderate effort — built for consistency and mental health.');
@@ -33162,16 +33179,22 @@ function getRecommendedSplit(experience, goal, priority, days) {
     if (hasGlutesOnly && parts.length === 1) {
       return rec('glute', 'The Glute Priority split dedicates two days to hip thrusts, RDLs, and isolation work — the most direct path to glute development.');
     }
-    // Arms (with or without other upper) → Bro Split if enough days, else PPL
+    // Arms (with or without other upper) → Bro Split if enough days and time, else PPL
     if (hasArms && hasUpperOnly) {
-      if (!days || days <= 3) return rec('ppl', 'PPL gives arms two dedicated sessions per week — triceps on push day, biceps on pull day — plus a full leg day.');
-      return rec('bro', 'The Bro Split gives arms their own dedicated session with direct bicep and tricep volume. Best for bringing up arms specifically.');
+      if (!days || days <= 3 || isShort) return rec('ppl', isShort
+        ? 'PPL keeps each session focused on one category — push, pull, or legs. Arms get hit on both push and pull days, no long sessions needed.'
+        : 'PPL gives arms two dedicated sessions per week — triceps on push day, biceps on pull day — plus a full leg day.');
+      return rec('bro', 'The Bro Split gives arms their own dedicated session with direct bicep and tricep volume. You\'ll want a full hour for those days.');
     }
     // Upper only (chest, back, shoulders — no arms leading)
     if (hasUpperOnly) {
       const muscleList = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' & ');
-      if (!days || days <= 3) return rec('ppl', `PPL gives ${muscleList} dedicated focus — push day for chest and shoulders, pull day for back. One full lower body day completes the week.`);
-      if (days >= 4) return rec('pp', `Push/Pull trains ${muscleList} twice per week — two push sessions and two pull sessions. Maximum upper body frequency.`);
+      if (!days || days <= 3 || isShort) return rec('ppl', isShort
+        ? `PPL keeps ${muscleList} work contained to one or two sessions — push day for chest and shoulders, pull day for back. Focused enough to finish in under 45 minutes.`
+        : `PPL gives ${muscleList} dedicated focus — push day for chest and shoulders, pull day for back. One full lower body day completes the week.`);
+      return rec('pp', hasTime
+        ? `Push/Pull trains ${muscleList} twice per week — two push sessions and two pull sessions. You have the time to do it right.`
+        : `Push/Pull trains ${muscleList} twice per week — two push sessions and two pull sessions. Maximum upper body frequency.`);
     }
     // Lower only (glutes, hamstrings, quads, calves)
     if (hasLowerOnly) {
@@ -33188,19 +33211,31 @@ function getRecommendedSplit(experience, goal, priority, days) {
     }
   }
 
-  // No priority selected — days are the primary driver
+  // No priority — days and session length drive the recommendation
   if (days === 2) return rec('full2', 'Two complete full-body sessions — every muscle covered with maximum recovery time between sessions.');
   if (days === 3) {
     if (experience === 'beginner') return rec('full3', 'Three full-body sessions — high frequency, lower per-session volume. The best setup for new lifters.');
-    return rec('ppl', 'Three focused sessions: push, pull, and legs. Each muscle group gets one dedicated quality session per week.');
+    return rec('ppl', isShort
+      ? 'PPL keeps it simple — each session has one focus. Push, pull, or legs. Done in under 45 minutes if you stay tight on rest.'
+      : 'Three focused sessions: push, pull, and legs. Each muscle group gets one dedicated quality session per week.');
   }
-  if (days === 4) return rec('ul', 'Four days: two upper, two lower. Every muscle trained twice per week — the gold standard for hypertrophy.');
+  if (days === 4) return rec('ul', isShort
+    ? 'Upper/Lower with four days — each session covers one half of the body. Manageable in under 45 minutes if you prioritize the big compound lifts.'
+    : 'Four days: two upper, two lower. Every muscle trained twice per week — the gold standard for hypertrophy.');
   if (days === 5) {
-    if (experience === 'advanced' && (goal === 'size' || goal === 'both')) return rec('bro', 'Five days: each muscle group gets its own dedicated high-volume session. Built for advanced lifters.');
-    return rec('ul', 'Upper/Lower with a fifth session — the extra day goes toward any area you want to bring up.');
+    if (experience === 'advanced' && (goal === 'size' || goal === 'both') && !isShort) {
+      return rec('bro', isExtended
+        ? 'Five days: each muscle group gets its own dedicated high-volume session. You have the time to go deep on each one.'
+        : 'Five days: each muscle group gets its own dedicated session. Built for advanced lifters who can commit a full hour per session.');
+    }
+    return rec('ul', isShort
+      ? 'Upper/Lower at five days — the extra session is built in, and each day stays focused enough for a shorter window.'
+      : 'Upper/Lower with a fifth session — the extra day goes toward any area you want to bring up.');
   }
   if (days >= 6) {
-    if (experience === 'advanced') return rec('antagonist', 'Six days: opposing muscle pairs trained together, each pair hit twice per week. Maximum frequency for advanced lifters.');
+    if (experience === 'advanced') return rec('antagonist', isShort
+      ? 'Six days of opposing muscle pairs — chest and back, quads and hamstrings. Supersets make these sessions efficient even under 45 minutes.'
+      : 'Six days: opposing muscle pairs trained together, each pair hit twice per week. Maximum frequency for advanced lifters.');
     return rec('ul', 'Upper/Lower at high frequency — adjust per-session volume to match your recovery.');
   }
   if (experience === 'beginner') return rec('ul', 'Upper/Lower trains every muscle twice a week with full recovery built in — the best starting point for beginners.');
@@ -33214,7 +33249,8 @@ function renderSplitRecommendation() {
   if (!exp || !goal) return;
   const priority = document.getElementById('ob-priority')?.value || '';
   const days = parseInt(document.getElementById('ob-rec-days')?.value) || 0;
-  const rec = getRecommendedSplit(exp, goal, priority, days);
+  const session = document.getElementById('ob-session-length')?.value || '';
+  const rec = getRecommendedSplit(exp, goal, priority, days, session);
   const card = document.getElementById('ob-split-recommendation');
   if (!card) return;
   document.getElementById('ob-split-rec-name').textContent = rec.name;
@@ -33268,6 +33304,14 @@ function selectObRecDays(days, btn) {
     step4Btn.classList.add('selected');
     if (dc) { step4Btn.style.borderColor = dc.border; step4Btn.style.background = dc.bg; }
   }
+  renderSplitRecommendation();
+}
+
+function selectObSessionLength(val, btn) {
+  haptic(HAPTIC.tap);
+  document.getElementById('ob-session-length').value = val;
+  document.querySelectorAll('.ob-session-btn').forEach(b => { b.classList.remove('selected'); b.style.borderColor = ''; b.style.background = ''; });
+  btn.classList.add('selected');
   renderSplitRecommendation();
 }
 
