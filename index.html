@@ -3648,7 +3648,9 @@
     <div id="onboard-step-1" class="onboard-step">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">TELL US ABOUT YOU</div>
       <div style="font-size:13px; color:var(--gray-light); margin-bottom:10px;">This personalizes your program, pre-fills your weights, and powers your T&amp;S Strength Score.</div>
-      <div style="font-size:13px; color:rgba(160,155,150,0.65); margin-bottom:24px; line-height:1.65;">The programming is built on training volume research. The app tracks how much work each muscle needs each week, reads your effort after every set, and adjusts automatically. You train. The app adapts.</div>
+      <div style="font-size:13px; color:rgba(160,155,150,0.65); margin-bottom:16px; line-height:1.65;">The programming is built on training volume research. The app tracks how much work each muscle needs each week, reads your effort after every set, and adjusts automatically. You train. The app adapts.</div>
+
+      <div style="font-size:12px; color:rgba(155,150,145,0.55); margin-bottom:24px; line-height:1.6;">Have a health condition or injury? Check with your doctor before starting a new training program.</div>
 
       <div style="display:flex; gap:10px; margin-bottom:16px;">
         <div style="flex:1;">
@@ -3711,7 +3713,7 @@
         <div style="display:flex; flex-direction:column; gap:8px;">
           <button class="onboard-select-btn selected" id="ob-gym-full-btn" onclick="selectObGym('full')">
             <div style="font-weight:bold;">Full Gym</div>
-            <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">Barbells, cables, machines — everything. You get the full recommended program.</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">Barbells, cables, machines, everything. You get the full recommended program.</div>
           </button>
           <button class="onboard-select-btn" id="ob-gym-dumbbells-cable-btn" onclick="selectObGym('dumbbells-cable')">
             <div style="font-weight:bold;">Dumbbells + Cable</div>
@@ -3719,7 +3721,7 @@
           </button>
           <button class="onboard-select-btn" id="ob-gym-dumbbells-btn" onclick="selectObGym('dumbbells')">
             <div style="font-weight:bold;">Dumbbells Only</div>
-            <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">DB-only setup. All barbell and cable exercises will be swapped automatically.</div>
+            <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">Dumbbells only. All barbell and cable exercises will be swapped automatically.</div>
           </button>
         </div>
         <input type="hidden" id="ob-gym-equipment" value="full"/>
@@ -3859,9 +3861,9 @@
           <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Two full body sessions per week. A and B days, each hitting every major muscle. 2 days.</div>
         </button>
         <button class="onboard-select-btn" onclick="selectSplitOnboard('antagonist', this)"
-          data-short="Chest with back, shoulders with arms, and legs — each pair trained twice per week. 6 days.">
+          data-short="Chest with back, shoulders with arms, and legs. Each pair trained twice per week. 6 days.">
           <div style="font-weight:bold;">Antagonist Split</div>
-          <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Chest with back, shoulders with arms, and legs — each pair trained twice per week. 6 days.</div>
+          <div class="ob-split-desc" style="font-size:13px; color:var(--gray-light); margin-top:5px; line-height:1.5;">Chest with back, shoulders with arms, and legs. Each pair trained twice per week. 6 days.</div>
         </button>
         <button class="onboard-select-btn" onclick="selectSplitOnboard('lul', this)"
           data-short="Lower body twice, upper body once per week. Great for leg and glute development. 3 days.">
@@ -3945,7 +3947,7 @@
     <!-- STEP 5: Exercise Mode -->
     <div id="onboard-step-5" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR EXERCISES</div>
-      <div style="font-size:13px; color:var(--gray-light); margin-bottom:20px; line-height:1.6;">We'll set you up with solid exercises to start. Down the road, the app will let you know when it's a good time to swap something out and try a variation. You're always in control. Nothing changes unless you say so.</div>
+      <div style="font-size:13px; color:var(--gray-light); margin-bottom:20px; line-height:1.6;">We'll start you with proven exercises. The app will suggest swaps over time, but nothing changes unless you say so.</div>
 
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;" id="ob-exercise-mode-btns">
         <button class="onboard-select-btn" onclick="selectExerciseMode('auto', this)">
@@ -4003,7 +4005,7 @@
         <div style="background:var(--dark3); border:1px solid #333; border-radius:14px; padding:16px; display:flex; align-items:flex-start; gap:14px;">
           <div style="font-size:26px; flex-shrink:0;">⚡</div>
           <div>
-            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream); letter-spacing:0.5px; margin-bottom:3px;">AFTER 4 SESSIONS, YOU'RE DIALLED IN</div>
+            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream); letter-spacing:0.5px; margin-bottom:3px;">AFTER 4 SESSIONS, YOU'RE DIALED IN</div>
             <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">The app will review your RPE data and recommend your true working weights. Then real training begins.</div>
           </div>
         </div>
@@ -4024,7 +4026,7 @@
       <div style="display:flex; gap:10px; margin-bottom:16px;">
         <div style="flex:1; background:rgba(204,32,39,0.07); border:1px solid rgba(204,32,39,0.28); border-radius:12px; padding:12px 13px;">
           <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; color:var(--red-text); letter-spacing:1px; margin-bottom:4px;">DON'T OVERTHINK</div>
-          <div style="font-size:12px; color:var(--gray-light); line-height:1.5;">Don't overthink it. You can update this anytime in Settings as you progress.</div>
+          <div style="font-size:12px; color:var(--gray-light); line-height:1.5;">These get refined after Week 1. You can also update them anytime in Settings.</div>
         </div>
         <div style="flex:1; background:var(--dark3); border:1px solid #333; border-radius:12px; padding:12px 13px;">
           <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; color:var(--gray-light); letter-spacing:1px; margin-bottom:4px;">ISOLATIONS</div>
@@ -4126,8 +4128,8 @@
       <div class="ob-button-row">
         <button onclick="completeOnboarding()" style="flex:1; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:22px; letter-spacing:3px; cursor:pointer;">START YOUR PROGRAM →</button>
       </div>
-      <div style="margin-top:16px; margin-bottom:80px; font-size:13px; color:var(--gray-light); line-height:1.6; text-align:center; padding:0 8px;">
-        Consult a qualified medical professional before beginning any new exercise program, especially if you have a pre-existing health condition or injury.
+      <div style="margin-top:16px; margin-bottom:80px; font-size:12px; color:rgba(155,150,145,0.5); line-height:1.6; text-align:center; padding:0 8px;">
+        If you have a health condition, injury, or any concerns, check with your doctor before starting.
       </div>
     </div>
 
