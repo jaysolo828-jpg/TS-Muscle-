@@ -5479,6 +5479,8 @@ const DEFAULT_PROGRAM = [
         ytLink: 'https://youtu.be/axoeDmW0oAY',
         alts: [
           { name: 'Cable Row (Seated)', note: 'Close or wide grip', ytLink: 'https://youtu.be/GZbfZ033f74' },
+          { name: 'Chest-Supported DB Row', note: 'Incline bench removes momentum, true muscle-only effort', ytLink: 'https://youtu.be/czoQ_ncuqqI' },
+          { name: 'Renegade Row', note: 'DB row in plank — core and back together', ytLink: 'https://youtu.be/4qEIChzM4ZA' },
           { name: 'T-Bar Row', note: 'Heavy compound rowing', ytLink: 'https://youtu.be/TyLoy3n_a10' },
           { name: 'Pendlay Row', note: 'Explosive row from floor', ytLink: 'https://youtu.be/h4nkoayPFWw' },
           { name: 'Barbell Bent Over Row', note: 'Classic back builder', ytLink: 'https://youtu.be/FWJR5Ve8bnQ' },
@@ -5561,6 +5563,11 @@ const DEFAULT_PROGRAM = [
           { name: 'Leg Press (Mid-foot)', note: 'Same as Lower A if needed', ytLink: 'https://youtu.be/K_BXb4e9ljo' },
           { name: 'Hack Squat', note: 'Machine squat variation', ytLink: 'https://youtu.be/m2DiSYKPzqk' },
           { name: 'Sumo Squat (DB)', note: 'Wide stance, inner thigh focus', ytLink: 'https://youtu.be/sQ-lwJtpwUc' },
+          { name: 'Goblet Squat', note: 'DB or KB at chest, great for hip depth', ytLink: 'https://youtu.be/MeIiIdhvXT4' },
+          { name: 'Bulgarian Split Squat', note: 'Rear foot elevated, heavy hip and glute load', ytLink: 'https://youtu.be/2C-uNgKwPLE' },
+          { name: 'Romanian Deadlift', note: 'Hip hinge — hammers hamstrings and glutes', ytLink: 'https://youtu.be/QR6HDEmBQNo' },
+          { name: 'Reverse Lunge (DB)', note: 'Less knee stress, unilateral leg builder', ytLink: 'https://youtu.be/J9MpoAQCjos' },
+          { name: 'Forward Lunge (DB)', note: 'Classic lunge for quad and glute balance', ytLink: 'https://youtu.be/D7KaRcUTQeE' },
           { name: 'Belt Squat', note: 'No spinal load option', ytLink: 'https://youtu.be/9fEloOw3hTo' },
           { name: 'Wide Stance Barbell Squat', note: 'More glute/ham recruitment', ytLink: 'https://youtu.be/Dy28eq2PjcM' },
           { name: 'Good Morning', note: 'Hip hinge for posterior chain', ytLink: 'https://youtu.be/YA-h3n9L4YU' },
@@ -30209,6 +30216,8 @@ function confirmRestoreDefaults() {
     day.exercises.forEach(ex => { ex.cycleIntroduced = _currCycle; });
   });
   state.rotationMigrated = true;
+  // Re-apply equipment substitutions so dumbbells/cable users don't get barbell defaults back.
+  _applyEquipmentSubstitutions();
   saveState();
   renderHome();
   showToast('Default exercises restored ✓');
@@ -31628,6 +31637,8 @@ function applySplitType() {
     day.exercises.forEach(ex => { ex.cycleIntroduced = _currCycle; });
   });
   state.rotationMigrated = true;
+  // Re-apply equipment substitutions so dumbbells/cable users get compatible exercises on the new split.
+  _applyEquipmentSubstitutions();
   saveState();
   closeSplitTypeModal();
   updateSplitTypeSub();
