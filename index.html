@@ -3855,12 +3855,12 @@
 
       <!-- Priority + days context pickers — feed into recommendation, update on tap -->
       <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:14px; display:flex; flex-direction:column; gap:14px;">
-        <div>
+        <div id="ob-priority-section">
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
             <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">ANY PRIORITY AREAS?</span>
             <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
           </div>
-          <div style="font-size:13px; color:#888; margin-bottom:12px; line-height:1.5;">A muscle you want to bring up. We add extra sets for it on the right training days.</div>
+          <div style="font-size:13px; color:#888; margin-bottom:12px; line-height:1.5;">A muscle you want to bring up. We add extra sets for it on the right training days, starting week 2.</div>
           <div style="display:flex; flex-wrap:wrap; gap:8px;">
             <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('chest', this)">Chest</button>
             <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('back', this)">Back</button>
@@ -24501,6 +24501,21 @@ function finalizeEndSession(save) {
       const prevWeek = state.weekCount || 1;
       if (_sessionBased) state.weekRolledOverPrevWeek = prevWeek;
       state.weekCount = Math.min((state.weekCount || 1) + 1, 8);
+      // Week 1 → 2: inject priority boost exercises now that test week is done
+      if (prevWeek === 1 && state.priorityMuscles) {
+        applyPriorityVolumeBoost(state.priorityMuscles, state.program);
+        var _priorityToMusclesRollover = {
+          chest: ['CHEST'], back: ['BACK'], shoulders: ['SHOULDERS'],
+          arms: ['BICEPS', 'TRICEPS'], glutes: ['GLUTES'],
+          hamstrings: ['HAMSTRINGS'], quads: ['QUADS'], calves: ['CALVES']
+        };
+        var _emphasisRollover = [];
+        state.priorityMuscles.split(',').filter(Boolean).forEach(function(p) {
+          var ms = _priorityToMusclesRollover[p];
+          if (ms) ms.forEach(function(m) { if (_emphasisRollover.indexOf(m) === -1) _emphasisRollover.push(m); });
+        });
+        if (_emphasisRollover.length) state.cycleEmphasis = _emphasisRollover;
+      }
       // Cycle complete — was on week 8, now would roll over
       if (prevWeek === 8) {
         state.weekCount = 1;
@@ -32921,6 +32936,19 @@ function onboardNext(step) {
   if (step === 3) {
     // Validate step 2: goal
     if (!document.getElementById('ob-goal').value) { showToast('Please select your training goal'); return; }
+    // Priority section is for intermediate/advanced only — beginners skip it
+    var _obExp3 = document.getElementById('ob-experience').value;
+    var _prioritySection = document.getElementById('ob-priority-section');
+    if (_prioritySection) {
+      if (_obExp3 === 'beginner') {
+        _prioritySection.style.display = 'none';
+        // Clear any stale priority selection from a previous experience change
+        document.getElementById('ob-priority').value = '';
+        document.querySelectorAll('.ob-priority-btn.selected').forEach(function(b) { b.classList.remove('selected'); });
+      } else {
+        _prioritySection.style.display = '';
+      }
+    }
     renderSplitRecommendation();
   }
   if (step === 4) {
@@ -33192,14 +33220,14 @@ function renderSplitRecommendation() {
   document.getElementById('ob-split-rec-name').textContent = rec.name;
   document.getElementById('ob-split-rec-reason').textContent = rec.reason;
   document.getElementById('ob-split-rec-btn').setAttribute('onclick', "useRecommendedSplit('" + rec.key + "')");
-  // Priority boost preview line
+  // Priority boost preview line — only for intermediate/advanced; boost activates at week 2
   const boostEl = document.getElementById('ob-split-rec-boost');
   if (boostEl) {
-    const parts = priority ? priority.split(',').filter(Boolean) : [];
+    const parts = (exp !== 'beginner' && priority) ? priority.split(',').filter(Boolean) : [];
     if (parts.length) {
       const _boostLabels = { chest: 'Chest', back: 'Back', shoulders: 'Shoulders', arms: 'Arms (biceps + triceps)', glutes: 'Glutes', hamstrings: 'Hamstrings', quads: 'Quads', calves: 'Calves' };
       const named = parts.map(function(p) { return _boostLabels[p] || p; }).join(', ');
-      boostEl.textContent = '\u2b06 Priority boost: extra isolation sets for ' + named + ' will be added to your program.';
+      boostEl.innerHTML = '\u2b06 <strong>' + named + '</strong> priority boost unlocks in Week 2 — Week 1 is your baseline test week.';
       boostEl.style.display = 'block';
     } else {
       boostEl.style.display = 'none';
@@ -33993,11 +34021,15 @@ function buildOnboardingSummary() {
   document.getElementById('ob-greeting').textContent = splitType === 'ts'
     ? `Your T&S program is built for mental health and consistency. 3 days a week, moderate effort, compound lifts. Week 1 is about finding your rhythm. Log your RPE honestly and the app will learn you.`
     : `Your program is built for ${goalDesc}. Week 1 is a calibration week — just train, log your RPE, and let the app learn you. Your weights will be dialled in after 4 sessions.`;
+  const _obSummaryPriority = exp !== 'beginner' ? (document.getElementById('ob-priority')?.value || '') : '';
+  const _priorityBoostLabels = { chest: 'Chest', back: 'Back', shoulders: 'Shoulders', arms: 'Arms', glutes: 'Glutes', hamstrings: 'Hamstrings', quads: 'Quads', calves: 'Calves' };
+  const _priorityNamed = _obSummaryPriority ? _obSummaryPriority.split(',').filter(Boolean).map(function(p) { return _priorityBoostLabels[p] || p; }).join(', ') : '';
   document.getElementById('ob-summary').innerHTML = `
     <div>🎯 <strong>Goal:</strong> ${goalLabel}</div>
     <div>🗂 <strong>Split:</strong> ${splitLabels[splitType] || splitType}</div>
     <div>📅 <strong>Frequency:</strong> ${trainingDays} days / week</div>
     <div>🏋 <strong>Experience:</strong> ${expLabels[exp] || exp}</div>
+    ${_priorityNamed ? `<div style="margin-top:6px;">🎯 <strong>Priority:</strong> ${_priorityNamed} <span style="font-size:12px; color:var(--gray); font-style:italic;">(extra sets unlock in Week 2)</span></div>` : ''}
     <div style="margin-top:10px; font-size:13px; color:var(--gray-light); line-height:1.6;">After ${state.program?.length || trainingDays} sessions, go to Settings → Review Test Week to confirm your working weights.</div>
   `;
 }
@@ -34021,25 +34053,15 @@ function completeOnboarding() {
   _applyEquipmentSubstitutions();
   // Fill in all isolation defaults for any exercises not entered by user
   applyAllDefaults();
-  // Inject extra isolation sets for any priority body parts selected during onboarding
+  // Priority body part boost — intermediate/advanced only, activates at week 2
+  // Beginners are in neural adaptation; Week 1 is baseline test week for everyone
   var _obPriorityStr = document.getElementById('ob-priority')?.value || '';
-  if (_obPriorityStr) {
-    applyPriorityVolumeBoost(_obPriorityStr, state.program);
-    // Mark priority muscles as cycle emphasis so:
-    // (a) volume ramp targets MRV instead of MAV — they're intentionally pushed hard
-    // (b) getMRVApproachingMuscles() skips them — prevents premature deload signals
-    //     and protects active challenges from early deload interference
-    var _priorityToMuscles = {
-      chest: ['CHEST'], back: ['BACK'], shoulders: ['SHOULDERS'],
-      arms: ['BICEPS', 'TRICEPS'], glutes: ['GLUTES'],
-      hamstrings: ['HAMSTRINGS'], quads: ['QUADS'], calves: ['CALVES']
-    };
-    var _emphasisMuscles = [];
-    _obPriorityStr.split(',').filter(Boolean).forEach(function(p) {
-      var ms = _priorityToMuscles[p];
-      if (ms) ms.forEach(function(m) { if (_emphasisMuscles.indexOf(m) === -1) _emphasisMuscles.push(m); });
-    });
-    if (_emphasisMuscles.length) state.cycleEmphasis = _emphasisMuscles;
+  var _obExpForPriority = document.getElementById('ob-experience')?.value || 'beginner';
+  if (_obPriorityStr && _obExpForPriority !== 'beginner') {
+    // Save the selection — injection into the program happens at the week 1→2 rollover
+    state.priorityMuscles = _obPriorityStr;
+  } else {
+    state.priorityMuscles = '';
   }
   // Stamp new users' exercises so rotation suggestions start after cycle 1
   const _newCycle = state.cycleCount || 1;
