@@ -33180,11 +33180,12 @@ function getRecommendedSplit(experience, goal, priority, days, session) {
       if (!days || days <= 3) return rec('glute', 'The Glute Priority split dedicates two days to hip thrusts, RDLs, and isolation work — the most direct path to glute development.');
       return rec('ul', 'Upper/Lower trains lower body twice a week — extra glute sets get added on both lower days through the priority boost.');
     }
-    // Arms (with or without other upper) → Bro Split if enough days and time, else PPL
+    // Arms (with or without other upper) → Bro Split only at 5+ days with time; PPL otherwise
     if (hasArms && hasUpperOnly) {
       if (!days || days <= 3 || isShort) return rec('ppl', isShort
         ? 'PPL keeps each session focused on one category — push, pull, or legs. Arms get hit on both push and pull days, no long sessions needed.'
         : 'PPL gives arms two dedicated sessions per week — triceps on push day, biceps on pull day — plus a full leg day.');
+      if (days === 4) return rec('ul', 'Upper/Lower trains arms twice a week — triceps on push-heavy upper days, biceps on pull-heavy upper days. Hits them with more frequency than Bro Split at four days.');
       return rec('bro', 'The Bro Split gives arms their own dedicated session with direct bicep and tricep volume. You\'ll want a full hour for those days.');
     }
     // Upper only (chest, back, shoulders — no arms leading)
@@ -33204,11 +33205,14 @@ function getRecommendedSplit(experience, goal, priority, days, session) {
         if (!days || days <= 3) return rec('glute', `The Glute Priority split hits ${muscleList} twice per week with dedicated hip hinge and isolation work.`);
         return rec('ul', `Upper/Lower trains lower body twice a week — extra ${muscleList} sets get layered in through the priority boost.`);
       }
+      if (days === 2) return rec('full2', `Two full-body sessions — ${muscleList} gets hit each time, kept manageable with the priority boost adding focused work on top.`);
       if (!days || days <= 3) return rec('lul', `Lower/Upper/Lower trains ${muscleList} twice per week — two dedicated lower days bookend one upper session.`);
       return rec('ul', `Upper/Lower dedicates two full days to ${muscleList} each week — the most balanced way to bring up your lower body.`);
     }
     // Mix of upper and lower
     if (hasUpper && hasLower) {
+      if (days === 2) return rec('full2', 'Two full-body sessions — both your upper and lower priority areas get hit each session.');
+      if (days === 3) return rec('full3', 'Three full-body sessions — every priority area gets touched each session with manageable volume.');
       return rec('ul', 'Upper/Lower trains both your upper and lower body twice per week — the most balanced structure for multiple priority areas.');
     }
   }
