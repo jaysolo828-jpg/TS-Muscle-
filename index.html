@@ -6187,17 +6187,71 @@ const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBO
 // of the split recommendation — the split is the structure, the boost is extra
 // targeted volume for that specific muscle.
 const PRIORITY_BOOST_EXERCISES = {
-  chest:      { id: 'priority-chest',     name: 'Pec Deck Flye',           sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/Z57CtFmRMxA', equipment: 'machine',    _priorityBoost: true },
-  back:       { id: 'priority-back',      name: 'Chest-Supported DB Row',  sets: 3, reps: '10\u201312', rest: '90 sec', ytLink: 'https://youtu.be/zQ7hVDaY3vA', equipment: 'dumbbell',   _priorityBoost: true },
-  shoulders:  { id: 'priority-shoulders', name: 'Face Pull',               sets: 3, reps: '15',         rest: '60 sec', ytLink: 'https://youtu.be/VdnHXklRQW8', equipment: 'cable',      _priorityBoost: true },
+  chest: { id: 'priority-chest', name: 'Pec Deck Flye', sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/Z57CtFmRMxA', equipment: 'machine', _priorityBoost: true,
+    alts: [
+      { name: 'DB Chest Flye', note: 'Flat bench, arms wide with fixed elbow bend', ytLink: 'https://youtu.be/eozdVDA78K0', equipment: 'dumbbell' },
+      { name: 'Cable Flye', note: 'Constant tension, great at home cable setup', ytLink: 'https://youtu.be/fwN2ECQsvGg', equipment: 'cable' },
+      { name: 'Resistance Band Flye', note: 'Anchor at chest height, minimal equipment', ytLink: 'https://youtu.be/8lDC4Ri9zAQ', equipment: 'bands' }
+    ]
+  },
+  back: { id: 'priority-back', name: 'Chest-Supported DB Row', sets: 3, reps: '10\u201312', rest: '90 sec', ytLink: 'https://youtu.be/zQ7hVDaY3vA', equipment: 'dumbbell', _priorityBoost: true,
+    alts: [
+      { name: 'Single-Arm DB Row', note: 'Brace on bench, full range of motion', ytLink: 'https://youtu.be/T2DssNg4GtU', equipment: 'dumbbell' },
+      { name: 'Resistance Band Row', note: 'Anchor band to door, pull to hip', ytLink: 'https://youtu.be/Kg0CsREeDkE', equipment: 'bands' },
+      { name: 'Bodyweight Row (TRX/rings)', note: 'Lean back, pull chest to handles', ytLink: 'https://youtu.be/0V5waQZ2f5A', equipment: 'bodyweight' }
+    ]
+  },
+  shoulders: { id: 'priority-shoulders', name: 'Face Pull', sets: 3, reps: '15', rest: '60 sec', ytLink: 'https://youtu.be/VdnHXklRQW8', equipment: 'cable', _priorityBoost: true,
+    alts: [
+      { name: 'Band Face Pull', note: 'Anchor band at face height, pull to ears', ytLink: 'https://youtu.be/VdnHXklRQW8', equipment: 'bands' },
+      { name: 'DB Rear Delt Fly', note: 'Seated, chest on thighs, elbows wide', ytLink: 'https://youtu.be/ttvAhFCTzMg', equipment: 'dumbbell' },
+      { name: 'Prone Y-T-W Raise', note: 'Lie face-down on incline bench, no weight needed', ytLink: 'https://youtu.be/sDRn3zJBtOU', equipment: 'bodyweight' }
+    ]
+  },
   arms: [
-    { id: 'priority-biceps',  name: 'Incline DB Curl',  sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/soxrZlIl35U', equipment: 'dumbbell', _priorityBoost: true },
-    { id: 'priority-triceps', name: 'Skull Crushers',   sets: 3, reps: '10\u201312', rest: '60 sec', ytLink: 'https://youtu.be/ZLIKPa4Iunc', equipment: 'barbell',  _priorityBoost: true }
+    { id: 'priority-biceps', name: 'Incline DB Curl', sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/soxrZlIl35U', equipment: 'dumbbell', _priorityBoost: true,
+      alts: [
+        { name: 'Concentration Curl', note: 'Elbow braced on inner thigh, full stretch', ytLink: 'https://youtu.be/Ks89JY1oHBQ', equipment: 'dumbbell' },
+        { name: 'Hammer Curl', note: 'Neutral grip, hits brachialis and brachioradialis', ytLink: 'https://youtu.be/zC3nLlEvin4', equipment: 'dumbbell' },
+        { name: 'Band Curl', note: 'Step on band, curl to peak contraction', ytLink: 'https://youtu.be/VZNHLXqoE8s', equipment: 'bands' }
+      ]
+    },
+    { id: 'priority-triceps', name: 'Skull Crushers', sets: 3, reps: '10\u201312', rest: '60 sec', ytLink: 'https://youtu.be/ZLIKPa4Iunc', equipment: 'barbell', _priorityBoost: true,
+      alts: [
+        { name: 'DB Skull Crusher', note: 'Same movement with dumbbells, easier on wrists', ytLink: 'https://youtu.be/ZLIKPa4Iunc', equipment: 'dumbbell' },
+        { name: 'Band Overhead Tricep Extension', note: 'Step on band, extend overhead', ytLink: 'https://youtu.be/9Ark9S11uXw', equipment: 'bands' },
+        { name: 'Diamond Push-Up', note: 'Hands close together, tricep-dominant push-up', ytLink: 'https://youtu.be/J0DnG1_S92I', equipment: 'bodyweight' }
+      ]
+    }
   ],
-  glutes:     { id: 'priority-glutes',     name: 'Cable Kickback',          sets: 3, reps: '15',         rest: '60 sec', ytLink: 'https://youtu.be/p5eSWRlMjq4', equipment: 'cable',      _priorityBoost: true },
-  hamstrings: { id: 'priority-hamstrings', name: 'Seated Leg Curl',         sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/KXLX5vCYEoI', equipment: 'machine',    _priorityBoost: true },
-  quads:      { id: 'priority-quads',      name: 'Leg Extension (High Rep)', sets: 4, reps: '15\u201320', rest: '60 sec', ytLink: 'https://youtu.be/m0FOpMEgero', equipment: 'machine',   _priorityBoost: true },
-  calves:     { id: 'priority-calves',     name: 'Seated Calf Raise',       sets: 4, reps: '15\u201320', rest: '45 sec', ytLink: 'https://youtu.be/jIRSxjCF_GA', equipment: 'machine',    _priorityBoost: true }
+  glutes: { id: 'priority-glutes', name: 'Cable Kickback', sets: 3, reps: '15', rest: '60 sec', ytLink: 'https://youtu.be/p5eSWRlMjq4', equipment: 'cable', _priorityBoost: true,
+    alts: [
+      { name: 'Resistance Band Kickback', note: 'Band around ankles, kick back and squeeze', ytLink: 'https://youtu.be/p5eSWRlMjq4', equipment: 'bands' },
+      { name: 'Donkey Kick', note: 'On all fours, drive heel toward ceiling', ytLink: 'https://youtu.be/SJ1Xuz9D-ZQ', equipment: 'bodyweight' },
+      { name: 'Single-Leg Glute Bridge', note: 'One leg extended, drive hips up and squeeze', ytLink: 'https://youtu.be/gB2TS2JFibo', equipment: 'bodyweight' }
+    ]
+  },
+  hamstrings: { id: 'priority-hamstrings', name: 'Seated Leg Curl', sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/KXLX5vCYEoI', equipment: 'machine', _priorityBoost: true,
+    alts: [
+      { name: 'DB Leg Curl', note: 'Lie face down, DB gripped between feet', ytLink: 'https://youtu.be/n9n3zGTwp2k', equipment: 'dumbbell' },
+      { name: 'Nordic Curl', note: 'Anchor feet, lower body under full control', ytLink: 'https://youtu.be/c2pWqsHR7FU', equipment: 'bodyweight' },
+      { name: 'Band Leg Curl', note: 'Anchor band low, curl heel to glutes', ytLink: 'https://youtu.be/KXLX5vCYEoI', equipment: 'bands' }
+    ]
+  },
+  quads: { id: 'priority-quads', name: 'Leg Extension (High Rep)', sets: 4, reps: '15\u201320', rest: '60 sec', ytLink: 'https://youtu.be/m0FOpMEgero', equipment: 'machine', _priorityBoost: true,
+    alts: [
+      { name: 'Bulgarian Split Squat', note: 'Rear foot elevated, front leg does the work', ytLink: 'https://youtu.be/2C-uNgKwPLE', equipment: 'dumbbell' },
+      { name: 'Sissy Squat', note: 'Lean back, drive knees forward over toes', ytLink: 'https://youtu.be/1l_x0GnIxoQ', equipment: 'bodyweight' },
+      { name: 'Band Leg Extension', note: 'Anchor band behind, extend from seated', ytLink: 'https://youtu.be/m0FOpMEgero', equipment: 'bands' }
+    ]
+  },
+  calves: { id: 'priority-calves', name: 'Seated Calf Raise', sets: 4, reps: '15\u201320', rest: '45 sec', ytLink: 'https://youtu.be/jIRSxjCF_GA', equipment: 'machine', _priorityBoost: true,
+    alts: [
+      { name: 'DB Seated Calf Raise', note: 'DB on thighs, full heel drop to step', ytLink: 'https://youtu.be/jIRSxjCF_GA', equipment: 'dumbbell' },
+      { name: 'Standing Bodyweight Calf Raise', note: 'Single leg on step, full ROM each rep', ytLink: 'https://youtu.be/gOoEQdEIvmI', equipment: 'bodyweight' },
+      { name: 'Band Calf Raise', note: 'Band around foot, pull while pointing toes', ytLink: 'https://youtu.be/jIRSxjCF_GA', equipment: 'bands' }
+    ]
+  }
 };
 // Which existing exercise IDs signal that a training day already works this muscle group
 const PRIORITY_DAY_INDICATORS = {
@@ -6660,15 +6714,19 @@ function _checkSetReductionTrigger(muscle) {
 
 // Returns exercises in the current session targeting the given muscle that are
 // eligible for set reduction (>= 2 sets loaded, not the undone last set already done).
+// Priority boost exercises are intentionally added volume — only include them
+// if there are no standard (non-priority) exercises left to reduce first.
 function _getSetReductionEligibleExercises(muscle) {
   if (!activeSession) return [];
   const day = state.program.find(d => d.id === activeSession.dayId);
   if (!day) return [];
-  return day.exercises.filter(ex =>
+  const all = day.exercises.filter(ex =>
     MUSCLE_MAP[ex.id] === muscle &&
     activeSession.sets[ex.id] &&
     activeSession.sets[ex.id].length >= 2
   );
+  const standard = all.filter(ex => !ex._priorityBoost);
+  return standard.length ? standard : all;
 }
 
 // Returns true if removing one set per eligible exercise won't drop total
@@ -18249,6 +18307,24 @@ function openDeloadModal() {
     const _exp = getEffectiveExperienceLevel();
     const _pctCut = _exp === 'beginner' ? 20 : _exp === 'advanced' ? 30 : 25;
     _deloadBtnDesc.textContent = `Same exercises, weights drop about ${_pctCut}%. You still train. Joints recover, muscle memory stays sharp.`;
+  }
+
+  // If a 1RM challenge is active, add a note so the user knows challenge
+  // logging is manual and unaffected by the deload weight reduction.
+  const _challengeNoteId = 'deload-challenge-note';
+  const _existingNote = document.getElementById(_challengeNoteId);
+  if (_existingNote) _existingNote.remove();
+  if (_hasActiveChallenge()) {
+    const _note = document.createElement('div');
+    _note.id = _challengeNoteId;
+    _note.style.cssText = 'margin:12px 0 0;padding:10px 14px;background:rgba(204,32,39,0.07);border-left:3px solid var(--red);border-radius:0 8px 8px 0;font-size:13px;color:var(--gray-light);line-height:1.5;';
+    _note.innerHTML = '<strong style="color:var(--cream);">Active challenge:</strong> Your 1RM challenge progress is logged manually and is not affected by deload weights. Train at your own judgment for challenge attempts.';
+    const _actionsEl = modal.querySelector('[id*="deload-btn"], .deload-actions, button');
+    if (_actionsEl && _actionsEl.parentElement) {
+      _actionsEl.parentElement.insertBefore(_note, _actionsEl);
+    } else {
+      modal.querySelector('div').appendChild(_note);
+    }
   }
 
   modal.style.display = 'flex';
@@ -33925,7 +34001,24 @@ function completeOnboarding() {
   applyAllDefaults();
   // Inject extra isolation sets for any priority body parts selected during onboarding
   var _obPriorityStr = document.getElementById('ob-priority')?.value || '';
-  if (_obPriorityStr) applyPriorityVolumeBoost(_obPriorityStr, state.program);
+  if (_obPriorityStr) {
+    applyPriorityVolumeBoost(_obPriorityStr, state.program);
+    // Mark priority muscles as cycle emphasis so:
+    // (a) volume ramp targets MRV instead of MAV — they're intentionally pushed hard
+    // (b) getMRVApproachingMuscles() skips them — prevents premature deload signals
+    //     and protects active challenges from early deload interference
+    var _priorityToMuscles = {
+      chest: ['CHEST'], back: ['BACK'], shoulders: ['SHOULDERS'],
+      arms: ['BICEPS', 'TRICEPS'], glutes: ['GLUTES'],
+      hamstrings: ['HAMSTRINGS'], quads: ['QUADS'], calves: ['CALVES']
+    };
+    var _emphasisMuscles = [];
+    _obPriorityStr.split(',').filter(Boolean).forEach(function(p) {
+      var ms = _priorityToMuscles[p];
+      if (ms) ms.forEach(function(m) { if (_emphasisMuscles.indexOf(m) === -1) _emphasisMuscles.push(m); });
+    });
+    if (_emphasisMuscles.length) state.cycleEmphasis = _emphasisMuscles;
+  }
   // Stamp new users' exercises so rotation suggestions start after cycle 1
   const _newCycle = state.cycleCount || 1;
   state.program.forEach(day => {
