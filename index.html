@@ -3747,7 +3747,44 @@
     <!-- STEP 3: Split -->
     <div id="onboard-step-3" class="onboard-step" style="display:none;">
       <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR SPLIT</div>
-      <div style="font-size:13px; color:var(--gray-light); margin-bottom:16px; line-height:1.6;">How you organize your training across the week. Tap any split to see details.</div>
+      <div style="font-size:13px; color:var(--gray-light); margin-bottom:16px; line-height:1.6;">How you organize your training across the week. Two quick answers and we'll point you in the right direction.</div>
+
+      <!-- Priority + days context pickers — feed into recommendation, update on tap -->
+      <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:14px; display:flex; flex-direction:column; gap:14px;">
+        <div>
+          <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:8px;">ANY PRIORITY AREAS?</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('balanced', this)" style="padding:10px 12px; text-align:left;">
+              <div style="font-weight:bold; font-size:13px;">Balanced</div>
+              <div style="font-size:11px; color:var(--gray-light); margin-top:2px;">Even development</div>
+            </button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('glutes', this)" style="padding:10px 12px; text-align:left;">
+              <div style="font-weight:bold; font-size:13px;">Glutes</div>
+              <div style="font-size:11px; color:var(--gray-light); margin-top:2px;">Hip thrust &amp; RDL focus</div>
+            </button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('legs', this)" style="padding:10px 12px; text-align:left;">
+              <div style="font-weight:bold; font-size:13px;">Legs / Quads</div>
+              <div style="font-size:11px; color:var(--gray-light); margin-top:2px;">Squat &amp; press focus</div>
+            </button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('upper', this)" style="padding:10px 12px; text-align:left;">
+              <div style="font-weight:bold; font-size:13px;">Upper Body</div>
+              <div style="font-size:11px; color:var(--gray-light); margin-top:2px;">Press &amp; pull focus</div>
+            </button>
+          </div>
+          <input type="hidden" id="ob-priority" value="balanced"/>
+        </div>
+        <div>
+          <div style="font-size:11px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:8px;">DAYS PER WEEK?</div>
+          <div style="display:flex; gap:8px;">
+            <button class="onboard-select-btn ob-rec-days-btn" onclick="selectObRecDays(2, this)" style="flex:1; padding:10px 6px; text-align:center; font-weight:bold; font-size:15px;">2</button>
+            <button class="onboard-select-btn ob-rec-days-btn" onclick="selectObRecDays(3, this)" style="flex:1; padding:10px 6px; text-align:center; font-weight:bold; font-size:15px;">3</button>
+            <button class="onboard-select-btn ob-rec-days-btn" onclick="selectObRecDays(4, this)" style="flex:1; padding:10px 6px; text-align:center; font-weight:bold; font-size:15px;">4</button>
+            <button class="onboard-select-btn ob-rec-days-btn" onclick="selectObRecDays(5, this)" style="flex:1; padding:10px 6px; text-align:center; font-weight:bold; font-size:15px;">5</button>
+            <button class="onboard-select-btn ob-rec-days-btn" onclick="selectObRecDays(6, this)" style="flex:1; padding:10px 6px; text-align:center; font-weight:bold; font-size:15px;">6</button>
+          </div>
+          <input type="hidden" id="ob-rec-days" value=""/>
+        </div>
+      </div>
 
       <!-- Recommendation card — populated dynamically by renderSplitRecommendation() -->
       <div id="ob-split-recommendation" style="display:none; margin-bottom:16px; background:rgba(204,32,39,0.08); border:1.5px solid rgba(204,32,39,0.4); border-radius:12px; padding:14px 16px;">
@@ -3755,12 +3792,12 @@
         <div id="ob-split-rec-name" style="font-size:16px; font-weight:700; color:var(--cream); margin-bottom:5px;"></div>
         <div id="ob-split-rec-reason" style="font-size:13px; color:var(--gray-light); line-height:1.5; margin-bottom:10px;"></div>
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-          <div style="font-size:12px; color:var(--gray); line-height:1.4; flex:1;">You can pick any split below — this is just our suggestion based on your goal and experience.</div>
+          <div style="font-size:12px; color:var(--gray); line-height:1.4; flex:1;">You can pick any split below — this is just our suggestion based on your answers.</div>
           <button id="ob-split-rec-btn" onclick="" style="flex-shrink:0; background:var(--red); border:none; color:white; padding:9px 16px; border-radius:9px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer; -webkit-tap-highlight-color:transparent;">USE THIS →</button>
         </div>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+      <div id="ob-split-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
         <button class="onboard-select-btn" onclick="selectSplitOnboard('ul', this)"
           data-short="Alternate upper and lower body days. Every muscle trained twice a week. 4 days ideal.">
           <div style="font-weight:bold;">Upper / Lower</div>
@@ -32299,45 +32336,58 @@ function getSplitAwareDayExplanation(n) {
   return tables[split]?.[n] || tables.ul[n] || '';
 }
 
-function getRecommendedSplit(experience, goal) {
+function getRecommendedSplit(experience, goal, priority, days) {
   const names = {
     ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body',
     bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull',
     full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist Split',
     lul: 'Lower / Upper / Lower', ts: 'T&S Split',
   };
-  let key, reason;
-  if (goal === 'wellness') {
-    key = 'ts';
-    reason = 'Three full-body sessions, moderate effort — built for consistency and mental health.';
-  } else if (experience === 'beginner') {
-    key = 'ul';
-    reason = 'Upper/Lower trains every muscle twice a week with full recovery built in — the best starting point for beginners.';
-  } else if (experience === 'intermediate') {
-    if (goal === 'strength') {
-      key = 'ul';
-      reason = 'Upper/Lower is the gold standard for intermediate strength — high frequency, balanced recovery, full program.';
-    } else {
-      key = 'ppl';
-      reason = 'Push/Pull/Legs lets you focus more volume into each muscle group as you move past the beginner stage.';
-    }
-  } else {
-    if (goal === 'strength') {
-      key = 'ul';
-      reason = 'Upper/Lower keeps frequency and recovery in balance even at advanced training ages.';
-    } else {
-      key = 'ppl';
-      reason = 'PPL gives advanced lifters the most focused per-session volume for continued hypertrophy.';
-    }
+  function rec(key, reason) { return { key, name: names[key], reason }; }
+
+  // Wellness always routes to T&S regardless of anything else
+  if (goal === 'wellness') return rec('ts', 'Three full-body sessions, moderate effort — built for consistency and mental health.');
+
+  // Priority area overrides days-based logic
+  if (priority === 'glutes') return rec('glute', 'Two glute-focused days per week: hip thrusts, RDLs, and isolation work. One balanced upper day.');
+  if (priority === 'legs') {
+    if (!days || days <= 3) return rec('lul', 'Lower body trained twice per week — two leg-focused days bookend one upper session.');
+    return rec('ul', 'Upper/Lower dedicates two full days to your lower body — ideal for leg development alongside a full program.');
   }
-  return { key, name: names[key], reason };
+  if (priority === 'upper') {
+    if (!days || days <= 3) return rec('ppl', 'Two upper-focused sessions (push + pull) and one leg day — the most upper frequency possible in 3 days.');
+    return rec('pp', 'Two push days and two pull days — your upper body gets the most focused volume possible across 4 sessions.');
+  }
+
+  // Balanced: days are the primary driver
+  if (days === 2) return rec('full2', 'Two complete full-body sessions per week — every muscle covered with maximum recovery time between sessions.');
+  if (days === 3) {
+    if (experience === 'beginner') return rec('full3', 'Three full-body sessions — high frequency with lower per-session volume. The best setup for new lifters.');
+    return rec('ppl', 'Three focused sessions: push, pull, and legs. Each muscle group gets one quality dedicated session per week.');
+  }
+  if (days === 4) return rec('ul', 'Four days: two upper, two lower. Every muscle trained twice per week — the gold standard for hypertrophy.');
+  if (days === 5) {
+    if (experience === 'advanced' && (goal === 'size' || goal === 'both')) return rec('bro', 'Five days: each muscle group gets its own dedicated high-volume session. Built for advanced lifters adding volume.');
+    return rec('ul', 'Upper/Lower with a fifth session — add the extra day for a lagging muscle group or extra volume.');
+  }
+  if (days >= 6) {
+    if (experience === 'advanced') return rec('antagonist', 'Six days: opposing muscle pairs trained together, each pair hit twice per week. Maximum frequency for advanced lifters.');
+    return rec('ul', 'Upper/Lower remains the most balanced option at high frequency — adjust per-session volume to match your recovery.');
+  }
+
+  // No days selected yet — fall back to experience + goal
+  if (experience === 'beginner') return rec('ul', 'Upper/Lower trains every muscle twice a week with full recovery built in — the best starting point for beginners.');
+  if (goal === 'strength') return rec('ul', 'Upper/Lower is the gold standard for strength development — high frequency, balanced recovery.');
+  return rec('ppl', 'Push/Pull/Legs lets you put more focused volume into each muscle group as you advance.');
 }
 
 function renderSplitRecommendation() {
   const exp = document.getElementById('ob-experience').value;
   const goal = document.getElementById('ob-goal').value;
   if (!exp || !goal) return;
-  const rec = getRecommendedSplit(exp, goal);
+  const priority = document.getElementById('ob-priority')?.value || 'balanced';
+  const days = parseInt(document.getElementById('ob-rec-days')?.value) || 0;
+  const rec = getRecommendedSplit(exp, goal, priority, days);
   const card = document.getElementById('ob-split-recommendation');
   if (!card) return;
   document.getElementById('ob-split-rec-name').textContent = rec.name;
@@ -32346,8 +32396,36 @@ function renderSplitRecommendation() {
   card.style.display = 'block';
 }
 
+function selectObPriority(value, btn) {
+  haptic(HAPTIC.tap);
+  document.getElementById('ob-priority').value = value;
+  document.querySelectorAll('.ob-priority-btn').forEach(b => { b.classList.remove('selected'); b.style.borderColor = ''; b.style.background = ''; });
+  btn.classList.add('selected');
+  renderSplitRecommendation();
+}
+
+function selectObRecDays(days, btn) {
+  haptic(HAPTIC.tap);
+  document.getElementById('ob-rec-days').value = days;
+  document.querySelectorAll('.ob-rec-days-btn').forEach(b => { b.classList.remove('selected'); b.style.borderColor = ''; b.style.background = ''; });
+  btn.classList.add('selected');
+  // Pre-select the matching day button in step 4 so it arrives pre-filled
+  document.getElementById('ob-training-days').value = days;
+  document.querySelectorAll('#onboard-step-4 .onboard-select-btn').forEach(b => {
+    b.classList.remove('selected'); b.style.borderColor = ''; b.style.background = '';
+    const d = b.querySelector('.ob-days-desc'); if (d) { d.textContent = b.dataset.short || ''; d.style.color = 'var(--gray)'; }
+  });
+  const step4Btn = document.getElementById('ob-day-btn-' + days);
+  if (step4Btn) {
+    const dc = DAY_COLORS[days];
+    step4Btn.classList.add('selected');
+    if (dc) { step4Btn.style.borderColor = dc.border; step4Btn.style.background = dc.bg; }
+  }
+  renderSplitRecommendation();
+}
+
 function useRecommendedSplit(key) {
-  const btns = document.querySelectorAll('#onboard-step-3 .onboard-select-btn');
+  const btns = document.querySelectorAll('#ob-split-list .onboard-select-btn');
   for (const btn of btns) {
     const oc = btn.getAttribute('onclick') || '';
     if (oc.includes("'" + key + "'")) {
@@ -32361,7 +32439,7 @@ function useRecommendedSplit(key) {
 function selectSplitOnboard(type, btn) {
   haptic(HAPTIC.tap);
   document.getElementById('ob-split-type').value = type;
-  const allBtns = btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn');
+  const allBtns = document.querySelectorAll('#ob-split-list .onboard-select-btn');
   allBtns.forEach(b => {
     b.classList.remove('selected');
     b.style.borderColor = '';
