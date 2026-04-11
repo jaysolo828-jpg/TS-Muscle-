@@ -16777,7 +16777,7 @@ function renderHome() {
                        : 'GRINDING LATE';
       greetingEl.textContent = `${salutation}, ${name.toUpperCase()}`;
     } else {
-      const h = new Date().getHours();
+      const h = (new Date().getHours() + (state.thirdShiftMode ? 8 : 0)) % 24;
       greetingEl.textContent = h >= 5 && h < 12 ? "GOOD MORNING — LET'S GET TO WORK"
                              : h >= 12 && h < 17 ? "GOOD AFTERNOON — TIME TO TRAIN"
                              : h >= 17 && h < 21 ? "GOOD EVENING — LET'S GET IT"
@@ -16810,16 +16810,16 @@ function renderHome() {
 
   const _fw = getContextWord();
   if (focusWordEl) focusWordEl.textContent = _fw.word;
-  streakEl.textContent = state.streak || 0;
+  if (streakEl) streakEl.textContent = state.streak || 0;
 
   if (isPaused) {
     if (focusWordEl) focusWordEl.style.color = 'var(--warning)';
-    streakEl.style.color = 'var(--warning)';
+    if (streakEl) streakEl.style.color = 'var(--warning)';
     if (focusLabelEl) { focusLabelEl.textContent = '⏸ PAUSED'; focusLabelEl.style.color = 'var(--warning)'; }
     if (streakLabelEl) { streakLabelEl.textContent = '⏸ STREAK PAUSED'; streakLabelEl.style.color = 'var(--warning)'; }
   } else {
     if (focusWordEl) focusWordEl.style.color = _isTS() ? 'var(--ts-sage)' : '#D4A843';
-    streakEl.style.color = 'var(--cream)';
+    if (streakEl) streakEl.style.color = 'var(--cream)';
     if (focusLabelEl) { focusLabelEl.textContent = "TODAY'S FOCUS"; focusLabelEl.style.color = _isTS() ? 'var(--ts-sage-dim)' : ''; }
     if (streakLabelEl) { streakLabelEl.textContent = 'Week Streak'; streakLabelEl.style.color = ''; }
   }
@@ -16835,7 +16835,8 @@ function renderHome() {
     pauseBanner = document.createElement('div');
     pauseBanner.id = 'pause-banner';
     const deloadBannerEl = document.getElementById('deload-banner');
-    deloadBannerEl.parentNode.insertBefore(pauseBanner, deloadBannerEl);
+    if (deloadBannerEl) deloadBannerEl.parentNode.insertBefore(pauseBanner, deloadBannerEl);
+    else document.getElementById('home-main-content')?.prepend(pauseBanner);
   }
   if (state.programPaused) {
     const pausedDays = Math.floor((Date.now() - new Date(state.pausedAt)) / (1000 * 60 * 60 * 24));
@@ -16862,7 +16863,8 @@ function renderHome() {
     _travelHomeBanner = document.createElement('div');
     _travelHomeBanner.id = 'travel-home-banner';
     const _deloadBannerEl = document.getElementById('deload-banner');
-    _deloadBannerEl.parentNode.insertBefore(_travelHomeBanner, _deloadBannerEl);
+    if (_deloadBannerEl) _deloadBannerEl.parentNode.insertBefore(_travelHomeBanner, _deloadBannerEl);
+    else document.getElementById('home-main-content')?.prepend(_travelHomeBanner);
   }
   if (state.travelMode) {
     _checkTravelModeExpiry();
@@ -17090,7 +17092,7 @@ function renderHome() {
       const isActiveDeload = isCurrent && (state.isDeloadWeek || state.isRestWeek);
       if (isActiveDeload) {
         dot.classList.add(_earlyDeload ? 'current-deload-mrv' : 'current-deload');
-      } else if (isDone || (!isCurrent && state.deloadWeekNum)) {
+      } else if (isDone) {
         // Recovery week has been passed — mark it done
         dot.classList.add('done');
       } else {
@@ -17151,7 +17153,7 @@ function renderHome() {
   if (!container) return;
   container.innerHTML = '';
   const maxDays = state.trainingDaysPerWeek || 4;
-  const visibleDays = state.program.slice(0, maxDays);
+  const visibleDays = (state.program || []).slice(0, maxDays);
 
   // Which days were completed this training week (last N real sessions, N = trainingDaysPerWeek)?
   // Using the training week rather than calendar day so badges persist across days
