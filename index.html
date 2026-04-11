@@ -3593,7 +3593,10 @@
             <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
             <div style="width:8px; height:4px; border-radius:2px; background:#333;"></div>
           </div>
-          <button onclick="introSlideNext(2)" class="onboard-next-btn">NEXT →</button>
+          <div style="display:flex; gap:10px;">
+            <button onclick="onboardBackToWelcome()" class="onboard-back-btn">← BACK</button>
+            <button onclick="introSlideNext(2)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
+          </div>
         </div>
       </div>
       <!-- Slide 2: The one thing to know (RPE) -->
@@ -3686,6 +3689,9 @@
         <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:3px; margin-bottom:10px;">THERAPY &amp; SNEAKERS</div>
         <div style="font-family:'Bebas Neue',cursive; font-size:42px; color:var(--cream); letter-spacing:3px; line-height:1.05;">T&amp;S MUSCLE</div>
         <div style="font-size:15px; color:#d0cbc6; margin-top:10px; line-height:1.5;">Train your body.<br>Train your mind.<br>Same place.</div>
+        <div style="margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);">
+          <div style="font-size:14px; color:#d0cbc6; line-height:1.65; max-width:290px; margin:0 auto;">Built by <strong style="color:var(--cream);">Jay Wilson, LCSW</strong> — a licensed clinical social worker from NC. T&amp;S is where getting stronger physically and steadier mentally happen in the same place.</div>
+        </div>
       </div>
       <div style="display:flex; flex-direction:column; gap:12px;">
         <button class="onboard-select-btn" onclick="onboardShowIntro()" style="padding:20px 16px;">
@@ -32389,6 +32395,14 @@ function onboardShowIntro() {
   document.getElementById('onboard-step-intro').style.display = 'block';
   document.querySelectorAll('.intro-slide').forEach(s => s.style.display = 'none');
   document.getElementById('intro-slide-1').style.display = 'block';
+  document.getElementById('onboarding-modal').scrollTop = 0;
+}
+
+function onboardBackToWelcome() {
+  document.getElementById('onboard-step-intro').style.display = 'none';
+  document.querySelectorAll('.intro-slide').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
+  document.getElementById('onboard-step-0').style.display = 'block';
   document.getElementById('onboarding-modal').scrollTop = 0;
 }
 
