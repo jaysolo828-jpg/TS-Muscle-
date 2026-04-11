@@ -6717,6 +6717,8 @@ function _checkSetReductionTrigger(muscle) {
   if (!state.setReductionEnabledAt) return false;
   // Never before Week 5 — not enough training history to make a reliable fatigue call
   if ((state.weekCount || 1) < 5) return false;
+  // Priority muscles are intentionally being pushed toward MRV — same guard as getMRVApproachingMuscles()
+  if ((state.cycleEmphasis || []).includes(muscle)) return false;
 
   // Suppress if any exercise targeting this muscle is in the 2-session manual adj period
   const day = state.program.find(d => d.id === activeSession.dayId);
