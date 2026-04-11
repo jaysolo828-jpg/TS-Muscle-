@@ -4589,14 +4589,6 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/></svg></div>
   </div>
 
-  <div id="install-app-row" class="settings-item" onclick="doInstall()">
-    <div>
-      <div class="settings-label">Install App to Home Screen</div>
-      <div class="settings-sub" id="install-app-sub">Install T&amp;S Muscle as a full-screen app. Works offline.</div>
-    </div>
-    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg></div>
-  </div>
-
   </div><!-- /ssec-account -->
 
   <!-- PROFILE -->
@@ -5202,42 +5194,6 @@
   </div>
 </div>
 
-<!-- INSTALL BANNER -->
-<div id="install-banner" style="display:none; position:fixed; bottom:calc(80px + env(safe-area-inset-bottom)); left:16px; right:16px; z-index:150;">
-  <div style="background:linear-gradient(135deg,#CC2027,#9e181d); border-radius:14px; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 8px 30px rgba(204,32,39,0.5);">
-    <div style="display:flex; align-items:center; gap:12px;">
-      <img src="/icon-192.png" style="width:44px; height:44px; border-radius:8px;" alt="icon"/>
-      <div>
-        <div style="font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; color:#F5E6C8; line-height:1;">INSTALL T&S MUSCLE</div>
-        <div style="font-size:13px; color:rgba(255,255,255,0.8); font-family:'Barlow Condensed',sans-serif; margin-top:2px;">Install as a full-screen app</div>
-      </div>
-    </div>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <button onclick="doInstall()" style="background:#F5E6C8; color:#CC2027; border:none; border-radius:10px; padding:10px 18px; font-family:'Bebas Neue',cursive; font-size:17px; letter-spacing:1px; cursor:pointer;">INSTALL</button>
-      <button onclick="document.getElementById('install-banner').style.display='none'" aria-label="Close" style="background:rgba(0,0,0,0.3); border:none; color:white; border-radius:8px; width:44px; height:44px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">×</button>
-    </div>
-  </div>
-</div>
-
-<!-- INSTALL WELCOME PROMPT (shown on first visit to non-installed users) -->
-<div id="install-welcome" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:100000; align-items:flex-end; justify-content:center;">
-  <div style="background:var(--dark2); border:1px solid var(--dark3); border-radius:20px 20px 0 0; padding:28px 24px calc(env(safe-area-inset-bottom) + 28px); width:100%; max-width:520px; animation:slideUp 0.35s ease;">
-    <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
-      <img src="./icon.png" style="width:80px; height:80px; box-shadow:0 4px 16px rgba(204,32,39,0.4);"/>
-      <div>
-        <div style="font-family:'Bebas Neue',cursive; font-size:26px; color:var(--cream); letter-spacing:2px; line-height:1;">T&amp;S MUSCLE</div>
-        <div style="font-size:13px; color:var(--gray); letter-spacing:1px; margin-top:2px;">THERAPY &amp; SNEAKERS</div>
-      </div>
-    </div>
-    <div style="font-size:14px; color:var(--gray-light); line-height:1.65; margin-bottom:22px;">
-      Add T&amp;S Muscle to your home screen. Works offline, loads instantly, and feels like a real app. No App Store needed.
-    </div>
-    <div style="display:flex; flex-direction:column; gap:10px;">
-      <button onclick="doWelcomeInstall()" style="width:100%; background:var(--red); border:none; color:white; padding:15px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">ADD TO HOME SCREEN</button>
-      <button onclick="dismissWelcomeInstall()" style="width:100%; background:transparent; border:none; color:var(--gray); padding:10px; font-family:'Barlow Condensed',sans-serif; font-size:15px; letter-spacing:1px; cursor:pointer;">NOT NOW</button>
-    </div>
-  </div>
-</div>
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
@@ -32004,21 +31960,6 @@ const TUTORIAL_SLIDES = [
     </div>`,
   },
   {
-    section: 'INSTALL THE APP',
-    icon: '📲',
-    title: 'Add to Your Home Screen',
-    body: `T&S Muscle is a <strong style="color:var(--cream);">Progressive Web App</strong>. Install it to your home screen for a full-screen, native-app experience with offline support.<br><br>
-    <strong style="color:var(--red-text);">iPhone (Safari only):</strong><br>
-    1. Tap the <strong style="color:var(--cream);">Share</strong> icon at the bottom of Safari<br>
-    2. Scroll down and tap <strong style="color:var(--cream);">Add to Home Screen</strong><br>
-    3. Tap <strong style="color:var(--cream);">Add</strong><br><br>
-    <strong style="color:var(--red-text);">Android (Chrome):</strong><br>
-    1. Tap the menu <strong style="color:var(--cream);">⋮</strong> in Chrome<br>
-    2. Tap <strong style="color:var(--cream);">Install app</strong> (or <strong style="color:var(--cream);">Add to Home Screen</strong>)<br>
-    3. Tap <strong style="color:var(--cream);">Install</strong> to confirm<br><br>
-    <span style="color:var(--gray);font-size:14px;">Updates happen automatically. Just reopen the app to get the latest version.</span>`,
-  },
-  {
     section: 'INITIAL SETUP',
     icon: '👤',
     title: 'Your First Setup',
@@ -32188,8 +32129,9 @@ const TUTORIAL_SLIDES = [
     section: 'CARDIO',
     icon: '❤️',
     title: 'Cardio Tracking',
-    body: `The <strong style="color:var(--cream);">Cardio tab</strong> tracks five activity types:<br><br>
-    🏃 Outdoor Run &nbsp; 🚶 Walk &nbsp; 🚶 Brisk Walk &nbsp; 🏃 Jog &nbsp; 🏋️ Treadmill<br><br>
+    body: `The <strong style="color:var(--cream);">Cardio tab</strong> tracks four activity types:<br><br>
+    🏋️ Treadmill &nbsp; 🏃 Run &nbsp; 🚶 Walk &nbsp; 🏃 Jog<br><br>
+    Walk has a <strong style="color:var(--cream);">Leisurely / Brisk</strong> sub-toggle — each uses different calorie math. You can also import sessions directly from <strong style="color:var(--cream);">Health Connect</strong> (Samsung Health, Google Fit, Strava, Garmin, and others).<br><br>
     Each session logs <strong style="color:var(--cream);">distance, duration, pace,</strong> and <strong style="color:var(--red-text);">calories burned,</strong> calculated using MET values, the same standard used in exercise science research.<br><br>
     Use the built-in <strong style="color:var(--cream);">timer</strong> with quick presets (20, 30, 45, 60 min) for structured sessions. Your <strong style="color:var(--cream);">weekly summary</strong> shows total sessions, minutes, and calories at a glance.`,
   },
