@@ -9843,7 +9843,7 @@ async function _sendWorkoutSignal(dayName) {
         state.supabaseAvatarUrl || null,
         'workout_start'
       );
-    }, 0);
+    }, 5 * 60 * 1000);
   } catch(e) {}
 }
 
