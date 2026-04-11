@@ -3561,29 +3561,43 @@
 
     <!-- STEP INTRO: App intro slides (shown to fresh installs after step 0 "Start Fresh") -->
     <div id="onboard-step-intro" class="onboard-step" style="display:none;">
+
       <!-- Slide 1: What T&S is -->
       <div class="intro-slide" id="intro-slide-1">
-        <div style="text-align:center; padding-top:10px; margin-bottom:22px;">
-          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:3px; margin-bottom:14px;">THERAPY &amp; SNEAKERS</div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:44px; color:var(--cream); letter-spacing:3px; margin-bottom:12px; line-height:1.05;">BUILT FOR<br>THE LONG GAME</div>
-          <div style="font-size:16px; color:#d0cbc6; line-height:1.6; max-width:300px; margin:0 auto;">Most apps just track your sets.<br>T&amp;S learns from them and adjusts your program automatically.</div>
+        <div style="text-align:center; padding-top:6px; margin-bottom:20px;">
+          <img src="./icon.png" style="width:72px; height:72px; border-radius:18px; margin-bottom:14px; display:block; margin-left:auto; margin-right:auto; animation:ob-icon-glow 2.8s ease-in-out infinite;"/>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:3px; margin-bottom:10px;">THERAPY &amp; SNEAKERS</div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:42px; color:var(--cream); letter-spacing:3px; line-height:1.05; margin-bottom:10px;">BUILT FOR<br>THE LONG GAME</div>
+          <div style="font-size:16px; color:var(--cream); line-height:1.6; max-width:300px; margin:0 auto; opacity:0.85;">Most apps just track your sets. T&amp;S learns from them and adjusts your program for you.</div>
         </div>
-        <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:22px; display:flex; flex-direction:column; gap:10px;">
-          <div style="display:flex; align-items:center; gap:12px;">
-            <div style="font-size:22px; flex-shrink:0;">🏋️</div>
-            <div style="font-size:15px; color:#d0cbc6; line-height:1.4;"><strong style="color:var(--cream);">Weights that adapt.</strong> The program pushes you up when you're ready — never before.</div>
+        <div style="background:var(--dark3); border:1px solid rgba(204,32,39,0.2); border-radius:14px; padding:16px; margin-bottom:20px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="font-size:24px; flex-shrink:0; width:32px; text-align:center;">🏋️</div>
+            <div>
+              <div style="font-size:15px; font-weight:700; color:var(--cream); margin-bottom:2px;">Weights that adapt</div>
+              <div style="font-size:14px; color:#ccc; line-height:1.45;">Goes up when you're ready. Never before.</div>
+            </div>
           </div>
-          <div style="display:flex; align-items:center; gap:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:22px; flex-shrink:0;">🧠</div>
-            <div style="font-size:15px; color:#d0cbc6; line-height:1.4;"><strong style="color:var(--cream);">Mental health built in.</strong> Mood check-ins, mindset tools, your why — all in one place.</div>
+          <div style="display:flex; align-items:center; gap:14px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);">
+            <div style="font-size:24px; flex-shrink:0; width:32px; text-align:center;">🧠</div>
+            <div>
+              <div style="font-size:15px; font-weight:700; color:var(--cream); margin-bottom:2px;">Mental health built in</div>
+              <div style="font-size:14px; color:#ccc; line-height:1.45;">Mood check-ins and mindset tools alongside your training.</div>
+            </div>
           </div>
-          <div style="display:flex; align-items:center; gap:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:22px; flex-shrink:0;">🏃</div>
-            <div style="font-size:15px; color:#d0cbc6; line-height:1.4;"><strong style="color:var(--cream);">Cardio counts.</strong> Runs, rides, walks — log it alongside your lifting.</div>
+          <div style="display:flex; align-items:center; gap:14px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);">
+            <div style="font-size:24px; flex-shrink:0; width:32px; text-align:center;">🏃</div>
+            <div>
+              <div style="font-size:15px; font-weight:700; color:var(--cream); margin-bottom:2px;">Cardio counts too</div>
+              <div style="font-size:14px; color:#ccc; line-height:1.45;">Runs, rides, walks — all in the same place.</div>
+            </div>
           </div>
-          <div style="display:flex; align-items:center; gap:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:22px; flex-shrink:0;">📈</div>
-            <div style="font-size:15px; color:#d0cbc6; line-height:1.4;"><strong style="color:var(--cream);">See your progress.</strong> PRs, volume trends, your T&amp;S Strength Score.</div>
+          <div style="display:flex; align-items:center; gap:14px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);">
+            <div style="font-size:24px; flex-shrink:0; width:32px; text-align:center;">📈</div>
+            <div>
+              <div style="font-size:15px; font-weight:700; color:var(--cream); margin-bottom:2px;">Watch yourself grow</div>
+              <div style="font-size:14px; color:#ccc; line-height:1.45;">PRs, volume, your T&amp;S Strength Score.</div>
+            </div>
           </div>
         </div>
         <div class="ob-button-row" style="flex-direction:column; gap:12px;">
@@ -3598,23 +3612,30 @@
           </div>
         </div>
       </div>
-      <!-- Slide 2: RPE — the one number -->
+
+      <!-- Slide 2: RPE -->
       <div class="intro-slide" id="intro-slide-2" style="display:none;">
-        <div style="text-align:center; padding-top:10px; margin-bottom:20px;">
-          <div style="font-family:'Bebas Neue',cursive; font-size:40px; color:var(--cream); letter-spacing:3px; margin-bottom:10px; line-height:1.05;">THE ONE NUMBER<br>THAT RUNS EVERYTHING</div>
-          <div style="font-size:16px; color:#d0cbc6; line-height:1.6; max-width:300px; margin:0 auto;">After every set, rate how hard it felt. That number tells the app what to do next.</div>
+        <div style="text-align:center; padding-top:8px; margin-bottom:20px;">
+          <div style="font-family:'Bebas Neue',cursive; font-size:42px; color:var(--cream); letter-spacing:3px; line-height:1.05; margin-bottom:10px;">THE ONE NUMBER<br>THAT RUNS EVERYTHING</div>
+          <div style="font-size:16px; color:var(--cream); line-height:1.6; max-width:300px; margin:0 auto; opacity:0.85;">After every set, rate how hard it felt. That number tells the app what to do next.</div>
         </div>
-        <div style="background:var(--dark3); border-radius:12px; padding:14px 16px; margin-bottom:20px;">
-          <div style="font-size:13px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:10px;">HOW HARD WAS THAT SET?</div>
-          <div style="display:flex; flex-direction:column; gap:8px; font-size:15px;">
-            <div style="display:flex; justify-content:space-between; padding:4px 0;"><span style="color:#bbb;">RPE 6</span><span style="color:#999;">Easy — 4+ reps left</span></div>
-            <div style="display:flex; justify-content:space-between; padding:4px 0;"><span style="color:#bbb;">RPE 7</span><span style="color:#999;">Solid — 3 reps left</span></div>
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-radius:8px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); margin:2px 0;">
-              <span style="color:var(--cream); font-weight:bold;">RPE 8 &nbsp;←&nbsp; your target</span>
-              <span style="color:#d0cbc6;">2 reps left</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; padding:4px 0;"><span style="color:#bbb;">RPE 9</span><span style="color:#999;">Hard — 1 rep left</span></div>
-            <div style="display:flex; justify-content:space-between; padding:4px 0;"><span style="color:#bbb;">RPE 10</span><span style="color:#999;">Max — nothing left</span></div>
+        <!-- Big RPE 8 hero -->
+        <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:20px;">
+          <div style="font-family:'Bebas Neue',cursive; font-size:88px; color:var(--red); line-height:1; letter-spacing:2px;">8</div>
+          <div style="text-align:left;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:2px; margin-bottom:4px;">YOUR TARGET</div>
+            <div style="font-size:16px; color:var(--cream); font-weight:600; line-height:1.4;">2 reps left<br>in the tank</div>
+          </div>
+        </div>
+        <!-- Scale -->
+        <div style="background:var(--dark3); border:1px solid rgba(204,32,39,0.2); border-radius:14px; padding:14px 16px; margin-bottom:20px;">
+          <div style="font-size:13px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:10px;">THE FULL SCALE</div>
+          <div style="display:flex; flex-direction:column; gap:0;">
+            <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="font-size:15px; color:#bbb; font-weight:600;">RPE 6</span><span style="font-size:15px; color:#bbb;">Easy — 4+ reps left</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="font-size:15px; color:#bbb; font-weight:600;">RPE 7</span><span style="font-size:15px; color:#bbb;">Solid — 3 reps left</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 10px; border-radius:8px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); margin:4px 0;"><span style="font-size:15px; color:var(--cream); font-weight:700;">RPE 8</span><span style="font-size:15px; color:var(--cream); font-weight:600;">← your target</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="font-size:15px; color:#bbb; font-weight:600;">RPE 9</span><span style="font-size:15px; color:#bbb;">Hard — 1 rep left</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0;"><span style="font-size:15px; color:#bbb; font-weight:600;">RPE 10</span><span style="font-size:15px; color:#bbb;">Max — nothing left</span></div>
           </div>
         </div>
         <div class="ob-button-row" style="flex-direction:column; gap:12px;">
@@ -3629,13 +3650,14 @@
           </div>
         </div>
       </div>
-      <!-- Slide 3: Let's build -->
+
+      <!-- Slide 3: Let's go -->
       <div class="intro-slide" id="intro-slide-3" style="display:none;">
-        <div style="text-align:center; padding-top:24px; margin-bottom:36px;">
-          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:3px; margin-bottom:18px;">T&amp;S MUSCLE</div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:48px; color:var(--cream); letter-spacing:3px; line-height:1.0; margin-bottom:16px;">LET'S BUILD<br>YOUR PROGRAM</div>
-          <div style="width:48px; height:3px; background:var(--red); border-radius:2px; margin:0 auto 20px;"></div>
-          <div style="font-size:16px; color:#d0cbc6; line-height:1.7; max-width:280px; margin:0 auto;">5 questions. Your full personalized program — ready before you know it.</div>
+        <div style="text-align:center; padding-top:32px; margin-bottom:40px;">
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:3px; margin-bottom:20px;">T&amp;S MUSCLE</div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:52px; color:var(--cream); letter-spacing:3px; line-height:1.0; margin-bottom:18px;">LET'S BUILD<br>YOUR PROGRAM</div>
+          <div style="width:48px; height:3px; background:var(--red); border-radius:2px; margin:0 auto 22px;"></div>
+          <div style="font-size:17px; color:var(--cream); line-height:1.7; max-width:270px; margin:0 auto; opacity:0.85;">5 questions. Your full personalized program — ready before you know it.</div>
         </div>
         <div class="ob-button-row" style="flex-direction:column; gap:12px;">
           <div style="display:flex; justify-content:center; gap:8px;">
@@ -3649,6 +3671,7 @@
           </div>
         </div>
       </div>
+
     </div>
 
     <!-- STEP 0: New or Returning? (shown first, before intro slides) -->
