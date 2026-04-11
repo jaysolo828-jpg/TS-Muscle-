@@ -21016,8 +21016,8 @@ function toggleSetDone(exId, setIndex) {
     setTimeout(function() { _maybeFireCoachingCue(exId, setIndex); }, 600);
   }
 
-  // Checkpoint: auto-save after every completed set so crash/swipe-away recovery has recent data
-  if (set.done && activeSession) {
+  // Checkpoint: auto-save on every set toggle so crash/swipe-away recovery has recent data
+  if (activeSession) {
     try { const _chk = JSON.stringify(activeSession); localStorage.setItem('ts-muscle-paused', _chk); _idbSet('ts-muscle-paused', _chk); } catch(e) {}
   }
 }
@@ -22881,7 +22881,8 @@ function _initDragHandles() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function updateSessionProgress() {
-  const day = state.program.find(d => d.id === activeSession.dayId);
+  const day = state.program?.find(d => d.id === activeSession?.dayId);
+  if (!day) return;
   let totalSets = 0, doneSets = 0, doneExercises = 0;
 
   day.exercises.forEach(ex => {
@@ -22916,7 +22917,8 @@ function updateSessionProgress() {
 }
 
 function openSessionSwap(exId) {
-  const day = state.program.find(d => d.id === activeSession.dayId);
+  const day = state.program?.find(d => d.id === activeSession?.dayId);
+  if (!day) return;
   const ex = day.exercises.find(e => e.id === exId);
   pendingSwap = { dayId: activeSession.dayId, exId, sessionMode: true };
   openAltModal(ex);
