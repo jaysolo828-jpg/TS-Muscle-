@@ -37,7 +37,7 @@ class MainActivity : LauncherActivity() {
                     ) {
                         try {
                             client.warmup(0L)
-                            client.newSession(null)?.prepareCall(super@MainActivity.getLaunchingUrl())
+                            client.newSession(null)?.mayLaunchUrl(super@MainActivity.getLaunchingUrl(), null, null)
                         } catch (_: Exception) {}
                     }
                     override fun onServiceDisconnected(name: ComponentName) {}
