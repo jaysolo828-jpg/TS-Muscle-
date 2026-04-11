@@ -3297,7 +3297,8 @@
   <!-- Tab header -->
   <div style="margin-bottom:22px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.05);">
     <div style="font-family:'Bebas Neue',cursive; font-size:28px; letter-spacing:3px; color:var(--cream); line-height:1;">MINDSET</div>
-    <div style="font-size:13px; color:var(--gray-light); letter-spacing:0.6px; margin-top:5px;">The inner work. Just as important as the reps.</div>
+    <div style="width:36px; height:2px; background:var(--red); border-radius:2px; margin:6px 0 8px;"></div>
+    <div style="font-size:13px; color:var(--gray-light); letter-spacing:0.6px;">The inner work. Just as important as the reps.</div>
   </div>
 
   <!-- Your Foundation -->
@@ -3307,20 +3308,20 @@
   <!-- Where You Are -->
   <div class="section-title" style="margin-bottom:10px;">WHERE YOU <span>ARE</span></div>
 
-  <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark2); border:1px solid var(--dark3); color:var(--cream); padding:16px; border-radius:14px; cursor:pointer; text-align:left; display:flex; align-items:center; gap:14px; margin-bottom:10px; -webkit-tap-highlight-color:transparent;">
-    <div style="width:36px; height:36px; border-radius:10px; background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-      <svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--red)" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+  <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark2); border:1.5px solid rgba(204,32,39,0.22); color:var(--cream); padding:16px; border-radius:14px; cursor:pointer; text-align:left; display:flex; align-items:center; gap:14px; margin-bottom:10px; -webkit-tap-highlight-color:transparent; transition:border-color 0.2s, background 0.2s;">
+    <div style="width:42px; height:42px; border-radius:12px; background:rgba(204,32,39,0.1); border:1px solid rgba(204,32,39,0.3); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--red)" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
     </div>
     <div style="flex:1; min-width:0;">
-      <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; letter-spacing:0.5px; margin-bottom:2px;">Check in with yourself</div>
-      <div style="font-size:13px; color:var(--gray-light);">A moment for what's actually on your mind.</div>
+      <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; letter-spacing:0.5px; margin-bottom:3px;">Check in with yourself</div>
+      <div style="font-size:13px; color:var(--gray-light);">A moment for what is actually on your mind.</div>
     </div>
     <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
   </button>
 
   <div id="mood-checkin-card" class="card" style="margin-bottom:24px; padding:16px 0 14px; overflow:hidden;">
     <div style="padding:0 16px;">
-      <div style="font-size:13px; color:var(--gray); letter-spacing:1.5px; margin-bottom:3px;" id="mood-checkin-label">T&amp;S FEELINGS WHEEL</div>
+      <div style="font-size:14px; color:var(--gray-light); letter-spacing:1.5px; margin-bottom:3px; font-family:'Barlow Condensed',sans-serif; font-weight:700;" id="mood-checkin-label">T&amp;S FEELINGS WHEEL</div>
       <div id="mood-wheel-subtitle" style="font-size:14px; color:var(--gray-light); margin-bottom:10px;">Tap a section to name how you feel right now.</div>
     </div>
     <input type="hidden" id="mood-timing" value="post"/>
@@ -4311,12 +4312,12 @@
       <div style="font-size:13px; color:var(--gray); letter-spacing:1px; margin-bottom:16px;">STEP 2 OF 4 · WHAT GOT IN THE WAY?</div>
       <div style="font-size:15px; color:var(--cream); margin-bottom:14px; line-height:1.5;">What got in the way?</div>
       <div style="display:flex; flex-direction:column; gap:10px;">
-        <button class="cbt-barrier-btn" onclick="selectBarrier('too tired')">😴 Too tired</button>
-        <button class="cbt-barrier-btn" onclick="selectBarrier('too busy')">⏰ Too busy / no time</button>
-        <button class="cbt-barrier-btn" onclick="selectBarrier('not motivated')">😑 Not feeling motivated</button>
-        <button class="cbt-barrier-btn" onclick="selectBarrier('anxious or stressed')">😰 Anxious or stressed</button>
-        <button class="cbt-barrier-btn" onclick="selectBarrier('physical pain or sickness')">🤕 Physical pain or sickness</button>
-        <button class="cbt-barrier-btn" onclick="selectBarrier('other')">💬 Something else</button>
+        <button class="cbt-barrier-btn" onclick="selectBarrier('too tired', this)">😴 Too tired</button>
+        <button class="cbt-barrier-btn" onclick="selectBarrier('too busy', this)">⏰ Too busy / no time</button>
+        <button class="cbt-barrier-btn" onclick="selectBarrier('not motivated', this)">😑 Not feeling motivated</button>
+        <button class="cbt-barrier-btn" onclick="selectBarrier('anxious or stressed', this)">😰 Anxious or stressed</button>
+        <button class="cbt-barrier-btn" onclick="selectBarrier('physical pain or sickness', this)">🤕 Physical pain or sickness</button>
+        <button class="cbt-barrier-btn" onclick="selectBarrier('other', this)">💬 Something else</button>
       </div>
       <div id="barrier-other-input" style="display:none; margin-top:12px;">
         <input id="barrier-other-text" type="text" class="notes-input" placeholder="Briefly describe what got in the way..." style="width:100%; padding:12px; border-radius:10px; box-sizing:border-box; margin-bottom:10px; font-size:16px;"/>
@@ -33897,13 +33898,14 @@ function renderMindsetActivity(showAll = false) {
     const dl = relDate(entry.date);
     if (entry.type === 'mood') {
       const e = entry.data;
-      return `<div class="card" style="margin-bottom:10px; padding:14px;">
+      const accentColor = e.catColor || 'var(--red)';
+      return `<div class="card" style="margin-bottom:10px; padding:14px; box-shadow:inset 3px 0 0 ${accentColor};">
         <div style="display:flex; justify-content:space-between; align-items:center;${e.note ? ' margin-bottom:10px;' : ''}">
           <div style="display:flex; align-items:center; gap:10px;">
-            <div style="font-size:24px; line-height:1;">${e.emoji || MOOD_EMOJIS[e.value]}</div>
+            <div style="font-size:26px; line-height:1;">${e.emoji || MOOD_EMOJIS[e.value]}</div>
             <div>
-              <div style="font-size:14px; color:var(--cream); font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.3px;">${e.label || MOOD_LABELS[e.value]}</div>
-              <div style="font-size:13px; color:var(--gray); letter-spacing:0.5px;">${e.catLabel ? `${e.catLabel} · FEELINGS CHECK-IN` : 'MOOD LOG'}</div>
+              <div style="font-size:15px; color:var(--cream); font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.3px;">${e.label || MOOD_LABELS[e.value]}</div>
+              <div style="font-size:12px; color:var(--gray); letter-spacing:0.8px; text-transform:uppercase;">${e.catLabel ? `${e.catLabel} · FEELINGS WHEEL` : 'MOOD LOG'}</div>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
@@ -33917,11 +33919,11 @@ function renderMindsetActivity(showAll = false) {
     if (entry.type === 'checkin') {
       const e = entry.data;
       const bl = e.barrier ? (barrierLabels[e.barrier] || e.barrier) : null;
-      return `<div class="card" style="margin-bottom:10px; padding:14px;">
+      return `<div class="card" style="margin-bottom:10px; padding:14px; box-shadow:inset 3px 0 0 #5b8dee;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:${e.feeling || e.aiResponse || e.plan ? '10px' : '0'};">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <div style="font-size:13px; color:var(--gray); letter-spacing:1px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">MINDSET CHECK-IN</div>
-            ${bl ? `<div style="font-size:13px; color:var(--red-text); background:rgba(204,32,39,0.08); border-radius:4px; padding:2px 6px;">${escapeHtml(bl)}</div>` : ''}
+            <div style="font-size:12px; color:#5b8dee; letter-spacing:1px; font-family:'Barlow Condensed',sans-serif; font-weight:700; text-transform:uppercase;">MINDSET CHECK-IN</div>
+            ${bl ? `<div style="font-size:12px; color:var(--red-text); background:rgba(204,32,39,0.08); border-radius:4px; padding:2px 6px; letter-spacing:0.5px;">${escapeHtml(bl)}</div>` : ''}
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;margin-left:8px;">
             <div style="font-size:13px;color:var(--gray);">${dl}</div>
@@ -33929,7 +33931,7 @@ function renderMindsetActivity(showAll = false) {
           </div>
         </div>
         ${e.feeling ? `<div style="font-size:14px; color:var(--cream); line-height:1.5; font-style:italic; margin-bottom:8px;">"${escapeHtml(e.feeling)}"</div>` : ''}
-        ${e.aiResponse ? `<div style="font-size:13px; color:var(--gray-light); line-height:1.55; border-left:2px solid var(--red); padding-left:10px; margin-bottom:8px;">${escapeHtml(e.aiResponse)}</div>` : ''}
+        ${e.aiResponse ? `<div style="font-size:13px; color:var(--gray-light); line-height:1.55; border-left:2px solid #5b8dee; padding-left:10px; margin-bottom:8px;">${escapeHtml(e.aiResponse)}</div>` : ''}
         ${e.plan ? `<div style="font-size:13px; color:var(--gray); border-top:1px solid var(--dark3); padding-top:8px;">↩ ${escapeHtml(e.plan)}</div>` : ''}
       </div>`;
     }
@@ -33955,14 +33957,14 @@ function renderValuesCard() {
   if (val) {
     card.innerHTML = `${watermark}${accent}
       <div style="padding-left:10px;">
-        <div style="font-size:13px; color:rgba(220,60,60,1); letter-spacing:2px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHY I TRAIN</div>
+        <div style="font-size:14px; color:rgba(220,60,60,1); letter-spacing:2px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHY I TRAIN</div>
         <div id="values-display-text" style="font-size:17px; color:var(--cream); line-height:1.65; font-family:'Barlow Condensed',sans-serif; font-weight:500; letter-spacing:0.2px; margin-bottom:14px;">${escapeHtml(val)}</div>
         <button onclick="editTrainingValues()" style="background:none; border:none; color:rgba(255,255,255,0.25); font-size:13px; cursor:pointer; padding:0; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif;">EDIT</button>
       </div>`;
   } else {
     card.innerHTML = `${watermark}${accent}
       <div style="padding-left:10px;">
-        <div style="font-size:13px; color:rgba(220,60,60,1); letter-spacing:2px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHY I TRAIN</div>
+        <div style="font-size:14px; color:rgba(220,60,60,1); letter-spacing:2px; margin-bottom:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">WHY I TRAIN</div>
         <div style="font-size:14px; color:rgba(255,255,255,0.35); line-height:1.6; margin-bottom:14px;">When it's hard to show up, your reason pulls you through.</div>
         <textarea id="values-input" class="notes-input" placeholder="What does training make possible for you?" style="min-height:64px; margin-bottom:12px;"></textarea>
         <button onclick="saveTrainingValues()" style="width:100%; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.3); color:var(--red); padding:12px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:2px; cursor:pointer;">SET MY WHY</button>
@@ -34679,7 +34681,9 @@ function openSelfCompassionModal() {
 }
 
 function closeSelfCompassionModal() {
-  document.getElementById('self-compassion-modal').style.display = 'none';
+  const scModal = document.getElementById('self-compassion-modal');
+  if (scModal) scModal.style.display = 'none';
+  scLastAiResponse = null;
   unlockBodyScroll();
 }
 
@@ -34724,7 +34728,8 @@ function scNext(step) {
   const next = document.getElementById('sc-step-' + step);
   if (next) {
     next.style.display = 'block';
-    document.getElementById('self-compassion-modal').scrollTop = 0;
+    const scModal = document.getElementById('self-compassion-modal');
+    if (scModal) scModal.scrollTop = 0;
   }
   // Step 2: AI response — fire personalized call with what they wrote
   if (step === 2) {
@@ -34865,10 +34870,10 @@ function selectThought(thought) {
   document.getElementById('cbt-step-1').style.display = 'block';
 }
 
-function selectBarrier(barrier) {
+function selectBarrier(barrier, btn) {
   cbtSelectedBarrier = barrier;
   document.querySelectorAll('.cbt-barrier-btn').forEach(b => b.classList.remove('selected'));
-  event.target.closest('.cbt-barrier-btn').classList.add('selected');
+  if (btn) btn.classList.add('selected');
 
   // Show free-text input only for "other"
   const otherInput = document.getElementById('barrier-other-input');
@@ -35100,6 +35105,7 @@ function renderHardDayCollection(showAll = false) {
         background:var(--dark2);border:1px solid var(--dark3);border-radius:14px;
         padding:14px 16px;margin-bottom:8px;
         display:flex;align-items:center;gap:14px;
+        box-shadow:inset 3px 0 0 ${meta.color};
       ">
         <div style="
           width:40px;height:40px;border-radius:10px;flex-shrink:0;
