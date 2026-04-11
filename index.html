@@ -4372,6 +4372,14 @@
     <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="8" y="14" width="3" height="3" rx="0.5"/></svg></div>
   </div>
 
+  <div class="settings-item" onclick="openGymEquipmentSheet()">
+    <div>
+      <div class="settings-label">Gym Equipment</div>
+      <div id="gym-equipment-sub" class="settings-sub">Full gym</div>
+    </div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16M18 4v16"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="2" y1="7" x2="6" y2="7"/><line x1="2" y1="17" x2="6" y2="17"/><line x1="18" y1="7" x2="22" y2="7"/><line x1="18" y1="17" x2="22" y2="17"/></svg></div>
+  </div>
+
   <!-- Compact feature toggles card -->
   <div style="background:var(--dark2);border:1px solid var(--dark3);border-radius:14px;overflow:hidden;margin-bottom:2px;">
     <div onclick="toggleProgressiveOverload()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--dark3);cursor:pointer;-webkit-tap-highlight-color:transparent;">
@@ -5073,6 +5081,34 @@
   </div>
 </div>
 
+<!-- GYM EQUIPMENT SHEET -->
+<div id="gym-equipment-sheet" style="display:none; position:fixed; inset:0; z-index:99997; background:rgba(0,0,0,0.75);" onclick="closeGymEquipmentSheet()">
+  <div onclick="event.stopPropagation()" style="position:absolute; bottom:0; left:0; right:0; background:var(--dark2); border-radius:18px 18px 0 0; padding-bottom:env(safe-area-inset-bottom,0); max-height:80vh; overflow-y:auto;">
+    <div style="width:36px; height:4px; background:rgba(255,255,255,0.18); border-radius:2px; margin:12px auto 0;"></div>
+    <div style="padding:16px 20px 12px;">
+      <div style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream); letter-spacing:2px; margin-bottom:4px;">GYM EQUIPMENT</div>
+      <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">Exercises will be automatically swapped to match what you have. Switching back to Full Gym restores default exercises.</div>
+    </div>
+    <div style="padding:0 20px 16px; display:flex; flex-direction:column; gap:10px;">
+      <button id="geq-full-btn" onclick="selectGymEquip('full')" class="onboard-select-btn">
+        <div style="font-weight:bold;">Full Gym</div>
+        <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">Barbells, cables, machines — everything. Restores default exercises for your split.</div>
+      </button>
+      <button id="geq-dc-btn" onclick="selectGymEquip('dumbbells-cable')" class="onboard-select-btn">
+        <div style="font-weight:bold;">Dumbbells + Cable</div>
+        <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">No barbell or rack. Home gym or commercial gym without a squat rack.</div>
+      </button>
+      <button id="geq-db-btn" onclick="selectGymEquip('dumbbells')" class="onboard-select-btn">
+        <div style="font-weight:bold;">Dumbbells Only</div>
+        <div style="font-size:13px; color:var(--gray-light); margin-top:4px; line-height:1.5;">DB-only setup. All barbell and cable exercises swapped automatically.</div>
+      </button>
+    </div>
+    <div style="padding:0 20px 24px;">
+      <button onclick="applyGymEquipment()" style="width:100%; background:var(--red); border:none; color:white; padding:15px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">APPLY</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============================================================
      TUTORIAL MODAL — must live OUTSIDE .app-content so its z-index
      is not trapped inside that stacking context (z-index:1), which
@@ -5479,6 +5515,8 @@ const DEFAULT_PROGRAM = [
         ytLink: 'https://youtu.be/axoeDmW0oAY',
         alts: [
           { name: 'Cable Row (Seated)', note: 'Close or wide grip', ytLink: 'https://youtu.be/GZbfZ033f74' },
+          { name: 'Chest-Supported DB Row', note: 'Incline bench removes momentum, true muscle-only effort', ytLink: 'https://youtu.be/czoQ_ncuqqI' },
+          { name: 'Renegade Row', note: 'DB row in plank — core and back together', ytLink: 'https://youtu.be/4qEIChzM4ZA' },
           { name: 'T-Bar Row', note: 'Heavy compound rowing', ytLink: 'https://youtu.be/TyLoy3n_a10' },
           { name: 'Pendlay Row', note: 'Explosive row from floor', ytLink: 'https://youtu.be/h4nkoayPFWw' },
           { name: 'Barbell Bent Over Row', note: 'Classic back builder', ytLink: 'https://youtu.be/FWJR5Ve8bnQ' },
@@ -5561,6 +5599,11 @@ const DEFAULT_PROGRAM = [
           { name: 'Leg Press (Mid-foot)', note: 'Same as Lower A if needed', ytLink: 'https://youtu.be/K_BXb4e9ljo' },
           { name: 'Hack Squat', note: 'Machine squat variation', ytLink: 'https://youtu.be/m2DiSYKPzqk' },
           { name: 'Sumo Squat (DB)', note: 'Wide stance, inner thigh focus', ytLink: 'https://youtu.be/sQ-lwJtpwUc' },
+          { name: 'Goblet Squat', note: 'DB or KB at chest, great for hip depth', ytLink: 'https://youtu.be/MeIiIdhvXT4' },
+          { name: 'Bulgarian Split Squat', note: 'Rear foot elevated, heavy hip and glute load', ytLink: 'https://youtu.be/2C-uNgKwPLE' },
+          { name: 'Romanian Deadlift', note: 'Hip hinge — hammers hamstrings and glutes', ytLink: 'https://youtu.be/QR6HDEmBQNo' },
+          { name: 'Reverse Lunge (DB)', note: 'Less knee stress, unilateral leg builder', ytLink: 'https://youtu.be/J9MpoAQCjos' },
+          { name: 'Forward Lunge (DB)', note: 'Classic lunge for quad and glute balance', ytLink: 'https://youtu.be/D7KaRcUTQeE' },
           { name: 'Belt Squat', note: 'No spinal load option', ytLink: 'https://youtu.be/9fEloOw3hTo' },
           { name: 'Wide Stance Barbell Squat', note: 'More glute/ham recruitment', ytLink: 'https://youtu.be/Dy28eq2PjcM' },
           { name: 'Good Morning', note: 'Hip hinge for posterior chain', ytLink: 'https://youtu.be/YA-h3n9L4YU' },
@@ -22974,6 +23017,9 @@ function _renderAltList() {
   const groups = Array.from(dropdown.children).filter(c => c.tagName === 'OPTGROUP');
   if (!groups.length) return;
   container.style.cssText = 'display:none; border:1px solid var(--dark4); border-top:none; border-radius:0 0 10px 10px; overflow:hidden; max-height:260px; overflow-y:auto; -webkit-overflow-scrolling:touch;';
+  // Equipment compatibility check — flag alts that need gear the user doesn't have
+  const _gymTier = state.gymEquipment;
+  const _validEquip = (_gymTier && _gymTier !== 'full') ? _getTravelTierEquipment(_gymTier) : null;
   groups.forEach((grp, gi) => {
     const hdr = document.createElement('div');
     hdr.style.cssText = 'padding:10px 14px 8px; border-left:3px solid var(--red); font-family:\'Barlow Condensed\',sans-serif; font-size:13px; font-weight:700; color:var(--gray-light); letter-spacing:2px; background:var(--dark2);' + (gi > 0 ? 'border-top:1px solid var(--dark4);' : '');
@@ -22982,9 +23028,24 @@ function _renderAltList() {
     Array.from(grp.children).forEach((opt, oi) => {
       const isLast = gi === groups.length - 1 && oi === grp.children.length - 1;
       const row = document.createElement('div');
+      const cleanName = opt.textContent;
       row.dataset.value = opt.value;
-      row.style.cssText = 'padding:11px 14px; font-family:\'Barlow Condensed\',sans-serif; font-size:16px; color:var(--cream); background:var(--dark3); cursor:pointer; min-height:44px; display:flex; align-items:center; transition:background 0.15s;' + (!isLast ? 'border-bottom:1px solid rgba(255,255,255,0.05);' : '');
-      row.textContent = opt.textContent;
+      row.dataset.name = cleanName;
+      // Only flag RECOMMENDED alts — MORE OPTIONS are already in the user's program
+      const altEquip = (_validEquip && grp.label === 'RECOMMENDED') ? _TRAVEL_ALT_EQ[cleanName] : null;
+      const isIncompat = altEquip && !_validEquip.includes(altEquip);
+      row.style.cssText = 'padding:11px 14px; font-family:\'Barlow Condensed\',sans-serif; font-size:16px; color:var(--cream); background:var(--dark3); cursor:pointer; min-height:44px; display:flex; align-items:center; gap:0; transition:background 0.15s;' + (!isLast ? 'border-bottom:1px solid rgba(255,255,255,0.05);' : '') + (isIncompat ? 'opacity:0.72;' : '');
+      if (isIncompat) {
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = cleanName;
+        const flagSpan = document.createElement('span');
+        flagSpan.style.cssText = 'font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:rgba(200,180,140,0.5);margin-left:8px;flex-shrink:0;';
+        flagSpan.textContent = '\u00b7 needs full gym';
+        row.appendChild(nameSpan);
+        row.appendChild(flagSpan);
+      } else {
+        row.textContent = cleanName;
+      }
       row.addEventListener('pointerdown', () => { row.style.background = 'rgba(204,32,39,0.18)'; });
       row.addEventListener('pointerleave', () => { if (dropdown.value !== opt.value) row.style.background = 'var(--dark3)'; });
       row.addEventListener('click', () => _selectAltItem(opt.value, row));
@@ -23011,7 +23072,7 @@ function _selectAltItem(val, el) {
   document.querySelectorAll('#alt-custom-list [data-value]').forEach(r => { r.style.background = 'var(--dark3)'; });
   el.style.background = 'rgba(204,32,39,0.12)';
   dropdown.value = val;
-  if (label) { label.textContent = el.textContent.toUpperCase(); label.style.color = '#fff'; }
+  if (label) { label.textContent = (el.dataset.name || el.textContent).toUpperCase(); label.style.color = '#fff'; }
   container.style.display = 'none';
   if (chevron) chevron.style.transform = '';
   onAltDropdownChange();
@@ -30209,6 +30270,8 @@ function confirmRestoreDefaults() {
     day.exercises.forEach(ex => { ex.cycleIntroduced = _currCycle; });
   });
   state.rotationMigrated = true;
+  // Re-apply equipment substitutions so dumbbells/cable users don't get barbell defaults back.
+  _applyEquipmentSubstitutions();
   saveState();
   renderHome();
   showToast('Default exercises restored ✓');
@@ -31595,6 +31658,59 @@ function closeSplitTypeModal() {
   document.getElementById('split-type-modal').style.display = 'none';
 }
 
+var _pendingGymEquip = null;
+
+function openGymEquipmentSheet() {
+  _pendingGymEquip = state.gymEquipment || 'full';
+  document.getElementById('geq-full-btn')?.classList.toggle('selected', _pendingGymEquip === 'full');
+  document.getElementById('geq-dc-btn')?.classList.toggle('selected', _pendingGymEquip === 'dumbbells-cable');
+  document.getElementById('geq-db-btn')?.classList.toggle('selected', _pendingGymEquip === 'dumbbells');
+  document.getElementById('gym-equipment-sheet').style.display = 'block';
+}
+
+function closeGymEquipmentSheet() {
+  document.getElementById('gym-equipment-sheet').style.display = 'none';
+}
+
+function selectGymEquip(val) {
+  _pendingGymEquip = val;
+  document.getElementById('geq-full-btn')?.classList.toggle('selected', val === 'full');
+  document.getElementById('geq-dc-btn')?.classList.toggle('selected', val === 'dumbbells-cable');
+  document.getElementById('geq-db-btn')?.classList.toggle('selected', val === 'dumbbells');
+}
+
+function applyGymEquipment() {
+  const newTier = _pendingGymEquip || 'full';
+  if (newTier === (state.gymEquipment || 'full')) {
+    closeGymEquipmentSheet();
+    return;
+  }
+  state.gymEquipment = newTier;
+  if (newTier === 'full') {
+    // Restore default exercises — removes all substitutions
+    state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[state.splitType] || DEFAULT_PROGRAM));
+    const _c = state.cycleCount || 1;
+    state.program.forEach(d => d.exercises.forEach(ex => { ex.cycleIntroduced = _c; }));
+    state.rotationMigrated = true;
+    showToast('Full gym restored \u2713');
+  } else {
+    _applyEquipmentSubstitutions();
+    const _labels = { 'dumbbells-cable': 'Dumbbells + Cable', 'dumbbells': 'Dumbbells Only' };
+    showToast((_labels[newTier] || newTier) + ' applied \u2713');
+  }
+  saveState();
+  updateGymEquipmentSub();
+  renderHome();
+  closeGymEquipmentSheet();
+}
+
+function updateGymEquipmentSub() {
+  const el = document.getElementById('gym-equipment-sub');
+  if (!el) return;
+  const _labels = { full: 'Full gym', 'dumbbells-cable': 'Dumbbells + Cable', 'dumbbells': 'Dumbbells Only' };
+  el.textContent = _labels[state.gymEquipment || 'full'] || 'Full gym';
+}
+
 function selectSplitTypeSettings(type, btn) {
   pendingSplitType = type;
   document.querySelectorAll('#split-type-modal .settings-day-btn').forEach(b => {
@@ -31628,6 +31744,8 @@ function applySplitType() {
     day.exercises.forEach(ex => { ex.cycleIntroduced = _currCycle; });
   });
   state.rotationMigrated = true;
+  // Re-apply equipment substitutions so dumbbells/cable users get compatible exercises on the new split.
+  _applyEquipmentSubstitutions();
   saveState();
   closeSplitTypeModal();
   updateSplitTypeSub();
@@ -35991,6 +36109,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkTestWeekReview();
   updateTrainingDaysSub();
   updateSplitTypeSub();
+  updateGymEquipmentSub();
   updateProgressiveOverloadUI();
   updateBetweenSetCoachingUI();
   updateCarryingFeatureUI();
