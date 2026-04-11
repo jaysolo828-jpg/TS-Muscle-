@@ -33632,11 +33632,6 @@ function completeOnboarding() {
     // Show a contextual toast: welcoming for brand-new users, confirmatory for redos.
     const name = state.profile?.name || 'there';
     const isFirstTime = !state.history || state.history.length === 0;
-    if (!state.tutorialAutoLaunched) {
-      state.tutorialAutoLaunched = true;
-      saveState();
-      setTimeout(() => openTutorial(), 800);
-    }
     showToast(isFirstTime
       ? `You're all set, ${name}! Week 1 starts now. 💪`
       : `Setup updated, ${name}! Your program is ready.`);
@@ -33649,13 +33644,6 @@ function confirmAutoPopulate(yes, modal) {
   setTimeout(() => modal.remove(), 150);
   const name = state.profile?.name || 'champ';
   showToast(yes ? `Weights locked in, ${name}! 💪` : `Got it. Enter weights as you go!`);
-
-  // Auto-launch tutorial first time only
-  if (!state.tutorialAutoLaunched) {
-    state.tutorialAutoLaunched = true;
-    saveState();
-    setTimeout(() => openTutorial(), 800);
-  }
 }
 
 function closeOnboardingModal() {
