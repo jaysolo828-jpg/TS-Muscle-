@@ -3839,26 +3839,18 @@
             <span style="color:var(--gray);">ANY PRIORITY AREAS?</span>
             <span style="color:var(--red-text); font-size:11px; letter-spacing:1px;">OPTIONAL</span>
           </div>
-          <div style="font-size:12px; color:#888; margin-bottom:8px;">Tap to select, tap again to remove.</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('balanced', this)" style="padding:10px 12px; text-align:left;">
-              <div style="font-weight:bold; font-size:14px;">Balanced</div>
-              <div style="font-size:13px; color:var(--gray-light); margin-top:2px;">Even development</div>
-            </button>
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('glutes', this)" style="padding:10px 12px; text-align:left;">
-              <div style="font-weight:bold; font-size:14px;">Glutes</div>
-              <div style="font-size:13px; color:var(--gray-light); margin-top:2px;">Hip thrust &amp; RDL focus</div>
-            </button>
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('legs', this)" style="padding:10px 12px; text-align:left;">
-              <div style="font-weight:bold; font-size:14px;">Legs / Quads</div>
-              <div style="font-size:13px; color:var(--gray-light); margin-top:2px;">Squat &amp; press focus</div>
-            </button>
-            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('upper', this)" style="padding:10px 12px; text-align:left;">
-              <div style="font-weight:bold; font-size:14px;">Upper Body</div>
-              <div style="font-size:13px; color:var(--gray-light); margin-top:2px;">Press &amp; pull focus</div>
-            </button>
+          <div style="font-size:12px; color:#888; margin-bottom:10px;">Select any that apply. Tap again to remove.</div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('chest', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Chest</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('back', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Back</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('shoulders', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Shoulders</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('arms', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Arms</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('glutes', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Glutes</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('hamstrings', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Hamstrings</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('quads', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Quads</button>
+            <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('calves', this)" style="padding:9px 14px; width:auto; flex:none; font-weight:bold; font-size:14px;">Calves</button>
           </div>
-          <input type="hidden" id="ob-priority" value="balanced"/>
+          <input type="hidden" id="ob-priority" value=""/>
         </div>
         <div>
           <div style="font-size:13px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:8px;">DAYS PER WEEK?</div>
@@ -3878,9 +3870,10 @@
         <div style="font-size:13px; color:var(--red-text); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; margin-bottom:6px;">&#9733; RECOMMENDED FOR YOU</div>
         <div id="ob-split-rec-name" style="font-size:16px; font-weight:700; color:var(--cream); margin-bottom:5px;"></div>
         <div id="ob-split-rec-reason" style="font-size:14px; color:var(--gray-light); line-height:1.5; margin-bottom:10px;"></div>
+        <div id="ob-split-rec-boost" style="display:none; margin-bottom:10px; padding:8px 10px; background:rgba(204,32,39,0.12); border-radius:8px; font-size:13px; color:var(--red-text); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.5px; line-height:1.4;"></div>
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
           <div style="font-size:13px; color:var(--gray); line-height:1.4; flex:1;">You can pick any split below — this is just our suggestion based on your answers.</div>
-          <button id="ob-split-rec-btn" onclick="" style="flex-shrink:0; background:var(--red); border:none; color:white; padding:9px 16px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer; -webkit-tap-highlight-color:transparent;">USE THIS →</button>
+          <button id="ob-split-rec-btn" onclick="" style="flex-shrink:0; background:var(--red); border:none; color:white; padding:9px 16px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer; -webkit-tap-highlight-color:transparent;">YES, THIS ONE →</button>
         </div>
       </div>
 
@@ -6188,6 +6181,37 @@ const TS_PROGRAM = [
 
 const SPLIT_PROGRAMS = { ul: DEFAULT_PROGRAM, ppl: PPL_PROGRAM, fullbody: FULLBODY_PROGRAM, bro: BRO_PROGRAM, glute: GLUTE_PROGRAM, pp: PP_PROGRAM, full3: FULL3_PROGRAM, full2: FULL2_PROGRAM, antagonist: ANTAGONIST_PROGRAM, lul: LUL_PROGRAM, ts: TS_PROGRAM };
 
+// ── PRIORITY BODY PART VOLUME BOOST ───────────────────────────
+// Extra isolation exercises injected by applyPriorityVolumeBoost() when a
+// user selects priority body parts during onboarding. These are added ON TOP
+// of the split recommendation — the split is the structure, the boost is extra
+// targeted volume for that specific muscle.
+const PRIORITY_BOOST_EXERCISES = {
+  chest:      { id: 'priority-chest',     name: 'Pec Deck Flye',           sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/Z57CtFmRMxA', equipment: 'machine',    _priorityBoost: true },
+  back:       { id: 'priority-back',      name: 'Chest-Supported DB Row',  sets: 3, reps: '10\u201312', rest: '90 sec', ytLink: 'https://youtu.be/zQ7hVDaY3vA', equipment: 'dumbbell',   _priorityBoost: true },
+  shoulders:  { id: 'priority-shoulders', name: 'Face Pull',               sets: 3, reps: '15',         rest: '60 sec', ytLink: 'https://youtu.be/VdnHXklRQW8', equipment: 'cable',      _priorityBoost: true },
+  arms: [
+    { id: 'priority-biceps',  name: 'Incline DB Curl',  sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/soxrZlIl35U', equipment: 'dumbbell', _priorityBoost: true },
+    { id: 'priority-triceps', name: 'Skull Crushers',   sets: 3, reps: '10\u201312', rest: '60 sec', ytLink: 'https://youtu.be/ZLIKPa4Iunc', equipment: 'barbell',  _priorityBoost: true }
+  ],
+  glutes:     { id: 'priority-glutes',     name: 'Cable Kickback',          sets: 3, reps: '15',         rest: '60 sec', ytLink: 'https://youtu.be/p5eSWRlMjq4', equipment: 'cable',      _priorityBoost: true },
+  hamstrings: { id: 'priority-hamstrings', name: 'Seated Leg Curl',         sets: 3, reps: '12\u201315', rest: '60 sec', ytLink: 'https://youtu.be/KXLX5vCYEoI', equipment: 'machine',    _priorityBoost: true },
+  quads:      { id: 'priority-quads',      name: 'Leg Extension (High Rep)', sets: 4, reps: '15\u201320', rest: '60 sec', ytLink: 'https://youtu.be/m0FOpMEgero', equipment: 'machine',   _priorityBoost: true },
+  calves:     { id: 'priority-calves',     name: 'Seated Calf Raise',       sets: 4, reps: '15\u201320', rest: '45 sec', ytLink: 'https://youtu.be/jIRSxjCF_GA', equipment: 'machine',    _priorityBoost: true }
+};
+// Which existing exercise IDs signal that a training day already works this muscle group
+const PRIORITY_DAY_INDICATORS = {
+  chest:      ['bench', 'incline', 'flye'],
+  back:       ['chest-row', 'pulldown', 'db-row'],
+  shoulders:  ['ohp', 'lateral', 'rear-delt'],
+  biceps:     ['ez-curl', 'preacher'],
+  triceps:    ['pushdown', 'overhead-tri'],
+  glutes:     ['hip-thrust-a', 'hip-thrust-b', 'rdl', 'legpress-a', 'legpress-b'],
+  hamstrings: ['rdl', 'ham-curl-a', 'ham-curl-b'],
+  quads:      ['legpress-a', 'legpress-b', 'leg-ext-a', 'leg-ext-b'],
+  calves:     ['calf-a', 'calf-b']
+};
+
 // ── T&S SPLIT DETECTION ────────────────────────────────────────
 // Single gate for all T&S specific behavior. Every T&S adaptation
 // checks this. If false, the existing code path runs unchanged.
@@ -6207,6 +6231,11 @@ var _TRAVEL_EX_EQ = {
   'legpress-b':'machine','single-legpress':'machine','leg-ext-b':'machine',
   'ham-curl-b':'bodyweight','pull-through':'cable','calf-b':'machine',
   'bss':'dumbbell','hip-abduction':'machine','donkey-kick':'cable','glute-iso':'machine',
+  // Priority boost exercises
+  'priority-chest':'machine','priority-back':'dumbbell','priority-shoulders':'cable',
+  'priority-biceps':'dumbbell','priority-triceps':'barbell',
+  'priority-glutes':'cable','priority-hamstrings':'machine',
+  'priority-quads':'machine','priority-calves':'machine',
 };
 var _TRAVEL_ALT_EQ = {
     // chest
@@ -6363,6 +6392,11 @@ const MUSCLE_MAP = {
   'hip-thrust-a': 'GLUTES', 'pull-through': 'GLUTES',
   'bss': 'GLUTES', 'hip-abduction': 'GLUTES', 'donkey-kick': 'GLUTES', 'glute-iso': 'GLUTES',
   'calf-a': 'CALVES', 'calf-b': 'CALVES',
+  // Priority boost exercises
+  'priority-chest': 'CHEST', 'priority-back': 'BACK', 'priority-shoulders': 'SHOULDERS',
+  'priority-biceps': 'BICEPS', 'priority-triceps': 'TRICEPS',
+  'priority-glutes': 'GLUTES', 'priority-hamstrings': 'HAMSTRINGS',
+  'priority-quads': 'QUADS', 'priority-calves': 'CALVES',
 };
 const MUSCLE_COLORS = {
   CHEST: '#5b9cf6', BACK: '#3bbfb8', QUADS: '#e07b54',
@@ -7019,6 +7053,16 @@ const GOAL_REPS = {
   'hip-abduction':   { strength: '12–15', size: '15–20', both: '12–17', wellness: '15–20' },
   'donkey-kick':     { strength: '12–15', size: '15',    both: '12–15', wellness: '12–15' },
   'glute-iso':       { strength: '10–12', size: '12–15', both: '10–13', wellness: '12–15' },
+  // ── Priority boost exercises ───────────────────────────────
+  'priority-chest':      { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'priority-back':       { strength: '5–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'priority-shoulders':  { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'priority-biceps':     { strength: '6–8',   size: '12–15', both: '10–13', wellness: '12–15' },
+  'priority-triceps':    { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'priority-glutes':     { strength: '12–15', size: '15',    both: '12–15', wellness: '12–15' },
+  'priority-hamstrings': { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
+  'priority-quads':      { strength: '10–12', size: '15–20', both: '12–17', wellness: '15–20' },
+  'priority-calves':     { strength: '10–12', size: '15–20', both: '12–17', wellness: '15–20' },
 };
 
 // Goal-aligned set counts per exercise
@@ -7060,6 +7104,16 @@ const GOAL_SETS = {
   'hip-abduction':   { strength: 3, size: 4, both: 3, wellness: 3 },
   'donkey-kick':     { strength: 3, size: 4, both: 3, wellness: 3 },
   'glute-iso':       { strength: 3, size: 4, both: 3, wellness: 3 },
+  // ── Priority boost exercises ───────────────────────────────
+  'priority-chest':      { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-back':       { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-shoulders':  { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-biceps':     { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-triceps':    { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-glutes':     { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-hamstrings': { strength: 3, size: 4, both: 3, wellness: 3 },
+  'priority-quads':      { strength: 3, size: 4, both: 4, wellness: 3 },
+  'priority-calves':     { strength: 3, size: 4, both: 3, wellness: 3 },
 };
 
 // Returns the goal-adjusted set count for an exercise.
@@ -32555,6 +32609,16 @@ const ALL_EXERCISE_DEFAULTS = {
   'bss':            { beginner: 20,  intermediate: 40,  advanced: 60  },
   'hip-abduction':  { beginner: 50,  intermediate: 90,  advanced: 130 },
   'donkey-kick':    { beginner: 20,  intermediate: 40,  advanced: 60  },
+  // Priority boost exercises
+  'priority-chest':      { beginner: 50,  intermediate: 70,  advanced: 90  },
+  'priority-back':       { beginner: 25,  intermediate: 40,  advanced: 60  },
+  'priority-shoulders':  { beginner: 30,  intermediate: 45,  advanced: 60  },
+  'priority-biceps':     { beginner: 15,  intermediate: 25,  advanced: 35  },
+  'priority-triceps':    { beginner: 45,  intermediate: 65,  advanced: 85  },
+  'priority-glutes':     { beginner: 20,  intermediate: 35,  advanced: 50  },
+  'priority-hamstrings': { beginner: 50,  intermediate: 80,  advanced: 110 },
+  'priority-quads':      { beginner: 50,  intermediate: 80,  advanced: 110 },
+  'priority-calves':     { beginner: 45,  intermediate: 80,  advanced: 115 },
 };
 
 function applyAllDefaults() {
@@ -32564,6 +32628,39 @@ function applyAllDefaults() {
     // Don't overwrite anything the user already entered
     if (!state.startingWeights[id]) {
       state.startingWeights[id] = defaults[exp] || defaults.beginner;
+    }
+  });
+}
+
+function applyPriorityVolumeBoost(priorityStr, program) {
+  if (!priorityStr || !program) return;
+  const parts = priorityStr.split(',').filter(Boolean);
+  if (!parts.length) return;
+  parts.forEach(function(part) {
+    if (part === 'arms') {
+      // Arms splits into two: biceps on pull/back day, triceps on push/chest day
+      var bicepBoost = JSON.parse(JSON.stringify(PRIORITY_BOOST_EXERCISES.arms[0]));
+      var tricepBoost = JSON.parse(JSON.stringify(PRIORITY_BOOST_EXERCISES.arms[1]));
+      var bicepDay = program.find(function(d) {
+        return d.exercises.some(function(e) { return PRIORITY_DAY_INDICATORS.biceps.indexOf(e.id) !== -1; }) &&
+               !d.exercises.some(function(e) { return e.id === 'priority-biceps'; });
+      });
+      if (bicepDay) bicepDay.exercises.push(bicepBoost);
+      var tricepDay = program.find(function(d) {
+        return d.exercises.some(function(e) { return PRIORITY_DAY_INDICATORS.triceps.indexOf(e.id) !== -1; }) &&
+               !d.exercises.some(function(e) { return e.id === 'priority-triceps'; });
+      });
+      if (tricepDay) tricepDay.exercises.push(tricepBoost);
+    } else {
+      var boostDef = PRIORITY_BOOST_EXERCISES[part];
+      var indicators = PRIORITY_DAY_INDICATORS[part];
+      if (!boostDef || !indicators) return;
+      var boost = JSON.parse(JSON.stringify(boostDef));
+      var targetDay = program.find(function(d) {
+        return d.exercises.some(function(e) { return indicators.indexOf(e.id) !== -1; }) &&
+               !d.exercises.some(function(e) { return e.id === boost.id; });
+      });
+      if (targetDay) targetDay.exercises.push(boost);
     }
   });
 }
@@ -32920,47 +33017,76 @@ function getRecommendedSplit(experience, goal, priority, days) {
   };
   function rec(key, reason) { return { key, name: names[key], reason }; }
 
-  // Wellness always routes to T&S regardless of anything else
+  // Wellness always routes to T&S Split
   if (goal === 'wellness') return rec('ts', 'Three full-body sessions, moderate effort — built for consistency and mental health.');
 
-  // Priority area overrides days-based logic
-  if (priority === 'glutes') return rec('glute', 'Two glute-focused days per week: hip thrusts, RDLs, and isolation work. One balanced upper day.');
-  if (priority === 'legs') {
-    if (!days || days <= 3) return rec('lul', 'Lower body trained twice per week — two leg-focused days bookend one upper session.');
-    return rec('ul', 'Upper/Lower dedicates two full days to your lower body — ideal for leg development alongside a full program.');
-  }
-  if (priority === 'upper') {
-    if (!days || days <= 3) return rec('ppl', 'Two upper-focused sessions (push + pull) and one leg day — the most upper frequency possible in 3 days.');
-    return rec('pp', 'Two push days and two pull days — your upper body gets the most focused volume possible across 4 sessions.');
+  // Parse body part priorities (comma-separated, may be empty)
+  const parts = priority ? priority.split(',').filter(Boolean) : [];
+  const upper = ['chest', 'back', 'shoulders', 'arms'];
+  const lower = ['glutes', 'hamstrings', 'quads', 'calves'];
+  const hasUpper = parts.some(p => upper.includes(p));
+  const hasLower = parts.some(p => lower.includes(p));
+  const hasArms  = parts.includes('arms');
+  const hasGlutesOnly = parts.includes('glutes') && !parts.some(p => ['hamstrings','quads','calves'].includes(p));
+  const hasLowerOnly  = hasLower && !hasUpper;
+  const hasUpperOnly  = hasUpper && !hasLower;
+
+  if (parts.length > 0) {
+    // Glutes only → dedicated Glute Priority split
+    if (hasGlutesOnly && parts.length === 1) {
+      return rec('glute', 'The Glute Priority split dedicates two days to hip thrusts, RDLs, and isolation work — the most direct path to glute development.');
+    }
+    // Arms (with or without other upper) → Bro Split if enough days, else PPL
+    if (hasArms && hasUpperOnly) {
+      if (!days || days <= 3) return rec('ppl', 'PPL gives arms two dedicated sessions per week — triceps on push day, biceps on pull day — plus a full leg day.');
+      return rec('bro', 'The Bro Split gives arms their own dedicated session with direct bicep and tricep volume. Best for bringing up arms specifically.');
+    }
+    // Upper only (chest, back, shoulders — no arms leading)
+    if (hasUpperOnly) {
+      const muscleList = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' & ');
+      if (!days || days <= 3) return rec('ppl', `PPL gives ${muscleList} dedicated focus — push day for chest and shoulders, pull day for back. One full lower body day completes the week.`);
+      if (days >= 4) return rec('pp', `Push/Pull trains ${muscleList} twice per week — two push sessions and two pull sessions. Maximum upper body frequency.`);
+    }
+    // Lower only (glutes, hamstrings, quads, calves)
+    if (hasLowerOnly) {
+      const muscleList = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' & ');
+      if (parts.includes('glutes') && parts.includes('hamstrings') && parts.length <= 2) {
+        return rec('glute', `The Glute Priority split hits ${muscleList} twice per week with dedicated hip hinge and isolation work.`);
+      }
+      if (!days || days <= 3) return rec('lul', `Lower/Upper/Lower trains ${muscleList} twice per week — two dedicated lower days bookend one upper session.`);
+      return rec('ul', `Upper/Lower dedicates two full days to ${muscleList} each week — the most balanced way to bring up your lower body.`);
+    }
+    // Mix of upper and lower
+    if (hasUpper && hasLower) {
+      return rec('ul', 'Upper/Lower trains both your upper and lower body twice per week — the most balanced structure for multiple priority areas.');
+    }
   }
 
-  // Balanced: days are the primary driver
-  if (days === 2) return rec('full2', 'Two complete full-body sessions per week — every muscle covered with maximum recovery time between sessions.');
+  // No priority selected — days are the primary driver
+  if (days === 2) return rec('full2', 'Two complete full-body sessions — every muscle covered with maximum recovery time between sessions.');
   if (days === 3) {
-    if (experience === 'beginner') return rec('full3', 'Three full-body sessions — high frequency with lower per-session volume. The best setup for new lifters.');
-    return rec('ppl', 'Three focused sessions: push, pull, and legs. Each muscle group gets one quality dedicated session per week.');
+    if (experience === 'beginner') return rec('full3', 'Three full-body sessions — high frequency, lower per-session volume. The best setup for new lifters.');
+    return rec('ppl', 'Three focused sessions: push, pull, and legs. Each muscle group gets one dedicated quality session per week.');
   }
   if (days === 4) return rec('ul', 'Four days: two upper, two lower. Every muscle trained twice per week — the gold standard for hypertrophy.');
   if (days === 5) {
-    if (experience === 'advanced' && (goal === 'size' || goal === 'both')) return rec('bro', 'Five days: each muscle group gets its own dedicated high-volume session. Built for advanced lifters adding volume.');
-    return rec('ul', 'Upper/Lower with a fifth session — add the extra day for a lagging muscle group or extra volume.');
+    if (experience === 'advanced' && (goal === 'size' || goal === 'both')) return rec('bro', 'Five days: each muscle group gets its own dedicated high-volume session. Built for advanced lifters.');
+    return rec('ul', 'Upper/Lower with a fifth session — the extra day goes toward any area you want to bring up.');
   }
   if (days >= 6) {
     if (experience === 'advanced') return rec('antagonist', 'Six days: opposing muscle pairs trained together, each pair hit twice per week. Maximum frequency for advanced lifters.');
-    return rec('ul', 'Upper/Lower remains the most balanced option at high frequency — adjust per-session volume to match your recovery.');
+    return rec('ul', 'Upper/Lower at high frequency — adjust per-session volume to match your recovery.');
   }
-
-  // No days selected yet — fall back to experience + goal
   if (experience === 'beginner') return rec('ul', 'Upper/Lower trains every muscle twice a week with full recovery built in — the best starting point for beginners.');
-  if (goal === 'strength') return rec('ul', 'Upper/Lower is the gold standard for strength development — high frequency, balanced recovery.');
-  return rec('ppl', 'Push/Pull/Legs lets you put more focused volume into each muscle group as you advance.');
+  if (goal === 'strength') return rec('ul', 'Upper/Lower is the gold standard for strength — high frequency, balanced recovery.');
+  return rec('ppl', 'Push/Pull/Legs puts focused volume into each muscle group as you advance.');
 }
 
 function renderSplitRecommendation() {
   const exp = document.getElementById('ob-experience').value;
   const goal = document.getElementById('ob-goal').value;
   if (!exp || !goal) return;
-  const priority = document.getElementById('ob-priority')?.value || 'balanced';
+  const priority = document.getElementById('ob-priority')?.value || '';
   const days = parseInt(document.getElementById('ob-rec-days')?.value) || 0;
   const rec = getRecommendedSplit(exp, goal, priority, days);
   const card = document.getElementById('ob-split-recommendation');
@@ -32968,22 +33094,34 @@ function renderSplitRecommendation() {
   document.getElementById('ob-split-rec-name').textContent = rec.name;
   document.getElementById('ob-split-rec-reason').textContent = rec.reason;
   document.getElementById('ob-split-rec-btn').setAttribute('onclick', "useRecommendedSplit('" + rec.key + "')");
+  // Priority boost preview line
+  const boostEl = document.getElementById('ob-split-rec-boost');
+  if (boostEl) {
+    const parts = priority ? priority.split(',').filter(Boolean) : [];
+    if (parts.length) {
+      const _boostLabels = { chest: 'Chest', back: 'Back', shoulders: 'Shoulders', arms: 'Arms (biceps + triceps)', glutes: 'Glutes', hamstrings: 'Hamstrings', quads: 'Quads', calves: 'Calves' };
+      const named = parts.map(function(p) { return _boostLabels[p] || p; }).join(', ');
+      boostEl.textContent = '\u2b06 Priority boost: extra isolation sets for ' + named + ' will be added to your program.';
+      boostEl.style.display = 'block';
+    } else {
+      boostEl.style.display = 'none';
+    }
+  }
   card.style.display = 'block';
 }
 
 function selectObPriority(value, btn) {
   haptic(HAPTIC.tap);
+  const input = document.getElementById('ob-priority');
+  const current = input.value ? input.value.split(',') : [];
   if (btn.classList.contains('selected')) {
     btn.classList.remove('selected');
-    btn.style.borderColor = '';
-    btn.style.background = '';
-    document.getElementById('ob-priority').value = '';
-    renderSplitRecommendation();
-    return;
+    input.value = current.filter(v => v !== value).join(',');
+  } else {
+    btn.classList.add('selected');
+    current.push(value);
+    input.value = current.join(',');
   }
-  document.getElementById('ob-priority').value = value;
-  document.querySelectorAll('.ob-priority-btn').forEach(b => { b.classList.remove('selected'); b.style.borderColor = ''; b.style.background = ''; });
-  btn.classList.add('selected');
   renderSplitRecommendation();
 }
 
@@ -33008,15 +33146,17 @@ function selectObRecDays(days, btn) {
 }
 
 function useRecommendedSplit(key) {
+  // Find and activate the matching split button in the list (for visual consistency)
   const btns = document.querySelectorAll('#ob-split-list .onboard-select-btn');
   for (const btn of btns) {
     const oc = btn.getAttribute('onclick') || '';
     if (oc.includes("'" + key + "'")) {
       selectSplitOnboard(key, btn);
-      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      return;
+      break;
     }
   }
+  // Advance directly to the next step — no need to scroll through the full split list
+  onboardNext(4);
 }
 
 function selectSplitOnboard(type, btn) {
@@ -33783,6 +33923,9 @@ function completeOnboarding() {
   _applyEquipmentSubstitutions();
   // Fill in all isolation defaults for any exercises not entered by user
   applyAllDefaults();
+  // Inject extra isolation sets for any priority body parts selected during onboarding
+  var _obPriorityStr = document.getElementById('ob-priority')?.value || '';
+  if (_obPriorityStr) applyPriorityVolumeBoost(_obPriorityStr, state.program);
   // Stamp new users' exercises so rotation suggestions start after cycle 1
   const _newCycle = state.cycleCount || 1;
   state.program.forEach(day => {
