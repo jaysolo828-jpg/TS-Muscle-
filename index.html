@@ -18276,6 +18276,7 @@ function applyDeloadWeek() {
     state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * _factor / 2.5) * 2.5;
   });
   state.isDeloadWeek = true;
+  state.isRestWeek   = false;
   state.weeksSinceDeload = 0;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
@@ -18316,9 +18317,11 @@ function activateDeloadWeek() {
     state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * _factor / 2.5) * 2.5;
   });
   state.isDeloadWeek = true;
+  state.isRestWeek   = false;
   state.weeksSinceDeload = 0;
   state.deloadStartDate = Date.now();
   state.deloadSessionsCompleted = 0;
+  delete state.deloadPostponedToWeek;
   delete state.deloadDismissedAtCycle;
   delete state.earlyDeloadDismissedAtCycle;
   saveState();
@@ -18334,9 +18337,13 @@ function activateDeloadRest() {
   state.deloadReason  = 'rest';
   state.deloadWeekNum = state.weekCount || 1;
   state.isRestWeek    = true;
+  state.isDeloadWeek  = false;
   state.weeksSinceDeload = 0;
+  state.deloadStartDate = Date.now();
+  state.deloadSessionsCompleted = 0;
   delete state.deloadDismissedAtCycle;
   delete state.earlyDeloadDismissedAtCycle;
+  delete state.deloadPostponedToWeek;
   saveState();
   const m = document.getElementById('deload-suggest-modal');
   if (m) m.remove();
