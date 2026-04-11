@@ -631,10 +631,11 @@
   .day-card {
     background: linear-gradient(to right, rgba(204,32,39,0.09) 0%, #1a1a1a 36%);
     border: 1px solid var(--dark3);
-    border-radius: 16px;
+    border-radius: 18px;
     margin-bottom: 12px;
     overflow: hidden;
     transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.4);
   }
   .day-card:hover { border-color: #333; }
 
@@ -1965,15 +1966,15 @@
   }
 
   .week-dot {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: 2px solid var(--dark4);
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Bebas Neue', cursive;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--gray);
     transition: all 0.2s;
   }
@@ -1983,8 +1984,8 @@
   .week-dot.done { background: var(--red); border-color: var(--red-text); color: var(--white); }
   .week-dot.current-deload     { border: 2px solid #7BA08C; color: #7BA08C; }
   .week-dot.current-deload-mrv { border: 2px solid var(--red-text); color: var(--red-text); }
-  .week-dot.final { border: 2px solid #777; color: var(--gray-light); font-size:13px; }
-  .week-dot.final.done { background: var(--red); border-color: var(--red-text); color: var(--white); font-size: 14px; }
+  .week-dot.final { border: 2px solid #777; color: var(--gray-light); font-size:14px; }
+  .week-dot.final.done { background: var(--red); border-color: var(--red-text); color: var(--white); font-size: 15px; }
 
   .stat-grid {
     display: grid;
@@ -1998,7 +1999,7 @@
     border: 1px solid var(--dark3);
     border-top: 2px solid var(--red);
     border-radius: 14px;
-    padding: 18px 12px 14px;
+    padding: 18px 14px 14px;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -2008,6 +2009,7 @@
     -webkit-tap-highlight-color: transparent;
   }
   .stat-box:active { transform: scale(0.95); }
+  #stat-box-focus { border-top-color: #D4A843; }
   .stat-focus-word {
     font-family: 'Bebas Neue', cursive;
     font-size: 28px;
@@ -2029,7 +2031,7 @@
 
   .stat-num {
     font-family: 'Bebas Neue', cursive;
-    font-size: 36px;
+    font-size: 38px;
     color: var(--cream);
     line-height: 1;
     letter-spacing: 1px;
@@ -2939,7 +2941,7 @@
     </div>
   </div>
 
-  <div id="home-greeting" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:2px; color:var(--gray-light); margin-bottom:6px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;"></div>
+  <div id="home-greeting" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:2px; color:var(--cream); margin-bottom:8px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;"></div>
   <div id="home-third-shift-badge" style="display:none; margin-bottom:12px;">
     <span style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; color:#f0a500; background:rgba(240,165,0,0.12); border:1px solid rgba(240,165,0,0.35); border-radius:20px; padding:3px 8px; text-transform:uppercase;">3RD SHIFT MODE ON</span>
   </div>
@@ -2951,7 +2953,7 @@
       <div class="stat-num" id="stat-sessions">0</div>
       <div class="stat-label">Sessions</div>
     </div>
-    <div class="stat-box" onclick="showStatInfo('focus')" style="cursor:pointer;position:relative;">
+    <div class="stat-box" id="stat-box-focus" onclick="showStatInfo('focus')" style="cursor:pointer;position:relative;">
       <div class="stat-tap-hint">ⓘ</div>
       <div class="stat-focus-word" id="stat-focus-word">--</div>
       <div class="stat-label" id="stat-focus-label">TODAY'S FOCUS</div>
@@ -3012,7 +3014,8 @@
     </div>
   </div>
 
-  <div class="section-title">YOUR <span>PROGRAM</span><span id="home-split-badge" style="margin-left:auto; font-size:13px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); color:var(--red-text); padding:4px 10px; border-radius:20px; letter-spacing:1.5px; font-weight:700; font-family:'Barlow Condensed',sans-serif;"></span></div>
+  <div class="section-title">YOUR <span>PROGRAM</span></div>
+  <div id="home-split-badge" style="display:inline-block; font-size:13px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); color:var(--red-text); padding:4px 10px; border-radius:20px; letter-spacing:1.5px; font-weight:700; font-family:'Barlow Condensed',sans-serif; margin-bottom:14px;"></div>
 
   <div id="day-cards"></div>
 
@@ -16774,7 +16777,11 @@ function renderHome() {
                        : 'GRINDING LATE';
       greetingEl.textContent = `${salutation}, ${name.toUpperCase()}`;
     } else {
-      greetingEl.textContent = '';
+      const h = new Date().getHours();
+      greetingEl.textContent = h >= 5 && h < 12 ? "GOOD MORNING — LET'S GET TO WORK"
+                             : h >= 12 && h < 17 ? "GOOD AFTERNOON — TIME TO TRAIN"
+                             : h >= 17 && h < 21 ? "GOOD EVENING — LET'S GET IT"
+                             : "GRINDING LATE — LET'S GO";
     }
   }
   const thirdShiftBadge = document.getElementById('home-third-shift-badge');
@@ -17051,7 +17058,8 @@ function renderHome() {
   const weekTrackerLabel = document.getElementById('week-tracker-label');
   if (weekTrackerLabel) {
     const _cycle = state.cycleCount || 1;
-    weekTrackerLabel.textContent = `CYCLE ${_cycle}`;
+    const _weekNum = state.weekCount || 1;
+    weekTrackerLabel.textContent = `WEEK ${_weekNum} OF 8 · CYCLE ${_cycle}`;
     weekTrackerLabel.style.display = '';
   }
 
