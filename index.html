@@ -5201,35 +5201,43 @@
   <div style="flex:1; min-height:0; display:flex; flex-direction:column; max-width:480px; width:100%; margin:0 auto;">
 
     <!-- Top bar -->
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:calc(env(safe-area-inset-top) + 16px) 20px 8px;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:20px; color:var(--gray); letter-spacing:2px;">T&S MUSCLE <span style="color:var(--red-text);">GUIDE</span></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:calc(env(safe-area-inset-top) + 14px) 20px 10px; flex-shrink:0;">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--red-text); letter-spacing:3px; margin-bottom:1px;">T&amp;S MUSCLE</div>
+        <div id="tutorial-topbar-title" style="font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cream); letter-spacing:2px;">APP GUIDE</div>
+      </div>
       <button onclick="closeTutorial()" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); padding:7px 14px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:14px; letter-spacing:1px; cursor:pointer; display:flex; align-items:center; gap:6px;">
         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        EXIT GUIDE
+        CLOSE
       </button>
     </div>
 
-    <!-- Progress bar -->
-    <div style="padding:0 20px 12px;">
-      <div style="background:var(--dark3); border-radius:4px; height:3px; overflow:hidden;">
+    <!-- Topic index — shown by default -->
+    <div id="tutorial-index" style="flex:1; min-height:0; overflow-y:auto; padding:4px 20px 40px;">
+      <!-- Built by buildTutorialIndex() -->
+    </div>
+
+    <!-- Progress bar — shown on slide view only -->
+    <div id="tutorial-progress-wrap" style="padding:0 20px 10px; display:none; flex-shrink:0;">
+      <div style="background:#222; border-radius:4px; height:3px; overflow:hidden;">
         <div id="tutorial-progress-bar" style="background:var(--red); height:100%; border-radius:4px; transition:width 0.3s; width:0%;"></div>
       </div>
-      <div style="display:flex; justify-content:space-between; margin-top:6px;">
-        <div id="tutorial-step-label" style="font-size:13px; color:var(--gray-light); letter-spacing:1px;"></div>
-        <div id="tutorial-step-counter" style="font-size:13px; color:var(--gray-light);"></div>
+      <div style="display:flex; justify-content:space-between; margin-top:5px;">
+        <div id="tutorial-step-label" style="font-size:13px; color:var(--gray); letter-spacing:1px; font-family:'Barlow Condensed',sans-serif;"></div>
+        <div id="tutorial-step-counter" style="font-size:13px; color:var(--gray);"></div>
       </div>
     </div>
 
-    <!-- Slides container -->
-    <div style="flex:1; min-height:0; overflow:hidden; position:relative;" id="tutorial-slides-wrapper">
+    <!-- Slides container — shown on slide view only -->
+    <div style="flex:1; min-height:0; overflow:hidden; position:relative; display:none;" id="tutorial-slides-wrapper">
       <div id="tutorial-slides" style="display:flex; height:100%; transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);">
         <!-- Slides injected by JS -->
       </div>
     </div>
 
-    <!-- Nav buttons -->
-    <div style="padding:16px 20px calc(env(safe-area-inset-bottom) + 28px); display:flex; gap:12px; align-items:center; flex-shrink:0;">
-      <button id="tutorial-back-btn" onclick="tutorialNav(-1)" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); padding:14px 20px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer; display:none;">← BACK</button>
+    <!-- Nav buttons — shown on slide view only -->
+    <div id="tutorial-nav-wrap" style="padding:14px 20px calc(env(safe-area-inset-bottom) + 24px); display:none; gap:10px; align-items:center; flex-shrink:0;">
+      <button id="tutorial-back-btn" onclick="tutorialNav(-1)" style="background:var(--dark3); border:1px solid #444; color:var(--gray-light); padding:14px 18px; border-radius:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; cursor:pointer; white-space:nowrap;">← TOPICS</button>
       <button id="tutorial-next-btn" onclick="tutorialNav(1)" style="flex:1; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer;">NEXT →</button>
     </div>
   </div>
@@ -31991,7 +31999,196 @@ function updateTrainingDaysSub() {
 // ============================================================
 // TUTORIAL
 // ============================================================
+const TUTORIAL_GROUPS = [
+  { label: 'GETTING STARTED', indices: [0, 1, 2] },
+  { label: 'TRAINING', indices: [3, 4, 5, 6, 7] },
+  { label: 'PROGRESSION', indices: [8, 9, 10] },
+  { label: 'RECOVERY', indices: [11, 12, 13] },
+  { label: 'STATS &amp; TRACKING', indices: [14, 15, 16] },
+  { label: 'MIND &amp; BODY', indices: [17] },
+];
+
 const TUTORIAL_SLIDES = [
+  {
+    section: 'GETTING STARTED',
+    icon: '💪',
+    title: 'Welcome to T&S Muscle',
+    body: `T&amp;S is a progressive overload training app. Your logged RPE and reps drive automatic weight progression — the more you log, the smarter it gets.<br><br>
+<strong style="color:var(--cream);">The app never changes your weights without telling you.</strong> Every progression shows up in a banner after your session with the reason behind it.<br><br>
+🏠 <strong style="color:var(--cream);">Home</strong> — start workouts, see your weekly plan<br>
+📋 <strong style="color:var(--cream);">Stats</strong> — past sessions, PRs, volume<br>
+❤️ <strong style="color:var(--cream);">Cardio</strong> — runs, rides, walks<br>
+🧠 <strong style="color:var(--cream);">Mindset</strong> — mood tracker, CBT tools<br>
+⚙️ <strong style="color:var(--cream);">Settings</strong> — program, equipment, backup`,
+  },
+  {
+    section: 'GETTING STARTED',
+    icon: '👤',
+    title: 'Your Profile &amp; Setup',
+    body: `Your setup — name, bodyweight, experience, goal, split, training days — builds and calibrates your program.<br><br>
+<strong style="color:var(--red-text);">To update anything:</strong> Settings → Redo Initial Setup. Your history is preserved.<br><br>
+<strong style="color:var(--cream);">Bodyweight</strong> is used to estimate starting weights and your Strength Score. Update it in Settings when it changes.<br><br>
+<strong style="color:var(--cream);">Experience level</strong> sets your weekly volume. Beginner = fewer sets per session, advanced = more. Update it as you grow.`,
+  },
+  {
+    section: 'GETTING STARTED',
+    icon: '📋',
+    title: 'Week 1 — Calibration',
+    body: `Your first week is a calibration week. Weights start conservative — the goal is to find your real working weights, not max out.<br><br>
+<strong style="color:var(--red-text);">After 4 sessions,</strong> a Test Week Review opens. You choose lighter, same, or heavier for each lift. Your real program starts immediately after.<br><br>
+<strong style="color:var(--cream);">Key rule:</strong> Log your RPE honestly on every set. The calibration only works if the data is real.`,
+  },
+  {
+    section: 'TRAINING',
+    icon: '📝',
+    title: 'Logging a Workout',
+    body: `From Home, tap a day card → tap <strong style="color:var(--red-text);">START</strong>.<br><br>
+For each set, enter <strong style="color:var(--cream);">weight, reps, and RPE.</strong> As you type reps, live feedback shows:<br>
+<strong style="color:#4caf50;">✓ Hit target &nbsp;&nbsp; ▲ Exceeded</strong><br>
+<strong style="color:#e57373;">▼ Fell short</strong><br><br>
+Tap the <strong style="color:var(--cream);">checkmark</strong> to lock the set in. Each exercise card also has:<br>
+⏱ <strong style="color:var(--cream);">Rest timer</strong> — vibrates when time's up<br>
+🍽 <strong style="color:var(--cream);">Plate calculator</strong> — exact plate loading<br>
+📝 <strong style="color:var(--cream);">Notes</strong> — form cues or reminders<br><br>
+When done, tap <strong style="color:var(--red-text);">COMPLETE ✓</strong> to see your session summary before anything saves. Tap <strong style="color:var(--cream);">EXIT</strong> to save progress and resume later.`,
+  },
+  {
+    section: 'TRAINING',
+    icon: '✦',
+    title: 'Live Coaching',
+    body: `After certain sets, the app generates a coaching cue based on your RPE, reps, and where you are in the cycle. It only fires when something specific is worth noting — not after every set.<br><br>
+<strong style="color:var(--cream);">Examples:</strong><br>
+→ High RPE + low reps: weight may be too heavy<br>
+→ Consistently hitting top of rep range: you may be ready to progress<br>
+→ RPE spike mid-session: fatigue building faster than expected<br><br>
+If fatigue is strong enough, a <strong style="color:var(--cream);">REMOVE SET</strong> option may appear.<br><br>
+Turn it off in <strong style="color:var(--red-text);">Settings → Between-Set Coaching.</strong>`,
+  },
+  {
+    section: 'TRAINING',
+    icon: '🔗',
+    title: 'Supersets',
+    body: `A superset alternates two exercises back-to-back with rest after both. Same volume, less time.<br><br>
+<strong style="color:var(--red-text);">To pair exercises:</strong><br>
+1. Tap <strong style="color:var(--cream);">PAIR</strong> on any exercise card<br>
+2. Tap the other exercise to link them<br>
+3. Choose: this session only, or save for the full cycle<br><br>
+Once paired, a connector strip shows your round count. After you lock a set, the partner card pulses amber — that's your cue to switch.<br><br>
+To unpair: tap <strong style="color:var(--cream);">PAIRED ✕</strong> on either card.`,
+  },
+  {
+    section: 'TRAINING',
+    icon: '🔀',
+    title: 'Swapping Exercises',
+    body: `Every exercise has a <strong style="color:var(--red-text);">SWAP</strong> button with curated alternatives, each with a note on why it works.<br><br>
+<strong style="color:var(--cream);">Today only:</strong> applies this session. Your program keeps the original next time.<br><br>
+<strong style="color:var(--cream);">Permanently:</strong> replaces the exercise going forward. Undo from Settings → Restore Default Exercises.<br><br>
+Each exercise also has a <strong style="color:var(--cream);">form video link</strong> — set your own YouTube link to your preferred coaching cue.<br><br>
+You can also type any exercise name not on the list.`,
+  },
+  {
+    section: 'TRAINING',
+    icon: '🔁',
+    title: 'Exercise Rotation',
+    body: `At <strong style="color:var(--cream);">Week 5</strong> of each cycle, the app suggests rotating a couple of exercises. Same muscle group, different angle — enough to keep driving adaptation.<br><br>
+<strong style="color:var(--red-text);">From the rotation banner:</strong><br>
+→ Pick from suggested alternatives<br>
+→ Choose your own from the full list<br>
+→ Type in anything not on the list<br>
+→ Skip and keep the current exercise<br><br>
+<strong style="color:var(--cream);">Your weight history carries over.</strong> Nothing resets on the new movement.`,
+  },
+  {
+    section: 'PROGRESSION',
+    icon: '📈',
+    title: 'Smart Weight Progression',
+    body: `The app adjusts your weights based on your logged RPE and reps — it gets smarter the more you log.<br><br>
+<strong style="color:var(--red-text);">Sessions 1–2:</strong> Progression based on your most recent session.<br><br>
+<strong style="color:var(--red-text);">Session 3+:</strong> Trend logic — averages your last 3 sessions before deciding. One great day won't spike your weight. One hard day won't tank it.<br><br>
+After each session, a banner on each exercise shows the next weight and the reason. Toggle this in <strong style="color:var(--cream);">Settings → Progressive Overload.</strong>`,
+  },
+  {
+    section: 'PROGRESSION',
+    icon: '⚖️',
+    title: 'When the App Says Ease Off',
+    body: `If you log <strong style="color:var(--cream);">RPE 9–10 two or three sessions in a row</strong> on the same exercise, the app shows a <strong style="color:var(--red-text);">Too Heavy?</strong> card before that exercise on your next session.<br><br>
+It suggests a slightly lighter weight and explains why. Accept it or keep your current weight — always your call.<br><br>
+If your RPE keeps maxing out and you keep overriding, the prompt keeps returning. That's the data telling you that adding more weight right now isn't the answer.`,
+  },
+  {
+    section: 'PROGRESSION',
+    icon: '📆',
+    title: 'Cycle to Cycle',
+    body: `Each 8-week cycle ends with a recovery week, then a fresh start. But <strong style="color:var(--cream);">you're not resetting.</strong><br><br>
+Your weights at the end of Cycle 1 become the starting point for Cycle 2, plus a small increment. Week 1 of Cycle 2 starts heavier than Week 1 of Cycle 1 did.<br><br>
+Your <strong style="color:var(--cream);">PR board</strong> in the Stats tab shows the heaviest weight you've hit on every exercise across every session ever logged.`,
+  },
+  {
+    section: 'RECOVERY',
+    icon: '🌿',
+    title: 'Recovery Weeks',
+    body: `A recovery week drops your weights to 75% so your joints, tendons, and nervous system can catch up. You keep training — just at reduced load. Full weights restore automatically the following week.<br><br>
+Scheduled at <strong style="color:var(--cream);">Week 7</strong> of each cycle. Can also trigger earlier if RPE data shows consistent near-limit effort.<br><br>
+When early recovery is suggested, an <strong style="color:var(--red-text);">R dot</strong> appears on the home screen. The banner shows which muscles triggered it — you decide whether to start it.`,
+  },
+  {
+    section: 'RECOVERY',
+    icon: '⚡',
+    title: 'Deload vs Rest Week',
+    body: `<strong style="color:var(--cream);">Deload:</strong> Same exercises, weights drop to 75%. You keep training. Best for managing accumulated fatigue without losing momentum. Full weights restore the following week.<br><br>
+<strong style="color:var(--cream);">Rest Week:</strong> Program pauses completely. Nothing resets. Best if you're run down, dealing with an ache, or need real time off.<br><br>
+Access both from the recovery banner on Home or from <strong style="color:var(--red-text);">Settings.</strong>`,
+  },
+  {
+    section: 'RECOVERY',
+    icon: '⏸',
+    title: 'Pausing Your Program',
+    body: `Go to <strong style="color:var(--red-text);">Settings → Pause Program</strong> and choose a reason:<br><br>
+🤒 Illness &nbsp;&nbsp; 🩹 Injury &nbsp;&nbsp; 🏠 Emergency &nbsp;&nbsp; ✈️ Travel<br><br>
+While paused, your <strong style="color:var(--cream);">week counter and streak are frozen.</strong> Nothing resets. A banner on Home shows how long you've been paused with a one-tap resume.<br><br>
+<span style="color:var(--gray); font-size:14px;">One pause per cycle maximum. Auto-expires after 14 days.</span>`,
+  },
+  {
+    section: 'STATS &amp; TRACKING',
+    icon: '📊',
+    title: 'History, PRs &amp; Milestones',
+    body: `The <strong style="color:var(--cream);">Stats tab</strong> has every completed session with full set-by-set detail.<br><br>
+After each workout, a <strong style="color:var(--red-text);">Volume Trend</strong> card shows how your total volume compares to your last session on the same day.<br><br>
+<strong style="color:var(--cream);">PRs</strong> are celebrated automatically when you set a new all-time best. The PR board at the top of Stats shows every lift's best ever.<br><br>
+<strong style="color:var(--cream);">Milestones</strong> unlock at 1, 5, 10, 25, 50, 100 sessions and at 2, 4, 8, 12-week streaks.`,
+  },
+  {
+    section: 'STATS &amp; TRACKING',
+    icon: '🏅',
+    title: 'Your Strength Score',
+    body: `A 1000-point scale that benchmarks your overall strength against age and sex-adjusted standards. Updates automatically as you log sessions.<br><br>
+<strong style="color:var(--red-text);">Five levels:</strong><br>
+Beginner → Developing → Intermediate → Advanced → Elite<br><br>
+Factors in your compound lift weights relative to bodyweight, age, and sex — so the benchmark is always personal to you.<br><br>
+Find it in the <strong style="color:var(--cream);">Stats tab.</strong> You can also share it as a card.`,
+  },
+  {
+    section: 'STATS &amp; TRACKING',
+    icon: '❤️',
+    title: 'Cardio Tracking',
+    body: `The <strong style="color:var(--cream);">Cardio tab</strong> tracks runs, jogs, walks, and treadmill sessions.<br><br>
+<strong style="color:var(--cream);">Walk</strong> has a Leisurely / Brisk toggle — each uses different calorie math.<br><br>
+Import sessions from <strong style="color:var(--cream);">Health Connect</strong> — Samsung Health, Google Fit, Strava, Garmin, and others.<br><br>
+Each session logs distance, duration, pace, and calories. Built-in timer with quick presets: 20, 30, 45, 60 min. Weekly summary shows totals at a glance.`,
+  },
+  {
+    section: 'MIND &amp; BODY',
+    icon: '🧠',
+    title: 'Mindset Tools',
+    body: `The <strong style="color:var(--cream);">Mindset tab</strong> has three tools built around the psychology of consistency:<br><br>
+<strong style="color:var(--red-text);">Mood Check-In</strong> — Rate how you feel before and after training. Over time, the app tracks your average mood lift. Most people feel measurably better after a session than before.<br><br>
+<strong style="color:var(--red-text);">Self-Compassion</strong> — A 3-step guided exercise for when you're being hard on yourself. Research shows self-criticism after a missed session increases the chance of quitting.<br><br>
+<strong style="color:var(--red-text);">Cognitive Reframe</strong> — Log what got in the way of a workout and work through a CBT-based reframe. Patterns build up over time so you can spot your real blockers.`,
+  },
+];
+
+// ── REMOVED ORIGINAL SLIDES (replaced by new TUTORIAL_SLIDES above) ──
+const _TUTORIAL_SLIDES_ORIG_PLACEHOLDER = [
   {
     section: 'WELCOME',
     icon: '💪',
@@ -32202,10 +32399,11 @@ const TUTORIAL_SLIDES = [
   },
 ];
 
-let tutorialStep = 0;
+let tutorialStep = -1; // -1 = index view
 
 function openTutorial() {
-  tutorialStep = 0;
+  tutorialStep = -1;
+  buildTutorialIndex();
   buildTutorialSlides();
   updateTutorialUI();
   document.getElementById('tutorial-modal').style.display = 'flex';
@@ -32215,16 +32413,38 @@ function closeTutorial() {
   document.getElementById('tutorial-modal').style.display = 'none';
 }
 
+function buildTutorialIndex() {
+  const idx = document.getElementById('tutorial-index');
+  let html = '<div style="font-size:15px; color:#ccc; line-height:1.6; margin-bottom:4px; padding-top:4px;">Tap any topic to jump straight to it.</div>';
+  TUTORIAL_GROUPS.forEach(g => {
+    html += `<div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--red-text); letter-spacing:2.5px; margin:18px 0 8px;">${g.label}</div>`;
+    g.indices.forEach(i => {
+      const slide = TUTORIAL_SLIDES[i];
+      if (!slide) return;
+      html += `<button onclick="tutorialJumpTo(${i})" style="width:100%; background:var(--dark3); border:1px solid #2a2a2a; border-radius:12px; color:var(--cream); padding:13px 14px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:12px; margin-bottom:6px; -webkit-tap-highlight-color:transparent;">
+        <span style="font-size:20px; flex-shrink:0; width:28px; text-align:center;">${slide.icon}</span>
+        <span style="flex:1; font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:600; letter-spacing:0.3px;">${slide.title}</span>
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="#555" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>`;
+    });
+  });
+  idx.innerHTML = html;
+}
+
+function tutorialJumpTo(i) {
+  tutorialStep = i;
+  updateTutorialUI();
+}
+
 function buildTutorialSlides() {
   const container = document.getElementById('tutorial-slides');
   container.innerHTML = TUTORIAL_SLIDES.map((slide, i) => `
-    <div style="min-width:100%; height:100%; overflow-y:auto; padding:8px 20px 20px; box-sizing:border-box;">
-      <div style="text-align:center; padding:20px 0 16px;">
-        <div style="font-size:56px; margin-bottom:12px;">${slide.icon}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:3px; margin-bottom:8px;">${slide.section}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:26px; color:var(--cream); letter-spacing:1px; line-height:1.2;">${slide.title}</div>
+    <div style="min-width:100%; height:100%; overflow-y:auto; padding:8px 20px 24px; box-sizing:border-box;">
+      <div style="padding:14px 0 16px;">
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:var(--red-text); letter-spacing:2.5px; margin-bottom:6px;">${slide.section}</div>
+        <div style="font-family:'Bebas Neue',cursive; font-size:30px; color:var(--cream); letter-spacing:2px; line-height:1.15;">${slide.title}</div>
       </div>
-      <div style="background:var(--dark2); border:1px solid var(--dark3); border-radius:16px; padding:20px; font-size:15px; color:#cccccc; line-height:1.8;">
+      <div style="background:var(--dark3); border:1px solid #2a2a2a; border-radius:14px; padding:18px 16px; font-size:15px; color:#ccc; line-height:1.85;">
         ${slide.body}
       </div>
     </div>
@@ -32232,14 +32452,22 @@ function buildTutorialSlides() {
 }
 
 function updateTutorialUI() {
+  const isIndex = tutorialStep < 0;
   const total = TUTORIAL_SLIDES.length;
-  const pct = ((tutorialStep + 1) / total) * 100;
 
+  document.getElementById('tutorial-index').style.display = isIndex ? 'block' : 'none';
+  document.getElementById('tutorial-progress-wrap').style.display = isIndex ? 'none' : 'block';
+  document.getElementById('tutorial-slides-wrapper').style.display = isIndex ? 'none' : 'block';
+  document.getElementById('tutorial-nav-wrap').style.display = isIndex ? 'none' : 'flex';
+  document.getElementById('tutorial-topbar-title').textContent = isIndex ? 'APP GUIDE' : (TUTORIAL_SLIDES[tutorialStep]?.section || 'APP GUIDE');
+
+  if (isIndex) return;
+
+  const pct = ((tutorialStep + 1) / total) * 100;
   document.getElementById('tutorial-progress-bar').style.width = pct + '%';
   document.getElementById('tutorial-step-label').textContent = TUTORIAL_SLIDES[tutorialStep].section;
   document.getElementById('tutorial-step-counter').textContent = `${tutorialStep + 1} / ${total}`;
   document.getElementById('tutorial-slides').style.transform = `translateX(-${tutorialStep * 100}%)`;
-  document.getElementById('tutorial-back-btn').style.display = tutorialStep > 0 ? 'block' : 'none';
 
   const nextBtn = document.getElementById('tutorial-next-btn');
   if (tutorialStep === total - 1) {
@@ -32250,28 +32478,32 @@ function updateTutorialUI() {
     nextBtn.onclick = () => tutorialNav(1);
   }
 
-  // Scroll slide back to top on change
   const wrapper = document.getElementById('tutorial-slides-wrapper');
   if (wrapper) wrapper.scrollTop = 0;
 }
 
 function tutorialNav(dir) {
+  if (dir === -1) {
+    tutorialStep = -1; // back to index
+    updateTutorialUI();
+    return;
+  }
   const total = TUTORIAL_SLIDES.length;
-  tutorialStep = Math.max(0, Math.min(total - 1, tutorialStep + dir));
+  tutorialStep = Math.min(tutorialStep + 1, total - 1);
   updateTutorialUI();
 }
 
-// Swipe support for tutorial
+// Swipe support for tutorial (slides only — not on index)
 (function() {
   let startX = 0;
   document.addEventListener('touchstart', e => {
     const modal = document.getElementById('tutorial-modal');
-    if (!modal || !modal.style.display || modal.style.display === 'none') return;
+    if (!modal || modal.style.display === 'none' || tutorialStep < 0) return;
     startX = e.touches[0].clientX;
   }, { passive: true });
   document.addEventListener('touchend', e => {
     const modal = document.getElementById('tutorial-modal');
-    if (!modal || !modal.style.display || modal.style.display === 'none') return;
+    if (!modal || modal.style.display === 'none' || tutorialStep < 0) return;
     const diff = startX - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 50) tutorialNav(diff > 0 ? 1 : -1);
   }, { passive: true });
