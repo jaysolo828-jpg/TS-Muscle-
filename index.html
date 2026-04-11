@@ -7610,6 +7610,7 @@ function supabaseDismiss() {
 }
 
 function toggleSocialFeatures() {
+  haptic(HAPTIC.click);
   state.socialEnabled = (state.socialEnabled === false) ? true : false;
   saveState();
   _applySocialToggleUI();
@@ -8873,6 +8874,7 @@ function _confirmClearReactions(signalId, count) {
 // card disappears. Relies on the reactions_to_me_delete RLS policy
 // added in migration 012.
 async function _clearReactionsForSignal(signalId) {
+  haptic(HAPTIC.warning);
   document.getElementById('clear-reactions-confirm-sheet')?.remove();
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
@@ -8918,6 +8920,7 @@ function _confirmRemoveSingleReaction(reactionId) {
 // After success, re-fetches the recent-reactions section so the chip
 // disappears and the card collapses/disappears if it was the last one.
 async function _removeSingleReaction(reactionId) {
+  haptic(HAPTIC.warning);
   document.getElementById('remove-reaction-confirm-sheet')?.remove();
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
@@ -8985,6 +8988,7 @@ async function _doFriendSearch(query) {
 }
 
 async function _sendFriendRequest(addresseeId, btn) {
+  haptic(HAPTIC.click);
   const sb = _getSupabaseClient();
   if (!sb) return;
   const myId = state.supabaseUserId;
@@ -9474,6 +9478,7 @@ async function _openFriendActivity(userId, signalId) {
 // feedback; reverts the visual + shows a toast on DB error.
 async function _toggleWorkoutMute(userId) {
   if (!state.supabaseUserId || userId === state.supabaseUserId) return;
+  haptic(HAPTIC.click);
   const sb = _getSupabaseClient();
   if (!sb) return;
   const wasMuted = _mutedFriends.has(userId);
@@ -9608,6 +9613,7 @@ async function _confirmRemoveFriend(userId) {
 }
 
 async function _sendReaction(signalId, toUserId, reactionType, btn) {
+  haptic(HAPTIC.tap);
   const sb = _getSupabaseClient();
   if (!sb || !btn) return;
   const card = btn.closest('.friend-signal-card');
@@ -10053,6 +10059,7 @@ async function _openNotifPrefsSheet() {
 // corresponding toggle element and (for quiet_enabled) show/hide
 // the time picker row.
 async function _toggleNotifPref(key) {
+  haptic(HAPTIC.click);
   const p = state.notifPrefs || _getDefaultNotifPrefs();
   const currentOn = p[key] !== false;
   const nextOn = !currentOn;
@@ -11783,6 +11790,7 @@ async function _openAcceptChallengeFlow(challengeId) {
 // and leaves activation to the creator (manual start) or the cron
 // (auto-start at 48h).
 async function _submitAcceptChallenge() {
+  haptic(HAPTIC.success);
   if (!_challengeDraft || _challengeDraft.mode !== 'accept') return;
   const d = _challengeDraft;
   const sb = _getSupabaseClient();
@@ -11870,6 +11878,7 @@ function _confirmDeclineChallenge(challengeId) {
   _declineChallenge(challengeId);
 }
 async function _declineChallenge(challengeId) {
+  haptic(HAPTIC.tap);
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
   const ch = (_challenges || []).find(c => c.id === challengeId);
@@ -11912,6 +11921,7 @@ function _confirmCancelChallenge(challengeId) {
   _cancelChallenge(challengeId);
 }
 async function _cancelChallenge(challengeId) {
+  haptic(HAPTIC.warning);
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
   const ch = (_challenges || []).find(c => c.id === challengeId);
@@ -11954,6 +11964,7 @@ function _confirmQuitChallenge(challengeId) {
   _quitChallenge(challengeId);
 }
 async function _quitChallenge(challengeId) {
+  haptic(HAPTIC.warning);
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
   const ch = (_challenges || []).find(c => c.id === challengeId);
@@ -12013,6 +12024,7 @@ function _confirmStartChallenge(challengeId) {
   _startChallengeNow(challengeId);
 }
 async function _startChallengeNow(challengeId) {
+  haptic(HAPTIC.start);
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
   const ch = (_challenges || []).find(c => c.id === challengeId);
@@ -14594,6 +14606,7 @@ async function _submitChallengeLog(challengeId) {
   const r = parseInt(document.getElementById('challenge-log-reps')?.value, 10);
   if (!w || w <= 0) { showToast('Enter a valid weight.'); return; }
   if (!r || r < 1 || r > 20) { showToast('Reps must be between 1 and 20.'); return; }
+  haptic(HAPTIC.success);
   const btn = document.getElementById('challenge-log-save');
   if (btn) { btn.disabled = true; btn.textContent = 'SAVING...'; }
   try {
@@ -25841,6 +25854,7 @@ function deleteHistoryEntry(entryId) {
     showToast('History is locked during an active challenge.');
     return;
   }
+  haptic(HAPTIC.warning);
   const idx = state.history.findIndex(e => String(e.id) === String(entryId));
   if (idx === -1) return;
 
