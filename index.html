@@ -4019,7 +4019,7 @@
       <div style="font-family:'Bebas Neue',cursive; font-size:34px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR EXERCISES</div>
       <div style="font-size:15px; color:#d0cbc6; margin-bottom:20px; line-height:1.6;">Proven movements to start. Nothing changes unless you say so.</div>
 
-      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;" id="ob-exercise-mode-btns">
+      <div style="display:flex; flex-direction:column; gap:0; margin-bottom:20px;" id="ob-exercise-mode-btns">
         <button class="onboard-select-btn" onclick="selectExerciseMode('auto', this)">
           <div style="display:flex; align-items:center; gap:10px;">
             <span style="font-size:22px; line-height:1;">✅</span>
@@ -4029,11 +4029,16 @@
             </div>
           </div>
         </button>
-        <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)">
+        <div style="display:flex; align-items:center; gap:10px; padding:10px 0;">
+          <div style="flex:1; height:1px; background:#333;"></div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:#666; letter-spacing:2px;">OR</div>
+          <div style="flex:1; height:1px; background:#333;"></div>
+        </div>
+        <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)" style="border-color:rgba(204,32,39,0.45); background:rgba(204,32,39,0.04);">
           <div style="display:flex; align-items:center; gap:10px;">
             <span style="font-size:22px; line-height:1;">✏️</span>
             <div>
-              <div style="font-weight:bold; font-size:16px;">I'll Choose</div>
+              <div style="font-weight:bold; font-size:16px; color:var(--cream);">I'll Choose My Own</div>
               <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Pick exactly what you want to train. One exercise per movement slot.</div>
             </div>
           </div>
