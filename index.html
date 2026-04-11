@@ -35,6 +35,7 @@
     --gold: #c47d00;
     --gold-dim: rgba(196,125,0,0.18);
     --blue: #5b8dee;
+    --youtube-red: #FF0000;
     --ts-sage: #7FB685;
     --ts-sage-dim: rgba(127,182,133,0.55);
     --ts-sage-bg: rgba(127,182,133,0.12);
@@ -2912,9 +2913,9 @@
 
 
   <!-- ROTATION BANNER (shown at Week 5+ when exercises are due for rotation) -->
-  <div id="rotation-banner" style="display:none; margin-bottom:12px;">
+  <div id="rotation-banner" style="display:none; margin:0 -16px 12px; padding:0 16px;">
     <div class="rotation-banner" onclick="openRotationModal()" style="cursor:pointer;">
-      <div style="flex-shrink:0; font-size:22px;">🔄</div>
+      <div style="flex-shrink:0;"><svg viewBox="0 0 24 24" width="26" height="26" stroke="var(--success)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg></div>
       <div style="flex:1; min-width:0;">
         <div style="font-family:'Bebas Neue',cursive; font-size:17px; letter-spacing:1.5px; color:var(--success); margin-bottom:3px;">TIME TO MIX IT UP</div>
         <div style="font-size:14px; color:var(--gray-light); line-height:1.4;">Same muscle, fresh angle. Variation keeps growth coming. Tap to review.</div>
@@ -2940,7 +2941,7 @@
 
   <div id="home-greeting" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:2px; color:var(--gray-light); margin-bottom:6px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;"></div>
   <div id="home-third-shift-badge" style="display:none; margin-bottom:12px;">
-    <span style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; color:#f0a500; background:rgba(240,165,0,0.12); border:1px solid rgba(240,165,0,0.35); border-radius:6px; padding:3px 8px; text-transform:uppercase;">3RD SHIFT MODE ON</span>
+    <span style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; color:#f0a500; background:rgba(240,165,0,0.12); border:1px solid rgba(240,165,0,0.35); border-radius:20px; padding:3px 8px; text-transform:uppercase;">3RD SHIFT MODE ON</span>
   </div>
 
   <div id="home-main-content">
@@ -3112,7 +3113,7 @@
   <!-- Walk sub-toggle -->
   <div id="cardio-walk-mode" style="display:none;margin-bottom:14px;">
     <div style="display:flex;gap:6px;">
-      <button id="walkmode-leisurely" onclick="_setWalkMode('walk')" style="flex:1;padding:10px 6px;border-radius:10px;border:1px solid rgba(204,32,39,0.4);background:rgba(204,32,39,0.1);color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LEISURELY</button>
+      <button id="walkmode-leisurely" onclick="_setWalkMode('walk')" style="flex:1;padding:10px 6px;border-radius:10px;border:1px solid rgba(204,32,39,0.4);background:rgba(204,32,39,0.08);color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LEISURELY</button>
       <button id="walkmode-brisk" onclick="_setWalkMode('briskwalk')" style="flex:1;padding:10px 6px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">BRISK</button>
     </div>
     <div id="cardio-walk-desc" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:6px;padding:0 2px;">Leisurely pace \u2014 under 2.5 mph. Great for active recovery.</div>
@@ -3161,7 +3162,7 @@
         <button onclick="setTimerPreset(60)" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:11px 4px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent;">60m</button>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
-        <input type="number" id="timer-mins" value="" min="0" max="999" placeholder="0" oninput="_onDurationInput()" style="width:80px;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);font-family:'Bebas Neue',cursive;font-size:36px;text-align:center;border-radius:10px;padding:8px 4px;-webkit-tap-highlight-color:transparent;" inputmode="decimal"/>
+        <input type="number" id="timer-mins" value="" min="0" max="999" placeholder="0" oninput="_onDurationInput()" style="width:80px;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);font-family:'Bebas Neue',cursive;font-size:28px;text-align:center;border-radius:10px;padding:8px 4px;-webkit-tap-highlight-color:transparent;" inputmode="decimal"/>
         <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray);letter-spacing:1px;">MIN</span>
         <input type="number" id="timer-secs" value="00" min="0" max="59" style="display:none;" inputmode="decimal"/>
       </div>
@@ -3239,13 +3240,13 @@
     </div>
 
     <!-- Save -->
-    <button onclick="saveCardioSession()" style="width:100%;background:transparent;border:2px solid var(--cream);color:var(--cream);padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;cursor:pointer;margin-bottom:28px;-webkit-tap-highlight-color:transparent;">SAVE SESSION</button>
+    <button onclick="saveCardioSession()" style="width:100%;background:var(--red);border:none;color:white;padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;cursor:pointer;margin-bottom:28px;-webkit-tap-highlight-color:transparent;">SAVE SESSION</button>
 
   </div>
 
   <!-- ═══ IMPORT FROM HEALTH CONNECT (Android only — shown by JS) ═══ -->
   <div id="cardio-hc-section" style="display:none;margin-bottom:28px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">IMPORT FROM HEALTH CONNECT</div>
+    <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">IMPORT FROM HEALTH CONNECT</div>
     <div style="background:var(--dark2);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;margin-bottom:10px;">Already tracked your workout with a fitness app or watch? Pull those sessions in here. Works with Samsung Health, Google Fit, Strava, Garmin Connect, and any app connected to Health Connect.</div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-bottom:4px;">Pulls walks and runs of 10+ minutes from the past 7 days.</div>
@@ -3289,7 +3290,7 @@
   <div class="section-title" style="margin-bottom:10px;">WHERE YOU <span>ARE</span></div>
 
   <button onclick="openSelfCompassionModal()" style="width:100%; background:var(--dark2); border:1px solid var(--dark3); color:var(--cream); padding:16px; border-radius:14px; cursor:pointer; text-align:left; display:flex; align-items:center; gap:14px; margin-bottom:10px; -webkit-tap-highlight-color:transparent;">
-    <div style="width:36px; height:36px; border-radius:10px; background:rgba(204,32,39,0.1); border:1px solid rgba(204,32,39,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+    <div style="width:36px; height:36px; border-radius:10px; background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
       <svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--red)" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
     </div>
     <div style="flex:1; min-width:0;">
@@ -3323,7 +3324,7 @@
     </div>
     <div id="mood-wheel-actions" style="display:none; margin-top:14px; padding:0 16px 4px;">
       <textarea id="mood-note" class="notes-input" placeholder="Add a note (optional)" style="min-height:50px; margin-bottom:10px;"></textarea>
-      <button id="log-mood-btn" onclick="saveMoodEntry()" style="width:100%; background:var(--success); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; transition:background 0.2s;">LOG MOOD</button>
+      <button id="log-mood-btn" onclick="saveMoodEntry()" style="width:100%; background:var(--red); border:none; color:white; padding:14px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; cursor:pointer; transition:background 0.2s;">LOG MOOD</button>
     </div>
   </div>
 
@@ -3352,7 +3353,7 @@
 <!-- ============================================================
      DELOAD / REST WEEK MODAL
      ============================================================ -->
-<div id="deload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
+<div id="deload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99996; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(243,156,18,0.4); overflow:hidden; box-shadow:0 8px 40px rgba(243,156,18,0.12);">
     <div style="height:4px; background:linear-gradient(90deg,transparent,var(--warning),transparent);"></div>
     <div style="padding:24px;">
@@ -3393,7 +3394,7 @@
 <!-- ============================================================
      GAP RETURN MODAL — shown when user returns after 10+ day absence
      ============================================================ -->
-<div id="gap-return-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
+<div id="gap-return-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99997; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(204,32,39,0.3); overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,0.4);">
     <div style="height:4px; background:linear-gradient(90deg,transparent,var(--red),transparent);"></div>
     <div style="padding:24px;">
@@ -3431,7 +3432,7 @@
 <!-- ============================================================
      PR CELEBRATION MODAL
      ============================================================ -->
-<div id="pr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99995; align-items:center; justify-content:center; padding:24px; pointer-events:none;">
+<div id="pr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99995; align-items:center; justify-content:center; padding:24px; pointer-events:none;">
   <div id="pr-modal-inner" style="background:linear-gradient(135deg,#1a1200,#2d2000); border:2px solid var(--gold); border-radius:20px; padding:24px; width:100%; max-width:420px; text-align:center; pointer-events:auto; box-shadow:0 0 40px rgba(196,125,0,0.4); position:relative;">
     <button onclick="document.getElementById('pr-modal').style.display='none'" aria-label="Close" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--gray);font-size:20px;cursor:pointer;line-height:1;padding:4px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">✕</button>
     <div style="margin-bottom:12px;"><svg viewBox="0 0 24 24" width="56" height="56" stroke="var(--gold)" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H2V5h4M18 9h4V5h-4M8 21h8M12 17v4"/><path d="M6 5h12v8a6 6 0 01-12 0V5z"/></svg></div>
@@ -3529,12 +3530,12 @@
           <div style="display:flex; flex-direction:column; gap:8px; font-size:14px;">
             <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 6</span><span style="color:var(--gray-light);">Easy. Could do 4+ more.</span></div>
             <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 7</span><span style="color:var(--gray-light);">Solid. 3 more in the tank.</span></div>
-            <div style="display:flex; justify-content:space-between; padding:8px 10px; border-radius:8px; background:rgba(204,32,39,0.1); border:1px solid rgba(204,32,39,0.3); margin:2px 0;"><span style="color:var(--cream); font-weight:bold;">RPE 8 ← your target</span><span style="color:var(--gray-light);">2 reps left.</span></div>
+            <div style="display:flex; justify-content:space-between; padding:8px 10px; border-radius:8px; background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.3); margin:2px 0;"><span style="color:var(--cream); font-weight:bold;">RPE 8 ← your target</span><span style="color:var(--gray-light);">2 reps left.</span></div>
             <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 9</span><span style="color:var(--gray-light);">Almost there. 1 more rep.</span></div>
             <div style="display:flex; justify-content:space-between;"><span style="color:var(--gray-light);">RPE 10</span><span style="color:var(--gray-light);">Nothing left. Max effort.</span></div>
           </div>
         </div>
-        <div style="background:rgba(204,32,39,0.07); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; font-size:14px; color:var(--gray-light); margin-bottom:20px; line-height:1.6;">
+        <div style="background:rgba(204,32,39,0.08); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; font-size:14px; color:var(--gray-light); margin-bottom:20px; line-height:1.6;">
           The app uses your RPE to decide when to increase weight, when to hold steady, and when to suggest you back off. You don't need to think about it — just be honest.
         </div>
         <div class="ob-button-row" style="flex-direction:column; gap:12px;">
@@ -3821,7 +3822,7 @@
         <div id="ob-split-rec-reason" style="font-size:14px; color:var(--gray-light); line-height:1.5; margin-bottom:10px;"></div>
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
           <div style="font-size:13px; color:var(--gray); line-height:1.4; flex:1;">You can pick any split below — this is just our suggestion based on your answers.</div>
-          <button id="ob-split-rec-btn" onclick="" style="flex-shrink:0; background:var(--red); border:none; color:white; padding:9px 16px; border-radius:9px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer; -webkit-tap-highlight-color:transparent;">USE THIS →</button>
+          <button id="ob-split-rec-btn" onclick="" style="flex-shrink:0; background:var(--red); border:none; color:white; padding:9px 16px; border-radius:10px; font-family:'Bebas Neue',cursive; font-size:14px; letter-spacing:1px; cursor:pointer; -webkit-tap-highlight-color:transparent;">USE THIS →</button>
         </div>
       </div>
 
@@ -3899,7 +3900,7 @@
       <div style="font-size:14px; color:var(--gray-light); margin-bottom:16px; line-height:1.6;">How many days per week can you realistically commit? Be honest. Consistency beats ambition.</div>
 
       <!-- Goal-based recommendation banner -->
-      <div id="ob-goal-rec" style="display:none; background:rgba(204,32,39,0.1); border:1px solid rgba(204,32,39,0.35); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:14px; color:var(--cream); line-height:1.5;"></div>
+      <div id="ob-goal-rec" style="display:none; background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.35); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:14px; color:var(--cream); line-height:1.5;"></div>
 
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;" id="ob-days-buttons">
         <button class="onboard-select-btn" id="ob-day-btn-2" onclick="selectTrainingDaysOnboard(2, this)"
@@ -3942,7 +3943,7 @@
       <div id="ob-days-tip" style="display:none;"></div>
 
       <!-- Below-minimum advisory (shows if they pick under the goal minimum) -->
-      <div id="ob-days-warning" style="display:none; background:rgba(243,156,18,0.1); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:14px; color:var(--warning); margin-bottom:14px; line-height:1.6;"></div>
+      <div id="ob-days-warning" style="display:none; background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:14px; color:var(--warning); margin-bottom:14px; line-height:1.6;"></div>
 
       <div class="ob-button-row">
         <button onclick="onboardBack(3)" class="onboard-back-btn">← BACK</button>
@@ -4030,7 +4031,7 @@
 
       <!-- Hint cards -->
       <div style="display:flex; gap:10px; margin-bottom:16px;">
-        <div style="flex:1; background:rgba(204,32,39,0.07); border:1px solid rgba(204,32,39,0.28); border-radius:12px; padding:12px 13px;">
+        <div style="flex:1; background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.28); border-radius:12px; padding:12px 13px;">
           <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; color:var(--red-text); letter-spacing:1px; margin-bottom:4px;">DON'T OVERTHINK</div>
           <div style="font-size:13px; color:var(--gray-light); line-height:1.5;">These get refined after Week 1. You can also update them anytime in Settings.</div>
         </div>
@@ -4153,7 +4154,7 @@
 </div>
 
 <!-- PAUSE PROGRAM MODAL -->
-<div id="pause-program-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
+<div id="pause-program-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99996; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(204,32,39,0.3); overflow:hidden; box-shadow:0 8px 40px rgba(204,32,39,0.1);">
     <div style="height:4px; background:linear-gradient(90deg,transparent,var(--red),transparent);"></div>
 
@@ -4196,7 +4197,7 @@
       </div>
 
       <!-- Warning note -->
-      <div id="pause-limit-warning" style="display:none; background:rgba(243,156,18,0.1); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--warning); margin-bottom:16px; line-height:1.6;">
+      <div id="pause-limit-warning" style="display:none; background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--warning); margin-bottom:16px; line-height:1.6;">
         You've already used your pause for this cycle. Pauses reset when you start a new cycle.
       </div>
     </div>
@@ -4267,7 +4268,7 @@
 </div>
 
 <!-- CBT MODAL -->
-<div id="cbt-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9800; align-items:center; justify-content:center; padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); overflow-y:auto;">
+<div id="cbt-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:9800; align-items:center; justify-content:center; padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); overflow-y:auto;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid var(--dark3); position:relative;">
     <div style="font-family:'Bebas Neue',cursive; font-size:24px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">REFRAME YOUR THINKING</div>
     <div style="font-size:13px; color:var(--gray); letter-spacing:1px; margin-bottom:20px;">LET'S WORK THROUGH IT</div>
@@ -4461,7 +4462,7 @@
       </button>
       <button onclick="setWeightIncrement('medium')" id="inc-btn-medium" style="
         flex:1;padding:10px 8px;border-radius:10px;border:1.5px solid var(--red);
-        background:rgba(204,32,39,0.1);color:var(--cream);cursor:pointer;
+        background:rgba(204,32,39,0.08);color:var(--cream);cursor:pointer;
         font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.5px;
         transition:all 0.15s;
       ">
@@ -4788,20 +4789,20 @@
     <div class="modal-sub" id="alt-modal-sub">Choose an alternate</div>
 
     <!-- SWAP RESET BANNER — shown only when exercise has been renamed -->
-    <div id="alt-reset-banner" style="display:none; background:#3a2a10; border:1px solid #7a5a20; border-radius:10px; padding:10px 14px; margin-bottom:14px; align-items:center; gap:10px;">
+    <div id="alt-reset-banner" style="display:none; background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.3); border-radius:10px; padding:10px 14px; margin-bottom:14px; align-items:center; gap:10px;">
       <span style="font-size:16px;">↩</span>
       <div style="flex:1;">
-        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:#f0a830; letter-spacing:0.5px; font-weight:700;">CURRENTLY SWAPPED</div>
-        <div id="alt-reset-label" style="font-family:'Barlow',sans-serif; font-size:14px; color:#d4a96a; margin-top:2px;"></div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--warning); letter-spacing:0.5px; font-weight:700;">CURRENTLY SWAPPED</div>
+        <div id="alt-reset-label" style="font-family:'Barlow',sans-serif; font-size:14px; color:var(--gray-light); margin-top:2px;"></div>
       </div>
-      <button id="alt-reset-btn" onclick="resetExerciseToDefault()" style="background:#7a5a20; border:none; color:#f0d090; border-radius:8px; padding:7px 12px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; cursor:pointer; white-space:nowrap;">RESET</button>
+      <button id="alt-reset-btn" onclick="resetExerciseToDefault()" style="background:rgba(243,156,18,0.15); border:1px solid rgba(243,156,18,0.4); color:var(--warning); border-radius:8px; padding:7px 12px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.5px; cursor:pointer; white-space:nowrap;">RESET</button>
     </div>
 
     <!-- CURRENT EXERCISE YOUTUBE LINK -->
     <div id="current-yt-section" style="background:var(--dark3); border-radius:12px; padding:12px 14px; margin-bottom:16px;">
       <div style="font-size:13px; color:var(--gray); letter-spacing:1px; margin-bottom:8px;">📺 WHAT YOU DO NOW</div>
       <div style="display:flex; align-items:center; gap:8px;">
-        <a id="current-yt-link" href="#" style="flex:1; background:#FF0000; color:white; border:none; border-radius:8px; padding:8px 12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; cursor:pointer; text-decoration:none; display:flex; align-items:center; gap:6px;" onclick="event.preventDefault();_safeOpenYtLink(this.getAttribute('href'));">
+        <a id="current-yt-link" href="#" style="flex:1; background:var(--youtube-red); color:white; border:none; border-radius:8px; padding:8px 12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; cursor:pointer; text-decoration:none; display:flex; align-items:center; gap:6px;" onclick="event.preventDefault();_safeOpenYtLink(this.getAttribute('href'));">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
           WATCH CURRENT
         </a>
@@ -4830,7 +4831,7 @@
       <div id="alt-detail-label" style="font-size:13px; color:var(--gray); letter-spacing:1px; margin-bottom:6px;">📺 WHAT YOU'D SWAP TO</div>
       <div id="alt-detail-note" style="font-size:14px; color:var(--gray-light); margin-bottom:10px;"></div>
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-        <a id="alt-yt-link" href="#" style="flex:1; background:#FF0000; color:white; border:none; border-radius:8px; padding:8px 12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; cursor:pointer; text-decoration:none; display:flex; align-items:center; gap:6px;" onclick="event.preventDefault();_safeOpenYtLink(this.getAttribute('href'));">
+        <a id="alt-yt-link" href="#" style="flex:1; background:var(--youtube-red); color:white; border:none; border-radius:8px; padding:8px 12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; cursor:pointer; text-decoration:none; display:flex; align-items:center; gap:6px;" onclick="event.preventDefault();_safeOpenYtLink(this.getAttribute('href'));">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
           WATCH SWAP OPTION
         </a>
@@ -4943,7 +4944,7 @@
      TRAINING DAYS MODAL — outside .app-content to avoid z-index/
      overflow clipping from that stacking context.
      ============================================================ -->
-<div id="training-days-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:20px;">
+<div id="training-days-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99997; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid var(--dark3); max-height:calc(100dvh - 40px); display:flex; flex-direction:column; overflow:hidden;">
     <!-- Sticky header -->
     <div style="padding:20px 24px 12px; flex-shrink:0;">
@@ -4954,7 +4955,7 @@
     <!-- Scrollable body -->
     <div style="overflow-y:auto; flex:1; min-height:0; padding:0 24px 8px;">
       <!-- Goal-aware recommendation banner -->
-      <div id="settings-days-rec" style="display:none; background:rgba(204,32,39,0.1); border:1px solid rgba(204,32,39,0.35); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:14px; color:var(--cream); line-height:1.5;"></div>
+      <div id="settings-days-rec" style="display:none; background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.35); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:14px; color:var(--cream); line-height:1.5;"></div>
 
       <!-- Day option buttons with badges -->
       <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
@@ -4996,7 +4997,7 @@
       <div id="days-explanation" style="display:none;"></div>
 
       <!-- Below-minimum warning -->
-      <div id="settings-days-warning" style="display:none; background:rgba(243,156,18,0.1); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:14px; color:var(--warning); margin-bottom:8px; line-height:1.6;"></div>
+      <div id="settings-days-warning" style="display:none; background:rgba(243,156,18,0.08); border:1px solid rgba(243,156,18,0.4); border-radius:8px; padding:12px 14px; font-size:14px; color:var(--warning); margin-bottom:8px; line-height:1.6;"></div>
     </div>
 
     <!-- Sticky footer -->
@@ -5011,7 +5012,7 @@
      SPLIT TYPE MODAL — outside .app-content to avoid z-index/
      overflow clipping from that stacking context.
      ============================================================ -->
-<div id="split-type-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99997; align-items:center; justify-content:center; padding:12px;">
+<div id="split-type-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99997; align-items:center; justify-content:center; padding:12px;">
   <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:460px; border:1px solid var(--dark3); max-height:calc(100dvh - 24px); display:flex; flex-direction:column; overflow:hidden;">
     <!-- Sticky header -->
     <div style="padding:20px 24px 12px; flex-shrink:0;">
@@ -5103,7 +5104,7 @@
 </div>
 
 <!-- GYM EQUIPMENT SHEET -->
-<div id="gym-equipment-sheet" style="display:none; position:fixed; inset:0; z-index:99997; background:rgba(0,0,0,0.75);" onclick="closeGymEquipmentSheet()">
+<div id="gym-equipment-sheet" style="display:none; position:fixed; inset:0; z-index:99997; background:rgba(0,0,0,0.85);" onclick="closeGymEquipmentSheet()">
   <div onclick="event.stopPropagation()" style="position:absolute; bottom:0; left:0; right:0; background:var(--dark2); border-radius:18px 18px 0 0; padding-bottom:env(safe-area-inset-bottom,0); max-height:80vh; overflow-y:auto;">
     <div style="width:36px; height:4px; background:rgba(255,255,255,0.18); border-radius:2px; margin:12px auto 0;"></div>
     <div style="padding:16px 20px 12px;">
@@ -10788,7 +10789,7 @@ function _renderChallengesListHtml() {
     wrapDiv.style.marginTop = rows.length ? '10px' : '0';
 
     const toggleBtn = document.createElement('button');
-    toggleBtn.style.cssText = 'width:100%;padding:9px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--gray);border-radius:9px;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;';
+    toggleBtn.style.cssText = 'width:100%;padding:9px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--gray);border-radius:10px;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;';
     toggleBtn.textContent = '\u25be  PAST CHALLENGES (' + past.length + ')';
 
     const pastList = document.createElement('div');
@@ -10841,7 +10842,7 @@ function _pastChallengeRowHtml(c) {
   const inlineBg    = isWin ? '' : 'background:' + (isTie ? 'rgba(255,255,255,0.03)' : 'rgba(123,111,160,0.07)') + ';';
 
   return '<div class="' + winClass.trim() + '" onclick="_openChallengeDetailSheet(\'' + c.id + '\')" '
-    + 'style="display:flex;align-items:center;justify-content:space-between;padding:11px 13px;' + inlineBg + 'border:1px solid ' + borderColor + ';border-radius:9px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;gap:10px;">'
+    + 'style="display:flex;align-items:center;justify-content:space-between;padding:11px 13px;' + inlineBg + 'border:1px solid ' + borderColor + ';border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;gap:10px;">'
     + '<div style="min-width:0;flex:1;">'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:14px;color:' + liftColor + ';letter-spacing:1.2px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">1RM \u00b7 ' + escapeHtml(liftLabel) + '</div>'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(sub) + '</div>'
@@ -15138,7 +15139,7 @@ function openProfileModal() {
   const pending = state.pendingExperienceLevel;
   const modal = document.createElement('div');
   modal.id = 'profile-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
@@ -15241,7 +15242,7 @@ function openBodyweightModal() {
   const current = state.profile?.bodyweight || '';
   const modal = document.createElement('div');
   modal.id = 'bw-update-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">UPDATE BODYWEIGHT</div>
@@ -15347,7 +15348,7 @@ function showResumeProgramModal() {
   const reasonText = reasonLabels[state.pauseReason || ''] || 'recovery';
 
   const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;width:100%;max-width:420px;border:1px solid var(--dark3);padding:24px;">
       <div style="font-family:'Bebas Neue',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">WELCOME BACK</div>
@@ -18316,7 +18317,7 @@ function dismissMRVBanner() {
 
 function endRecoveryWeekEarly() {
   const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">END RECOVERY EARLY?</div>
@@ -19146,7 +19147,7 @@ function startSession(dayId, triggerEl) {
       if (parsed.dayId === dayId) {
         // Show resume modal instead of confirm() for iOS compatibility
       const resumeModal = document.createElement('div');
-      resumeModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      resumeModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
       resumeModal.innerHTML = `
         <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
           <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">RESUME SESSION?</div>
@@ -20227,7 +20228,7 @@ function renderSession() {
           <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
             ${_muscle ? `<span class="muscle-pill" style="color:${_mColor};border-color:${_mColor}44;background:${_mColor}18;">${_muscle}</span>` : ''}
             ${_isTravelSub ? `<span style="font-size:13px;font-weight:700;color:#4A9EDB;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(74,158,219,0.12);border:1px solid rgba(74,158,219,0.3);padding:2px 7px;border-radius:4px;">✈ TRAVEL</span>` : ''}
-            ${_needsTravelSub ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);padding:2px 7px;border-radius:4px;">⚠ SWAP NEEDED</span>` : ''}
+            ${_needsTravelSub ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(243,156,18,0.08);border:1px solid rgba(243,156,18,0.3);padding:2px 7px;border-radius:4px;">⚠ SWAP NEEDED</span>` : ''}
             ${isSource ? `<span style="font-size:13px;font-weight:700;color:#f59e0b;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;background:rgba(245,158,11,0.1);padding:3px 8px;border-radius:4px;">PAIRING…</span>` : ''}
           </div>
         </div>
@@ -23509,7 +23510,7 @@ function showDiscardConfirm() {
   closeExitModal();
   const overlay = document.createElement('div');
   overlay.id = 'discard-confirm-modal';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
   overlay.innerHTML = `
     <div style="background:var(--dark2);border:1px solid #8b0000;border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center;">
       <div style="font-size:36px;margin-bottom:12px;">🗑</div>
@@ -23561,7 +23562,7 @@ function discardSession() {
 function showIncompleteWarning(setCount, exCount) {
   const overlay = document.createElement('div');
   overlay.id = 'incomplete-warning-modal';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
   const setsLabel = setCount === 1 ? '1 unchecked set' : `${setCount} unchecked sets`;
   const exLabel = exCount === 1 ? '1 exercise' : `${exCount} exercises`;
   overlay.innerHTML = `
@@ -23629,7 +23630,7 @@ function _getExercisesWithIncompleteDoneSets() {
 function showIncompleteDoneModal(exerciseNames, onSaveAnyway) {
   const overlay = document.createElement('div');
   overlay.id = 'incomplete-done-modal';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:flex-end;justify-content:center;padding:0;';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;justify-content:center;padding:0;';
   const listHTML = exerciseNames
     .map(n => `<div style="padding:6px 0;border-bottom:1px solid var(--dark3);font-size:14px;color:var(--cream);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.3px;">${n}</div>`)
     .join('');
@@ -23867,7 +23868,7 @@ function showSessionWrapUp() {
 
   const modal = document.createElement('div');
   modal.id = 'session-wrapup-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
       <!-- Header: workout name + DONE -->
@@ -25429,7 +25430,7 @@ function showCycleCompleteModal() {
           </div>
           <div style="font-size:13px;color:var(--gray);line-height:1.5;margin-bottom:10px;">${due.length} exercise${due.length === 1 ? '' : 's'} eligible for a fresh swap.</div>
           ${preview}
-          <button onclick="closeCycleModal();setTimeout(openRotationModal,300);" style="width:100%;margin-top:10px;background:rgba(80,200,130,0.1);border:1px solid rgba(80,200,130,0.35);color:#50c882;padding:11px 16px;border-radius:9px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">REVIEW EXERCISE SWAPS →</button>
+          <button onclick="closeCycleModal();setTimeout(openRotationModal,300);" style="width:100%;margin-top:10px;background:rgba(80,200,130,0.1);border:1px solid rgba(80,200,130,0.35);color:#50c882;padding:11px 16px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">REVIEW EXERCISE SWAPS →</button>
         </div>`;
       })()}
 
@@ -25719,7 +25720,7 @@ function editHistoryNote(entryId) {
 
   const modal = document.createElement('div');
   modal.id = 'history-note-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:flex-end;padding:0;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;padding:0;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 24px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;margin:0 auto;border:1px solid var(--dark3);">
       <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:16px;">SESSION NOTE</div>
@@ -25755,7 +25756,7 @@ function openSongEditSheet(entryId) {
 
   const modal = document.createElement('div');
   modal.id = 'song-edit-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:flex-end;padding:0;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;padding:0;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 24px calc(32px + env(safe-area-inset-bottom));width:100%;max-width:480px;margin:0 auto;border:1px solid var(--dark3);">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
@@ -25817,7 +25818,7 @@ function confirmDeleteSession(entryId) {
   const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">DELETE SESSION?</div>
@@ -26141,7 +26142,7 @@ function renderHistory() {
         const inlineBg    = isWin ? '' : 'background:' + (isTie ? 'rgba(255,255,255,0.04)' : 'rgba(123,111,160,0.08)') + ';';
 
         rowsHtml += '<div class="ch-rec-row' + winClass + '" onclick="_openChallengeDetailSheet(\'' + ch.id + '\')" '
-          + 'style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;' + inlineBg + 'border:1px solid ' + borderColor + ';border-radius:9px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;gap:10px;">'
+          + 'style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;' + inlineBg + 'border:1px solid ' + borderColor + ';border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;gap:10px;">'
           + '<div style="min-width:0;flex:1;">'
           + '<div style="font-family:\'Bebas Neue\',cursive;font-size:14px;color:' + liftColor + ';letter-spacing:1.2px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(liftLabel) + '</div>'
           + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(sub) + '</div>'
@@ -30271,7 +30272,7 @@ function openHelpSheet() {
 
 function resetWeeks() {
   const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">RESET TO WEEK 1?</div>
@@ -30920,7 +30921,7 @@ function showChangelogModal() {
 
   const modal = document.createElement('div');
   modal.id = 'changelog-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10001;display:flex;align-items:flex-end;justify-content:center;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10001;display:flex;align-items:flex-end;justify-content:center;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px calc(40px + env(safe-area-inset-bottom));width:100%;max-width:480px;border-top:1px solid var(--dark3);animation:slideUp 0.3s ease;max-height:85vh;max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -30966,7 +30967,7 @@ function checkIOSDeleteWarning() {
         <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:14px;">
           On iPhone, <strong style="color:var(--cream);">deleting this app from your home screen permanently erases all your workout history and progress.</strong> There is no undo.
         </div>
-        <div style="background:rgba(204,32,39,0.1);border:1px solid rgba(204,32,39,0.3);border-radius:10px;padding:12px;margin-bottom:20px;font-size:14px;color:#e05a5f;line-height:1.5;">
+        <div style="background:rgba(204,32,39,0.08);border:1px solid rgba(204,32,39,0.3);border-radius:10px;padding:12px;margin-bottom:20px;font-size:14px;color:#e05a5f;line-height:1.5;">
           Export a backup regularly from <strong>Settings → Export Backup</strong>. It takes 5 seconds and saves your data to your Files or iCloud.
         </div>
         <div style="display:flex;flex-direction:column;gap:10px;">
@@ -31009,7 +31010,7 @@ function showBackupReminderBanner() {
       <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:14px;">
         Your workout history lives only on this device. If you switch phones or reinstall the app, you'll lose everything without a backup.
       </div>
-      <div style="background:rgba(204,32,39,0.1);border:1px solid rgba(204,32,39,0.3);border-radius:10px;padding:12px;margin-bottom:20px;font-size:14px;color:#e05a5f;line-height:1.5;">
+      <div style="background:rgba(204,32,39,0.08);border:1px solid rgba(204,32,39,0.3);border-radius:10px;padding:12px;margin-bottom:20px;font-size:14px;color:#e05a5f;line-height:1.5;">
         It takes 5 seconds. Tap "Export Backup Now" and save the file somewhere safe.
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;">
@@ -33842,7 +33843,7 @@ function renderMindsetActivity(showAll = false) {
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:${e.feeling || e.aiResponse || e.plan ? '10px' : '0'};">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <div style="font-size:13px; color:var(--gray); letter-spacing:1px; font-family:'Barlow Condensed',sans-serif; font-weight:700;">MINDSET CHECK-IN</div>
-            ${bl ? `<div style="font-size:13px; color:var(--red-text); background:rgba(204,32,39,0.1); border-radius:4px; padding:2px 6px;">${escapeHtml(bl)}</div>` : ''}
+            ${bl ? `<div style="font-size:13px; color:var(--red-text); background:rgba(204,32,39,0.08); border-radius:4px; padding:2px 6px;">${escapeHtml(bl)}</div>` : ''}
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;margin-left:8px;">
             <div style="font-size:13px;color:var(--gray);">${dl}</div>
@@ -34949,7 +34950,7 @@ function renderSelfCompassionLog(showAll = false) {
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div style="display:flex; align-items:center; gap:8px;">
             <div style="font-family:'Barlow Condensed',sans-serif; font-size:14px; color:var(--gray); letter-spacing:1px;">MINDSET CHECK-IN</div>
-            ${barrierDisplay ? `<div style="font-size:13px; color:var(--red-text); background:rgba(204,32,39,0.1); border-radius:4px; padding:2px 6px; letter-spacing:0.5px;">${escapeHtml(barrierDisplay)}</div>` : ''}
+            ${barrierDisplay ? `<div style="font-size:13px; color:var(--red-text); background:rgba(204,32,39,0.08); border-radius:4px; padding:2px 6px; letter-spacing:0.5px;">${escapeHtml(barrierDisplay)}</div>` : ''}
           </div>
           <div style="display:flex; align-items:center; gap:10px;">
             <div style="font-size:13px; color:var(--gray);">${dateStr}</div>
@@ -35058,7 +35059,7 @@ function _confirmDeleteEntry(key, type) {
       <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">REMOVE ENTRY</div>
       <div style="font-size:14px;color:var(--gray-light);margin-bottom:24px;line-height:1.5;">This entry will be permanently deleted.</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <button onclick="_doDeleteEntry('${key}','${type}')" style="width:100%;background:rgba(204,32,39,0.1);border:1px solid rgba(204,32,39,0.35);color:var(--red);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;cursor:pointer;">REMOVE</button>
+        <button onclick="_doDeleteEntry('${key}','${type}')" style="width:100%;background:rgba(204,32,39,0.08);border:1px solid rgba(204,32,39,0.35);color:var(--red);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;cursor:pointer;">REMOVE</button>
         <button onclick="document.querySelectorAll('[data-delete-confirm]').forEach(el=>el.remove())" style="width:100%;background:none;border:1px solid var(--dark3);color:var(--gray);padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;cursor:pointer;">KEEP IT</button>
       </div>
     </div>`;
@@ -35246,7 +35247,7 @@ function checkInactivityPrompt() {
     setTimeout(() => {
       // Custom modal instead of confirm() for iOS PWA compatibility
       const inactModal = document.createElement('div');
-      inactModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      inactModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
       if (daysSince >= 7) {
         inactModal.innerHTML = `
           <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
@@ -35330,7 +35331,7 @@ function _showUnilateralAuditPrompt(exercises) {
 
   const overlay = document.createElement('div');
   overlay.id = 'uni-audit-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   overlay.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);max-height:90vh;overflow-y:auto;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">
@@ -35413,7 +35414,7 @@ function checkImplementationIntention() {
 
   setTimeout(() => {
     const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
     modal.innerHTML = `
       <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
         <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">CHECKING IN</div>
@@ -36032,7 +36033,7 @@ function confirmDeleteCardioSession(sessionId) {
   const typeLabel = typeLabelMap[entry.type] || entry.type;
 
   const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
     <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
       <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">DELETE CARDIO SESSION</div>
@@ -36849,7 +36850,7 @@ function _escHtml(str) {
 </div>
 
 <!-- RESTORE DEFAULTS CONFIRM MODAL -->
-<div id="restore-defaults-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99996; align-items:center; justify-content:center; padding:20px;">
+<div id="restore-defaults-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99996; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--dark2); border-radius:20px; padding:24px; width:100%; max-width:420px; border:1px solid #553333;">
     <div style="text-align:center; margin-bottom:20px;">
       <div style="font-size:32px; margin-bottom:12px;">⚠️</div>
