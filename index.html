@@ -1682,7 +1682,7 @@
 
   .progress-chart {
     background: var(--dark2);
-    border: 1px solid var(--dark3);
+    border: 1px solid rgba(204,32,39,0.2);
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 14px;
@@ -3041,7 +3041,12 @@
 </div>
 
 <div id="screen-history" class="screen">
-  <div class="section-title">YOUR <span>STATS</span></div>
+  <!-- PAGE HEADER -->
+  <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.05);">
+    <div style="font-family:'Bebas Neue',cursive;font-size:28px;letter-spacing:3px;color:var(--cream);line-height:1;">YOUR STATS</div>
+    <div style="width:36px;height:2px;background:var(--red);border-radius:2px;margin:6px 0 8px;"></div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);letter-spacing:0.5px;">Every rep logged. Every pound gained.</div>
+  </div>
   <!-- Main stats content — rebuilt by renderHistory() on every visit -->
   <div id="history-list"></div>
 
@@ -25990,8 +25995,10 @@ function renderHistoryItem(entry, container, insertBefore) {
   const volumeStr = totalVolume > 0 ? ` · ${Math.round(totalVolume).toLocaleString()} lbs` : '';
   const durationStr = entry.duration ? `${entry.duration} min` : null;
 
+  const _historyAccent = entry.isDeload ? '#f39c12' : entry.travelMode ? '#4A9EDB' : 'var(--red)';
   const el = document.createElement('div');
   el.className = 'history-item';
+  el.style.boxShadow = `inset 3px 0 0 ${_historyAccent}`;
   el.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
       <div style="flex:1; min-width:0;">
@@ -26078,7 +26085,7 @@ function renderHistory() {
   // ── Helpers ──────────────────────────────────────────────
   function mkLabel(text) {
     const el = document.createElement('div');
-    el.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:8px;margin-top:4px;';
+    el.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--cream);margin-bottom:8px;margin-top:4px;';
     el.textContent = text;
     return el;
   }
@@ -27423,7 +27430,8 @@ function renderProgress() {
 }
 
 function renderProgressChart() {
-  const exId = document.getElementById('exercise-picker').value;
+  const exId = document.getElementById('exercise-picker')?.value;
+  if (!exId) return;
   const dataPoints = [];
 
   (state.history || []).forEach(entry => {
