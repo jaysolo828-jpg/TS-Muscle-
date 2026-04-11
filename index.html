@@ -33175,9 +33175,10 @@ function getRecommendedSplit(experience, goal, priority, days, session) {
   const hasUpperOnly  = hasUpper && !hasLower;
 
   if (parts.length > 0) {
-    // Glutes only → dedicated Glute Priority split
+    // Glutes only → dedicated Glute Priority split at 3 days; UL at 4+ (trains lower twice + priority boost)
     if (hasGlutesOnly && parts.length === 1) {
-      return rec('glute', 'The Glute Priority split dedicates two days to hip thrusts, RDLs, and isolation work — the most direct path to glute development.');
+      if (!days || days <= 3) return rec('glute', 'The Glute Priority split dedicates two days to hip thrusts, RDLs, and isolation work — the most direct path to glute development.');
+      return rec('ul', 'Upper/Lower trains lower body twice a week — extra glute sets get added on both lower days through the priority boost.');
     }
     // Arms (with or without other upper) → Bro Split if enough days and time, else PPL
     if (hasArms && hasUpperOnly) {
@@ -33200,7 +33201,8 @@ function getRecommendedSplit(experience, goal, priority, days, session) {
     if (hasLowerOnly) {
       const muscleList = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' & ');
       if (parts.includes('glutes') && parts.includes('hamstrings') && parts.length <= 2) {
-        return rec('glute', `The Glute Priority split hits ${muscleList} twice per week with dedicated hip hinge and isolation work.`);
+        if (!days || days <= 3) return rec('glute', `The Glute Priority split hits ${muscleList} twice per week with dedicated hip hinge and isolation work.`);
+        return rec('ul', `Upper/Lower trains lower body twice a week — extra ${muscleList} sets get layered in through the priority boost.`);
       }
       if (!days || days <= 3) return rec('lul', `Lower/Upper/Lower trains ${muscleList} twice per week — two dedicated lower days bookend one upper session.`);
       return rec('ul', `Upper/Lower dedicates two full days to ${muscleList} each week — the most balanced way to bring up your lower body.`);
