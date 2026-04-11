@@ -784,7 +784,7 @@ silently never applied and deletes appeared broken for hours.)
 
 ## Current version
 
-- `versionCode 42`, `versionName '1.0.5'` in `android/app/build.gradle`.
+- `versionCode 47`, `versionName '1.1.0'` in `android/app/build.gradle`.
 - `sw.js` cache is `ts-muscle-v227` — bump this on any sw.js change so
   existing users get the new SW on their next visit.
 - Always bump both `versionCode` and `versionName` for any native change
