@@ -18731,6 +18731,10 @@ function endRecoveryWeek(cancelled) {
   // Flag for post-deload check-in — shows on home screen next render
   // Suppress when the user cancelled — they didn't finish the lighter week.
   state.postDeloadCheckIn = !cancelled;
+  // Suppress gap-return and inactivity prompts — the user was on a planned
+  // recovery, not inactive. Same pattern as the pause resume flow.
+  state.gapReturnShown = true;
+  state.inactivityPromptShown = true;
   // Clean up deload metadata so stale values don't leak into the next cycle
   delete state.deloadStartDate;
   delete state.deloadSessionsCompleted;
