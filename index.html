@@ -17372,7 +17372,7 @@ function renderHome() {
       ? `R = EARLY RECOVERY · ${_legendMuscles.join(' & ').toUpperCase()}`
       : `R = EARLY RECOVERY · WEEK ${_deloadSlot}`;
   } else {
-    dotsLegend.textContent = 'R = WEEK 7 · PLANNED RECOVERY';
+    dotsLegend.textContent = `R = WEEK ${_deloadSlot} · PLANNED RECOVERY`;
   }
 
   // Day cards — respect training days limit
