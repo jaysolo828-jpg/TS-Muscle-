@@ -24234,6 +24234,34 @@ function showSessionWrapUp() {
         const _hardCarrying = ['heavy','anxious','empty'];
         if (!activeSession.carrying || !_hardCarrying.includes(activeSession.carrying)) return '';
         const _carryLabel = { heavy: 'something heavy', anxious: 'anxious and wired', empty: 'running on empty' }[activeSession.carrying];
+        const _hardDayMessages = [
+          "You came in " + _carryLabel + ". That is not nothing.",
+          "You walked in " + _carryLabel + " and still moved weight. Remember that.",
+          "Most people would have stayed home. You did not.",
+          "The reps you grind out on days like this are the ones that actually build you.",
+          "Showing up " + _carryLabel + " took more guts than a PR on a good day.",
+          "This is the session you will be glad you did not skip.",
+          "You did not wait to feel ready. You just showed up.",
+          "Days like this are where discipline gets forged. You were here for it.",
+          "The bar does not know what kind of day you had. You moved it anyway.",
+          "Nothing about today was easy, and you still got it done.",
+          "Carrying " + _carryLabel + " and you still made it through every set.",
+          "Some days the win is just walking through the door. Today was one of them.",
+          "Your body showed up for you today even when your head was somewhere else.",
+          "Hard days build the kind of strength that good days never will.",
+          "You trained through the noise. That is a skill most people never develop.",
+          "Today was not about numbers. It was about not quitting. You passed.",
+          "A year from now you will not remember the weight. You will remember you showed up.",
+          "Consistency is not showing up when it is easy. It is showing up when it is this.",
+          "You chose the gym over the couch on a day when the couch was winning. Respect.",
+          "Every hard day you show up for makes the next one a little less impossible.",
+          "This session counts double in the ways that matter.",
+          "You came in " + _carryLabel + " and left having done the work. That is the whole game.",
+          "Nobody would have blamed you for skipping today. But here you are.",
+          "The version of you that showed up today is the one that gets results long-term.",
+          "Tough days are the reps that build mental muscle. You just got stronger."
+        ];
+        const _hardDayMsg = _hardDayMessages[Math.floor(Math.random() * _hardDayMessages.length)];
         return `
         <div id="hard-day-claim-card" style="
           background:linear-gradient(135deg,rgba(204,32,39,0.08),rgba(204,32,39,0.04));
@@ -24244,7 +24272,7 @@ function showSessionWrapUp() {
             You showed up on a hard day.
           </div>
           <div style="font-size:14px;color:var(--gray-light);font-family:'Barlow',sans-serif;line-height:1.5;margin-bottom:16px;">
-            You came in ${_carryLabel}. That's not nothing.
+            ${_hardDayMsg}
           </div>
           <div style="display:flex;gap:10px;">
             <button
