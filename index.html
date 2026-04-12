@@ -7730,25 +7730,28 @@ function loadState() {
         saveState();
       }
 
-      // One-time repair: fix stale startingWeights after a deload was cancelled
-      // before the endRecoveryWeek(cancelled) fix shipped. startingWeights may
-      // be behind the user's actual lifting weight because deloadBaseWeights
-      // was a stale snapshot. Also untag orphaned isDeload sessions from the
-      // current cycle so the progression algorithm can see them.
-      if (!state._v250WeightRepair) {
-        state._v250WeightRepair = true;
+      // One-time repair (v2): fix stale startingWeights after a deload was
+      // cancelled before the endRecoveryWeek(cancelled) fix shipped. Two passes:
+      // 1) Untag isDeload sessions from the current cycle and clear their
+      //    deload-era suggestedWeights so the nonOverrideSessions filter
+      //    doesn't exclude them.
+      // 2) Walk all non-deload history (including freshly untagged) and bump
+      //    startingWeights where the user was lifting higher than the base.
+      if (!state._v251WeightRepair) {
+        state._v251WeightRepair = true;
         if (!state.isDeloadWeek && !state.isRestWeek && !state.deloadBaseWeights) {
+          // Pass 1: untag current-cycle deload sessions
+          (state.history || []).forEach(function(_rh) {
+            if (_rh.isDeload && (_rh.cycleNum || 1) === (state.cycleCount || 1)) {
+              delete _rh.isDeload;
+              delete _rh.suggestedWeights;
+            }
+          });
+          // Pass 2: bump startingWeights from actual history
           var _repairSeen = {};
           for (var _ri = (state.history || []).length - 1; _ri >= 0; _ri--) {
             var _rh = (state.history || [])[_ri];
-            if (_rh.isDeload) {
-              // Untag deload sessions from the current cycle only —
-              // older completed-deload sessions in previous cycles stay tagged.
-              if ((_rh.cycleNum || 1) === (state.cycleCount || 1)) {
-                delete _rh.isDeload;
-              }
-              continue;
-            }
+            if (_rh.isDeload) continue;
             for (var _rExId in (_rh.sets || {})) {
               if (_repairSeen[_rExId]) continue;
               _repairSeen[_rExId] = true;
@@ -18745,6 +18748,10 @@ function endRecoveryWeek(cancelled) {
       (state.history || []).forEach(function(h) {
         if (h.isDeload && new Date(h.date).getTime() >= _deloadStart) {
           delete h.isDeload;
+          // Clear deload-era suggestedWeights so the nonOverrideSessions
+          // filter doesn't exclude these sessions (deload suggestion was
+          // lower than what the user actually lifted = treated as override).
+          delete h.suggestedWeights;
         }
       });
     }
