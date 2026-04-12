@@ -3025,7 +3025,7 @@
         <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:var(--cream);letter-spacing:1.5px;">REST WEEK ACTIVE</div>
         <div data-rest-sub style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray);margin-top:2px;line-height:1.4;">Program paused. Rest up and recover. Resume when you're ready.</div>
       </div>
-      <button onclick="resumeDeloadRest()" style="flex-shrink:0; background:rgba(245,230,200,0.08); border:1px solid rgba(245,230,200,0.2); color:var(--cream); padding:10px 14px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer; white-space:nowrap; min-height:44px; -webkit-tap-highlight-color:transparent;">RESUME</button>
+      <button onclick="openDeloadModal()" style="flex-shrink:0; background:rgba(245,230,200,0.08); border:1px solid rgba(245,230,200,0.2); color:var(--cream); padding:10px 14px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer; white-space:nowrap; min-height:44px; -webkit-tap-highlight-color:transparent;">CHANGE</button>
     </div>
   </div>
 
@@ -3451,8 +3451,8 @@
 <!-- ============================================================
      DELOAD / REST WEEK MODAL
      ============================================================ -->
-<div id="deload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99996; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(243,156,18,0.4); overflow:hidden; box-shadow:0 8px 40px rgba(243,156,18,0.12);">
+<div id="deload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99996; align-items:center; justify-content:center; padding:20px; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+  <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(243,156,18,0.4); overflow:hidden; box-shadow:0 8px 40px rgba(243,156,18,0.12); margin:auto;">
     <div style="height:4px; background:linear-gradient(90deg,transparent,var(--warning),transparent);"></div>
     <div style="padding:24px;">
     <div style="text-align:center; margin-bottom:16px;">
@@ -18395,22 +18395,41 @@ function openDeloadModal() {
     _deloadBtnDesc.textContent = `Same exercises, weights drop about ${_pctCut}%. You still train. Joints recover, muscle memory stays sharp.`;
   }
 
-  // If a 1RM challenge is active, add a note so the user knows challenge
-  // logging is manual and unaffected by the deload weight reduction.
+  // List all active challenges so the user knows what they're in before
+  // choosing recovery. All types are affected — rest week means no sessions.
   const _challengeNoteId = 'deload-challenge-note';
   const _existingNote = document.getElementById(_challengeNoteId);
   if (_existingNote) _existingNote.remove();
-  if (_hasActiveChallenge()) {
+  const _activeChallenges = (_challenges || []).filter(c => c.status === 'active');
+  if (_activeChallenges.length) {
+    const _typeLabels = { one_rep_max: '1RM Challenge', dont_break_chain: "Don\u2019t Break the Chain", clear_your_head: 'Clear Your Head', control_the_aux: 'Control the Aux' };
+    const _names = _activeChallenges.map(c => _typeLabels[c.challenge_type] || c.challenge_type);
     const _note = document.createElement('div');
     _note.id = _challengeNoteId;
     _note.style.cssText = 'margin:12px 0 0;padding:10px 14px;background:rgba(204,32,39,0.07);border-left:3px solid var(--red);border-radius:0 8px 8px 0;font-size:13px;color:var(--gray-light);line-height:1.5;';
-    _note.innerHTML = '<strong style="color:var(--cream);">Active challenge:</strong> Your 1RM challenge progress is logged manually and is not affected by deload weights. Train at your own judgment for challenge attempts.';
+    _note.innerHTML = '<strong style="color:var(--cream);">You\u2019re in ' + _activeChallenges.length + ' active challenge' + (_activeChallenges.length > 1 ? 's' : '') + ':</strong> ' + _names.join(', ') + '. Rest week means no training sessions \u2014 consider how that affects your challenges.';
     const _actionsEl = modal.querySelector('[id*="deload-btn"], .deload-actions, button');
     if (_actionsEl && _actionsEl.parentElement) {
       _actionsEl.parentElement.insertBefore(_note, _actionsEl);
     } else {
       modal.querySelector('div').appendChild(_note);
     }
+  }
+
+  // When recovery is already active (user tapped CHANGE on the banner),
+  // show a RESUME TRAINING button so they can cancel and go back to normal.
+  const _resumeBtnId = 'deload-modal-resume-btn';
+  const _existingResumeBtn = document.getElementById(_resumeBtnId);
+  if (_existingResumeBtn) _existingResumeBtn.remove();
+  if (state.isDeloadWeek || state.isRestWeek) {
+    const _resumeBtn = document.createElement('button');
+    _resumeBtn.id = _resumeBtnId;
+    _resumeBtn.onclick = function() { resumeDeloadRest(); document.getElementById('deload-modal').style.display = 'none'; };
+    _resumeBtn.style.cssText = 'width:100%;background:rgba(80,200,130,0.1);border:2px solid rgba(80,200,130,0.4);color:#50c882;padding:14px;border-radius:12px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;cursor:pointer;margin-bottom:12px;-webkit-tap-highlight-color:transparent;';
+    _resumeBtn.textContent = 'CANCEL RECOVERY — KEEP TRAINING';
+    // Insert before the first button group
+    const _btnGroup = modal.querySelector('[style*="flex-direction:column"]');
+    if (_btnGroup) _btnGroup.parentElement.insertBefore(_resumeBtn, _btnGroup);
   }
 
   modal.style.display = 'flex';
