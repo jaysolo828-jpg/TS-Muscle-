@@ -7715,6 +7715,16 @@ function loadState() {
         state.mrvBannerMigrated = true;
       }
 
+      // One-time migration: clear deloadDismissedAtCycle that was incorrectly
+      // set when an early signal modal (checkDeloadSuggestion) was dismissed
+      // while weekCount happened to be 7. The old code treated ANY dismissal
+      // at week 7 as dismissing the scheduled recovery, killing the banner.
+      // Clearing it restores the week 7 banner so the user can choose.
+      if (!state.earlyDismissContextFixed) {
+        delete state.deloadDismissedAtCycle;
+        state.earlyDismissContextFixed = true;
+      }
+
       // Migration: avatar URLs previously stored with .jpg extension no longer resolve
       // (storage now uses extension-free filenames). Clear them so the fallback icon shows.
       if (state.supabaseAvatarUrl && state.supabaseAvatarUrl.includes('/avatars/') && state.supabaseAvatarUrl.includes('.jpg')) {
@@ -18567,8 +18577,15 @@ function activateDeloadRest() {
 function dismissDeloadSuggestion(fromBanner) {
   // Determine if this is an early signal dismissal (MRV/plateau/long-run)
   // vs. the scheduled Week 7 or postponed recovery week.
-  const _isScheduled = (state.weekCount === 7 && !state.deloadPostponedToWeek)
-    || (state.deloadPostponedToWeek && state.weekCount === state.deloadPostponedToWeek);
+  // IMPORTANT: only treat it as "scheduled" when dismissed from the HOME BANNER
+  // (fromBanner=true). Signal-based modals (checkDeloadSuggestion, post-workout
+  // popup) pass no argument — those are always early-signal dismissals even if
+  // weekCount happens to be 7. Without this guard, dismissing an early signal
+  // at week 7 incorrectly kills the scheduled week 7 recovery banner.
+  const _isScheduled = !!fromBanner && (
+    (state.weekCount === 7 && !state.deloadPostponedToWeek)
+    || (state.deloadPostponedToWeek && state.weekCount === state.deloadPostponedToWeek)
+  );
   if (_isScheduled) {
     // Dismissing the scheduled recovery — suppress all deload banners this cycle
     state.deloadDismissedAtCycle = state.cycleCount || 1;
@@ -18900,8 +18917,15 @@ function getProgressiveWeight(exId, dayId) {
   // overload calculation. Beginners detrain faster (15%), advanced retain more
   // fitness (7%), intermediate in between (10%). Does not apply on first-ever
   // session (already returned above when sameDaySessions is empty).
-  const _daysSinceLast = sameDaySessions[0].date
-    ? (Date.now() - new Date(sameDaySessions[0].date).getTime()) / 86400000
+  // IMPORTANT: check recency against ALL same-day sessions (including deload).
+  // sameDaySessions excludes deload for weight baseline purposes, but the user
+  // WAS still training during deload — a deload period should not create a
+  // false 14-day gap that triggers the return reduction.
+  const _mostRecentAny = [...(state.history || [])]
+    .reverse()
+    .find(h => h.dayId === dayId && h.sets?.[exId]);
+  const _daysSinceLast = _mostRecentAny?.date
+    ? (Date.now() - new Date(_mostRecentAny.date).getTime()) / 86400000
     : 0;
   const _gapReduction = _expLevel === 'beginner' ? 0.85 : _expLevel === 'advanced' ? 0.93 : 0.9;
   const lastWeight = (_daysSinceLast > 14)
