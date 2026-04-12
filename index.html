@@ -15425,7 +15425,7 @@ function openProfileModal() {
           <button class="profile-sex-btn ${exp === 'intermediate' ? 'selected' : ''}" id="settings-exp-intermediate" onclick="setExperienceLevel('intermediate')" style="flex:1;">Intermediate</button>
           <button class="profile-sex-btn ${exp === 'advanced' ? 'selected' : ''}" id="settings-exp-advanced" onclick="setExperienceLevel('advanced')" style="flex:1;">Advanced</button>
         </div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;">Affects weekly volume targets, weight progression, and coaching style.</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:6px;letter-spacing:0.5px;line-height:1.7;">Controls volume targets, deload timing, and load progression.<br><span style="color:var(--gray);">Quick gains most sessions → Beginner &nbsp;·&nbsp; Weekly gains → Intermediate &nbsp;·&nbsp; Months between PRs → Advanced</span></div>
         <div id="settings-exp-pending-msg" style="display:${pending && pending !== exp ? 'block' : 'none'};font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--warning);margin-top:6px;letter-spacing:0.3px;line-height:1.4;">This will take effect at the start of your next cycle.</div>
       </div>
     </div>`;
