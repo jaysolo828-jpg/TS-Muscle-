@@ -14376,33 +14376,22 @@ async function _submitAcceptAuxChallenge(challengeId) {
 
 // ── SONG SUBMISSION ───────────────────────────────────────────────────────────
 
-// Resolve a streaming URL via the Songlink/Odesli API. Returns null on failure.
+// Resolve a streaming URL via the resolve-song edge function (proxies Songlink API server-side to avoid CORS).
 async function _resolveOdesli(url) {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const resp = await fetch('https://api.song.link/v1-alpha.1/links?url=' + encodeURIComponent(url), { signal: controller.signal });
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const resp = await fetch('https://idiaozmcnckopwfisdpu.supabase.co/functions/v1/resolve-song', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+      signal: controller.signal,
+    });
     clearTimeout(timeout);
     if (!resp.ok) return null;
     const data = await resp.json();
-    if (!data) return null;
-    // Metadata lives inside entitiesByUniqueId keyed by entityUniqueId
-    var entity = null;
-    if (data.entityUniqueId && data.entitiesByUniqueId && data.entitiesByUniqueId[data.entityUniqueId]) {
-      entity = data.entitiesByUniqueId[data.entityUniqueId];
-    }
-    if (!entity || (!entity.title && !entity.artistName)) return null;
-    const links = {};
-    for (const [platform, info] of Object.entries(data.linksByPlatform || {})) {
-      if (info && info.url) links[platform] = info.url;
-    }
-    return {
-      title: entity.title || 'Unknown Title',
-      artist: entity.artistName || '',
-      artwork_url: entity.thumbnailUrl || null,
-      platform_links: links,
-      odesli_key: data.entityUniqueId || null,
-    };
+    if (!data || !data.title) return null;
+    return data;
   } catch (_) { return null; }
 }
 
