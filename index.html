@@ -10942,6 +10942,7 @@ function _openChallengeIntroSheet(type, onContinue) {
   const cta = document.getElementById('challenge-intro-cta');
   if (cta) {
     cta.onclick = function() {
+      haptic(HAPTIC.success);
       _markChallengeIntroSeen(type);
       sheet.remove();
       if (typeof onContinue === 'function') { try { onContinue(); } catch (e) { console.error('[challenge-intro] continue failed:', e); } }
@@ -12981,10 +12982,10 @@ async function _renderChainDetailBody(ch) {
       });
     }
     const nameById = {};
-    if (sb && joined.length) {
+    if (sb && participants.length) {
       const { data: users } = await sb.from('users')
         .select('id,username,display_name')
-        .in('id', joined.map(p => p.user_id));
+        .in('id', participants.map(p => p.user_id));
       (users || []).forEach(u => { nameById[u.id] = u.username || u.display_name || 'Member'; });
     }
     const dotColorById = {};
@@ -13746,6 +13747,7 @@ async function _startCYHNow(challengeId) {
     const updated = (_challenges || []).find(c => c.id === challengeId);
     if (updated) _renderCYHDetailBody(updated);
     _renderActiveChallengeHomeCard();
+    _renderActiveCYHHomeCard();
     _renderChallengesListHtml();
   } catch (e) {
     showToast('Could not start: ' + (_chErrMsg(e) || 'try again'));
@@ -13769,6 +13771,7 @@ async function _cancelCYHNow(challengeId) {
     await _loadChallenges();
     _renderChallengesListHtml();
     _renderActiveChallengeHomeCard();
+    _renderActiveCYHHomeCard();
   } catch (e) {
     showToast('Could not cancel: ' + (_chErrMsg(e) || 'try again'));
   }
@@ -13791,6 +13794,7 @@ async function _quitCYHNow(challengeId) {
     await _loadChallenges();
     _renderChallengesListHtml();
     _renderActiveChallengeHomeCard();
+    _renderActiveCYHHomeCard();
   } catch (e) {
     showToast('Could not quit: ' + (_chErrMsg(e) || 'try again'));
   }
