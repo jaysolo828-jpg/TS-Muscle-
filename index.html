@@ -7729,6 +7729,45 @@ function loadState() {
         state.supabaseAvatarUrl = null;
         saveState();
       }
+
+      // One-time repair: fix stale startingWeights after a deload was cancelled
+      // before the endRecoveryWeek(cancelled) fix shipped. startingWeights may
+      // be behind the user's actual lifting weight because deloadBaseWeights
+      // was a stale snapshot. Also untag orphaned isDeload sessions from the
+      // current cycle so the progression algorithm can see them.
+      if (!state._v250WeightRepair) {
+        state._v250WeightRepair = true;
+        if (!state.isDeloadWeek && !state.isRestWeek && !state.deloadBaseWeights) {
+          var _repairSeen = {};
+          for (var _ri = (state.history || []).length - 1; _ri >= 0; _ri--) {
+            var _rh = (state.history || [])[_ri];
+            if (_rh.isDeload) {
+              // Untag deload sessions from the current cycle only —
+              // older completed-deload sessions in previous cycles stay tagged.
+              if ((_rh.cycleNum || 1) === (state.cycleCount || 1)) {
+                delete _rh.isDeload;
+              }
+              continue;
+            }
+            for (var _rExId in (_rh.sets || {})) {
+              if (_repairSeen[_rExId]) continue;
+              _repairSeen[_rExId] = true;
+              var _rSets = _rh.sets[_rExId] || [];
+              for (var _rsi = _rSets.length - 1; _rsi >= 0; _rsi--) {
+                if (_rSets[_rsi].done && _rSets[_rsi].weight) {
+                  var _rw = parseFloat(_rSets[_rsi].weight) || 0;
+                  if (_rw > (state.startingWeights?.[_rExId] || 0)) {
+                    if (!state.startingWeights) state.startingWeights = {};
+                    state.startingWeights[_rExId] = _rw;
+                  }
+                  break;
+                }
+              }
+            }
+          }
+          saveState();
+        }
+      }
     } catch(e) {}
   }
 }
