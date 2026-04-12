@@ -18917,8 +18917,15 @@ function getProgressiveWeight(exId, dayId) {
   // overload calculation. Beginners detrain faster (15%), advanced retain more
   // fitness (7%), intermediate in between (10%). Does not apply on first-ever
   // session (already returned above when sameDaySessions is empty).
-  const _daysSinceLast = sameDaySessions[0].date
-    ? (Date.now() - new Date(sameDaySessions[0].date).getTime()) / 86400000
+  // IMPORTANT: check recency against ALL same-day sessions (including deload).
+  // sameDaySessions excludes deload for weight baseline purposes, but the user
+  // WAS still training during deload — a deload period should not create a
+  // false 14-day gap that triggers the return reduction.
+  const _mostRecentAny = [...(state.history || [])]
+    .reverse()
+    .find(h => h.dayId === dayId && h.sets?.[exId]);
+  const _daysSinceLast = _mostRecentAny?.date
+    ? (Date.now() - new Date(_mostRecentAny.date).getTime()) / 86400000
     : 0;
   const _gapReduction = _expLevel === 'beginner' ? 0.85 : _expLevel === 'advanced' ? 0.93 : 0.9;
   const lastWeight = (_daysSinceLast > 14)
