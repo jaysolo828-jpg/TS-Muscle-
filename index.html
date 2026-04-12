@@ -18438,45 +18438,7 @@ function postponeDeload() {
   // If recovery is already active (user tapped CHANGE then MOVE TO NEXT WEEK),
   // end the current recovery first so the banner clears and weights restore.
   if (state.isDeloadWeek || state.isRestWeek) {
-    const _cancelledDeloadStart = state.deloadStartDate || 0;
-    endRecoveryWeek();
-    // User cancelled the recovery, they didn't finish it — suppress the
-    // "You just finished a lighter week" check-in card.
-    state.postDeloadCheckIn = false;
-    // Untag sessions logged during the cancelled deload so the progression
-    // algorithm can see them. Without this, sameDaySessions filters them
-    // out (!h.isDeload) and falls back to the stale startingWeights base,
-    // showing a lower weight than the user was actually lifting.
-    if (_cancelledDeloadStart) {
-      (state.history || []).forEach(function(h) {
-        if (h.isDeload && new Date(h.date).getTime() >= _cancelledDeloadStart) {
-          delete h.isDeload;
-        }
-      });
-    }
-    // startingWeights was restored from deloadBaseWeights, but that snapshot
-    // may be behind the user's actual lifting weight (progressive overload
-    // updates the suggestion per-session, not startingWeights). Walk recent
-    // non-deload history and bump any entry where the user was lifting more.
-    var _seen = {};
-    for (var _i = (state.history || []).length - 1; _i >= 0; _i--) {
-      var _h = (state.history || [])[_i];
-      if (_h.isDeload) continue;
-      for (var _exId in (_h.sets || {})) {
-        if (_seen[_exId]) continue;
-        _seen[_exId] = true;
-        var _sets = _h.sets[_exId] || [];
-        for (var _si = _sets.length - 1; _si >= 0; _si--) {
-          if (_sets[_si].done && _sets[_si].weight) {
-            var _w = parseFloat(_sets[_si].weight) || 0;
-            if (_w > (state.startingWeights[_exId] || 0)) {
-              state.startingWeights[_exId] = _w;
-            }
-            break;
-          }
-        }
-      }
-    }
+    endRecoveryWeek(true);
   }
   const nextWeek = Math.min((state.weekCount || 7) + 1, 8);
   state.deloadPostponedToWeek = nextWeek;
@@ -18707,14 +18669,16 @@ function endRecoveryWeekEarly() {
       <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">You'll return to full training weight and volume. Only do this if you're feeling fully recovered.</div>
       <div style="display:flex;gap:10px;">
         <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
-        <button onclick="this.closest('[style*=fixed]').remove();endRecoveryWeek();renderHome();showToast('Recovery week ended. Back to full training 💪');" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">END EARLY</button>
+        <button onclick="this.closest('[style*=fixed]').remove();endRecoveryWeek(true);renderHome();showToast('Recovery week ended. Back to full training 💪');" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">END EARLY</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
 }
 
-function endRecoveryWeek() {
-  // Called after enough sessions or days have passed during a deload/rest week
+function endRecoveryWeek(cancelled) {
+  // Called after enough sessions or days have passed during a deload/rest week,
+  // OR when the user manually cancels the deload (cancelled = true).
+  var _deloadStart = state.deloadStartDate || 0;
   if (state.deloadBaseWeights) {
     state.startingWeights = { ...state.deloadBaseWeights };
     delete state.deloadBaseWeights;
@@ -18723,7 +18687,8 @@ function endRecoveryWeek() {
   state.isRestWeek = false;
   state.weeksSinceDeload = 0;
   // Flag for post-deload check-in — shows on home screen next render
-  state.postDeloadCheckIn = true;
+  // Suppress when the user cancelled — they didn't finish the lighter week.
+  state.postDeloadCheckIn = !cancelled;
   // Clean up deload metadata so stale values don't leak into the next cycle
   delete state.deloadStartDate;
   delete state.deloadSessionsCompleted;
@@ -18731,6 +18696,44 @@ function endRecoveryWeek() {
   delete state.deloadWeekNum;
   delete state.deloadReason;
   delete state.deloadMRVMuscles;
+
+  if (cancelled) {
+    // Untag sessions logged during the cancelled deload so the progression
+    // algorithm can see them. Without this, sameDaySessions filters them
+    // out (!h.isDeload) and falls back to the stale startingWeights base,
+    // showing a lower weight than the user was actually lifting.
+    if (_deloadStart) {
+      (state.history || []).forEach(function(h) {
+        if (h.isDeload && new Date(h.date).getTime() >= _deloadStart) {
+          delete h.isDeload;
+        }
+      });
+    }
+    // startingWeights was restored from deloadBaseWeights, but that snapshot
+    // may be behind the user's actual lifting weight (progressive overload
+    // updates the suggestion per-session, not startingWeights). Walk recent
+    // non-deload history and bump any entry where the user was lifting more.
+    var _seen = {};
+    for (var _i = (state.history || []).length - 1; _i >= 0; _i--) {
+      var _h = (state.history || [])[_i];
+      if (_h.isDeload) continue;
+      for (var _exId in (_h.sets || {})) {
+        if (_seen[_exId]) continue;
+        _seen[_exId] = true;
+        var _sets = _h.sets[_exId] || [];
+        for (var _si = _sets.length - 1; _si >= 0; _si--) {
+          if (_sets[_si].done && _sets[_si].weight) {
+            var _w = parseFloat(_sets[_si].weight) || 0;
+            if (_w > (state.startingWeights[_exId] || 0)) {
+              state.startingWeights[_exId] = _w;
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+
   saveState();
 }
 
@@ -18830,7 +18833,7 @@ function _dismissPostDeloadCheckIn() {
 }
 
 function resumeDeloadRest() {
-  endRecoveryWeek();
+  endRecoveryWeek(true);
   renderHome();
   showToast('Rest week ended. Back to full training 💪');
 }
