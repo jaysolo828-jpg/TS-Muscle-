@@ -21516,7 +21516,7 @@ function _evalCoachingCueTriggers(exId, setIndex) {
     var allHigh4 = recent4.length >= 2 && recent4.every(function(s) { return (parseFloat(s.rpe) || null) >= 8; });
     if (allHigh4) {
       var avgRpe4 = recent4.reduce(function(sum, s) { return sum + (parseFloat(s.rpe) || 0); }, 0) / recent4.length;
-      return { trigger: 4, data: { reps: currentReps, rpe: currentRpe, avgRpe: Math.round(avgRpe4 * 10) / 10 } };
+      return { trigger: 4, data: { reps: currentReps, rpe: currentRpe, avgRpe: Math.round(avgRpe4 * 10) / 10, repMin: repMin, repMax: repMax } };
     }
   }
 
@@ -21545,7 +21545,7 @@ function _evalCoachingCueTriggers(exId, setIndex) {
   if (allowedTriggers[6]) {
     var goalSets6 = getGoalSets(exId, (_ex && _ex.sets) || 3);
     if (setIndex === goalSets6 - 2 && setIndex >= 1) {
-      return { trigger: 6, data: { reps: currentReps, rpe: currentRpe, goalSets: goalSets6 } };
+      return { trigger: 6, data: { reps: currentReps, rpe: currentRpe, goalSets: goalSets6, repMin: repMin, repMax: repMax } };
     }
   }
 
