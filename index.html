@@ -18937,6 +18937,14 @@ function getProgressiveWeight(exId, dayId) {
   if (repLoggedSets.length === 0) return String(lastWeight); // no rep data: maintain weight, no hint
   const avgReps = repLoggedSets.reduce((sum, s) => sum + parseInt(s.reps), 0) / repLoggedSets.length;
 
+  // ── Mesocycle-aware RPE tolerance ──────────────────────────────────────
+  // Weeks 5-6 sit at peak programmed volume (MEV→MAV ramp is complete).
+  // RPE naturally climbs ~0.5-1.0 points from fatigue accumulation alone.
+  // Without this offset the engine misreads normal late-block effort as
+  // "too heavy" and drops weight across the board.
+  const _weekBand = getCycleWeekBand();
+  const _lateBlockRpeOffset = (_weekBand === '5-6') ? 0.5 : 0;
+
   // For trend mode: check consistency — how many sessions had high RPE
   // Applies the same superset RPE adjustment so a paired session's inflated
   // RPE doesn't falsely count as a "high RPE session" when now unpaired.
@@ -18952,7 +18960,7 @@ function getProgressiveWeight(exId, dayId) {
         } else if (!_sessWasPaired && _currentlyPaired) {
           sessAvgRPE = Math.min(10, sessAvgRPE + _RPE_SUPERSET_OFFSET);
         }
-        if (sessAvgRPE >= 9) highRPESessionCount++;
+        if (sessAvgRPE >= 9 + _lateBlockRpeOffset) highRPESessionCount++;
       }
     });
   }
@@ -18988,7 +18996,7 @@ function getProgressiveWeight(exId, dayId) {
   // Flag for reduce signal: in trend mode require 2+ high RPE sessions.
   // Single-session mode (beginner): require RPE 10 (truly maximal) because
   // beginners over-report RPE — a perceived 9.5 is often more like an 8.5.
-  const _reduceRpeThreshold = _expLevel === 'beginner' ? 10 : 9.5;
+  const _reduceRpeThreshold = (_expLevel === 'beginner' ? 10 : 9.5) + _lateBlockRpeOffset;
   const trendSignalsReduce = useTrend
     ? highRPESessionCount >= 2
     : (avgRPE !== null && avgRPE >= _reduceRpeThreshold);
@@ -19022,7 +19030,7 @@ function getProgressiveWeight(exId, dayId) {
     } else if (avgRPE <= 8 && hitRepRangeTop && allSetsCompleted && trendReadyToIncrease) {
       newWeight = lastWeight + getIncrement('small');
       reason = `${Math.round(avgReps)} reps at RPE ${avgRPE.toFixed(1)} (${modeLabel})`;
-    } else if (missedRange && avgRPE >= 9) {
+    } else if (missedRange && avgRPE >= 9 + _lateBlockRpeOffset) {
       newWeight = lastWeight - getWeightIncrement(goal);
       reason = `only ${Math.round(avgReps)} reps at RPE ${avgRPE.toFixed(1)}. Too heavy.`;
     } else {
