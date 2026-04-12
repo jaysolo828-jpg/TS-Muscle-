@@ -18438,10 +18438,45 @@ function postponeDeload() {
   // If recovery is already active (user tapped CHANGE then MOVE TO NEXT WEEK),
   // end the current recovery first so the banner clears and weights restore.
   if (state.isDeloadWeek || state.isRestWeek) {
+    const _cancelledDeloadStart = state.deloadStartDate || 0;
     endRecoveryWeek();
     // User cancelled the recovery, they didn't finish it — suppress the
     // "You just finished a lighter week" check-in card.
     state.postDeloadCheckIn = false;
+    // Untag sessions logged during the cancelled deload so the progression
+    // algorithm can see them. Without this, sameDaySessions filters them
+    // out (!h.isDeload) and falls back to the stale startingWeights base,
+    // showing a lower weight than the user was actually lifting.
+    if (_cancelledDeloadStart) {
+      (state.history || []).forEach(function(h) {
+        if (h.isDeload && new Date(h.date).getTime() >= _cancelledDeloadStart) {
+          delete h.isDeload;
+        }
+      });
+    }
+    // startingWeights was restored from deloadBaseWeights, but that snapshot
+    // may be behind the user's actual lifting weight (progressive overload
+    // updates the suggestion per-session, not startingWeights). Walk recent
+    // non-deload history and bump any entry where the user was lifting more.
+    var _seen = {};
+    for (var _i = (state.history || []).length - 1; _i >= 0; _i--) {
+      var _h = (state.history || [])[_i];
+      if (_h.isDeload) continue;
+      for (var _exId in (_h.sets || {})) {
+        if (_seen[_exId]) continue;
+        _seen[_exId] = true;
+        var _sets = _h.sets[_exId] || [];
+        for (var _si = _sets.length - 1; _si >= 0; _si--) {
+          if (_sets[_si].done && _sets[_si].weight) {
+            var _w = parseFloat(_sets[_si].weight) || 0;
+            if (_w > (state.startingWeights[_exId] || 0)) {
+              state.startingWeights[_exId] = _w;
+            }
+            break;
+          }
+        }
+      }
+    }
   }
   const nextWeek = Math.min((state.weekCount || 7) + 1, 8);
   state.deloadPostponedToWeek = nextWeek;
