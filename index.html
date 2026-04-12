@@ -19062,12 +19062,13 @@ function getProgressiveWeight(exId, dayId) {
     ? (Date.now() - new Date(_mostRecentAny.date).getTime()) / 86400000
     : 0;
   const _gapReduction = _expLevel === 'beginner' ? 0.85 : _expLevel === 'advanced' ? 0.93 : 0.9;
-  // Skip the gap reduction if weeksSinceDeload is 0 — the user just came out
-  // of a deload/rest week. The gap is from the recovery period, not an actual
-  // break. Penalizing weight after a planned recovery defeats the purpose.
-  const lastWeight = (_daysSinceLast > 14 && (state.weeksSinceDeload || 0) > 0)
+  // Gap return is now a suggestion, not automatic. Always use the full weight.
+  // The suggestion card is built in buildOverloadHint() if a gap is detected.
+  const _hasGap = _daysSinceLast > 14 && (state.weeksSinceDeload || 0) > 0;
+  const _gapReducedWeight = _hasGap
     ? Math.max(5, Math.round(_rawLastWeight * _gapReduction / _roundStep) * _roundStep)
-    : _rawLastWeight;
+    : null;
+  const lastWeight = _rawLastWeight;
 
   // Avg RPE across all sessions in window (only sets with RPE logged)
   // Default when not logged: Beginners underestimate effort → 8.5 (more conservative,
@@ -19351,6 +19352,9 @@ function getProgressiveWeight(exId, dayId) {
       : null,
     inAdjustmentPeriod: _manualAdj
       ? { direction: _manualAdj.direction, sessionsLeft: _manualAdj.sessionsLeft }
+      : null,
+    gapSuggestion: _hasGap
+      ? { daysSince: Math.floor(_daysSinceLast), suggestedWeight: _gapReducedWeight, pctDrop: Math.round((1 - _gapReduction) * 100) }
       : null
   };
 
@@ -19401,6 +19405,25 @@ function buildOverloadHint(exId) {
       <div style="display:flex; gap:8px; padding-left:23px; flex-wrap:wrap; margin-top:8px;">
         <button onclick="_autoregAccept('${exId}', ${ar.suggestedWeight})" style="background:rgba(243,156,18,0.18); border:1px solid rgba(243,156,18,0.4); border-radius:8px; color:var(--warning); font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.5px; padding:10px 14px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">REDUCE TO ${ar.suggestedWeight} LBS</button>
         <button onclick="_autoregDismiss('${exId}')" style="background:transparent; border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--gray-light); font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:600; letter-spacing:0.5px; padding:10px 14px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">KEEP CURRENT</button>
+      </div>
+    </div>`;
+  }
+
+  // Gap return suggestion — user has been away 14+ days for this exercise.
+  // Shows a suggestion card instead of auto-reducing. User decides.
+  if (info.gapSuggestion && !activeSession.gapReturnActed?.[exId]) {
+    const gap = info.gapSuggestion;
+    const _weeksAway = Math.floor(gap.daysSince / 7);
+    const _timeLabel = _weeksAway >= 2 ? `${_weeksAway} weeks` : `${gap.daysSince} days`;
+    return `<div style="background:rgba(243,156,18,0.10); border:2px solid rgba(243,156,18,0.4); border-radius:12px; padding:14px 14px 12px; margin:8px 16px 8px;">
+      <div style="font-family:'Bebas Neue',cursive; font-size:18px; color:var(--warning); letter-spacing:1.5px; margin-bottom:8px;">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--warning)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:6px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${_timeLabel} SINCE THIS EXERCISE
+      </div>
+      <div style="font-family:'Barlow',sans-serif; font-size:15px; color:var(--cream); line-height:1.6; margin-bottom:12px;">Your muscles lose some strength after time off. Easing back in at <strong>${gap.suggestedWeight} lbs</strong> (${gap.pctDrop}% lighter) reduces injury risk and lets you rebuild quickly.</div>
+      <div style="display:flex; gap:10px;">
+        <button onclick="_gapReturnAccept('${exId}', ${gap.suggestedWeight})" style="flex:1; background:rgba(243,156,18,0.15); border:2px solid rgba(243,156,18,0.5); border-radius:10px; color:var(--warning); font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; padding:13px 10px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">EASE IN · ${gap.suggestedWeight} LBS</button>
+        <button onclick="_gapReturnDismiss('${exId}')" style="flex:1; background:var(--dark3); border:2px solid var(--dark4); border-radius:10px; color:var(--cream); font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; padding:13px 10px; cursor:pointer; min-height:44px; -webkit-tap-highlight-color:transparent;">FULL WEIGHT · ${info.lastWeight} LBS</button>
       </div>
     </div>`;
   }
@@ -19568,6 +19591,27 @@ function _autoregDismiss(exId) {
   if (!activeSession) return;
   if (!activeSession.autoregActed) activeSession.autoregActed = {};
   activeSession.autoregActed[exId] = 'dismissed';
+  renderSession();
+}
+
+function _gapReturnAccept(exId, reducedWeight) {
+  if (!activeSession) return;
+  if (!activeSession.gapReturnActed) activeSession.gapReturnActed = {};
+  activeSession.gapReturnActed[exId] = 'accepted';
+  // Update weight for all undone sets
+  const sets = activeSession.sets[exId];
+  if (sets) sets.forEach(function(s) { if (!s.done) s.weight = String(reducedWeight); });
+  if (activeSession.overloadReasons?.[exId]) {
+    activeSession.overloadReasons[exId].changed = true;
+    activeSession.overloadReasons[exId].newWeight = reducedWeight;
+  }
+  renderSession();
+}
+
+function _gapReturnDismiss(exId) {
+  if (!activeSession) return;
+  if (!activeSession.gapReturnActed) activeSession.gapReturnActed = {};
+  activeSession.gapReturnActed[exId] = 'dismissed';
   renderSession();
 }
 
