@@ -18395,25 +18395,19 @@ function openDeloadModal() {
     _deloadBtnDesc.textContent = `Same exercises, weights drop about ${_pctCut}%. You still train. Joints recover, muscle memory stays sharp.`;
   }
 
-  // If a weight- or session-relevant challenge is active, warn the user.
-  // Only show for types where recovery actually matters:
-  // - one_rep_max: deload weights don't affect manual 1RM logging
-  // - dont_break_chain: rest week = no sessions = chain could break
-  // Skip control_the_aux (songs) and clear_your_head (cardio) — unaffected.
+  // List all active challenges so the user knows what they're in before
+  // choosing recovery. All types are affected — rest week means no sessions.
   const _challengeNoteId = 'deload-challenge-note';
   const _existingNote = document.getElementById(_challengeNoteId);
   if (_existingNote) _existingNote.remove();
   const _activeChallenges = (_challenges || []).filter(c => c.status === 'active');
-  const _has1RM = _activeChallenges.some(c => c.challenge_type === 'one_rep_max');
-  const _hasChain = _activeChallenges.some(c => c.challenge_type === 'dont_break_chain');
-  if (_has1RM || _hasChain) {
-    const _lines = [];
-    if (_has1RM) _lines.push('Your <strong>1RM challenge</strong> progress is logged manually and is not affected by deload weights.');
-    if (_hasChain) _lines.push('Choosing <strong>Rest Week</strong> means no training sessions \u2014 your <strong>chain challenge</strong> streak could break. Deload keeps sessions going.');
+  if (_activeChallenges.length) {
+    const _typeLabels = { one_rep_max: '1RM Challenge', dont_break_chain: "Don\u2019t Break the Chain", clear_your_head: 'Clear Your Head', control_the_aux: 'Control the Aux' };
+    const _names = _activeChallenges.map(c => _typeLabels[c.challenge_type] || c.challenge_type);
     const _note = document.createElement('div');
     _note.id = _challengeNoteId;
     _note.style.cssText = 'margin:12px 0 0;padding:10px 14px;background:rgba(204,32,39,0.07);border-left:3px solid var(--red);border-radius:0 8px 8px 0;font-size:13px;color:var(--gray-light);line-height:1.5;';
-    _note.innerHTML = '<strong style="color:var(--cream);">Active challenge:</strong> ' + _lines.join('<br style="margin-bottom:6px;">');
+    _note.innerHTML = '<strong style="color:var(--cream);">You\u2019re in ' + _activeChallenges.length + ' active challenge' + (_activeChallenges.length > 1 ? 's' : '') + ':</strong> ' + _names.join(', ') + '. Rest week means no training sessions \u2014 consider how that affects your challenges.';
     const _actionsEl = modal.querySelector('[id*="deload-btn"], .deload-actions, button');
     if (_actionsEl && _actionsEl.parentElement) {
       _actionsEl.parentElement.insertBefore(_note, _actionsEl);
