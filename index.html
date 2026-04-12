@@ -20482,7 +20482,7 @@ function renderSession() {
               oninput="updateRepIndicator('${ex.id}',${si},'${_goalReps}')"/>
             <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
           </div>
-          <button class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" ${set.done ? 'disabled' : ''} onclick="openRpePicker('${ex.id}',${si},'main')">${set.rpe || 'RPE'}</button>
+          <button class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" onclick="openRpePicker('${ex.id}',${si},'main')">${set.rpe || 'RPE'}</button>
           <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleSetDone('${ex.id}',${si})"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
         </div>
       `;
@@ -20867,7 +20867,7 @@ function renderBonusExercises() {
           <input type="number" inputmode="numeric" class="set-input" placeholder="10"
             value="${set.reps}" ${set.done ? 'disabled' : ''}
             onchange="updateBonusSet('${bonus.id}',${si},'reps',this.value)"/>
-          <button class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" ${set.done ? 'disabled' : ''} onclick="openRpePicker('${bonus.id}',${si},'bonus')">${set.rpe || 'RPE'}</button>
+          <button class="rpe-select" data-empty="${set.rpe ? 'false' : 'true'}" onclick="openRpePicker('${bonus.id}',${si},'bonus')">${set.rpe || 'RPE'}</button>
           <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleBonusSetDone('${bonus.id}',${si})">
             <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
