@@ -14543,6 +14543,14 @@ async function _reactToAuxSong(songId, reactionType, challengeId) {
       { song_id: songId, user_id: state.supabaseUserId, reaction_type: reactionType },
       { onConflict: 'song_id,user_id' }
     );
+    // Notify the song submitter
+    const cachedSong = (_auxHomeDataCache[challengeId]?.songs || []).find(s => s.id === songId);
+    if (cachedSong && cachedSong.user_id !== state.supabaseUserId) {
+      const myName = state.supabaseUsername || state.supabaseDisplayName || 'Someone';
+      const rxnLabel = { fire: '\uD83D\uDD25', fuel: '\uD83D\uDCAA', vibe: '\u2728' }[reactionType] || reactionType;
+      const songLabel = cachedSong.title + (cachedSong.artist ? ' \u2014 ' + cachedSong.artist : '');
+      _sendDirectPush(cachedSong.user_id, myName + ' voted on your song ' + rxnLabel, songLabel + ' \u00B7 +1 pt', 'challenge', challengeId);
+    }
     delete _auxHomeDataCache[challengeId];
     const ch = (_challenges || []).find(c => c.id === challengeId);
     if (ch) _renderAuxDetailBody(ch);
@@ -14684,6 +14692,17 @@ async function _renderActiveAuxHomeCard(ch) {
     ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:4px;">\uD83E\uDD47 ' + escapeHtml(leaderName) + ' leads with ' + leader.score + ' pts</div>'
     : '';
 
+  // Show the user's own score + vote count on their songs
+  const myScore = scores[myId] || 0;
+  const mySongs = songs.filter(s => s.user_id === myId);
+  const myRxnCount = mySongs.reduce((sum, s) => sum + reactions.filter(r => r.song_id === s.id).length, 0);
+  const myUseCount = mySongs.reduce((sum, s) => sum + uses.filter(u => u.song_id === s.id).length, 0);
+  const myActivityLine = mySongs.length
+    ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:2px;">'
+      + 'Your songs: ' + myRxnCount + ' vote' + (myRxnCount !== 1 ? 's' : '') + ', ' + myUseCount + ' use' + (myUseCount !== 1 ? 's' : '') + ' \u00B7 ' + myScore + ' pts'
+      + '</div>'
+    : '';
+
   const songSection = featuredSong
     ? '<div style="display:flex;align-items:flex-start;gap:10px;margin-top:10px;background:rgba(0,0,0,0.25);border-radius:8px;padding:8px;">'
       + artHtml
@@ -14701,6 +14720,7 @@ async function _renderActiveAuxHomeCard(ch) {
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:' + _AUX_COLOR + ';letter-spacing:2px;">CONTROL THE AUX</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:24px;color:var(--cream);letter-spacing:2px;line-height:1.1;">' + (daysLeft > 0 ? daysLeft + ' DAYS LEFT' : 'FINAL DAY') + '</div>'
     + leaderLine
+    + myActivityLine
     + '</div>'
     + '<div style="font-size:26px;color:rgba(147,51,234,0.4);">\uD83C\uDFB5</div>'
     + '</div>'
