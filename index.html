@@ -3451,7 +3451,7 @@
 <!-- ============================================================
      DELOAD / REST WEEK MODAL
      ============================================================ -->
-<div id="deload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99996; align-items:center; justify-content:center; padding:20px; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+<div id="deload-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99996; align-items:flex-start; justify-content:center; padding:20px 20px calc(20px + env(safe-area-inset-bottom, 0px)); overflow-y:auto; -webkit-overflow-scrolling:touch;">
   <div style="background:var(--dark2); border-radius:20px; width:100%; max-width:420px; border:1px solid rgba(243,156,18,0.4); overflow:hidden; box-shadow:0 8px 40px rgba(243,156,18,0.12); margin:auto;">
     <div style="height:4px; background:linear-gradient(90deg,transparent,var(--warning),transparent);"></div>
     <div style="padding:24px;">
@@ -17296,12 +17296,13 @@ function renderHome() {
   if (!dotsEl) return;
   dotsEl.innerHTML = '';
 
-  // Determine where the "D" marker lives this cycle.
-  // If a deload has been activated (deloadWeekNum is set), use that week.
-  // Otherwise fall back to week 7 as the planned recovery slot.
-  const _deloadSlot = (state.deloadWeekNum && state.deloadWeekNum >= 1 && state.deloadWeekNum <= 8)
-    ? state.deloadWeekNum
-    : 7;
+  // Determine where the "R" marker lives this cycle.
+  // Postponed week takes priority, then active deload week, then default 7.
+  const _deloadSlot = (state.deloadPostponedToWeek && state.deloadPostponedToWeek >= 1 && state.deloadPostponedToWeek <= 8)
+    ? state.deloadPostponedToWeek
+    : (state.deloadWeekNum && state.deloadWeekNum >= 1 && state.deloadWeekNum <= 8)
+      ? state.deloadWeekNum
+      : 7;
   const _earlyDeload = _deloadSlot < 7;
 
   for (let w = 1; w <= 8; w++) {
@@ -18438,6 +18439,9 @@ function postponeDeload() {
   // end the current recovery first so the banner clears and weights restore.
   if (state.isDeloadWeek || state.isRestWeek) {
     endRecoveryWeek();
+    // User cancelled the recovery, they didn't finish it — suppress the
+    // "You just finished a lighter week" check-in card.
+    state.postDeloadCheckIn = false;
   }
   const nextWeek = Math.min((state.weekCount || 7) + 1, 8);
   state.deloadPostponedToWeek = nextWeek;
