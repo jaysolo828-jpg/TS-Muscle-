@@ -264,8 +264,8 @@
     font-family: 'Barlow Condensed', sans-serif !important;
     font-size: 15px !important;
     letter-spacing: 1px !important;
-    color: var(--gray) !important;
-    border-color: #3a3a3a !important;
+    color: var(--cream) !important;
+    border-color: #4a4a4a !important;
     transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s !important;
   }
   .ob-priority-btn.selected {
@@ -3860,7 +3860,7 @@
             <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">ANY PRIORITY AREAS?</span>
             <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
           </div>
-          <div style="font-size:13px; color:#888; margin-bottom:10px; line-height:1.5;">A muscle you want to bring up — we add extra sets on the right training days from Week 2.</div>
+          <div style="font-size:14px; color:#d0cbc6; margin-bottom:10px; line-height:1.5;">A muscle you want to bring up — we add extra sets on the right training days from Week 2.</div>
           <div style="display:flex; flex-wrap:wrap; gap:8px;">
             <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('chest', this)">Chest</button>
             <button class="onboard-select-btn ob-priority-btn" onclick="selectObPriority('back', this)">Back</button>
@@ -3878,7 +3878,7 @@
             <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">DAYS PER WEEK?</span>
             <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
           </div>
-          <div style="font-size:13px; color:#888; margin-bottom:10px; line-height:1.5;">Helps us match the recommendation to a split that fits your schedule.</div>
+          <div style="font-size:14px; color:#d0cbc6; margin-bottom:10px; line-height:1.5;">Helps us match the recommendation to a split that fits your schedule.</div>
           <div style="display:flex; gap:8px;">
             <button class="onboard-select-btn ob-rec-days-btn" onclick="selectObRecDays(2, this)" style="flex:1; padding:10px 6px; text-align:center; font-weight:bold; font-size:15px;">2</button>
             <button class="onboard-select-btn ob-rec-days-btn" onclick="selectObRecDays(3, this)" style="flex:1; padding:10px 6px; text-align:center; font-weight:bold; font-size:15px;">3</button>
@@ -3893,7 +3893,7 @@
             <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">TIME PER SESSION?</span>
             <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
           </div>
-          <div style="font-size:13px; color:#888; margin-bottom:10px; line-height:1.5;">Some splits ask more per session than others — this keeps the recommendation realistic.</div>
+          <div style="font-size:14px; color:#d0cbc6; margin-bottom:10px; line-height:1.5;">Some splits ask more per session than others — this keeps the recommendation realistic.</div>
           <div style="display:flex; gap:8px;">
             <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('short', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">&lt;45 min</button>
             <button class="onboard-select-btn ob-session-btn" onclick="selectObSessionLength('medium', this)" style="flex:1; padding:10px 4px; text-align:center; font-weight:bold; font-size:13px;">45–60 min</button>
@@ -29792,13 +29792,13 @@ async function generateAndShareCard(type, data) {
     const volDelta = data.lastVolume > 0 ? Math.round((data.thisVolume - data.lastVolume) / data.lastVolume * 100) : null;
     const deltaColor = volDelta !== null ? (volDelta >= 0 ? '#50ff90' : '#ff6b6b') : 'rgba(255,255,255,0.6)';
 
-    drawText('THIS CYCLE', col1X, wkY, barlow(600, 30), 'rgba(255,255,255,0.6)', Math.round(360 * S));
+    drawText('THIS WEEK', col1X, wkY, barlow(600, 30), 'rgba(255,255,255,0.6)', Math.round(360 * S));
     drawText(`${fmtV(data.thisVolume)} lbs`, col1X, colY,
       bebas(80), '#ffffff', Math.round(380 * S), { color: 'rgba(0,0,0,0.35)', blur: 14 });
     drawText(`${data.thisSessions || 0} sessions`, col1X, lblY,
       barlow(600, 28), 'rgba(255,255,255,0.65)', Math.round(360 * S));
 
-    drawText('LAST CYCLE', col2X, wkY, barlow(600, 30), 'rgba(255,255,255,0.6)', Math.round(360 * S));
+    drawText('LAST WEEK', col2X, wkY, barlow(600, 30), 'rgba(255,255,255,0.6)', Math.round(360 * S));
     drawText(`${fmtV(data.lastVolume)} lbs`, col2X, colY,
       bebas(80), 'rgba(255,255,255,0.55)', Math.round(380 * S));
     drawText(`${data.lastSessions || 0} sessions`, col2X, lblY,
@@ -29932,6 +29932,43 @@ async function generateAndShareCard(type, data) {
         W / 2, _crBottomY,
         barlow(600, 26), 'rgba(100,180,255,0.85)', MAX_TW
       );
+    }
+
+  } else if (type === 'growth_log') {
+    const _glTagY    = Math.round(SPLIT * 0.13);
+    const _glEstY    = Math.round(SPLIT * 0.42);
+    const _glRangeY  = Math.round(SPLIT * 0.63);
+    const _glStateY  = Math.round(SPLIT * 0.78);
+    const _glWeeksY  = Math.round(SPLIT * 0.90);
+
+    drawText('LEAN MASS ESTIMATE', W / 2, _glTagY,
+      barlow(700, 40), 'rgba(255,255,255,0.85)', MAX_TW);
+
+    const _glStateColors = {
+      'GAINING': '#2ecc71', 'REGAINING': '#4a8af5',
+      'HOLDING': 'rgba(200,200,200,0.85)', 'PLATEAU': '#f0a500',
+      'DECLINING': '#cc5555'
+    };
+    const _glStateColor = _glStateColors[data.state] || 'rgba(200,200,200,0.7)';
+
+    ctx.save();
+    ctx.shadowColor = _glStateColor;
+    ctx.shadowBlur  = Math.round(40 * S);
+    drawText(data.estimate || '\u2014', W / 2, _glEstY,
+      bebas(130), _glStateColor, MAX_TW);
+    ctx.restore();
+
+    drawText('ESTIMATED LEAN MASS GAINED', W / 2, _glRangeY - Math.round(30 * S),
+      barlow(600, 30), 'rgba(255,255,255,0.55)', MAX_TW);
+    drawText(data.range || '', W / 2, _glRangeY + Math.round(20 * S),
+      barlow(500, 28), 'rgba(255,255,255,0.4)', MAX_TW);
+
+    drawText(data.state || '', W / 2, _glStateY,
+      barlow(700, 36), _glStateColor, MAX_TW);
+
+    if (data.weeks > 0) {
+      drawText(`${data.weeks} WEEKS OF TRAINING`, W / 2, _glWeeksY,
+        barlow(500, 28), 'rgba(255,255,255,0.4)', MAX_TW);
     }
   }
 
@@ -30245,7 +30282,7 @@ async function generateAndShareCard(type, data) {
       }
     } else if (navigator.share) {
       try {
-        await navigator.share({ title: 'T&S Muscle' });
+        await navigator.share({ title: 'T&S Muscle', url: 'https://therapyandsneakers.org' });
       } catch(e) {
         if (e.name !== 'AbortError') _downloadShareCard(blob);
       }
