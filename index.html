@@ -6897,7 +6897,9 @@ function checkAutoregulation(exId, dayId, raiseThreshold) {
   const lastWeight = parseFloat(lastSets[lastSets.length - 1]?.weight) || 0;
   if (!lastWeight) return null;
 
-  const suggestedWeight = Math.max(5, Math.round((lastWeight - getIncrement('small')) / 2.5) * 2.5);
+  const _arEquip = _TRAVEL_EX_EQ[exId] || (state.program || []).reduce((eq, d) => eq || ((d.exercises || []).find(e => e.id === exId) || {}).equipment, null) || '';
+  const _arStep = (_arEquip === 'dumbbell') ? 5 : 2.5;
+  const suggestedWeight = Math.max(5, Math.round((lastWeight - getIncrement('small')) / _arStep) * _arStep);
 
   if (raiseThreshold) {
     // Raised threshold during manual-increase adjustment period:
@@ -18789,6 +18791,10 @@ function getProgressiveWeight(exId, dayId) {
     return '';
   }
 
+  // Dumbbells come in 5 lb increments; barbells/cables use 2.5.
+  const _exEquip = _TRAVEL_EX_EQ[exId] || (state.program || []).reduce((eq, d) => eq || ((d.exercises || []).find(e => e.id === exId) || {}).equipment, null) || '';
+  const _roundStep = (_exEquip === 'dumbbell') ? 5 : 2.5;
+
   const goal = state.profile?.goal || 'both';
 
   // Collect up to last 3 sessions for this same day
@@ -18814,10 +18820,10 @@ function getProgressiveWeight(exId, dayId) {
   if (state.isDeloadWeek) {
     const _dlFactor = state.deloadReductionFactor || 0.75;
     const baseWeight = parseFloat(state.deloadBaseWeights?.[exId] || 0);
-    if (baseWeight) return String(Math.max(5, Math.round(baseWeight * _dlFactor / 2.5) * 2.5));
+    if (baseWeight) return String(Math.max(5, Math.round(baseWeight * _dlFactor / _roundStep) * _roundStep));
     const lastSessionSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done && !s.coachRemoved);
     const lastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
-    if (lastWeight) return String(Math.max(5, Math.round(lastWeight * _dlFactor / 2.5) * 2.5));
+    if (lastWeight) return String(Math.max(5, Math.round(lastWeight * _dlFactor / _roundStep) * _roundStep));
     return state.startingWeights?.[exId] ? String(state.startingWeights[exId]) : '';
   }
 
@@ -18886,7 +18892,7 @@ function getProgressiveWeight(exId, dayId) {
     : 0;
   const _gapReduction = _expLevel === 'beginner' ? 0.85 : _expLevel === 'advanced' ? 0.93 : 0.9;
   const lastWeight = (_daysSinceLast > 14)
-    ? Math.max(5, Math.round(_rawLastWeight * _gapReduction / 2.5) * 2.5)
+    ? Math.max(5, Math.round(_rawLastWeight * _gapReduction / _roundStep) * _roundStep)
     : _rawLastWeight;
 
   // Avg RPE across all sessions in window (only sets with RPE logged)
@@ -19102,8 +19108,8 @@ function getProgressiveWeight(exId, dayId) {
       newWeight = lastWeight + _velIncr * _velMult;
     }
   }
-  // Round to nearest 2.5 lbs, never below 5
-  newWeight = Math.max(5, Math.round(newWeight / 2.5) * 2.5);
+  // Round to nearest valid plate step, never below 5
+  newWeight = Math.max(5, Math.round(newWeight / _roundStep) * _roundStep);
 
   // Detect consecutive weight regressions across same-day sessions.
   // Counts how many consecutive drops occurred (w0 < w1 < w2 < w3 …).
@@ -23665,7 +23671,9 @@ function saveExInfoWeight() {
   const input = document.getElementById('ex-info-weight-input');
   const newW = parseFloat(input?.value);
   if (!newW || newW <= 0) { showToast('Enter a valid weight', 'error'); return; }
-  const rounded = Math.max(5, Math.round(newW / 2.5) * 2.5);
+  const _swEquip = _TRAVEL_EX_EQ[exId] || (state.program || []).reduce((eq, d) => eq || ((d.exercises || []).find(e => e.id === exId) || {}).equipment, null) || '';
+  const _swStep = (_swEquip === 'dumbbell') ? 5 : 2.5;
+  const rounded = Math.max(5, Math.round(newW / _swStep) * _swStep);
 
   // Determine which dayId(s) this exercise appears on so the adjustment period is
   // recorded against the right day key (same logic getProgressiveWeight uses).
