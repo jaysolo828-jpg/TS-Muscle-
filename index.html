@@ -7026,14 +7026,14 @@ function _updatePendingManualAdj(exId) {
 // ── END MANUAL WEIGHT ADJUSTMENT PERIOD ──────────────────────────────────────
 
 // Returns weekly set counts per muscle group based on sessions in the current
-// Sun–Sat calendar week — consistent with the home screen display and streak.
+// Mon–Sun calendar week — consistent with the home screen display and streak.
 function getWeeklySetsByMuscle() {
   const counts = {};
   Object.keys(VOLUME_LANDMARKS).forEach(m => counts[m] = 0);
 
-  // Compute Sunday midnight of the current calendar week (same anchor used
-  // everywhere else in the app).
-  const _wd = new Date(); _wd.setDate(_wd.getDate() - _wd.getDay()); _wd.setHours(0, 0, 0, 0);
+  // Compute Monday midnight of the current calendar week (Mon–Sun, same
+  // anchor used everywhere else in the app).
+  const _wd = new Date(); _wd.setDate(_wd.getDate() - ((_wd.getDay() + 6) % 7)); _wd.setHours(0, 0, 0, 0);
   const weekStart = _wd.getTime();
 
   const weekSessions = (state.history || []).filter(e => new Date(e.date).getTime() >= weekStart);
@@ -15652,16 +15652,16 @@ function calcConsistencyRate() {
   if (history.length === 0) return null;
   const daysPerWeek = state.trainingDaysPerWeek || 4;
   const now = new Date();
-  const todaySunday = new Date(now);
-  todaySunday.setHours(0, 0, 0, 0);
-  todaySunday.setDate(todaySunday.getDate() - todaySunday.getDay());
+  const todayMonday = new Date(now);
+  todayMonday.setHours(0, 0, 0, 0);
+  todayMonday.setDate(todayMonday.getDate() - ((todayMonday.getDay() + 6) % 7));
   const firstDate = new Date(Math.min(...history.map(e => new Date(e.date).getTime())));
   const WINDOW = 8;
   let scheduled = 0, completed = 0;
   for (let w = 1; w <= WINDOW; w++) {
-    const wSun = new Date(todaySunday);
-    wSun.setDate(wSun.getDate() - w * 7);
-    const wEnd = new Date(wSun);
+    const wMon = new Date(todayMonday);
+    wMon.setDate(wMon.getDate() - w * 7);
+    const wEnd = new Date(wMon);
     wEnd.setDate(wEnd.getDate() + 7);
     if (wEnd.getTime() <= firstDate.getTime()) break; // before program started
     const count = history.filter(e => {
@@ -16778,7 +16778,7 @@ function showStatInfo(type) {
       title: 'WEEK STREAK',
       icon: '🔥',
       body: `<strong style="color:var(--cream);">${streak} week${streak !== 1 ? 's' : ''}</strong> straight. ${streak >= 4 ? "That's a habit, not a hobby." : streak >= 1 ? "Keep showing up." : "Start the streak this week."}`,
-      sub: `You train ${days} days/week. Hit at least ${threshold} of them in a Sun–Sat week to keep it alive. One missed week resets it — so protect it.`
+      sub: `You train ${days} days/week. Hit at least ${threshold} of them in a Mon–Sun week to keep it alive. One missed week resets it — so protect it.`
     }
   };
 
@@ -17379,17 +17379,17 @@ function renderHome() {
   const realSessionsOrdered = (state.history || [])
     .filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done)))
     .sort((a, b) => new Date(a.date) - new Date(b.date));
-  // Determine sessions done in the current Sun–Sat calendar week.
-  // Anchoring on Sunday means a week that starts Sunday and runs through
-  // Saturday — so moving any session to Saturday never crosses a week
-  // boundary and won't break streaks or completion display.
+  // Determine sessions done in the current Mon–Sun calendar week.
+  // Anchoring on Monday means a week that starts Monday and runs through
+  // Sunday — so a Sunday session still belongs to the same week and won't
+  // cause a premature reset at midnight Saturday.
   const _calNow = new Date();
-  const _calWeekSunday = new Date(_calNow);
-  _calWeekSunday.setDate(_calNow.getDate() - _calNow.getDay()); // getDay() 0=Sun…6=Sat
-  _calWeekSunday.setHours(0, 0, 0, 0);
+  const _calWeekMonday = new Date(_calNow);
+  _calWeekMonday.setDate(_calNow.getDate() - ((_calNow.getDay() + 6) % 7)); // Mon=0…Sun=6
+  _calWeekMonday.setHours(0, 0, 0, 0);
 
   const sessionsThisWeek = realSessionsOrdered.filter(
-    e => new Date(e.date).getTime() >= _calWeekSunday.getTime()
+    e => new Date(e.date).getTime() >= _calWeekMonday.getTime()
   );
   const completedThisWeekIds = new Set(sessionsThisWeek.map(e => e.dayId));
   const _weekFullyDone = sessionsThisWeek.length >= (state.trainingDaysPerWeek || state.program?.length || 4);
@@ -18248,12 +18248,12 @@ function adjustPlateCalcWeight(exId, delta) {
 // STREAK TRACKER
 // ============================================================
 function updateStreak() {
-  // A "week" = Sun–Sat. If user logs at least (trainingDaysPerWeek) sessions in a calendar week
+  // A "week" = Mon–Sun. If user logs at least (trainingDaysPerWeek) sessions in a calendar week
   // streak increments. If they miss a full week, streak resets.
   const target = state.trainingDaysPerWeek || 4;
   const now = new Date();
 
-  // Group history by Sun–Sat calendar week
+  // Group history by Mon–Sun calendar week
   const weekCounts = {};
   (state.history || []).forEach(h => {
     const d = new Date(h.date);
@@ -18288,14 +18288,14 @@ function updateStreak() {
   state.streak = streak;
 }
 
-// Returns the date string (YYYY-MM-DD) of the Sunday that starts the Sun–Sat
-// calendar week containing `date`. Using Sunday as the anchor means any
-// session from Sunday through Saturday belongs to the same week — consistent
+// Returns the date string (YYYY-MM-DD) of the Monday that starts the Mon–Sun
+// calendar week containing `date`. Using Monday as the anchor means any
+// session from Monday through Sunday belongs to the same week — consistent
 // with the home-screen display and the calendar rollover logic.
 function getISOWeek(date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - d.getDay()); // roll back to Sunday (getDay() 0=Sun)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // roll back to Monday
   return d.toISOString().slice(0, 10);
 }
 
@@ -24566,31 +24566,31 @@ function finalizeEndSession(save) {
 
     // Increment week every N sessions (N = training days/week) OR after 7 calendar days — whichever comes first.
     // This prevents low-frequency users from waiting a month to reach the next week.
-    // Anchor weekStartTimestamp to Sunday midnight so it aligns with the
-    // Sun–Sat week used by the display and streak logic.
-    const _toSundayMidnight = ts => {
-      const _d = new Date(ts); _d.setDate(_d.getDate() - _d.getDay()); _d.setHours(0,0,0,0); return _d.getTime();
+    // Anchor weekStartTimestamp to Monday midnight so it aligns with the
+    // Mon–Sun week used by the display and streak logic.
+    const _toMondayMidnight = ts => {
+      const _d = new Date(ts); _d.setDate(_d.getDate() - ((_d.getDay() + 6) % 7)); _d.setHours(0,0,0,0); return _d.getTime();
     };
-    if (!state.weekStartTimestamp) state.weekStartTimestamp = _toSundayMidnight(Date.now());
+    if (!state.weekStartTimestamp) state.weekStartTimestamp = _toMondayMidnight(Date.now());
     const _weekLen = state.trainingDaysPerWeek || state.program?.length || 4;
     const _sessionBased = (state.totalSessions || 0) % _weekLen === 0;
-    // Calendar rollover: fires when the Sun–Sat boundary has been crossed since
+    // Calendar rollover: fires when the Mon–Sun boundary has been crossed since
     // weekStartTimestamp was set — prevents premature mid-week rollovers that
     // happened when the old "7 days since last rollover" check fired on Thursday
     // if the previous week ended on Friday.
-    const _currentWeekSunday = _toSundayMidnight(Date.now());
-    const _startWeekSunday   = _toSundayMidnight(state.weekStartTimestamp);
+    const _currentWeekMonday = _toMondayMidnight(Date.now());
+    const _startWeekMonday   = _toMondayMidnight(state.weekStartTimestamp);
     const _sessionsThisWeek = (state.history || [])
       .filter(h => new Date(h.date).getTime() >= (state.weekStartTimestamp || 0)).length;
     // Guard: if a session-based rollover happened within the last 3 days, suppress
-    // calendar-based rollover. This prevents Sat→Sun back-to-back sessions from
-    // triggering two rollovers in 24 hours (session-based on Saturday, then
-    // calendar-based on Sunday when the Sun–Sat boundary crosses).
+    // calendar-based rollover. This prevents Sun→Mon back-to-back sessions from
+    // triggering two rollovers in 24 hours (session-based on Sunday, then
+    // calendar-based on Monday when the Mon–Sun boundary crosses).
     const _recentSessionRollover = state.weekRolledOverAt && (Date.now() - state.weekRolledOverAt) / 86400000 < 3;
-    const _calendarBased = _currentWeekSunday > _startWeekSunday && !_sessionBased && !_recentSessionRollover && _sessionsThisWeek >= 1;
+    const _calendarBased = _currentWeekMonday > _startWeekMonday && !_sessionBased && !_recentSessionRollover && _sessionsThisWeek >= 1;
     if (_sessionBased || _calendarBased) {
       if (_sessionBased) state.weekRolledOverAt = Date.now();
-      state.weekStartTimestamp = _currentWeekSunday;
+      state.weekStartTimestamp = _currentWeekMonday;
       // Don't count deload/rest weeks toward the "weeks since deload" counter
       if (!state.isDeloadWeek && !state.isRestWeek) {
         state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
@@ -26775,7 +26775,7 @@ function renderHistory() {
         (state.program || []).forEach(day => {
           (day.exercises || []).forEach(ex => { if (ex.id && ex.name) nameMap[ex.id] = ex.name; });
         });
-        const wd = new Date(); wd.setDate(wd.getDate() - wd.getDay()); wd.setHours(0,0,0,0);
+        const wd = new Date(); wd.setDate(wd.getDate() - ((wd.getDay() + 6) % 7)); wd.setHours(0,0,0,0);
         const weekStart = wd.getTime();
         const results = [];
         (state.history || []).filter(e => new Date(e.date).getTime() >= weekStart).forEach(entry => {
@@ -28866,7 +28866,7 @@ function _buildGrowthWeighInRow() {
   // If there's a recent entry (this week), show it as editable with an update button.
   // Use the same findIndex logic as _saveGrowthWeighIn so button label always matches save behaviour.
   const now = new Date();
-  const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
+  const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7)); startOfWeek.setHours(0,0,0,0);
   const wLog = state.weightLog || [];
   const thisWeekIdx = wLog.findIndex(w => new Date(w.date).getTime() >= startOfWeek.getTime());
   const thisWeekEntry = thisWeekIdx >= 0;
@@ -28910,7 +28910,7 @@ function _saveGrowthWeighIn() {
 
   // If there's already an entry this week, update it instead of adding a new one
   const now = new Date();
-  const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
+  const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7)); startOfWeek.setHours(0,0,0,0);
   const existingIdx = state.weightLog.findIndex(w => new Date(w.date).getTime() >= startOfWeek.getTime());
 
   if (existingIdx >= 0) {
@@ -34263,10 +34263,10 @@ function completeOnboarding() {
   // full training week.
   (function() {
     const _now = new Date();
-    const _sunday = new Date(_now);
-    _sunday.setDate(_now.getDate() - _now.getDay());
-    _sunday.setHours(0, 0, 0, 0);
-    state.weekStartTimestamp = _sunday.getTime();
+    const _mon = new Date(_now);
+    _mon.setDate(_now.getDate() - ((_now.getDay() + 6) % 7));
+    _mon.setHours(0, 0, 0, 0);
+    state.weekStartTimestamp = _mon.getTime();
   })();
 
   saveState();
@@ -36006,12 +36006,12 @@ function resetCycleAfterGap() {
     state.startingWeights = { ...state.deloadBaseWeights };
     delete state.deloadBaseWeights;
   }
-  // Anchor the new cycle's week counter to Sunday of the current calendar week
+  // Anchor the new cycle's week counter to Monday of the current calendar week
   const _now = new Date();
-  const _sun = new Date(_now);
-  _sun.setDate(_now.getDate() - _now.getDay());
-  _sun.setHours(0, 0, 0, 0);
-  state.weekStartTimestamp = _sun.getTime();
+  const _mon = new Date(_now);
+  _mon.setDate(_now.getDate() - ((_now.getDay() + 6) % 7));
+  _mon.setHours(0, 0, 0, 0);
+  state.weekStartTimestamp = _mon.getTime();
   delete state.deloadReason;
   delete state.deloadWeekNum;
   delete state.deloadMRVMuscles;
