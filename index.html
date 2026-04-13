@@ -7429,6 +7429,9 @@ let state = {
   growthState: 'inactive',     // gaining|holding|declining|regaining|plateau|slow_decay|inactive
   cycleEmphasis: [],           // muscles to push toward MRV this cycle — set at cycle-complete modal
   gymEquipment: 'full',        // 'full' | 'dumbbells-cable' | 'dumbbells' — set at onboarding
+  trialStartAt: null,          // ISO string — set from DB on sign-in
+  subscriptionStatus: 'trial', // 'trial' | 'active' | 'expired' | 'cancelled'
+  subscriptionSku: null,       // 'ts_muscle_monthly' | 'ts_muscle_annual'
 };
 
 let activeSession = null;
@@ -7944,6 +7947,13 @@ function _updateSettingsAccountSection() {
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Change Password</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
+        <div class="settings-item" onclick="_openSubscriptionManagement()" style="cursor:pointer;">
+          <div>
+            <div class="settings-label" style="color:var(--gray);font-size:14px;">Subscription</div>
+            <div class="settings-sub">${state.subscriptionStatus === 'active' ? (state.subscriptionSku === 'ts_muscle_annual' ? 'Annual plan' : 'Monthly plan') : state.subscriptionStatus === 'trial' ? 'Free trial active' : 'Expired'}</div>
+          </div>
+          <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
         <div class="settings-item" onclick="supabaseSignOut()">
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Sign Out</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -8194,13 +8204,16 @@ async function _onSupabaseSignIn(user) {
   saveState();
 
   // Check if user already has a row in public.users
-  const { data: existingUser } = await sb.from('users').select('id, username, avatar_color, avatar_url').eq('id', user.id).single();
+  const { data: existingUser } = await sb.from('users').select('id, username, avatar_color, avatar_url, trial_start_at, subscription_status, subscription_sku').eq('id', user.id).single();
   if (existingUser?.avatar_color) { state.supabaseAvatarColor = existingUser.avatar_color; saveState(); }
   if (existingUser?.avatar_url) { state.supabaseAvatarUrl = existingUser.avatar_url; saveState(); }
   if (existingUser?.username && !existingUser.username.startsWith('user_')) {
     state.supabaseDisplayName = existingUser.username;
     saveState();
   }
+  if (existingUser?.trial_start_at)      { state.trialStartAt       = existingUser.trial_start_at;       saveState(); }
+  if (existingUser?.subscription_status) { state.subscriptionStatus = existingUser.subscription_status;  saveState(); }
+  if (existingUser?.subscription_sku)    { state.subscriptionSku    = existingUser.subscription_sku;     saveState(); }
 
   if (!existingUser) {
     // New user — upsert their profile (username will be set in the bottom sheet)
@@ -8209,8 +8222,12 @@ async function _onSupabaseSignIn(user) {
       id: user.id,
       display_name: rawName || tempUsername,
       username: tempUsername,
-      avatar_color: '#C0392B'
+      avatar_color: '#C0392B',
+      trial_start_at: new Date().toISOString()
     });
+    state.trialStartAt = new Date().toISOString();
+    state.subscriptionStatus = 'trial';
+    saveState();
     // Show username setup bottom sheet
     _showUsernameSheet(user.id, rawName);
   } else if (!existingUser.username || existingUser.username.startsWith('user_')) {
@@ -8383,6 +8400,7 @@ async function _checkSupabaseSession() {
       _swStoreUserId(session.user.id);
       _requestNotificationPermission();
       _loadNotifPrefs(); // eager load so settings sub-text is ready
+      _loadAndCheckSubscription();
     _loadChallenges().then(() => { _renderActiveChallengeHomeCard(); _renderActiveChainHomeCard(); }).catch(() => {});
       _maybeHandlePendingNotifOpen();
       if (window._fcmToken) _saveFcmToken(window._fcmToken);
@@ -17015,6 +17033,253 @@ function _stopMidnightCheckInterval() {
   if (_midnightCheckInterval) { clearInterval(_midnightCheckInterval); _midnightCheckInterval = null; }
 }
 
+// ============================================================
+// SUBSCRIPTION / BILLING  (Digital Goods API — TWA only)
+// SKU IDs must match products created in Play Console exactly.
+// ============================================================
+
+const _SKU_MONTHLY = 'ts_muscle_monthly';
+const _SKU_ANNUAL  = 'ts_muscle_annual';
+const _BILLING_URL = 'https://play.google.com/billing';
+
+async function _getDigitalGoodsService() {
+  if (!window.getDigitalGoodsService) return null;
+  try { return await window.getDigitalGoodsService(_BILLING_URL); }
+  catch(_) { return null; }
+}
+
+async function _loadAndCheckSubscription() {
+  if (!state.supabaseUserId) return;
+  const sb = _getSupabaseClient();
+  if (!sb) return;
+
+  // Refresh subscription state from DB (may have changed on another device).
+  try {
+    const { data } = await sb.from('users')
+      .select('trial_start_at, subscription_status, subscription_sku')
+      .eq('id', state.supabaseUserId)
+      .single();
+    if (data?.trial_start_at)      { state.trialStartAt       = data.trial_start_at;      saveState(); }
+    if (data?.subscription_status) { state.subscriptionStatus = data.subscription_status; saveState(); }
+    if (data?.subscription_sku)    { state.subscriptionSku    = data.subscription_sku;    saveState(); }
+  } catch(_) {}
+
+  // If marked active, verify via Digital Goods API that the purchase still exists.
+  if (state.subscriptionStatus === 'active') {
+    const svc = await _getDigitalGoodsService();
+    if (svc) {
+      try {
+        const purchases = await svc.listPurchases();
+        const hasActive = purchases.some(p => p.itemId === _SKU_MONTHLY || p.itemId === _SKU_ANNUAL);
+        if (!hasActive) {
+          state.subscriptionStatus = 'expired';
+          saveState();
+          try { await sb.from('users').update({ subscription_status: 'expired' }).eq('id', state.supabaseUserId); } catch(_) {}
+        }
+      } catch(_) {
+        // Cannot reach Play — trust DB status rather than revoking access.
+      }
+    }
+  }
+
+  // Check if trial window has closed.
+  if (state.subscriptionStatus === 'trial' && state.trialStartAt) {
+    const daysIn = (Date.now() - new Date(state.trialStartAt).getTime()) / 86400000;
+    if (daysIn > 14) {
+      state.subscriptionStatus = 'expired';
+      saveState();
+    }
+  }
+
+  if (state.subscriptionStatus === 'expired') {
+    _showSubscribeScreenAsync();
+    return;
+  }
+
+  _updateSettingsAccountSection();
+}
+
+async function _showSubscribeScreenAsync() {
+  const svc = await _getDigitalGoodsService();
+  if (!svc) return; // web browser — no billing gate
+
+  // Don't stack multiple screens.
+  if (document.getElementById('ts-subscribe-screen')) return;
+
+  let monthlyDetails = null;
+  let annualDetails  = null;
+  try {
+    const details = await svc.getDetails([_SKU_MONTHLY, _SKU_ANNUAL]);
+    monthlyDetails = details.find(d => d.itemId === _SKU_MONTHLY) || null;
+    annualDetails  = details.find(d => d.itemId === _SKU_ANNUAL)  || null;
+  } catch(_) {
+    // Products not yet created in Play Console — skip gate during development.
+    return;
+  }
+
+  _showSubscribeScreen(monthlyDetails, annualDetails);
+}
+
+function _showSubscribeScreen(monthlyDetails, annualDetails) {
+  const el = document.createElement('div');
+  el.id = 'ts-subscribe-screen';
+  el.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0a0a0a;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:0 0 40px;';
+
+  const monthlyPrice = monthlyDetails?.price || '';
+  const annualPrice  = annualDetails?.price  || '';
+
+  const features = [
+    'Full training program with progressive overload',
+    'AI between-set coaching',
+    '1RM challenges with friends',
+    'Workout streaks and volume tracking',
+    'Friend activity and reactions',
+    'Health Connect sync',
+    'Unlimited workout history'
+  ];
+
+  el.innerHTML = `
+    <div style="width:100%;max-width:420px;padding:0 24px;">
+      <div style="text-align:center;padding:48px 0 32px;">
+        <img src="./icon.png" alt="T&S Muscle" style="width:72px;height:72px;margin-bottom:16px;box-shadow:0 0 24px rgba(204,32,39,0.4);border-radius:18px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:32px;letter-spacing:3px;color:#F5E6C8;">T&S MUSCLE</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:3px;color:#666;margin-top:4px;">YOUR FREE TRIAL HAS ENDED</div>
+      </div>
+
+      <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;padding:20px;margin-bottom:20px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;color:#888;margin-bottom:14px;">EVERYTHING INCLUDED</div>
+        ${features.map(f => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><div style="color:#CC2027;font-size:16px;flex-shrink:0;line-height:1.4;">&#10003;</div><div style="font-family:'Barlow',sans-serif;font-size:14px;color:#ccc;line-height:1.4;">${f}</div></div>`).join('')}
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button id="sub-btn-monthly" onclick="_subSelectPlan('monthly')"
+          style="flex:1;padding:16px 8px;border-radius:12px;border:2px solid #CC2027;background:rgba(204,32,39,0.1);color:#F5E6C8;cursor:pointer;text-align:center;">
+          <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;">MONTHLY</div>
+          <div style="font-family:'Barlow',sans-serif;font-size:13px;color:#aaa;margin-top:2px;">${monthlyPrice}</div>
+        </button>
+        <button id="sub-btn-annual" onclick="_subSelectPlan('annual')"
+          style="flex:1;padding:16px 8px;border-radius:12px;border:2px solid #333;background:transparent;color:#F5E6C8;cursor:pointer;text-align:center;position:relative;">
+          <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#CC2027;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px;padding:2px 8px;border-radius:99px;white-space:nowrap;">BEST VALUE</div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;">ANNUAL</div>
+          <div style="font-family:'Barlow',sans-serif;font-size:13px;color:#aaa;margin-top:2px;">${annualPrice}</div>
+        </button>
+      </div>
+
+      <button id="sub-cta-btn" onclick="_purchaseSubscription(_SKU_MONTHLY)"
+        style="width:100%;background:#CC2027;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:18px;border-radius:14px;cursor:pointer;margin-bottom:12px;">
+        SUBSCRIBE
+      </button>
+
+      <button onclick="_restoreSubscriptionPurchases()"
+        style="width:100%;background:none;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;cursor:pointer;">
+        RESTORE PURCHASE
+      </button>
+    </div>`;
+
+  document.body.appendChild(el);
+}
+
+function _subSelectPlan(plan) {
+  const monthly = document.getElementById('sub-btn-monthly');
+  const annual  = document.getElementById('sub-btn-annual');
+  const cta     = document.getElementById('sub-cta-btn');
+  if (!monthly || !annual || !cta) return;
+  if (plan === 'monthly') {
+    monthly.style.borderColor = '#CC2027'; monthly.style.background = 'rgba(204,32,39,0.1)';
+    annual.style.borderColor  = '#333';    annual.style.background  = 'transparent';
+    cta.onclick = function() { _purchaseSubscription(_SKU_MONTHLY); };
+  } else {
+    annual.style.borderColor  = '#CC2027'; annual.style.background  = 'rgba(204,32,39,0.1)';
+    monthly.style.borderColor = '#333';    monthly.style.background = 'transparent';
+    cta.onclick = function() { _purchaseSubscription(_SKU_ANNUAL); };
+  }
+}
+
+async function _purchaseSubscription(sku) {
+  const svc = await _getDigitalGoodsService();
+  if (!svc) return;
+
+  const cta = document.getElementById('sub-cta-btn');
+  if (cta) { cta.disabled = true; cta.textContent = 'PROCESSING...'; }
+
+  try {
+    const request = new PaymentRequest(
+      [{ supportedMethods: _BILLING_URL, data: { sku } }],
+      { total: { label: 'T&S Muscle', amount: { currency: 'USD', value: '0' } } }
+    );
+    if (!await request.canMakePayment()) {
+      showToast('Google Play billing is not available.', 'error');
+      if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
+      return;
+    }
+
+    const response = await request.show();
+    const token    = response.details?.purchaseToken || '';
+    await response.complete('success');
+
+    if (token) {
+      try { await svc.acknowledge(token, 'subscription'); } catch(_) {}
+    }
+
+    const sb2 = _getSupabaseClient();
+    if (sb2 && state.supabaseUserId) {
+      await sb2.from('users').update({
+        subscription_status: 'active',
+        subscription_sku: sku
+      }).eq('id', state.supabaseUserId);
+    }
+    state.subscriptionStatus = 'active';
+    state.subscriptionSku    = sku;
+    saveState();
+
+    document.getElementById('ts-subscribe-screen')?.remove();
+    document.getElementById('trial-banner')?.remove();
+    _updateSettingsAccountSection();
+    showToast('Subscription activated. Welcome to T&S Muscle!');
+
+  } catch(e) {
+    if (e.name !== 'AbortError') showToast('Purchase failed. Please try again.', 'error');
+    if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
+  }
+}
+
+async function _restoreSubscriptionPurchases() {
+  const svc = await _getDigitalGoodsService();
+  if (!svc) return;
+
+  try {
+    const purchases = await svc.listPurchases();
+    const active    = purchases.find(p => p.itemId === _SKU_MONTHLY || p.itemId === _SKU_ANNUAL);
+    if (!active) { showToast('No active subscription found.', 'error'); return; }
+
+    const token = active.purchaseToken || '';
+    if (token) { try { await svc.acknowledge(token, 'subscription'); } catch(_) {} }
+
+    const sb2 = _getSupabaseClient();
+    if (sb2 && state.supabaseUserId) {
+      await sb2.from('users').update({
+        subscription_status: 'active',
+        subscription_sku: active.itemId
+      }).eq('id', state.supabaseUserId);
+    }
+    state.subscriptionStatus = 'active';
+    state.subscriptionSku    = active.itemId;
+    saveState();
+
+    document.getElementById('ts-subscribe-screen')?.remove();
+    document.getElementById('trial-banner')?.remove();
+    _updateSettingsAccountSection();
+    showToast('Subscription restored!');
+
+  } catch(_) { showToast('Could not restore. Please try again.', 'error'); }
+}
+
+function _openSubscriptionManagement() {
+  const sku = state.subscriptionSku || _SKU_MONTHLY;
+  const pkg = 'io.github.jaysolo828_jpg.twa';
+  window.open('https://play.google.com/store/account/subscriptions?sku=' + sku + '&package=' + pkg, '_blank');
+}
+
 function renderHome() {
   _lastRenderedDate = new Date().toDateString();
   _startMidnightCheckInterval();
@@ -17023,6 +17288,23 @@ function renderHome() {
   // paint), then refresh in the background so it's current.
   _renderActiveChallengeHomeCard();
   _renderActiveChainHomeCard();
+
+  // Trial days-left banner — shown when 7 or fewer days remain.
+  const _existingTrialBanner = document.getElementById('trial-banner');
+  if (_existingTrialBanner) _existingTrialBanner.remove();
+  if (state.subscriptionStatus === 'trial' && state.trialStartAt) {
+    const _daysIn   = (Date.now() - new Date(state.trialStartAt).getTime()) / 86400000;
+    const _daysLeft = Math.ceil(14 - _daysIn);
+    if (_daysLeft <= 7 && _daysLeft > 0) {
+      const _trialBanner = document.createElement('div');
+      _trialBanner.id = 'trial-banner';
+      _trialBanner.style.cssText = 'background:rgba(204,32,39,0.1);border:1px solid rgba(204,32,39,0.25);border-radius:12px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;';
+      _trialBanner.innerHTML = `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#CC2027;letter-spacing:1px;">${_daysLeft} DAY${_daysLeft === 1 ? '' : 'S'} LEFT IN TRIAL</div><button onclick="_showSubscribeScreenAsync()" style="background:#CC2027;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1px;padding:7px 14px;border-radius:8px;cursor:pointer;">SUBSCRIBE</button>`;
+      const _homeContent = document.getElementById('home-main-content');
+      if (_homeContent) _homeContent.prepend(_trialBanner);
+    }
+  }
+
   if (state.supabaseUserId) {
     _loadChallenges().then(() => { _renderActiveChallengeHomeCard(); _renderActiveChainHomeCard(); }).catch(() => {});
   }
