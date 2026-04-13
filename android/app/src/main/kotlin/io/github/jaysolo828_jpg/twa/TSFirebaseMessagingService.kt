@@ -69,12 +69,20 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Right side of notification card: sender's profile picture, or app logo as fallback
+        // Right side of notification card: sender's profile picture, or app logo as fallback.
+        // URL is validated to HTTPS and known storage domains before fetching.
         val avatarUrl = message.data["avatar_url"]
         val largeIcon = try {
-            if (!avatarUrl.isNullOrEmpty()) {
-                val stream = java.net.URL(avatarUrl).openStream()
-                BitmapFactory.decodeStream(stream)
+            val parsed = if (!avatarUrl.isNullOrEmpty()) Uri.parse(avatarUrl) else null
+            val allowed = setOf(
+                "lbdnmghpevnqpkldcqfi.supabase.co",
+                "app.therapyandsneakers.org"
+            )
+            if (parsed != null && parsed.scheme == "https" && allowed.contains(parsed.host)) {
+                val conn = java.net.URL(avatarUrl).openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 3000
+                conn.readTimeout = 3000
+                conn.inputStream.use { BitmapFactory.decodeStream(it) }
             } else {
                 BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
             }
