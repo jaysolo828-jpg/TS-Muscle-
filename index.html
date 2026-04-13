@@ -17038,6 +17038,9 @@ function _stopMidnightCheckInterval() {
 // SKU IDs must match products created in Play Console exactly.
 // ============================================================
 
+// Set to true when ready to enforce the paywall in production.
+const _BILLING_LIVE = false;
+
 const _SKU_MONTHLY = 'ts_muscle_monthly';
 const _SKU_ANNUAL  = 'ts_muscle_annual';
 const _BILLING_URL = 'https://play.google.com/billing';
@@ -17091,7 +17094,7 @@ async function _loadAndCheckSubscription() {
     }
   }
 
-  if (state.subscriptionStatus === 'expired') {
+  if (state.subscriptionStatus === 'expired' && _BILLING_LIVE) {
     _showSubscribeScreenAsync();
     return;
   }
@@ -17289,10 +17292,10 @@ function renderHome() {
   _renderActiveChallengeHomeCard();
   _renderActiveChainHomeCard();
 
-  // Trial days-left banner — shown when 7 or fewer days remain.
+  // Trial days-left banner — shown when 7 or fewer days remain (billing live only).
   const _existingTrialBanner = document.getElementById('trial-banner');
   if (_existingTrialBanner) _existingTrialBanner.remove();
-  if (state.subscriptionStatus === 'trial' && state.trialStartAt) {
+  if (_BILLING_LIVE && state.subscriptionStatus === 'trial' && state.trialStartAt) {
     const _daysIn   = (Date.now() - new Date(state.trialStartAt).getTime()) / 86400000;
     const _daysLeft = Math.ceil(14 - _daysIn);
     if (_daysLeft <= 7 && _daysLeft > 0) {
