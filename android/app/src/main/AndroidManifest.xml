@@ -40,7 +40,8 @@
     <application
         android:label="@string/appName"
         android:icon="@mipmap/ic_launcher"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:allowBackup="false">
 
         <activity
             android:name=".MainActivity"
