@@ -25,6 +25,9 @@ class StepPermissionActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Reject any invocation that doesn't carry our custom scheme.
+        if (intent?.scheme != "ts-muscle-step-start") { finish(); return }
+
         // ACTIVITY_RECOGNITION is only a runtime permission on Android 10 (API 29)+.
         // On older versions the hardware sensor is accessible without it.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {

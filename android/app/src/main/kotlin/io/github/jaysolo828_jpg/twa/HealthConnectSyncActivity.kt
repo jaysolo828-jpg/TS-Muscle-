@@ -80,6 +80,12 @@ class HealthConnectSyncActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Reject unexpected external invocations. The only two valid callers are:
+        //   1. Our TWA (scheme = ts-muscle-hc-sync)
+        //   2. The Health Connect permissions screen sending the rationale action
+        val isRationale = intent?.action == "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"
+        if (!isRationale && intent?.scheme != "ts-muscle-hc-sync") { finish(); return }
+
         // Play Store requirement: handle the rationale intent from the
         // Health Connect permissions screen.
         if (intent?.action == "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE") {

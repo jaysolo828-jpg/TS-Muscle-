@@ -35,6 +35,11 @@ class EnableNotificationsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Reject any invocation that doesn't carry our custom scheme.
+        // Prevents external apps from triggering this activity via an
+        // BROWSABLE intent with a different scheme or action.
+        if (intent?.scheme != "ts-muscle-enable-notifs") { finish(); return }
+
         // On Android 12 and below, POST_NOTIFICATIONS does not exist as
         // a runtime permission — notifications are granted by default
         // until the user turns them off in system settings. Nothing to
