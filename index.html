@@ -8772,7 +8772,8 @@ function _socialSetupLater() {
 // ============================================================
 
 const _friendCache = {};       // userId -> { display_name, username, last_active, avatar_color }
-const _mutedFriends = new Set(); // friend user IDs the current user has muted from receiving workout-start notifications
+const _mutedFriends  = new Set(); // friend user IDs the current user has muted from receiving workout-start notifications
+const _blockedUsers  = new Set(); // user IDs the current user has blocked
 // Outgoing friend requests the current user has sent. Used to (a) persist
 // the "SENT ✓" / "CANCEL" button state in the search results across
 // re-renders (user typing a new query) and (b) drive the cancel flow.
@@ -8838,7 +8839,8 @@ function _loadSignalReactionState() {
 // Defined at module scope so both _loadFriendsList (initial render) and
 // _toggleWorkoutMute (in-place update after toggle) can read it.
 const _BELL_OFF_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="#888" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Muted from your workouts" style="flex-shrink:0;"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-const _CHEVRON_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+const _CHEVRON_SVG  = '<svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+const _BLOCK_SVG    = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="#888" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Blocked" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
 let _friendSearchTimer = null; // debounce handle for username search
 
 // Returns true if a hex color is light enough to need black text
@@ -9235,10 +9237,13 @@ async function _doFriendSearch(query) {
 
   data.forEach(u => { _friendCache[u.id] = u; });
   results.innerHTML = data.map(u => {
+    const isBlocked   = _blockedUsers.has(u.id);
     const hasOutgoing = !!_outgoingFriendRequests[u.id];
-    const btnHtml = hasOutgoing
-      ? `<button onclick="_cancelFriendRequest('${u.id}',this)" style="background:transparent;border:1px solid #444;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">CANCEL</button>`
-      : `<button onclick="_sendFriendRequest('${u.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">ADD FRIEND</button>`;
+    const btnHtml = isBlocked
+      ? `<button onclick="_unblockUser('${u.id}',this)" style="background:transparent;border:1px solid #444;color:#888;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">BLOCKED</button>`
+      : hasOutgoing
+        ? `<button onclick="_cancelFriendRequest('${u.id}',this)" style="background:transparent;border:1px solid #444;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">CANCEL</button>`
+        : `<button onclick="_sendFriendRequest('${u.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">ADD FRIEND</button>`;
     return `<div id="friend-search-row-${u.id}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1a1a1a;border-radius:10px;margin-bottom:6px;">
       <div style="display:flex;align-items:center;gap:10px;">
         ${_avatarHtml(u.display_name, u.avatar_color, 32, u.avatar_url)}
@@ -9492,15 +9497,18 @@ async function _loadFriendsList() {
   // no extra round-trip. Users sorted by last_active desc so recently-
   // active crew bubble to the top (nullsFirst: false pushes users who
   // have never been seen to the bottom).
-  const [{ data: users }, { data: mutes }] = await Promise.all([
+  const [{ data: users }, { data: mutes }, { data: blocks }] = await Promise.all([
     sb.from('users')
       .select('id, display_name, username, last_active, avatar_color, avatar_url')
       .in('id', friendIds)
       .order('last_active', { ascending: false, nullsFirst: false }),
-    sb.from('workout_notif_mutes').select('muted_friend_id').eq('muter_id', state.supabaseUserId)
+    sb.from('workout_notif_mutes').select('muted_friend_id').eq('muter_id', state.supabaseUserId),
+    sb.from('blocked_users').select('blocked_id').eq('blocker_id', state.supabaseUserId)
   ]);
   _mutedFriends.clear();
   (mutes || []).forEach(m => { _mutedFriends.add(m.muted_friend_id); });
+  _blockedUsers.clear();
+  (blocks || []).forEach(b => { _blockedUsers.add(b.blocked_id); });
 
   if (!users || users.length === 0) {
     list.innerHTML = `<div style="text-align:center;padding:24px 12px 8px;">
@@ -9580,7 +9588,23 @@ async function _openFriendActivity(userId, signalId) {
           <div style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(${_mutedFriends.has(userId) ? '0' : '18px'});"></div>
         </div>
       </div>
-      <button onclick="_removeFriend('${userId}')" style="width:100%;margin-top:10px;background:transparent;border:1px solid #333;color:#666;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;padding:12px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">REMOVE FRIEND</button>
+      <div style="margin-top:14px;background:var(--dark2);border-radius:12px;overflow:hidden;">
+        <div style="padding:9px 16px;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gray);border-bottom:1px solid rgba(255,255,255,0.05);">MANAGE</div>
+        <div onclick="_removeFriend('${userId}')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);-webkit-tap-highlight-color:transparent;">
+          <div style="flex:1;min-width:0;padding-right:12px;">
+            <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:var(--cream);letter-spacing:1.5px;line-height:1.1;margin-bottom:3px;">REMOVE FRIEND</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:0.3px;line-height:1.3;">Ends your friendship. They can send a request again later.</div>
+          </div>
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div onclick="_blockUser('${userId}')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+          <div style="flex:1;min-width:0;padding-right:12px;">
+            <div style="font-family:'Bebas Neue',cursive;font-size:15px;color:#e74c3c;letter-spacing:1.5px;line-height:1.1;margin-bottom:3px;">BLOCK USER</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:0.3px;line-height:1.3;">Prevents all interaction. They won't know they've been blocked.</div>
+          </div>
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="#e74c3c" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
     </div>`;
   document.body.appendChild(sheet);
   sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
@@ -9736,6 +9760,124 @@ async function _openFriendActivity(userId, signalId) {
 
 // Per-friend mute for workout-start notifications. Toggles whether the
 // edge function fans out "I'm in the gym" notifications to this friend
+// ── Block / Unblock ──────────────────────────────────────────────────────────
+
+function _blockUser(userId) {
+  haptic(HAPTIC.warning);
+  const cached      = _friendCache[userId];
+  const displayStr  = cached?.username ? '@' + escapeHtml(cached.username) : escapeHtml(cached?.display_name || 'this user');
+
+  const existing = document.getElementById('block-user-confirm-sheet');
+  if (existing) existing.remove();
+
+  const sheet = document.createElement('div');
+  sheet.id = 'block-user-confirm-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid rgba(231,76,60,0.3);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.25);border-radius:10px;padding:9px;flex-shrink:0;">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="#e74c3c" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        </div>
+        <div>
+          <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:#e74c3c;letter-spacing:2px;line-height:1;">BLOCK USER</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:3px;">${displayStr}</div>
+        </div>
+      </div>
+      <div style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--gray-light);margin-bottom:24px;line-height:1.6;">They won't be able to find your profile, send friend requests, or see your activity. They won't know they've been blocked.</div>
+      <button onclick="haptic(HAPTIC.warning);this.disabled=true;this.textContent='BLOCKING...';_confirmBlockUser('${userId}')"
+        style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px;">
+        BLOCK
+      </button>
+      <button onclick="document.getElementById('block-user-confirm-sheet').remove()"
+        style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+        CANCEL
+      </button>
+    </div>`;
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+}
+
+async function _confirmBlockUser(userId) {
+  setTimeout(() => document.getElementById('block-user-confirm-sheet')?.remove(), 150);
+
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) { showToast('Could not block user. Try again.'); return; }
+
+  const { error: blockError } = await sb.from('blocked_users').upsert(
+    { blocker_id: state.supabaseUserId, blocked_id: userId },
+    { onConflict: 'blocker_id,blocked_id' }
+  );
+  if (blockError) { showToast('Could not block user. Try again.'); return; }
+
+  // Remove friendship both directions — best effort.
+  const myId         = state.supabaseUserId;
+  const supabaseUrl  = window.SUPABASE_URL || '';
+  const anonKey      = window.SUPABASE_PUBLISHABLE_KEY || '';
+  const jwt          = await _getJwt();
+  if (jwt && supabaseUrl) {
+    await Promise.all([
+      fetch(`${supabaseUrl}/rest/v1/friendships?requester_id=eq.${myId}&addressee_id=eq.${userId}`, {
+        method: 'DELETE', headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' }
+      }),
+      fetch(`${supabaseUrl}/rest/v1/friendships?requester_id=eq.${userId}&addressee_id=eq.${myId}`, {
+        method: 'DELETE', headers: { apikey: anonKey, Authorization: `Bearer ${jwt}`, Prefer: 'return=minimal' }
+      })
+    ]).catch(() => {});
+  }
+
+  // Cancel any shared active challenges — best effort.
+  try {
+    await sb.from('challenges')
+      .update({ status: 'cancelled' })
+      .in('status', ['pending', 'active'])
+      .or(
+        'and(challenger_id.eq.' + myId + ',challenged_id.eq.' + userId + '),' +
+        'and(challenger_id.eq.' + userId + ',challenged_id.eq.' + myId + ')'
+      );
+  } catch(_) {}
+
+  _blockedUsers.add(userId);
+
+  try {
+    await _loadChallenges();
+    _renderChallengesListHtml();
+    _renderActiveChallengeHomeCard();
+    _renderActiveChainHomeCard();
+  } catch(_) {}
+
+  document.getElementById('friend-activity-sheet')?.remove();
+  showToast('User blocked.');
+  _renderFriendsSection();
+}
+
+async function _unblockUser(userId, btn) {
+  haptic(HAPTIC.click);
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  const { error } = await sb.from('blocked_users')
+    .delete()
+    .eq('blocker_id', state.supabaseUserId)
+    .eq('blocked_id', userId);
+
+  if (error) {
+    showToast('Could not unblock. Try again.', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'BLOCKED'; }
+    return;
+  }
+
+  _blockedUsers.delete(userId);
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'ADD FRIEND';
+    btn.style.cssText = btn.style.cssText.replace(/background:[^;]+/, 'background:#C0392B').replace(/color:[^;]+/, 'color:#fff').replace(/border:[^;]+/, 'border:none');
+    btn.onclick = function() { _sendFriendRequest(userId, this); };
+  }
+  showToast('Unblocked.');
+}
+
 // when the current user starts training. Optimistic update for instant
 // feedback; reverts the visual + shows a toast on DB error.
 async function _toggleWorkoutMute(userId) {
