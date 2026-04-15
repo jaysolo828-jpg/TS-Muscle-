@@ -188,7 +188,7 @@
 
   <div class="container">
 
-    <p class="updated">Last updated: April 1, 2025</p>
+    <p class="updated">Last updated: April 15, 2025</p>
 
     <section>
       <h2>Overview</h2>
@@ -217,6 +217,15 @@
           <li>Sets, reps, weights, and progress over time</li>
           <li>Session check-ins and feature preferences</li>
         </ul>
+
+        <p style="margin-top:16px;"><strong>Health &amp; Fitness Data from Health Connect</strong> <span style="color:#888;font-size:13px;">(Android only, only if you grant permission)</span></p>
+        <ul>
+          <li>Exercise sessions — type, duration, and start/end time</li>
+          <li>Distance traveled during a session</li>
+          <li>Total calories burned during a session</li>
+          <li>Step count during a session</li>
+        </ul>
+        <p style="margin-top:8px;color:#888;font-size:14px;">This data is read from Google Health Connect only when you tap "Sync from Health Connect" or when a background sync runs. Only walking and running sessions of 10 minutes or more are imported. This data is used solely to log your cardio sessions and track progress in group movement challenges within the app. It is never sold or shared with third parties.</p>
 
         <p style="margin-top:16px;"><strong>Social Data</strong> <span style="color:#888;font-size:13px;">(only if Social Features are enabled)</span></p>
         <ul>
@@ -268,6 +277,11 @@
               <td>Push notifications for training reminders</td>
               <td><a href="https://onesignal.com/privacy_policy" target="_blank">onesignal.com/privacy</a></td>
             </tr>
+            <tr>
+              <td><strong>Google Health Connect</strong></td>
+              <td>Reading exercise sessions, distance, calories, and steps on Android (only with your permission)</td>
+              <td><a href="https://policies.google.com/privacy" target="_blank">policies.google.com/privacy</a></td>
+            </tr>
           </tbody>
         </table>
         <p class="highlight" style="margin-top:16px;">When workout data is sent to the Claude API, Anthropic processes it under their API data policy. By default, API data is not used to train Anthropic's models.</p>
@@ -279,6 +293,18 @@
       <div class="card">
         <p>Your data is stored on Supabase's servers with industry-standard encryption in transit and at rest. Some preferences are also stored locally on your device.</p>
         <p>We take reasonable steps to protect your data, but no system is completely secure. Use a strong password and keep your credentials private.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Health Connect Data</h2>
+      <div class="card">
+        <p>On Android, T&amp;S Muscle can connect to <strong>Google Health Connect</strong> to import your walking and running sessions. This is entirely optional and requires your explicit permission.</p>
+        <p style="margin-top:12px;"><strong>What we read:</strong> exercise session type, duration, distance, calories burned, and step count — for sessions of 10 minutes or more.</p>
+        <p style="margin-top:12px;"><strong>How we use it:</strong> solely to log your cardio activity and count progress toward group movement challenges inside the app.</p>
+        <p style="margin-top:12px;"><strong>What we never do:</strong> we do not sell, share, or transfer your Health Connect data to any third party for advertising, analytics, or any other purpose.</p>
+        <p style="margin-top:12px;"><strong>Revoking access:</strong> you can remove Health Connect permissions at any time in your device's Health Connect settings under App permissions.</p>
+        <p style="margin-top:12px;">Health Connect data handling is governed by <a href="https://policies.google.com/privacy" target="_blank" style="color:#e8404a;text-decoration:none;">Google's Privacy Policy</a>.</p>
       </div>
     </section>
 
