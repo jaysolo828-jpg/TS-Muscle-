@@ -197,6 +197,7 @@ class StepCounterService : Service(), SensorEventListener {
             .setSmallIcon(R.drawable.ic_ts_notification)
             .setContentTitle("Workout in progress")
             .setContentText(contentText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setContentIntent(tapPi)
             .setOngoing(true)
             .addAction(0, actionLabel, actionPi)
