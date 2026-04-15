@@ -663,6 +663,11 @@
     box-shadow: 0 0 0 2px rgba(204,32,39,0.3) !important;
   }
 
+@keyframes ts-rec-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
 @keyframes backBtnPulse {
     0%   { transform: scale(1); box-shadow: none; }
     40%  { transform: scale(1.08); box-shadow: 0 0 0 4px rgba(245,230,200,0.15); }
@@ -3226,7 +3231,10 @@
   <!-- ACTIVE: live tracking view (hidden until START) -->
   <div id="cardio-active-view" style="display:none;margin-bottom:22px;">
     <div style="background:var(--dark2);border:1px solid rgba(204,32,39,0.3);border-radius:16px;padding:24px;text-align:center;">
-      <div id="cardio-active-label" style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--red);letter-spacing:3px;margin-bottom:6px;">TREADMILL IN PROGRESS</div>
+      <div id="cardio-active-label" style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--red);letter-spacing:3px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span id="cardio-rec-dot" style="width:8px;height:8px;background:var(--red);border-radius:50%;flex-shrink:0;animation:ts-rec-pulse 1.4s ease-in-out infinite;"></span>
+        <span id="cardio-active-type">TREADMILL IN PROGRESS</span>
+      </div>
       <div id="cardio-live-timer" style="font-family:'Bebas Neue',cursive;font-size:72px;color:var(--cream);letter-spacing:2px;line-height:1;margin-bottom:8px;">0:00</div>
       <div id="cardio-live-steps" style="display:none;margin-bottom:16px;">
         <span id="cardio-steps-count" style="font-family:'Bebas Neue',cursive;font-size:36px;color:var(--cream);letter-spacing:1px;line-height:1;">0</span>
@@ -36978,10 +36986,14 @@ function _startTrackingWorkout() {
   _cardioTrackedSteps = 0;
   const labelEl = document.getElementById('cardio-active-label');
   const typeNames = { treadmill:'TREADMILL', outdoor:'RUN', walk:'WALK', briskwalk:'BRISK WALK', jog:'JOG' };
-  if (labelEl) labelEl.textContent = (typeNames[cardioType] || cardioType.toUpperCase()) + ' IN PROGRESS';
+  const typeEl = document.getElementById('cardio-active-type');
+  if (typeEl) typeEl.textContent = (typeNames[cardioType] || cardioType.toUpperCase()) + ' IN PROGRESS';
   document.getElementById('cardio-idle-view').style.display = 'none';
   document.getElementById('cardio-active-view').style.display = 'block';
   document.getElementById('cardio-log-section').style.display = 'none';
+  // Reset recording dot to pulsing state
+  const recDot = document.getElementById('cardio-rec-dot');
+  if (recDot) recDot.style.animationPlayState = 'running';
   // Reset steps display
   const stepsCount = document.getElementById('cardio-steps-count');
   const stepsRow = document.getElementById('cardio-live-steps');
@@ -36994,8 +37006,11 @@ function _startTrackingWorkout() {
       _updateTrackingDisplay();
     }
   }, 1000);
-  // On Android: launch StepCounterService via native bridge, then start polling
+  // On Android: show steps placeholder immediately so user knows sensor is initializing,
+  // then launch StepCounterService and start polling
   if (!!window._fcmToken) {
+    if (stepsCount) stepsCount.textContent = '\u2014';
+    if (stepsRow)   stepsRow.style.display = 'block';
     window.location.href = 'intent://start#Intent;scheme=ts-muscle-step-start;package=io.github.jaysolo828_jpg.twa;end';
     setTimeout(_startStepPolling, 2000);
   }
@@ -37029,6 +37044,8 @@ function _pauseTrackingWorkout() {
   _cardioTrackingPaused = !_cardioTrackingPaused;
   const btn = document.getElementById('cardio-pause-btn');
   if (btn) btn.textContent = _cardioTrackingPaused ? 'RESUME' : 'PAUSE';
+  const dot = document.getElementById('cardio-rec-dot');
+  if (dot) dot.style.animationPlayState = _cardioTrackingPaused ? 'paused' : 'running';
   haptic(HAPTIC.light);
 }
 
