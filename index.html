@@ -12580,8 +12580,14 @@ function _renderActiveChallengeHomeCard() {
   });
 
   // Find the most recent active 1RM challenge for this user.
+  // Exclude challenges the user has quit — the challenge row stays 'active'
+  // for the remaining participants, but their own card should clear.
   const active = (_challenges || [])
     .filter(c => c.status === 'active' && c.challenge_type === 'one_rep_max')
+    .filter(c => {
+      const me = (c.participants || []).find(p => p.user_id === state.supabaseUserId);
+      return !me || me.status !== 'left';
+    })
     .sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
 
   if (!active.length) {
@@ -14036,7 +14042,12 @@ async function _quitCYHNow(challengeId) {
 function _renderActiveCYHHomeCard() {
   const existing = document.getElementById('cyh-home-card');
   if (existing) existing.remove();
-  const active = (_challenges || []).filter(c => c.status === 'active' && c.challenge_type === 'clear_your_head');
+  const active = (_challenges || [])
+    .filter(c => c.status === 'active' && c.challenge_type === 'clear_your_head')
+    .filter(c => {
+      const me = (c.challenge_participants || []).find(p => p.user_id === state.supabaseUserId);
+      return !me || me.status !== 'left';
+    });
   if (!active.length) return;
   const ch = active[0];
   const now = new Date();
