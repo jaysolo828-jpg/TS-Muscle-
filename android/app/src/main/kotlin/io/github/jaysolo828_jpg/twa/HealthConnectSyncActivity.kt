@@ -96,7 +96,13 @@ class HealthConnectSyncActivity : Activity() {
                           "Only sessions of 10 minutes or more are counted. " +
                           "No data is shared with third parties.",
                 positive       = "Got it",
-                positiveAction = { finish() }
+                positiveAction = { finish() },
+                negative       = "Privacy Policy",
+                negativeAction = {
+                    startActivity(Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://app.therapyandsneakers.org/privacy.html")))
+                    finish()
+                }
             )
             return
         }
