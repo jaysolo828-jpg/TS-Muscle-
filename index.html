@@ -36684,6 +36684,7 @@ function resetCycleAfterGap() {
 
 function checkInactivityPrompt() {
   if (state.programPaused) return;
+  if (state.isRestWeek) return;
   if (!state.history || state.history.length === 0) return;
   const lastSession = state.history[state.history.length - 1];
   if (!lastSession) return;
