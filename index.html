@@ -12571,7 +12571,14 @@ function _renderActiveChallengeHomeCard() {
   _renderActiveCYHHomeCard();
 
   // Aux challenges get their own async home card. Render each separately.
-  const auxActive = (_challenges || []).filter(c => c.status === 'active' && c.challenge_type === 'control_the_aux');
+  // Exclude ones the user has quit — the cleanup loop below removes their
+  // stale card because the quit challenge is no longer in auxActive.
+  const auxActive = (_challenges || [])
+    .filter(c => c.status === 'active' && c.challenge_type === 'control_the_aux')
+    .filter(c => {
+      const me = (c.challenge_participants || []).find(p => p.user_id === state.supabaseUserId);
+      return !me || me.status !== 'left';
+    });
   for (const auxCh of auxActive) { _renderActiveAuxHomeCard(auxCh); }
   // Remove stale aux cards for challenges no longer active
   document.querySelectorAll('[id^="aux-home-card-"]').forEach(el => {
@@ -12580,8 +12587,14 @@ function _renderActiveChallengeHomeCard() {
   });
 
   // Find the most recent active 1RM challenge for this user.
+  // Exclude challenges the user has quit — the challenge row stays 'active'
+  // for the remaining participants, but their own card should clear.
   const active = (_challenges || [])
     .filter(c => c.status === 'active' && c.challenge_type === 'one_rep_max')
+    .filter(c => {
+      const me = (c.participants || []).find(p => p.user_id === state.supabaseUserId);
+      return !me || me.status !== 'left';
+    })
     .sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
 
   if (!active.length) {
@@ -13350,7 +13363,12 @@ function _buildDotGrid(ch, workoutsByUser, dotColorById, dayElapsed, joined, nam
 function _renderActiveChainHomeCard() {
   const existing = document.getElementById('chain-home-card');
   if (existing) existing.remove();
-  const active = (_challenges || []).filter(c => c.status === 'active' && c.challenge_type === 'dont_break_chain');
+  const active = (_challenges || [])
+    .filter(c => c.status === 'active' && c.challenge_type === 'dont_break_chain')
+    .filter(c => {
+      const me = (c.challenge_participants || []).find(p => p.user_id === state.supabaseUserId);
+      return !me || me.status !== 'left';
+    });
   if (!active.length) return;
   const ch = active[0];
   const startDate = ch.start_date ? new Date(ch.start_date) : null;
@@ -14036,7 +14054,12 @@ async function _quitCYHNow(challengeId) {
 function _renderActiveCYHHomeCard() {
   const existing = document.getElementById('cyh-home-card');
   if (existing) existing.remove();
-  const active = (_challenges || []).filter(c => c.status === 'active' && c.challenge_type === 'clear_your_head');
+  const active = (_challenges || [])
+    .filter(c => c.status === 'active' && c.challenge_type === 'clear_your_head')
+    .filter(c => {
+      const me = (c.challenge_participants || []).find(p => p.user_id === state.supabaseUserId);
+      return !me || me.status !== 'left';
+    });
   if (!active.length) return;
   const ch = active[0];
   const now = new Date();
