@@ -15439,6 +15439,12 @@ async function _updateSocialNotifyDot() {
   if (!sb) { dot.style.display = 'none'; return; }
   try {
     const lastSeen = state.socialLastSeen || '1970-01-01T00:00:00.000Z';
+    // Scope the reaction count to today only — reactions from previous days
+    // never show in "Today's Reactions" and socialLastSeen never advances past
+    // them, causing a permanent stuck badge. Using max(lastSeen, todayMidnight)
+    // means old reactions can't hold the badge open.
+    const todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
+    const rxnSince = lastSeen > todayMidnight.toISOString() ? lastSeen : todayMidnight.toISOString();
     const [pendingRes, rxnRes] = await Promise.all([
       sb.from('friendships')
         .select('id', { count: 'exact', head: true })
@@ -15447,7 +15453,7 @@ async function _updateSocialNotifyDot() {
       sb.from('reactions')
         .select('id', { count: 'exact', head: true })
         .eq('to_user_id', state.supabaseUserId)
-        .gt('created_at', lastSeen)
+        .gt('created_at', rxnSince)
     ]);
     // If either query errored, don't change dot state — leave as-is
     if (pendingRes.error || rxnRes.error) return;
