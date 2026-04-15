@@ -187,15 +187,17 @@ class StepCounterService : Service(), SensorEventListener {
 
         val actionLabel  = if (isPaused) "Resume" else "Pause"
         val actionAction = if (isPaused) ACTION_RESUME else ACTION_PAUSE
-        val actionIcon   = Icon.createWithResource(
-            "android",
-            if (isPaused) android.R.drawable.ic_media_play else android.R.drawable.ic_media_pause
-        )
         val actionIntent = Intent(this, StepCounterService::class.java).apply { action = actionAction }
         val actionPi = PendingIntent.getService(
             this, 1, actionIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
+        val action = Notification.Action.Builder(
+            Icon.createWithResource(this, R.drawable.ic_ts_notification),
+            actionLabel,
+            actionPi
+        ).build()
 
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
@@ -209,9 +211,8 @@ class StepCounterService : Service(), SensorEventListener {
             .setContentText(contentText)
             .setContentIntent(tapPi)
             .setOngoing(true)
-            .addAction(
-                Notification.Action.Builder(actionIcon, actionLabel, actionPi).build()
-            )
+            .addAction(action)
+            .setStyle(Notification.MediaStyle().setShowActionsInCompactView(0))
             .build()
     }
 
