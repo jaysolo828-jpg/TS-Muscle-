@@ -23,10 +23,10 @@ jobs:
           KEYSTORE_PATH: ${{ github.workspace }}/signing.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.6-bin.zip -O /tmp/gradle.zip
+          wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp
           printf 'android.useAndroidX=true\nandroid.enableJetifier=true\n' > gradle.properties
-          /tmp/gradle-8.6/bin/gradle wrapper --gradle-version 8.6
+          /tmp/gradle-8.11.1/bin/gradle wrapper --gradle-version 8.11.1
           chmod +x gradlew
           ./gradlew bundleRelease --no-daemon
 
