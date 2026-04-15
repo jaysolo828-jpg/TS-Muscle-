@@ -3570,7 +3570,7 @@
 <!-- ============================================================
      ONBOARDING MODAL
      ============================================================ -->
-<div id="onboarding-modal" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:9900; overflow-y:auto;">
+<div id="onboarding-modal" role="dialog" aria-label="Onboarding setup" aria-modal="true" style="display:none; position:fixed; inset:0; background:#0a0a0a; z-index:9900; overflow-y:auto;">
   <!-- Exit bar: visible only when entering via Settings → Redo Initial Setup -->
   <div id="ob-exit-bar" style="display:none; position:sticky; top:0; z-index:1; background:#0a0a0a; padding:14px 20px 0; text-align:right;">
     <button onclick="closeOnboardingModal()" style="background:none; border:none; color:var(--red-text); font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; padding:4px 0;">← BACK TO SETTINGS</button>
@@ -3611,28 +3611,28 @@
             <div style="font-size:24px; flex-shrink:0; width:32px; text-align:center;">🏋️</div>
             <div>
               <div style="font-size:15px; font-weight:700; color:var(--cream); margin-bottom:2px;">Weights that adapt</div>
-              <div style="font-size:14px; color:#ccc; line-height:1.45;">Goes up when you're ready. Never before.</div>
+              <div style="font-size:14px; color:#d0cbc6; line-height:1.45;">Goes up when you're ready. Never before.</div>
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:14px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);">
             <div style="font-size:24px; flex-shrink:0; width:32px; text-align:center;">🧠</div>
             <div>
               <div style="font-size:15px; font-weight:700; color:var(--cream); margin-bottom:2px;">Mental health built in</div>
-              <div style="font-size:14px; color:#ccc; line-height:1.45;">Mood check-ins and mindset tools alongside your training.</div>
+              <div style="font-size:14px; color:#d0cbc6; line-height:1.45;">Mood check-ins and mindset tools alongside your training.</div>
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:14px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);">
             <div style="font-size:24px; flex-shrink:0; width:32px; text-align:center;">🏃</div>
             <div>
               <div style="font-size:15px; font-weight:700; color:var(--cream); margin-bottom:2px;">Cardio counts too</div>
-              <div style="font-size:14px; color:#ccc; line-height:1.45;">Runs, rides, walks — all in the same place.</div>
+              <div style="font-size:14px; color:#d0cbc6; line-height:1.45;">Runs, rides, walks — all in the same place.</div>
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:14px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);">
             <div style="font-size:24px; flex-shrink:0; width:32px; text-align:center;">📈</div>
             <div>
               <div style="font-size:15px; font-weight:700; color:var(--cream); margin-bottom:2px;">Watch yourself grow</div>
-              <div style="font-size:14px; color:#ccc; line-height:1.45;">PRs, volume, your T&amp;S Strength Score.</div>
+              <div style="font-size:14px; color:#d0cbc6; line-height:1.45;">PRs, volume, your T&amp;S Strength Score.</div>
             </div>
           </div>
         </div>
@@ -3667,11 +3667,11 @@
         <div style="background:var(--dark3); border:1px solid rgba(204,32,39,0.2); border-radius:14px; padding:14px 16px; margin-bottom:20px;">
           <div style="font-size:13px; color:var(--gray); letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-bottom:10px;">THE FULL SCALE</div>
           <div style="display:flex; flex-direction:column; gap:0;">
-            <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="font-size:15px; color:#bbb; font-weight:600;">RPE 6</span><span style="font-size:15px; color:#bbb;">Easy — 4+ reps left</span></div>
-            <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="font-size:15px; color:#bbb; font-weight:600;">RPE 7</span><span style="font-size:15px; color:#bbb;">Solid — 3 reps left</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="font-size:15px; color:#d0cbc6; font-weight:600;">RPE 6</span><span style="font-size:15px; color:#d0cbc6;">Easy — 4+ reps left</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="font-size:15px; color:#d0cbc6; font-weight:600;">RPE 7</span><span style="font-size:15px; color:#d0cbc6;">Solid — 3 reps left</span></div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 10px; border-radius:8px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.4); margin:4px 0;"><span style="font-size:15px; color:var(--cream); font-weight:700;">RPE 8</span><span style="font-size:15px; color:var(--cream); font-weight:600;">← your target</span></div>
-            <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="font-size:15px; color:#bbb; font-weight:600;">RPE 9</span><span style="font-size:15px; color:#bbb;">Hard — 1 rep left</span></div>
-            <div style="display:flex; justify-content:space-between; padding:7px 0;"><span style="font-size:15px; color:#bbb; font-weight:600;">RPE 10</span><span style="font-size:15px; color:#bbb;">Max — nothing left</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="font-size:15px; color:#d0cbc6; font-weight:600;">RPE 9</span><span style="font-size:15px; color:#d0cbc6;">Hard — 1 rep left</span></div>
+            <div style="display:flex; justify-content:space-between; padding:7px 0;"><span style="font-size:15px; color:#d0cbc6; font-weight:600;">RPE 10</span><span style="font-size:15px; color:#d0cbc6;">Max — nothing left</span></div>
           </div>
         </div>
         <div class="ob-button-row" style="flex-direction:column; gap:12px;">
@@ -3727,7 +3727,7 @@
             <span style="font-size:26px;">💪</span>
             <div>
               <div style="font-weight:bold; font-size:16px;">I'm New — Build My Program</div>
-              <div style="font-size:14px; color:#bbb; margin-top:4px;">~2 minutes. Your program is ready when you're done.</div>
+              <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">~2 minutes. Your program is ready when you're done.</div>
             </div>
           </div>
         </button>
@@ -3736,7 +3736,7 @@
             <span style="font-size:26px;">📲</span>
             <div>
               <div style="font-weight:bold; font-size:16px;">Restore from Backup</div>
-              <div style="font-size:14px; color:#bbb; margin-top:4px;">Pick up exactly where you left off on another device.</div>
+              <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Pick up exactly where you left off on another device.</div>
             </div>
           </div>
         </button>
@@ -3755,21 +3755,23 @@
       <div style="display:flex; gap:10px; margin-bottom:16px;">
         <div style="flex:1;">
           <div style="font-size:14px; color:var(--gray-light); letter-spacing:1px; margin-bottom:6px;">YOUR NAME</div>
-          <input type="text" id="ob-name" class="set-input" placeholder="e.g. Marcus" style="width:100%; padding:12px 14px; text-align:left;"/>
+          <input type="text" id="ob-name" class="set-input" placeholder="Your name" autocomplete="given-name" autocapitalize="words" style="width:100%; padding:12px 14px; text-align:left;"/>
         </div>
         <div style="width:90px;">
           <div style="font-size:14px; color:var(--gray-light); letter-spacing:1px; margin-bottom:6px;">AGE</div>
-          <input type="number" id="ob-age" class="set-input" inputmode="numeric" placeholder="28" min="13" max="100" style="width:100%; padding:12px 10px; text-align:left;"/>
+          <input type="number" id="ob-age" class="set-input" inputmode="numeric" placeholder="28" min="13" max="100" autocomplete="off" style="width:100%; padding:12px 10px; text-align:left;"/>
         </div>
       </div>
 
       <div style="margin-bottom:16px;">
-        <div style="font-size:14px; color:var(--gray-light); letter-spacing:1px; margin-bottom:6px;">BODYWEIGHT (LBS) <span style="font-weight:400; font-size:13px; letter-spacing:0; opacity:0.7;">— used to set your starting isolation weights</span></div>
+        <div style="font-size:14px; color:var(--gray-light); letter-spacing:1px; margin-bottom:4px;">BODYWEIGHT (LBS)</div>
+        <div style="font-size:13px; color:#c0bbb6; margin-bottom:8px; line-height:1.5; letter-spacing:0;">Used to set your starting isolation weights.</div>
         <input type="number" id="ob-bodyweight" class="set-input" inputmode="decimal" placeholder="e.g. 185" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
 
       <div style="margin-bottom:16px;">
-        <div style="font-size:14px; color:var(--gray-light); letter-spacing:1px; margin-bottom:8px;">BIOLOGICAL SEX <span style="font-weight:400; font-size:13px; letter-spacing:0; opacity:0.7;">— for your Strength Score benchmarks, never shared</span></div>
+        <div style="font-size:14px; color:var(--gray-light); letter-spacing:1px; margin-bottom:4px;">BIOLOGICAL SEX</div>
+        <div style="font-size:13px; color:#c0bbb6; margin-bottom:8px; line-height:1.5; letter-spacing:0;">Used only for your Strength Score benchmarks. Never shared.</div>
         <div style="display:flex; gap:10px;">
           <button class="onboard-select-btn" id="ob-sex-male-btn" onclick="selectObSex('male')" style="flex:1; padding:14px 8px; text-align:center;">
             <div style="font-weight:bold;">Male</div>
@@ -3801,7 +3803,11 @@
       </div>
 
       <div style="margin-bottom:24px;">
-        <div style="font-size:14px; color:var(--gray-light); letter-spacing:1px; margin-bottom:6px;">WHY DO YOU TRAIN? <span style="font-weight:400; font-size:13px; letter-spacing:0; opacity:0.7;">(optional — the app will show this back to you when you need it)</span></div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <span style="font-size:14px; color:var(--gray-light); letter-spacing:1px;">WHY DO YOU TRAIN?</span>
+          <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:11px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
+        </div>
+        <div style="font-size:13px; color:#c0bbb6; margin-bottom:8px; line-height:1.5;">The app will show this back to you on hard days.</div>
         <input type="text" id="ob-why-train" class="set-input" placeholder="e.g. To feel stronger and show up for the people I love" style="width:100%; padding:12px 14px; text-align:left;"/>
       </div>
 
@@ -3836,19 +3842,19 @@
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
         <button class="onboard-select-btn" onclick="selectGoalOnboard('size', this)">
           <div style="font-weight:bold; font-size:16px;">Build Size</div>
-          <div style="font-size:14px; color:#bbb; margin-top:4px;">Higher reps. More muscle. Change how you look.</div>
+          <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Higher reps. More muscle. Change how you look.</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('strength', this)">
           <div style="font-weight:bold; font-size:16px;">Build Strength</div>
-          <div style="font-size:14px; color:#bbb; margin-top:4px;">Lower reps. Heavier weights. Get stronger on your main lifts.</div>
+          <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Lower reps. Heavier weights. Get stronger on your main lifts.</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('both', this)">
           <div style="font-weight:bold; font-size:16px;">Size &amp; Strength</div>
-          <div style="font-size:14px; color:#bbb; margin-top:4px;">Powerbuilding balance. Bigger and stronger at the same time.</div>
+          <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Powerbuilding balance. Bigger and stronger at the same time.</div>
         </button>
         <button class="onboard-select-btn" onclick="selectGoalOnboard('wellness', this)">
           <div style="font-weight:bold; font-size:16px;">Mental Health / Wellness</div>
-          <div style="font-size:14px; color:#bbb; margin-top:4px;">Lift for your head as much as your body. 3 days, moderate effort, no grinding.</div>
+          <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Lift for your head as much as your body. 3 days, moderate effort, no grinding.</div>
         </button>
       </div>
       <div id="ob-goal-echo" style="display:none; margin-bottom:16px; background:rgba(204,32,39,0.08); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; font-size:14px; color:var(--cream); line-height:1.6;"></div>
@@ -3873,7 +3879,7 @@
         <div id="ob-priority-section">
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
             <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">ANY PRIORITY AREAS?</span>
-            <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
+            <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:11px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
           </div>
           <div style="font-size:14px; color:#d0cbc6; margin-bottom:10px; line-height:1.5;">A muscle you want to bring up — we add extra sets on the right training days from Week 2.</div>
           <div style="display:flex; flex-wrap:wrap; gap:8px;">
@@ -3891,7 +3897,7 @@
         <div>
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
             <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">DAYS PER WEEK?</span>
-            <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
+            <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:11px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
           </div>
           <div style="font-size:14px; color:#d0cbc6; margin-bottom:10px; line-height:1.5;">Helps us match the recommendation to a split that fits your schedule.</div>
           <div style="display:flex; gap:8px;">
@@ -3906,7 +3912,7 @@
         <div>
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
             <span style="font-size:13px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:var(--cream);">TIME PER SESSION?</span>
-            <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:10px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
+            <span style="background:rgba(204,32,39,0.15); color:var(--red-text); font-size:11px; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:4px; line-height:1.8;">OPTIONAL</span>
           </div>
           <div style="font-size:14px; color:#d0cbc6; margin-bottom:10px; line-height:1.5;">Some splits ask more per session than others — this keeps the recommendation realistic.</div>
           <div style="display:flex; gap:8px;">
@@ -3920,7 +3926,7 @@
       </div>
 
       <!-- Recommendation card — populated dynamically by renderSplitRecommendation() -->
-      <div id="ob-split-recommendation" style="display:none; margin-bottom:16px; background:rgba(204,32,39,0.08); border:1.5px solid rgba(204,32,39,0.4); border-radius:12px; padding:14px 16px;">
+      <div id="ob-split-recommendation" style="display:none; margin-bottom:16px; background:rgba(204,32,39,0.08); border:1px solid rgba(204,32,39,0.4); border-radius:12px; padding:14px 16px;">
         <div style="font-size:13px; color:var(--red-text); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; margin-bottom:6px;">&#9733; RECOMMENDED FOR YOU</div>
         <div id="ob-split-rec-name" style="font-size:16px; font-weight:700; color:var(--cream); margin-bottom:5px;"></div>
         <div id="ob-split-rec-reason" style="font-size:14px; color:var(--gray-light); line-height:1.5; margin-bottom:10px;"></div>
@@ -4019,7 +4025,7 @@
             <div style="font-weight:bold; font-size:16px;">2 Days / Week</div>
             <div id="ob-day-badge-2" style="display:none; font-size:13px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div class="ob-days-desc" style="font-size:14px; color:#bbb; margin-top:5px;">Minimal commitment. Maximum recovery. Still gets results.</div>
+          <div class="ob-days-desc" style="font-size:14px; color:#d0cbc6; margin-top:5px;">Minimal commitment. Maximum recovery. Still gets results.</div>
         </button>
         <button class="onboard-select-btn" id="ob-day-btn-3" onclick="selectTrainingDaysOnboard(3, this)"
           data-short="The sweet spot. Solid gains without burning out.">
@@ -4027,7 +4033,7 @@
             <div style="font-weight:bold; font-size:16px;">3 Days / Week</div>
             <div id="ob-day-badge-3" style="display:none; font-size:13px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div class="ob-days-desc" style="font-size:14px; color:#bbb; margin-top:5px;">The sweet spot. Solid gains without burning out.</div>
+          <div class="ob-days-desc" style="font-size:14px; color:#d0cbc6; margin-top:5px;">The sweet spot. Solid gains without burning out.</div>
         </button>
         <button class="onboard-select-btn" id="ob-day-btn-4" onclick="selectTrainingDaysOnboard(4, this)"
           data-short="Where the real progress lives. Best volume-to-recovery balance.">
@@ -4035,7 +4041,7 @@
             <div style="font-weight:bold; font-size:16px;">4 Days / Week</div>
             <div id="ob-day-badge-4" style="display:none; font-size:13px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div class="ob-days-desc" style="font-size:14px; color:#bbb; margin-top:5px;">Where the real progress lives. Best volume-to-recovery balance.</div>
+          <div class="ob-days-desc" style="font-size:14px; color:#d0cbc6; margin-top:5px;">Where the real progress lives. Best volume-to-recovery balance.</div>
         </button>
         <button class="onboard-select-btn" id="ob-day-btn-5" onclick="selectTrainingDaysOnboard(5, this)"
           data-short="High volume. Serious gains. You know what you're doing.">
@@ -4043,7 +4049,7 @@
             <div style="font-weight:bold; font-size:16px;">5 Days / Week</div>
             <div id="ob-day-badge-5" style="display:none; font-size:13px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
-          <div class="ob-days-desc" style="font-size:14px; color:#bbb; margin-top:5px;">High volume. Serious gains. You know what you're doing.</div>
+          <div class="ob-days-desc" style="font-size:14px; color:#d0cbc6; margin-top:5px;">High volume. Serious gains. You know what you're doing.</div>
         </button>
       </div>
 
@@ -4081,7 +4087,7 @@
           <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:#666; letter-spacing:2px;">OR</div>
           <div style="flex:1; height:1px; background:#333;"></div>
         </div>
-        <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)" style="border-color:rgba(204,32,39,0.45); background:rgba(204,32,39,0.04);">
+        <button class="onboard-select-btn" onclick="selectExerciseMode('manual', this)">
           <div style="display:flex; align-items:center; gap:10px;">
             <span style="font-size:22px; line-height:1;">✏️</span>
             <div>
@@ -4113,21 +4119,29 @@
           <div style="font-size:26px; flex-shrink:0;">🪶</div>
           <div>
             <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream); letter-spacing:0.5px; margin-bottom:3px;">START LIGHTER THAN YOU THINK</div>
-            <div style="font-size:14px; color:#ccc; line-height:1.5;">Pick weights you can handle comfortably. The app will push them up once it sees your RPE data.</div>
+            <div style="font-size:14px; color:#d0cbc6; line-height:1.5;">Pick weights you can handle comfortably. The app will push them up once it sees your RPE data.</div>
           </div>
         </div>
-        <div style="background:var(--dark3); border:1px solid rgba(204,32,39,0.35); border-radius:14px; padding:16px; display:flex; align-items:flex-start; gap:14px;">
-          <div style="font-size:26px; flex-shrink:0;">💯</div>
-          <div>
-            <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream); letter-spacing:0.5px; margin-bottom:3px;">LOG YOUR RPE AFTER EVERY SET</div>
-            <div style="font-size:14px; color:#ccc; line-height:1.5;"><strong style="color:var(--cream);">RPE 8</strong> = 2 reps left. That number tells the app when to go up, hold steady, or back off. Be honest with it.</div>
+        <div style="background:var(--dark3); border:1px solid rgba(204,32,39,0.35); border-radius:14px; padding:16px;">
+          <div style="display:flex; align-items:flex-start; gap:14px;">
+            <div style="font-size:26px; flex-shrink:0;">💯</div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream); letter-spacing:0.5px; margin-bottom:3px;">LOG YOUR RPE AFTER EVERY SET</div>
+              <div style="font-size:14px; color:#d0cbc6; line-height:1.5;">That number tells the app when to go up, hold steady, or back off. Be honest with it.</div>
+            </div>
+          </div>
+          <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:6px; font-size:13px; color:#d0cbc6; line-height:1.45;">
+            <div style="display:flex; justify-content:space-between; gap:10px;"><span style="color:var(--gray-light); font-weight:600;">RPE 7</span><span>3 reps left — a little too easy</span></div>
+            <div style="display:flex; justify-content:space-between; gap:10px; padding:6px 10px; background:rgba(204,32,39,0.12); border:1px solid rgba(204,32,39,0.35); border-radius:8px;"><span style="color:var(--cream); font-weight:700;">RPE 8</span><span style="color:var(--cream); font-weight:600;">2 reps left — your target</span></div>
+            <div style="display:flex; justify-content:space-between; gap:10px;"><span style="color:var(--gray-light); font-weight:600;">RPE 9</span><span>1 rep left — pushing it</span></div>
+            <div style="display:flex; justify-content:space-between; gap:10px;"><span style="color:var(--gray-light); font-weight:600;">RPE 10</span><span>All-out — nothing in the tank</span></div>
           </div>
         </div>
         <div style="background:var(--dark3); border:1px solid #333; border-radius:14px; padding:16px; display:flex; align-items:flex-start; gap:14px;">
           <div style="font-size:26px; flex-shrink:0;">🏆</div>
           <div>
             <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--cream); letter-spacing:0.5px; margin-bottom:3px;">AFTER 4 SESSIONS, YOU'RE DIALED IN</div>
-            <div style="font-size:14px; color:#ccc; line-height:1.5;">The app reviews your data and locks in your real working weights. Then real training begins.</div>
+            <div style="font-size:14px; color:#d0cbc6; line-height:1.5;">The app reviews your data and locks in your real working weights. Then real training begins.</div>
           </div>
         </div>
       </div>
@@ -4234,6 +4248,9 @@
               </div>
             </div>
           </div>
+          <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08); font-size:13px; color:#d0cbc6; line-height:1.55;">
+            <span style="font-weight:700; color:var(--cream);">Back up your data.</span> Head to <strong style="color:var(--cream);">Settings → Data</strong> anytime to export your progress or sign in to sync across devices.
+          </div>
         </div>
 
         <div style="background:linear-gradient(135deg,#081a10,#0a1e12); border:1.5px solid rgba(80,200,130,0.35); border-radius:14px; padding:14px 16px; display:flex; align-items:flex-start; gap:12px;">
@@ -4249,7 +4266,7 @@
       <div class="ob-button-row">
         <button onclick="completeOnboarding()" style="flex:1; background:var(--red); border:none; color:white; padding:16px; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:22px; letter-spacing:3px; cursor:pointer;">START YOUR PROGRAM →</button>
       </div>
-      <div style="margin-top:16px; margin-bottom:80px; font-size:13px; color:rgba(155,150,145,0.5); line-height:1.6; text-align:center; padding:0 8px;">
+      <div style="margin-top:16px; margin-bottom:80px; font-size:13px; color:#9b9690; line-height:1.6; text-align:center; padding:0 8px;">
         If you have a health condition, injury, or any concerns, check with your doctor before starting.
       </div>
     </div>
@@ -33738,14 +33755,14 @@ function onboardNext(step) {
   if (step === 2) {
     // Validate step 1: profile + age + sex
     const name = document.getElementById('ob-name').value.trim();
-    const bw = document.getElementById('ob-bodyweight').value;
+    const bw = parseFloat(document.getElementById('ob-bodyweight').value);
     const exp = document.getElementById('ob-experience').value;
-    const age = document.getElementById('ob-age').value;
+    const ageNum = parseInt(document.getElementById('ob-age').value, 10);
     const sex = document.getElementById('ob-sex').value;
-    if (!name) { showToast('Please enter your name'); return; }
-    if (!bw) { showToast('Please enter your bodyweight'); return; }
+    if (!name || name.length < 2) { showToast('Please enter your name'); return; }
+    if (!bw || isNaN(bw) || bw < 40 || bw > 700) { showToast('Please enter a bodyweight between 40 and 700 lbs'); return; }
     if (!exp) { showToast('Please select your experience level'); return; }
-    if (!age) { showToast('Please enter your age'); return; }
+    if (!ageNum || isNaN(ageNum) || ageNum < 13 || ageNum > 100) { showToast('Please enter an age between 13 and 100'); return; }
     if (!sex) { showToast('Please select your biological sex'); return; }
     state.gymEquipment = document.getElementById('ob-gym-equipment')?.value || 'full';
   }
