@@ -7,13 +7,13 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.graphics.drawable.Icon
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.ServerSocket
@@ -193,14 +193,26 @@ class StepCounterService : Service(), SensorEventListener {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        val action = Notification.Action.Builder(
+            Icon.createWithResource(this, R.drawable.ic_ts_notification),
+            actionLabel,
+            actionPi
+        ).build()
+
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, CHANNEL_ID)
+        } else {
+            @Suppress("DEPRECATION")
+            Notification.Builder(this)
+        }
+        return builder
             .setSmallIcon(R.drawable.ic_ts_notification)
             .setContentTitle("Workout in progress")
             .setContentText(contentText)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setContentIntent(tapPi)
             .setOngoing(true)
-            .addAction(0, actionLabel, actionPi)
+            .addAction(action)
+            .setStyle(Notification.MediaStyle().setShowActionsInCompactView(0))
             .build()
     }
 
