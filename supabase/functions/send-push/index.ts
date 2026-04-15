@@ -298,39 +298,54 @@ Deno.serve(async (req) => {
     try { fcmAccessToken = await getGoogleAccessToken(fbEmail, fbKey); } catch (e) { debug.push(`oauth_error:${e}`); }
   }
 
-  await Promise.all(subs.map(async (sub: any) => {
-    // Try FCM first (Android native — app icon, no Chrome branding)
-    if (sub.fcm_token && fcmAccessToken) {
-      const ok = await sendFcm(sub.fcm_token, notifTitle, notifBody, extraData, fcmAccessToken, fbProject)
+  // Group subscriptions by user_id. A single user can have multiple rows
+  // (e.g. an Android row with an FCM token AND an older web-push row).
+  // We want to send at most ONE notification per user: FCM if available
+  // and working, web push otherwise. Without this grouping the loop below
+  // would fire both the native notification (FCM row) AND the Chrome
+  // notification (web-push row) for the same user simultaneously.
+  const subsByUser: Record<string, any[]> = {};
+  for (const sub of subs) {
+    if (!subsByUser[sub.user_id]) subsByUser[sub.user_id] = [];
+    subsByUser[sub.user_id].push(sub);
+  }
+
+  await Promise.all(Object.entries(subsByUser).map(async ([_userId, userSubs]) => {
+    // Try FCM first across all this user's rows (Android native notification)
+    const fcmSub = fcmAccessToken ? userSubs.find(s => s.fcm_token) : undefined;
+    if (fcmSub) {
+      const ok = await sendFcm(fcmSub.fcm_token, notifTitle, notifBody, extraData, fcmAccessToken, fbProject)
         .catch((e) => { debug.push(`fcm_error:${e}`); return false; });
-      if (ok) { sent++; debug.push(`fcm_ok:${sub.fcm_token.slice(0,15)}`); return; }
-      debug.push(`fcm_failed:${sub.fcm_token.slice(0,15)}`);
+      if (ok) { sent++; debug.push(`fcm_ok:${fcmSub.fcm_token.slice(0,15)}`); return; }
+      debug.push(`fcm_failed:${fcmSub.fcm_token.slice(0,15)}`);
     } else {
-      debug.push(`no_fcm:has_token=${!!sub.fcm_token},has_access=${!!fcmAccessToken}`);
+      debug.push(`no_fcm:has_token=${!!userSubs.find(s=>s.fcm_token)},has_access=${!!fcmAccessToken}`);
     }
 
-    // Fall back to VAPID web push (iOS, desktop, Android without FCM token)
-    if (!sub.push_endpoint || !sub.push_p256dh || !sub.push_auth || !vapidPub || !vapidPriv) {
-      failed++;
-      return;
+    // Fall back to VAPID web push — try each of this user's web-push rows
+    // until one succeeds (iOS, desktop, Android without FCM token)
+    for (const sub of userSubs) {
+      if (!sub.push_endpoint || !sub.push_p256dh || !sub.push_auth || !vapidPub || !vapidPriv) continue;
+      try {
+        const payload  = JSON.stringify({ title: notifTitle, body: notifBody, icon: avatar_url || null, data: extraData });
+        const encBody  = await encryptPayload(payload, sub.push_p256dh, sub.push_auth);
+        const jwt      = await makeVapidJwt(sub.push_endpoint, vapidSub, vapidPub, vapidPriv);
+        const r = await fetch(sub.push_endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type':     'application/octet-stream',
+            'Content-Encoding': 'aes128gcm',
+            'TTL':              '86400',
+            'Urgency':          'high',
+            'Authorization':    `vapid t=${jwt},k=${vapidPub}`,
+          },
+          body: encBody,
+        });
+        if (r.status >= 200 && r.status < 300) { sent++; debug.push(`webpush_ok`); return; }
+        debug.push(`webpush_failed:${r.status}`);
+      } catch (_) {}
     }
-    try {
-      const payload  = JSON.stringify({ title: notifTitle, body: notifBody, icon: avatar_url || null, data: extraData });
-      const encBody  = await encryptPayload(payload, sub.push_p256dh, sub.push_auth);
-      const jwt      = await makeVapidJwt(sub.push_endpoint, vapidSub, vapidPub, vapidPriv);
-      const r = await fetch(sub.push_endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type':     'application/octet-stream',
-          'Content-Encoding': 'aes128gcm',
-          'TTL':              '86400',
-          'Urgency':          'high',
-          'Authorization':    `vapid t=${jwt},k=${vapidPub}`,
-        },
-        body: encBody,
-      });
-      if (r.status >= 200 && r.status < 300) { sent++; debug.push(`webpush_ok`); } else { failed++; debug.push(`webpush_failed:${r.status}`); }
-    } catch (_) { failed++; }
+    failed++;
   }));
 
   return new Response(JSON.stringify({ sent, failed, debug }), {
