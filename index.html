@@ -3250,6 +3250,9 @@
           <button id="cardio-pause-btn" onclick="_pauseTrackingWorkout()" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">PAUSE</button>
           <button onclick="_finishTrackingWorkout()" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;box-shadow:0 2px 10px rgba(204,32,39,0.35);-webkit-tap-highlight-color:transparent;">FINISH</button>
         </div>
+        <div id="cardio-discard-row" style="margin-top:14px;text-align:center;">
+          <button id="cardio-discard-btn" onclick="_discardTrackingWorkout()" style="background:transparent;border:none;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;padding:6px 16px;-webkit-tap-highlight-color:transparent;">DISCARD</button>
+        </div>
       </div>
     </div>
 
@@ -37079,6 +37082,49 @@ function _pauseTrackingWorkout() {
   if (btn) btn.textContent = _cardioTrackingPaused ? 'RESUME' : 'PAUSE';
   const dot = document.getElementById('cardio-rec-dot');
   if (dot) dot.style.animationPlayState = _cardioTrackingPaused ? 'paused' : 'running';
+  haptic(HAPTIC.light);
+}
+
+let _discardConfirmTimeout = null;
+function _discardTrackingWorkout() {
+  const btn = document.getElementById('cardio-discard-btn');
+  // Short sessions (< 30s): discard immediately — clearly a mistake.
+  // Longer sessions: require a second tap to confirm.
+  if (_cardioTrackingSeconds >= 30 && btn && btn.dataset.confirming !== '1') {
+    btn.dataset.confirming = '1';
+    btn.textContent = 'SURE? TAP AGAIN TO DISCARD';
+    btn.style.color = 'var(--red)';
+    _discardConfirmTimeout = setTimeout(() => {
+      btn.dataset.confirming = '0';
+      btn.textContent = 'DISCARD';
+      btn.style.color = 'var(--gray)';
+    }, 3000);
+    return;
+  }
+  // Clear confirm state
+  if (_discardConfirmTimeout) { clearTimeout(_discardConfirmTimeout); _discardConfirmTimeout = null; }
+  if (btn) { btn.dataset.confirming = '0'; btn.textContent = 'DISCARD'; btn.style.color = 'var(--gray)'; }
+  // Stop step polling and native service
+  clearInterval(_cardioStepPollInterval);
+  _cardioStepPollInterval = null;
+  if (!!window._fcmToken) fetch('http://localhost:8765/stop', {method: 'POST'}).catch(() => {});
+  // Stop timer
+  clearInterval(_cardioTrackingInterval);
+  _cardioTrackingInterval = null;
+  _cardioTrackingActive  = false;
+  _cardioTrackingPaused  = false;
+  _cardioTrackingSeconds = 0;
+  _cardioTrackedSteps    = 0;
+  // Reset UI back to idle — no save, no tab switch
+  document.getElementById('cardio-idle-view').style.display  = 'block';
+  document.getElementById('cardio-active-view').style.display = 'none';
+  document.getElementById('cardio-live-steps').style.display  = 'none';
+  const pauseBtn = document.getElementById('cardio-pause-btn');
+  if (pauseBtn) pauseBtn.textContent = 'PAUSE';
+  const dot = document.getElementById('cardio-rec-dot');
+  if (dot) dot.style.animationPlayState = 'running';
+  const logTabBtn = document.getElementById('cardio-tab-log');
+  if (logTabBtn) { logTabBtn.disabled = false; logTabBtn.style.opacity = ''; logTabBtn.style.cursor = 'pointer'; }
   haptic(HAPTIC.light);
 }
 
