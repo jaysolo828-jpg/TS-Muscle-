@@ -37057,6 +37057,13 @@ function _finishTrackingWorkout() {
   _cardioTrackingPaused = false;
   const pauseBtn = document.getElementById('cardio-pause-btn');
   if (pauseBtn) pauseBtn.textContent = 'PAUSE';
+  // Show tracked step count in the log form so the user can see what was recorded
+  if (_cardioTrackedSteps > 0) {
+    const manualStepsInput = document.getElementById('cardio-manual-steps');
+    const manualStepsRow   = document.getElementById('cardio-steps-row');
+    if (manualStepsInput) manualStepsInput.value = _cardioTrackedSteps;
+    if (manualStepsRow)   manualStepsRow.style.display = 'block';
+  }
   // Auto-save if there was actual time
   if (totalMins > 0) {
     saveCardioSession();
