@@ -3258,6 +3258,27 @@
   <!-- ── LOG tab content ── -->
   <div id="cardio-log-section" style="display:none;">
 
+    <!-- ═══ IMPORT FROM HEALTH CONNECT (Android only — shown by JS) ═══ -->
+    <div id="cardio-hc-section" style="display:none;margin-bottom:20px;">
+      <div style="background:var(--dark2);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:16px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">IMPORT FROM HEALTH CONNECT</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray-light);line-height:1.5;margin-bottom:4px;">Already tracked with a watch or fitness app? Pull those sessions in here — Samsung Health, Google Fit, Strava, Garmin, and any app connected to Health Connect.</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-bottom:4px;">Pulls walks and runs of 10+ minutes from the past 7 days.</div>
+        <div id="cardio-hc-sync-time" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-bottom:14px;"></div>
+        <button onclick="_cardioHCSync()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.18);color:var(--cream);padding:14px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent;">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          SYNC FROM HEALTH CONNECT
+        </button>
+      </div>
+    </div>
+
+    <!-- Divider between HC import and manual log (only visible on Android when HC section shows) -->
+    <div id="cardio-log-divider" style="display:none;align-items:center;gap:10px;margin-bottom:18px;">
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gray);letter-spacing:2px;">OR LOG MANUALLY</span>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+    </div>
+
     <!-- Duration -->
     <div class="card" style="margin-bottom:12px;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--cream);letter-spacing:2px;margin-bottom:14px;">DURATION</div>
@@ -3345,20 +3366,6 @@
 
     <!-- Save -->
     <button onclick="saveCardioSession()" style="width:100%;background:var(--red);border:none;color:white;padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;cursor:pointer;margin-bottom:28px;-webkit-tap-highlight-color:transparent;">SAVE SESSION</button>
-
-    <!-- ═══ IMPORT FROM HEALTH CONNECT (Android only — shown by JS) ═══ -->
-    <div id="cardio-hc-section" style="display:none;margin-bottom:28px;">
-      <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">IMPORT FROM HEALTH CONNECT</div>
-      <div style="background:var(--dark2);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;margin-bottom:10px;">Already tracked your workout with a fitness app or watch? Pull those sessions in here. Works with Samsung Health, Google Fit, Strava, Garmin Connect, and any app connected to Health Connect.</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-bottom:4px;">Pulls walks and runs of 10+ minutes from the past 7 days.</div>
-        <div id="cardio-hc-sync-time" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-bottom:16px;"></div>
-        <button onclick="_cardioHCSync()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.18);color:var(--cream);padding:14px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent;">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-          SYNC FROM HEALTH CONNECT
-        </button>
-      </div>
-    </div>
 
   </div>
 
@@ -37008,6 +37015,9 @@ function _startTrackingWorkout() {
   _switchCardioTab('track');
   document.getElementById('cardio-idle-view').style.display = 'none';
   document.getElementById('cardio-active-view').style.display = 'block';
+  // Lock the LOG tab while a session is active so the user can't accidentally navigate away
+  const logTabBtn = document.getElementById('cardio-tab-log');
+  if (logTabBtn) { logTabBtn.disabled = true; logTabBtn.style.opacity = '0.3'; logTabBtn.style.cursor = 'default'; }
   // Reset recording dot to pulsing state
   const recDot = document.getElementById('cardio-rec-dot');
   if (recDot) recDot.style.animationPlayState = 'running';
@@ -37086,6 +37096,9 @@ function _finishTrackingWorkout() {
   if (minsEl) minsEl.value = totalMins > 0 ? totalMins : 1;
   document.getElementById('cardio-idle-view').style.display = 'block';
   document.getElementById('cardio-active-view').style.display = 'none';
+  // Unlock the LOG tab before switching to it
+  const logTabBtn = document.getElementById('cardio-tab-log');
+  if (logTabBtn) { logTabBtn.disabled = false; logTabBtn.style.opacity = ''; logTabBtn.style.cursor = 'pointer'; }
   _switchCardioTab('log');
   _cardioTrackingSeconds = 0;
   _cardioTrackingPaused = false;
@@ -37256,9 +37269,12 @@ function _updateCYHNote() {
   const hasCYH = (_challenges || []).some(c => c.status === 'active' && c.challenge_type === 'clear_your_head');
   const qualifies = qualifyingTypes.includes(cardioType) && mins >= 10 && hasCYH;
   note.style.display = qualifies ? 'flex' : 'none';
-  // HC import section — Android only, independent of CYH
-  const hcSection = document.getElementById('cardio-hc-section');
-  if (hcSection) hcSection.style.display = !!window._fcmToken ? 'block' : 'none';
+  // HC import section + divider — Android only, independent of CYH
+  const hcSection  = document.getElementById('cardio-hc-section');
+  const hcDivider  = document.getElementById('cardio-log-divider');
+  const showHC = !!window._fcmToken;
+  if (hcSection) hcSection.style.display = showHC ? 'block' : 'none';
+  if (hcDivider) hcDivider.style.display = showHC ? 'flex'  : 'none';
 }
 
 async function _cardioHCSync() {
