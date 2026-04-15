@@ -3239,15 +3239,15 @@
     </div>
   </div>
 
-  <!-- DIVIDER -->
+  <!-- ═══ LOG MANUALLY ═══ -->
+  <div id="cardio-log-section">
+
+  <!-- DIVIDER — inside log section so it hides during active tracking -->
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
     <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--gray-light);letter-spacing:2px;white-space:nowrap;">OR LOG MANUALLY</div>
     <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
   </div>
-
-  <!-- ═══ LOG MANUALLY ═══ -->
-  <div id="cardio-log-section">
 
     <!-- Duration -->
     <div class="card" style="margin-bottom:12px;">
@@ -37355,6 +37355,11 @@ function saveCardioSession() {
   document.querySelectorAll('.cardio-rpe-btn').forEach(b => b.classList.remove('active'));
   const clearIds = ['cardio-distance','cardio-speed','cardio-incline','cardio-notes','cardio-calories-input','cardio-manual-steps'];
   clearIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  // Re-hide steps row unless type is walk — it may have been shown by live tracking
+  if (cardioType !== 'walk' && cardioType !== 'briskwalk') {
+    const sr = document.getElementById('cardio-steps-row');
+    if (sr) sr.style.display = 'none';
+  }
   document.getElementById('timer-mins').value = '30';
   _updateCYHNote();
   _updatePaceDisplay();
