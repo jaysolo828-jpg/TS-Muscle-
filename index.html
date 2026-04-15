@@ -12576,7 +12576,7 @@ function _renderActiveChallengeHomeCard() {
   const auxActive = (_challenges || [])
     .filter(c => c.status === 'active' && c.challenge_type === 'control_the_aux')
     .filter(c => {
-      const me = (c.challenge_participants || []).find(p => p.user_id === state.supabaseUserId);
+      const me = (c.participants || []).find(p => p.user_id === state.supabaseUserId);
       return !me || me.status !== 'left';
     });
   for (const auxCh of auxActive) { _renderActiveAuxHomeCard(auxCh); }
@@ -13366,7 +13366,7 @@ function _renderActiveChainHomeCard() {
   const active = (_challenges || [])
     .filter(c => c.status === 'active' && c.challenge_type === 'dont_break_chain')
     .filter(c => {
-      const me = (c.challenge_participants || []).find(p => p.user_id === state.supabaseUserId);
+      const me = (c.participants || []).find(p => p.user_id === state.supabaseUserId);
       return !me || me.status !== 'left';
     });
   if (!active.length) return;
@@ -14057,7 +14057,7 @@ function _renderActiveCYHHomeCard() {
   const active = (_challenges || [])
     .filter(c => c.status === 'active' && c.challenge_type === 'clear_your_head')
     .filter(c => {
-      const me = (c.challenge_participants || []).find(p => p.user_id === state.supabaseUserId);
+      const me = (c.participants || []).find(p => p.user_id === state.supabaseUserId);
       return !me || me.status !== 'left';
     });
   if (!active.length) return;
