@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.graphics.drawable.Icon
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -25,6 +26,8 @@ import java.net.Socket
 // Lifecycle:
 //   - Started by StepPermissionActivity after ACTIVITY_RECOGNITION is granted.
 //   - ACTION_RESET resets the session counter (called each time a new workout starts).
+//   - ACTION_PAUSE / ACTION_RESUME freeze/unfreeze step accumulation and update the
+//     notification action button. The web page syncs its pause state from the JSON response.
 //   - Stopped when the web page POSTs to /stop (FINISH button), or via ACTION_STOP.
 //
 // The HTTP server adds Access-Control-Allow-Origin: * so Chrome's fetch() can reach
@@ -36,17 +39,21 @@ class StepCounterService : Service(), SensorEventListener {
     private var sensorManager: SensorManager? = null
     private var initialSteps = -1L
     private var sessionSteps = 0L
+    private var frozenSteps  = 0L
+    @Volatile private var isPaused = false
     private var hasSensor = false
     private var serverSocket: ServerSocket? = null
     private var serverThread: Thread? = null
     private var lastNotifMs = 0L
 
     companion object {
-        const val CHANNEL_ID   = "ts_step_counter"
-        const val NOTIF_ID     = 9001
-        const val PORT         = 8765
-        const val ACTION_RESET = "io.github.jaysolo828_jpg.twa.STEP_RESET"
-        const val ACTION_STOP  = "io.github.jaysolo828_jpg.twa.STEP_STOP"
+        const val CHANNEL_ID    = "ts_step_counter"
+        const val NOTIF_ID      = 9001
+        const val PORT          = 8765
+        const val ACTION_RESET  = "io.github.jaysolo828_jpg.twa.STEP_RESET"
+        const val ACTION_STOP   = "io.github.jaysolo828_jpg.twa.STEP_STOP"
+        const val ACTION_PAUSE  = "io.github.jaysolo828_jpg.twa.STEP_PAUSE"
+        const val ACTION_RESUME = "io.github.jaysolo828_jpg.twa.STEP_RESUME"
     }
 
     override fun onCreate() {
@@ -75,9 +82,21 @@ class StepCounterService : Service(), SensorEventListener {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_RESET -> {
-                // New workout started — reset the session counter.
+                // New workout started — reset the session counter and unpause.
                 initialSteps = -1L
                 sessionSteps = 0L
+                frozenSteps  = 0L
+                isPaused     = false
+                updateNotification()
+            }
+            ACTION_PAUSE -> {
+                frozenSteps = sessionSteps
+                isPaused    = true
+                updateNotification()
+            }
+            ACTION_RESUME -> {
+                isPaused = false
+                updateNotification()
             }
             ACTION_STOP -> stopSelf()
         }
@@ -88,13 +107,17 @@ class StepCounterService : Service(), SensorEventListener {
         if (event.sensor.type != Sensor.TYPE_STEP_COUNTER) return
         val raw = event.values[0].toLong()
         if (initialSteps < 0) initialSteps = raw
-        sessionSteps = raw - initialSteps
+        if (isPaused) {
+            // Keep resetting the baseline so sessionSteps stays frozen at frozenSteps.
+            initialSteps = raw - frozenSteps
+        } else {
+            sessionSteps = raw - initialSteps
+        }
         // Throttle notification updates to at most every 10 seconds.
         val now = System.currentTimeMillis()
         if (now - lastNotifMs > 10_000) {
             lastNotifMs = now
-            (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
-                .notify(NOTIF_ID, buildNotification())
+            updateNotification()
         }
     }
 
@@ -117,13 +140,13 @@ class StepCounterService : Service(), SensorEventListener {
             val reader = BufferedReader(InputStreamReader(client.getInputStream()))
             val requestLine = reader.readLine() ?: return
 
-            val isStop    = requestLine.startsWith("POST /stop")
+            val isStop      = requestLine.startsWith("POST /stop")
             val isPreflight = requestLine.startsWith("OPTIONS")
 
             val body = when {
                 isPreflight -> ""
                 isStop      -> "{\"stopped\":true}"
-                else        -> "{\"steps\":$sessionSteps,\"has_sensor\":$hasSensor}"
+                else        -> "{\"steps\":$sessionSteps,\"has_sensor\":$hasSensor,\"paused\":$isPaused}"
             }
 
             val response = buildString {
@@ -147,12 +170,30 @@ class StepCounterService : Service(), SensorEventListener {
         }
     }
 
+    private fun updateNotification() {
+        lastNotifMs = System.currentTimeMillis()
+        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
+            .notify(NOTIF_ID, buildNotification())
+    }
+
     private fun buildNotification(): Notification {
         val tapIntent = packageManager.getLaunchIntentForPackage(packageName)
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            PendingIntent.FLAG_IMMUTABLE else 0
-        val pi = PendingIntent.getActivity(this, 0, tapIntent, flags)
-        val text = if (hasSensor) "$sessionSteps steps" else "Timer running"
+        val tapPi = PendingIntent.getActivity(
+            this, 0, tapIntent, PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val stepText = if (hasSensor) "$sessionSteps steps" else "Timer running"
+        val contentText = if (isPaused) "Paused — $stepText" else stepText
+
+        val actionLabel  = if (isPaused) "Resume" else "Pause"
+        val actionAction = if (isPaused) ACTION_RESUME else ACTION_PAUSE
+        val actionIcon   = if (isPaused) android.R.drawable.ic_media_play
+                           else          android.R.drawable.ic_media_pause
+        val actionIntent = Intent(this, StepCounterService::class.java).apply { action = actionAction }
+        val actionPi = PendingIntent.getService(
+            this, 1, actionIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
@@ -163,9 +204,16 @@ class StepCounterService : Service(), SensorEventListener {
         return builder
             .setSmallIcon(R.drawable.ic_ts_notification)
             .setContentTitle("Workout in progress")
-            .setContentText(text)
-            .setContentIntent(pi)
+            .setContentText(contentText)
+            .setContentIntent(tapPi)
             .setOngoing(true)
+            .addAction(
+                Notification.Action.Builder(
+                    Icon.createWithResource(this, actionIcon),
+                    actionLabel,
+                    actionPi
+                ).build()
+            )
             .build()
     }
 

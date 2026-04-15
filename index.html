@@ -37068,6 +37068,9 @@ function _startStepPolling() {
         return;
       }
       _cardioTrackedSteps = j.steps || 0;
+      // Sync pause state from notification button — only toggle when states differ
+      if (j.paused === true && !_cardioTrackingPaused) _pauseTrackingWorkout();
+      else if (j.paused === false && _cardioTrackingPaused) _pauseTrackingWorkout();
       const stepsCount = document.getElementById('cardio-steps-count');
       const stepsRow = document.getElementById('cardio-live-steps');
       if (stepsCount) stepsCount.textContent = _cardioTrackedSteps.toLocaleString();
