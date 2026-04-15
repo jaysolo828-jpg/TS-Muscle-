@@ -7,13 +7,13 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.graphics.drawable.Icon
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.IBinder
+import androidx.core.app.NotificationCompat
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.ServerSocket
@@ -187,31 +187,19 @@ class StepCounterService : Service(), SensorEventListener {
 
         val actionLabel  = if (isPaused) "Resume" else "Pause"
         val actionAction = if (isPaused) ACTION_RESUME else ACTION_PAUSE
-        val actionIcon   = Icon.createWithResource(
-            "android",
-            if (isPaused) android.R.drawable.ic_media_play else android.R.drawable.ic_media_pause
-        )
         val actionIntent = Intent(this, StepCounterService::class.java).apply { action = actionAction }
         val actionPi = PendingIntent.getService(
             this, 1, actionIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, CHANNEL_ID)
-        } else {
-            @Suppress("DEPRECATION")
-            Notification.Builder(this)
-        }
-        return builder
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_ts_notification)
             .setContentTitle("Workout in progress")
             .setContentText(contentText)
             .setContentIntent(tapPi)
             .setOngoing(true)
-            .addAction(
-                Notification.Action.Builder(actionIcon, actionLabel, actionPi).build()
-            )
+            .addAction(0, actionLabel, actionPi)
             .build()
     }
 
