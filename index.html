@@ -3189,10 +3189,7 @@
     <div id="cardio-week-breakdown" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:8px;letter-spacing:0.3px;line-height:1.4;"></div>
   </div>
 
-  <!-- ═══ TRACK A WORKOUT ═══ -->
-  <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">TRACK A WORKOUT</div>
-
-  <!-- Activity tiles — shared by track + log -->
+  <!-- ACTIVITY TYPE — shared selector, applies to both tabs -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
     <button id="ctype-treadmill" onclick="selectCardioType('treadmill')" class="cardio-type-btn active-cardio-btn" style="padding:16px 10px;gap:8px;">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="14" width="20" height="3" rx="1"/><path d="M5 14V9l3-4h4l2 4v5"/><line x1="9" y1="5" x2="9" y2="14"/><circle cx="17" cy="6" r="2"/><path d="M15 14l2-5 3 2"/></svg>
@@ -3221,41 +3218,45 @@
     <div id="cardio-walk-desc" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:6px;padding:0 2px;">Leisurely pace \u2014 under 2.5 mph. Great for active recovery.</div>
   </div>
 
-  <!-- IDLE: START button -->
-  <div id="cardio-idle-view">
-    <button onclick="_startTrackingWorkout()" style="width:100%;background:var(--red);border:none;color:white;padding:18px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:3px;cursor:pointer;box-shadow:0 4px 20px rgba(204,32,39,0.4);-webkit-tap-highlight-color:transparent;margin-bottom:22px;">
-      START WORKOUT
-    </button>
+  <!-- TAB TOGGLE: TRACK / LOG -->
+  <div style="display:flex;background:var(--dark2);border-radius:12px;padding:3px;margin-bottom:20px;gap:3px;">
+    <button id="cardio-tab-track" onclick="_switchCardioTab('track')" style="flex:1;padding:11px;border-radius:9px;border:none;background:var(--red);color:white;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;">TRACK</button>
+    <button id="cardio-tab-log" onclick="_switchCardioTab('log')" style="flex:1;padding:11px;border-radius:9px;border:none;background:transparent;color:var(--gray);font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LOG</button>
   </div>
 
-  <!-- ACTIVE: live tracking view (hidden until START) -->
-  <div id="cardio-active-view" style="display:none;margin-bottom:22px;">
-    <div style="background:var(--dark2);border:1px solid rgba(204,32,39,0.3);border-radius:16px;padding:24px;text-align:center;">
-      <div id="cardio-active-label" style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--red);letter-spacing:3px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:8px;">
-        <span id="cardio-rec-dot" style="width:8px;height:8px;background:var(--red);border-radius:50%;flex-shrink:0;animation:ts-rec-pulse 1.4s ease-in-out infinite;"></span>
-        <span id="cardio-active-type">TREADMILL IN PROGRESS</span>
-      </div>
-      <div id="cardio-live-timer" style="font-family:'Bebas Neue',cursive;font-size:72px;color:var(--cream);letter-spacing:2px;line-height:1;margin-bottom:8px;">0:00</div>
-      <div id="cardio-live-steps" style="display:none;margin-bottom:16px;">
-        <span id="cardio-steps-count" style="font-family:'Bebas Neue',cursive;font-size:36px;color:var(--cream);letter-spacing:1px;line-height:1;">0</span>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--gray-light);letter-spacing:2px;margin-left:8px;">STEPS</span>
-      </div>
-      <div style="display:flex;gap:10px;justify-content:center;">
-        <button id="cardio-pause-btn" onclick="_pauseTrackingWorkout()" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">PAUSE</button>
-        <button onclick="_finishTrackingWorkout()" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;box-shadow:0 2px 10px rgba(204,32,39,0.35);-webkit-tap-highlight-color:transparent;">FINISH</button>
+  <!-- ── TRACK tab content ── -->
+  <div id="cardio-track-content">
+
+    <!-- IDLE: START button -->
+    <div id="cardio-idle-view">
+      <button onclick="_startTrackingWorkout()" style="width:100%;background:var(--red);border:none;color:white;padding:18px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:3px;cursor:pointer;box-shadow:0 4px 20px rgba(204,32,39,0.4);-webkit-tap-highlight-color:transparent;margin-bottom:22px;">
+        START WORKOUT
+      </button>
+    </div>
+
+    <!-- ACTIVE: live tracking view (hidden until START) -->
+    <div id="cardio-active-view" style="display:none;margin-bottom:22px;">
+      <div style="background:var(--dark2);border:1px solid rgba(204,32,39,0.3);border-radius:16px;padding:24px;text-align:center;">
+        <div id="cardio-active-label" style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--red);letter-spacing:3px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span id="cardio-rec-dot" style="width:8px;height:8px;background:var(--red);border-radius:50%;flex-shrink:0;animation:ts-rec-pulse 1.4s ease-in-out infinite;"></span>
+          <span id="cardio-active-type">TREADMILL IN PROGRESS</span>
+        </div>
+        <div id="cardio-live-timer" style="font-family:'Bebas Neue',cursive;font-size:72px;color:var(--cream);letter-spacing:2px;line-height:1;margin-bottom:8px;">0:00</div>
+        <div id="cardio-live-steps" style="display:none;margin-bottom:16px;">
+          <span id="cardio-steps-count" style="font-family:'Bebas Neue',cursive;font-size:36px;color:var(--cream);letter-spacing:1px;line-height:1;">0</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--gray-light);letter-spacing:2px;margin-left:8px;">STEPS</span>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button id="cardio-pause-btn" onclick="_pauseTrackingWorkout()" style="flex:1;background:var(--dark3);border:1px solid var(--dark4);color:var(--cream);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent;">PAUSE</button>
+          <button onclick="_finishTrackingWorkout()" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;cursor:pointer;box-shadow:0 2px 10px rgba(204,32,39,0.35);-webkit-tap-highlight-color:transparent;">FINISH</button>
+        </div>
       </div>
     </div>
+
   </div>
 
-  <!-- ═══ LOG MANUALLY ═══ -->
-  <div id="cardio-log-section">
-
-  <!-- DIVIDER — inside log section so it hides during active tracking -->
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-    <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--gray-light);letter-spacing:2px;white-space:nowrap;">OR LOG MANUALLY</div>
-    <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
-  </div>
+  <!-- ── LOG tab content ── -->
+  <div id="cardio-log-section" style="display:none;">
 
     <!-- Duration -->
     <div class="card" style="margin-bottom:12px;">
@@ -3294,12 +3295,10 @@
           <input type="number" id="cardio-incline" placeholder="0" oninput="_calcCardioCalories();_updateCalorieHint()" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
         </div>
       </div>
-      <!-- Calories — all types. Placeholder shows live estimate; user can override with their own number (e.g. from treadmill display or fitness app). -->
       <div id="cardio-calories-row" style="margin-bottom:12px;">
         <div style="font-size:13px;color:var(--gray-light);letter-spacing:1px;margin-bottom:6px;">CALORIES</div>
         <input type="number" id="cardio-calories-input" placeholder="—" min="0" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="decimal"/>
       </div>
-      <!-- Steps — walks only. Hidden for treadmill/run/jog since live tracking or HC covers those. -->
       <div id="cardio-steps-row" style="display:none;">
         <div style="font-size:13px;color:var(--gray-light);letter-spacing:1px;margin-bottom:6px;">STEPS</div>
         <input type="number" id="cardio-manual-steps" placeholder="0" min="0" class="set-input" style="width:100%;text-align:left;padding:10px 12px;" inputmode="numeric"/>
@@ -3347,20 +3346,20 @@
     <!-- Save -->
     <button onclick="saveCardioSession()" style="width:100%;background:var(--red);border:none;color:white;padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;cursor:pointer;margin-bottom:28px;-webkit-tap-highlight-color:transparent;">SAVE SESSION</button>
 
-  </div>
-
-  <!-- ═══ IMPORT FROM HEALTH CONNECT (Android only — shown by JS) ═══ -->
-  <div id="cardio-hc-section" style="display:none;margin-bottom:28px;">
-    <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">IMPORT FROM HEALTH CONNECT</div>
-    <div style="background:var(--dark2);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;margin-bottom:10px;">Already tracked your workout with a fitness app or watch? Pull those sessions in here. Works with Samsung Health, Google Fit, Strava, Garmin Connect, and any app connected to Health Connect.</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-bottom:4px;">Pulls walks and runs of 10+ minutes from the past 7 days.</div>
-      <div id="cardio-hc-sync-time" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-bottom:16px;"></div>
-      <button onclick="_cardioHCSync()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.18);color:var(--cream);padding:14px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent;">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-        SYNC FROM HEALTH CONNECT
-      </button>
+    <!-- ═══ IMPORT FROM HEALTH CONNECT (Android only — shown by JS) ═══ -->
+    <div id="cardio-hc-section" style="display:none;margin-bottom:28px;">
+      <div style="font-family:'Bebas Neue',cursive;font-size:17px;color:var(--cream);letter-spacing:2px;margin-bottom:12px;">IMPORT FROM HEALTH CONNECT</div>
+      <div style="background:var(--dark2);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--gray-light);line-height:1.6;margin-bottom:10px;">Already tracked your workout with a fitness app or watch? Pull those sessions in here. Works with Samsung Health, Google Fit, Strava, Garmin Connect, and any app connected to Health Connect.</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-bottom:4px;">Pulls walks and runs of 10+ minutes from the past 7 days.</div>
+        <div id="cardio-hc-sync-time" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-bottom:16px;"></div>
+        <button onclick="_cardioHCSync()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.18);color:var(--cream);padding:14px 16px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent;">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          SYNC FROM HEALTH CONNECT
+        </button>
+      </div>
     </div>
+
   </div>
 
   <!-- HISTORY HEADER with collapse toggle -->
@@ -36978,19 +36977,37 @@ function _updateTrackingDisplay() {
     : m + ':' + String(s).padStart(2,'0');
 }
 
+function _switchCardioTab(tab) {
+  const trackContent = document.getElementById('cardio-track-content');
+  const logContent   = document.getElementById('cardio-log-section');
+  const trackBtn     = document.getElementById('cardio-tab-track');
+  const logBtn       = document.getElementById('cardio-tab-log');
+  if (!trackContent || !logContent) return;
+  const isTrack = tab === 'track';
+  trackContent.style.display = isTrack ? 'block' : 'none';
+  logContent.style.display   = isTrack ? 'none'  : 'block';
+  if (trackBtn) {
+    trackBtn.style.background = isTrack ? 'var(--red)' : 'transparent';
+    trackBtn.style.color      = isTrack ? 'white'      : 'var(--gray)';
+  }
+  if (logBtn) {
+    logBtn.style.background = isTrack ? 'transparent' : 'var(--red)';
+    logBtn.style.color      = isTrack ? 'var(--gray)'  : 'white';
+  }
+}
+
 function _startTrackingWorkout() {
   haptic(HAPTIC.start);
   _cardioTrackingActive = true;
   _cardioTrackingPaused = false;
   _cardioTrackingSeconds = 0;
   _cardioTrackedSteps = 0;
-  const labelEl = document.getElementById('cardio-active-label');
   const typeNames = { treadmill:'TREADMILL', outdoor:'RUN', walk:'WALK', briskwalk:'BRISK WALK', jog:'JOG' };
   const typeEl = document.getElementById('cardio-active-type');
   if (typeEl) typeEl.textContent = (typeNames[cardioType] || cardioType.toUpperCase()) + ' IN PROGRESS';
+  _switchCardioTab('track');
   document.getElementById('cardio-idle-view').style.display = 'none';
   document.getElementById('cardio-active-view').style.display = 'block';
-  document.getElementById('cardio-log-section').style.display = 'none';
   // Reset recording dot to pulsing state
   const recDot = document.getElementById('cardio-rec-dot');
   if (recDot) recDot.style.animationPlayState = 'running';
@@ -37069,7 +37086,7 @@ function _finishTrackingWorkout() {
   if (minsEl) minsEl.value = totalMins > 0 ? totalMins : 1;
   document.getElementById('cardio-idle-view').style.display = 'block';
   document.getElementById('cardio-active-view').style.display = 'none';
-  document.getElementById('cardio-log-section').style.display = 'block';
+  _switchCardioTab('log');
   _cardioTrackingSeconds = 0;
   _cardioTrackingPaused = false;
   const pauseBtn = document.getElementById('cardio-pause-btn');
@@ -37382,6 +37399,7 @@ function saveCardioSession() {
   _updatePaceDisplay();
   _updateCalorieHint();
   renderCardioHistory();
+  _switchCardioTab('track');
   const cyhActive = (_challenges || []).some(c => c.status === 'active' && c.challenge_type === 'clear_your_head');
   const qualifies = ['walk','briskwalk','outdoor','jog'].includes(cardioType) && duration >= 10 && cyhActive;
   showToast(qualifies ? 'Session saved \u2014 counted toward your challenge.' : 'Session saved.');
@@ -37580,6 +37598,7 @@ async function _importCYHLogsToCardioHistory() {
 
 
 document.addEventListener('DOMContentLoaded', () => {
+  _switchCardioTab('track');
   renderCardioHistory();
   selectCardioType('treadmill');
   _purgeLegacyMoodLogs();
