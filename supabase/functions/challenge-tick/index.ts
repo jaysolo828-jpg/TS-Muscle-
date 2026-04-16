@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
     // rows. A single nested query would be cleaner but PostgREST
     // filters are simpler when split.
     const pendingRes = await fetch(
-      `${sbUrl}/rest/v1/challenges?status=eq.pending&challenge_type=in.(one_rep_max,control_the_aux,clear_your_head)&select=id,challenger_id,challenge_type`,
+      `${sbUrl}/rest/v1/challenges?status=eq.pending&challenge_type=in.(one_rep_max,dont_break_chain,control_the_aux,clear_your_head)&select=id,challenger_id,challenge_type`,
       { headers }
     );
     if (!pendingRes.ok) throw new Error('pending query failed: ' + await pendingRes.text());
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
   // ─────────────────────────────────────────────────────────────
   try {
     const dueRes = await fetch(
-      `${sbUrl}/rest/v1/challenges?status=eq.pending&challenge_type=in.(one_rep_max,control_the_aux,clear_your_head)&auto_start_at=not.is.null&auto_start_at=lt.${encodeURIComponent(nowIso)}&select=*`,
+      `${sbUrl}/rest/v1/challenges?status=eq.pending&challenge_type=in.(one_rep_max,dont_break_chain,control_the_aux,clear_your_head)&auto_start_at=not.is.null&auto_start_at=lt.${encodeURIComponent(nowIso)}&select=*`,
       { headers }
     );
     if (!dueRes.ok) throw new Error('auto-start query failed: ' + await dueRes.text());

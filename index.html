@@ -11749,7 +11749,7 @@ function _onChallengeBaselineContinue() {
   const w = parseFloat(_challengeDraft.baselineWeight);
   const r = parseInt(_challengeDraft.baselineReps, 10);
   if (!w || w <= 0) { showToast('Enter a valid weight.'); return; }
-  if (!r || r < 1 || r > 20) { showToast('Reps must be between 1 and 20.'); return; }
+  if (!r || r < 1 || r > 30) { showToast('Reps must be between 1 and 30.'); return; }
   _challengeDraft.step = 'confirm';
   _renderChallengeCreateStep();
 }
