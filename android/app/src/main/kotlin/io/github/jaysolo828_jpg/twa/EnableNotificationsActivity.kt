@@ -2,9 +2,11 @@ package io.github.jaysolo828_jpg.twa
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
@@ -71,7 +73,29 @@ class EnableNotificationsActivity : Activity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        // Whatever the user chose, we're done. Finish so the TWA resumes.
+        if (requestCode != REQUEST_CODE) { finish(); return }
+
+        val granted = grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            finish()
+            return
+        }
+
+        // Permission denied. If shouldShowRequestPermissionRationale is
+        // false at this point, the user selected "Don't allow" with the
+        // permanent flag — requestPermissions will never show a dialog
+        // again. Open the system notification settings so they can flip
+        // the toggle themselves.
+        val permanentlyDenied = !ActivityCompat.shouldShowRequestPermissionRationale(
+            this, Manifest.permission.POST_NOTIFICATIONS
+        )
+        if (permanentlyDenied) {
+            val settingsIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            }
+            startActivity(settingsIntent)
+        }
         finish()
     }
 
