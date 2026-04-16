@@ -12,7 +12,5 @@
     <style name="AppTheme.Launcher" parent="android:Theme.Black.NoTitleBar">
         <item name="android:windowBackground">@color/backgroundColor</item>
         <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/backgroundColor</item>
-        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="31">@mipmap/ic_launcher_foreground</item>
-        <item name="android:windowSplashScreenIconBackgroundColor" tools:targetApi="31">@color/backgroundColor</item>
     </style>
 </resources>
