@@ -60,24 +60,6 @@ class EnableNotificationsActivity : Activity() {
             return
         }
 
-        // If the user previously denied with "Don't ask again",
-        // requestPermissions silently returns denied without showing a
-        // dialog. Detect this via shouldShowRequestPermissionRationale
-        // returning false (permission denied + no rationale = permanent
-        // denial) and open the system notification settings directly so
-        // the user can flip the toggle themselves.
-        val permanentlyDenied = !ActivityCompat.shouldShowRequestPermissionRationale(
-            this, Manifest.permission.POST_NOTIFICATIONS
-        )
-        if (permanentlyDenied) {
-            val settingsIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-            }
-            startActivity(settingsIntent)
-            finish()
-            return
-        }
-
         ActivityCompat.requestPermissions(
             this,
             arrayOf(Manifest.permission.POST_NOTIFICATIONS),
@@ -91,7 +73,29 @@ class EnableNotificationsActivity : Activity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        // Whatever the user chose, we're done. Finish so the TWA resumes.
+        if (requestCode != REQUEST_CODE) { finish(); return }
+
+        val granted = grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            finish()
+            return
+        }
+
+        // Permission denied. If shouldShowRequestPermissionRationale is
+        // false at this point, the user selected "Don't allow" with the
+        // permanent flag — requestPermissions will never show a dialog
+        // again. Open the system notification settings so they can flip
+        // the toggle themselves.
+        val permanentlyDenied = !ActivityCompat.shouldShowRequestPermissionRationale(
+            this, Manifest.permission.POST_NOTIFICATIONS
+        )
+        if (permanentlyDenied) {
+            val settingsIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            }
+            startActivity(settingsIntent)
+        }
         finish()
     }
 
