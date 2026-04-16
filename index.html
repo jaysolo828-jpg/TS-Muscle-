@@ -15185,12 +15185,13 @@ async function _requestNotificationPermission() {
   if (!('Notification' in window) || !('PushManager' in window)) return;
   if (Notification.permission === 'granted') {
     _registerOneSignalPlayerId();
-    // Permission is confirmed granted at the Chrome level. Persist the
-    // sheet dismissal so it stops re-appearing on every app launch.
-    // This catches the case where a previous session granted via the
-    // native bridge but the ENABLE onclick's synchronous check ran
-    // before Chrome updated its state. Recoverable: toggling social
-    // features off/on clears the flag and re-shows the sheet.
+    try { localStorage.setItem('notifSheetShown', '1'); } catch(_) {}
+  }
+  // On Android TWA, notifications go through native FCM — Chrome's
+  // Notification.permission stays 'default' even when notifications
+  // work fine. If we have an FCM token, the native path is active
+  // and the sheet is unnecessary.
+  if (window._fcmToken) {
     try { localStorage.setItem('notifSheetShown', '1'); } catch(_) {}
   }
   _maybeShowNotifSheet();
