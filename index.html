@@ -15185,14 +15185,14 @@ async function _requestNotificationPermission() {
   if (!('Notification' in window) || !('PushManager' in window)) return;
   if (Notification.permission === 'granted') {
     _registerOneSignalPlayerId();
+    // Permission is confirmed granted at the Chrome level. Persist the
+    // sheet dismissal so it stops re-appearing on every app launch.
+    // This catches the case where a previous session granted via the
+    // native bridge but the ENABLE onclick's synchronous check ran
+    // before Chrome updated its state. Recoverable: toggling social
+    // features off/on clears the flag and re-shows the sheet.
+    try { localStorage.setItem('notifSheetShown', '1'); } catch(_) {}
   }
-  // ALWAYS fall through to the sheet — even in 'granted' state. On Android,
-  // Chrome's origin permission can be 'granted' while the OS-level
-  // POST_NOTIFICATIONS is blocked, and the user needs a visible recovery path.
-  // _maybeShowNotifSheet respects localStorage.notifSheetShown so once
-  // the user dismisses it, it stays dismissed across app restarts. The
-  // user can re-trigger it by toggling social features in settings,
-  // which clears the flag.
   _maybeShowNotifSheet();
 }
 
@@ -15248,6 +15248,35 @@ function _triggerNativePermissionPrompt() {
   } catch (_) {}
 }
 
+// After the native bridge fires, the EnableNotificationsActivity shows the OS
+// dialog and finishes. When the TWA regains focus, we check whether permission
+// was granted. If so, persist the flag so the sheet stops re-appearing, and
+// register the push subscription so Chrome's internal state also flips to
+// 'granted'. Without this, the ENABLE onclick's synchronous check runs BEFORE
+// the OS dialog has shown, so the flag is never set and the sheet returns on
+// every app launch even though notifications are working.
+function _waitForNotifGrant() {
+  function onReturn() {
+    document.removeEventListener('visibilitychange', onReturn);
+    clearTimeout(fallback);
+    setTimeout(function() {
+      if (Notification.permission === 'granted') {
+        try { localStorage.setItem('notifSheetShown', '1'); } catch(_) {}
+        _registerOneSignalPlayerId();
+      }
+    }, 300);
+  }
+  document.addEventListener('visibilitychange', onReturn);
+  // Fallback if visibilitychange never fires (some TWA configurations)
+  var fallback = setTimeout(function() {
+    document.removeEventListener('visibilitychange', onReturn);
+    if (Notification.permission === 'granted') {
+      try { localStorage.setItem('notifSheetShown', '1'); } catch(_) {}
+      _registerOneSignalPlayerId();
+    }
+  }, 4000);
+}
+
 function _showNotifSheet() {
   if (document.getElementById('notif-prompt-sheet')) return;
   // Note: do NOT set localStorage.notifSheetShown here. If we did, a
@@ -15280,7 +15309,7 @@ function _showNotifSheet() {
   // to show the real OS prompt. On non-Android, fall through to the
   // web API which works fine because there's no split-permission state.
   const primaryAction = isAndroid
-    ? (enableJs + ';_triggerNativePermissionPrompt()')
+    ? (enableJs + ';_triggerNativePermissionPrompt();_waitForNotifGrant()')
     : "_enableNotifFromSheet()";
 
   const sheet = document.createElement('div');
