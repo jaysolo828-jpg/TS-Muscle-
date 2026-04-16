@@ -8157,17 +8157,23 @@ function supabaseShowEmailForm(source) {
 }
 
 async function supabaseSignInEmailFromSettings() {
-  const email = (document.getElementById('settings-email-input')?.value || '').trim();
-  const password = (document.getElementById('settings-password-input')?.value || '');
   const sb = _getSupabaseClient();
   if (!sb) { showToast('Social features unavailable. Please try again.'); return; }
+  if (state.supabaseUserId) { showToast("You're connected!"); setTimeout(() => location.reload(), 800); return; }
+  const email = (document.getElementById('settings-email-input')?.value || '').trim();
+  const password = (document.getElementById('settings-password-input')?.value || '');
   if (!email || !password) { showToast('Enter email and password.'); return; }
   try {
     let { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error?.message?.includes('Invalid login')) {
       ({ data, error } = await sb.auth.signUp({ email, password }));
     }
-    if (error) { showToast(error.message || 'Sign in failed.'); return; }
+    if (error) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session?.user) { await _onSupabaseSignIn(session.user); return; }
+      showToast(error.message || 'Sign in failed.');
+      return;
+    }
     // If signup returned a user but no session, email confirmation is required
     if (data?.user && !data?.session) {
       showToast('Check your email to confirm your account, then sign in here.');
@@ -8197,6 +8203,9 @@ async function supabaseSignInGoogle() {
 async function supabaseSignInEmail() {
   const sb = _getSupabaseClient();
   if (!sb) { showToast('Social features unavailable. Try again later.'); return; }
+  // If already signed in (e.g. _checkSupabaseSession completed while user
+  // was filling the form with autofilled credentials), skip the auth call.
+  if (state.supabaseUserId) { showToast("You're connected!"); setTimeout(() => location.reload(), 800); return; }
   const email = (document.getElementById('supabase-email-input')?.value || '').trim();
   const password = (document.getElementById('supabase-password-input')?.value || '');
   if (!email || !password) { showToast('Enter your email and password.'); return; }
@@ -8206,7 +8215,14 @@ async function supabaseSignInEmail() {
     if (result.error && result.error.message && result.error.message.toLowerCase().includes('invalid')) {
       result = await sb.auth.signUp({ email, password });
     }
-    if (result.error) { showToast(result.error.message || 'Sign in failed.'); return; }
+    if (result.error) {
+      // Supabase may have established a session despite returning an error
+      // (e.g. rate-limit warning, partial success). Check before showing toast.
+      const { data: { session } } = await sb.auth.getSession();
+      if (session?.user) { await _onSupabaseSignIn(session.user); return; }
+      showToast(result.error.message || 'Sign in failed.');
+      return;
+    }
     if (result.data?.user) {
       await _onSupabaseSignIn(result.data.user);
     } else {
