@@ -10,8 +10,8 @@ android {
         applicationId 'io.github.jaysolo828_jpg.twa'
         minSdk 23
         targetSdk 35
-        versionCode 59
-        versionName '1.3.0'
+        versionCode 62
+        versionName '1.3.3'
     }
 
     signingConfigs {

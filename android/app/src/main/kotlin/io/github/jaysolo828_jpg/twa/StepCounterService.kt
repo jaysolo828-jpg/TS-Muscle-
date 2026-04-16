@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.graphics.drawable.Icon
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -178,26 +177,10 @@ class StepCounterService : Service(), SensorEventListener {
 
     private fun buildNotification(): Notification {
         val tapIntent = packageManager.getLaunchIntentForPackage(packageName)
-        val tapPi = PendingIntent.getActivity(
-            this, 0, tapIntent, PendingIntent.FLAG_IMMUTABLE
-        )
-
+        val flags = PendingIntent.FLAG_IMMUTABLE
+        val pi = PendingIntent.getActivity(this, 0, tapIntent, flags)
         val stepText = if (hasSensor) "$sessionSteps steps" else "Timer running"
         val contentText = if (isPaused) "Paused — $stepText" else stepText
-
-        val actionLabel  = if (isPaused) "Resume" else "Pause"
-        val actionAction = if (isPaused) ACTION_RESUME else ACTION_PAUSE
-        val actionIntent = Intent(this, StepCounterService::class.java).apply { action = actionAction }
-        val actionPi = PendingIntent.getService(
-            this, 1, actionIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val action = Notification.Action.Builder(
-            Icon.createWithResource(this, R.drawable.ic_ts_notification),
-            actionLabel,
-            actionPi
-        ).build()
 
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
@@ -209,10 +192,8 @@ class StepCounterService : Service(), SensorEventListener {
             .setSmallIcon(R.drawable.ic_ts_notification)
             .setContentTitle("Workout in progress")
             .setContentText(contentText)
-            .setContentIntent(tapPi)
+            .setContentIntent(pi)
             .setOngoing(true)
-            .addAction(action)
-            .setStyle(Notification.MediaStyle().setShowActionsInCompactView(0))
             .build()
     }
 
