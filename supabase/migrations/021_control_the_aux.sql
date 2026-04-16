@@ -16,7 +16,7 @@ ALTER TABLE public.challenges
 
 ALTER TABLE public.challenges
   ADD CONSTRAINT challenges_challenge_type_check
-  CHECK (challenge_type IN ('one_rep_max', 'dont_break_chain', 'control_the_aux'));
+  CHECK (challenge_type IN ('one_rep_max', 'dont_break_chain', 'clear_your_head', 'control_the_aux'));
 
 -- ── 2. aux_songs ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.aux_songs (
