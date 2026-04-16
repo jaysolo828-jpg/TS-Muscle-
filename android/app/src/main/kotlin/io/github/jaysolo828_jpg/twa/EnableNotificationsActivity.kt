@@ -2,9 +2,11 @@ package io.github.jaysolo828_jpg.twa
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
@@ -54,6 +56,24 @@ class EnableNotificationsActivity : Activity() {
         ) == PackageManager.PERMISSION_GRANTED
 
         if (alreadyGranted) {
+            finish()
+            return
+        }
+
+        // If the user previously denied with "Don't ask again",
+        // requestPermissions silently returns denied without showing a
+        // dialog. Detect this via shouldShowRequestPermissionRationale
+        // returning false (permission denied + no rationale = permanent
+        // denial) and open the system notification settings directly so
+        // the user can flip the toggle themselves.
+        val permanentlyDenied = !ActivityCompat.shouldShowRequestPermissionRationale(
+            this, Manifest.permission.POST_NOTIFICATIONS
+        )
+        if (permanentlyDenied) {
+            val settingsIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            }
+            startActivity(settingsIntent)
             finish()
             return
         }
