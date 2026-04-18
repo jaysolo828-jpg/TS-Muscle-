@@ -29415,7 +29415,8 @@ function renderGrowthLogCard() {
   card.id = 'growth-log-card';
 
   const enabled = !!state.growthTrackingEnabled;
-  const weighIns = _uniqueWeighInWeeks();
+  const weighInsRaw = (state.weightLog || []).length;
+  const weighIns = Math.max(weighInsRaw, _uniqueWeighInWeeks());
   const balance = state.growthBalance || 0;
   const gs = state.growthState || 'inactive';
   const snapshots = (state.growthHistory || []).slice(-20);
