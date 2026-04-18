@@ -29627,14 +29627,14 @@ function _buildGrowthWeighInRow() {
   const hint = thisWeekEntry
     ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Logged ' + new Date(displayEntry.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' \xb7 ' + displayEntry.weight + ' lbs. Edit and tap update to correct it.</div>'
     : (displayEntry
-      ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Last: ' + displayEntry.weight + ' lbs \xb7 ' + lastLabel + ' \xb7 New week = new check-in.</div>'
+      ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Last: ' + displayEntry.weight + ' lbs \xb7 ' + lastLabel + ' \xb7 Update if changed, or tap ' + btnLabel + ' to log same weight.</div>'
       : '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">One weigh-in per week counts toward unlocking your estimate.</div>');
 
   return `
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;margin-bottom:14px;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:6px;">WEIGH-IN &middot; <span style="font-weight:400;letter-spacing:0.5px;">once per week</span></div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <input type="number" id="growth-weighin-input" inputmode="decimal" value="${thisWeekEntry ? prefill : ''}" placeholder="${prefill || 'e.g. 185'}" style="
+        <input type="number" id="growth-weighin-input" inputmode="decimal" value="${prefill}" placeholder="${prefill || 'e.g. 185'}" style="
           flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;
           color:var(--cream);padding:8px 10px;
           font-family:'Barlow Condensed',sans-serif;font-size:15px;
