@@ -426,6 +426,10 @@
   .active-cardio-btn svg { stroke: var(--red) !important; }
   .active-cardio-btn span { color: var(--red) !important; }
 
+  #cardio-type-grid, #cardio-tab-toggle, #cardio-walk-mode {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
   .cardio-rpe-btn {
     background: var(--dark3);
     border: 1px solid var(--dark4);
@@ -3187,10 +3191,11 @@
       </div>
     </div>
     <div id="cardio-week-breakdown" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:8px;letter-spacing:0.3px;line-height:1.4;"></div>
+    <div id="cw-vs-last" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:0.5px;margin-top:6px;"></div>
   </div>
 
   <!-- ACTIVITY TYPE — shared selector, applies to both tabs -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+  <div id="cardio-type-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
     <button id="ctype-treadmill" onclick="selectCardioType('treadmill')" class="cardio-type-btn active-cardio-btn" style="padding:16px 10px;gap:8px;">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="14" width="20" height="3" rx="1"/><path d="M5 14V9l3-4h4l2 4v5"/><line x1="9" y1="5" x2="9" y2="14"/><circle cx="17" cy="6" r="2"/><path d="M15 14l2-5 3 2"/></svg>
       <span style="font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;">TREADMILL</span>
@@ -3219,7 +3224,7 @@
   </div>
 
   <!-- TAB TOGGLE: TRACK / LOG -->
-  <div style="display:flex;background:var(--dark2);border-radius:12px;padding:3px;margin-bottom:20px;gap:3px;">
+  <div id="cardio-tab-toggle" style="display:flex;background:var(--dark2);border-radius:12px;padding:3px;margin-bottom:20px;gap:3px;">
     <button id="cardio-tab-track" onclick="_switchCardioTab('track')" style="flex:1;padding:11px;border-radius:9px;border:none;background:var(--red);color:white;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;">TRACK</button>
     <button id="cardio-tab-log" onclick="_switchCardioTab('log')" style="flex:1;padding:11px;border-radius:9px;border:none;background:transparent;color:var(--gray);font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;">LOG</button>
   </div>
@@ -37341,6 +37346,29 @@ function _switchCardioTab(tab) {
   }
 }
 
+function _setCardioControlsVisible(visible) {
+  const typeGrid  = document.getElementById('cardio-type-grid');
+  const tabToggle = document.getElementById('cardio-tab-toggle');
+  const walkMode  = document.getElementById('cardio-walk-mode');
+  if (visible) {
+    [typeGrid, tabToggle].filter(Boolean).forEach(el => {
+      el.style.display = el === typeGrid ? 'grid' : 'flex';
+      requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+    });
+    if (walkMode) {
+      const showWalk = cardioType === 'walk' || cardioType === 'briskwalk';
+      walkMode.style.display = showWalk ? 'block' : 'none';
+      if (showWalk) requestAnimationFrame(() => { walkMode.style.opacity = '1'; walkMode.style.transform = 'translateY(0)'; });
+    }
+  } else {
+    [typeGrid, tabToggle, walkMode].filter(Boolean).forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(-4px)';
+      setTimeout(() => { el.style.display = 'none'; }, 210);
+    });
+  }
+}
+
 function _startTrackingWorkout() {
   haptic(HAPTIC.start);
   _cardioTrackingActive = true;
@@ -37351,6 +37379,7 @@ function _startTrackingWorkout() {
   const typeEl = document.getElementById('cardio-active-type');
   if (typeEl) typeEl.textContent = (typeNames[cardioType] || cardioType.toUpperCase()) + ' IN PROGRESS';
   _switchCardioTab('track');
+  _setCardioControlsVisible(false);
   document.getElementById('cardio-idle-view').style.display = 'none';
   document.getElementById('cardio-active-view').style.display = 'block';
   // Lock the LOG tab while a session is active so the user can't accidentally navigate away
@@ -37448,6 +37477,7 @@ function _discardTrackingWorkout() {
   _cardioTrackingSeconds = 0;
   _cardioTrackedSteps    = 0;
   // Reset UI back to idle — no save, no tab switch
+  _setCardioControlsVisible(true);
   document.getElementById('cardio-idle-view').style.display  = 'block';
   document.getElementById('cardio-active-view').style.display = 'none';
   document.getElementById('cardio-live-steps').style.display  = 'none';
@@ -37478,6 +37508,7 @@ function _finishTrackingWorkout() {
   // Pre-fill the manual log duration with elapsed time, then save
   const minsEl = document.getElementById('timer-mins');
   if (minsEl) minsEl.value = totalMins > 0 ? totalMins : 1;
+  _setCardioControlsVisible(true);
   document.getElementById('cardio-idle-view').style.display = 'block';
   document.getElementById('cardio-active-view').style.display = 'none';
   // Unlock the LOG tab before switching to it
@@ -37816,6 +37847,9 @@ function renderCardioWeeklySummary() {
   weekStart.setHours(0, 0, 0, 0);
   const history = state.cardioHistory || [];
   const thisWeek = history.filter(s => new Date(s.date) >= weekStart);
+  const lastWeekStart = new Date(weekStart);
+  lastWeekStart.setDate(weekStart.getDate() - 7);
+  const lastWeekCount = history.filter(s => { const d = new Date(s.date); return d >= lastWeekStart && d < weekStart; }).length;
   const totalMins = thisWeek.reduce((sum, s) => sum + (parseInt(s.duration) || 0), 0);
   const totalCal = thisWeek.reduce((sum, s) => sum + (parseFloat(s.details?.calories) || 0), 0);
   const sesEl = document.getElementById('cw-sessions');
@@ -37823,6 +37857,7 @@ function renderCardioWeeklySummary() {
   const calEl = document.getElementById('cw-cal');
   const calBlock = document.getElementById('cw-cal-block');
   const bdEl = document.getElementById('cardio-week-breakdown');
+  const vsEl = document.getElementById('cw-vs-last');
   if (sesEl) sesEl.textContent = thisWeek.length;
   if (minEl) minEl.textContent = totalMins;
   if (calEl) calEl.textContent = Math.round(totalCal) || 0;
@@ -37837,6 +37872,26 @@ function renderCardioWeeklySummary() {
         .join(' \u00b7 ');
     } else {
       bdEl.textContent = 'No sessions logged yet this week.';
+    }
+  }
+  if (vsEl) {
+    if (lastWeekCount === 0 && thisWeek.length === 0) {
+      vsEl.textContent = '';
+    } else if (lastWeekCount === 0) {
+      vsEl.style.color = 'var(--gray)';
+      vsEl.textContent = 'No sessions last week';
+    } else {
+      const diff = thisWeek.length - lastWeekCount;
+      if (diff > 0) {
+        vsEl.style.color = 'var(--success)';
+        vsEl.textContent = '\u2191\u00a0' + diff + ' more than last week\u2019s ' + lastWeekCount;
+      } else if (diff < 0) {
+        vsEl.style.color = 'var(--gray)';
+        vsEl.textContent = '\u2193\u00a0' + Math.abs(diff) + ' fewer than last week\u2019s ' + lastWeekCount;
+      } else {
+        vsEl.style.color = 'var(--gray)';
+        vsEl.textContent = 'Same as last week \u00b7 ' + lastWeekCount + ' session' + (lastWeekCount !== 1 ? 's' : '');
+      }
     }
   }
 }
