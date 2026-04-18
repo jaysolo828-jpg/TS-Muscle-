@@ -18093,8 +18093,11 @@ function renderHome() {
   const _tmTier = state.travelMode?.tier;
   const _tmValidEquip = _tmActive ? _getTravelTierEquipment(_tmTier) : [];
 
+  let _nextUpFound = false;
   visibleDays.forEach((day, dayIdx) => {
     const doneThisWeek = completedThisWeekIds.has(day.id);
+    const isNextUp = !doneThisWeek && !_nextUpFound;
+    if (!doneThisWeek) _nextUpFound = true;
     const isResuming = pausedSession && pausedSession.dayId === day.id;
     const _dc = typeof CARD_DAY_PALETTES !== 'undefined' ? CARD_DAY_PALETTES[dayIdx % CARD_DAY_PALETTES.length] : null;
     const _dayColorBase = _dc ? (_dc.ui || _dc.hi) : 'var(--red)';
@@ -18109,6 +18112,7 @@ function renderHome() {
     const card = document.createElement('div');
     card.className = 'day-card';
     if (_tmActive) card.style.borderColor = 'rgba(74,158,219,0.25)';
+    if (isNextUp && !_tmActive) card.style.borderColor = `rgba(${_r},${_g},${_b},0.6)`;
     card.innerHTML = `
       <div class="day-header" onclick="toggleDayCard('${day.id}')">
         <div class="day-accent" style="background:${_dayColor};"></div>
@@ -36770,6 +36774,7 @@ function renderHardDayCollection(showAll = false) {
           <div style="font-size:13px;color:var(--gray);margin-top:3px;">${meta.label}${volumeStr ? ' · ' + volumeStr : ''}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+          <span style="display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:#D4A843;border:2px solid #D4A843;border-radius:3px;padding:2px 6px;transform:rotate(-8deg);transform-origin:center;white-space:nowrap;">SHOWED UP</span>
           <div style="font-size:13px;color:var(--gray);">${dateStr}</div>
           ${_trashBtn(entry.id, 'hardday')}
         </div>
