@@ -7687,12 +7687,42 @@ function migrateExerciseRotationTracking() {
   saveState();
 }
 
-function loadState() {
-  const saved = localStorage.getItem('ts-muscle-state');
+async function loadState() {
+  let saved = localStorage.getItem('ts-muscle-state');
+
+  // IDB fallback for the state blob. If localStorage was wiped (OS storage
+  // reclaim, private mode, user cleared app data on one side, etc.) restore
+  // from the IDB mirror before proceeding. Doing it here inside loadState
+  // ensures state is fully hydrated before renderHome runs — without this
+  // the screen would paint with default state, then re-paint after recovery.
+  if (!saved) {
+    try {
+      const backup = await _idbGet('ts-muscle-state');
+      if (typeof backup === 'string' && backup) {
+        saved = backup;
+        try { localStorage.setItem('ts-muscle-state', backup); } catch(_) {}
+      }
+    } catch(_) {}
+  }
+
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
       state = { ...state, ...parsed };
+
+      // History lives in its own IDB key (ts-muscle-history). Load it BEFORE
+      // any history migrations run below so they operate on the authoritative
+      // array. Legacy users may still have history embedded in the state blob
+      // above — if IDB has nothing yet, we leave whatever came from the blob
+      // and the next saveState will migrate it to IDB automatically.
+      try {
+        const idbHist = await _idbGet('ts-muscle-history');
+        if (idbHist) {
+          const parsedHist = typeof idbHist === 'string' ? JSON.parse(idbHist) : idbHist;
+          if (Array.isArray(parsedHist)) state.history = parsedHist;
+        }
+      } catch(_) {}
+
       if (!state.program) state.program = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
       migrateExerciseNames();
       migrateExerciseRotationTracking();
@@ -7830,33 +7860,14 @@ function loadState() {
 }
 
 function saveState() {
-  // Keep history lean while preserving enough same-day sessions for the
-  // progression velocity multiplier (needs up to 8 per dayId). Walk newest
-  // → oldest: keep a session if the per-day quota isn't full OR we haven't
-  // hit the overall cap yet. Prevents a long-term user's oldest "Upper A"
-  // sessions from getting trimmed before the overall cap is reached.
-  const MAX_TOTAL_HISTORY = 200;
-  const MIN_PER_DAY = 10;
-  if (state.history && state.history.length > MAX_TOTAL_HISTORY) {
-    const countPerDay = {};
-    const kept = [];
-    for (let i = state.history.length - 1; i >= 0; i--) {
-      const h = state.history[i];
-      const id = (h && h.dayId) || '_unknown';
-      const belowFloor = (countPerDay[id] || 0) < MIN_PER_DAY;
-      const belowCap = kept.length < MAX_TOTAL_HISTORY;
-      if (belowFloor || belowCap) {
-        kept.push(h);
-        countPerDay[id] = (countPerDay[id] || 0) + 1;
-      }
-    }
-    kept.reverse();
-    if (kept.length < state.history.length) {
-      const dropped = state.history.length - kept.length;
-      state.history = kept;
-      showToast(`${dropped} oldest session${dropped > 1 ? 's' : ''} removed to free up space`, 'error');
-    }
-  }
+  // History lives in its own IndexedDB key (ts-muscle-history). localStorage
+  // has a ~5 MB quota that would eventually force us to trim old sessions;
+  // IndexedDB has no practical size limit, so workout history can grow
+  // indefinitely. state.history stays in memory for synchronous reads by
+  // the 70+ render/metric functions that already depend on it.
+  //
+  // Cardio and mindset logs stay in the localStorage blob — they're small,
+  // already capped, and not performance-sensitive.
   if (state.cardioHistory && state.cardioHistory.length > 100) state.cardioHistory = state.cardioHistory.slice(-100);
   // Cap mindset logs — newest first (unshift order), keep most recent
   if (state.moodLog && state.moodLog.length > 200) state.moodLog = state.moodLog.slice(0, 200);
@@ -7864,20 +7875,31 @@ function saveState() {
   if (state.selfCompassionLog && state.selfCompassionLog.length > 100) state.selfCompassionLog = state.selfCompassionLog.slice(0, 100);
   if (state.implementationIntentions && state.implementationIntentions.length > 50) state.implementationIntentions = state.implementationIntentions.slice(0, 50);
 
+  // Persist history to its dedicated IDB key first. Fire-and-forget — the
+  // put is queued and completes in the background.
   try {
-    const _json = JSON.stringify(state);
+    _idbSet('ts-muscle-history', JSON.stringify(state.history || []));
+  } catch(e) {}
+
+  // Save the rest of state (without history) to localStorage + IDB mirror.
+  // Stripping history here keeps the blob tiny — typically < 50 KB even
+  // for a long-term user — so the localStorage quota is effectively unreachable.
+  try {
+    const { history: _stateHistory, ...stateForBlob } = state;
+    const _json = JSON.stringify(stateForBlob);
     localStorage.setItem('ts-muscle-state', _json);
     _idbSet('ts-muscle-state', _json);
   } catch(e) {
-    // localStorage quota hit — trim aggressively and retry
+    // localStorage quota hit on the tiny non-history blob. state.history is
+    // safe in IDB — do NOT touch it. Trim cardio as a last resort.
     try {
-      state.history = (state.history || []).slice(-50);
       state.cardioHistory = (state.cardioHistory || []).slice(-50);
-      const _json = JSON.stringify(state);
+      const { history: _h2, ...stateForBlob2 } = state;
+      const _json = JSON.stringify(stateForBlob2);
       localStorage.setItem('ts-muscle-state', _json);
       _idbSet('ts-muscle-state', _json);
     } catch(e2) {
-      showToast('Storage full. Oldest history trimmed to save space.', 'error');
+      showToast('Storage full. Some data may not be saved.', 'error');
     }
   }
 }
@@ -32429,8 +32451,9 @@ function migratePeriodizationState() {
 // Declared here (before init) to avoid TDZ error: _initObScroll is called from
 // checkOnboarding() inside the init block, before the original `let` at line ~13134.
 let _obScrollListenerReady = false;
+(async function initApp() {
 try {
-  loadState();
+  await loadState();
   // Restore per-signal reaction push-gate state so the per-type push
   // gate survives page reloads (otherwise a reload-then-retap of the
   // same reaction type would re-fire a push that was already sent).
@@ -32517,6 +32540,7 @@ try {
 } catch(e) {
   console.error('T&S Muscle init error:', e);
 }
+})();
 
 // Version toast
 
