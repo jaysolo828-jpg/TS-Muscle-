@@ -745,6 +745,52 @@ Deno.serve(async (req) => {
     report.errors.push({ phase: 'aux-end', detail: String(e) });
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // H. RECOVERY WEEK END NOTIFICATIONS
+  //    Find users whose rest_week_start_at is 7+ days ago and who
+  //    are still flagged (column not yet cleared). Fire a push that
+  //    deep-links into the recovery check-in questions, then clear
+  //    the column so the notification fires only once.
+  // ─────────────────────────────────────────────────────────────
+  try {
+    const recoveryCutoff = new Date(nowMs - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const recoveryRes = await fetch(
+      `${sbUrl}/rest/v1/users?rest_week_start_at=not.is.null&rest_week_start_at=lt.${encodeURIComponent(recoveryCutoff)}&select=id,rest_week_type`,
+      { headers }
+    );
+    if (!recoveryRes.ok) throw new Error('recovery query failed: ' + await recoveryRes.text());
+    const recoveryUsers: any[] = await recoveryRes.json();
+    report.recoveryNotifs = 0;
+
+    for (const user of recoveryUsers) {
+      const isDeload = user.rest_week_type === 'deload';
+      const title = isDeload ? 'Light week is done' : 'Rest week is done';
+      await fetch(pushUrl, {
+        method: 'POST',
+        headers: pushHeaders,
+        body: JSON.stringify({
+          to_uid: user.id,
+          title,
+          body: 'Time to get back to it. Tap to check in.',
+          type: 'recovery',
+          sid: 'recovery',
+        })
+      });
+      // Clear so this fires only once per recovery period
+      await fetch(
+        `${sbUrl}/rest/v1/users?id=eq.${user.id}`,
+        {
+          method: 'PATCH',
+          headers: { ...headers, 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ rest_week_start_at: null, rest_week_type: null })
+        }
+      );
+      report.recoveryNotifs++;
+    }
+  } catch (e) {
+    report.errors.push({ phase: 'recovery', detail: String(e) });
+  }
+
   return new Response(JSON.stringify({ ok: true, ...report }), {
     headers: { ...CORS, 'content-type': 'application/json' }
   });
