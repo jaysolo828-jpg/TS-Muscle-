@@ -3419,6 +3419,15 @@
     <div style="padding:0 16px;">
       <div style="font-size:14px; color:var(--gray-light); letter-spacing:1.5px; margin-bottom:3px; font-family:'Barlow Condensed',sans-serif; font-weight:700;" id="mood-checkin-label">T&amp;S FEELINGS WHEEL</div>
       <div id="mood-wheel-subtitle" style="font-size:14px; color:var(--gray-light); margin-bottom:10px;">Tap a section to name how you feel right now.</div>
+      <div id="mood-wheel-timing-hint" style="display:flex; align-items:center; gap:10px; margin-bottom:14px; background:rgba(204,32,39,0.07); border:1px solid rgba(204,32,39,0.2); border-radius:10px; padding:10px 12px;">
+        <div style="width:32px; height:32px; border-radius:8px; background:rgba(204,32,39,0.13); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="19.8" y1="7.5" x2="4.2" y2="16.5"/><line x1="19.8" y1="16.5" x2="4.2" y2="7.5"/></svg>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:2px; color:var(--red); margin-bottom:2px;">LOG AFTER EACH WORKOUT</div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--gray-light); line-height:1.35;">Training shifts how you feel. Come back when you finish.</div>
+        </div>
+      </div>
     </div>
     <input type="hidden" id="mood-timing" value="post"/>
     <input type="hidden" id="mood-value" value=""/>
@@ -15993,7 +16002,7 @@ function calcConsistencyRate() {
     if (wEnd.getTime() <= firstDate.getTime()) break; // before program started
     const count = history.filter(e => {
       const d = new Date(e.date).getTime();
-      return d >= wSun.getTime() && d < wEnd.getTime();
+      return d >= wMon.getTime() && d < wEnd.getTime();
     }).length;
     scheduled += daysPerWeek;
     completed += Math.min(count, daysPerWeek);
@@ -29627,14 +29636,14 @@ function _buildGrowthWeighInRow() {
   const hint = thisWeekEntry
     ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Logged ' + new Date(displayEntry.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' \xb7 ' + displayEntry.weight + ' lbs. Edit and tap update to correct it.</div>'
     : (displayEntry
-      ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Last: ' + displayEntry.weight + ' lbs \xb7 ' + lastLabel + ' \xb7 New week = new check-in.</div>'
+      ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">Last: ' + displayEntry.weight + ' lbs \xb7 ' + lastLabel + ' \xb7 Update if changed, or tap ' + btnLabel + ' to log same weight.</div>'
       : '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);margin-top:5px;letter-spacing:0.3px;">One weigh-in per week counts toward unlocking your estimate.</div>');
 
   return `
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;margin-bottom:14px;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:6px;">WEIGH-IN &middot; <span style="font-weight:400;letter-spacing:0.5px;">once per week</span></div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <input type="number" id="growth-weighin-input" inputmode="decimal" value="${thisWeekEntry ? prefill : ''}" placeholder="${prefill || 'e.g. 185'}" style="
+        <input type="number" id="growth-weighin-input" inputmode="decimal" value="${prefill}" placeholder="${prefill || 'e.g. 185'}" style="
           flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;
           color:var(--cream);padding:8px 10px;
           font-family:'Barlow Condensed',sans-serif;font-size:15px;
@@ -35731,7 +35740,9 @@ function renderMoodCheckinLabel() {
   if (!el) return;
   const { deduped } = _getTodayMoods();
   const postEntry = deduped.find(e => e.timing === 'post');
-  if (!postEntry) { el.textContent = 'T\u0026S FEELINGS WHEEL'; el.style.color = ''; const sub = document.getElementById('mood-wheel-subtitle'); if (sub) sub.textContent = 'Tap a section to name how you feel right now.'; return; }
+  const hintEl = document.getElementById('mood-wheel-timing-hint');
+  if (!postEntry) { el.textContent = 'T\u0026S FEELINGS WHEEL'; el.style.color = ''; const sub = document.getElementById('mood-wheel-subtitle'); if (sub) sub.textContent = 'Tap a section to name how you feel right now.'; if (hintEl) hintEl.style.display = 'flex'; return; }
+  if (hintEl) hintEl.style.display = 'none';
   el.style.color = 'var(--success)';
   el.innerHTML = `<span>FEELINGS WHEEL \u00b7 \u2713 ${postEntry.emoji} ${postEntry.label}</span>`;
   const sub = document.getElementById('mood-wheel-subtitle');
