@@ -8302,6 +8302,11 @@ async function _onSupabaseSignIn(user) {
     _requestNotificationPermission();
     _loadNotifPrefs(); // eager load so settings sub-text is ready
     _loadChallenges().then(() => { _renderActiveChallengeHomeCard(); _renderActiveChainHomeCard(); }).catch(() => {});
+    // Sync rest/deload week to server in case this user was already in one
+    // before the column existed (fire-and-forget — non-critical)
+    if (state.isRestWeek || state.isDeloadWeek) {
+      _syncRecoveryWeekToServer(state.isDeloadWeek ? 'deload' : 'rest');
+    }
     showToast("You're connected!");
     setTimeout(() => location.reload(), 1200);
   }
@@ -8588,6 +8593,18 @@ async function _confirmAvatarColor() {
   const sb = _getSupabaseClient();
   if (!sb || !state.supabaseUserId) return;
   await sb.from('users').update({ avatar_color: hex }).eq('id', state.supabaseUserId);
+}
+
+// Sync rest/deload week state to the server so the challenge-tick cron can
+// fire a "rest week is done" push 7 days after recovery starts.
+// Pass type='deload'|'rest' to set, null to clear (week ended).
+function _syncRecoveryWeekToServer(type) {
+  const sb = _getSupabaseClient();
+  if (!sb || !state.supabaseUserId) return;
+  const patch = type
+    ? { rest_week_start_at: new Date(state.deloadStartDate || Date.now()).toISOString(), rest_week_type: type }
+    : { rest_week_start_at: null, rest_week_type: null };
+  sb.from('users').update(patch).eq('id', state.supabaseUserId).then(function(){}).catch(function(){});
 }
 
 // ── Profile Photo Upload ──────────────────────────────────────────────────────
@@ -15373,6 +15390,14 @@ function _maybeHandlePendingNotifOpen() {
   // sheet (z-index 999999) doesn't pop over the friend-activity sheet.
   try { localStorage.setItem('notifSheetShown', '1'); } catch(_) {}
 
+  // Recovery week done — tap opens the deload modal (same questions flow).
+  // Must come before the challenge check and the self-userId check because
+  // recovery pushes also have pending.userId === self.
+  if (pending.signalId === 'recovery') {
+    openDeloadModal();
+    return;
+  }
+
   // Challenge deep-link. _sendDirectPush (and the challenge-tick cron)
   // stuffs the challenge id into the edge function's `sid` field
   // prefixed with "c:" so the native Android service — which blindly
@@ -19160,6 +19185,7 @@ function applyDeloadWeek() {
   state.deloadSessionsCompleted = 0;
   delete state.deloadPostponedToWeek;
   saveState();
+  _syncRecoveryWeekToServer('deload');
   document.getElementById('deload-modal').style.display = 'none';
   showToast(`Recovery week active. Weights at ${100 - _pctLabel}% ⚡`);
   renderHome();
@@ -19176,6 +19202,7 @@ function applyRestWeek() {
   state.deloadSessionsCompleted = 0;
   delete state.deloadPostponedToWeek;
   saveState();
+  _syncRecoveryWeekToServer('rest');
   document.getElementById('deload-modal').style.display = 'none';
   showToast('Rest week active. Program paused. Come back strong 💤');
   renderHome();
@@ -19203,6 +19230,7 @@ function activateDeloadWeek() {
   delete state.deloadDismissedAtCycle;
   delete state.earlyDeloadDismissedAtCycle;
   saveState();
+  _syncRecoveryWeekToServer('deload');
   const m = document.getElementById('deload-suggest-modal');
   if (m) m.remove();
   showToast(`Light week active. Weights at ${100 - _pctLabel}% ⚡`);
@@ -19223,6 +19251,7 @@ function activateDeloadRest() {
   delete state.earlyDeloadDismissedAtCycle;
   delete state.deloadPostponedToWeek;
   saveState();
+  _syncRecoveryWeekToServer('rest');
   const m = document.getElementById('deload-suggest-modal');
   if (m) m.remove();
   showToast('Rest week active. Program paused. Come back strong 💤');
@@ -19355,6 +19384,7 @@ function endRecoveryWeek(cancelled) {
   }
 
   saveState();
+  _syncRecoveryWeekToServer(null);
 }
 
 // ── Post-deload recovery check-in ────────────────────────────────────────
