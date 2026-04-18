@@ -7830,11 +7830,32 @@ function loadState() {
 }
 
 function saveState() {
-  // Keep history lean — last 100 workout sessions and 100 cardio sessions
-  if (state.history && state.history.length > 100) {
-    const dropped = state.history.length - 100;
-    state.history = state.history.slice(-100);
-    showToast(`${dropped} oldest session${dropped > 1 ? 's' : ''} removed to free up space`, 'error');
+  // Keep history lean while preserving enough same-day sessions for the
+  // progression velocity multiplier (needs up to 8 per dayId). Walk newest
+  // → oldest: keep a session if the per-day quota isn't full OR we haven't
+  // hit the overall cap yet. Prevents a long-term user's oldest "Upper A"
+  // sessions from getting trimmed before the overall cap is reached.
+  const MAX_TOTAL_HISTORY = 200;
+  const MIN_PER_DAY = 10;
+  if (state.history && state.history.length > MAX_TOTAL_HISTORY) {
+    const countPerDay = {};
+    const kept = [];
+    for (let i = state.history.length - 1; i >= 0; i--) {
+      const h = state.history[i];
+      const id = (h && h.dayId) || '_unknown';
+      const belowFloor = (countPerDay[id] || 0) < MIN_PER_DAY;
+      const belowCap = kept.length < MAX_TOTAL_HISTORY;
+      if (belowFloor || belowCap) {
+        kept.push(h);
+        countPerDay[id] = (countPerDay[id] || 0) + 1;
+      }
+    }
+    kept.reverse();
+    if (kept.length < state.history.length) {
+      const dropped = state.history.length - kept.length;
+      state.history = kept;
+      showToast(`${dropped} oldest session${dropped > 1 ? 's' : ''} removed to free up space`, 'error');
+    }
   }
   if (state.cardioHistory && state.cardioHistory.length > 100) state.cardioHistory = state.cardioHistory.slice(-100);
   // Cap mindset logs — newest first (unshift order), keep most recent
@@ -19177,7 +19198,8 @@ function applyDeloadWeek() {
     state.deloadBaseWeights = { ...state.startingWeights };
   }
   Object.keys(state.startingWeights).forEach(id => {
-    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * _factor / 2.5) * 2.5;
+    const step = _getExerciseRoundStep(id);
+    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * _factor / step) * step;
   });
   state.isDeloadWeek = true;
   state.isRestWeek   = false;
@@ -19220,7 +19242,8 @@ function activateDeloadWeek() {
     state.deloadBaseWeights = { ...state.startingWeights };
   }
   Object.keys(state.startingWeights).forEach(id => {
-    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * _factor / 2.5) * 2.5;
+    const step = _getExerciseRoundStep(id);
+    state.startingWeights[id] = Math.round((state.deloadBaseWeights[id] || state.startingWeights[id]) * _factor / step) * step;
   });
   state.isDeloadWeek = true;
   state.isRestWeek   = false;
@@ -19518,6 +19541,14 @@ function getIncrement(size) {
   if (size === 'medium') return inc === 'small' ? 5   : inc === 'medium' ? 10 : 15;
   if (size === 'large')  return inc === 'small' ? 7.5 : inc === 'medium' ? 15 : 20;
   return 5;
+}
+
+// Per-exercise weight rounding step. Dumbbells come in 5-lb pairs;
+// barbells/cables/machines use 2.5-lb plates. Used by deload activation
+// so deloaded dumbbell weights snap to valid pair values.
+function _getExerciseRoundStep(exId) {
+  const eq = _TRAVEL_EX_EQ[exId] || (state.program || []).reduce((e, d) => e || ((d.exercises || []).find(x => x.id === exId) || {}).equipment, null) || '';
+  return eq === 'dumbbell' ? 5 : 2.5;
 }
 
 // Returns a multiplier (0.75 / 1.0 / 1.25) that scales the progression increment
@@ -21762,20 +21793,59 @@ function removeBonusSet(bonusId) {
 function removeBonusExercise(bonusId) {
   if (!activeSession?.bonusExercises) return;
   const bonus = activeSession.bonusExercises.find(b => b.id === bonusId);
+  // If this bonus was promoted to the program (cycle or permanent), confirm
+  // before deleting it from the program. The ✕ button tooltip is "Remove
+  // this bonus exercise" — silently wiping it from the program is surprising.
   if (bonus?.programExId) {
-    const day = state.program.find(d => d.id === activeSession.dayId);
-    if (day) {
-      day.exercises = day.exercises.filter(e => e.id !== bonus.programExId);
-      activeSession.exerciseOrder = (activeSession.exerciseOrder || []).filter(id => id !== bonus.programExId);
-      const pairedWith = activeSession.supersets?.[bonus.programExId];
-      if (pairedWith) { delete activeSession.supersets[bonus.programExId]; delete activeSession.supersets[pairedWith]; }
-      delete activeSession.sets[bonus.programExId];
-      saveState();
-    }
+    _confirmRemoveProgramBonus(bonus);
+    return;
   }
   activeSession.bonusExercises = activeSession.bonusExercises.filter(b => b.id !== bonusId);
   renderBonusExercises();
   updateSessionProgress();
+}
+
+function _confirmRemoveProgramBonus(bonus) {
+  if (!bonus) return;
+  const rawName = bonus.name || 'this exercise';
+  const nameUpper = escapeHtml(rawName.toUpperCase());
+  const bonusId = bonus.id;
+  const programExId = bonus.programExId;
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:420px;border:1px solid var(--dark3);">
+      <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:10px;">REMOVE ${nameUpper}?</div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.6;margin-bottom:20px;">This exercise was added to your program. Remove it from just this session, or from your program entirely?</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button id="rm-bonus-session-only" style="background:var(--dark3);border:1px solid #444;color:var(--cream);padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">REMOVE FROM THIS SESSION</button>
+        <button id="rm-bonus-program" style="background:var(--red);border:none;color:white;padding:13px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;">REMOVE FROM PROGRAM</button>
+        <button id="rm-bonus-cancel" style="background:transparent;border:none;color:var(--gray);padding:10px;font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1px;cursor:pointer;">CANCEL</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#rm-bonus-cancel').onclick = () => modal.remove();
+  modal.querySelector('#rm-bonus-session-only').onclick = () => {
+    modal.remove();
+    activeSession.bonusExercises = activeSession.bonusExercises.filter(b => b.id !== bonusId);
+    renderBonusExercises();
+    updateSessionProgress();
+  };
+  modal.querySelector('#rm-bonus-program').onclick = () => {
+    modal.remove();
+    const day = state.program.find(d => d.id === activeSession.dayId);
+    if (day && programExId) {
+      day.exercises = day.exercises.filter(e => e.id !== programExId);
+      activeSession.exerciseOrder = (activeSession.exerciseOrder || []).filter(id => id !== programExId);
+      const pairedWith = activeSession.supersets?.[programExId];
+      if (pairedWith) { delete activeSession.supersets[programExId]; delete activeSession.supersets[pairedWith]; }
+      delete activeSession.sets[programExId];
+      saveState();
+    }
+    activeSession.bonusExercises = activeSession.bonusExercises.filter(b => b.id !== bonusId);
+    renderBonusExercises();
+    updateSessionProgress();
+  };
 }
 
 function removePermanentBonus(exId) {
@@ -24657,6 +24727,13 @@ function showDiscardConfirm() {
 }
 
 function discardSession() {
+  // Stop all running intervals before tearing down the session. Without this
+  // the rest-timer setIntervals and the session timer keep firing into a
+  // null activeSession and (harmlessly) call updateRestTimerUI on DOM nodes
+  // that are no longer visible.
+  clearAllRestTimers();
+  stopSessionTimer();
+  clearRepIndicators();
   // Disconnect all stale coaching-cue IntersectionObservers before nulling
   // activeSession so they cannot fire into the next session and corrupt
   // activeSession.coachingCues[exId] for a matching exercise id.
@@ -24751,6 +24828,17 @@ function _getExercisesWithIncompleteDoneSets() {
       }
     }
     names.push(name);
+  });
+  // Also catch bonus exercises whose sets are tracked in their own bonus.sets
+  // array rather than activeSession.sets. Without this, a bonus set marked
+  // done with blank weight/reps would save to history with empty values and
+  // never warn the user.
+  (activeSession.bonusExercises || []).forEach(bonus => {
+    if (!bonus || !Array.isArray(bonus.sets)) return;
+    const hasIncomplete = bonus.sets.some(s =>
+      s && s.done && (!(parseFloat(s.weight) > 0) || !(parseInt(s.reps) > 0))
+    );
+    if (hasIncomplete) names.push(bonus.name || 'Bonus exercise');
   });
   return names;
 }
