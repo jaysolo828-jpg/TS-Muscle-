@@ -15993,6 +15993,14 @@ function calcConsistencyRate() {
   todayMonday.setDate(todayMonday.getDate() - ((todayMonday.getDay() + 6) % 7));
   const firstDate = new Date(Math.min(...history.map(e => new Date(e.date).getTime())));
   const WINDOW = 8;
+  // Pre-compute which Mon-bounded calendar weeks had deload-flagged sessions
+  const deloadWeekStartMs = new Set();
+  history.filter(e => e.isDeload).forEach(e => {
+    const d = new Date(e.date);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    d.setHours(0, 0, 0, 0);
+    deloadWeekStartMs.add(d.getTime());
+  });
   let scheduled = 0, completed = 0;
   for (let w = 1; w <= WINDOW; w++) {
     const wMon = new Date(todayMonday);
@@ -16000,12 +16008,21 @@ function calcConsistencyRate() {
     const wEnd = new Date(wMon);
     wEnd.setDate(wEnd.getDate() + 7);
     if (wEnd.getTime() <= firstDate.getTime()) break; // before program started
-    const count = history.filter(e => {
+    const weekEntries = history.filter(e => {
       const d = new Date(e.date).getTime();
       return d >= wMon.getTime() && d < wEnd.getTime();
-    }).length;
+    });
+    // Skip deload training weeks
+    if (weekEntries.some(e => e.isDeload)) continue;
+    // Skip planned rest weeks (zero-session week immediately after a deload week)
+    if (weekEntries.length === 0) {
+      const prevWeekMs = wMon.getTime() - 7 * 86400000;
+      if (deloadWeekStartMs.has(prevWeekMs)) continue;
+      // Also skip the current partial week if user is actively in a rest/deload
+      if (w === 1 && (state.isDeloadWeek || state.isRestWeek)) continue;
+    }
     scheduled += daysPerWeek;
-    completed += Math.min(count, daysPerWeek);
+    completed += Math.min(weekEntries.length, daysPerWeek);
   }
   return scheduled === 0 ? null : Math.round((completed / scheduled) * 100);
 }
@@ -29398,7 +29415,7 @@ function renderGrowthLogCard() {
   card.id = 'growth-log-card';
 
   const enabled = !!state.growthTrackingEnabled;
-  const weighIns = (state.weightLog || []).length;
+  const weighIns = _uniqueWeighInWeeks();
   const balance = state.growthBalance || 0;
   const gs = state.growthState || 'inactive';
   const snapshots = (state.growthHistory || []).slice(-20);
@@ -29619,14 +29636,26 @@ function _buildGrowthPath(snaps) {
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:40px;display:block;" preserveAspectRatio="none">${segments}${glow}${dot}</svg>`;
 }
 
+// Count distinct Mon-bounded calendar weeks that have at least one weigh-in
+function _uniqueWeighInWeeks() {
+  const seen = new Set();
+  (state.weightLog || []).forEach(w => {
+    const d = new Date(w.date);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    d.setHours(0, 0, 0, 0);
+    seen.add(d.getTime());
+  });
+  return seen.size;
+}
+
 // Compact weigh-in row for the Growth Log card (stats tab)
 function _buildGrowthWeighInRow() {
   // If there's a recent entry (this week), show it as editable with an update button.
-  // Use the same findIndex logic as _saveGrowthWeighIn so button label always matches save behaviour.
   const now = new Date();
   const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7)); startOfWeek.setHours(0,0,0,0);
+  const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 7);
   const wLog = state.weightLog || [];
-  const thisWeekIdx = wLog.findIndex(w => new Date(w.date).getTime() >= startOfWeek.getTime());
+  const thisWeekIdx = wLog.findIndex(w => { const t = new Date(w.date).getTime(); return t >= startOfWeek.getTime() && t < endOfWeek.getTime(); });
   const thisWeekEntry = thisWeekIdx >= 0;
   const displayEntry = thisWeekEntry ? wLog[thisWeekIdx] : wLog.slice(-1)[0];
   const lastLabel = displayEntry ? _timeAgoShort(displayEntry.date) : '';
@@ -29669,18 +29698,19 @@ function _saveGrowthWeighIn() {
   // If there's already an entry this week, update it instead of adding a new one
   const now = new Date();
   const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7)); startOfWeek.setHours(0,0,0,0);
-  const existingIdx = state.weightLog.findIndex(w => new Date(w.date).getTime() >= startOfWeek.getTime());
+  const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 7);
+  const existingIdx = state.weightLog.findIndex(w => { const t = new Date(w.date).getTime(); return t >= startOfWeek.getTime() && t < endOfWeek.getTime(); });
 
   if (existingIdx >= 0) {
     state.weightLog[existingIdx].weight = wVal;
     state.weightLog[existingIdx].date = new Date().toISOString();
-    const _wCount = state.weightLog.length;
-    showToast(_wCount >= 3 ? wVal + ' lbs updated' : wVal + ' lbs updated (' + _wCount + '/3)');
+    const _wCount = _uniqueWeighInWeeks();
+    showToast(_wCount >= 3 ? wVal + ' lbs updated' : wVal + ' lbs updated (' + _wCount + '/3 weeks)');
   } else {
     state.weightLog.push({ weight: wVal, date: new Date().toISOString() });
     if (state.weightLog.length > 200) state.weightLog = state.weightLog.slice(-200);
-    const _wCount = state.weightLog.length;
-    showToast(_wCount >= 3 ? wVal + ' lbs saved' : wVal + ' lbs saved (' + _wCount + '/3)');
+    const _wCount = _uniqueWeighInWeeks();
+    showToast(_wCount >= 3 ? wVal + ' lbs saved \u2014 growth log active!' : wVal + ' lbs saved (' + _wCount + '/3 weeks)');
   }
 
   // Update profile bodyweight to keep it current
