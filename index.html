@@ -4627,6 +4627,14 @@
 
   <!-- Bodyweight moved to PROFILE section below -->
 
+  <div class="settings-item" onclick="openDeloadModal()">
+    <div>
+      <div class="settings-label">Recovery Week</div>
+      <div class="settings-sub" id="recovery-settings-sub">Take a deload or rest week at any time.</div>
+    </div>
+    <div class="settings-arrow"><svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+  </div>
+
   <div class="settings-item" onclick="openPauseProgramModal()">
     <div>
       <div class="settings-label" id="pause-settings-label">Pause Program</div>
@@ -6652,7 +6660,7 @@ function getWeeklyVolumeTarget(muscle, weekNum) {
   const isFocus = (state.cycleEmphasis || []).includes(muscle);
   const ceiling = isFocus ? mrv : mav;
   let target;
-  if (weekNum >= 7) {
+  if (weekNum >= 7 && (state.isDeloadWeek || state.isRestWeek)) {
     target = Math.round(mev * 0.4);
   } else {
     const progress = Math.min((weekNum - 1) / 5, 1);
@@ -15896,6 +15904,23 @@ function updatePauseSettingsLabel() {
 }
 
 
+function updateRecoverySettingsLabel() {
+  const sub = document.getElementById('recovery-settings-sub');
+  if (!sub) return;
+  if (state.isDeloadWeek) {
+    const sessions = state.deloadSessionsCompleted || 0;
+    sub.textContent = `Deload active — ${Math.max(0, 4 - sessions)} session${Math.max(0, 4 - sessions) !== 1 ? 's' : ''} left.`;
+    sub.style.color = 'var(--warning)';
+  } else if (state.isRestWeek) {
+    const days = Math.floor((Date.now() - (state.deloadStartDate || Date.now())) / 86400000);
+    sub.textContent = `Rest week active — day ${days + 1} of 7.`;
+    sub.style.color = 'var(--warning)';
+  } else {
+    sub.textContent = 'Take a deload or rest week at any time.';
+    sub.style.color = '';
+  }
+}
+
 function openBodyweightModal() {
   const current = state.profile?.bodyweight || '';
   const modal = document.createElement('div');
@@ -15991,6 +16016,7 @@ function confirmPauseProgram() {
     document.getElementById('pause-program-modal').style.display = 'none';
     renderHome();
     updatePauseSettingsLabel();
+    updateRecoverySettingsLabel();
     // Update bodyweight sub label
     const bwSub = document.getElementById('bw-settings-sub');
     if (bwSub && state.profile?.bodyweight) bwSub.textContent = `Current: ${state.profile.bodyweight} lbs`;
@@ -16039,6 +16065,7 @@ function resumeProgram() {
   saveState();
   renderHome();
   updatePauseSettingsLabel();
+  updateRecoverySettingsLabel();
   showToast("Program resumed. Let's go 💪");
 }
 
@@ -32519,6 +32546,7 @@ try {
   }
   checkOnboarding();
   updatePauseSettingsLabel();
+  updateRecoverySettingsLabel();
   updateGoalSettingsSub();
   checkForAppUpdate();
   updateWeightIncrementUI();
@@ -37997,6 +38025,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateNotificationsUI();
   updateGoalSettingsSub();
   updatePauseSettingsLabel();
+  updateRecoverySettingsLabel();
   _applySocialToggleUI();
   checkTrainingReminder();
   refreshUndoRestoreUI();
