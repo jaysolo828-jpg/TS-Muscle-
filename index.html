@@ -29415,8 +29415,7 @@ function renderGrowthLogCard() {
   card.id = 'growth-log-card';
 
   const enabled = !!state.growthTrackingEnabled;
-  const weighInsRaw = (state.weightLog || []).length;
-  const weighIns = Math.max(weighInsRaw, _uniqueWeighInWeeks());
+  const weighIns = (state.weightLog || []).length;
   const balance = state.growthBalance || 0;
   const gs = state.growthState || 'inactive';
   const snapshots = (state.growthHistory || []).slice(-20);
@@ -29719,9 +29718,10 @@ function _saveGrowthWeighIn() {
   state.profile.bodyweight = wVal;
   const _bwSub = document.getElementById('bw-settings-sub');
   if (_bwSub) _bwSub.textContent = wVal + ' lbs';
-  // Recalc growth estimate with updated weight trend (need ≥2 entries for a trend signal)
-  if ((state.weightLog || []).length >= 2) recalcGrowthBalance();
+  // Save first so the entry is persisted even if recalc throws
   saveState();
+  // Recalc growth estimate with updated weight trend (need ≥2 entries for a trend signal)
+  if ((state.weightLog || []).length >= 2) try { recalcGrowthBalance(); saveState(); } catch(e) {}
   // Update the growth log card in-place so dots + counter reflect the new state.
   // We mutate the existing card's innerHTML directly (rather than replaceChild) so the
   // DOM node stays put and getElementById always finds it on subsequent saves.
