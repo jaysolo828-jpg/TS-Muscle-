@@ -15690,7 +15690,7 @@ function showScreen(name, el) {
     card.classList.add('bounce-in');
   });
 
-  if (name === 'history') { renderHistory(); renderProgress(); renderProgressChart(); }
+  if (name === 'history') { renderHistory(); renderProgressChart(); }
 
   if (name === 'cardio') {
     renderCardioHistory();
@@ -17246,7 +17246,7 @@ function getDayStats(dayId) {
   const _nowMid  = new Date(); _nowMid.setHours(0, 0, 0, 0);
   const _lastMid = new Date(lastDate); _lastMid.setHours(0, 0, 0, 0);
   const daysAgo  = Math.round((_nowMid - _lastMid) / 86400000);
-  const lastDoneLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : dayNames[lastDate.getDay()];
+  const lastDoneLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : daysAgo <= 13 ? `${daysAgo}d ago` : `${Math.floor(daysAgo / 7)}w ago`;
   return {
     lastId: last.id,
     volume: lastVol,
@@ -18963,7 +18963,7 @@ function updateStreak() {
 
   // If the current week already hit the target, count it — otherwise skip it
   // without breaking the streak (week is still in progress)
-  for (let i = 0; i < 52; i++) {
+  for (let i = 0; i < 156; i++) {
     const count = weekCounts[checkWeek] || 0;
     if (i === 0) {
       if (count >= threshold) {
@@ -27253,7 +27253,7 @@ let _statsRenderKey = null;
 function _getStatsKey() {
   const h = state.history || [];
   const lastW = (state.weightLog || []).slice(-1)[0];
-  return `v3|${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}|${state.strengthScore ?? ''}|${state.growthBalance ?? ''}|${state.growthTrackingEnabled ? '1' : '0'}|${(state.weightLog || []).length}|${lastW?.date || ''}`;
+  return `v3|${h.length}|${(h.slice(-1)[0]?.id) || ''}|${(state.cycleHistory || []).length}|${state.strengthScore ?? ''}|${state.growthBalance ?? ''}|${state.growthTrackingEnabled ? '1' : '0'}|${(state.weightLog || []).length}|${lastW?.date || ''}|${state.weekCount || 1}|${state.cycleCount || 1}|${(state.moodLog || []).length}|${(_challenges || []).length}`;
 }
 
 function renderHistory() {
@@ -28032,8 +28032,7 @@ function renderHistory() {
     const daysPerWeek = state.trainingDaysPerWeek || 4;
 
     function weekEntries(group, wk) {
-      const s = [...group].sort((a, b) => new Date(a.date) - new Date(b.date));
-      return s.slice((wk - 1) * daysPerWeek, wk * daysPerWeek);
+      return group.filter(e => e.weekCount === wk);
     }
     function groupStats(entries) {
       const sessions = entries.length;
@@ -28482,6 +28481,7 @@ function _statsProgInfo() {
   const sorted = [...hist].sort((a, b) => new Date(a.date) - new Date(b.date));
   let firstW = null, curW = null, best1RM = 0;
   for (const entry of sorted) {
+    if (entry.travelMode) continue;
     const sets = ((entry.sets || {})[exId] || []).filter(s => s.done);
     if (!sets.length) continue;
     const maxW = Math.max(...sets.map(s => parseFloat(s.weight) || 0));
@@ -28515,10 +28515,13 @@ function _statsProgInfo() {
 
 function renderHistoryDetail(entry) {
   const day = state.program.find(d => d.id === entry.dayId);
-  if (!day) return '';
+  const exercises = day
+    ? day.exercises
+    : Object.keys(entry.sets || {}).map(id => ({ id, name: entry.swaps?.[id]?.name || id }));
+  if (!exercises.length && !(entry.bonusExercises?.length)) return '';
 
   let html = '';
-  day.exercises.forEach(ex => {
+  exercises.forEach(ex => {
     const sets = entry.sets?.[ex.id];
     if (!sets) return;
     const doneSets = sets.filter(s => s.done);
@@ -28530,7 +28533,7 @@ function renderHistoryDetail(entry) {
     // Superset badge: compute label letter from the entry's saved supersets
     let supersetBadge = '';
     if (entry.supersets?.[ex.id]) {
-      const ssOrder = day.exercises.map(e => e.id);
+      const ssOrder = exercises.map(e => e.id);
       const seen = new Set(); let letter = 65;
       for (const sid of ssOrder) {
         if (!entry.supersets[sid]) continue;
