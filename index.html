@@ -10825,6 +10825,7 @@ function _epley1RM(weight, reps) {
   const w = parseFloat(weight);
   const r = parseInt(reps, 10);
   if (!w || !r || r < 1 || r > 30) return 0;
+  if (r === 1) return Math.round(w * 10) / 10;
   return Math.round(w * (1 + r / 30) * 10) / 10;
 }
 
@@ -15168,7 +15169,7 @@ async function _submitChallengeLog(challengeId) {
     const ch = (_challenges || []).find(c => c.id === challengeId);
     const me = ch ? _myParticipantRow(ch) : null;
     // Only save if this e1RM strictly beats the current best (or there is no best yet).
-    if (me && me.final_e1rm != null && e1rm < me.final_e1rm) {
+    if (me && me.final_e1rm != null && e1rm <= me.final_e1rm) {
       const bestDesc = me.final_weight && me.final_reps
         ? me.final_weight + ' \u00d7 ' + me.final_reps + ' (e1RM ' + me.final_e1rm + ')'
         : 'e1RM ' + me.final_e1rm;
@@ -15191,7 +15192,7 @@ async function _submitChallengeLog(challengeId) {
         .filter(p => p.user_id !== state.supabaseUserId)
         .map(p => p.user_id);
       others.forEach(uid => {
-        _sendDirectPush(uid, fromName + ' just logged a new best', pct + '% improvement so far.', 'challenge', challengeId);
+        _sendDirectPush(uid, fromName + ' just logged a new best', pct > 0 ? pct + '% improvement so far.' : 'Check the leaderboard.', 'challenge', challengeId);
       });
     }
     await _loadChallenges();
