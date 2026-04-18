@@ -10262,10 +10262,10 @@ async function _sendWorkoutSignal(dayName) {
   const displayName = state.supabaseDisplayName || 'Someone';
   try {
     // Dedup check: look for a 'started' signal for this exact workout
-    // name within the last 30 minutes. If found, reuse its id.
+    // name within the last 2 hours. If found, reuse its id.
     // Otherwise insert a new one. Either way, fall through to
     // _notifyFriends.
-    const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
     const { data: recent } = await sb.from('workout_signals')
       .select('id')
       .eq('user_id', state.supabaseUserId)
@@ -21720,8 +21720,12 @@ function updateBonusSet(bonusId, setIndex, field, value) {
   if (!activeSession?.bonusExercises) return;
   const bonus = activeSession.bonusExercises.find(b => b.id === bonusId);
   if (!bonus || !bonus.sets[setIndex]) return;
-  if (field === 'weight' || field === 'reps') {
+  if (field === 'weight') {
     const num = parseFloat(value);
+    if (value !== '' && (isNaN(num) || num < 0)) return;
+    value = value === '' ? '' : num;
+  } else if (field === 'reps') {
+    const num = parseInt(value, 10);
     if (value !== '' && (isNaN(num) || num < 0)) return;
     value = value === '' ? '' : num;
   }
@@ -21788,8 +21792,12 @@ function removePermanentBonus(exId) {
 
 function updateSet(exId, setIndex, field, value) {
   if (!activeSession?.sets[exId]?.[setIndex]) return;
-  if (field === 'weight' || field === 'reps') {
+  if (field === 'weight') {
     const num = parseFloat(value);
+    if (value !== '' && (isNaN(num) || num < 0)) return;
+    value = value === '' ? '' : num;
+  } else if (field === 'reps') {
+    const num = parseInt(value, 10);
     if (value !== '' && (isNaN(num) || num < 0)) return;
     value = value === '' ? '' : num;
   }
