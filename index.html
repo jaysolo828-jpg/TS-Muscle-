@@ -4567,6 +4567,15 @@
         <div id="between-set-coaching-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(18px);"></div>
       </div>
     </div>
+    <div onclick="toggleDropSets()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--dark3);cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <div style="min-width:0;flex:1;padding-right:12px;">
+        <div class="settings-label" style="margin-bottom:2px;">Drop Set Recommendations</div>
+        <div id="drop-sets-sub" class="settings-sub" style="color:#2ecc71;">On. Recommends drop sets when your training supports it.</div>
+      </div>
+      <div id="drop-sets-icon" style="width:44px;height:26px;border-radius:13px;background:#2ecc71;position:relative;transition:background 0.2s;flex-shrink:0;">
+        <div id="drop-sets-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(18px);"></div>
+      </div>
+    </div>
     <div onclick="toggleCarryingFeature()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--dark3);cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <div style="min-width:0;flex:1;padding-right:12px;">
         <div class="settings-label" style="margin-bottom:2px;">Pre-Session Check-In</div>
@@ -6699,7 +6708,7 @@ function _getAvgRPEForMuscle(muscle, startMs, endMs) {
   sessions.forEach(entry => {
     Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
       if (MUSCLE_MAP[exId] !== muscle) return;
-      sets.filter(s => s.done && s.rpe != null && s.rpe !== '').forEach(s => {
+      sets.filter(s => s.done && !s.isDropSet && s.rpe != null && s.rpe !== '').forEach(s => {
         totalRPE += parseFloat(s.rpe);
         count++;
       });
@@ -6768,7 +6777,7 @@ function _getMuscleSessionRPEs(muscle, maxSessions) {
     const rpeVals = [];
     Object.entries(sess.sets || {}).forEach(([exId, exSets]) => {
       if (MUSCLE_MAP[exId] !== muscle) return;
-      exSets.filter(s => s.done && s.rpe != null && s.rpe !== '').forEach(s => rpeVals.push(parseFloat(s.rpe)));
+      exSets.filter(s => s.done && !s.isDropSet && s.rpe != null && s.rpe !== '').forEach(s => rpeVals.push(parseFloat(s.rpe)));
     });
     if (rpeVals.length === 0) continue;
     result.push(rpeVals.reduce((a, b) => a + b, 0) / rpeVals.length);
@@ -6950,7 +6959,7 @@ function checkAutoregulation(exId, dayId, raiseThreshold) {
   const _AR_SUPERSET_OFFSET = 0.75;
 
   function sessAvgRpe(sess) {
-    const sets = (sess.sets[exId] || []).filter(s => s.done && s.rpe != null && s.rpe !== '');
+    const sets = (sess.sets[exId] || []).filter(s => s.done && !s.isDropSet && s.rpe != null && s.rpe !== '');
     if (!sets.length) return null;
     let avg = sets.reduce((sum, s) => sum + parseFloat(s.rpe), 0) / sets.length;
     const _wasPaired = !!(sess.supersets?.[exId]);
@@ -6963,7 +6972,7 @@ function checkAutoregulation(exId, dayId, raiseThreshold) {
   const rpe1 = sessAvgRpe(sessions[1]);
   if (rpe0 === null || rpe1 === null) return null;
 
-  const lastSets = (sessions[0].sets[exId] || []).filter(s => s.done);
+  const lastSets = (sessions[0].sets[exId] || []).filter(s => s.done && !s.isDropSet);
   const lastWeight = parseFloat(lastSets[lastSets.length - 1]?.weight) || 0;
   if (!lastWeight) return null;
 
@@ -7039,7 +7048,7 @@ function _getLastLoggedWeight(exId, dayId) {
   const sessions = (state.history || []).slice().reverse()
     .filter(h => h.dayId === dayId && h.sets?.[exId]);
   if (!sessions.length) return 0;
-  const sets = (sessions[0].sets[exId] || []).filter(s => s.done && s.weight);
+  const sets = (sessions[0].sets[exId] || []).filter(s => s.done && !s.isDropSet && s.weight);
   return sets.length ? (parseFloat(sets[sets.length - 1].weight) || 0) : 0;
 }
 
@@ -7055,7 +7064,7 @@ function _updatePendingManualAdj(exId) {
 
   // Only consider sets where both weight AND reps are logged
   const fullySets = (activeSession.sets[exId] || []).filter(s =>
-    s.done &&
+    s.done && !s.isDropSet &&
     s.weight !== '' && parseFloat(s.weight) > 0 &&
     s.reps !== '' && parseInt(s.reps) > 0
   );
@@ -7116,7 +7125,9 @@ function getWeeklySetsByMuscle() {
       // counts as 2 toward the muscle group total. Use persistent flags only (not the
       // session-swap flag) since historical entries reflect a potentially different session.
       const mult = (UNILATERAL_EXERCISES.has(exId) || state.customUnilateralExercises?.[exId]) ? 2 : 1;
-      counts[muscle] += sets.filter(s => s.done && !s.coachRemoved).length * mult;
+      // Drop sets count as 0.5 toward MRV — real stimulus but not a full working set.
+      const eligible = sets.filter(s => s.done && !s.coachRemoved);
+      counts[muscle] += eligible.reduce((acc, s) => acc + (s.isDropSet ? 0.5 : 1), 0) * mult;
     });
   });
 
@@ -7125,9 +7136,9 @@ function getWeeklySetsByMuscle() {
     Object.entries(activeSession.sets).forEach(([exId, sets]) => {
       const muscle = MUSCLE_MAP[exId];
       if (!muscle || !Object.prototype.hasOwnProperty.call(counts, muscle)) return;
-      // For the active session _isUnilateral also captures session-only swaps.
       const mult = _isUnilateral(exId) ? 2 : 1;
-      counts[muscle] += sets.filter(s => s.done && !s.coachRemoved).length * mult;
+      const eligible = sets.filter(s => s.done && !s.coachRemoved);
+      counts[muscle] += eligible.reduce((acc, s) => acc + (s.isDropSet ? 0.5 : 1), 0) * mult;
     });
   }
 
@@ -10982,7 +10993,7 @@ function _findRecentBaselineByExId(exId) {
     // on higher reps so 225x6 beats 225x5).
     let best = null;
     for (const s of sets) {
-      if (!s || !s.done) continue;
+      if (!s || !s.done || s.isDropSet) continue;
       const w = parseFloat(s.weight);
       const r = parseInt(s.reps, 10);
       if (!w || !r || r < 1 || r > 30) continue;
@@ -18422,7 +18433,7 @@ function recalcPRForExercise(exId) {
 
   let histBest = null;
   (state.history || []).forEach(entry => {
-    (entry.sets?.[exId] || []).filter(s => s.done && s.weight && s.reps).forEach(s => {
+    (entry.sets?.[exId] || []).filter(s => s.done && !s.isDropSet && s.weight && s.reps).forEach(s => {
       const w = parseFloat(s.weight), r = parseInt(s.reps);
       if (!w || !r) return;
       if (!histBest || w > histBest.weight || (w === histBest.weight && r > histBest.reps))
@@ -18487,7 +18498,7 @@ function checkSessionProgressSignal(exId) {
   const ex = day?.exercises.find(e => e.id === exId);
   if (!ex) return;
 
-  const doneSets = (activeSession.sets[exId] || []).filter(s => s.done && s.reps);
+  const doneSets = (activeSession.sets[exId] || []).filter(s => s.done && s.reps && !s.isDropSet);
   if (!doneSets.length) return;
 
   // Use the week-band tightened target as the "top of range" threshold.
@@ -19539,7 +19550,7 @@ function endRecoveryWeek(cancelled) {
         _seen[_exId] = true;
         var _sets = _h.sets[_exId] || [];
         for (var _si = _sets.length - 1; _si >= 0; _si--) {
-          if (_sets[_si].done && _sets[_si].weight) {
+          if (_sets[_si].done && !_sets[_si].isDropSet && _sets[_si].weight) {
             var _w = parseFloat(_sets[_si].weight) || 0;
             if (_w > (state.startingWeights[_exId] || 0)) {
               state.startingWeights[_exId] = _w;
@@ -19761,7 +19772,7 @@ function getProgressiveWeight(exId, dayId) {
     const _dlFactor = state.deloadReductionFactor || 0.75;
     const baseWeight = parseFloat(state.deloadBaseWeights?.[exId] || 0);
     if (baseWeight) return String(Math.max(5, Math.round(baseWeight * _dlFactor / _roundStep) * _roundStep));
-    const lastSessionSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done && !s.coachRemoved);
+    const lastSessionSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done && !s.coachRemoved && !s.isDropSet);
     const lastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
     if (lastWeight) return String(Math.max(5, Math.round(lastWeight * _dlFactor / _roundStep) * _roundStep));
     return state.startingWeights?.[exId] ? String(state.startingWeights[exId]) : '';
@@ -19776,7 +19787,7 @@ function getProgressiveWeight(exId, dayId) {
   const _isTestWeek = state.testWeekComplete === false && (state.weekCount || 1) <= 1;
   if (_isCalibrationWeek || _isTestWeek) {
     if (state.startingWeights?.[exId]) return String(state.startingWeights[exId]);
-    const _calSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done && !s.coachRemoved);
+    const _calSets = (sameDaySessions[0]?.sets[exId] || []).filter(s => s.done && !s.coachRemoved && !s.isDropSet);
     const _calWeight = parseFloat(_calSets[_calSets.length - 1]?.weight) || 0;
     return _calWeight ? String(_calWeight) : '';
   }
@@ -19795,7 +19806,7 @@ function getProgressiveWeight(exId, dayId) {
   const nonOverrideSessions = sameDaySessions.filter(h => {
     const suggested = h.suggestedWeights?.[exId];
     if (suggested === undefined || suggested === '') return true; // legacy or no suggestion: include
-    const doneSets = (h.sets[exId] || []).filter(s => s.done && parseFloat(s.weight) > 0 && parseInt(s.reps) > 0);
+    const doneSets = (h.sets[exId] || []).filter(s => s.done && !s.isDropSet && parseFloat(s.weight) > 0 && parseInt(s.reps) > 0);
     if (doneSets.length === 0) return true;
     return parseFloat(doneSets[0].weight) === parseFloat(suggested);
   });
@@ -19810,7 +19821,7 @@ function getProgressiveWeight(exId, dayId) {
   // Aggregate data across sessions
   let allSets = [];
   sessions.forEach(sess => {
-    const s = (sess.sets[exId] || []).filter(s => s.done && !s.coachRemoved);
+    const s = (sess.sets[exId] || []).filter(s => s.done && !s.coachRemoved && !s.isDropSet);
     allSets = allSets.concat(s);
   });
 
@@ -19818,7 +19829,7 @@ function getProgressiveWeight(exId, dayId) {
 
 
   // Use most recent session's last weight as baseline
-  const lastSessionSets = (sameDaySessions[0].sets[exId] || []).filter(s => s.done && !s.coachRemoved);
+  const lastSessionSets = (sameDaySessions[0].sets[exId] || []).filter(s => s.done && !s.coachRemoved && !s.isDropSet);
   const _rawLastWeight = parseFloat(lastSessionSets[lastSessionSets.length - 1]?.weight) || 0;
   if (!_rawLastWeight) return '';
 
@@ -21469,6 +21480,27 @@ function renderSession() {
       // must never render a DOM row — especially on re-renders triggered by exercise
       // swaps or session resume, where their row would otherwise reappear as active.
       if (set.coachRemoved) return;
+      if (set.isDropSet) {
+        // Drop set rows: gold DROP label, no RPE button, gold left border while undone
+        setsHTML += `
+          <div class="set-row drop-set-row${set.done ? ' done' : ''}" id="set-row-${ex.id}-${si}" style="${!set.done ? 'box-shadow:inset 3px 0 0 #C9A84C;' : ''}">
+            <div class="set-num" style="color:#C9A84C;font-size:11px;font-weight:700;letter-spacing:0.5px;">DROP</div>
+            <input type="number" inputmode="decimal" class="set-input" placeholder="0"
+              value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
+            <div style="position:relative;">
+              <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
+                placeholder=""
+                value="${set.reps}" style="padding-right:22px;"
+                ${set.done ? 'disabled' : ''}
+                onchange="updateSet('${ex.id}',${si},'reps',this.value)"/>
+              <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
+            </div>
+            <div style="width:44px;"></div>
+            <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleSetDone('${ex.id}',${si})"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+          </div>
+        `;
+        return;
+      }
       setsHTML += `
         <div class="set-row${set.done ? ' done' : ''}" id="set-row-${ex.id}-${si}">
           <div class="set-num">${si + 1}</div>
@@ -22147,24 +22179,32 @@ function toggleSetDone(exId, setIndex) {
   }
 
   if (set.done) {
-    checkForPR(exId, set);
+    // Drop set rows never trigger PR checks or manual adjustment — they are bonus
+    // volume at reduced weight and must not corrupt the progressive overload engine.
+    if (!set.isDropSet) {
+      checkForPR(exId, set);
+    }
     // Record completion timestamp for rest gap calculation between consecutive sets
     set.completedAt = Date.now();
     // Detect manual weight change: a set is fully complete only when both weight
     // and reps are logged.  _updatePendingManualAdj recomputes from ALL done sets
     // so unchecking+reweighting always uses the latest confirmed values.
-    _updatePendingManualAdj(exId);
+    if (!set.isDropSet) {
+      _updatePendingManualAdj(exId);
+    }
 
     // In-session set intelligence: record whether user entered the suggested reps
     // or deviated from them, then push an updated suggestion onto the next set.
-    if (activeSession?.setIntel?.[exId]) {
+    // Drop set rows are excluded — their high-RPE / low-rep profile must not
+    // influence the rep suggestion for subsequent planned sets.
+    if (!set.isDropSet && activeSession?.setIntel?.[exId]) {
       const _intel = activeSession.setIntel[exId][setIndex];
       if (_intel && _intel.suggestedReps !== null && _intel.suggestedReps !== undefined) {
         _intel.wasManualOverride = (parseInt(set.reps) !== _intel.suggestedReps);
       }
       const _nextIdx = setIndex + 1;
       const _nextSet = activeSession.sets[exId]?.[_nextIdx];
-      if (_nextSet && !_nextSet.done) {
+      if (_nextSet && !_nextSet.done && !_nextSet.isDropSet) {
         if (!activeSession.setIntel[exId][_nextIdx]) {
           activeSession.setIntel[exId][_nextIdx] = { suggestedReps: null, wasManualOverride: false };
         }
@@ -22187,6 +22227,19 @@ function toggleSetDone(exId, setIndex) {
     recalcPRForExercise(exId);
     // Recompute pending adjustment — the unchecked set may have been the representative one
     _updatePendingManualAdj(exId);
+
+    // Drop set undo cleanup: if this primary set had an accepted drop set appended,
+    // remove the drop set row and state so the recommendation can re-fire if appropriate.
+    if (activeSession.dropSetSuggestion?.[exId] === 'accepted') {
+      const _dropIdx = (activeSession.sets[exId] || []).findIndex((s, i) => i > setIndex && s.isDropSet);
+      if (_dropIdx !== -1) {
+        activeSession.sets[exId].splice(_dropIdx, 1);
+        const _dropRow = document.getElementById('set-row-' + exId + '-' + _dropIdx);
+        if (_dropRow) _dropRow.remove();
+      }
+      delete activeSession.dropSetSuggestion[exId];
+      _clearDropSetCard(exId);
+    }
 
     // In-session set intelligence: clear this set's override flag and
     // recalculate the next set's suggestion (it'll return null since this set is
@@ -22243,23 +22296,28 @@ function toggleSetDone(exId, setIndex) {
   }
 
   // Reveal rest timer row on set completion.
-  // For supersets: only show after BOTH exercises in the pair have completed a set this round
-  if (set.done) {
-    const partnerId = activeSession.supersets?.[exId];
-    let showRest = true;
-    if (partnerId) {
-      // Count how many sets are done on each side — rest fires after both match
-      const myDone = (activeSession.sets[exId] || []).filter(s => s.done).length;
-      const partnerDone = (activeSession.sets[partnerId] || []).filter(s => s.done).length;
-      showRest = partnerDone >= myDone; // partner has caught up to this exercise
-    }
-    if (showRest) {
-      const restRow = document.getElementById('rest-row-' + exId);
-      if (restRow) restRow.style.display = 'flex';
-      // Also show partner's rest row if partner is behind (they complete after us)
+  // For supersets: only show after BOTH exercises in the pair have completed a set this round.
+  // Drop set rows never show the rest timer — there is no rest between a primary set and its drop.
+  // Primary sets that triggered an accepted drop set also suppress the timer (skipDropSet reveals it).
+  if (set.done && !set.isDropSet) {
+    // If a drop set card is about to fire (700ms), defer rest timer to skipDropSet/acceptDropSet
+    const dropSuggState = activeSession.dropSetSuggestion?.[exId];
+    const dropCardSuppressRest = dropSuggState === 'suggested';
+    if (!dropCardSuppressRest) {
+      const partnerId = activeSession.supersets?.[exId];
+      let showRest = true;
       if (partnerId) {
-        const partnerRestRow = document.getElementById('rest-row-' + partnerId);
-        if (partnerRestRow) partnerRestRow.style.display = 'flex';
+        const myDone = (activeSession.sets[exId] || []).filter(s => s.done).length;
+        const partnerDone = (activeSession.sets[partnerId] || []).filter(s => s.done).length;
+        showRest = partnerDone >= myDone;
+      }
+      if (showRest) {
+        const restRow = document.getElementById('rest-row-' + exId);
+        if (restRow) restRow.style.display = 'flex';
+        if (partnerId) {
+          const partnerRestRow = document.getElementById('rest-row-' + partnerId);
+          if (partnerRestRow) partnerRestRow.style.display = 'flex';
+        }
       }
     }
   }
@@ -22299,15 +22357,19 @@ function toggleSetDone(exId, setIndex) {
   // Update rep goal label dynamically after every set completion/undo
   updateRepGoalLabel(exId);
 
-  // Dynamic set expansion — check after every set completion (small delay lets UI settle)
-  if (set.done) {
+  // Dynamic set expansion — check after every set completion (small delay lets UI settle).
+  // Skip for drop set rows — they are bonus volume, not planned sets.
+  if (set.done && !set.isDropSet) {
     setTimeout(function() { _checkAndShowDynamicSetSuggestion(exId); }, 250);
   }
 
   // Between-set coaching cue — fires 600ms after set completion (after dynamic set expansion check)
-  if (set.done) {
+  // Drop set recommendation fires at 700ms so it never races with the coaching cue.
+  // Both are suppressed entirely for isDropSet rows.
+  if (set.done && !set.isDropSet) {
     _clearCoachingCueCard(exId);
     setTimeout(function() { _maybeFireCoachingCue(exId, setIndex); }, 600);
+    setTimeout(function() { _maybeFireDropSetRecommendation(exId, setIndex); }, 700);
   }
 
   // Checkpoint: auto-save on every set toggle so crash/swipe-away recovery has recent data
@@ -22346,6 +22408,27 @@ function updateBetweenSetCoachingUI() {
   var knob = document.getElementById('between-set-coaching-knob');
   if (sub) {
     sub.textContent = on ? 'On. Live insights after certain sets.' : 'Off. No coaching cues during sessions.';
+    sub.style.color = on ? '#2ecc71' : 'var(--gray)';
+  }
+  if (track) track.style.background = on ? '#2ecc71' : '#444';
+  if (knob) knob.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
+}
+
+function toggleDropSets() {
+  haptic(HAPTIC.click);
+  state.dropSetsEnabled = !(state.dropSetsEnabled !== false);
+  saveState();
+  updateDropSetsUI();
+  showToast(state.dropSetsEnabled !== false ? 'Drop Set Recommendations on' : 'Drop Set Recommendations off');
+}
+
+function updateDropSetsUI() {
+  var on = state.dropSetsEnabled !== false;
+  var sub = document.getElementById('drop-sets-sub');
+  var track = document.getElementById('drop-sets-icon');
+  var knob = document.getElementById('drop-sets-knob');
+  if (sub) {
+    sub.textContent = on ? 'On. Recommends drop sets when your training supports it.' : 'Off. No drop set suggestions during sessions.';
     sub.style.color = on ? '#2ecc71' : 'var(--gray)';
   }
   if (track) track.style.background = on ? '#2ecc71' : '#444';
@@ -23123,6 +23206,293 @@ async function _maybeFireCoachingCue(exId, setIndex) {
 }
 
 // ============================================================
+// DROP SET RECOMMENDATION SYSTEM
+// ============================================================
+// State: activeSession.dropSetSuggestion[exId] tracks per-exercise drop set state.
+// Values: undefined | 'suggested' | 'accepted' | 'skipped'
+// One drop set per exercise per session — no chaining, by design.
+
+// Returns the EXERCISE_LIBRARY tier ('compound'|'isolation') for a program exId,
+// or null if the exercise is not found in the library.
+function _isDropSetEligibleExercise(exId) {
+  if (typeof EXERCISE_LIBRARY === 'undefined') return false;
+  const day = state.program.find(d => d.id === activeSession?.dayId);
+  const ex = day?.exercises.find(e => e.id === exId);
+  if (!ex) return false;
+  const exName = (activeSession?.swaps?.[exId]?.name || ex.name || '').toLowerCase();
+  const libEntry = EXERCISE_LIBRARY.find(e =>
+    e.name.toLowerCase() === exName || e.id === exId
+  );
+  return libEntry?.tier === 'isolation';
+}
+
+// Returns the suggested drop weight: 15% reduction, rounded to nearest 5 lbs, min 5.
+function _calcDropWeight(weight) {
+  const w = parseFloat(weight);
+  if (!w || w <= 0) return 0;
+  return Math.max(5, Math.round(w * 0.85 / 5) * 5);
+}
+
+// Returns the suggested drop reps: primary reps + 4, capped at 15.
+function _calcDropReps(reps) {
+  const r = parseInt(reps);
+  if (!r || r <= 0) return 10;
+  return Math.min(r + 4, 15);
+}
+
+// Determines WHY this drop set is being recommended.
+// Returns a trigger key string or null if conditions are not met.
+// Trigger keys: 'rep_range_top' | 'plateau'
+function _getDropSetTriggerReason(exId, setIndex) {
+  const sets = activeSession?.sets[exId];
+  if (!sets || !sets[setIndex]) return null;
+  const set = sets[setIndex];
+  const rpe = parseFloat(set.rpe);
+
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  const ex = day?.exercises.find(e => e.id === exId);
+  const repStr = activeSession?.repOverrides?.[exId] || getGoalReps(exId, ex?.reps);
+  const parts = repStr.split(/[–\-]/);
+  const repRangeMin = parseInt(parts[0]) || 1;
+  const repRangeMax = parseInt(parts[1]) || repRangeMin;
+  if (repRangeMin < 8) return null; // strength rep range — never recommend
+
+  const weekBandTarget = getCycleWeekBandRepTarget(exId) || repRangeMax;
+  const setReps = parseInt(set.reps);
+
+  // Primary trigger: hit top of week-band rep target + RPE 7-8 (capacity remaining)
+  if (setReps >= weekBandTarget && rpe >= 7 && rpe <= 8.5) return 'rep_range_top';
+
+  // Secondary trigger: plateau detected + normal RPE (not fatigued, just stalled)
+  if (!isNaN(rpe) && rpe <= 8) {
+    const plateau = detectProgressionPlateau();
+    if (plateau.stalled) {
+      const autoReg = checkAutoregulation(exId, activeSession.dayId);
+      if (!autoReg) return 'plateau'; // stalled but NOT chronically high RPE
+    }
+  }
+
+  return null;
+}
+
+// Returns the localized template explanation string for the card body.
+function _getDropSetTemplateText(triggerReason, exName, dropWeight) {
+  if (triggerReason === 'rep_range_top') {
+    return 'You hit your rep target on ' + exName + ' with energy left — a drop to ' + dropWeight + ' lbs will push the muscle further than a straight set can reach.';
+  }
+  if (triggerReason === 'plateau') {
+    return 'Your ' + exName + ' weight has been steady. A drop set at ' + dropWeight + ' lbs adds a different stimulus that can help restart progress.';
+  }
+  return 'A drop to ' + dropWeight + ' lbs will extend the stimulus beyond what a straight set delivers.';
+}
+
+// Returns true if all gates pass and a drop set recommendation should fire.
+function _canSuggestDropSet(exId, setIndex) {
+  if (!activeSession) return false;
+
+  // Settings gate
+  if (state.dropSetsEnabled === false) return false;
+
+  // Only once per exercise per session
+  if (activeSession.dropSetSuggestion?.[exId] !== undefined) return false;
+
+  // Never during deload or rest
+  if (state.isDeloadWeek || state.isRestWeek) return false;
+
+  // Too early in the cycle
+  if ((state.weekCount || 1) <= 2) return false;
+
+  // Returning from a gap — streak is 0
+  if ((state.streak || 0) === 0) return false;
+
+  // Goal gate: only size or both
+  const goal = state.profile?.goal;
+  if (goal === 'strength' || goal === 'wellness') return false;
+
+  // Experience gate: never for beginners with fewer than 30 total sessions
+  const exp = getEffectiveExperienceLevel();
+  if (exp === 'beginner') return false;
+  if ((state.totalSessions || 0) < 30) return false;
+
+  // Age gates
+  const age = state.profile?.age;
+  if (age !== null && age !== undefined) {
+    if (age >= 65) return false;
+    const consistency = typeof _growthConsistencyMult === 'function' ? _growthConsistencyMult() : 1;
+    if (age >= 45 && age < 55 && consistency < 0.85) return false;
+    if (age >= 55 && (exp !== 'advanced' || goal !== 'size')) return false;
+  }
+
+  // Consistency gate: sporadic trainers don't need intensification
+  if (typeof _growthConsistencyMult === 'function') {
+    if (_growthConsistencyMult() < 0.75) return false;
+  }
+
+  // Superset gate: disrupts round cadence
+  if (activeSession.supersets?.[exId]) return false;
+
+  // No coach intervention already applied to this exercise
+  const dynState = activeSession.dynamicSetExpansion?.[exId];
+  if (dynState === 'coach-removed' || dynState === 'set-reduction-applied') return false;
+
+  // Exercise must be isolation tier
+  if (!_isDropSetEligibleExercise(exId)) return false;
+
+  // MRV gate: muscle must not be near MRV (unless it is a focus muscle)
+  const muscle = MUSCLE_MAP[exId];
+  if (muscle) {
+    const mrvApproaching = getMRVApproachingMuscles();
+    const nearMRV = mrvApproaching.some(m => m.muscle === muscle);
+    if (nearMRV && !(state.cycleEmphasis || []).includes(muscle)) return false;
+  }
+
+  // Must have a valid trigger reason (rep range + RPE conditions)
+  const trigger = _getDropSetTriggerReason(exId, setIndex);
+  if (!trigger) return false;
+
+  return true;
+}
+
+// Removes the drop set card from DOM (does not change session state).
+function _clearDropSetCard(exId) {
+  const card = document.getElementById('drop-set-card-' + exId);
+  if (card) card.remove();
+}
+
+// Injects the drop set recommendation card below the qualifying set row.
+function _showDropSetCard(exId, setIndex, triggerReason, dropWeight, dropReps) {
+  _clearDropSetCard(exId);
+
+  // Guard against duplicate
+  if (document.getElementById('drop-set-card-' + exId)) return;
+
+  const sets = activeSession.sets[exId];
+  const lastSetRow = document.getElementById('set-row-' + exId + '-' + setIndex);
+  if (!lastSetRow) return;
+
+  const day = state.program.find(d => d.id === activeSession.dayId);
+  const ex = day?.exercises.find(e => e.id === exId);
+  const exName = activeSession?.swaps?.[exId]?.name || ex?.name || exId;
+  const bodyText = _getDropSetTemplateText(triggerReason, exName, dropWeight);
+
+  const card = document.createElement('div');
+  card.id = 'drop-set-card-' + exId;
+  card.style.cssText = 'margin:6px 0;padding:10px 12px;background:var(--dark2);border:none;border-left:3px solid #C9A84C;border-radius:0 8px 8px 0;';
+
+  card.innerHTML =
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">' +
+      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);font-weight:700;letter-spacing:0.3px;line-height:1.2;">DROP SET?</div>' +
+      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:#C9A84C;font-weight:600;letter-spacing:0.5px;white-space:nowrap;">&#9733; Live insight</div>' +
+    '</div>' +
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:0.2px;line-height:1.4;margin-bottom:10px;">' + bodyText + '</div>' +
+    '<div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">' +
+      '<button onclick="skipDropSet(\'' + exId + '\')" style="background:none;border:none;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.5px;cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;">SKIP</button>' +
+      '<button onclick="acceptDropSet(\'' + exId + '\',' + setIndex + ',' + dropWeight + ',' + dropReps + ')" style="background:transparent;border:1px solid #C9A84C;color:#C9A84C;padding:5px 12px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DO IT &nbsp;' + dropWeight + ' lbs &times; ' + dropReps + '</button>' +
+    '</div>';
+
+  lastSetRow.insertAdjacentElement('afterend', card);
+
+  // Hide rest timer while awaiting decision
+  const restRow = document.getElementById('rest-row-' + exId);
+  if (restRow) restRow.style.display = 'none';
+
+  if (!activeSession.dropSetSuggestion) activeSession.dropSetSuggestion = {};
+  activeSession.dropSetSuggestion[exId] = 'suggested';
+}
+
+// User tapped SKIP — record dismissal, reveal rest timer, no consequences.
+function skipDropSet(exId) {
+  _clearDropSetCard(exId);
+  if (!activeSession) return;
+  if (!activeSession.dropSetSuggestion) activeSession.dropSetSuggestion = {};
+  activeSession.dropSetSuggestion[exId] = 'skipped';
+
+  // Reveal rest timer now that user has decided
+  const restRow = document.getElementById('rest-row-' + exId);
+  if (restRow) restRow.style.display = 'flex';
+}
+
+// User tapped DO IT — append the drop set row and record acceptance.
+function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
+  if (!activeSession?.sets[exId]) return;
+  _clearDropSetCard(exId);
+
+  if (!activeSession.dropSetSuggestion) activeSession.dropSetSuggestion = {};
+  activeSession.dropSetSuggestion[exId] = 'accepted';
+
+  const sets = activeSession.sets[exId];
+  const newSetIndex = sets.length;
+
+  // Append drop set as a full set object with isDropSet flag
+  sets.push({
+    done: false,
+    weight: String(dropWeight),
+    reps: String(dropReps),
+    rpe: '',
+    note: '',
+    isDropSet: true
+  });
+
+  // Crash-recovery checkpoint
+  try { const _chk = JSON.stringify(activeSession); localStorage.setItem('ts-muscle-paused', _chk); _idbSet('ts-muscle-paused', _chk); } catch(e) {}
+
+  // Build the drop set row — no RPE button, gold "DROP" label
+  const setRow = document.createElement('div');
+  setRow.className = 'set-row drop-set-row';
+  setRow.id = 'set-row-' + exId + '-' + newSetIndex;
+  setRow.style.cssText = 'box-shadow:inset 3px 0 0 #C9A84C;';
+  setRow.innerHTML =
+    '<div class="set-num" style="color:#C9A84C;font-size:11px;font-weight:700;letter-spacing:0.5px;">DROP</div>' +
+    '<input type="number" inputmode="decimal" class="set-input" value="' + dropWeight + '"' +
+      ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'weight\',this.value)"/>' +
+    '<div style="position:relative;">' +
+      '<input type="number" inputmode="numeric" class="set-input" id="reps-input-' + exId + '-' + newSetIndex + '"' +
+        ' value="' + dropReps + '" style="padding-right:22px;"' +
+        ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'reps\',this.value)"/>' +
+      '<div id="rep-indicator-' + exId + '-' + newSetIndex + '" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>' +
+    '</div>' +
+    '<div style="width:44px;"></div>' +
+    '<button class="set-done-btn" onclick="toggleSetDone(\'' + exId + '\',' + newSetIndex + ')">' +
+      '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+    '</button>';
+
+  // Insert before rest row
+  const restRow = document.getElementById('rest-row-' + exId);
+  if (restRow) {
+    restRow.parentElement.insertBefore(setRow, restRow);
+  } else {
+    const prevRow = document.getElementById('set-row-' + exId + '-' + (newSetIndex - 1));
+    if (prevRow) prevRow.insertAdjacentElement('afterend', setRow);
+  }
+
+  updateSessionProgress();
+}
+
+// Called 700ms after a set is marked done — checks all gates and fires the card if appropriate.
+// Fires AFTER _maybeFireCoachingCue (600ms) so they don't collide.
+function _maybeFireDropSetRecommendation(exId, setIndex) {
+  if (!activeSession) return;
+  // Don't fire if a coaching cue card or dynamic set suggestion is already showing
+  if (document.getElementById('coaching-cue-' + exId)) return;
+  if (document.getElementById('dynamic-set-suggestion-' + exId)) return;
+  // Don't fire if a coaching cue API call is in-flight
+  if (_coachingCueFetching[exId]) return;
+
+  if (!_canSuggestDropSet(exId, setIndex)) return;
+
+  const set = activeSession.sets[exId]?.[setIndex];
+  if (!set) return;
+  const dropWeight = _calcDropWeight(set.weight);
+  const dropReps = _calcDropReps(set.reps);
+  if (!dropWeight) return;
+
+  const triggerReason = _getDropSetTriggerReason(exId, setIndex);
+  if (!triggerReason) return;
+
+  _showDropSetCard(exId, setIndex, triggerReason, dropWeight, dropReps);
+}
+
+// ============================================================
 // LIVE SESSION TIMER
 // ============================================================
 let sessionTimerInterval = null;
@@ -23521,7 +23891,7 @@ function addDynamicSet(exId) {
     : '';
 
   // Push the new set into the live session state
-  sets.push({ done: false, weight: prevWeight, reps: '', rpe: '', note: '' });
+  sets.push({ done: false, weight: prevWeight, reps: '', rpe: '', note: '', isDropSet: false });
 
   // Checkpoint crash-recovery snapshot so the partial set isn't lost on swipe-away.
   // Mirrors the identical checkpoint in toggleSetDone — ensures the undone dynamic set
@@ -25093,7 +25463,10 @@ function showSessionWrapUp() {
   let totalSets = 0, hitSets = 0, exceededSets = 0, missedSets = 0;
 
   day.exercises.forEach(ex => {
-    const sets = (activeSession.sets[ex.id] || []).filter(s => s.done && s.reps);
+    // Drop sets are bonus volume — exclude from planned-set outcome counts and RPE averages.
+    // They are shown separately at the bottom of the exercise block.
+    const dropSets = (activeSession.sets[ex.id] || []).filter(s => s.done && s.reps && s.isDropSet);
+    const sets = (activeSession.sets[ex.id] || []).filter(s => s.done && s.reps && !s.isDropSet);
     if (!sets.length) return;
 
     const repStr = getGoalReps(ex.id, ex.reps);
@@ -25149,14 +25522,19 @@ function showSessionWrapUp() {
       `<span style="color:${o.color};font-size:13px;font-weight:700;">${o.icon}${o.reps}</span>`
     ).join('<span style="color:#333;margin:0 3px;">·</span>');
 
+    const dropLine = dropSets.length
+      ? `<div style="font-size:12px;color:#C9A84C;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;margin-top:4px;">+ DROP ${dropSets[0].weight}lb &times; ${dropSets[0].reps} reps</div>`
+      : '';
+
     rows += `
       <div style="border-bottom:1px solid var(--dark3);padding:16px 0;">
         <div style="font-size:14px;color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">${ex.name}</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;${nextHint ? 'margin-bottom:8px;' : ''}">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;${nextHint || dropLine ? 'margin-bottom:6px;' : ''}">
           ${setDots}
           ${avgRPE ? `<span style="color:var(--gray-light);font-size:13px;letter-spacing:0.5px;margin-left:4px;">RPE ${avgRPE}</span>` : ''}
         </div>
-        ${nextHint ? `<div>${nextHint}</div>` : ''}
+        ${dropLine}
+        ${nextHint ? `<div style="margin-top:${dropLine ? '6px' : '0'}">${nextHint}</div>` : ''}
       </div>`;
   });
 
@@ -26533,7 +26911,7 @@ function checkDeloadSuggestion() {
   let totalRPE = 0, rpeCount = 0;
   recentSessions.forEach(sess => {
     Object.values(sess.sets || {}).forEach(sets => {
-      sets.filter(s => s.done && s.rpe).forEach(s => {
+      sets.filter(s => s.done && !s.isDropSet && s.rpe).forEach(s => {
         totalRPE += parseFloat(s.rpe);
         rpeCount++;
       });
@@ -27297,7 +27675,7 @@ function recalcPRsFromHistory() {
 
   state.history.forEach(entry => {
     Object.entries(entry.sets || {}).forEach(([exId, sets]) => {
-      sets.filter(s => s.done && s.weight && s.reps && !s.coachRemoved).forEach(set => {
+      sets.filter(s => s.done && !s.isDropSet && s.weight && s.reps && !s.coachRemoved).forEach(set => {
         const w = parseFloat(set.weight);
         const r = parseInt(set.reps);
         if (!w || !r) return;
@@ -28687,10 +29065,17 @@ function renderHistoryDetail(entry) {
       }
     }
 
+    let _primarySetNum = 0;
     html += `<div class="history-ex">
       <div class="history-ex-name" style="display:flex;align-items:center;gap:6px;">${displayName}${wasPR ? ' <span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-size:13px;font-weight:700;padding:3px 8px;border-radius:20px;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:0.5px;">🏆 PR</span>' : ''}${supersetBadge}</div>
       <div class="history-sets">
-        ${doneSets.map((s, i) => `<div class="history-set-pill"><span style="color:var(--gray);font-size:13px;margin-right:4px;">S${i + 1}</span>${s.weight ? s.weight + 'lb' : '--'} × ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`).join('')}
+        ${doneSets.map(s => {
+          if (s.isDropSet) {
+            return `<div class="history-set-pill"><span style="color:#C9A84C;font-size:11px;font-weight:700;margin-right:4px;letter-spacing:0.5px;">DROP</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`;
+          }
+          _primarySetNum++;
+          return `<div class="history-set-pill"><span style="color:var(--gray);font-size:13px;margin-right:4px;">S${_primarySetNum}</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`;
+        }).join('')}
       </div>
       ${exNote ? `<div class="history-ex-note"><span class="history-ex-note-label">Note</span>${exNote}</div>` : ''}
     </div>`;
@@ -28704,7 +29089,7 @@ function renderHistoryDetail(entry) {
       html += `<div class="history-ex">
         <div class="history-ex-name" style="display:flex;align-items:center;gap:6px;">${escapeHtml(bonus.name)}<span style="font-size:12px;font-weight:700;color:var(--gray);background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">BONUS</span></div>
         <div class="history-sets">
-          ${doneSets.map((s, i) => `<div class="history-set-pill"><span style="color:var(--gray);font-size:13px;margin-right:4px;">S${i + 1}</span>${s.weight ? s.weight + 'lb' : '--'} × ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`).join('')}
+          ${(() => { let _n = 0; return doneSets.map(s => { if (s.isDropSet) { return `<div class="history-set-pill"><span style="color:#C9A84C;font-size:11px;font-weight:700;margin-right:4px;letter-spacing:0.5px;">DROP</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`; } _n++; return `<div class="history-set-pill"><span style="color:var(--gray);font-size:13px;margin-right:4px;">S${_n}</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`; }).join(''); })()}
         </div>
       </div>`;
     });
@@ -31606,6 +31991,7 @@ function handleImport(e) {
         // Gracefully handle missing fields when restoring older backups:
         // betweenSetCoaching: default on (existing check is `!== false`, so undefined = on)
         if (state.betweenSetCoaching === undefined) state.betweenSetCoaching = true;
+        if (state.dropSetsEnabled === undefined) state.dropSetsEnabled = true;
         if (!state.hardDayCollection) state.hardDayCollection = [];
         if (state.carryingFeatureEnabled === undefined) state.carryingFeatureEnabled = true;
         // customUnilateralExercises: introduced with unilateral tracking — default empty object
