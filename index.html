@@ -8180,7 +8180,7 @@ function supabaseDeleteAccount() {
   if (existing) { existing.remove(); return; }
   const sheet = document.createElement('div');
   sheet.id = 'delete-account-sheet';
-  sheet.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.7);';
+  sheet.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.7);';
   sheet.innerHTML = `
     <div style="width:100%;max-width:480px;background:#111;border-radius:20px 20px 0 0;padding:24px 20px 40px;position:relative;overflow:hidden;">
       <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,57,43,0.09) 0%,transparent 60%);pointer-events:none;"></div>
@@ -9391,6 +9391,10 @@ async function _doFriendSearch(query) {
   }
 
   data.forEach(u => { _friendCache[u.id] = u; });
+  if (_blockedUsers.size === 0 && state.supabaseUserId) {
+    const { data: freshBlocks } = await sb.from('blocked_users').select('blocked_id').eq('blocker_id', state.supabaseUserId);
+    if (freshBlocks) freshBlocks.forEach(b => _blockedUsers.add(b.blocked_id));
+  }
   results.innerHTML = data.map(u => {
     const isBlocked   = _blockedUsers.has(u.id);
     const hasOutgoing = !!_outgoingFriendRequests[u.id];
@@ -9633,6 +9637,8 @@ async function _loadFriendsList() {
   const list = document.getElementById('friends-list');
   if (!sb || !list) return;
 
+  list.innerHTML = '<div style="text-align:center;padding:24px 12px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1px;">LOADING...</div>';
+
   const { data: rows } = await sb.from('friendships')
     .select('requester_id, addressee_id')
     .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
@@ -9726,7 +9732,7 @@ function _timeAgo(ts) {
 
 async function _openFriendActivity(userId, signalId) {
   const sb = _getSupabaseClient();
-  if (!sb) return;
+  if (!sb || !state.supabaseUserId) return;
   const cached = _friendCache[userId] || {};
 
   const existing = document.getElementById('friend-activity-sheet');
@@ -11152,6 +11158,30 @@ function _originalInviteeCount(challenge) {
 }
 
 // Extract a short, user-facing error message from an error value.
+function _showConfirmModal(msg, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:var(--dark2);border-radius:20px;padding:24px;width:100%;max-width:360px;border:1px solid var(--dark3);';
+  const msgEl = document.createElement('div');
+  msgEl.style.cssText = 'font-family:\'Barlow Condensed\',sans-serif;font-size:15px;color:var(--gray-light);line-height:1.5;margin-bottom:20px;';
+  msgEl.textContent = msg;
+  const btns = document.createElement('div');
+  btns.style.cssText = 'display:flex;gap:10px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText = 'flex:1;background:var(--dark3);border:1px solid #444;color:var(--gray);padding:13px;border-radius:12px;font-family:\'Bebas Neue\',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;';
+  cancelBtn.textContent = 'CANCEL';
+  cancelBtn.onclick = () => overlay.remove();
+  const okBtn = document.createElement('button');
+  okBtn.style.cssText = 'flex:1;background:rgba(204,32,39,0.2);border:1px solid var(--red);color:var(--red-text);padding:13px;border-radius:12px;font-family:\'Bebas Neue\',cursive;font-size:16px;letter-spacing:1px;cursor:pointer;';
+  okBtn.textContent = 'CONFIRM';
+  okBtn.onclick = () => { overlay.remove(); onConfirm(); };
+  btns.append(cancelBtn, okBtn);
+  box.append(msgEl, btns);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
 // Supabase errors expose message/details/hint/code fields, plain
 // Errors have .message, strings are themselves. Falls back to
 // JSON.stringify and caps length so toasts don't blow out.
@@ -12460,8 +12490,7 @@ async function _submitAcceptChallenge() {
 // 'declined' (or the whole challenge row if this is a legacy 1v1 with
 // no participant row yet). Fires a push to the creator.
 function _confirmDeclineChallenge(challengeId) {
-  if (!confirm('Decline this challenge?')) return;
-  _declineChallenge(challengeId);
+  _showConfirmModal('Decline this challenge?', () => _declineChallenge(challengeId));
 }
 async function _declineChallenge(challengeId) {
   haptic(HAPTIC.tap);
@@ -12503,8 +12532,7 @@ async function _declineChallenge(challengeId) {
 // Confirm + cancel a pending OR active challenge. CREATOR-ONLY action.
 // Ends the challenge for everyone. Non-creators use _quitChallenge.
 function _confirmCancelChallenge(challengeId) {
-  if (!confirm('Cancel this challenge? It ends for everyone.')) return;
-  _cancelChallenge(challengeId);
+  _showConfirmModal('Cancel this challenge? It ends for everyone.', () => _cancelChallenge(challengeId));
 }
 async function _cancelChallenge(challengeId) {
   haptic(HAPTIC.warning);
@@ -12546,8 +12574,7 @@ async function _cancelChallenge(challengeId) {
 // If the quit drops the roster below 2 joined, the whole challenge
 // auto-cancels.
 function _confirmQuitChallenge(challengeId) {
-  if (!confirm('Quit this challenge? You\u2019ll be out — the rest keeps going without you.')) return;
-  _quitChallenge(challengeId);
+  _showConfirmModal('Quit this challenge? You\u2019ll be out \u2014 the rest keeps going without you.', () => _quitChallenge(challengeId));
 }
 async function _quitChallenge(challengeId) {
   haptic(HAPTIC.warning);
@@ -12607,9 +12634,10 @@ function _confirmStartChallenge(challengeId) {
   }
   const originalInvites = _originalInviteeCount(ch);
   if (originalInvites > 1 && otherJoined === 1) {
-    if (!confirm('Only 1 of ' + originalInvites + ' has accepted. Start anyway?')) return;
+    _showConfirmModal('Only 1 of ' + originalInvites + ' has accepted. Start anyway?', () => _startChallengeNow(challengeId));
+  } else {
+    _startChallengeNow(challengeId);
   }
-  _startChallengeNow(challengeId);
 }
 async function _startChallengeNow(challengeId) {
   haptic(HAPTIC.start);
@@ -12681,7 +12709,7 @@ function _openLogResultFlow(challengeId) {
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">'
     + '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;">LOG YOUR BEST SET</div>'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-top:2px;">' + escapeHtml(liftLabel) + '</div></div>'
-    + '<button onclick="document.getElementById(\'challenge-log-sheet\').remove()" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
+    + '<button onclick="document.getElementById(\'challenge-log-sheet\').remove();_openChallengeDetailSheet(\'' + challengeId + '\')" aria-label="Close" style="background:rgba(255,255,255,0.08);border:none;color:var(--gray-light);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">\u2715</button>'
     + '</div>'
     + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;">BASELINE</div>'
     + '<div style="font-family:\'Barlow\',sans-serif;font-size:14px;color:var(--cream);margin-bottom:8px;">' + escapeHtml(baselineTxt) + '</div>'
@@ -12698,7 +12726,7 @@ function _openLogResultFlow(challengeId) {
     + '<div id="challenge-log-e1rm" style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);margin-top:14px;">Enter weight and reps to see your new estimate.</div>'
     + '<button id="challenge-log-save" onclick="_submitChallengeLog(\'' + challengeId + '\')" style="width:100%;margin-top:18px;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SAVE LOG</button>'
     + '</div>';
-  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.remove(); });
+  sheet.addEventListener('click', e => { if (e.target === sheet) { sheet.remove(); _openChallengeDetailSheet(challengeId); } });
   document.body.appendChild(sheet);
 }
 
@@ -14132,12 +14160,12 @@ async function _submitCYHLog() {
 
 // ─── CLEAR YOUR HEAD — LIFECYCLE + HOME CARD ────────────────────────────────
 
-async function _confirmStartCYH(challengeId, invitedCount) {
+function _confirmStartCYH(challengeId, invitedCount) {
   if (invitedCount > 0) {
-    const ok = confirm('Only some invitees have accepted. Start anyway?');
-    if (!ok) return;
+    _showConfirmModal('Only some invitees have accepted. Start anyway?', () => _startCYHNow(challengeId));
+  } else {
+    _startCYHNow(challengeId);
   }
-  await _startCYHNow(challengeId);
 }
 
 async function _startCYHNow(challengeId) {
@@ -14163,9 +14191,7 @@ async function _startCYHNow(challengeId) {
 }
 
 function _confirmCancelCYH(challengeId) {
-  const ok = confirm('Cancel this challenge? This cannot be undone.');
-  if (!ok) return;
-  _cancelCYHNow(challengeId);
+  _showConfirmModal('Cancel this challenge? This cannot be undone.', () => _cancelCYHNow(challengeId));
 }
 
 async function _cancelCYHNow(challengeId) {
@@ -14186,9 +14212,7 @@ async function _cancelCYHNow(challengeId) {
 }
 
 function _confirmQuitCYH(challengeId) {
-  const ok = confirm('Quit this challenge?');
-  if (!ok) return;
-  _quitCYHNow(challengeId);
+  _showConfirmModal('Quit this challenge?', () => _quitCYHNow(challengeId));
 }
 
 async function _quitCYHNow(challengeId) {
@@ -17866,6 +17890,7 @@ function renderHome() {
     }
   } else {
     _travelHomeBanner.style.display = 'none';
+    document.getElementById('travel-expiry-banner')?.remove();
   }
 
   // Rest week banner (separate from deload banner) — show day countdown
@@ -18681,7 +18706,7 @@ function openRpePicker(exId, setIndex, type) {
   // Get current value
   let currentRpe = '';
   if (type === 'bonus') {
-    const bonus = activeSession?.bonusSets?.find(b => b.id === exId);
+    const bonus = activeSession?.bonusExercises?.find(b => b.id === exId);
     currentRpe = bonus?.sets?.[setIndex]?.rpe || '';
   } else {
     currentRpe = activeSession?.sets?.[exId]?.[setIndex]?.rpe || '';
@@ -18753,8 +18778,8 @@ function selectRpeFromPicker(rpe) {
     updateSet(exId, setIndex, 'rpe', rpe);
   }
   // Update the button text in the set row
-  const rowPrefix = type === 'bonus' ? 'bonus-set-row-' : 'set-row-';
-  const row = document.getElementById(rowPrefix + exId + '-' + setIndex) || document.getElementById('set-row-' + exId + '-' + setIndex);
+  const rowPrefix = type === 'bonus' ? 'bonus-row-' : 'set-row-';
+  const row = document.getElementById(rowPrefix + exId + '-' + setIndex);
   const btn = row ? row.querySelector('.rpe-select') : null;
   if (btn) {
     btn.textContent = rpe;
@@ -18772,7 +18797,8 @@ function clearRpeFromPicker() {
   } else {
     updateSet(exId, setIndex, 'rpe', '');
   }
-  const row = document.getElementById('set-row-' + exId + '-' + setIndex);
+  const _clearRowPrefix = type === 'bonus' ? 'bonus-row-' : 'set-row-';
+  const row = document.getElementById(_clearRowPrefix + exId + '-' + setIndex);
   const btn = row ? row.querySelector('.rpe-select') : null;
   if (btn) {
     btn.textContent = 'RPE';
@@ -20372,6 +20398,7 @@ function _launchSessionFromEl(triggerEl) {
 }
 
 function startSession(dayId, triggerEl) {
+  if (state.programPaused) { showToast('Your program is paused. Resume it in Settings before starting a session.'); return; }
   haptic(HAPTIC.start);
   // Check for a paused session for this day
   const paused = localStorage.getItem('ts-muscle-paused');
@@ -20430,6 +20457,7 @@ function _proceedWithSession(dayId, triggerEl, carrying) {
   pairingSourceId = null;
   _stopMidnightCheckInterval(); // stop midnight check during active workout
   const day = state.program.find(d => d.id === dayId);
+  if (!day) { showToast('Could not find workout day. Please try again.'); return; }
   activeSession = {
     dayId,
     dayName: day.badge,
@@ -21287,6 +21315,7 @@ function refreshConnectorStrip(exId) {
 function renderSession() {
   if (!activeSession) return;
   const day = state.program.find(d => d.id === activeSession.dayId);
+  if (!day) return;
 
   const titleParts = day.badge.split(' ');
   document.getElementById('session-title').innerHTML = titleParts[0] + ' <span>' + titleParts.slice(1).join(' ') + '</span>';
@@ -24143,9 +24172,18 @@ function updateSessionProgress() {
     if (eligible.length > 0 && done === eligible.length) doneExercises++;
   });
 
+  (activeSession.bonusExercises || []).forEach(bonus => {
+    const eligible = (bonus.sets || []).filter(s => !s.coachRemoved);
+    totalSets += eligible.length;
+    const done = eligible.filter(s => s.done).length;
+    doneSets += done;
+    if (eligible.length > 0 && done === eligible.length) doneExercises++;
+  });
+
+  const bonusCount = (activeSession.bonusExercises || []).length;
   const pct = totalSets > 0 ? (doneSets / totalSets) * 100 : 0;
   document.getElementById('session-progress-bar').style.width = pct + '%';
-  document.getElementById('session-progress-text').textContent = `${doneExercises} / ${day.exercises.length} exercises done`;
+  document.getElementById('session-progress-text').textContent = `${doneExercises} / ${day.exercises.length + bonusCount} exercises done`;
   document.getElementById('session-sets-text').textContent = `${doneSets} sets logged`;
 
   // Pulse complete button + green glow on wrap when all sets done
@@ -25602,7 +25640,7 @@ function finalizeEndSession(save) {
         state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
       }
       const prevWeek = state.weekCount || 1;
-      if (_sessionBased) state.weekRolledOverPrevWeek = prevWeek;
+      state.weekRolledOverPrevWeek = prevWeek;
       state.weekCount = Math.min((state.weekCount || 1) + 1, 8);
       // Week 1 → 2: inject priority boost exercises now that test week is done
       if (prevWeek === 1 && state.priorityMuscles) {
@@ -28590,7 +28628,16 @@ function renderHistoryDetail(entry) {
   const day = state.program.find(d => d.id === entry.dayId);
   const exercises = day
     ? day.exercises
-    : Object.keys(entry.sets || {}).map(id => ({ id, name: entry.swaps?.[id]?.name || id }));
+    : Object.keys(entry.sets || {}).map(id => {
+        let name = entry.swaps?.[id]?.name;
+        if (!name) {
+          for (const _d of (state.program || [])) {
+            const _ex = _d.exercises.find(e => e.id === id);
+            if (_ex) { name = _ex.name; break; }
+          }
+        }
+        return { id, name: name || id };
+      });
   if (!exercises.length && !(entry.bonusExercises?.length)) return '';
 
   let html = '';
@@ -32699,12 +32746,28 @@ document.addEventListener('focusin', function(e) {
 history.pushState({ page: 'home' }, '');
 
 window.addEventListener('popstate', (e) => {
-  // 1. Close any dynamic modals first (cycle complete, goal picker, etc.)
-  const dynamicModals = ['cycle-complete-modal', 'cycle-goal-picker'];
+  // 1. Close any dynamic modals first (cycle complete, goal picker, sheets, etc.)
+  const dynamicModals = [
+    'cycle-complete-modal', 'cycle-goal-picker',
+    'challenge-log-sheet', 'challenge-create-sheet', 'friend-activity-sheet',
+    'notif-prefs-sheet', 'carrying-sheet', 'discard-confirm-modal',
+    'delete-account-sheet', 'color-picker-sheet', 'install-welcome',
+  ];
   for (const id of dynamicModals) {
     const el = document.getElementById(id);
     if (el) { el.remove(); history.pushState({ page: 'home' }, ''); return; }
   }
+  // Close social modal if open
+  const socialOverlay = document.getElementById('social-overlay');
+  if (socialOverlay && socialOverlay.style.display !== 'none' && socialOverlay.style.display !== '') {
+    closeSocialModal(); history.pushState({ page: 'home' }, ''); return;
+  }
+  // Close challenge detail sheet if open
+  const challengeDetailSheet = document.getElementById('challenge-detail-sheet');
+  if (challengeDetailSheet) { _closeChallengeDetailSheet(); history.pushState({ page: 'home' }, ''); return; }
+  // Close RPE picker if open
+  const rpePicker = document.getElementById('rpe-picker-sheet');
+  if (rpePicker && rpePicker.style.display !== 'none') { closeRpePicker(); history.pushState({ page: 'home' }, ''); return; }
 
   // 2. Close any visible static modals
   const staticModals = [
@@ -38822,6 +38885,29 @@ function _escHtml(str) {
   </div>
 </div>
 
+
+<!-- INSTALL BOTTOM BANNER -->
+<div id="install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--dark2);border-top:1px solid var(--dark3);padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);z-index:500;display:none;align-items:center;gap:12px;">
+  <div style="flex:1;">
+    <div style="font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:1.5px;color:var(--cream);">ADD TO HOME SCREEN</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);margin-top:2px;">Install T&amp;S Muscle for the best experience</div>
+  </div>
+  <button id="install-btn" onclick="doInstall()" style="background:var(--red);border:none;color:white;padding:10px 18px;border-radius:10px;font-family:'Bebas Neue',cursive;font-size:15px;letter-spacing:1px;cursor:pointer;flex-shrink:0;">INSTALL</button>
+  <button onclick="document.getElementById('install-banner').style.display='none'" style="background:none;border:none;color:var(--gray);font-size:22px;cursor:pointer;padding:4px;line-height:1;flex-shrink:0;">&times;</button>
+</div>
+
+<!-- INSTALL WELCOME OVERLAY -->
+<div id="install-welcome" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:600;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--dark2);border-radius:20px;padding:28px 24px;width:100%;max-width:420px;border:1px solid var(--dark3);text-align:center;">
+    <div style="font-size:40px;margin-bottom:12px;">💪</div>
+    <div style="font-family:'Bebas Neue',cursive;font-size:26px;letter-spacing:2px;color:var(--cream);margin-bottom:8px;">INSTALL T&amp;S MUSCLE</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:var(--gray-light);line-height:1.6;margin-bottom:24px;">Add to your home screen for instant access, offline support, and the full app experience.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button onclick="doWelcomeInstall()" style="background:var(--red);border:none;color:white;padding:15px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1.5px;cursor:pointer;">ADD TO HOME SCREEN</button>
+      <button onclick="dismissWelcomeInstall()" style="background:none;border:1px solid var(--dark3);color:var(--gray);padding:13px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;">NOT NOW</button>
+    </div>
+  </div>
+</div>
 
 <!-- INSTALL INSTRUCTIONS MODAL -->
 <div id="install-instructions" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:600; align-items:flex-end; justify-content:center;">
