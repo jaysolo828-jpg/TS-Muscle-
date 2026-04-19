@@ -13,6 +13,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png"/>
 <link rel="icon" type="image/png" href="/icon-192.png"/>
 <link rel="manifest" href="/manifest.json"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&family=Satisfy&display=swap" rel="stylesheet"/>
 <style>
   :root {
@@ -8231,7 +8233,7 @@ function supabaseShowEmailForm(source) {
 async function supabaseSignInEmailFromSettings() {
   const sb = _getSupabaseClient();
   if (!sb) { showToast('Social features unavailable. Please try again.'); return; }
-  if (state.supabaseUserId) { showToast("You're connected!"); setTimeout(() => location.reload(), 800); return; }
+  if (state.supabaseUserId) { showToast("You're connected!"); document.body.style.pointerEvents = 'none'; setTimeout(() => location.reload(), 800); return; }
   const email = (document.getElementById('settings-email-input')?.value || '').trim();
   const password = (document.getElementById('settings-password-input')?.value || '');
   if (!email || !password) { showToast('Enter email and password.'); return; }
@@ -8277,7 +8279,7 @@ async function supabaseSignInEmail() {
   if (!sb) { showToast('Social features unavailable. Try again later.'); return; }
   // If already signed in (e.g. _checkSupabaseSession completed while user
   // was filling the form with autofilled credentials), skip the auth call.
-  if (state.supabaseUserId) { showToast("You're connected!"); setTimeout(() => location.reload(), 800); return; }
+  if (state.supabaseUserId) { showToast("You're connected!"); document.body.style.pointerEvents = 'none'; setTimeout(() => location.reload(), 800); return; }
   const email = (document.getElementById('supabase-email-input')?.value || '').trim();
   const password = (document.getElementById('supabase-password-input')?.value || '');
   if (!email || !password) { showToast('Enter your email and password.'); return; }
@@ -8371,6 +8373,7 @@ async function _onSupabaseSignIn(user) {
       _syncRecoveryWeekToServer(state.isDeloadWeek ? 'deload' : 'rest');
     }
     showToast("You're connected!");
+    document.body.style.pointerEvents = 'none';
     setTimeout(() => location.reload(), 1200);
   }
 }
@@ -8467,6 +8470,7 @@ async function _saveUsername(userId) {
   _swStoreUserId(liveId);
   _requestNotificationPermission();
   showToast("You're all set! Welcome to the crew.");
+  document.body.style.pointerEvents = 'none';
   setTimeout(() => location.reload(), 1200);
 }
 
@@ -32078,6 +32082,7 @@ if ('serviceWorker' in navigator) {
   // When the waiting SW activates (user tapped the banner), reload to pick up new assets
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!_hadController) return; // first install, not an update
+    if (isWorkoutActive()) { _pendingSWUpdate = true; return; }
     window.location.reload();
   });
 
@@ -32698,8 +32703,17 @@ if (navigator.storage && navigator.storage.persist) {
 
 // ── FCM token: Android TWA passes it as ?fcm_token=... on launch ──
 (function() {
-  var token = new URLSearchParams(location.search).get('fcm_token');
-  if (token) { window._fcmToken = token; _saveFcmToken(token); }
+  var p = new URLSearchParams(location.search);
+  var token = p.get('fcm_token');
+  if (token) {
+    window._fcmToken = token;
+    _saveFcmToken(token);
+    try {
+      p.delete('fcm_token');
+      var cleanQs = p.toString();
+      history.replaceState(null, '', location.pathname + (cleanQs ? '?' + cleanQs : ''));
+    } catch(_) {}
+  }
 })();
 
 async function _saveFcmToken(token) {
