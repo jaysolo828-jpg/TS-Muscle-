@@ -21484,7 +21484,7 @@ function renderSession() {
         // Drop set rows: gold DROP label, no RPE button, gold left border while undone
         setsHTML += `
           <div class="set-row drop-set-row${set.done ? ' done' : ''}" id="set-row-${ex.id}-${si}" style="${!set.done ? 'box-shadow:inset 3px 0 0 #C9A84C;' : ''}">
-            <div class="set-num" style="color:#C9A84C;font-size:11px;font-weight:700;letter-spacing:0.5px;">DROP</div>
+            <div class="set-num" style="color:#C9A84C;font-size:13px;font-weight:700;letter-spacing:0.5px;">DROP</div>
             <input type="number" inputmode="decimal" class="set-input" placeholder="0"
               value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
             <div style="position:relative;">
@@ -22175,6 +22175,8 @@ function toggleSetDone(exId, setIndex) {
   const row = document.getElementById(`set-row-${exId}-${setIndex}`);
   if (row) {
     row.classList.toggle('done', set.done);
+    // Drop set rows have an inline gold box-shadow that signals "pending" — clear it on completion.
+    if (set.isDropSet) row.style.boxShadow = set.done ? '' : 'inset 3px 0 0 #C9A84C';
     row.querySelectorAll('input, select').forEach(el => el.disabled = set.done);
   }
 
@@ -23400,12 +23402,12 @@ function _showDropSetCard(exId, setIndex, triggerReason, dropWeight, dropReps) {
   card.innerHTML =
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">' +
       '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);font-weight:700;letter-spacing:0.3px;line-height:1.2;">DROP SET?</div>' +
-      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:#C9A84C;font-weight:600;letter-spacing:0.5px;white-space:nowrap;">&#9733; Live insight</div>' +
+      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:#C9A84C;font-weight:600;letter-spacing:0.5px;white-space:nowrap;">&#10022; Live insight</div>' +
     '</div>' +
     '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:0.2px;line-height:1.4;margin-bottom:10px;">' + bodyText + '</div>' +
     '<div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">' +
       '<button onclick="skipDropSet(\'' + exId + '\')" style="background:none;border:none;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.5px;cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;">SKIP</button>' +
-      '<button onclick="acceptDropSet(\'' + exId + '\',' + setIndex + ',' + dropWeight + ',' + dropReps + ')" style="background:transparent;border:1px solid #C9A84C;color:#C9A84C;padding:5px 12px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DO IT &nbsp;' + dropWeight + ' lbs &times; ' + dropReps + '</button>' +
+      '<button onclick="acceptDropSet(\'' + exId + '\',' + setIndex + ',' + dropWeight + ',' + dropReps + ')" style="background:transparent;border:1px solid #C9A84C;color:#C9A84C;padding:5px 12px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DO IT &mdash; ' + dropWeight + ' lbs &times; ' + dropReps + '</button>' +
     '</div>';
 
   lastSetRow.insertAdjacentElement('afterend', card);
@@ -23460,7 +23462,7 @@ function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
   setRow.id = 'set-row-' + exId + '-' + newSetIndex;
   setRow.style.cssText = 'box-shadow:inset 3px 0 0 #C9A84C;';
   setRow.innerHTML =
-    '<div class="set-num" style="color:#C9A84C;font-size:11px;font-weight:700;letter-spacing:0.5px;">DROP</div>' +
+    '<div class="set-num" style="color:#C9A84C;font-size:13px;font-weight:700;letter-spacing:0.5px;">DROP</div>' +
     '<input type="number" inputmode="decimal" class="set-input" value="' + dropWeight + '"' +
       ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'weight\',this.value)"/>' +
     '<div style="position:relative;">' +
@@ -25542,7 +25544,7 @@ function showSessionWrapUp() {
     ).join('<span style="color:#333;margin:0 3px;">·</span>');
 
     const dropLine = dropSets.length
-      ? `<div style="font-size:12px;color:#C9A84C;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;margin-top:4px;">+ DROP ${dropSets[0].weight}lb &times; ${dropSets[0].reps} reps</div>`
+      ? `<div style="font-size:12px;color:#C9A84C;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;margin-top:4px;">+ DROP ${dropSets[0].weight} lbs &times; ${dropSets[0].reps} reps</div>`
       : '';
 
     rows += `
