@@ -21495,7 +21495,7 @@ function renderSession() {
                 onchange="updateSet('${ex.id}',${si},'reps',this.value)"/>
               <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
             </div>
-            <div style="width:44px;display:flex;align-items:center;justify-content:center;">${!set.done ? '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:1px;">GO</span>' : ''}</div>
+            <div style="display:flex;align-items:center;justify-content:center;">${!set.done ? '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:1px;">GO</span>' : ''}</div>
             <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleSetDone('${ex.id}',${si})"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
           </div>
         `;
@@ -23487,7 +23487,7 @@ function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
         ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'reps\',this.value)"/>' +
       '<div id="rep-indicator-' + exId + '-' + newSetIndex + '" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>' +
     '</div>' +
-    '<div style="width:44px;display:flex;align-items:center;justify-content:center;">' +
+    '<div style="display:flex;align-items:center;justify-content:center;">' +
       '<span id="go-label-' + exId + '-' + newSetIndex + '" style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:1px;">GO</span>' +
     '</div>' +
     '<button class="set-done-btn" onclick="toggleSetDone(\'' + exId + '\',' + newSetIndex + ')">' +
@@ -29113,7 +29113,7 @@ function renderHistoryDetail(entry) {
       <div class="history-sets">
         ${doneSets.map(s => {
           if (s.isDropSet) {
-            return `<div class="history-set-pill"><span style="color:#C9A84C;font-size:11px;font-weight:700;margin-right:4px;letter-spacing:0.5px;">DROP</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`;
+            return `<div class="history-set-pill"><span style="color:#C9A84C;font-size:13px;font-weight:700;margin-right:4px;letter-spacing:0.5px;">DROP</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`;
           }
           _primarySetNum++;
           return `<div class="history-set-pill"><span style="color:var(--gray);font-size:13px;margin-right:4px;">S${_primarySetNum}</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`;
@@ -29131,7 +29131,7 @@ function renderHistoryDetail(entry) {
       html += `<div class="history-ex">
         <div class="history-ex-name" style="display:flex;align-items:center;gap:6px;">${escapeHtml(bonus.name)}<span style="font-size:12px;font-weight:700;color:var(--gray);background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">BONUS</span></div>
         <div class="history-sets">
-          ${(() => { let _n = 0; return doneSets.map(s => { if (s.isDropSet) { return `<div class="history-set-pill"><span style="color:#C9A84C;font-size:11px;font-weight:700;margin-right:4px;letter-spacing:0.5px;">DROP</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`; } _n++; return `<div class="history-set-pill"><span style="color:var(--gray);font-size:13px;margin-right:4px;">S${_n}</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`; }).join(''); })()}
+          ${(() => { let _n = 0; return doneSets.map(s => { if (s.isDropSet) { return `<div class="history-set-pill"><span style="color:#C9A84C;font-size:13px;font-weight:700;margin-right:4px;letter-spacing:0.5px;">DROP</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`; } _n++; return `<div class="history-set-pill"><span style="color:var(--gray);font-size:13px;margin-right:4px;">S${_n}</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`; }).join(''); })()}
         </div>
       </div>`;
     });
