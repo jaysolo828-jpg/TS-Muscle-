@@ -4579,7 +4579,7 @@
     <div onclick="toggleCarryingFeature()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--dark3);cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <div style="min-width:0;flex:1;padding-right:12px;">
         <div class="settings-label" style="margin-bottom:2px;">Pre-Session Check-In</div>
-        <div id="carrying-feature-sub" class="settings-sub" style="color:#2ecc71;">On. Pre-session check-in.</div>
+        <div id="carrying-feature-sub" class="settings-sub" style="color:#2ecc71;">On. Asks how you're feeling before each session.</div>
       </div>
       <div id="carrying-feature-icon" style="width:44px;height:26px;border-radius:13px;background:#2ecc71;position:relative;transition:background 0.2s;flex-shrink:0;">
         <div id="carrying-feature-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(18px);"></div>
@@ -7995,16 +7995,11 @@ function toggleSocialFeatures() {
 }
 
 function _applyNotifToggleUI() {
-  const granted = ('Notification' in window) && Notification.permission === 'granted';
-  const indicator = document.getElementById('notif-settings-indicator');
-  const knob = document.getElementById('notif-settings-knob');
-  const sub = document.getElementById('notif-settings-sub');
-  if (indicator) indicator.style.background = granted ? '#2ecc71' : '#444';
-  if (knob) knob.style.transform = granted ? 'translateX(18px)' : 'translateX(0)';
-  if (sub) sub.textContent = granted ? 'Notifications enabled' : 'Tap to enable workout alerts from friends';
+  updateNotificationsUI();
 }
 
 async function _onNotifSettingsTap() {
+  haptic(HAPTIC.tap);
   if (!('Notification' in window)) { showToast('Notifications not supported on this device'); return; }
   if (Notification.permission === 'denied') {
     const ua = (navigator.userAgent || '').toLowerCase();
@@ -8046,7 +8041,7 @@ function _updateSettingsAccountSection() {
     el.innerHTML = `
       <div class="settings-item" onclick="document.getElementById('account-manage-drawer').style.display=document.getElementById('account-manage-drawer').style.display==='none'?'block':'none';var a=document.getElementById('account-drawer-arrow');a.style.transform=a.style.transform?'':'rotate(90deg)';" style="cursor:pointer;">
         <div>
-          <div class="settings-label">${name}</div>
+          <div class="settings-label">${escapeHtml(name)}</div>
           <div class="settings-sub">Signed in. Tap to manage account.</div>
         </div>
         <div class="settings-arrow" id="account-drawer-arrow" style="transition:transform 0.2s;"><svg viewBox="0 0 24 24" width="20" height="20" stroke="#2ecc71" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -8102,12 +8097,14 @@ function _updateSettingsAccountSection() {
 }
 
 async function supabaseSignOut() {
+  haptic(HAPTIC.click);
   const sb = _getSupabaseClient();
   if (sb) { try { await sb.auth.signOut(); } catch(e) {} }
   state.supabaseUserId = null;
   state.supabaseDisplayName = null;
   state.supabaseAvatarColor = null;
   state.supabaseAvatarUrl = null;
+  state.notifPrefs = null;
   _supabaseClient = null;
   _cachedJwt = null;
   if (_socialPollInterval) { clearInterval(_socialPollInterval); _socialPollInterval = null; }
@@ -10519,7 +10516,6 @@ function _getDefaultNotifPrefs() {
 
 async function _loadNotifPrefs() {
   if (!state.supabaseUserId) return;
-  if (state.notifPrefs) return; // Already cached
   const sb = _getSupabaseClient();
   if (!sb) return;
   try {
@@ -10544,6 +10540,27 @@ async function _loadNotifPrefs() {
   }
 }
 
+function _revertNotifPrefsDom(partial, prev) {
+  if (!partial) return;
+  const defaults = _getDefaultNotifPrefs();
+  Object.keys(partial).forEach(function(key) {
+    const revertedVal = prev ? (prev[key] !== undefined ? prev[key] : defaults[key]) : defaults[key];
+    const isOn = revertedVal !== false;
+    const toggleEl = document.getElementById('notif-pref-toggle-' + key);
+    if (toggleEl) {
+      toggleEl.innerHTML = '<div style="width:44px;height:26px;border-radius:13px;background:'
+        + (isOn ? '#2ecc71' : '#444')
+        + ';position:relative;transition:background 0.2s;flex-shrink:0;pointer-events:none;">'
+        + '<div style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX('
+        + (isOn ? '18px' : '0') + ');"></div></div>';
+    }
+    if (key === 'quiet_enabled') {
+      const timesEl = document.getElementById('notif-prefs-quiet-times');
+      if (timesEl) timesEl.style.display = isOn ? 'flex' : 'none';
+    }
+  });
+}
+
 async function _saveNotifPrefs(partial) {
   if (!state.supabaseUserId) return;
   const prev = state.notifPrefs ? { ...state.notifPrefs } : null;
@@ -10562,12 +10579,14 @@ async function _saveNotifPrefs(partial) {
       .update({ notif_prefs: merged })
       .eq('id', state.supabaseUserId);
     if (error) {
+      _revertNotifPrefsDom(partial, prev);
       state.notifPrefs = prev;
       saveState();
       _updateNotifPrefsSettingsSub();
       showToast('Could not save notification preferences.');
     }
   } catch (e) {
+    _revertNotifPrefsDom(partial, prev);
     state.notifPrefs = prev;
     saveState();
     _updateNotifPrefsSettingsSub();
@@ -10579,18 +10598,23 @@ async function _saveNotifPrefs(partial) {
 function _updateNotifPrefsSettingsSub() {
   const sub = document.getElementById('notif-prefs-settings-sub');
   if (!sub) return;
+  if (!state.supabaseUserId) {
+    sub.textContent = 'Sign in to configure';
+    return;
+  }
   const p = state.notifPrefs || _getDefaultNotifPrefs();
   const types = ['workout_start', 'workout_complete', 'reaction', 'friend', 'challenge'];
   const onCount = types.filter(k => p[k] !== false).length;
-  const quietLabel = p.quiet_enabled
-    ? (p.quiet_start + '\u2013' + p.quiet_end)
-    : 'off';
-  sub.textContent = onCount + ' of 5 on \u00b7 Quiet ' + quietLabel;
+  const quietSuffix = p.quiet_enabled
+    ? (' \u00b7 Quiet ' + p.quiet_start + '\u2013' + p.quiet_end)
+    : '';
+  sub.textContent = onCount + ' of 5 on' + quietSuffix;
 }
 
 // Open the notification preferences bottom sheet. Lazy-loads prefs
 // from the DB if they haven't been cached yet.
 async function _openNotifPrefsSheet() {
+  haptic(HAPTIC.tap);
   if (!state.supabaseUserId) {
     showToast('Sign in to set notification preferences.');
     return;
@@ -15808,14 +15832,6 @@ function showScreen(name, el) {
   if (name === 'mindset') { _purgeLegacyMoodLogs(); renderValuesCard(); _mwSpinOnNext = true; renderMoodWheel(); renderMoodCheckinLabel(); renderMindsetStats(); renderHardDayCollection(); renderMindsetActivity(); }
 
   if (name === 'settings') {
-    const nameInput = document.getElementById('display-name-input');
-    if (nameInput) nameInput.value = state.displayName || state.profile?.name || state.supabaseDisplayName || '';
-    const ageInput = document.getElementById('profile-age-input');
-    if (ageInput) ageInput.value = state.profile?.age || '';
-    _updateSexButtons(state.profile?.sex || null);
-    _updateExpLevelButtons();
-    const bwSub = document.getElementById('bw-settings-sub');
-    if (bwSub && state.profile?.bodyweight) bwSub.textContent = `${state.profile.bodyweight} lbs`;
     updateProfileNotifyDot();
   }
 }
@@ -22474,7 +22490,7 @@ function updateCarryingFeatureUI() {
   var track = document.getElementById('carrying-feature-icon');
   var knob = document.getElementById('carrying-feature-knob');
   if (sub) {
-    sub.textContent = on ? 'On. Pre-session check-in.' : 'Off. No check-in before sessions.';
+    sub.textContent = on ? 'On. Asks how you\'re feeling before each session.' : 'Off. No check-in before sessions.';
     sub.style.color = on ? '#2ecc71' : 'var(--gray)';
   }
   if (track) track.style.background = on ? '#2ecc71' : '#444';
@@ -31898,6 +31914,7 @@ function _getCardShareText(type, data) {
 // EXPORT / IMPORT
 // ============================================================
 function sendFeedback() {
+  haptic(HAPTIC.click);
   const version = document.getElementById('footer-version')?.textContent || 'unknown';
   const device  = navigator.userAgent;
   const sessions = (state.history || []).length;
@@ -31916,6 +31933,7 @@ function sendFeedback() {
 }
 
 function exportData() {
+  haptic(HAPTIC.click);
   const data = JSON.stringify(state, null, 2);
   const d = new Date();
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -32006,6 +32024,7 @@ function exportData() {
 }
 
 function importData() {
+  haptic(HAPTIC.click);
   showRestoreConfirmModal({
     title: 'RESTORE FROM BACKUP?',
     message: 'This will replace <strong style="color:var(--cream);">all of your current data</strong> — workouts, history, settings, and program — with whatever is in the backup file you choose.<br><br>Your current data will be saved as a snapshot, so you can undo this from Settings if you change your mind.',
@@ -32113,7 +32132,8 @@ function openMaintenanceSheet() {
 }
 
 function settingsFilter(section) {
-  const sections = ['program','account','profile','help','danger','about'];
+  haptic(HAPTIC.tap);
+  const sections = ['program','account','profile','help','danger'];
   const nav = document.getElementById('settings-jump-nav');
   const activeBtn = nav ? nav.querySelector('.snav-active') : null;
   const alreadyThis = activeBtn && activeBtn.getAttribute('onclick').includes("'" + section + "'");
@@ -33777,6 +33797,7 @@ function setWeightIncrement(size) {
 }
 
 function toggleIncrementExpand() {
+  haptic(HAPTIC.click);
   const panel = document.getElementById('increment-buttons');
   const chevron = document.getElementById('increment-chevron');
   if (!panel) return;
@@ -35982,6 +36003,7 @@ function closeOnboardingModal() {
 }
 
 function confirmHardReset() {
+  haptic(HAPTIC.warning);
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
