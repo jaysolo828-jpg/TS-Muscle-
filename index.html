@@ -23298,12 +23298,12 @@ function _getDropSetTriggerReason(exId, setIndex) {
 // Returns the localized template explanation string for the card body.
 function _getDropSetTemplateText(triggerReason, exName, dropWeight) {
   if (triggerReason === 'rep_range_top') {
-    return 'You hit your rep target on ' + exName + ' with energy left — a drop to ' + dropWeight + ' lbs will push the muscle further than a straight set can reach.';
+    return 'You hit your target on ' + exName + ' with gas left in the tank. Strip to ' + dropWeight + ' lbs right now \u2014 no rest \u2014 and keep going. That extra stimulus is what drives growth past a plateau.';
   }
   if (triggerReason === 'plateau') {
-    return 'Your ' + exName + ' weight has been steady. A drop set at ' + dropWeight + ' lbs adds a different stimulus that can help restart progress.';
+    return 'Your ' + exName + ' has been stuck at the same weight. Strip to ' + dropWeight + ' lbs right now \u2014 no rest \u2014 and push out more reps. A different stimulus is what breaks a stall.';
   }
-  return 'A drop to ' + dropWeight + ' lbs will extend the stimulus beyond what a straight set delivers.';
+  return 'Strip to ' + dropWeight + ' lbs right now \u2014 no rest \u2014 and keep going to extend the stimulus.';
 }
 
 // Returns true if all gates pass and a drop set recommendation should fire.
@@ -23401,7 +23401,7 @@ function _showDropSetCard(exId, setIndex, triggerReason, dropWeight, dropReps) {
 
   card.innerHTML =
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">' +
-      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);font-weight:700;letter-spacing:0.3px;line-height:1.2;">DROP SET?</div>' +
+      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);font-weight:700;letter-spacing:0.3px;line-height:1.2;">REDUCE WEIGHT &amp; KEEP GOING?</div>' +
       '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:#C9A84C;font-weight:600;letter-spacing:0.5px;white-space:nowrap;">&#10022; Live insight</div>' +
     '</div>' +
     '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:0.2px;line-height:1.4;margin-bottom:10px;">' + bodyText + '</div>' +
