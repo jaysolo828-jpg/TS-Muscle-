@@ -22213,11 +22213,14 @@ function toggleSetDone(exId, setIndex) {
       }
     }
 
-    // RPE nudge — show inline row if RPE not selected
-    if (!set.rpe) {
-      setTimeout(() => _showRpeNudge(exId, setIndex), 400);
-    } else {
-      _removeRpeNudge(exId, setIndex);
+    // RPE nudge — show inline row if RPE not selected.
+    // Drop set rows intentionally have no RPE field, so skip the nudge entirely.
+    if (!set.isDropSet) {
+      if (!set.rpe) {
+        setTimeout(() => _showRpeNudge(exId, setIndex), 400);
+      } else {
+        _removeRpeNudge(exId, setIndex);
+      }
     }
   } else {
     // Remove badge and RPE nudge when unchecking
@@ -22228,9 +22231,10 @@ function toggleSetDone(exId, setIndex) {
     // Recompute pending adjustment — the unchecked set may have been the representative one
     _updatePendingManualAdj(exId);
 
-    // Drop set undo cleanup: if this primary set had an accepted drop set appended,
-    // remove the drop set row and state so the recommendation can re-fire if appropriate.
-    if (activeSession.dropSetSuggestion?.[exId] === 'accepted') {
+    // Drop set undo cleanup: clear any drop set suggestion/card tied to this exercise.
+    const _dropSugg = activeSession.dropSetSuggestion?.[exId];
+    if (_dropSugg === 'accepted') {
+      // Remove the accepted (but now orphaned) drop set row from data + DOM
       const _dropIdx = (activeSession.sets[exId] || []).findIndex((s, i) => i > setIndex && s.isDropSet);
       if (_dropIdx !== -1) {
         activeSession.sets[exId].splice(_dropIdx, 1);
@@ -22239,6 +22243,14 @@ function toggleSetDone(exId, setIndex) {
       }
       delete activeSession.dropSetSuggestion[exId];
       _clearDropSetCard(exId);
+    } else if (_dropSugg === 'suggested') {
+      // Card is still showing — clear it so the user isn't looking at a suggestion
+      // for a set they just unchecked.
+      delete activeSession.dropSetSuggestion[exId];
+      _clearDropSetCard(exId);
+      // Re-reveal the rest timer (it was hidden when the card appeared)
+      const _rstRow = document.getElementById('rest-row-' + exId);
+      if (_rstRow) _rstRow.style.display = 'flex';
     }
 
     // In-session set intelligence: clear this set's override flag and
@@ -22300,9 +22312,11 @@ function toggleSetDone(exId, setIndex) {
   // Drop set rows never show the rest timer — there is no rest between a primary set and its drop.
   // Primary sets that triggered an accepted drop set also suppress the timer (skipDropSet reveals it).
   if (set.done && !set.isDropSet) {
-    // If a drop set card is about to fire (700ms), defer rest timer to skipDropSet/acceptDropSet
-    const dropSuggState = activeSession.dropSetSuggestion?.[exId];
-    const dropCardSuppressRest = dropSuggState === 'suggested';
+    // Preemptively suppress the rest timer if a drop set card is about to fire (700ms timer).
+    // _canSuggestDropSet is synchronous and safe to call here. If it returns true, the card
+    // will show in 700ms and hide the rest timer itself — showing it now would cause a flash.
+    // skipDropSet reveals it; acceptDropSet keeps it hidden (no rest during a drop set).
+    const dropCardSuppressRest = _canSuggestDropSet(exId, setIndex);
     if (!dropCardSuppressRest) {
       const partnerId = activeSession.supersets?.[exId];
       let showRest = true;
@@ -23219,9 +23233,13 @@ function _isDropSetEligibleExercise(exId) {
   const day = state.program.find(d => d.id === activeSession?.dayId);
   const ex = day?.exercises.find(e => e.id === exId);
   if (!ex) return false;
-  const exName = (activeSession?.swaps?.[exId]?.name || ex.name || '').toLowerCase();
+  // Swapped exercise: the swap object carries the exact library display name.
+  const swappedName = (activeSession?.swaps?.[exId]?.name || '').toLowerCase();
+  // Default program exercise: PROGRAM_TO_LIB_ID bridges program IDs ('flye') to
+  // library IDs ('cable-flye-mid') since they don't share the same ID space.
+  const libId = typeof PROGRAM_TO_LIB_ID !== 'undefined' ? PROGRAM_TO_LIB_ID[exId] : null;
   const libEntry = EXERCISE_LIBRARY.find(e =>
-    e.name.toLowerCase() === exName || e.id === exId
+    (swappedName && e.name.toLowerCase() === swappedName) || (libId && e.id === libId)
   );
   return libEntry?.tier === 'isolation';
 }
@@ -23472,6 +23490,10 @@ function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
 // Fires AFTER _maybeFireCoachingCue (600ms) so they don't collide.
 function _maybeFireDropSetRecommendation(exId, setIndex) {
   if (!activeSession) return;
+  // Guard against stale closure: the 700ms timeout may fire after the user
+  // undid the set. If the set is no longer done, abort immediately.
+  const set = activeSession.sets[exId]?.[setIndex];
+  if (!set?.done) return;
   // Don't fire if a coaching cue card or dynamic set suggestion is already showing
   if (document.getElementById('coaching-cue-' + exId)) return;
   if (document.getElementById('dynamic-set-suggestion-' + exId)) return;
@@ -23479,9 +23501,6 @@ function _maybeFireDropSetRecommendation(exId, setIndex) {
   if (_coachingCueFetching[exId]) return;
 
   if (!_canSuggestDropSet(exId, setIndex)) return;
-
-  const set = activeSession.sets[exId]?.[setIndex];
-  if (!set) return;
   const dropWeight = _calcDropWeight(set.weight);
   const dropReps = _calcDropReps(set.reps);
   if (!dropWeight) return;
