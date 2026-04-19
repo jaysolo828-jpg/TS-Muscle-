@@ -21489,7 +21489,7 @@ function renderSession() {
               value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
             <div style="position:relative;">
               <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
-                placeholder=""
+                placeholder="${set._suggestedReps || ''}"
                 value="${set.reps}" style="padding-right:22px;"
                 ${set.done ? 'disabled' : ''}
                 onchange="updateSet('${ex.id}',${si},'reps',this.value)"/>
@@ -23457,10 +23457,11 @@ function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
   sets.push({
     done: false,
     weight: String(dropWeight),
-    reps: String(dropReps),
+    reps: '',
     rpe: '',
     note: '',
-    isDropSet: true
+    isDropSet: true,
+    _suggestedReps: dropReps
   });
 
   // Crash-recovery checkpoint
@@ -23477,7 +23478,7 @@ function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
       ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'weight\',this.value)"/>' +
     '<div style="position:relative;">' +
       '<input type="number" inputmode="numeric" class="set-input" id="reps-input-' + exId + '-' + newSetIndex + '"' +
-        ' value="' + dropReps + '" style="padding-right:22px;"' +
+        ' value="" placeholder="' + dropReps + '" style="padding-right:22px;"' +
         ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'reps\',this.value)"/>' +
       '<div id="rep-indicator-' + exId + '-' + newSetIndex + '" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>' +
     '</div>' +
@@ -25559,7 +25560,7 @@ function showSessionWrapUp() {
     ).join('<span style="color:#333;margin:0 3px;">·</span>');
 
     const dropLine = dropSets.length
-      ? `<div style="font-size:12px;color:#C9A84C;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;margin-top:4px;">+ DROP ${dropSets[0].weight} lbs &times; ${dropSets[0].reps} reps</div>`
+      ? `<div style="font-size:12px;color:#C9A84C;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;margin-top:4px;">+ DROP ${dropSets[0].weight} lbs &times; ${dropSets[0].reps || dropSets[0]._suggestedReps || '?'} reps</div>`
       : '';
 
     rows += `
