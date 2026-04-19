@@ -3866,7 +3866,7 @@
           <div style="font-weight:bold; font-size:16px;">Build Strength</div>
           <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Lower reps. Heavier weights. Get stronger on your main lifts.</div>
         </button>
-        <button class="onboard-select-btn" onclick="selectGoalOnboard('both', this)">
+        <button class="onboard-select-btn selected" onclick="selectGoalOnboard('both', this)">
           <div style="font-weight:bold; font-size:16px;">Size &amp; Strength</div>
           <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Powerbuilding balance. Bigger and stronger at the same time.</div>
         </button>
@@ -3877,7 +3877,7 @@
       </div>
       <div id="ob-goal-echo" style="display:none; margin-bottom:16px; background:rgba(204,32,39,0.08); border-left:3px solid var(--red); border-radius:8px; padding:12px 14px; font-size:14px; color:var(--cream); line-height:1.6;"></div>
       <div id="ob-goal-rep-preview" style="display:none; margin-bottom:16px;"></div>
-      <input type="hidden" id="ob-goal" value=""/>
+      <input type="hidden" id="ob-goal" value="both"/>
       <div class="ob-button-row">
         <button onclick="onboardBack(1)" class="onboard-back-btn">← BACK</button>
         <button onclick="onboardNext(3)" class="onboard-next-btn" style="flex:1;">NEXT →</button>
@@ -4068,6 +4068,15 @@
             <div id="ob-day-badge-5" style="display:none; font-size:13px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
           </div>
           <div class="ob-days-desc" style="font-size:14px; color:#d0cbc6; margin-top:5px;">High volume. Serious gains. You know what you're doing.</div>
+        </button>
+        <button class="onboard-select-btn" id="ob-day-btn-6" onclick="selectTrainingDaysOnboard(6, this)"
+          data-short="The full program. Every session, full frequency, peak volume."
+          style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:bold; font-size:16px;">6 Days / Week</div>
+            <div id="ob-day-badge-6" style="display:none; font-size:13px; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; padding:2px 8px; border-radius:20px;"></div>
+          </div>
+          <div class="ob-days-desc" style="font-size:14px; color:#d0cbc6; margin-top:5px;">The full program. Every session, full frequency, peak volume.</div>
         </button>
       </div>
 
@@ -4288,9 +4297,6 @@
         If you have a health condition, injury, or any concerns, check with your doctor before starting.
       </div>
     </div>
-
-    <!-- STEP 9: unused placeholder -->
-    <div id="onboard-step-9" class="onboard-step" style="display:none;"></div>
 
   </div>
 </div>
@@ -7145,6 +7151,7 @@ const DAY_COLORS = {
   3: { hex: '#7c6fcd', bg: 'rgba(124,111,205,0.12)',  border: 'rgba(124,111,205,0.45)'  },
   4: { hex: '#4a8af5', bg: 'rgba(74,138,245,0.12)',   border: 'rgba(74,138,245,0.45)'   },
   5: { hex: '#e05c3a', bg: 'rgba(224,92,58,0.12)',    border: 'rgba(224,92,58,0.45)'    },
+  6: { hex: '#f97316', bg: 'rgba(249,115,22,0.12)',   border: 'rgba(249,115,22,0.45)'   },
 };
 
 const FORM_CUES = {
@@ -33988,6 +33995,7 @@ function introDone() {
   document.getElementById('onboard-dots').style.display = 'flex';
   document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
   document.getElementById('onboard-step-1').style.display = 'block';
+  document.querySelectorAll('.onboard-dot').forEach(d => d.classList.remove('active'));
   document.querySelector('.onboard-dot[data-step="1"]')?.classList.add('active');
   document.getElementById('onboarding-modal').scrollTop = 0;
 }
@@ -34032,7 +34040,11 @@ function handleImportOnboarding(e) {
       saveState();
       updateStreak();
       document.getElementById('onboarding-modal').style.display = 'none';
-      document.getElementById('onboard-dots').style.display = 'flex'; // reset for future redo
+      document.getElementById('onboard-dots').style.display = 'flex';
+      document.querySelectorAll('.onboard-dot').forEach(d => d.classList.remove('active'));
+      document.querySelector('.onboard-dot[data-step="1"]')?.classList.add('active');
+      document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
+      document.getElementById('onboard-step-1').style.display = 'block';
       renderHome();
       // Navigate to home screen
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -34156,7 +34168,7 @@ function onboardBack(step) {
 function selectOption(fieldId, value, btn) {
   haptic(HAPTIC.tap);
   document.getElementById(fieldId).value = value;
-  btn.closest('.onboard-step').querySelectorAll('.onboard-select-btn').forEach(b => b.classList.remove('selected'));
+  btn.parentElement.querySelectorAll('.onboard-select-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
 }
 
@@ -34190,6 +34202,43 @@ const SPLIT_DAY_TIPS = {
     3: 'The full Glute Priority program: two focused glute days plus one balanced upper session.',
     4: '4 days: run the 3-day cycle with one repeat. Extra glute frequency for maximum results.',
     5: '5 days: high frequency glute training. Recovery, nutrition, and sleep are non-negotiable.',
+  },
+  pp: {
+    2: 'One push day + one pull day. Good starting point, but legs get limited direct work.',
+    3: 'Two push days + one pull day, or the reverse. One pattern gets extra frequency each week.',
+    4: 'The full program: two push days and two pull days. Optimal frequency for this split.',
+    5: 'Full program + one extra day. Use it for lagging muscles or active recovery.',
+  },
+  full3: {
+    2: 'Full Body A + B. Every muscle trained twice per week. Efficient and effective.',
+    3: 'Full Body A, B, and C. The complete program. Three different exercise selections per session.',
+    4: 'Full Body x4. Very high frequency. Manage volume carefully to stay recovered.',
+    5: 'Extremely high frequency. Sleep and nutrition become the limiting factor.',
+  },
+  full2: {
+    2: 'Full Body A + B. The complete 2-session program. Every muscle gets hit twice per week.',
+    3: 'Full Body x3. Higher frequency than the base plan. Recovery becomes key.',
+    4: 'Full Body x4. Very high frequency. Progress stalls fast without enough sleep.',
+    5: 'Not recommended for most people. Full body at this frequency leads to burnout.',
+  },
+  antagonist: {
+    2: 'One paired session + one lower day. Coverage is limited but efficient.',
+    3: 'All three session types once each. A solid starting point for this split.',
+    4: 'Full antagonist cycle + one repeat. One muscle group gets double frequency.',
+    5: 'Close to the full cycle. One session per week is still missed.',
+    6: 'The full program. All three pairings trained twice per week. Optimal for Antagonist.',
+  },
+  lul: {
+    2: 'One lower + one upper day. Less leg frequency than the full plan.',
+    3: 'The full program: Lower A, Upper, Lower B. Two lower sessions and one upper per week.',
+    4: 'Full program + one repeat. Extra session for lagging areas.',
+    5: 'Very high frequency. Legs get trained three times a week. Recovery becomes critical.',
+  },
+  ts: {
+    2: 'Two sessions per week. Enough for consistency, but 3 days is what this split is built for.',
+    3: 'The full T&S program. Three sessions per week, one per day pattern. Optimal.',
+    4: 'Full program + one repeat. Good if you want extra volume on a specific day.',
+    5: 'High frequency for a full-body program. Prioritize recovery and sleep.',
   },
 };
 
@@ -34449,6 +34498,9 @@ function selectObRecDays(days, btn) {
     const dc = DAY_COLORS[days];
     step4Btn.classList.add('selected');
     if (dc) { step4Btn.style.borderColor = dc.border; step4Btn.style.background = dc.bg; }
+    const tipText = getDayTip(days);
+    const descDiv = step4Btn.querySelector('.ob-days-desc');
+    if (descDiv && tipText) { descDiv.textContent = tipText; descDiv.style.color = dc ? dc.hex : 'var(--cream)'; }
   }
   renderSplitRecommendation();
 }
@@ -34902,12 +34954,21 @@ function updateDayButtonsForSplit(type) {
       4: 'Full program + one repeat. Extra session for lagging areas.',
       5: 'Very high frequency. Legs get trained three times a week. Recovery becomes critical.',
     },
+    ts: {
+      2: 'Two sessions per week. Covers the core movements but 3 days is what this split is built for.',
+      3: 'The full T&S program. Three sessions, one per day pattern. The optimal choice.',
+      4: 'Full program + one repeat. Good for adding extra volume on a priority movement.',
+      5: 'High frequency for full-body training. Prioritize sleep and recovery.',
+    },
   };
   const desc = descriptions[type] || descriptions.ul;
-  [2, 3, 4, 5].forEach(d => {
+  const splits6Day = new Set(['antagonist', 'bro']);
+  const btn6 = document.getElementById('ob-day-btn-6');
+  if (btn6) btn6.style.display = splits6Day.has(type) ? '' : 'none';
+  [2, 3, 4, 5, 6].forEach(d => {
     const btn = document.getElementById('ob-day-btn-' + d);
     if (!btn) return;
-    const subDiv = btn.querySelector('div[style*="var(--gray)"]');
+    const subDiv = btn.querySelector('.ob-days-desc');
     if (subDiv && desc[d]) subDiv.textContent = desc[d];
   });
 }
@@ -34968,7 +35029,7 @@ function renderDayRecommendations() {
   rec.innerHTML = cfg.recText;
 
   // Reset all badges
-  [2,3,4,5].forEach(d => {
+  [2,3,4,5,6].forEach(d => {
     const badge = document.getElementById('ob-day-badge-' + d);
     if (!badge) return;
     badge.style.display = 'none';
@@ -35189,15 +35250,17 @@ function buildOnboardingSummary() {
   const splitLabels = { ul: 'Upper / Lower', ppl: 'Push / Pull / Legs', fullbody: 'Full Body', bro: 'Bro Split', glute: 'Glute Priority', pp: 'Push / Pull', full3: 'Full Body 3x', full2: 'Full Body 2x', antagonist: 'Antagonist', lul: 'Lower / Upper / Lower', ts: 'T&S Split' };
   const expLabels = { beginner: 'Just Starting Out', intermediate: 'Been at It a While', advanced: 'Experienced Lifter' };
 
-  state.profile = { name, goal, experience: exp, bodyweight: parseFloat(document.getElementById('ob-bodyweight').value) || 0 };
+  const _obAgeSummary = parseInt(document.getElementById('ob-age')?.value) || null;
+  const _obSexSummary = document.getElementById('ob-sex')?.value || null;
+  state.profile = { name, goal, experience: exp, bodyweight: parseFloat(document.getElementById('ob-bodyweight').value) || 0,
+    age: _obAgeSummary, sex: _obSexSummary };
   state.expScalingActive = true;
   state.trainingDaysPerWeek = trainingDays;
   state.splitType = splitType;
   state.testWeekComplete = false;
   state.testWeekStartDate = new Date().toISOString();
-  // Save optional "why do you train" — feeds into Mindset self-compassion modal
-  const whyTrain = document.getElementById('ob-why-train')?.value?.trim();
-  if (whyTrain) state.trainingValues = whyTrain;
+  // Always write "why do you train" (empty string clears old value on redo)
+  state.trainingValues = document.getElementById('ob-why-train')?.value?.trim() || '';
   // Build the correct program now so the "REVIEW & CUSTOMIZE" modal shows the right exercises
   state.program = JSON.parse(JSON.stringify(SPLIT_PROGRAMS[splitType] || DEFAULT_PROGRAM));
   applyObExerciseSelections();
@@ -35260,20 +35323,15 @@ function completeOnboarding() {
   });
   state.rotationMigrated = true;
   state.onboardingComplete = true;
-  // Save "why do you train" if not already saved by buildOnboardingSummary
-  const _obWhyTrain = document.getElementById('ob-why-train')?.value?.trim();
-  if (_obWhyTrain && !state.trainingValues) state.trainingValues = _obWhyTrain;
-  // Save optional age + sex collected in onboarding step 1
+  // Ensure age + sex are on state.profile (already written by buildOnboardingSummary,
+  // but guard in case completeOnboarding is called without it on a rare redo path)
   const _obAge = parseInt(document.getElementById('ob-age')?.value);
   const _obSex = document.getElementById('ob-sex')?.value;
-  if (!isNaN(_obAge) && _obAge >= 13 && _obAge <= 100) {
-    if (!state.profile) state.profile = {};
-    state.profile.age = _obAge;
-  }
-  if (_obSex === 'male' || _obSex === 'female') {
-    if (!state.profile) state.profile = {};
-    state.profile.sex = _obSex;
-  }
+  if (!state.profile) state.profile = {};
+  if (!isNaN(_obAge) && _obAge >= 13 && _obAge <= 100) state.profile.age = _obAge;
+  if (_obSex === 'male' || _obSex === 'female') state.profile.sex = _obSex;
+  // Always write trainingValues so redo can clear an old value if the user blanked the field
+  state.trainingValues = document.getElementById('ob-why-train')?.value?.trim() || state.trainingValues || '';
 
   // Anchor the week clock to the Monday of the current calendar week so
   // week-band tightening always counts from a clean boundary. A user who
@@ -35421,6 +35479,7 @@ function resetOnboarding() {
   state.profile = null;
   state.startingWeights = {};
   state.testWeekComplete = false;
+  state.gymEquipment = (window._onboardBackup && window._onboardBackup.gymEquipment) ? window._onboardBackup.gymEquipment : 'full';
   // Clear pause state on full setup redo
   state.programPaused = false;
   state.pauseUsedThisCycle = false;
@@ -35463,10 +35522,16 @@ function resetOnboarding() {
         selectSplitOnboard(bk.splitType, splitBtns[splitIdx]);
       }
     }
+    if (bk.profile.age) {
+      const ageEl = document.getElementById('ob-age');
+      if (ageEl) ageEl.value = bk.profile.age;
+    }
+    if (bk.profile.sex) { selectObSex(bk.profile.sex); }
+    if (bk.gymEquipment) { selectObGym(bk.gymEquipment); }
     if (bk.trainingDaysPerWeek) {
       const days = bk.trainingDaysPerWeek;
       document.getElementById('ob-training-days').value = days;
-      document.querySelectorAll('#onboard-step-6 .onboard-select-btn').forEach(b => b.classList.remove('selected'));
+      document.querySelectorAll('#onboard-step-4 .onboard-select-btn').forEach(b => b.classList.remove('selected'));
       const dayBtn = document.getElementById('ob-day-btn-' + days);
       if (dayBtn) dayBtn.classList.add('selected');
     }
