@@ -21489,13 +21489,13 @@ function renderSession() {
               value="${set.weight}" ${set.done ? 'disabled' : ''} onchange="updateSet('${ex.id}',${si},'weight',this.value)"/>
             <div style="position:relative;">
               <input type="number" inputmode="numeric" class="set-input" id="reps-input-${ex.id}-${si}"
-                placeholder=""
+                placeholder="${set._suggestedReps || ''}"
                 value="${set.reps}" style="padding-right:22px;"
                 ${set.done ? 'disabled' : ''}
                 onchange="updateSet('${ex.id}',${si},'reps',this.value)"/>
               <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
             </div>
-            <div style="width:44px;"></div>
+            <div style="display:flex;align-items:center;justify-content:center;">${!set.done ? '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:1px;">GO</span>' : ''}</div>
             <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleSetDone('${ex.id}',${si})"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
           </div>
         `;
@@ -22176,7 +22176,13 @@ function toggleSetDone(exId, setIndex) {
   if (row) {
     row.classList.toggle('done', set.done);
     // Drop set rows have an inline gold box-shadow that signals "pending" — clear it on completion.
-    if (set.isDropSet) row.style.boxShadow = set.done ? '' : 'inset 3px 0 0 #C9A84C';
+    if (set.isDropSet) {
+      row.style.boxShadow = set.done ? '' : 'inset 3px 0 0 #C9A84C';
+      if (set.done) {
+        const _goLabel = document.getElementById('go-label-' + exId + '-' + setIndex);
+        if (_goLabel) _goLabel.remove();
+      }
+    }
     row.querySelectorAll('input, select').forEach(el => el.disabled = set.done);
   }
 
@@ -23296,14 +23302,14 @@ function _getDropSetTriggerReason(exId, setIndex) {
 }
 
 // Returns the localized template explanation string for the card body.
-function _getDropSetTemplateText(triggerReason, exName, dropWeight) {
+function _getDropSetTemplateText(triggerReason, exName) {
   if (triggerReason === 'rep_range_top') {
-    return 'You hit your rep target on ' + exName + ' with energy left — a drop to ' + dropWeight + ' lbs will push the muscle further than a straight set can reach.';
+    return 'You hit your target on ' + exName + ' with gas left. That extra stimulus is where growth happens.';
   }
   if (triggerReason === 'plateau') {
-    return 'Your ' + exName + ' weight has been steady. A drop set at ' + dropWeight + ' lbs adds a different stimulus that can help restart progress.';
+    return 'Your ' + exName + ' has been stuck. A different stimulus is what breaks a stall.';
   }
-  return 'A drop to ' + dropWeight + ' lbs will extend the stimulus beyond what a straight set delivers.';
+  return 'Extending the stimulus beyond a straight set drives more growth.';
 }
 
 // Returns true if all gates pass and a drop set recommendation should fire.
@@ -23393,21 +23399,30 @@ function _showDropSetCard(exId, setIndex, triggerReason, dropWeight, dropReps) {
   const day = state.program.find(d => d.id === activeSession.dayId);
   const ex = day?.exercises.find(e => e.id === exId);
   const exName = activeSession?.swaps?.[exId]?.name || ex?.name || exId;
-  const bodyText = _getDropSetTemplateText(triggerReason, exName, dropWeight);
+  const bodyText = _getDropSetTemplateText(triggerReason, exName);
 
   const card = document.createElement('div');
   card.id = 'drop-set-card-' + exId;
-  card.style.cssText = 'margin:6px 0;padding:10px 12px;background:var(--dark2);border:none;border-left:3px solid #C9A84C;border-radius:0 8px 8px 0;';
+  card.style.cssText = 'margin:8px 0;padding:12px 14px 12px;background:var(--dark2);border-left:3px solid #C9A84C;border-radius:0 8px 8px 0;';
 
   card.innerHTML =
-    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">' +
-      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);font-weight:700;letter-spacing:0.3px;line-height:1.2;">DROP SET?</div>' +
-      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:#C9A84C;font-weight:600;letter-spacing:0.5px;white-space:nowrap;">&#10022; Live insight</div>' +
+    // Badge — top right only, matches coaching cue pattern
+    '<div style="display:flex;justify-content:flex-end;margin-bottom:8px;">' +
+      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#C9A84C;font-weight:600;letter-spacing:0.5px;">&#10022; Live insight</div>' +
     '</div>' +
-    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:0.2px;line-height:1.4;margin-bottom:10px;">' + bodyText + '</div>' +
+    // Hero: weight + reps
+    '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:2px;">' +
+      '<span style="font-family:\'Bebas Neue\',cursive;font-size:36px;color:var(--cream);line-height:1;">' + dropWeight + '</span>' +
+      '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:17px;color:var(--cream);font-weight:600;letter-spacing:0.3px;">lbs &times; ' + dropReps + ' reps</span>' +
+    '</div>' +
+    // Command line — drop set label + action in one line
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:1px;margin-bottom:8px;">DROP SET &mdash; REDUCE WEIGHT, NO REST</div>' +
+    // Reason
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.2px;line-height:1.4;margin-bottom:12px;">' + bodyText + '</div>' +
+    // Actions
     '<div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">' +
       '<button onclick="skipDropSet(\'' + exId + '\')" style="background:none;border:none;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.5px;cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;">SKIP</button>' +
-      '<button onclick="acceptDropSet(\'' + exId + '\',' + setIndex + ',' + dropWeight + ',' + dropReps + ')" style="background:transparent;border:1px solid #C9A84C;color:#C9A84C;padding:5px 12px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DO IT &mdash; ' + dropWeight + ' lbs &times; ' + dropReps + '</button>' +
+      '<button onclick="acceptDropSet(\'' + exId + '\',' + setIndex + ',' + dropWeight + ',' + dropReps + ')" style="background:transparent;border:1px solid #C9A84C;color:#C9A84C;padding:6px 16px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:700;letter-spacing:0.8px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DO IT</button>' +
     '</div>';
 
   lastSetRow.insertAdjacentElement('afterend', card);
@@ -23447,10 +23462,11 @@ function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
   sets.push({
     done: false,
     weight: String(dropWeight),
-    reps: String(dropReps),
+    reps: '',
     rpe: '',
     note: '',
-    isDropSet: true
+    isDropSet: true,
+    _suggestedReps: dropReps
   });
 
   // Crash-recovery checkpoint
@@ -23467,11 +23483,13 @@ function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
       ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'weight\',this.value)"/>' +
     '<div style="position:relative;">' +
       '<input type="number" inputmode="numeric" class="set-input" id="reps-input-' + exId + '-' + newSetIndex + '"' +
-        ' value="' + dropReps + '" style="padding-right:22px;"' +
+        ' value="" placeholder="' + dropReps + '" style="padding-right:22px;"' +
         ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'reps\',this.value)"/>' +
       '<div id="rep-indicator-' + exId + '-' + newSetIndex + '" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>' +
     '</div>' +
-    '<div style="width:44px;"></div>' +
+    '<div style="display:flex;align-items:center;justify-content:center;">' +
+      '<span id="go-label-' + exId + '-' + newSetIndex + '" style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:1px;">GO</span>' +
+    '</div>' +
     '<button class="set-done-btn" onclick="toggleSetDone(\'' + exId + '\',' + newSetIndex + ')">' +
       '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
     '</button>';
@@ -23484,6 +23502,9 @@ function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
     const prevRow = document.getElementById('set-row-' + exId + '-' + (newSetIndex - 1));
     if (prevRow) prevRow.insertAdjacentElement('afterend', setRow);
   }
+
+  // Scroll the new row into view so the user sees it immediately
+  setTimeout(() => setRow.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
 
   updateSessionProgress();
 }
@@ -25544,7 +25565,7 @@ function showSessionWrapUp() {
     ).join('<span style="color:#333;margin:0 3px;">·</span>');
 
     const dropLine = dropSets.length
-      ? `<div style="font-size:12px;color:#C9A84C;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;margin-top:4px;">+ DROP ${dropSets[0].weight} lbs &times; ${dropSets[0].reps} reps</div>`
+      ? `<div style="font-size:12px;color:#C9A84C;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;margin-top:4px;">+ DROP ${dropSets[0].weight} lbs &times; ${dropSets[0].reps || dropSets[0]._suggestedReps || '?'} reps</div>`
       : '';
 
     rows += `
@@ -29092,7 +29113,7 @@ function renderHistoryDetail(entry) {
       <div class="history-sets">
         ${doneSets.map(s => {
           if (s.isDropSet) {
-            return `<div class="history-set-pill"><span style="color:#C9A84C;font-size:11px;font-weight:700;margin-right:4px;letter-spacing:0.5px;">DROP</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`;
+            return `<div class="history-set-pill"><span style="color:#C9A84C;font-size:13px;font-weight:700;margin-right:4px;letter-spacing:0.5px;">DROP</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`;
           }
           _primarySetNum++;
           return `<div class="history-set-pill"><span style="color:var(--gray);font-size:13px;margin-right:4px;">S${_primarySetNum}</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`;
@@ -29110,7 +29131,7 @@ function renderHistoryDetail(entry) {
       html += `<div class="history-ex">
         <div class="history-ex-name" style="display:flex;align-items:center;gap:6px;">${escapeHtml(bonus.name)}<span style="font-size:12px;font-weight:700;color:var(--gray);background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;">BONUS</span></div>
         <div class="history-sets">
-          ${(() => { let _n = 0; return doneSets.map(s => { if (s.isDropSet) { return `<div class="history-set-pill"><span style="color:#C9A84C;font-size:11px;font-weight:700;margin-right:4px;letter-spacing:0.5px;">DROP</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`; } _n++; return `<div class="history-set-pill"><span style="color:var(--gray);font-size:13px;margin-right:4px;">S${_n}</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`; }).join(''); })()}
+          ${(() => { let _n = 0; return doneSets.map(s => { if (s.isDropSet) { return `<div class="history-set-pill"><span style="color:#C9A84C;font-size:13px;font-weight:700;margin-right:4px;letter-spacing:0.5px;">DROP</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`; } _n++; return `<div class="history-set-pill"><span style="color:var(--gray);font-size:13px;margin-right:4px;">S${_n}</span>${s.weight ? s.weight + 'lb' : '--'} \xd7 ${s.reps || '--'} reps${s.rpe ? ' @ RPE ' + s.rpe : ''}</div>`; }).join(''); })()}
         </div>
       </div>`;
     });
