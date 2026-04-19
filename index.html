@@ -15896,7 +15896,7 @@ function openProfileModal() {
       <!-- Display Name -->
       <div style="margin-bottom:18px;">
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Display Name</div>
-        <input type="text" id="display-name-input" placeholder="Your name or handle" maxlength="24" value="${state.displayName || state.profile?.name || ''}"
+        <input type="text" id="display-name-input" placeholder="Your name or handle" maxlength="24" value="${state.displayName || state.profile?.name || state.supabaseDisplayName || ''}"
           style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--cream);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:16px;outline:none;box-sizing:border-box;-webkit-appearance:none;"
           oninput="setDisplayName(this.value)"
         />
@@ -32763,13 +32763,33 @@ window.addEventListener('popstate', (e) => {
   // 1. Close any dynamic modals first (cycle complete, goal picker, sheets, etc.)
   const dynamicModals = [
     'cycle-complete-modal', 'cycle-goal-picker',
-    'challenge-log-sheet', 'challenge-create-sheet', 'friend-activity-sheet',
+    'friend-activity-sheet', 'chain-accept-sheet', 'cyh-accept-sheet',
     'notif-prefs-sheet', 'carrying-sheet', 'discard-confirm-modal',
     'delete-account-sheet', 'color-picker-sheet', 'install-welcome',
+    'challenge-intro-sheet', 'challenge-picker-sheet',
+    'change-email-sheet', 'change-password-sheet', 'username-setup-sheet', 'photo-upload-sheet',
+    'cyh-log-sheet', 'aux-submit-sheet',
+    'travel-setup-sheet', 'travel-active-sheet', '_tvl-sub-picker-sheet',
+    'notif-prompt-sheet', 'clear-reactions-confirm-sheet', 'remove-reaction-confirm-sheet',
+    'block-user-confirm-sheet', 'remove-friend-confirm-sheet',
   ];
   for (const id of dynamicModals) {
     const el = document.getElementById(id);
     if (el) { el.remove(); history.pushState({ page: 'home' }, ''); return; }
+  }
+  // Challenge create sheet: use the proper close function so accept-flow
+  // cancel navigates back to the detail sheet instead of stranding the user.
+  if (document.getElementById('challenge-create-sheet')) {
+    _closeChallengeCreateSheet(); history.pushState({ page: 'home' }, ''); return;
+  }
+  // Challenge log sheet: back goes to detail sheet (not home)
+  const challengeLogSheet = document.getElementById('challenge-log-sheet');
+  if (challengeLogSheet) {
+    const cid = challengeLogSheet.dataset.challengeId;
+    challengeLogSheet.remove();
+    if (cid) _openChallengeDetailSheet(cid);
+    history.pushState({ page: 'home' }, '');
+    return;
   }
   // Close social modal if open
   const socialOverlay = document.getElementById('social-overlay');
@@ -32920,7 +32940,9 @@ const DAY_OPTIONS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturda
 function openEditDay(dayId) {
   editingDayId = dayId;
   const grid = document.getElementById('day-options-grid');
-  const currentDay = state.program.find(d => d.id === dayId).day;
+  const _editDayObj = state.program.find(d => d.id === dayId);
+  if (!_editDayObj || !grid) return;
+  const currentDay = _editDayObj.day;
   grid.innerHTML = DAY_OPTIONS.map(d => `
     <button onclick="selectDayOption('${d}')" style="
       background:${d === currentDay ? 'var(--red)' : 'var(--dark3)'};
