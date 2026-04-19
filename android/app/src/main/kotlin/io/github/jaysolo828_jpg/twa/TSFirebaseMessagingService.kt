@@ -55,6 +55,7 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
         // on launch and opens _openFriendActivity for that signal.
         val toUserId = message.data["to_user_id"]
         val signalId = message.data["signal_id"]
+        val notificationId = System.currentTimeMillis().toInt()
         val tapUri = Uri.parse("https://app.therapyandsneakers.org/")
             .buildUpon()
             .apply {
@@ -65,7 +66,7 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
         val intent = Intent(Intent.ACTION_VIEW, tapUri)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
+            this, notificationId, intent,
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -100,7 +101,7 @@ class TSFirebaseMessagingService : FirebaseMessagingService() {
             .setContentIntent(pendingIntent)
             .build()
 
-        manager.notify(System.currentTimeMillis().toInt(), notification)
+        manager.notify(notificationId, notification)
     }
 
     override fun onNewToken(token: String) {

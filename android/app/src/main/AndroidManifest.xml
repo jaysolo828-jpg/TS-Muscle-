@@ -83,7 +83,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="com.google.androidbrowserhelper.trusted.FocusActivity" />
+        <activity android:name="com.google.androidbrowserhelper.trusted.FocusActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity" />
 
         <!-- Small bridge activity invoked from the web page via a custom-scheme
