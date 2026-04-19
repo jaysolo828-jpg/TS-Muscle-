@@ -23296,14 +23296,14 @@ function _getDropSetTriggerReason(exId, setIndex) {
 }
 
 // Returns the localized template explanation string for the card body.
-function _getDropSetTemplateText(triggerReason, exName, dropWeight) {
+function _getDropSetTemplateText(triggerReason, exName) {
   if (triggerReason === 'rep_range_top') {
-    return 'You hit your target on ' + exName + ' with gas left in the tank. Strip to ' + dropWeight + ' lbs right now \u2014 no rest \u2014 and keep going. That extra stimulus is what drives growth past a plateau.';
+    return 'You hit your target on ' + exName + ' with gas left. That extra stimulus is where growth happens.';
   }
   if (triggerReason === 'plateau') {
-    return 'Your ' + exName + ' has been stuck at the same weight. Strip to ' + dropWeight + ' lbs right now \u2014 no rest \u2014 and push out more reps. A different stimulus is what breaks a stall.';
+    return 'Your ' + exName + ' has been stuck. A different stimulus is what breaks a stall.';
   }
-  return 'Strip to ' + dropWeight + ' lbs right now \u2014 no rest \u2014 and keep going to extend the stimulus.';
+  return 'Extending the stimulus beyond a straight set drives more growth.';
 }
 
 // Returns true if all gates pass and a drop set recommendation should fire.
@@ -23393,21 +23393,31 @@ function _showDropSetCard(exId, setIndex, triggerReason, dropWeight, dropReps) {
   const day = state.program.find(d => d.id === activeSession.dayId);
   const ex = day?.exercises.find(e => e.id === exId);
   const exName = activeSession?.swaps?.[exId]?.name || ex?.name || exId;
-  const bodyText = _getDropSetTemplateText(triggerReason, exName, dropWeight);
+  const bodyText = _getDropSetTemplateText(triggerReason, exName);
 
   const card = document.createElement('div');
   card.id = 'drop-set-card-' + exId;
-  card.style.cssText = 'margin:6px 0;padding:10px 12px;background:var(--dark2);border:none;border-left:3px solid #C9A84C;border-radius:0 8px 8px 0;';
+  card.style.cssText = 'margin:8px 0;padding:12px 14px 12px;background:var(--dark2);border-left:3px solid #C9A84C;border-radius:0 8px 8px 0;';
 
   card.innerHTML =
-    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">' +
-      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--cream);font-weight:700;letter-spacing:0.3px;line-height:1.2;">REDUCE WEIGHT &amp; KEEP GOING?</div>' +
-      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:#C9A84C;font-weight:600;letter-spacing:0.5px;white-space:nowrap;">&#10022; Live insight</div>' +
+    // Top row: label + badge
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:1.2px;">DROP SET</div>' +
+      '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;color:#C9A84C;font-weight:600;letter-spacing:0.5px;white-space:nowrap;">&#10022; Live insight</div>' +
     '</div>' +
-    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray-light);letter-spacing:0.2px;line-height:1.4;margin-bottom:10px;">' + bodyText + '</div>' +
+    // Hero: weight + reps
+    '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:2px;">' +
+      '<span style="font-family:\'Bebas Neue\',cursive;font-size:36px;color:var(--cream);line-height:1;">' + dropWeight + '</span>' +
+      '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:17px;color:var(--cream);font-weight:600;letter-spacing:0.3px;">lbs &times; ' + dropReps + ' reps</span>' +
+    '</div>' +
+    // Command line
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:1px;margin-bottom:8px;">STRIP WEIGHT NOW &mdash; NO REST</div>' +
+    // Reason
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;color:var(--gray);letter-spacing:0.2px;line-height:1.4;margin-bottom:12px;">' + bodyText + '</div>' +
+    // Actions
     '<div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">' +
       '<button onclick="skipDropSet(\'' + exId + '\')" style="background:none;border:none;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.5px;cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;">SKIP</button>' +
-      '<button onclick="acceptDropSet(\'' + exId + '\',' + setIndex + ',' + dropWeight + ',' + dropReps + ')" style="background:transparent;border:1px solid #C9A84C;color:#C9A84C;padding:5px 12px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DO IT &mdash; ' + dropWeight + ' lbs &times; ' + dropReps + '</button>' +
+      '<button onclick="acceptDropSet(\'' + exId + '\',' + setIndex + ',' + dropWeight + ',' + dropReps + ')" style="background:transparent;border:1px solid #C9A84C;color:#C9A84C;padding:6px 16px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:700;letter-spacing:0.8px;cursor:pointer;-webkit-tap-highlight-color:transparent;">DO IT</button>' +
     '</div>';
 
   lastSetRow.insertAdjacentElement('afterend', card);
