@@ -21495,7 +21495,7 @@ function renderSession() {
                 onchange="updateSet('${ex.id}',${si},'reps',this.value)"/>
               <div id="rep-indicator-${ex.id}-${si}" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>
             </div>
-            <div style="width:44px;"></div>
+            <div style="width:44px;display:flex;align-items:center;justify-content:center;">${!set.done ? '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:1px;">GO</span>' : ''}</div>
             <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleSetDone('${ex.id}',${si})"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
           </div>
         `;
@@ -23481,7 +23481,9 @@ function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
         ' onchange="updateSet(\'' + exId + '\',' + newSetIndex + ',\'reps\',this.value)"/>' +
       '<div id="rep-indicator-' + exId + '-' + newSetIndex + '" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);font-size:14px;pointer-events:none;"></div>' +
     '</div>' +
-    '<div style="width:44px;"></div>' +
+    '<div style="width:44px;display:flex;align-items:center;justify-content:center;">' +
+      '<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;color:#C9A84C;letter-spacing:1px;">GO</span>' +
+    '</div>' +
     '<button class="set-done-btn" onclick="toggleSetDone(\'' + exId + '\',' + newSetIndex + ')">' +
       '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
     '</button>';
@@ -23494,6 +23496,9 @@ function acceptDropSet(exId, primarySetIndex, dropWeight, dropReps) {
     const prevRow = document.getElementById('set-row-' + exId + '-' + (newSetIndex - 1));
     if (prevRow) prevRow.insertAdjacentElement('afterend', setRow);
   }
+
+  // Scroll the new row into view so the user sees it immediately
+  setTimeout(() => setRow.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
 
   updateSessionProgress();
 }
