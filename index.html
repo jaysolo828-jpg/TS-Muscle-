@@ -22239,26 +22239,29 @@ function toggleSetDone(exId, setIndex) {
     // Recompute pending adjustment — the unchecked set may have been the representative one
     _updatePendingManualAdj(exId);
 
-    // Drop set undo cleanup: clear any drop set suggestion/card tied to this exercise.
-    const _dropSugg = activeSession.dropSetSuggestion?.[exId];
-    if (_dropSugg === 'accepted') {
-      // Remove the accepted (but now orphaned) drop set row from data + DOM
-      const _dropIdx = (activeSession.sets[exId] || []).findIndex((s, i) => i > setIndex && s.isDropSet);
-      if (_dropIdx !== -1) {
-        activeSession.sets[exId].splice(_dropIdx, 1);
-        const _dropRow = document.getElementById('set-row-' + exId + '-' + _dropIdx);
-        if (_dropRow) _dropRow.remove();
+    // Drop set undo cleanup: only runs when a PRIMARY set is unchecked, not the drop set
+    // row itself. Unchecking the drop set row must not reset the one-per-session gate.
+    if (!set.isDropSet) {
+      const _dropSugg = activeSession.dropSetSuggestion?.[exId];
+      if (_dropSugg === 'accepted') {
+        // Remove the accepted (but now orphaned) drop set row from data + DOM
+        const _dropIdx = (activeSession.sets[exId] || []).findIndex((s, i) => i > setIndex && s.isDropSet);
+        if (_dropIdx !== -1) {
+          activeSession.sets[exId].splice(_dropIdx, 1);
+          const _dropRow = document.getElementById('set-row-' + exId + '-' + _dropIdx);
+          if (_dropRow) _dropRow.remove();
+        }
+        delete activeSession.dropSetSuggestion[exId];
+        _clearDropSetCard(exId);
+      } else if (_dropSugg === 'suggested') {
+        // Card is still showing — clear it so the user isn't looking at a suggestion
+        // for a set they just unchecked.
+        delete activeSession.dropSetSuggestion[exId];
+        _clearDropSetCard(exId);
+        // Re-reveal the rest timer (it was hidden when the card appeared)
+        const _rstRow = document.getElementById('rest-row-' + exId);
+        if (_rstRow) _rstRow.style.display = 'flex';
       }
-      delete activeSession.dropSetSuggestion[exId];
-      _clearDropSetCard(exId);
-    } else if (_dropSugg === 'suggested') {
-      // Card is still showing — clear it so the user isn't looking at a suggestion
-      // for a set they just unchecked.
-      delete activeSession.dropSetSuggestion[exId];
-      _clearDropSetCard(exId);
-      // Re-reveal the rest timer (it was hidden when the card appeared)
-      const _rstRow = document.getElementById('rest-row-' + exId);
-      if (_rstRow) _rstRow.style.display = 'flex';
     }
 
     // In-session set intelligence: clear this set's override flag and
