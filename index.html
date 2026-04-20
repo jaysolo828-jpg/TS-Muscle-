@@ -26092,13 +26092,18 @@ function finalizeEndSession(save) {
     if (_sessionBased || _calendarBased) {
       if (_sessionBased) state.weekRolledOverAt = Date.now();
       state.weekStartTimestamp = _currentWeekMonday;
-      // Don't count deload/rest weeks toward the "weeks since deload" counter
-      if (!state.isDeloadWeek && !state.isRestWeek) {
-        state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
-      }
       const prevWeek = state.weekCount || 1;
       state.weekRolledOverPrevWeek = prevWeek;
       state.weekCount = Math.min((state.weekCount || 1) + 1, 8);
+      // Don't count deload/rest weeks toward the "weeks since deload" counter,
+      // and skip the increment entirely when completing week 8 (reset happens below).
+      if (!state.isDeloadWeek && !state.isRestWeek && prevWeek !== 8) {
+        state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
+      }
+      // Clear a stale deload postponement once the user has advanced past it.
+      if (state.deloadPostponedToWeek && state.weekCount > state.deloadPostponedToWeek) {
+        delete state.deloadPostponedToWeek;
+      }
       // Week 1 → 2: inject priority boost exercises now that test week is done
       if (prevWeek === 1 && state.priorityMuscles) {
         applyPriorityVolumeBoost(state.priorityMuscles, state.program);
@@ -26119,7 +26124,7 @@ function finalizeEndSession(save) {
         state.weekCount = 1;
         // ── Snapshot this cycle's stats before incrementing cycleCount ──
         const _completingCycle = state.cycleCount || 1;
-        const _cycleEntries = (state.history || []).filter(e => e.cycleNum === _completingCycle);
+        const _cycleEntries = (state.history || []).filter(e => e.cycleNum === _completingCycle || (!e.cycleNum && _completingCycle === 1));
         const _cycleSessions = _cycleEntries.length;
         const _cyclePRs = _cycleEntries.reduce((n, e) => n + (e.prs?.length || 0), 0);
         const _targetSessions = (state.trainingDaysPerWeek || 4) * 8;
@@ -27706,16 +27711,21 @@ function deleteHistoryEntry(entryId) {
   // Roll back counters
   state.totalSessions = Math.max(0, state.totalSessions - 1);
 
-  // Step back week if this session caused a week advance
-  // Week advances every N sessions (N = trainingDaysPerWeek) — if total was a multiple of N, this session triggered it
-  const sessionNumAtDelete = state.totalSessions + 1; // what session number this was
-  const _weekLenDelete = state.trainingDaysPerWeek || state.program?.length || 4;
-  if (sessionNumAtDelete % _weekLenDelete === 0 && state.weekCount > 1) {
-    state.weekCount = Math.max(1, state.weekCount - 1);
-  }
-
-  // Remove the entry
+  // Remove the entry first so the history-based week recount is accurate
   state.history.splice(idx, 1);
+
+  // Recompute weekCount from remaining cycle sessions — more reliable than
+  // the old modulo check, which broke when trainingDaysPerWeek changed mid-cycle
+  {
+    const _daysPerWeek = state.trainingDaysPerWeek || state.program?.length || 4;
+    const _cycle = state.cycleCount || 1;
+    const _cycleSessions = state.history.filter(e => e.cycleNum === _cycle || (!e.cycleNum && _cycle === 1)).length;
+    const _newWeekCount = Math.max(1, Math.min(8, Math.floor(_cycleSessions / _daysPerWeek) + 1));
+    if (state.weekCount !== _newWeekCount) {
+      state.weekCount = _newWeekCount;
+      delete state.weekRolledOverAt; // calendar guard is stale now that the rollover was undone
+    }
+  }
 
   // Recalculate PRs from remaining history (in case this was a PR session)
   recalcPRsFromHistory();
