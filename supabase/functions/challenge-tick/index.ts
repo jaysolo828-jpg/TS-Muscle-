@@ -747,13 +747,18 @@ Deno.serve(async (req) => {
 
   // ─────────────────────────────────────────────────────────────
   // H. RECOVERY WEEK END NOTIFICATIONS
-  //    Find users whose rest_week_start_at is 7+ days ago and who
+  //    Find users whose rest_week_start_at is 6+ days ago and who
   //    are still flagged (column not yet cleared). Fire a push that
   //    deep-links into the recovery check-in questions, then clear
   //    the column so the notification fires only once.
+  //
+  //    Threshold is 6 days (not 7) so the cron fires at midnight on
+  //    the day the 7-day mark falls, before the client-side auto-end
+  //    in renderHome() (which runs at >= 7 days) can clear the column
+  //    and cause the push to be silently skipped.
   // ─────────────────────────────────────────────────────────────
   try {
-    const recoveryCutoff = new Date(nowMs - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const recoveryCutoff = new Date(nowMs - 6 * 24 * 60 * 60 * 1000).toISOString();
     const recoveryRes = await fetch(
       `${sbUrl}/rest/v1/users?rest_week_start_at=not.is.null&rest_week_start_at=lt.${encodeURIComponent(recoveryCutoff)}&select=id,rest_week_type`,
       { headers }
