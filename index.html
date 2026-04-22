@@ -8954,6 +8954,7 @@ function _socialSetupLater() {
 // ============================================================
 
 const _friendCache = {};       // userId -> { display_name, username, last_active, avatar_color }
+const _friendIds     = new Set(); // accepted friend user IDs (for search deduplication)
 const _mutedFriends  = new Set(); // friend user IDs the current user has muted from receiving workout-start notifications
 const _blockedUsers  = new Set(); // user IDs the current user has blocked
 // Outgoing friend requests the current user has sent. Used to (a) persist
@@ -9434,10 +9435,13 @@ async function _doFriendSearch(query) {
     if (freshBlocks) freshBlocks.forEach(b => _blockedUsers.add(b.blocked_id));
   }
   results.innerHTML = data.map(u => {
-    const isBlocked   = _blockedUsers.has(u.id);
-    const hasOutgoing = !!_outgoingFriendRequests[u.id];
+    const isBlocked    = _blockedUsers.has(u.id);
+    const isAlreadyFriend = _friendIds.has(u.id);
+    const hasOutgoing  = !!_outgoingFriendRequests[u.id];
     const btnHtml = isBlocked
       ? `<button onclick="_unblockUser('${u.id}',this)" style="background:transparent;border:1px solid #444;color:#888;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">BLOCKED</button>`
+      : isAlreadyFriend
+        ? `<span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;color:var(--gray);padding:8px 14px;white-space:nowrap;">FRIENDS</span>`
       : hasOutgoing
         ? `<button onclick="_cancelFriendRequest('${u.id}',this)" style="background:transparent;border:1px solid #444;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">CANCEL</button>`
         : `<button onclick="_sendFriendRequest('${u.id}',this)" style="background:#C0392B;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;padding:8px 14px;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:44px;">ADD FRIEND</button>`;
@@ -9494,13 +9498,12 @@ async function _sendFriendRequest(addresseeId, btn) {
   // both paths (fresh render vs. in-place update after send).
   const row = btn?.closest('[id^="friend-search-row-"]');
   if (row) {
-    const newBtn = btn;
-    newBtn.disabled = false;
-    newBtn.textContent = 'CANCEL';
-    newBtn.style.background = 'transparent';
-    newBtn.style.border = '1px solid #444';
-    newBtn.style.color = 'var(--gray)';
-    newBtn.setAttribute('onclick', `_cancelFriendRequest('${addresseeId}',this)`);
+    btn.disabled = false;
+    btn.textContent = 'CANCEL';
+    btn.style.background = 'transparent';
+    btn.style.border = '1px solid #444';
+    btn.style.color = 'var(--gray)';
+    btn.setAttribute('onclick', `_cancelFriendRequest('${addresseeId}',this)`);
   }
 
   // Fire a push notification to the recipient so they see the request
@@ -9691,6 +9694,8 @@ async function _loadFriendsList() {
   }
 
   const friendIds = rows.map(f => f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id);
+  _friendIds.clear();
+  friendIds.forEach(id => _friendIds.add(id));
   // Fetch users + the current user's workout-mute list in parallel so the
   // friends list and the per-friend mute indicators show up together with
   // no extra round-trip. Users sorted by last_active desc so recently-
@@ -10089,7 +10094,9 @@ async function _unblockUser(userId, btn) {
   if (btn) {
     btn.disabled = false;
     btn.textContent = 'ADD FRIEND';
-    btn.style.cssText = btn.style.cssText.replace(/background:[^;]+/, 'background:#C0392B').replace(/color:[^;]+/, 'color:#fff').replace(/border:[^;]+/, 'border:none');
+    btn.style.background = '#C0392B';
+    btn.style.border = 'none';
+    btn.style.color = '#fff';
     btn.onclick = function() { _sendFriendRequest(userId, this); };
   }
   showToast('Unblocked.');
