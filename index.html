@@ -16121,6 +16121,9 @@ function confirmPauseProgram() {
   state.pauseUsedThisCycle = true;
   state.pauseWeekCount = state.weekCount; // freeze week
   state.pauseStreak = state.streak;       // freeze streak
+  // Record pause period so consistency/streak skip these weeks
+  if (!state.pausePeriods) state.pausePeriods = [];
+  state.pausePeriods.push({ start: Date.now(), end: null });
   saveState();
 
   setTimeout(() => {
@@ -16163,6 +16166,15 @@ function showResumeProgramModal() {
 }
 
 function resumeProgram() {
+  // Close the open pause period so consistency stops excluding future weeks
+  if (state.pausePeriods && state.pausePeriods.length > 0) {
+    const last = state.pausePeriods[state.pausePeriods.length - 1];
+    if (last.end === null) last.end = Date.now();
+  } else if (state.pausedAt) {
+    // Backfill for users who paused before pausePeriods existed
+    if (!state.pausePeriods) state.pausePeriods = [];
+    state.pausePeriods.push({ start: new Date(state.pausedAt).getTime(), end: Date.now() });
+  }
   state.programPaused = false;
   state.weekCount = state.pauseWeekCount || state.weekCount;
   state.streak = state.pauseStreak || state.streak;
@@ -16193,13 +16205,13 @@ function checkPauseAutoExpiry() {
 function calcConsistencyRate() {
   const history = state.history || [];
   if (history.length === 0) return null;
-  const daysPerWeek = state.trainingDaysPerWeek || 4;
   const now = new Date();
   const todayMonday = new Date(now);
   todayMonday.setHours(0, 0, 0, 0);
   todayMonday.setDate(todayMonday.getDate() - ((todayMonday.getDay() + 6) % 7));
   const firstDate = new Date(Math.min(...history.map(e => new Date(e.date).getTime())));
   const WINDOW = 8;
+
   // Pre-compute which Mon-bounded calendar weeks had deload-flagged sessions
   const deloadWeekStartMs = new Set();
   history.filter(e => e.isDeload).forEach(e => {
@@ -16208,6 +16220,32 @@ function calcConsistencyRate() {
     d.setHours(0, 0, 0, 0);
     deloadWeekStartMs.add(d.getTime());
   });
+
+  // Build pause intervals: historical closed periods + current active pause
+  const pauseIntervals = (state.pausePeriods || []).map(p => ({
+    start: p.start,
+    end: p.end !== null && p.end !== undefined ? p.end : Infinity
+  }));
+  if (state.programPaused && state.pausedAt) {
+    pauseIntervals.push({ start: new Date(state.pausedAt).getTime(), end: Infinity });
+  }
+  function weekOverlapsPause(wMonMs, wEndMs) {
+    return pauseIntervals.some(p => p.start < wEndMs && p.end > wMonMs);
+  }
+
+  // Use the training days target that was in effect during each historical week.
+  // state.trainingDaysHistory holds [{ts, days}] entries in chronological order.
+  function getDaysForWeek(wMonMs) {
+    const hist = state.trainingDaysHistory;
+    if (!hist || hist.length === 0) return state.trainingDaysPerWeek || 4;
+    let days = hist[0].days;
+    for (const entry of hist) {
+      if (entry.ts <= wMonMs) days = entry.days;
+      else break;
+    }
+    return days;
+  }
+
   let scheduled = 0, completed = 0;
   for (let w = 1; w <= WINDOW; w++) {
     const wMon = new Date(todayMonday);
@@ -16221,6 +16259,8 @@ function calcConsistencyRate() {
     });
     // Skip deload training weeks
     if (weekEntries.some(e => e.isDeload)) continue;
+    // Skip weeks that overlap with any pause period — user was unable to train
+    if (weekOverlapsPause(wMon.getTime(), wEnd.getTime())) continue;
     // Skip planned rest weeks (zero-session week immediately after a deload week)
     if (weekEntries.length === 0) {
       const prevWeekMs = wMon.getTime() - 7 * 86400000;
@@ -16228,6 +16268,7 @@ function calcConsistencyRate() {
       // Also skip the current partial week if user is actively in a rest/deload
       if (w === 1 && (state.isDeloadWeek || state.isRestWeek)) continue;
     }
+    const daysPerWeek = getDaysForWeek(wMon.getTime());
     scheduled += daysPerWeek;
     completed += Math.min(weekEntries.length, daysPerWeek);
   }
@@ -19100,6 +19141,15 @@ function updateStreak() {
     weekCounts[week] = (weekCounts[week] || 0) + 1;
   });
 
+  // Build pause intervals: historical closed periods + current active pause
+  const pauseIntervals = (state.pausePeriods || []).map(p => ({
+    start: p.start,
+    end: p.end !== null && p.end !== undefined ? p.end : Infinity
+  }));
+  if (state.programPaused && state.pausedAt) {
+    pauseIntervals.push({ start: new Date(state.pausedAt).getTime(), end: Infinity });
+  }
+
   // Walk back from current week, counting consecutive hit weeks
   let streak = 0;
   let checkWeek = getISOWeek(now);
@@ -19109,13 +19159,23 @@ function updateStreak() {
   // without breaking the streak (week is still in progress)
   for (let i = 0; i < 156; i++) {
     const count = weekCounts[checkWeek] || 0;
+    const wMonMs = new Date(checkWeek).getTime();
+    const wEndMs = wMonMs + 7 * 86400000;
+    const isPausedWeek = pauseIntervals.some(p => p.start < wEndMs && p.end > wMonMs);
+
     if (i === 0) {
-      if (count >= threshold) {
-        streak++;
-      }
+      // Current (partial) week: count if threshold already met; skip without penalty if paused
+      if (!isPausedWeek && count >= threshold) streak++;
       checkWeek = prevISOWeek(checkWeek);
       continue;
     }
+
+    if (isPausedWeek) {
+      // Paused week: skip without breaking the streak
+      checkWeek = prevISOWeek(checkWeek);
+      continue;
+    }
+
     if (count >= threshold) {
       streak++;
       checkWeek = prevISOWeek(checkWeek);
@@ -33644,6 +33704,13 @@ function updateDaysExplanation(n) {
 
 function applyTrainingDays() {
   if (!pendingDaysCount) return;
+  // Record the change so calcConsistencyRate uses the right target for past weeks
+  if (!state.trainingDaysHistory) state.trainingDaysHistory = [];
+  if (state.trainingDaysHistory.length === 0) {
+    // Seed with the outgoing value at epoch so all pre-change history uses the original target
+    state.trainingDaysHistory.push({ ts: 0, days: state.trainingDaysPerWeek || 4 });
+  }
+  state.trainingDaysHistory.push({ ts: Date.now(), days: pendingDaysCount });
   state.trainingDaysPerWeek = pendingDaysCount;
   saveState();
   closeTrainingDaysModal();
@@ -33765,6 +33832,12 @@ function applySplitType() {
   // Reset training days to the new split's natural length when switching splits
   const programLen = state.program.length;
   if (!state.trainingDaysPerWeek || state.trainingDaysPerWeek > programLen) {
+    // Record the change so calcConsistencyRate uses the right target for past weeks
+    if (!state.trainingDaysHistory) state.trainingDaysHistory = [];
+    if (state.trainingDaysHistory.length === 0) {
+      state.trainingDaysHistory.push({ ts: 0, days: state.trainingDaysPerWeek || 4 });
+    }
+    state.trainingDaysHistory.push({ ts: Date.now(), days: programLen });
     state.trainingDaysPerWeek = programLen;
   }
   // Stamp cycleIntroduced on all new exercises — they're fresh, so rotation won't suggest them for a full cycle
