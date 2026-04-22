@@ -16182,6 +16182,15 @@ function resumeProgram() {
   delete state.pauseReason;
   delete state.pauseWeekCount;
   delete state.pauseStreak;
+  // Reset weekStartTimestamp to this calendar Monday so the first post-resume session
+  // doesn't trigger a premature calendar-based week rollover. Without this, a pause
+  // that crosses a Mon–Sun boundary leaves weekStartTimestamp stale, and the next
+  // session's finalizeEndSession() sees currentWeekMonday > startWeekMonday and
+  // advances weekCount again — undoing the freeze/restore above.
+  const _resumeMon = new Date();
+  _resumeMon.setDate(_resumeMon.getDate() - ((_resumeMon.getDay() + 6) % 7));
+  _resumeMon.setHours(0, 0, 0, 0);
+  state.weekStartTimestamp = _resumeMon.getTime();
   // Suppress gap-return modal: the user was paused, not inactive — mark as seen
   // so checkGapReturnPrompt doesn't fire on the next app open after resume.
   state.gapReturnShown = true;
