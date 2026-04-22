@@ -5903,6 +5903,26 @@ const FULLBODY_PROGRAM = [
 
 // ── BRO SPLIT (5-day classic bodybuilding) ────────────────────
 // Chest/Triceps · Back/Biceps · Legs · Shoulders · Arms
+const SKULL_CRUSHER_EXERCISE = {
+  id: 'skull-crusher', name: 'Skull Crushers (EZ Bar)', sets: 3, reps: '10–12', rest: '60 sec',
+  ytLink: 'https://youtu.be/ZLIKPa4Iunc',
+  alts: [
+    { name: 'Dumbbell Skull Crusher', note: 'DB version, each arm works independently', ytLink: 'https://youtu.be/ZLIKPa4Iunc' },
+    { name: 'Cable Overhead Extension', note: 'Constant tension, easier on the elbows', ytLink: 'https://youtu.be/9Ark9S11uXw' },
+    { name: 'Machine Tricep Extension', note: 'If free weights are occupied', ytLink: 'https://youtu.be/NNyuuN2sJb0' },
+    { name: 'Tricep Pushdown (Cable)', note: 'Lighter, great for high-rep pump finisher', ytLink: 'https://youtu.be/_w-HpW70nSQ' }
+  ]
+};
+const CLOSE_GRIP_EXERCISE = {
+  id: 'close-grip', name: 'Close-Grip Bench Press', sets: 3, reps: '8–10', rest: '90 sec',
+  ytLink: 'https://youtu.be/4yKLxOsrGfg',
+  alts: [
+    { name: 'Dumbbell Close-Grip Press', note: 'Neutral grip DBs pressed together for same pattern', ytLink: 'https://youtu.be/4yKLxOsrGfg' },
+    { name: 'Tricep Dip (Machine)', note: 'Compound tricep push alternative', ytLink: 'https://youtu.be/UQvJFCeHHIM' },
+    { name: 'Overhead Tricep Extension', note: 'Targets the long head directly', ytLink: 'https://youtu.be/popGXI-qs98' },
+    { name: 'Diamond Push-Up', note: 'Bodyweight option, no equipment needed', ytLink: 'https://youtu.be/J0DXGHy8RuY' }
+  ]
+};
 const BRO_PROGRAM = [
   {
     id: 'bro-chest', day: 'Monday', badge: 'CHEST', name: 'Chest + Triceps',
@@ -5941,8 +5961,8 @@ const BRO_PROGRAM = [
     exercises: [
       DEFAULT_PROGRAM[2].exercises[3], // ez-curl
       DEFAULT_PROGRAM[2].exercises[4], // preacher
-      DEFAULT_PROGRAM[0].exercises[3], // pushdown
-      DEFAULT_PROGRAM[0].exercises[4], // overhead-tri
+      SKULL_CRUSHER_EXERCISE,
+      CLOSE_GRIP_EXERCISE,
     ]
   }
 ];
@@ -6377,7 +6397,7 @@ const PRIORITY_DAY_INDICATORS = {
   back:       ['chest-row', 'pulldown', 'db-row'],
   shoulders:  ['ohp', 'lateral', 'rear-delt'],
   biceps:     ['ez-curl', 'preacher'],
-  triceps:    ['pushdown', 'overhead-tri'],
+  triceps:    ['pushdown', 'overhead-tri', 'skull-crusher', 'close-grip'],
   glutes:     ['hip-thrust-a', 'hip-thrust-b', 'rdl', 'legpress-a', 'legpress-b'],
   hamstrings: ['rdl', 'ham-curl-a', 'ham-curl-b'],
   quads:      ['legpress-a', 'legpress-b', 'leg-ext-a', 'leg-ext-b'],
@@ -6396,6 +6416,7 @@ function _isTS() { return state.splitType === 'ts'; }
 var _TRAVEL_EX_EQ = {
   'bench':'barbell','incline':'dumbbell','flye':'cable','pushdown':'cable',
   'overhead-tri':'cable','ohp':'barbell','lateral':'cable',
+  'skull-crusher':'barbell','close-grip':'barbell',
   'legpress-a':'machine','rdl':'barbell','leg-ext-a':'machine',
   'ham-curl-a':'machine','hip-thrust-a':'barbell','calf-a':'machine',
   'chest-row':'machine','pulldown':'cable','db-row':'dumbbell',
@@ -6554,7 +6575,7 @@ function _migrateEquipmentTags() {
 
 const MUSCLE_MAP = {
   bench: 'CHEST', incline: 'CHEST', flye: 'CHEST',
-  pushdown: 'TRICEPS', 'overhead-tri': 'TRICEPS',
+  pushdown: 'TRICEPS', 'overhead-tri': 'TRICEPS', 'skull-crusher': 'TRICEPS', 'close-grip': 'TRICEPS',
   ohp: 'SHOULDERS', lateral: 'SHOULDERS', 'rear-delt': 'SHOULDERS',
   'chest-row': 'BACK', pulldown: 'BACK', 'db-row': 'BACK',
   'ez-curl': 'BICEPS', preacher: 'BICEPS',
@@ -7173,6 +7194,8 @@ const FORM_CUES = {
   'flye':           ["Arms wide with a slight, fixed elbow bend. Never straighten", "Think 'hugging a barrel', not pressing", "Stretch fully at the bottom, strong squeeze at the top", "Control the return. Don't let the cable yank you back"],
   'pushdown':       ["Pin elbows tight to your sides. They don't move", "Push to full lockout and squeeze triceps hard", "Slow 3-count return. Don't let the weight pull you up", "Stand tall, slight forward lean from the hips"],
   'overhead-tri':   ["Start with elbows pointing straight at the ceiling", "Lower weight behind your head, keeping elbows in", "Extend fully at the top without flaring your elbows out", "Brace your core. This protects your lower back"],
+  'skull-crusher':  ["Lie on bench, EZ bar held directly over your forehead with a shoulder-width grip", "Lower the bar by bending only at the elbows — upper arms stay vertical and fixed", "Feel a deep stretch at the bottom, pause briefly without bouncing", "Extend fully to lockout and squeeze the triceps hard at the top"],
+  'close-grip':     ["Take a grip just inside shoulder-width — hands about 12 inches apart on the bar", "Keep elbows tucked close to your ribcage as you lower the bar", "Bar touches lower chest; press straight up to full lockout", "This is a compound tricep builder — heavier than isolation moves, treat it like a press"],
   'lateral':        ["Slight forward lean at the hips, slight elbow bend throughout", "Lead with your elbows, not your hands or wrists", "Raise to shoulder height. Going higher takes over the traps", "Hold briefly at top, slow 3-second descent is key"],
   'ohp':            ["Grip just outside shoulder-width, bar resting on your upper chest at the base of your neck", "Brace your core and glutes hard before you press — this protects your lower back under load", "Press straight up, moving your head slightly back as the bar passes your face", "Lock out fully overhead, shrug slightly at the top to seat the weight in the shoulder"],
   'legpress-a':     ["Feet hip-width, mid-foot on the platform", "Lower until knees reach ~90°. Don't compress the knee past that", "Push through your full foot, not just your toes", "Don't lock out knees at the top. Keep a soft bend"],
@@ -7209,6 +7232,8 @@ const GOAL_REPS = {
   'ohp':             { strength: '4–6',   size: '8–12',  both: '6–10',  wellness: '8–12'  },
   'pushdown':        { strength: '8–10',  size: '12–15', both: '10–13', wellness: '12–15' },
   'overhead-tri':    { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'skull-crusher':   { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
+  'close-grip':      { strength: '4–6',   size: '8–12',  both: '6–10',  wellness: '8–12'  },
   'lateral':         { strength: '10–12', size: '15–20', both: '12–15', wellness: '12–15' },
   // ── LOWER A ────────────────────────────────────────────────
   'legpress-a':      { strength: '6–8',   size: '10–12', both: '8–12',  wellness: '10–12' },
@@ -7259,6 +7284,8 @@ const GOAL_SETS = {
   'flye':            { strength: 3, size: 4, both: 3, wellness: 3 },
   'pushdown':        { strength: 3, size: 4, both: 3, wellness: 3 },
   'overhead-tri':    { strength: 3, size: 3, both: 3, wellness: 3 },
+  'skull-crusher':   { strength: 3, size: 4, both: 3, wellness: 3 },
+  'close-grip':      { strength: 4, size: 4, both: 4, wellness: 3 },
   'ohp':             { strength: 3, size: 3, both: 4, wellness: 3 },
   'lateral':         { strength: 3, size: 4, both: 3, wellness: 3 },
   // ── LOWER A ────────────────────────────────────────────────
@@ -34516,6 +34543,8 @@ const ALL_EXERCISE_DEFAULTS = {
   'flye':           { beginner: 30,  intermediate: 50,  advanced: 70  },
   'pushdown':       { beginner: 30,  intermediate: 50,  advanced: 70  },
   'overhead-tri':   { beginner: 20,  intermediate: 35,  advanced: 55  },
+  'skull-crusher':  { beginner: 45,  intermediate: 65,  advanced: 85  },
+  'close-grip':     { beginner: 65,  intermediate: 95,  advanced: 135 },
   'ohp':            { beginner: 45,  intermediate: 75,  advanced: 115 },
   'lateral':        { beginner: 10,  intermediate: 20,  advanced: 30  },
   'legpress-a':     { beginner: 90,  intermediate: 180, advanced: 270 },
@@ -34539,6 +34568,7 @@ const ALL_EXERCISE_DEFAULTS = {
   'bss':            { beginner: 20,  intermediate: 40,  advanced: 60  },
   'hip-abduction':  { beginner: 50,  intermediate: 90,  advanced: 130 },
   'donkey-kick':    { beginner: 20,  intermediate: 40,  advanced: 60  },
+  'glute-iso':      { beginner: 50,  intermediate: 90,  advanced: 130 },
   // Priority boost exercises
   'priority-chest':      { beginner: 50,  intermediate: 70,  advanced: 90  },
   'priority-back':       { beginner: 25,  intermediate: 40,  advanced: 60  },
