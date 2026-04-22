@@ -16209,6 +16209,14 @@ function resumeProgram() {
     if (!state.pausePeriods) state.pausePeriods = [];
     state.pausePeriods.push({ start: new Date(state.pausedAt).getTime(), end: Date.now() });
   }
+  // Snapshot the slow-decay that accrued during the pause BEFORE clearing
+  // the flag. _determineGrowthState() checks programPaused first and returns
+  // 'slow_decay', so weeksSinceLast covers the full pause duration at the
+  // correct (slower) decay rate. Without this call the pause period gets
+  // lumped into the first post-resume session, where programPaused is
+  // already false and daysSinceTraining >= 14 triggers 'declining' (faster
+  // active decay) instead of slow_decay.
+  if (state.growthTrackingEnabled) recalcGrowthBalance();
   state.programPaused = false;
   state.weekCount = state.pauseWeekCount || state.weekCount;
   state.streak = state.pauseStreak || state.streak;
@@ -29689,14 +29697,27 @@ function _growthStrengthTrend() {
   const changes = [];
   TRACKED.forEach(exId => {
     const isUni = UNILATERAL_EXERCISES.has(exId) || !!state.customUnilateralExercises?.[exId];
-    const recent = getBestE1RM(exId, 30, isUni);
+    const wMult = isUni ? 2 : 1;
+    // Exclude deload entries from both windows so intentionally reduced
+    // deload weights don't register as a strength decline.
+    const recent = (function() {
+      let best = 0;
+      hist.forEach(entry => {
+        if (new Date(entry.date).getTime() < cutoff30 || entry.isDeload) return;
+        (entry.sets?.[exId] || []).filter(s => s.done && s.weight && s.reps && !s.coachRemoved).forEach(s => {
+          const w = parseFloat(s.weight) * wMult, r = parseInt(s.reps);
+          if (!w || !r || r < 1) return;
+          const e1rm = r === 1 ? w : Math.round(w * (1 + r / 30));
+          if (e1rm > best) best = e1rm;
+        });
+      });
+      return best > 0 ? best : null;
+    })();
     const older  = (function() {
-      // Get best e1RM from 30-90 days ago
-      const wMult = isUni ? 2 : 1;
       let best = 0;
       hist.forEach(entry => {
         const ms = new Date(entry.date).getTime();
-        if (ms >= cutoff30 || ms < cutoff90) return;
+        if (ms >= cutoff30 || ms < cutoff90 || entry.isDeload) return;
         (entry.sets?.[exId] || []).filter(s => s.done && s.weight && s.reps && !s.coachRemoved).forEach(s => {
           const w = parseFloat(s.weight) * wMult, r = parseInt(s.reps);
           if (!w || !r || r < 1) return;
