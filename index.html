@@ -34438,6 +34438,187 @@ const _TUTORIAL_SLIDES_ORIG_PLACEHOLDER = [
   },
 ];
 
+// === SPOTLIGHT WALKTHROUGH FOR NEW USERS ===
+const _WT_STEPS = [
+  {
+    target: null,
+    title: `YOUR PROGRAM IS READY`,
+    body: `Take 30 seconds — we'll show you where everything lives so your first session goes smoothly.`,
+    pos: 'center'
+  },
+  {
+    target: '.stat-grid',
+    title: `YOUR DAILY STATS`,
+    body: `Sessions logged, today's muscle focus, and your weekly streak. All three update automatically after every workout.`,
+    pos: 'below'
+  },
+  {
+    target: '.week-tracker',
+    title: `PROGRAM PROGRESS`,
+    body: `Each dot is one week of your 8-week training cycle. Your current week is highlighted. Week 7 is always a built-in recovery week.`,
+    pos: 'below'
+  },
+  {
+    target: '#day-cards',
+    title: `YOUR TRAINING DAYS`,
+    body: `These are your workout sessions for the week. Tap any card to expand it and see your exercises, then hit START to begin logging.`,
+    pos: 'above'
+  },
+  {
+    target: '.header-right',
+    title: `QUICK ACCESS`,
+    body: `Three shortcuts up top: your Friends feed and social activity, the full Exercise Library to explore any movement, and Travel Mode for hotel or minimal-equipment sessions.`,
+    pos: 'below'
+  },
+  {
+    target: '[aria-label="History"]',
+    title: `STATS TAB`,
+    body: `Every past session with full set-by-set detail. Also your PR board, strength score, and volume trends over time.`,
+    pos: 'above'
+  },
+  {
+    target: '[aria-label="Cardio"]',
+    title: `CARDIO TAB`,
+    body: `Log runs, walks, and rides. Built-in timer with presets, Health Connect import, and a weekly distance and calorie summary.`,
+    pos: 'above'
+  },
+  {
+    target: '[aria-label="Mindset"]',
+    title: `MINDSET TAB`,
+    body: `Mood check-in before and after training, a self-compassion exercise, and a CBT reframe tool for the tough days when life gets in the way.`,
+    pos: 'above'
+  },
+  {
+    target: '[aria-label="Settings"]',
+    title: `SETTINGS`,
+    body: `Update your profile, swap exercises, adjust training days, set notification preferences, and back up your data.`,
+    pos: 'above'
+  },
+  {
+    target: null,
+    title: `GO TRAIN`,
+    body: `That's the full tour. Head to Home, tap a day card, and start your first session. You can revisit this guide anytime from Settings → App Tutorial.`,
+    pos: 'center',
+    isDone: true
+  }
+];
+
+let _wtStep = 0;
+
+function _startWalkthrough() {
+  if (localStorage.getItem('ts-walkthrough-shown')) return;
+  localStorage.setItem('ts-walkthrough-shown', '1');
+  _wtStep = 0;
+  _buildWalkthroughDOM();
+  _showWalkthroughStep(0);
+}
+
+function _buildWalkthroughDOM() {
+  document.getElementById('wt-overlay')?.remove();
+  document.getElementById('wt-spotlight')?.remove();
+  document.getElementById('wt-tooltip')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'wt-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:299997;background:transparent;';
+
+  const spotlight = document.createElement('div');
+  spotlight.id = 'wt-spotlight';
+  spotlight.style.cssText = 'position:fixed;z-index:299998;border-radius:12px;pointer-events:none;display:none;transition:top 0.25s ease,left 0.25s ease,width 0.25s ease,height 0.25s ease;';
+
+  const tooltip = document.createElement('div');
+  tooltip.id = 'wt-tooltip';
+  tooltip.style.cssText = 'position:fixed;z-index:299999;max-width:320px;width:calc(100% - 40px);background:var(--dark2);border:1px solid rgba(204,32,39,0.4);border-radius:16px;padding:18px 18px 14px;pointer-events:all;box-shadow:0 8px 32px rgba(0,0,0,0.6);';
+  tooltip.onclick = function(e) { e.stopPropagation(); };
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(spotlight);
+  document.body.appendChild(tooltip);
+}
+
+function _showWalkthroughStep(n) {
+  const step = _WT_STEPS[n];
+  if (!step) { _closeWalkthrough(); return; }
+  const total = _WT_STEPS.length;
+  const spotlight = document.getElementById('wt-spotlight');
+  const tooltip = document.getElementById('wt-tooltip');
+  const overlay = document.getElementById('wt-overlay');
+  if (!spotlight || !tooltip || !overlay) return;
+
+  const isCenter = step.pos === 'center' || !step.target;
+  const pad = 10;
+
+  if (isCenter) {
+    spotlight.style.display = 'none';
+    overlay.style.background = 'rgba(0,0,0,0.85)';
+  } else {
+    const el = document.querySelector(step.target);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      spotlight.style.display = 'block';
+      spotlight.style.top = (r.top - pad) + 'px';
+      spotlight.style.left = (r.left - pad) + 'px';
+      spotlight.style.width = (r.width + pad * 2) + 'px';
+      spotlight.style.height = (r.height + pad * 2) + 'px';
+      spotlight.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.82),0 0 0 2px rgba(204,32,39,0.5)';
+      overlay.style.background = 'transparent';
+    } else {
+      spotlight.style.display = 'none';
+      overlay.style.background = 'rgba(0,0,0,0.85)';
+    }
+  }
+
+  const dots = Array.from({length: total}, function(_, i) {
+    const active = i === n;
+    return '<span style="display:inline-block;width:' + (active ? 16 : 6) + 'px;height:6px;border-radius:3px;background:' + (active ? 'var(--red)' : '#444') + ';margin:0 2px;transition:all 0.2s;"></span>';
+  }).join('');
+
+  const isDone = !!step.isDone;
+  tooltip.innerHTML = '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">' + step.title + '</div>'
+    + '<div style="font-size:14px;color:var(--gray-light);line-height:1.65;margin-bottom:14px;">' + step.body + '</div>'
+    + '<div style="display:flex;justify-content:center;margin-bottom:12px;">' + dots + '</div>'
+    + '<div style="display:flex;gap:10px;align-items:center;">'
+    + '<button onclick="_closeWalkthrough()" style="background:none;border:none;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;padding:4px 0;flex-shrink:0;">SKIP</button>'
+    + '<button onclick="_walkthroughNext()" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:10px;font-family:\'Bebas Neue\',cursive;font-size:17px;letter-spacing:2px;cursor:pointer;">' + (isDone ? 'DONE ✓' : 'NEXT →') + '</button>'
+    + '</div>';
+
+  if (isCenter) {
+    tooltip.style.top = '50%';
+    tooltip.style.left = '50%';
+    tooltip.style.transform = 'translate(-50%, -50%)';
+  } else {
+    const el = document.querySelector(step.target);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const ttH = 210;
+      tooltip.style.transform = '';
+      tooltip.style.left = '20px';
+      if (step.pos === 'below') {
+        const topVal = r.bottom + pad + 12;
+        tooltip.style.top = Math.min(topVal, window.innerHeight - ttH - 16) + 'px';
+      } else {
+        const topVal = r.top - pad - 12 - ttH;
+        tooltip.style.top = Math.max(topVal, 80) + 'px';
+      }
+    }
+  }
+}
+
+function _walkthroughNext() {
+  _wtStep++;
+  if (_wtStep >= _WT_STEPS.length) {
+    _closeWalkthrough();
+    return;
+  }
+  _showWalkthroughStep(_wtStep);
+}
+
+function _closeWalkthrough() {
+  document.getElementById('wt-overlay')?.remove();
+  document.getElementById('wt-spotlight')?.remove();
+  document.getElementById('wt-tooltip')?.remove();
+}
+
 let tutorialStep = -1; // -1 = index view
 
 function openTutorial() {
@@ -36124,6 +36305,9 @@ function confirmAutoPopulate(yes, modal) {
   setTimeout(() => modal.remove(), 150);
   const name = state.profile?.name || 'champ';
   showToast(yes ? `Weights locked in, ${name}! 💪` : `Got it. Enter weights as you go!`);
+  if (!state.history || state.history.length === 0) {
+    setTimeout(_startWalkthrough, 700);
+  }
 }
 
 function closeOnboardingModal() {
