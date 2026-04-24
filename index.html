@@ -150,24 +150,32 @@
 
   .header-right {
     display: flex;
-    gap: 8px;
+    gap: 0;
+    background: var(--dark3);
+    border: 1px solid #333;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
   }
 
   .icon-btn {
-    background: var(--dark3);
-    border: 1px solid var(--dark4);
+    background: transparent;
+    border: none;
+    border-right: 1px solid #333;
     color: var(--gray-light);
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
+    width: 44px;
+    height: 40px;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     font-size: 18px;
-    transition: all 0.2s;
+    transition: background 0.15s, color 0.15s;
   }
-  .icon-btn:hover { border-color: var(--red-text); color: var(--red-text); }
+  .icon-btn:last-child { border-right: none; }
+  .icon-btn:hover { background: rgba(255,255,255,0.07); color: var(--red-text); }
+  .icon-btn:active { background: rgba(204,32,39,0.15); color: var(--red-text); }
 
   /* BOTTOM NAV */
   .bottom-nav {
@@ -2999,7 +3007,7 @@
   </div>
   <div class="header-right">
     <button class="icon-btn" id="travel-mode-btn" onclick="openTravelModeSheet()" aria-label="Travel Mode" title="Travel Mode" style="position:relative;">
-      <span id="travel-mode-icon" style="font-size:28px;line-height:1;color:#999;display:block;">✈</span>
+      <span id="travel-mode-icon" style="font-size:20px;line-height:1;color:#999;display:block;">✈</span>
     </button>
     <button class="icon-btn" id="lib-open-btn" onclick="openExerciseLibrary(null)" aria-label="Exercise Library" title="Exercise Library">
       <svg viewBox="0 0 24 24" width="26" height="26" stroke="#999" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.24" y2="14.24"/></svg>
