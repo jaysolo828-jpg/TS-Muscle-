@@ -36358,6 +36358,14 @@ async function hardResetApp() {
   } catch(_) {}
   localStorage.clear();
   sessionStorage.clear();
+  try {
+    await new Promise(resolve => {
+      const req = indexedDB.deleteDatabase(_IDB_NAME);
+      req.onsuccess = resolve;
+      req.onerror = resolve;
+      req.onblocked = resolve;
+    });
+  } catch(_) {}
   window.location.reload();
 }
 
