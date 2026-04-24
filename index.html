@@ -34496,7 +34496,7 @@ function _buildWalkthroughDOM() {
 
   const ring = document.createElement('div');
   ring.id = 'wt-ring';
-  ring.style.cssText = 'position:fixed;z-index:299997;border-radius:14px;border:2px solid rgba(204,32,39,0.75);pointer-events:none;box-shadow:0 0 0 1px rgba(204,32,39,0.2),0 0 18px rgba(204,32,39,0.3);top:-9999px;left:0;width:0;height:0;';
+  ring.style.cssText = 'position:fixed;z-index:299997;border-radius:20px;border:2px solid rgba(204,32,39,0.75);pointer-events:none;box-shadow:0 0 0 1px rgba(204,32,39,0.2),0 0 18px rgba(204,32,39,0.3);top:-9999px;left:0;width:0;height:0;';
 
   const tooltip = document.createElement('div');
   tooltip.id = 'wt-tooltip';
@@ -34525,6 +34525,7 @@ function _showWalkthroughStep(n) {
   const ttH = 280;
   const el = step.target ? document.querySelector(step.target) : null;
   const isCenter = step.pos === 'center' || !el;
+  const r = el ? el.getBoundingClientRect() : null;
   const dBase = 'position:fixed;z-index:299996;background:rgba(0,0,0,0.82);pointer-events:all;';
 
   if (isCenter) {
@@ -34534,11 +34535,10 @@ function _showWalkthroughStep(n) {
     if (dimBottom) dimBottom.style.cssText = dBase + 'top:0;left:0;width:0;height:0;';
     if (dimLeft) dimLeft.style.cssText = dBase + 'top:0;left:0;width:0;height:0;';
     if (dimRight) dimRight.style.cssText = dBase + 'top:0;left:0;width:0;height:0;';
-    if (ring) ring.style.cssText = 'position:fixed;z-index:299997;border-radius:14px;border:2px solid rgba(204,32,39,0.75);pointer-events:none;box-shadow:0 0 0 1px rgba(204,32,39,0.2),0 0 18px rgba(204,32,39,0.3);top:-9999px;left:0;width:0;height:0;';
+    if (ring) ring.style.cssText = 'position:fixed;z-index:299997;border-radius:20px;border:2px solid rgba(204,32,39,0.75);pointer-events:none;box-shadow:0 0 0 1px rgba(204,32,39,0.2),0 0 18px rgba(204,32,39,0.3);top:-9999px;left:0;width:0;height:0;';
   } else {
     overlay.style.background = 'transparent';
     overlay.style.pointerEvents = 'none';
-    const r = el.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const T = Math.max(0, r.top - pad);
@@ -34549,7 +34549,7 @@ function _showWalkthroughStep(n) {
     if (dimBottom) dimBottom.style.cssText = dBase + 'top:' + B + 'px;left:0;width:' + vw + 'px;height:' + (vh - B) + 'px;';
     if (dimLeft) dimLeft.style.cssText = dBase + 'top:' + T + 'px;left:0;width:' + L + 'px;height:' + (B - T) + 'px;';
     if (dimRight) dimRight.style.cssText = dBase + 'top:' + T + 'px;left:' + R + 'px;width:' + (vw - R) + 'px;height:' + (B - T) + 'px;';
-    if (ring) ring.style.cssText = 'position:fixed;z-index:299997;border-radius:14px;border:2px solid rgba(204,32,39,0.75);pointer-events:none;box-shadow:0 0 0 1px rgba(204,32,39,0.2),0 0 18px rgba(204,32,39,0.3);top:' + T + 'px;left:' + L + 'px;width:' + (R - L) + 'px;height:' + (B - T) + 'px;';
+    if (ring) ring.style.cssText = 'position:fixed;z-index:299997;border-radius:20px;border:2px solid rgba(204,32,39,0.75);pointer-events:none;box-shadow:0 0 0 1px rgba(204,32,39,0.2),0 0 18px rgba(204,32,39,0.3);top:' + T + 'px;left:' + L + 'px;width:' + (R - L) + 'px;height:' + (B - T) + 'px;';
   }
 
   const dots = Array.from({length: total}, function(_, i) {
@@ -34572,7 +34572,6 @@ function _showWalkthroughStep(n) {
     tooltip.style.left = '50%';
     tooltip.style.transform = 'translate(-50%, -50%)';
   } else {
-    const r = el.getBoundingClientRect();
     tooltip.style.transform = 'none';
     tooltip.style.left = '20px';
     if (step.pos === 'below') {
