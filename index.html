@@ -30312,7 +30312,10 @@ function renderGrowthLogCard() {
   </div>`;
 
   // ── Header (shared across all states) ──
-  const leafSvg = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2ecc71" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.85;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>';
+  const _isDeclining = gs === 'declining' || gs === 'slow_decay';
+  const leafSvg = _isDeclining
+    ? '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#e74c3c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.85;"><polyline points="23 18 17 12 11 15 1 6"/><polyline points="17 18 23 18 23 12"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#2ecc71" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.85;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>';
 
   // ── EMPTY STATE: not enabled ──
   if (!enabled) {
