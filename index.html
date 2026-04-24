@@ -34472,7 +34472,7 @@ const _WT_STEPS = [
   },
   {
     target: null,
-    title: `INSIDE A WORKOUT`,
+    title: `LOGGING YOUR SETS`,
     body: `<div style="background:rgba(255,255,255,0.05);border:1px solid #333;border-radius:10px;padding:12px 12px 10px;margin-bottom:12px;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--red-text);letter-spacing:2px;margin-bottom:8px;">EACH SET</div>
       <div style="display:flex;gap:6px;margin-bottom:9px;">
@@ -34484,10 +34484,30 @@ const _WT_STEPS = [
       <div style="font-size:12px;color:#777;line-height:1.5;text-align:center;"><span style="color:#4caf50;">▲ Exceeded</span> &nbsp;·&nbsp; <span style="color:#aaa;">✓ Hit target</span> &nbsp;·&nbsp; <span style="color:#e57373;">▼ Fell short</span></div>
     </div>
     <div style="font-size:13px;color:var(--gray-light);line-height:1.9;">
-      ⏱ <strong style="color:var(--cream);">Rest timer</strong> — vibrates when time is up<br>
-      🍽 <strong style="color:var(--cream);">Plate calculator</strong> — exact bar loading every set<br>
-      <strong style="color:var(--cream);">EXIT</strong> saves your progress to resume later<br>
-      <strong style="color:var(--cream);">COMPLETE ✓</strong> ends the session and shows your summary
+      Enter weight, reps, and <strong style="color:var(--cream);">RPE</strong> (how hard it felt, 1–10) for each set. As you type reps, live feedback shows whether you hit, exceeded, or fell short of your target.<br><br>
+      Tap <strong style="color:var(--cream);">✓</strong> to lock the set. The rest timer starts automatically and <strong style="color:var(--cream);">vibrates</strong> when time is up. The <strong style="color:var(--cream);">plate calculator</strong> shows exact bar loading for any weight.
+    </div>`,
+    pos: 'center'
+  },
+  {
+    target: null,
+    title: `EXERCISE TOOLS`,
+    body: `<div style="font-size:13px;color:var(--gray-light);line-height:1.95;">
+      <div style="margin-bottom:10px;"><strong style="color:var(--cream);">SWAP ⇔</strong> — Replace any exercise with an alternative. Choose <em style="color:#aaa;">today only</em> to keep your program intact, or <em style="color:#aaa;">permanently</em> to update it going forward. You can also type in any exercise not on the list.</div>
+      <div style="margin-bottom:10px;"><strong style="color:var(--cream);">PAIR</strong> — Link two exercises as a superset. They alternate back-to-back with rest after both. Same volume, less time. Unpair anytime by tapping PAIRED ✕.</div>
+      <div style="margin-bottom:10px;"><strong style="color:var(--cream);">Notes</strong> — Add form cues or reminders to any exercise. They show up every session.</div>
+      <div><strong style="color:var(--cream);">▶ Form video</strong> — Each exercise has a YouTube link for technique. Set your own preferred coaching cue video in Settings.</div>
+    </div>`,
+    pos: 'center'
+  },
+  {
+    target: null,
+    title: `FINISHING UP`,
+    body: `<div style="font-size:13px;color:var(--gray-light);line-height:1.95;">
+      <div style="margin-bottom:10px;">The <strong style="color:var(--cream);">header bar</strong> shows your elapsed time, sets logged, and a progress bar across all exercises so you always know where you stand.</div>
+      <div style="margin-bottom:10px;"><strong style="color:var(--cream);">Between-set coaching</strong> — After certain sets the app surfaces a cue based on your RPE and reps. Not after every set — only when something specific is worth flagging.</div>
+      <div style="margin-bottom:10px;"><strong style="color:var(--cream);">EXIT</strong> — Saves everything exactly as-is. Pick up where you left off next time you open the app.</div>
+      <div><strong style="color:var(--cream);">COMPLETE ✓</strong> — Shows your full session summary before anything is saved. Review it, then confirm to lock it in.</div>
     </div>`,
     pos: 'center'
   },
