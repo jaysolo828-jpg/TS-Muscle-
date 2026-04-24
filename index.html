@@ -432,6 +432,15 @@
     transition: opacity 0.2s ease, transform 0.2s ease;
   }
 
+  #cardio-history-list {
+    overflow: hidden;
+    max-height: 3000px;
+    transition: max-height 0.3s ease;
+  }
+  #cardio-history-list.collapsed {
+    max-height: 0;
+  }
+
   .cardio-rpe-btn {
     background: var(--dark3);
     border: 1px solid var(--dark4);
@@ -3139,11 +3148,11 @@
     <!-- Chart mode toggle -->
     <div style="display:flex; gap:8px; margin-bottom:12px;">
       <button id="chart-mode-weight" onclick="setChartMode('weight')"
-        style="flex:1; padding:8px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; border:1px solid var(--red); background:rgba(204,32,39,0.15); color:var(--cream);">
+        style="flex:1; padding:8px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; border:1px solid var(--red); background:rgba(204,32,39,0.15); color:var(--cream); transition:background 0.15s,border-color 0.15s,color 0.15s;">
         MAX WEIGHT
       </button>
       <button id="chart-mode-volume" onclick="setChartMode('volume')"
-        style="flex:1; padding:8px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--gray);">
+        style="flex:1; padding:8px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--gray); transition:background 0.15s,border-color 0.15s,color 0.15s;">
         VOLUME
       </button>
     </div>
@@ -3425,7 +3434,7 @@
   <div id="mood-checkin-card" class="card" style="margin-bottom:24px; padding:16px 0 14px; overflow:hidden;">
     <div style="padding:0 16px;">
       <div style="font-size:14px; color:var(--gray-light); letter-spacing:1.5px; margin-bottom:3px; font-family:'Barlow Condensed',sans-serif; font-weight:700;" id="mood-checkin-label">T&amp;S FEELINGS WHEEL</div>
-      <div id="mood-wheel-subtitle" style="font-size:14px; color:var(--gray-light); margin-bottom:10px;">Tap a section to name how you feel right now.</div>
+      <div id="mood-wheel-subtitle" style="font-size:14px; color:var(--gray-light); margin-bottom:10px; transition:opacity 0.15s;">Tap a section to name how you feel right now.</div>
       <div id="mood-wheel-timing-hint" style="display:flex; align-items:center; gap:10px; margin-bottom:14px; background:rgba(204,32,39,0.07); border:1px solid rgba(204,32,39,0.2); border-radius:10px; padding:10px 12px;">
         <div style="width:32px; height:32px; border-radius:8px; background:rgba(204,32,39,0.13); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="19.8" y1="7.5" x2="4.2" y2="16.5"/><line x1="19.8" y1="16.5" x2="4.2" y2="7.5"/></svg>
@@ -4868,7 +4877,7 @@
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         <div class="notes-label" style="margin:0;">SESSION NOTES</div>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:#aaaaaa;letter-spacing:0.5px;margin-left:auto;">OPTIONAL</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1px;margin-left:auto;">OPTIONAL</span>
       </div>
       <textarea class="notes-input" id="session-notes" placeholder="Form cues, how it felt, anything to remember for next time..." style="border-color:var(--dark4);"></textarea>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:#aaaaaa;letter-spacing:0.3px;margin-top:8px;">You can also add notes in the session summary before saving.</div>
@@ -15547,15 +15556,20 @@ function _showNotifSheet() {
   const sheet = document.createElement('div');
   sheet.id = 'notif-prompt-sheet';
   // z-index 999999 so no app modal at 99999 can visually cover it.
-  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0);z-index:999999;display:flex;align-items:flex-end;justify-content:center;transition:background 0.3s;';
   sheet.innerHTML = `
-    <div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;">
+    <div id="notif-prompt-sheet-inner" style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px calc(40px + env(safe-area-inset-bottom));border-top:2px solid #C0392B;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);">
       <div style="font-family:'Bebas Neue',cursive;font-size:26px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">${title}</div>
       <div style="font-family:'Barlow',sans-serif;font-size:15px;color:#ccc;line-height:1.6;margin-bottom:24px;">${msg}</div>
       <button onclick="${primaryAction}" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;margin-bottom:12px;-webkit-tap-highlight-color:transparent;">${primary}</button>
       <button onclick="${dismissJs}" style="width:100%;background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">NOT NOW</button>
     </div>`;
   document.body.appendChild(sheet);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    sheet.style.background = 'rgba(0,0,0,0.85)';
+    const inner = document.getElementById('notif-prompt-sheet-inner');
+    if (inner) inner.style.transform = 'translateY(0)';
+  }));
 }
 
 async function _enableNotifFromSheet() {
@@ -27414,7 +27428,7 @@ function showCycleCompleteModal() {
         <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:18px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--gray);">ANY MUSCLE TO BRING UP?</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;color:rgba(150,145,140,0.45);">OPTIONAL · MAX 2</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;color:var(--gray);">OPTIONAL · MAX 2</div>
           </div>
           <div style="font-size:13px;color:rgba(175,170,165,0.55);margin-bottom:14px;line-height:1.5;">Give a muscle extra volume this cycle. Everything else trains normally.</div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;">${_emphChipsHTML}</div>
@@ -27684,7 +27698,7 @@ function togglePRBoard() {
   if (!list) return;
   const open = list.style.display !== 'none';
   list.style.display = open ? 'none' : 'flex';
-  if (chevron) chevron.textContent = open ? '▶' : '▼';
+  if (chevron) chevron.style.transform = open ? '' : 'rotate(90deg)';
 }
 
 
@@ -28584,7 +28598,7 @@ function renderHistory() {
 
   if (exIdsWithHistory.size === 0) {
     const emptyCard = mkCard();
-    emptyCard.innerHTML = `<div style="text-align:center;color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;padding:16px 0;">No workout history yet. Complete a session to see your lift stats.</div>`;
+    emptyCard.innerHTML = `<div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" width="40" height="40" stroke="var(--gray)" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14M2 9h4M14 9h8M2 15h4M14 15h8"/></svg></div><div class="empty-state-text">No history yet. Complete a session to see your lift stats.</div></div>`;
     container.appendChild(emptyCard);
   } else {
     // Lifts card: T&S exercise picker → stats → chart + share
@@ -32305,7 +32319,6 @@ function settingsJumpTo(id) {
     btn.classList.remove('snav-active');
     if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(id)) btn.classList.add('snav-active');
   });
-  setTimeout(() => document.querySelectorAll('#settings-jump-nav button').forEach(b => b.classList.remove('snav-active')), 800);
 }
 
 function openHelpSheet() {
@@ -36794,6 +36807,13 @@ function renderMoodWheel() {
   svg.innerHTML = defs + `<g ${spinA}>${inner}</g>${selCat ? `<g ${outerA}>${outer}</g>` : ''}`;
 }
 
+function _mwSetSubtitle(text) {
+  const el = document.getElementById('mood-wheel-subtitle');
+  if (!el || el.textContent === text) return;
+  el.style.opacity = '0';
+  setTimeout(() => { el.textContent = text; el.style.opacity = '1'; }, 120);
+}
+
 function _mwClear() {
   haptic(HAPTIC.tap);
   _mwState = { catIdx: null, feelingIdx: null };
@@ -36801,7 +36821,7 @@ function _mwClear() {
   document.getElementById('mood-wheel-selected').style.display = 'none';
   document.getElementById('mood-wheel-clear').style.display = 'none';
   document.getElementById('mood-value').value = '';
-  document.getElementById('mood-wheel-subtitle').textContent = 'Tap a section to name how you feel right now.';
+  _mwSetSubtitle('Tap a section to name how you feel right now.');
   const pill = document.getElementById('mood-wheel-selected-inner');
   if (pill) { pill.style.borderColor = ''; pill.style.background = ''; }
   _mwSpinOnNext = false;
@@ -36815,7 +36835,7 @@ function _mwInnerClick(catIdx) {
     return;
   }
   _mwState = { catIdx, feelingIdx: null };
-  document.getElementById('mood-wheel-subtitle').textContent = 'Now tap the outer ring for a feeling';
+  _mwSetSubtitle('Now tap the outer ring for a feeling');
   document.getElementById('mood-wheel-actions').style.display = 'none';
   document.getElementById('mood-wheel-selected').style.display = 'none';
   document.getElementById('mood-wheel-clear').style.display = 'block';
@@ -36840,7 +36860,7 @@ function _mwOuterClick(feelingIdx) {
   document.getElementById('mood-wheel-selected').style.display = '';
   document.getElementById('mood-wheel-actions').style.display = '';
   document.getElementById('mood-wheel-clear').style.display = 'block';
-  document.getElementById('mood-wheel-subtitle').textContent = '';
+  _mwSetSubtitle('');
   // Update LOG button color to match category
   const logBtn = document.getElementById('log-mood-btn');
   if (logBtn) logBtn.style.background = cat.color;
@@ -36925,7 +36945,7 @@ function saveMoodEntry() {
   document.getElementById('mood-wheel-actions').style.display = 'none';
   document.getElementById('mood-wheel-selected').style.display = 'none';
   document.getElementById('mood-wheel-clear').style.display = 'none';
-  document.getElementById('mood-wheel-subtitle').textContent = 'Tap a section to name how you feel right now.';
+  _mwSetSubtitle('Tap a section to name how you feel right now.');
   const moodTimingInput = document.getElementById('mood-timing');
   if (moodTimingInput) moodTimingInput.value = 'post';
 
@@ -36960,12 +36980,11 @@ function renderMoodCheckinLabel() {
   const { deduped } = _getTodayMoods();
   const postEntry = deduped.find(e => e.timing === 'post');
   const hintEl = document.getElementById('mood-wheel-timing-hint');
-  if (!postEntry) { el.textContent = 'T\u0026S FEELINGS WHEEL'; el.style.color = ''; const sub = document.getElementById('mood-wheel-subtitle'); if (sub) sub.textContent = 'Tap a section to name how you feel right now.'; if (hintEl) hintEl.style.display = 'flex'; return; }
+  if (!postEntry) { el.textContent = 'T\u0026S FEELINGS WHEEL'; el.style.color = ''; _mwSetSubtitle('Tap a section to name how you feel right now.'); if (hintEl) hintEl.style.display = 'flex'; return; }
   if (hintEl) hintEl.style.display = 'none';
   el.style.color = 'var(--success)';
   el.innerHTML = `<span>FEELINGS WHEEL \u00b7 \u2713 ${postEntry.emoji} ${postEntry.label}</span>`;
-  const sub = document.getElementById('mood-wheel-subtitle');
-  if (sub) sub.textContent = 'Tap to update';
+  _mwSetSubtitle('Tap to update');
 }
 
 function shareMoodLift() {
@@ -38890,7 +38909,7 @@ function _toggleCardioHistory() {
   _cardioHistoryOpen = !_cardioHistoryOpen;
   const list = document.getElementById('cardio-history-list');
   const chevron = document.getElementById('cardio-history-chevron');
-  if (list) list.style.display = _cardioHistoryOpen ? 'block' : 'none';
+  if (list) list.classList.toggle('collapsed', !_cardioHistoryOpen);
   if (chevron) chevron.style.transform = _cardioHistoryOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
 
