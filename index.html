@@ -34447,9 +34447,15 @@ const _WT_STEPS = [
     pos: 'center'
   },
   {
+    target: '.header-right',
+    title: `QUICK ACCESS`,
+    body: `Three shortcuts at the top: your Friends feed, the full Exercise Library, and Travel Mode for hotel or minimal-equipment sessions.`,
+    pos: 'below'
+  },
+  {
     target: '.stat-grid',
     title: `YOUR DAILY STATS`,
-    body: `Sessions logged, today's muscle focus, and your weekly streak. All three update automatically after every workout.`,
+    body: `Sessions logged, today's muscle focus, and your weekly streak — all updated automatically after every workout.`,
     pos: 'below'
   },
   {
@@ -34459,37 +34465,31 @@ const _WT_STEPS = [
     pos: 'below'
   },
   {
-    target: '#day-cards',
+    target: '.day-card',
     title: `YOUR TRAINING DAYS`,
-    body: `These are your workout sessions for the week. Tap any card to expand it and see your exercises, then hit START to begin logging.`,
-    pos: 'above'
-  },
-  {
-    target: '.header-right',
-    title: `QUICK ACCESS`,
-    body: `Three shortcuts up top: your Friends feed and social activity, the full Exercise Library to explore any movement, and Travel Mode for hotel or minimal-equipment sessions.`,
+    body: `Tap any day card to expand it and see your exercises. Hit START to begin logging sets, reps, and RPE.`,
     pos: 'below'
   },
   {
-    target: '[aria-label="History"]',
+    target: '.nav-item[aria-label="History"]',
     title: `STATS TAB`,
-    body: `Every past session with full set-by-set detail. Also your PR board, strength score, and volume trends over time.`,
+    body: `Every past session with full set-by-set detail, your PR board, strength score, and volume trends over time.`,
     pos: 'above'
   },
   {
-    target: '[aria-label="Cardio"]',
+    target: '.nav-item[aria-label="Cardio"]',
     title: `CARDIO TAB`,
     body: `Log runs, walks, and rides. Built-in timer with presets, Health Connect import, and a weekly distance and calorie summary.`,
     pos: 'above'
   },
   {
-    target: '[aria-label="Mindset"]',
+    target: '.nav-item[aria-label="Mindset"]',
     title: `MINDSET TAB`,
-    body: `Mood check-in before and after training, a self-compassion exercise, and a CBT reframe tool for the tough days when life gets in the way.`,
+    body: `Mood check-in before and after training, a self-compassion exercise, and a CBT reframe tool for when life gets in the way.`,
     pos: 'above'
   },
   {
-    target: '[aria-label="Settings"]',
+    target: '.nav-item[aria-label="Settings"]',
     title: `SETTINGS`,
     body: `Update your profile, swap exercises, adjust training days, set notification preferences, and back up your data.`,
     pos: 'above'
@@ -34497,7 +34497,7 @@ const _WT_STEPS = [
   {
     target: null,
     title: `GO TRAIN`,
-    body: `That's the full tour. Head to Home, tap a day card, and start your first session. You can revisit this guide anytime from Settings → App Tutorial.`,
+    body: `That's the full tour. Tap a day card on Home and start your first session. You can revisit this guide anytime from Settings → App Tutorial.`,
     pos: 'center',
     isDone: true
   }
@@ -34524,11 +34524,11 @@ function _buildWalkthroughDOM() {
 
   const spotlight = document.createElement('div');
   spotlight.id = 'wt-spotlight';
-  spotlight.style.cssText = 'position:fixed;z-index:299998;border-radius:12px;pointer-events:none;display:none;transition:top 0.25s ease,left 0.25s ease,width 0.25s ease,height 0.25s ease;';
+  spotlight.style.cssText = 'position:fixed;z-index:299998;border-radius:12px;pointer-events:none;display:none;will-change:top,left,width,height;transition:top 0.28s ease,left 0.28s ease,width 0.28s ease,height 0.28s ease;';
 
   const tooltip = document.createElement('div');
   tooltip.id = 'wt-tooltip';
-  tooltip.style.cssText = 'position:fixed;z-index:299999;max-width:320px;width:calc(100% - 40px);background:var(--dark2);border:1px solid rgba(204,32,39,0.4);border-radius:16px;padding:18px 18px 14px;pointer-events:all;box-shadow:0 8px 32px rgba(0,0,0,0.6);';
+  tooltip.style.cssText = 'position:fixed;z-index:299999;max-width:340px;width:calc(100% - 40px);background:var(--dark2);border:1px solid rgba(204,32,39,0.4);border-radius:16px;padding:20px 20px 16px;pointer-events:all;box-shadow:0 12px 40px rgba(0,0,0,0.7);';
   tooltip.onclick = function(e) { e.stopPropagation(); };
 
   document.body.appendChild(overlay);
@@ -34545,41 +34545,38 @@ function _showWalkthroughStep(n) {
   const overlay = document.getElementById('wt-overlay');
   if (!spotlight || !tooltip || !overlay) return;
 
-  const isCenter = step.pos === 'center' || !step.target;
   const pad = 10;
+  const ttH = 220;
+  const el = step.target ? document.querySelector(step.target) : null;
+  const isCenter = step.pos === 'center' || !el;
 
   if (isCenter) {
     spotlight.style.display = 'none';
     overlay.style.background = 'rgba(0,0,0,0.85)';
   } else {
-    const el = document.querySelector(step.target);
-    if (el) {
-      const r = el.getBoundingClientRect();
-      spotlight.style.display = 'block';
-      spotlight.style.top = (r.top - pad) + 'px';
-      spotlight.style.left = (r.left - pad) + 'px';
-      spotlight.style.width = (r.width + pad * 2) + 'px';
-      spotlight.style.height = (r.height + pad * 2) + 'px';
-      spotlight.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.82),0 0 0 2px rgba(204,32,39,0.5)';
-      overlay.style.background = 'transparent';
-    } else {
-      spotlight.style.display = 'none';
-      overlay.style.background = 'rgba(0,0,0,0.85)';
-    }
+    const r = el.getBoundingClientRect();
+    spotlight.style.display = 'block';
+    spotlight.style.top = (r.top - pad) + 'px';
+    spotlight.style.left = (r.left - pad) + 'px';
+    spotlight.style.width = (r.width + pad * 2) + 'px';
+    spotlight.style.height = (r.height + pad * 2) + 'px';
+    spotlight.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.82),0 0 0 2px rgba(204,32,39,0.55)';
+    overlay.style.background = 'transparent';
   }
 
   const dots = Array.from({length: total}, function(_, i) {
     const active = i === n;
-    return '<span style="display:inline-block;width:' + (active ? 16 : 6) + 'px;height:6px;border-radius:3px;background:' + (active ? 'var(--red)' : '#444') + ';margin:0 2px;transition:all 0.2s;"></span>';
+    return '<span style="display:inline-block;width:' + (active ? 18 : 6) + 'px;height:6px;border-radius:3px;background:' + (active ? 'var(--red)' : '#444') + ';margin:0 2px;transition:all 0.25s;"></span>';
   }).join('');
 
   const isDone = !!step.isDone;
-  tooltip.innerHTML = '<div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:8px;">' + step.title + '</div>'
-    + '<div style="font-size:14px;color:var(--gray-light);line-height:1.65;margin-bottom:14px;">' + step.body + '</div>'
-    + '<div style="display:flex;justify-content:center;margin-bottom:12px;">' + dots + '</div>'
+  const skipLabel = isDone ? 'CLOSE' : 'SKIP TOUR';
+  tooltip.innerHTML = '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;line-height:1.1;margin-bottom:10px;">' + step.title + '</div>'
+    + '<div style="font-size:14px;color:var(--gray-light);line-height:1.7;margin-bottom:16px;">' + step.body + '</div>'
+    + '<div style="display:flex;justify-content:center;align-items:center;margin-bottom:14px;gap:0;">' + dots + '</div>'
     + '<div style="display:flex;gap:10px;align-items:center;">'
-    + '<button onclick="_closeWalkthrough()" style="background:none;border:none;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;padding:4px 0;flex-shrink:0;">SKIP</button>'
-    + '<button onclick="_walkthroughNext()" style="flex:1;background:var(--red);border:none;color:white;padding:13px;border-radius:10px;font-family:\'Bebas Neue\',cursive;font-size:17px;letter-spacing:2px;cursor:pointer;">' + (isDone ? 'DONE ✓' : 'NEXT →') + '</button>'
+    + '<button onclick="_closeWalkthrough()" style="background:none;border:none;color:var(--gray);font-family:\'Barlow Condensed\',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;padding:6px 0;flex-shrink:0;-webkit-tap-highlight-color:transparent;">' + skipLabel + '</button>'
+    + '<button onclick="_walkthroughNext()" style="flex:1;background:var(--red);border:none;color:white;padding:14px;border-radius:10px;font-family:\'Bebas Neue\',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;">' + (isDone ? 'DONE ✓' : 'NEXT →') + '</button>'
     + '</div>';
 
   if (isCenter) {
@@ -34587,19 +34584,15 @@ function _showWalkthroughStep(n) {
     tooltip.style.left = '50%';
     tooltip.style.transform = 'translate(-50%, -50%)';
   } else {
-    const el = document.querySelector(step.target);
-    if (el) {
-      const r = el.getBoundingClientRect();
-      const ttH = 210;
-      tooltip.style.transform = '';
-      tooltip.style.left = '20px';
-      if (step.pos === 'below') {
-        const topVal = r.bottom + pad + 12;
-        tooltip.style.top = Math.min(topVal, window.innerHeight - ttH - 16) + 'px';
-      } else {
-        const topVal = r.top - pad - 12 - ttH;
-        tooltip.style.top = Math.max(topVal, 80) + 'px';
-      }
+    const r = el.getBoundingClientRect();
+    tooltip.style.transform = 'none';
+    tooltip.style.left = '20px';
+    if (step.pos === 'below') {
+      const topVal = r.bottom + pad + 14;
+      tooltip.style.top = Math.min(topVal, window.innerHeight - ttH - 20) + 'px';
+    } else {
+      const topVal = r.top - pad - 14 - ttH;
+      tooltip.style.top = Math.max(topVal, 80) + 'px';
     }
   }
 }
