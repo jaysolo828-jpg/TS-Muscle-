@@ -3123,9 +3123,10 @@
         <input id="supabase-password-input" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:#1e1c1c; border:1px solid #2e2e2e; color:var(--cream); font-family:'Barlow',sans-serif; font-size:15px; padding:13px 48px 13px 14px; border-radius:10px; outline:none;">
         <button type="button" onclick="var i=document.getElementById('supabase-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
       </div>
-      <button onclick="supabaseSignInEmail()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; padding:14px; border-radius:12px; cursor:pointer; -webkit-tap-highlight-color:transparent;">CREATE ACCOUNT / SIGN IN</button>
-      <div style="text-align:center; margin-top:12px;">
+      <button id="supabase-signin-btn" onclick="supabaseSignInEmail()" style="width:100%; background:#C0392B; border:none; color:#fff; font-family:'Bebas Neue',cursive; font-size:18px; letter-spacing:2px; padding:14px; border-radius:12px; cursor:pointer; -webkit-tap-highlight-color:transparent;">CREATE ACCOUNT / SIGN IN</button>
+      <div style="text-align:center; margin-top:10px; display:flex; justify-content:center; gap:16px;">
         <button onclick="supabaseDismiss()" style="background:none; border:none; color:#555; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; padding:4px 8px; -webkit-tap-highlight-color:transparent;">NOT RIGHT NOW</button>
+        <button onclick="supabaseResetPassword()" style="background:none; border:none; color:#666; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; padding:4px 8px; -webkit-tap-highlight-color:transparent;">FORGOT PASSWORD?</button>
       </div>
     </div>
   </div>
@@ -7997,6 +7998,17 @@ function _getSupabaseClient() {
   return _supabaseClient;
 }
 
+// Race a Supabase (or any thenable) query against a timeout.
+// Rejects with Error('timeout') if ms elapses first.
+function _withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise(function(_, reject) {
+      setTimeout(function() { reject(new Error('timeout')); }, ms);
+    })
+  ]);
+}
+
 // Show/hide the auth card on the home screen
 function _updateSupabaseAuthCard() {
   const card = document.getElementById('supabase-auth-card');
@@ -8136,7 +8148,10 @@ function _updateSettingsAccountSection() {
           <input id="settings-password-input" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #2e2e2e;color:var(--cream);font-family:'Barlow',sans-serif;font-size:15px;padding:13px 48px 13px 14px;border-radius:10px;outline:none;">
           <button type="button" onclick="var i=document.getElementById('settings-password-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#666;">👁</button>
         </div>
-        <button onclick="supabaseSignInEmailFromSettings()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CREATE ACCOUNT / SIGN IN</button>
+        <button id="settings-signin-btn" onclick="supabaseSignInEmailFromSettings()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CREATE ACCOUNT / SIGN IN</button>
+        <div style="text-align:center;margin-top:8px;">
+          <button onclick="supabaseResetPassword()" style="background:none;border:none;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;">FORGOT PASSWORD?</button>
+        </div>
       </div>`;
   }
 }
@@ -8173,7 +8188,8 @@ async function supabaseChangeEmail() {
   sheet.innerHTML = '<div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #C0392B;">'
     + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">CHANGE EMAIL</div>'
     + (currentEmail ? '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;color:var(--gray);letter-spacing:0.5px;margin-bottom:18px;">Current: ' + escapeHtml(currentEmail) + '</div>' : '<div style="margin-bottom:18px;"></div>')
-    + '<input id="ce-new-email" type="email" placeholder="New email address" autocomplete="email" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:\'Barlow\',sans-serif;font-size:16px;padding:13px 14px;border-radius:10px;outline:none;margin-bottom:16px;">'
+    + '<input id="ce-new-email" type="email" placeholder="New email address" autocomplete="off" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:\'Barlow\',sans-serif;font-size:16px;padding:13px 14px;border-radius:10px;outline:none;margin-bottom:10px;">'
+    + '<input id="ce-confirm-email" type="email" placeholder="Confirm new email" autocomplete="off" style="width:100%;box-sizing:border-box;background:#1e1c1c;border:1px solid #333;color:var(--cream);font-family:\'Barlow\',sans-serif;font-size:16px;padding:13px 14px;border-radius:10px;outline:none;margin-bottom:16px;">'
     + '<button onclick="_submitNewEmail()" style="width:100%;background:#C0392B;border:none;color:#fff;font-family:\'Bebas Neue\',cursive;font-size:20px;letter-spacing:2px;padding:14px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;">SEND CONFIRMATION</button>'
     + '<button onclick="document.getElementById(\'change-email-sheet\').remove()" style="width:100%;background:none;border:none;color:#666;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;margin-top:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>'
     + '</div>';
@@ -8184,8 +8200,13 @@ async function supabaseChangeEmail() {
 
 async function _submitNewEmail() {
   const newEmail = (document.getElementById('ce-new-email')?.value || '').trim();
+  const confirmEmail = (document.getElementById('ce-confirm-email')?.value || '').trim();
   if (!newEmail || !newEmail.includes('@') || !newEmail.includes('.')) {
     showToast('Enter a valid email address.');
+    return;
+  }
+  if (newEmail !== confirmEmail) {
+    showToast('Email addresses do not match. Check both fields.');
     return;
   }
   const sb = _getSupabaseClient();
@@ -8290,6 +8311,9 @@ async function supabaseSignInEmailFromSettings() {
   const email = (document.getElementById('settings-email-input')?.value || '').trim();
   const password = (document.getElementById('settings-password-input')?.value || '');
   if (!email || !password) { showToast('Enter email and password.'); return; }
+  const btn = document.getElementById('settings-signin-btn');
+  const origText = btn ? btn.textContent : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'SIGNING IN...'; }
   try {
     let { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error?.message?.includes('Invalid login')) {
@@ -8309,9 +8333,25 @@ async function supabaseSignInEmailFromSettings() {
     if (data?.session?.access_token) _cachedJwt = data.session.access_token;
     if (data?.user) await _onSupabaseSignIn(data.user);
   } catch(e) { showToast(e.message || 'Sign in failed.'); }
+  finally { if (btn && origText) { btn.disabled = false; btn.textContent = origText; } }
 }
 
 
+
+async function supabaseResetPassword() {
+  const sb = _getSupabaseClient();
+  if (!sb) { showToast('Social features unavailable. Try again later.'); return; }
+  const email = (
+    (document.getElementById('supabase-email-input')?.value || '') ||
+    (document.getElementById('settings-email-input')?.value || '')
+  ).trim();
+  if (!email) { showToast('Enter your email address first, then tap Forgot Password.'); return; }
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/' });
+    if (error) { showToast(error.message || 'Could not send reset email.'); return; }
+    showToast('Password reset email sent. Check your inbox.');
+  } catch (e) { showToast('Could not send reset email. Try again.'); }
+}
 
 async function supabaseSignInGoogle() {
   const sb = _getSupabaseClient();
@@ -8336,6 +8376,9 @@ async function supabaseSignInEmail() {
   const email = (document.getElementById('supabase-email-input')?.value || '').trim();
   const password = (document.getElementById('supabase-password-input')?.value || '');
   if (!email || !password) { showToast('Enter your email and password.'); return; }
+  const btn = document.getElementById('supabase-signin-btn');
+  const origText = btn ? btn.textContent : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'SIGNING IN...'; }
   try {
     // Try sign-in first, then sign-up if user doesn't exist
     let result = await sb.auth.signInWithPassword({ email, password });
@@ -8357,6 +8400,8 @@ async function supabaseSignInEmail() {
     }
   } catch(e) {
     showToast('Sign in failed. Please try again.');
+  } finally {
+    if (btn && origText) { btn.disabled = false; btn.textContent = origText; }
   }
 }
 
@@ -8539,12 +8584,16 @@ async function _checkSupabaseSession() {
     const tsAuthMatch = hash.match(/[#&]ts_auth=([^&]+)/);
     if (isPWA && tsAuthMatch) {
       try {
-        const { at, rt } = JSON.parse(atob(tsAuthMatch[1]));
+        const { at, rt, pr } = JSON.parse(atob(tsAuthMatch[1]));
         if (at && rt) {
           const { data: { session: s } } = await sb.auth.setSession({ access_token: at, refresh_token: rt });
           // Clean the token from the URL so it doesn't persist
           history.replaceState(null, '', window.location.pathname);
-          if (s?.user) { await _onSupabaseSignIn(s.user); return; }
+          if (s?.user) {
+            await _onSupabaseSignIn(s.user);
+            if (pr) setTimeout(() => supabaseChangePassword(), 500);
+            return;
+          }
         }
       } catch(e) {}
     }
@@ -8553,7 +8602,8 @@ async function _checkSupabaseSession() {
     if (!isPWA && hash.includes('access_token')) {
       const { data: { session: s } } = await sb.auth.getSession();
       if (s?.access_token && s?.refresh_token) {
-        const encoded = btoa(JSON.stringify({ at: s.access_token, rt: s.refresh_token }));
+        const isRecovery = hash.includes('type=recovery');
+        const encoded = btoa(JSON.stringify({ at: s.access_token, rt: s.refresh_token, ...(isRecovery ? { pr: true } : {}) }));
         const returnUrl = window.location.origin + '/#ts_auth=' + encoded;
         // Show a full-screen overlay prompting user to return to the PWA
         const overlay = document.createElement('div');
@@ -8582,6 +8632,8 @@ async function _checkSupabaseSession() {
       _updateSupabaseAuthCard();
     } else if (session?.user && !state.supabaseUserId) {
       await _onSupabaseSignIn(session.user);
+      // Recovery link opened directly in TWA/PWA — hash contains type=recovery
+      if (hash.includes('type=recovery')) setTimeout(() => supabaseChangePassword(), 500);
     } else if (session?.user) {
       state.supabaseUserId = session.user.id;
       _updateSupabaseAuthCard();
@@ -9698,10 +9750,19 @@ async function _loadFriendsList() {
 
   list.innerHTML = '<div style="text-align:center;padding:24px 12px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1px;">LOADING...</div>';
 
-  const { data: rows } = await sb.from('friendships')
-    .select('requester_id, addressee_id')
-    .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
-    .eq('status', 'accepted');
+  let rows;
+  try {
+    ({ data: rows } = await _withTimeout(
+      sb.from('friendships')
+        .select('requester_id, addressee_id')
+        .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
+        .eq('status', 'accepted'),
+      8000
+    ));
+  } catch (e) {
+    list.innerHTML = '<div style="text-align:center;padding:24px 12px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1px;">Could not load crew. Check your connection and try again.</div>';
+    return;
+  }
 
   if (!rows || rows.length === 0) {
     list.innerHTML = `<div style="text-align:center;padding:24px 12px 8px;">
@@ -9719,14 +9780,23 @@ async function _loadFriendsList() {
   // no extra round-trip. Users sorted by last_active desc so recently-
   // active crew bubble to the top (nullsFirst: false pushes users who
   // have never been seen to the bottom).
-  const [{ data: users }, { data: mutes }, { data: blocks }] = await Promise.all([
-    sb.from('users')
-      .select('id, display_name, username, last_active, avatar_color, avatar_url')
-      .in('id', friendIds)
-      .order('last_active', { ascending: false, nullsFirst: false }),
-    sb.from('workout_notif_mutes').select('muted_friend_id').eq('muter_id', state.supabaseUserId),
-    sb.from('blocked_users').select('blocked_id').eq('blocker_id', state.supabaseUserId)
-  ]);
+  let users, mutes, blocks;
+  try {
+    ([{ data: users }, { data: mutes }, { data: blocks }] = await _withTimeout(
+      Promise.all([
+        sb.from('users')
+          .select('id, display_name, username, last_active, avatar_color, avatar_url')
+          .in('id', friendIds)
+          .order('last_active', { ascending: false, nullsFirst: false }),
+        sb.from('workout_notif_mutes').select('muted_friend_id').eq('muter_id', state.supabaseUserId),
+        sb.from('blocked_users').select('blocked_id').eq('blocker_id', state.supabaseUserId)
+      ]),
+      8000
+    ));
+  } catch (e) {
+    list.innerHTML = '<div style="text-align:center;padding:24px 12px;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);letter-spacing:1px;">Could not load crew. Check your connection and try again.</div>';
+    return;
+  }
   _mutedFriends.clear();
   (mutes || []).forEach(m => { _mutedFriends.add(m.muted_friend_id); });
   _blockedUsers.clear();
@@ -10577,10 +10647,19 @@ async function _loadNotifPrefs() {
       .single();
     const dbPrefs = (data && data.notif_prefs) || {};
     state.notifPrefs = Object.assign(_getDefaultNotifPrefs(), dbPrefs);
-    // Always make sure timezone is current (user may have traveled).
+    // Keep timezone current so quiet hours work correctly after travel.
+    // If the device timezone differs from what's stored, write it back to
+    // the DB so the edge function uses the right window on next push.
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (tz) state.notifPrefs.timezone = tz;
+      if (tz && tz !== dbPrefs.timezone) {
+        state.notifPrefs.timezone = tz;
+        sb.from('users')
+          .update({ notif_prefs: state.notifPrefs })
+          .eq('id', state.supabaseUserId)
+          .then(function() {})
+          .catch(function() {});
+      }
     } catch (_) {}
     saveState();
     _updateNotifPrefsSettingsSub();
@@ -11728,18 +11807,24 @@ async function _renderChallengeFriendPicker() {
     return;
   }
   try {
-    const { data: rows } = await sb.from('friendships')
-      .select('requester_id, addressee_id')
-      .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
-      .eq('status', 'accepted');
+    const { data: rows } = await _withTimeout(
+      sb.from('friendships')
+        .select('requester_id, addressee_id')
+        .or('requester_id.eq.' + state.supabaseUserId + ',addressee_id.eq.' + state.supabaseUserId)
+        .eq('status', 'accepted'),
+      8000
+    );
     if (!rows || !rows.length) {
       container.innerHTML = '<div style="text-align:center;padding:22px 6px;"><div style="font-family:\'Bebas Neue\',cursive;font-size:20px;color:var(--cream);letter-spacing:2px;margin-bottom:6px;">NO CREW YET</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);line-height:1.5;">Add a friend first — challenges need a sparring partner.</div></div>';
       return;
     }
     const friendIds = rows.map(f => f.requester_id === state.supabaseUserId ? f.addressee_id : f.requester_id);
-    const { data: users } = await sb.from('users')
-      .select('id, display_name, username, avatar_color, avatar_url')
-      .in('id', friendIds);
+    const { data: users } = await _withTimeout(
+      sb.from('users')
+        .select('id, display_name, username, avatar_color, avatar_url')
+        .in('id', friendIds),
+      8000
+    );
     (users || []).forEach(u => { _friendCache[u.id] = u; });
     if (!users || !users.length) {
       container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:14px;padding:10px 0;">No friends found.</div>';
@@ -11753,7 +11838,8 @@ async function _renderChallengeFriendPicker() {
     _refreshChallengeFriendPickerUi();
   } catch (e) {
     console.error('[challenge-friend-picker] load failed:', e);
-    container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:14px;padding:10px 0;">Could not load friends. Try again.</div>';
+    const msg = e.message === 'timeout' ? 'Loading timed out. Check your connection and try again.' : 'Could not load friends. Try again.';
+    container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;color:var(--gray);font-size:14px;padding:10px 0;">' + msg + '</div>';
   }
 }
 
@@ -27870,6 +27956,67 @@ function deleteHistoryEntry(entryId) {
   showToast('Session removed');
 }
 
+function _confirmBulkDeleteSessions() {
+  if (_hasActiveChallenge()) { showToast('History is locked during an active challenge.'); return; }
+  const hist = state.history || [];
+  if (hist.length === 0) return;
+
+  const now = Date.now();
+  const MS = { week: 7*24*3600*1000, month: 30*24*3600*1000, threeMonths: 90*24*3600*1000 };
+  function countOlderThan(ms) {
+    return hist.filter(function(e) { return now - new Date(e.date).getTime() > ms; }).length;
+  }
+  const opts = [];
+  const c1 = countOlderThan(MS.week);
+  const c2 = countOlderThan(MS.month);
+  const c3 = countOlderThan(MS.threeMonths);
+  if (c3 > 0) opts.push({ label: 'Older than 3 months (' + c3 + ')', ms: MS.threeMonths });
+  if (c2 > 0 && c2 !== c3) opts.push({ label: 'Older than 1 month (' + c2 + ')', ms: MS.month });
+  if (c1 > 0 && c1 !== c2) opts.push({ label: 'Older than 1 week (' + c1 + ')', ms: MS.week });
+  opts.push({ label: 'All sessions (' + hist.length + ')', ms: -1 });
+
+  const existing = document.getElementById('bulk-delete-sheet');
+  if (existing) { existing.remove(); return; }
+  const sheet = document.createElement('div');
+  sheet.id = 'bulk-delete-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  let optHtml = opts.map(function(o, i) {
+    return '<button onclick="_bulkDeleteSessions(' + JSON.stringify(o.ms) + ');document.getElementById(\'bulk-delete-sheet\').remove();" '
+      + 'style="width:100%;background:transparent;border:1px solid #333;color:var(--cream);font-family:\'Barlow Condensed\',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;padding:14px;border-radius:12px;cursor:pointer;text-align:left;margin-bottom:8px;-webkit-tap-highlight-color:transparent;">'
+      + escapeHtml(o.label) + '</button>';
+  }).join('');
+  sheet.innerHTML = '<div style="background:#161414;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:28px 24px 40px;border-top:2px solid #C0392B;">'
+    + '<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;color:var(--cream);letter-spacing:2px;margin-bottom:4px;">CLEAR SESSIONS</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;color:var(--gray);letter-spacing:0.5px;margin-bottom:20px;">Select which sessions to delete. This cannot be undone.</div>'
+    + optHtml
+    + '<button onclick="document.getElementById(\'bulk-delete-sheet\').remove()" style="width:100%;background:none;border:none;color:#666;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:1px;padding:10px;margin-top:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;">CANCEL</button>'
+    + '</div>';
+  sheet.addEventListener('click', function(e) { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+}
+
+function _bulkDeleteSessions(olderThanMs) {
+  if (_hasActiveChallenge()) { showToast('History is locked during an active challenge.'); return; }
+  const hist = state.history || [];
+  const now = Date.now();
+  const toRemove = olderThanMs < 0
+    ? new Set(hist.map(function(e) { return String(e.id); }))
+    : new Set(hist.filter(function(e) { return now - new Date(e.date).getTime() > olderThanMs; }).map(function(e) { return String(e.id); }));
+  if (toRemove.size === 0) { showToast('No sessions to delete.'); return; }
+  haptic(HAPTIC.warning);
+  state.history = hist.filter(function(e) { return !toRemove.has(String(e.id)); });
+  state.totalSessions = Math.max(0, state.totalSessions - toRemove.size);
+  const dpp = state.trainingDaysPerWeek || (state.program && state.program.length) || 4;
+  const cyc = state.cycleCount || 1;
+  const cs = state.history.filter(function(e) { return e.cycleNum === cyc || (!e.cycleNum && cyc === 1); }).length;
+  state.weekCount = Math.max(1, Math.min(8, Math.floor(cs / dpp) + 1));
+  recalcPRsFromHistory();
+  saveState();
+  renderHistory();
+  renderHome();
+  showToast(toRemove.size + ' session' + (toRemove.size !== 1 ? 's' : '') + ' deleted');
+}
+
 function recalcPRsFromHistory() {
   // Rebuild PR board from scratch based on remaining history.
   // Only exercises that appear in at least one entry.prs array are real PRs;
@@ -29131,7 +29278,23 @@ function renderHistory() {
   );
   if (sorted.length === 0) return;
 
-  container.appendChild(mkLabel(sorted.length === 1 ? 'LAST SESSION' : 'SESSION LOG'));
+  {
+    const logHeader = document.createElement('div');
+    logHeader.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:4px;';
+    const logTitle = document.createElement('span');
+    logTitle.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--cream);';
+    logTitle.textContent = sorted.length === 1 ? 'LAST SESSION' : 'SESSION LOG';
+    logHeader.appendChild(logTitle);
+    if (sorted.length > 1) {
+      const clearBtn = document.createElement('button');
+      clearBtn.onclick = _confirmBulkDeleteSessions;
+      clearBtn.title = 'Delete a range of sessions';
+      clearBtn.style.cssText = 'background:none;border:none;color:var(--gray);cursor:pointer;padding:4px 2px;display:flex;align-items:center;gap:5px;font-family:"Barlow Condensed",sans-serif;font-size:12px;letter-spacing:1px;-webkit-tap-highlight-color:transparent;';
+      clearBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>CLEAR OLD';
+      logHeader.appendChild(clearBtn);
+    }
+    container.appendChild(logHeader);
+  }
   const RECENT_COUNT = 3;
   const recent = sorted.slice(0, RECENT_COUNT);
   const older = sorted.slice(RECENT_COUNT);
