@@ -34471,6 +34471,27 @@ const _WT_STEPS = [
     pos: 'below'
   },
   {
+    target: null,
+    title: `INSIDE A WORKOUT`,
+    body: `<div style="background:rgba(255,255,255,0.05);border:1px solid #333;border-radius:10px;padding:12px 12px 10px;margin-bottom:12px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--red-text);letter-spacing:2px;margin-bottom:8px;">EACH SET</div>
+      <div style="display:flex;gap:6px;margin-bottom:9px;">
+        <span style="flex:1;background:var(--dark3);border:1px solid #333;border-radius:6px;padding:8px 4px;text-align:center;font-size:11px;color:var(--gray-light);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">WEIGHT</span>
+        <span style="flex:1;background:var(--dark3);border:1px solid #333;border-radius:6px;padding:8px 4px;text-align:center;font-size:11px;color:var(--gray-light);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">REPS</span>
+        <span style="flex:1;background:var(--dark3);border:1px solid #333;border-radius:6px;padding:8px 4px;text-align:center;font-size:11px;color:var(--gray-light);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">RPE</span>
+        <span style="width:34px;flex-shrink:0;background:var(--red);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;">✓</span>
+      </div>
+      <div style="font-size:12px;color:#777;line-height:1.5;text-align:center;"><span style="color:#4caf50;">▲ Exceeded</span> &nbsp;·&nbsp; <span style="color:#aaa;">✓ Hit target</span> &nbsp;·&nbsp; <span style="color:#e57373;">▼ Fell short</span></div>
+    </div>
+    <div style="font-size:13px;color:var(--gray-light);line-height:1.9;">
+      ⏱ <strong style="color:var(--cream);">Rest timer</strong> — vibrates when time is up<br>
+      🍽 <strong style="color:var(--cream);">Plate calculator</strong> — exact bar loading every set<br>
+      <strong style="color:var(--cream);">EXIT</strong> saves your progress to resume later<br>
+      <strong style="color:var(--cream);">COMPLETE ✓</strong> ends the session and shows your summary
+    </div>`,
+    pos: 'center'
+  },
+  {
     target: '.nav-item[aria-label="History"]',
     title: `STATS TAB`,
     body: `Every past session with full set-by-set detail, your PR board, strength score, and volume trends over time.`,
