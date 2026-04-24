@@ -34440,18 +34440,12 @@ const _TUTORIAL_SLIDES_ORIG_PLACEHOLDER = [
 
 let tutorialStep = -1; // -1 = index view
 
-function openTutorial(startSlide) {
-  tutorialStep = (typeof startSlide === 'number') ? startSlide : -1;
+function openTutorial() {
+  tutorialStep = -1;
   buildTutorialIndex();
   buildTutorialSlides();
   updateTutorialUI();
   document.getElementById('tutorial-modal').style.display = 'flex';
-}
-
-function _maybeShowWalkthrough() {
-  if (localStorage.getItem('ts-walkthrough-shown')) return;
-  localStorage.setItem('ts-walkthrough-shown', '1');
-  openTutorial(0);
 }
 
 function closeTutorial() {
@@ -36130,9 +36124,6 @@ function confirmAutoPopulate(yes, modal) {
   setTimeout(() => modal.remove(), 150);
   const name = state.profile?.name || 'champ';
   showToast(yes ? `Weights locked in, ${name}! 💪` : `Got it. Enter weights as you go!`);
-  if (!state.history || state.history.length === 0) {
-    setTimeout(_maybeShowWalkthrough, 1000);
-  }
 }
 
 function closeOnboardingModal() {
