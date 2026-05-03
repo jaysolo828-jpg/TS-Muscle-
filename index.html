@@ -3738,7 +3738,7 @@
           <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:3px; margin-bottom:20px;">T&amp;S MUSCLE</div>
           <div style="font-family:'Bebas Neue',cursive; font-size:52px; color:var(--cream); letter-spacing:3px; line-height:1.0; margin-bottom:18px;">LET'S BUILD<br>YOUR PROGRAM</div>
           <div style="width:48px; height:3px; background:var(--red); border-radius:2px; margin:0 auto 22px;"></div>
-          <div style="font-size:17px; color:var(--cream); line-height:1.7; max-width:270px; margin:0 auto; opacity:0.85;">5 questions. Your full personalized program — ready before you know it.</div>
+          <div style="font-size:17px; color:var(--cream); line-height:1.7; max-width:270px; margin:0 auto; opacity:0.85;">Answer a few questions. Your full personalized program, built for you.</div>
         </div>
         <div class="ob-button-row" style="flex-direction:column; gap:12px;">
           <div style="display:flex; justify-content:center; gap:8px;">
@@ -3772,7 +3772,7 @@
             <span style="font-size:26px;">💪</span>
             <div>
               <div style="font-weight:bold; font-size:16px;">I'm New — Build My Program</div>
-              <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">~2 minutes. Your program is ready when you're done.</div>
+              <div style="font-size:14px; color:#d0cbc6; margin-top:4px;">Your program is ready when you're done.</div>
             </div>
           </div>
         </button>
@@ -3917,7 +3917,7 @@
       <div style="font-family:'Bebas Neue',cursive; font-size:34px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">YOUR SPLIT</div>
       <div style="font-size:15px; color:#d0cbc6; margin-bottom:6px; line-height:1.6;">How your training is organized across the week.</div>
       <div style="background:rgba(204,32,39,0.08); border-left:3px solid var(--red); border-radius:8px; padding:10px 14px; font-size:14px; color:#d0cbc6; margin-bottom:16px; line-height:1.6;">
-        <strong style="color:var(--cream);">Don't know what a split is? That's fine.</strong> Just answer the two questions below and tap <strong style="color:var(--cream);">USE THIS →</strong> on the recommendation. You're done.
+        <strong style="color:var(--cream);">Don't know what a split is? That's fine.</strong> Just answer the two questions below and tap <strong style="color:var(--cream);">YES, THIS ONE →</strong> on the recommendation. You're done.
       </div>
 
       <!-- Priority + days context pickers — feed into recommendation, update on tap -->
@@ -4166,7 +4166,7 @@
 
     <!-- STEP 6: First Week -->
     <div id="onboard-step-6" class="onboard-step" style="display:none;">
-      <div style="font-family:'Bebas Neue',cursive; font-size:34px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">ONE THING BEFORE YOU START</div>
+      <div style="font-family:'Bebas Neue',cursive; font-size:34px; color:var(--cream); letter-spacing:2px; margin-bottom:6px;">BEFORE YOU START</div>
       <div style="font-size:15px; color:#d0cbc6; margin-bottom:20px; line-height:1.6;">Week 1 is calibration. Don't go hard — give the app data to find your real working weights.</div>
 
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:22px;">
@@ -4300,6 +4300,20 @@
               <div>
                 <div style="font-size:14px; color:var(--cream); font-weight:600;">Stats</div>
                 <div style="font-size:13px; color:var(--gray-light); line-height:1.4;">PRs, volume &amp; strength score</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:20px;">👥</span>
+              <div>
+                <div style="font-size:14px; color:var(--cream); font-weight:600;">Friends</div>
+                <div style="font-size:13px; color:var(--gray-light); line-height:1.4;">See who's training, react &amp; hype</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:20px;">🏆</span>
+              <div>
+                <div style="font-size:14px; color:var(--cream); font-weight:600;">Challenges</div>
+                <div style="font-size:13px; color:var(--gray-light); line-height:1.4;">1RM contests with your crew</div>
               </div>
             </div>
           </div>
@@ -35236,6 +35250,22 @@ function onboardNext(step) {
   document.querySelector(`.onboard-dot[data-step="${step}"]`)?.classList.add('active');
   document.getElementById('onboarding-modal').scrollTop = 0;
   setTimeout(_checkObScroll, 50);
+  if (step === 2) _initGoalEcho();
+}
+
+function _initGoalEcho() {
+  const gv = document.getElementById('ob-goal').value;
+  if (!gv) return;
+  const echoMap = {
+    size:     "Got it — you're here to build muscle. Moderate weights, higher reps, more volume.",
+    strength: "Got it — you're here to get stronger. Heavier weights, lower reps, more intensity.",
+    both:     "Got it — you want both. A powerbuilding balance: strength and size in the same program.",
+    wellness: "Got it — you're here to feel better. Moderate effort, consistent movement, sustainable habits. The T&S Split is built for you."
+  };
+  const echoEl = document.getElementById('ob-goal-echo');
+  if (echoEl && echoMap[gv]) { echoEl.textContent = echoMap[gv]; echoEl.style.display = 'block'; }
+  const previewEl = document.getElementById('ob-goal-rep-preview');
+  if (previewEl && typeof buildGoalRepPreviewHTML === 'function') { previewEl.innerHTML = buildGoalRepPreviewHTML(gv); previewEl.style.display = 'block'; }
 }
 
 function onboardBack(step) {
@@ -35244,6 +35274,7 @@ function onboardBack(step) {
   document.querySelectorAll('.onboard-dot').forEach(d => d.classList.remove('active'));
   document.querySelector(`.onboard-dot[data-step="${step}"]`)?.classList.add('active');
   document.getElementById('onboarding-modal').scrollTop = 0;
+  if (step === 2) _initGoalEcho();
   setTimeout(_checkObScroll, 50);
 }
 
@@ -36355,7 +36386,7 @@ function buildOnboardingSummary() {
   if (headlineEl) headlineEl.textContent = `YOU'RE ALL SET, ${name.toUpperCase()}`;
   document.getElementById('ob-greeting').textContent = splitType === 'ts'
     ? `Your T&S program is built for mental health and consistency. 3 days a week, moderate effort, compound lifts. Week 1 is about finding your rhythm. Log your RPE honestly and the app will learn you.`
-    : `Your program is built for ${goalDesc}. Week 1 is a calibration week — just train, log your RPE, and let the app learn you. Your weights will be dialled in after 4 sessions.`;
+    : `Your program is built for ${goalDesc}. Week 1 is a calibration week — just train, log your RPE, and let the app learn you. Your weights will be dialed in after 4 sessions.`;
   const _obSummaryPriority = exp !== 'beginner' ? (document.getElementById('ob-priority')?.value || '') : '';
   const _priorityBoostLabels = { chest: 'Chest', back: 'Back', shoulders: 'Shoulders', arms: 'Arms', glutes: 'Glutes', hamstrings: 'Hamstrings', quads: 'Quads', calves: 'Calves' };
   const _priorityNamed = _obSummaryPriority ? _obSummaryPriority.split(',').filter(Boolean).map(function(p) { return _priorityBoostLabels[p] || p; }).join(', ') : '';
