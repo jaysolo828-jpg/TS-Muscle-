@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ts-muscle-v279';
+const CACHE_NAME = 'ts-muscle-v280';
 const _SW_BASE = new URL('./', self.location.href).href;
 const ASSETS = ['./index.html', './exercise-library.js', './supabase.min.js', './icon.png', './icon-192.png', './badge-dumbbell.png', './manifest.json'];
 
@@ -150,19 +150,26 @@ self.addEventListener('notificationclick', function(event) {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
-  // config.js / supabase-config.js / onesignal-config.js: always network, never cache.
-  // These are Netlify Edge Functions that inject env vars at runtime.
+  // config.js / supabase-config.js / onesignal-config.js: stale-while-revalidate.
+  // These are Netlify Edge Functions that inject env vars at runtime, but the env
+  // vars (SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, ONESIGNAL_APP_ID) are effectively
+  // constants. Serving from cache immediately means Supabase can initialize without
+  // waiting on a network round-trip after the app has been idle, which is the main
+  // cause of the slow-open-after-a-day problem. The background revalidation keeps
+  // the cache fresh so any future env var changes propagate on the next open.
   if (e.request.url.includes('config.js')) {
-    const isSupabase  = e.request.url.includes('supabase-config.js');
-    const isOneSignal = e.request.url.includes('onesignal-config.js');
     e.respondWith(
-      fetch(new Request(e.request, { cache: 'no-store' }))
-        .catch(() => new Response(
-          isSupabase  ? "window.SUPABASE_URL = ''; window.SUPABASE_PUBLISHABLE_KEY = '';" :
-          isOneSignal ? "window.ONESIGNAL_APP_ID = '';" :
-                        "window.ANTHROPIC_API_KEY = '';",
-          { status: 200, headers: { 'content-type': 'application/javascript' } }
-        ))
+      caches.open(CACHE_NAME).then(cache =>
+        cache.match(e.request).then(cached => {
+          const networkFetch = fetch(new Request(e.request, { cache: 'no-store' }))
+            .then(resp => {
+              if (resp && resp.status === 200) cache.put(e.request, resp.clone());
+              return resp;
+            })
+            .catch(() => null);
+          return cached || networkFetch;
+        })
+      )
     );
     return;
   }
