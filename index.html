@@ -17752,8 +17752,7 @@ function _stopMidnightCheckInterval() {
 // Set to true when ready to enforce the paywall in production.
 const _BILLING_LIVE = false;
 
-const _SKU_MONTHLY = 'ts_muscle_monthly';
-const _SKU_ANNUAL  = 'ts_muscle_annual';
+const _SKU_MONTHLY = 'muscle_monthly';
 const _BILLING_URL = 'https://play.google.com/billing';
 
 async function _getDigitalGoodsService() {
@@ -17784,7 +17783,7 @@ async function _loadAndCheckSubscription() {
     if (svc) {
       try {
         const purchases = await svc.listPurchases();
-        const hasActive = purchases.some(p => p.itemId === _SKU_MONTHLY || p.itemId === _SKU_ANNUAL);
+        const hasActive = purchases.some(p => p.itemId === _SKU_MONTHLY);
         if (!hasActive) {
           state.subscriptionStatus = 'expired';
           saveState();
@@ -17821,26 +17820,23 @@ async function _showSubscribeScreenAsync() {
   if (document.getElementById('ts-subscribe-screen')) return;
 
   let monthlyDetails = null;
-  let annualDetails  = null;
   try {
-    const details = await svc.getDetails([_SKU_MONTHLY, _SKU_ANNUAL]);
+    const details = await svc.getDetails([_SKU_MONTHLY]);
     monthlyDetails = details.find(d => d.itemId === _SKU_MONTHLY) || null;
-    annualDetails  = details.find(d => d.itemId === _SKU_ANNUAL)  || null;
   } catch(_) {
     // Products not yet created in Play Console — skip gate during development.
     return;
   }
 
-  _showSubscribeScreen(monthlyDetails, annualDetails);
+  _showSubscribeScreen(monthlyDetails);
 }
 
-function _showSubscribeScreen(monthlyDetails, annualDetails) {
+function _showSubscribeScreen(monthlyDetails) {
   const el = document.createElement('div');
   el.id = 'ts-subscribe-screen';
   el.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0a0a0a;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:0 0 40px;';
 
   const monthlyPrice = monthlyDetails?.price || '';
-  const annualPrice  = annualDetails?.price  || '';
 
   const features = [
     'Full training program with progressive overload',
@@ -17865,21 +17861,12 @@ function _showSubscribeScreen(monthlyDetails, annualDetails) {
         ${features.map(f => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><div style="color:#CC2027;font-size:16px;flex-shrink:0;line-height:1.4;">&#10003;</div><div style="font-family:'Barlow',sans-serif;font-size:14px;color:#ccc;line-height:1.4;">${f}</div></div>`).join('')}
       </div>
 
-      <div style="display:flex;gap:8px;margin-bottom:16px;">
-        <button id="sub-btn-monthly" onclick="_subSelectPlan('monthly')"
-          style="flex:1;padding:16px 8px;border-radius:12px;border:2px solid #CC2027;background:rgba(204,32,39,0.1);color:#F5E6C8;cursor:pointer;text-align:center;">
-          <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;">MONTHLY</div>
-          <div style="font-family:'Barlow',sans-serif;font-size:13px;color:#aaa;margin-top:2px;">${monthlyPrice}</div>
-        </button>
-        <button id="sub-btn-annual" onclick="_subSelectPlan('annual')"
-          style="flex:1;padding:16px 8px;border-radius:12px;border:2px solid #333;background:transparent;color:#F5E6C8;cursor:pointer;text-align:center;position:relative;">
-          <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#CC2027;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px;padding:2px 8px;border-radius:99px;white-space:nowrap;">BEST VALUE</div>
-          <div style="font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;">ANNUAL</div>
-          <div style="font-family:'Barlow',sans-serif;font-size:13px;color:#aaa;margin-top:2px;">${annualPrice}</div>
-        </button>
+      <div style="background:#1a1a1a;border:2px solid #CC2027;border-radius:14px;padding:16px;margin-bottom:16px;text-align:center;">
+        <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:#F5E6C8;">MONTHLY</div>
+        <div style="font-family:'Barlow',sans-serif;font-size:15px;color:#aaa;margin-top:4px;">${monthlyPrice}</div>
       </div>
 
-      <button id="sub-cta-btn" onclick="_purchaseSubscription(_SKU_MONTHLY)"
+      <button onclick="_purchaseSubscription(_SKU_MONTHLY)"
         style="width:100%;background:#CC2027;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:18px;border-radius:14px;cursor:pointer;margin-bottom:12px;">
         SUBSCRIBE
       </button>
@@ -17893,21 +17880,6 @@ function _showSubscribeScreen(monthlyDetails, annualDetails) {
   document.body.appendChild(el);
 }
 
-function _subSelectPlan(plan) {
-  const monthly = document.getElementById('sub-btn-monthly');
-  const annual  = document.getElementById('sub-btn-annual');
-  const cta     = document.getElementById('sub-cta-btn');
-  if (!monthly || !annual || !cta) return;
-  if (plan === 'monthly') {
-    monthly.style.borderColor = '#CC2027'; monthly.style.background = 'rgba(204,32,39,0.1)';
-    annual.style.borderColor  = '#333';    annual.style.background  = 'transparent';
-    cta.onclick = function() { _purchaseSubscription(_SKU_MONTHLY); };
-  } else {
-    annual.style.borderColor  = '#CC2027'; annual.style.background  = 'rgba(204,32,39,0.1)';
-    monthly.style.borderColor = '#333';    monthly.style.background = 'transparent';
-    cta.onclick = function() { _purchaseSubscription(_SKU_ANNUAL); };
-  }
-}
 
 async function _purchaseSubscription(sku) {
   const svc = await _getDigitalGoodsService();
@@ -17963,7 +17935,7 @@ async function _restoreSubscriptionPurchases() {
 
   try {
     const purchases = await svc.listPurchases();
-    const active    = purchases.find(p => p.itemId === _SKU_MONTHLY || p.itemId === _SKU_ANNUAL);
+    const active    = purchases.find(p => p.itemId === _SKU_MONTHLY);
     if (!active) { showToast('No active subscription found.', 'error'); return; }
 
     const token = active.purchaseToken || '';
