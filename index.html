@@ -3761,9 +3761,9 @@
           <div style="width:48px; height:3px; background:var(--red); border-radius:2px; margin:0 auto 20px;"></div>
           <div style="font-size:16px; color:var(--cream); line-height:1.65; max-width:280px; margin:0 auto;">Try everything free for 14 days. No charge until your trial ends.</div>
         </div>
-        <div id="intro-price-card" style="display:none; background:var(--dark3); border:1px solid rgba(204,32,39,0.3); border-radius:14px; padding:20px; margin-bottom:24px; text-align:center;">
+        <div id="intro-price-card" style="background:var(--dark3); border:1px solid rgba(204,32,39,0.3); border-radius:14px; padding:20px; margin-bottom:24px; text-align:center;">
           <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:2px; color:#888; margin-bottom:8px;">AFTER YOUR TRIAL</div>
-          <div id="intro-trial-price" style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:2px;"></div>
+          <div id="intro-trial-price" style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:2px;">SEE PLAY STORE</div>
           <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#888; letter-spacing:1px; margin-top:4px;">PER MONTH &middot; CANCEL ANYTIME</div>
         </div>
         <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
@@ -35138,12 +35138,10 @@ async function _introLoadTrialPrice() {
     if (d?.price) {
       const el = document.getElementById('intro-trial-price');
       const el2 = document.getElementById('intro-trial-price-legal');
-      const card = document.getElementById('intro-price-card');
       if (el) el.textContent = d.price;
       if (el2) el2.textContent = d.price;
-      if (card) card.style.display = 'block';
     }
-  } catch(_) {}
+  } catch(e) { console.warn('_introLoadTrialPrice failed:', e); }
 }
 
 async function _introSubscribeNow() {
