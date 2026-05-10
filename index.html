@@ -8177,6 +8177,13 @@ function _updateSettingsAccountSection() {
           </div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
+        <div class="settings-item" onclick="_redeemPromoCode()" style="cursor:pointer;">
+          <div>
+            <div class="settings-label" style="color:var(--gray);font-size:14px;">Redeem Code</div>
+            <div class="settings-sub">Enter a promo or gift code</div>
+          </div>
+          <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
         <div class="settings-item" onclick="supabaseSignOut()">
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Sign Out</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -17902,6 +17909,11 @@ function _showSubscribeScreen(monthlyDetails) {
         style="width:100%;background:none;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;cursor:pointer;">
         RESTORE PURCHASE
       </button>
+
+      <button onclick="_redeemPromoCode()"
+        style="width:100%;background:none;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;cursor:pointer;">
+        REDEEM CODE
+      </button>
     </div>`;
 
   document.body.appendChild(el);
@@ -17985,6 +17997,11 @@ async function _restoreSubscriptionPurchases() {
     showToast('Subscription restored!');
 
   } catch(_) { showToast('Could not restore. Please try again.', 'error'); }
+}
+
+function _redeemPromoCode() {
+  const pkg = 'io.github.jaysolo828_jpg.twa';
+  window.open('https://play.google.com/redeem?package=' + pkg, '_blank');
 }
 
 function _openSubscriptionManagement() {
