@@ -3770,10 +3770,10 @@
           <button onclick="introDone()" class="onboard-next-btn" style="width:100%;">START FREE TRIAL →</button>
           <button id="intro-subscribe-now-btn" onclick="_introSubscribeNow()" style="width:100%;background:none;border:2px solid #CC2027;color:#CC2027;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;padding:15px;border-radius:12px;cursor:pointer;">SUBSCRIBE NOW</button>
         </div>
-        <div style="font-family:'Barlow',sans-serif; font-size:12px; color:#888; text-align:center; line-height:1.6; margin-bottom:8px;">
+        <div style="font-family:'Barlow',sans-serif; font-size:14px; color:#ccc; text-align:center; line-height:1.7; margin-bottom:8px;">
           14-day free trial, then <span id="intro-trial-price-legal">—</span>/month via Google Play.<br>Cancel anytime in Google Play settings.
         </div>
-        <button id="intro-restore-btn" onclick="_introRestorePurchase()" style="width:100%;background:none;border:none;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;padding:10px;cursor:pointer;margin-bottom:8px;">RESTORE PURCHASE</button>
+        <button id="intro-restore-btn" onclick="_introRestorePurchase()" style="width:100%;background:none;border:none;color:#aaa;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px;cursor:pointer;margin-bottom:8px;">RESTORE PURCHASE</button>
         <div style="display:flex; gap:10px; padding-bottom:32px;">
           <button onclick="introSlideNext(3)" class="onboard-back-btn">← BACK</button>
         </div>
@@ -17849,7 +17849,7 @@ async function _showSubscribeScreenAsync() {
   let monthlyDetails = null;
   try {
     const details = await svc.getDetails([_SKU_MONTHLY_DETAILS]);
-    monthlyDetails = details.find(d => d.itemId === _SKU_MONTHLY_DETAILS) || null;
+    monthlyDetails = details[0] || null;
   } catch(_) {
     // Products not yet created in Play Console — skip gate during development.
     return;
@@ -35135,7 +35135,7 @@ async function _introLoadTrialPrice() {
   if (!svc) return;
   try {
     const details = await svc.getDetails([_SKU_MONTHLY_DETAILS]);
-    const d = details.find(x => x.itemId === _SKU_MONTHLY_DETAILS);
+    const d = details[0];
     if (d?.price) {
       const el = document.getElementById('intro-trial-price');
       const el2 = document.getElementById('intro-trial-price-legal');
