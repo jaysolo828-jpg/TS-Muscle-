@@ -3748,7 +3748,7 @@
           </div>
           <div style="display:flex; gap:10px;">
             <button onclick="introSlideNext(2)" class="onboard-back-btn">← BACK</button>
-            <button onclick="introSlideNext(4);_introLoadTrialPrice();" class="onboard-next-btn" style="flex:1;">NEXT →</button>
+            <button onclick="_introShowSlide4()" class="onboard-next-btn" style="flex:1;">NEXT →</button>
           </div>
         </div>
       </div>
@@ -3770,9 +3770,10 @@
           <button onclick="introDone()" class="onboard-next-btn" style="width:100%;">START FREE TRIAL →</button>
           <button id="intro-subscribe-now-btn" onclick="_introSubscribeNow()" style="width:100%;background:none;border:2px solid #CC2027;color:#CC2027;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;padding:15px;border-radius:12px;cursor:pointer;">SUBSCRIBE NOW</button>
         </div>
-        <div style="font-family:'Barlow',sans-serif; font-size:11px; color:#555; text-align:center; line-height:1.6; margin-bottom:20px;">
+        <div style="font-family:'Barlow',sans-serif; font-size:11px; color:#555; text-align:center; line-height:1.6; margin-bottom:16px;">
           14-day free trial, then <span id="intro-trial-price-legal">—</span>/month via Google Play.<br>Cancel anytime in Google Play settings.
         </div>
+        <button id="intro-restore-btn" onclick="_introRestorePurchase()" style="width:100%;background:none;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;padding:10px;cursor:pointer;margin-bottom:12px;">RESTORE PURCHASE</button>
         <div style="display:flex; gap:10px;">
           <button onclick="introSlideNext(3)" class="onboard-back-btn">← BACK</button>
         </div>
@@ -35099,8 +35100,7 @@ function onboardBackToIntro() {
   document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
   document.getElementById('onboard-step-intro').style.display = 'block';
   document.querySelectorAll('.intro-slide').forEach(s => s.style.display = 'none');
-  document.getElementById('intro-slide-4').style.display = 'block';
-  _introLoadTrialPrice();
+  _introShowSlide4();
   document.getElementById('onboarding-modal').scrollTop = 0;
 }
 
@@ -35110,6 +35110,23 @@ function onboardBackToWelcome() {
   document.querySelectorAll('.onboard-step').forEach(s => s.style.display = 'none');
   document.getElementById('onboard-step-0').style.display = 'block';
   document.getElementById('onboarding-modal').scrollTop = 0;
+}
+
+function _introShowSlide4() {
+  if (state.subscriptionStatus === 'active') { introDone(); return; }
+  introSlideNext(4);
+  _introLoadTrialPrice();
+}
+
+async function _introRestorePurchase() {
+  const btn = document.getElementById('intro-restore-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'CHECKING...'; }
+  await _restoreSubscriptionPurchases();
+  if (state.subscriptionStatus === 'active') {
+    introDone();
+  } else {
+    if (btn) { btn.disabled = false; btn.textContent = 'RESTORE PURCHASE'; }
+  }
 }
 
 async function _introLoadTrialPrice() {
