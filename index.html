@@ -17779,6 +17779,7 @@ function _stopMidnightCheckInterval() {
 const _BILLING_LIVE = false;
 
 const _SKU_MONTHLY = 'muscle_monthly';
+const _SKU_MONTHLY_DETAILS = 'muscle_monthly:monthly-plan';
 const _BILLING_URL = 'https://play.google.com/billing';
 
 async function _getDigitalGoodsService() {
@@ -17847,8 +17848,8 @@ async function _showSubscribeScreenAsync() {
 
   let monthlyDetails = null;
   try {
-    const details = await svc.getDetails([_SKU_MONTHLY]);
-    monthlyDetails = details.find(d => d.itemId === _SKU_MONTHLY) || null;
+    const details = await svc.getDetails([_SKU_MONTHLY_DETAILS]);
+    monthlyDetails = details.find(d => d.itemId === _SKU_MONTHLY_DETAILS) || null;
   } catch(_) {
     // Products not yet created in Play Console — skip gate during development.
     return;
@@ -35133,8 +35134,8 @@ async function _introLoadTrialPrice() {
   const svc = await _getDigitalGoodsService();
   if (!svc) return;
   try {
-    const details = await svc.getDetails([_SKU_MONTHLY]);
-    const d = details.find(x => x.itemId === _SKU_MONTHLY);
+    const details = await svc.getDetails([_SKU_MONTHLY_DETAILS]);
+    const d = details.find(x => x.itemId === _SKU_MONTHLY_DETAILS);
     if (d?.price) {
       const el = document.getElementById('intro-trial-price');
       const el2 = document.getElementById('intro-trial-price-legal');
