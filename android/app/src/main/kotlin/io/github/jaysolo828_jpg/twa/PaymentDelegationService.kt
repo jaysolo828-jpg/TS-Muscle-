@@ -1,6 +1,6 @@
 package io.github.jaysolo828_jpg.twa
 
-import com.google.androidbrowserhelper.billing.DigitalGoodsRequestHandler
+import com.google.androidbrowserhelper.playbilling.digitalgoods.DigitalGoodsRequestHandler
 import com.google.androidbrowserhelper.trusted.DelegationService
 
 class PaymentDelegationService : DelegationService() {
