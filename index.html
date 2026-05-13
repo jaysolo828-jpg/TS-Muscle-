@@ -8170,10 +8170,10 @@ function _updateSettingsAccountSection() {
           <div><div class="settings-label" style="color:var(--gray);font-size:14px;">Change Password</div></div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
-        <div class="settings-item" onclick="_openSubscriptionManagement()" style="cursor:pointer;">
+        <div class="settings-item" onclick="${state.subscriptionStatus === 'active' ? '_openSubscriptionManagement()' : '_showSubscribeScreenAsync()'}" style="cursor:pointer;">
           <div>
             <div class="settings-label" style="color:var(--gray);font-size:14px;">Subscription</div>
-            <div class="settings-sub">${state.subscriptionStatus === 'active' ? (state.subscriptionSku === 'ts_muscle_annual' ? 'Annual plan' : 'Monthly plan') : state.subscriptionStatus === 'trial' ? 'Free trial active' : 'Expired'}</div>
+            <div class="settings-sub">${state.subscriptionStatus === 'active' ? 'Monthly plan — tap to manage' : state.subscriptionStatus === 'trial' ? 'Free trial active — tap to subscribe' : 'Expired — tap to subscribe'}</div>
           </div>
           <div class="settings-arrow"><svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--gray)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
