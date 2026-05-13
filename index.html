@@ -8504,7 +8504,8 @@ async function _onSupabaseSignIn(user) {
       display_name: rawName || tempUsername,
       username: tempUsername,
       avatar_color: '#C0392B',
-      trial_start_at: new Date().toISOString()
+      trial_start_at: new Date().toISOString(),
+      subscription_status: 'trial'
     });
     state.trialStartAt = new Date().toISOString();
     state.subscriptionStatus = 'trial';
@@ -17783,7 +17784,7 @@ function _stopMidnightCheckInterval() {
 // ============================================================
 
 // Set to true when ready to enforce the paywall in production.
-const _BILLING_LIVE = false;
+const _BILLING_LIVE = true;
 
 const _SKU_MONTHLY = 'muscle_monthly';
 const _SKU_MONTHLY_DETAILS = 'muscle_monthly:monthly-plan';
@@ -17835,6 +17836,7 @@ async function _loadAndCheckSubscription() {
     if (daysIn > 14) {
       state.subscriptionStatus = 'expired';
       saveState();
+      try { await sb.from('users').update({ subscription_status: 'expired' }).eq('id', state.supabaseUserId); } catch(_) {}
     }
   }
 
@@ -17900,7 +17902,7 @@ function _showSubscribeScreen(monthlyDetails) {
         <div style="font-family:'Barlow',sans-serif;font-size:15px;color:#aaa;margin-top:4px;">${monthlyPrice}</div>
       </div>
 
-      <button onclick="_purchaseSubscription(_SKU_MONTHLY)"
+      <button id="sub-cta-btn" onclick="_purchaseSubscription(_SKU_MONTHLY)"
         style="width:100%;background:#CC2027;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;padding:18px;border-radius:14px;cursor:pointer;margin-bottom:12px;">
         SUBSCRIBE
       </button>
