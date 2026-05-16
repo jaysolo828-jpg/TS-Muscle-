@@ -2183,7 +2183,7 @@
     letter-spacing: 0.5px;
     opacity: 0;
     transition: all 0.3s;
-    z-index: 999999;
+    z-index: 2147483647;
     pointer-events: none;
     white-space: nowrap;
   }
@@ -17937,73 +17937,31 @@ function _showSubscribeScreen(monthlyDetails) {
 
 
 function _purchaseSubscription(sku) {
-  // Must call PaymentRequest.show() synchronously from the click handler to
-  // preserve user activation. Any await before show() consumes the activation
-  // token and Chrome silently aborts the purchase sheet on TWA — exactly the
-  // "tap does nothing" behavior we hit before this rewrite.
-  showToast('STEP 1: tapped');
-  if (!window.PaymentRequest) {
-    showToast('STEP 2 FAIL: PaymentRequest API missing', 'error');
-    return;
-  }
-
-  const cta = document.getElementById('sub-cta-btn');
-  if (cta) { cta.disabled = true; cta.textContent = 'PROCESSING...'; }
-
-  let request;
-  try {
-    request = new PaymentRequest(
-      [{ supportedMethods: _BILLING_URL, data: { sku } }],
-      { total: { label: 'T&S Muscle', amount: { currency: 'USD', value: '0' } } }
-    );
-  } catch(e) {
-    showToast('ctor: ' + String(e && (e.message || e.name)).slice(0,140), 'error');
-    if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
-    return;
-  }
-
-  // Fire show() in the SAME task as the click (no await before it).
-  const shown = request.show();
-
-  shown.then(async (response) => {
-    showToast('STEP 6: show() resolved');
-    const token = response.details?.purchaseToken || '';
-    try { await response.complete('success'); } catch(_) {}
-
-    if (token) {
-      try {
-        const svc = await _getDigitalGoodsService();
-        if (svc) await svc.acknowledge(token, 'subscription');
-      } catch(_) {}
-    }
-
-    const sb2 = _getSupabaseClient();
-    if (sb2 && state.supabaseUserId) {
-      try {
-        await sb2.from('users').update({
-          subscription_status: 'active',
-          subscription_sku: sku
-        }).eq('id', state.supabaseUserId);
-      } catch(_) {}
-    }
-    state.subscriptionStatus = 'active';
-    state.subscriptionSku    = sku;
-    saveState();
-
-    document.getElementById('ts-subscribe-screen')?.remove();
-    document.getElementById('trial-banner')?.remove();
-    _updateSettingsAccountSection();
-    showToast('Subscription activated. Welcome to T&S Muscle!');
-  }).catch((e) => {
-    if (e && e.name !== 'AbortError') {
-      const msg = (e.message || e.name) ? String(e.message || e.name).slice(0,140) : 'Purchase failed.';
-      showToast('show(): ' + msg, 'error');
-    } else {
-      showToast('show() aborted (no activation / no handler)', 'error');
-    }
-    if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
-  });
+  // Chrome's PaymentRequest discovery for https://play.google.com/billing
+  // throws "method not supported" on this app despite a textbook manifest.
+  // Stop fighting it — open the Play Store subscription page directly, same
+  // pattern as the working Redeem Code button. When the user returns to the
+  // app, _restoreSubscriptionPurchases (called by _loadAndCheckSubscription
+  // on focus) will pick up the new subscription via Digital Goods listPurchases
+  // and flip the status to active.
+  const pkg = 'io.github.jaysolo828_jpg.twa';
+  const url = 'https://play.google.com/store/account/subscriptions?package=' + pkg + '&sku=' + encodeURIComponent(sku);
+  window.open(url, '_blank');
+  document.getElementById('ts-subscribe-screen')?.remove();
 }
+
+// When the TWA regains focus (user came back from Play Store), check if a
+// new subscription was activated and update local + DB state.
+window.addEventListener('focus', () => {
+  if (state && state.supabaseUserId && state.subscriptionStatus !== 'active') {
+    _restoreSubscriptionPurchases();
+  }
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && state && state.supabaseUserId && state.subscriptionStatus !== 'active') {
+    _restoreSubscriptionPurchases();
+  }
+});
 
 async function _restoreSubscriptionPurchases() {
   const svc = await _getDigitalGoodsService();
