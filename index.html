@@ -17934,11 +17934,6 @@ async function _purchaseSubscription(sku) {
       [{ supportedMethods: _BILLING_URL, data: { sku } }],
       { total: { label: 'T&S Muscle', amount: { currency: 'USD', value: '0' } } }
     );
-    if (!await request.canMakePayment()) {
-      showToast('Google Play billing is not available.', 'error');
-      if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
-      return;
-    }
 
     const response = await request.show();
     const token    = response.details?.purchaseToken || '';
@@ -17965,7 +17960,10 @@ async function _purchaseSubscription(sku) {
     showToast('Subscription activated. Welcome to T&S Muscle!');
 
   } catch(e) {
-    if (e.name !== 'AbortError') showToast('Purchase failed. Please try again.', 'error');
+    if (e.name !== 'AbortError') {
+      const msg = (e && (e.message || e.name)) ? String(e.message || e.name).slice(0, 140) : 'Purchase failed.';
+      showToast(msg, 'error');
+    }
     if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
   }
 }
