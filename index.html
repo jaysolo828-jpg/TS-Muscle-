@@ -17787,7 +17787,12 @@ function _stopMidnightCheckInterval() {
 const _BILLING_LIVE = true;
 
 const _SKU_MONTHLY = 'muscle_monthly';
-const _SKU_MONTHLY_DETAILS = 'muscle_monthly:monthly-plan';
+// TWA Play Billing requires the bare subscription product ID for both
+// getDetails() and PaymentRequest — the "product:base_plan" suffix format
+// returns empty and PaymentRequest throws "not supported". The base plan
+// itself is selected by whichever one is marked "Backwards-compatible" in
+// Play Console. (android-browser-helper issue #449.)
+const _SKU_MONTHLY_DETAILS = _SKU_MONTHLY;
 const _BILLING_URL = 'https://play.google.com/billing';
 
 async function _getDigitalGoodsService() {
