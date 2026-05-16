@@ -17787,7 +17787,12 @@ function _stopMidnightCheckInterval() {
 const _BILLING_LIVE = true;
 
 const _SKU_MONTHLY = 'muscle_monthly';
-const _SKU_MONTHLY_DETAILS = 'muscle_monthly:monthly-plan';
+// TWA Play Billing requires the bare subscription product ID for both
+// getDetails() and PaymentRequest — the "product:base_plan" suffix format
+// returns empty and PaymentRequest throws "not supported". The base plan
+// itself is selected by whichever one is marked "Backwards-compatible" in
+// Play Console. (android-browser-helper issue #449.)
+const _SKU_MONTHLY_DETAILS = _SKU_MONTHLY;
 const _BILLING_URL = 'https://play.google.com/billing';
 
 async function _getDigitalGoodsService() {
@@ -17849,34 +17854,15 @@ async function _loadAndCheckSubscription() {
 }
 
 async function _showSubscribeScreenAsync() {
-  if (!window.getDigitalGoodsService) {
-    showToast('DGS missing (not a TWA / Chrome too old)', 'error');
-    return;
-  }
-  let svc = null;
-  try { svc = await window.getDigitalGoodsService(_BILLING_URL); }
-  catch(e) {
-    showToast('DGS init: ' + String(e && (e.message || e.name)).slice(0,120), 'error');
-    return;
-  }
-  if (!svc) {
-    showToast('DGS returned null for ' + _BILLING_URL, 'error');
-    return;
-  }
-
+  const svc = await _getDigitalGoodsService();
+  if (!svc) return;
   if (document.getElementById('ts-subscribe-screen')) return;
 
   let monthlyDetails = null;
   try {
     const details = await svc.getDetails([_SKU_MONTHLY_DETAILS]);
     monthlyDetails = details[0] || null;
-    if (!monthlyDetails) {
-      showToast('getDetails empty for ' + _SKU_MONTHLY_DETAILS + ' (SKU not active in Play Console?)', 'error');
-    }
-  } catch(e) {
-    showToast('getDetails: ' + String(e && (e.message || e.name)).slice(0,120), 'error');
-    // Still render screen so user can try Subscribe and see the next error.
-  }
+  } catch(_) {}
 
   _showSubscribeScreen(monthlyDetails);
 }
@@ -17937,31 +17923,60 @@ function _showSubscribeScreen(monthlyDetails) {
 
 
 function _purchaseSubscription(sku) {
-  // Chrome's PaymentRequest discovery for https://play.google.com/billing
-  // throws "method not supported" on this app despite a textbook manifest.
-  // Stop fighting it — open the Play Store subscription page directly, same
-  // pattern as the working Redeem Code button. When the user returns to the
-  // app, _restoreSubscriptionPurchases (called by _loadAndCheckSubscription
-  // on focus) will pick up the new subscription via Digital Goods listPurchases
-  // and flip the status to active.
-  const pkg = 'io.github.jaysolo828_jpg.twa';
-  const url = 'https://play.google.com/store/account/subscriptions?package=' + pkg + '&sku=' + encodeURIComponent(sku);
-  window.open(url, '_blank');
-  document.getElementById('ts-subscribe-screen')?.remove();
-}
+  // PaymentRequest.show() MUST be called synchronously from the click — any
+  // await before show() consumes user activation and Chrome silently aborts.
+  if (!window.PaymentRequest) {
+    showToast('PaymentRequest API missing (not a TWA?)', 'error');
+    return;
+  }
 
-// When the TWA regains focus (user came back from Play Store), check if a
-// new subscription was activated and update local + DB state.
-window.addEventListener('focus', () => {
-  if (state && state.supabaseUserId && state.subscriptionStatus !== 'active') {
-    _restoreSubscriptionPurchases();
+  const cta = document.getElementById('sub-cta-btn');
+  if (cta) { cta.disabled = true; cta.textContent = 'PROCESSING...'; }
+
+  let request;
+  try {
+    request = new PaymentRequest(
+      [{ supportedMethods: _BILLING_URL, data: { sku } }],
+      { total: { label: 'T&S Muscle', amount: { currency: 'USD', value: '0' } } }
+    );
+  } catch(e) {
+    showToast('ctor failed: ' + String(e && (e.message || e.name)).slice(0,140), 'error');
+    if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
+    return;
   }
-});
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && state && state.supabaseUserId && state.subscriptionStatus !== 'active') {
-    _restoreSubscriptionPurchases();
-  }
-});
+
+  request.show().then(async (response) => {
+    const token = response.details?.purchaseToken || '';
+    try { await response.complete('success'); } catch(_) {}
+    if (token) {
+      try {
+        const svc = await _getDigitalGoodsService();
+        if (svc) await svc.acknowledge(token, 'subscription');
+      } catch(_) {}
+    }
+    const sb2 = _getSupabaseClient();
+    if (sb2 && state.supabaseUserId) {
+      try {
+        await sb2.from('users').update({
+          subscription_status: 'active',
+          subscription_sku: sku
+        }).eq('id', state.supabaseUserId);
+      } catch(_) {}
+    }
+    state.subscriptionStatus = 'active';
+    state.subscriptionSku    = sku;
+    saveState();
+    document.getElementById('ts-subscribe-screen')?.remove();
+    document.getElementById('trial-banner')?.remove();
+    _updateSettingsAccountSection();
+    showToast('Subscription activated. Welcome to T&S Muscle!');
+  }).catch((e) => {
+    if (e && e.name !== 'AbortError') {
+      showToast(String(e.message || e.name || 'Purchase failed').slice(0,140), 'error');
+    }
+    if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
+  });
+}
 
 async function _restoreSubscriptionPurchases() {
   const svc = await _getDigitalGoodsService();
