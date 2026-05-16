@@ -9,7 +9,7 @@ import androidx.browser.customtabs.CustomTabsServiceConnection
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.google.androidbrowserhelper.trusted.LauncherActivity
+import com.google.androidbrowserhelper.playbilling.provider.LauncherActivity
 import com.google.firebase.messaging.FirebaseMessaging
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
