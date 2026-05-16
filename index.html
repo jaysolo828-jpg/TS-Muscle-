@@ -17849,19 +17849,33 @@ async function _loadAndCheckSubscription() {
 }
 
 async function _showSubscribeScreenAsync() {
-  const svc = await _getDigitalGoodsService();
-  if (!svc) return; // web browser — no billing gate
+  if (!window.getDigitalGoodsService) {
+    showToast('DGS missing (not a TWA / Chrome too old)', 'error');
+    return;
+  }
+  let svc = null;
+  try { svc = await window.getDigitalGoodsService(_BILLING_URL); }
+  catch(e) {
+    showToast('DGS init: ' + String(e && (e.message || e.name)).slice(0,120), 'error');
+    return;
+  }
+  if (!svc) {
+    showToast('DGS returned null for ' + _BILLING_URL, 'error');
+    return;
+  }
 
-  // Don't stack multiple screens.
   if (document.getElementById('ts-subscribe-screen')) return;
 
   let monthlyDetails = null;
   try {
     const details = await svc.getDetails([_SKU_MONTHLY_DETAILS]);
     monthlyDetails = details[0] || null;
-  } catch(_) {
-    // Products not yet created in Play Console — skip gate during development.
-    return;
+    if (!monthlyDetails) {
+      showToast('getDetails empty for ' + _SKU_MONTHLY_DETAILS + ' (SKU not active in Play Console?)', 'error');
+    }
+  } catch(e) {
+    showToast('getDetails: ' + String(e && (e.message || e.name)).slice(0,120), 'error');
+    // Still render screen so user can try Subscribe and see the next error.
   }
 
   _showSubscribeScreen(monthlyDetails);
@@ -17923,8 +17937,15 @@ function _showSubscribeScreen(monthlyDetails) {
 
 
 async function _purchaseSubscription(sku) {
+  if (!window.PaymentRequest) {
+    showToast('PaymentRequest API missing in this Chrome', 'error');
+    return;
+  }
   const svc = await _getDigitalGoodsService();
-  if (!svc) return;
+  if (!svc) {
+    showToast('Subscribe: DGS unavailable', 'error');
+    return;
+  }
 
   const cta = document.getElementById('sub-cta-btn');
   if (cta) { cta.disabled = true; cta.textContent = 'PROCESSING...'; }
