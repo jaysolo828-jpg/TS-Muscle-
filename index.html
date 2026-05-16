@@ -17936,40 +17936,55 @@ function _showSubscribeScreen(monthlyDetails) {
 }
 
 
-async function _purchaseSubscription(sku) {
+function _purchaseSubscription(sku) {
+  // Must call PaymentRequest.show() synchronously from the click handler to
+  // preserve user activation. Any await before show() consumes the activation
+  // token and Chrome silently aborts the purchase sheet on TWA — exactly the
+  // "tap does nothing" behavior we hit before this rewrite.
+  showToast('STEP 1: tapped');
   if (!window.PaymentRequest) {
-    showToast('PaymentRequest API missing in this Chrome', 'error');
-    return;
-  }
-  const svc = await _getDigitalGoodsService();
-  if (!svc) {
-    showToast('Subscribe: DGS unavailable', 'error');
+    showToast('STEP 2 FAIL: PaymentRequest API missing', 'error');
     return;
   }
 
   const cta = document.getElementById('sub-cta-btn');
   if (cta) { cta.disabled = true; cta.textContent = 'PROCESSING...'; }
 
+  let request;
   try {
-    const request = new PaymentRequest(
+    request = new PaymentRequest(
       [{ supportedMethods: _BILLING_URL, data: { sku } }],
       { total: { label: 'T&S Muscle', amount: { currency: 'USD', value: '0' } } }
     );
+  } catch(e) {
+    showToast('ctor: ' + String(e && (e.message || e.name)).slice(0,140), 'error');
+    if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
+    return;
+  }
 
-    const response = await request.show();
-    const token    = response.details?.purchaseToken || '';
-    await response.complete('success');
+  // Fire show() in the SAME task as the click (no await before it).
+  const shown = request.show();
+
+  shown.then(async (response) => {
+    showToast('STEP 6: show() resolved');
+    const token = response.details?.purchaseToken || '';
+    try { await response.complete('success'); } catch(_) {}
 
     if (token) {
-      try { await svc.acknowledge(token, 'subscription'); } catch(_) {}
+      try {
+        const svc = await _getDigitalGoodsService();
+        if (svc) await svc.acknowledge(token, 'subscription');
+      } catch(_) {}
     }
 
     const sb2 = _getSupabaseClient();
     if (sb2 && state.supabaseUserId) {
-      await sb2.from('users').update({
-        subscription_status: 'active',
-        subscription_sku: sku
-      }).eq('id', state.supabaseUserId);
+      try {
+        await sb2.from('users').update({
+          subscription_status: 'active',
+          subscription_sku: sku
+        }).eq('id', state.supabaseUserId);
+      } catch(_) {}
     }
     state.subscriptionStatus = 'active';
     state.subscriptionSku    = sku;
@@ -17979,14 +17994,15 @@ async function _purchaseSubscription(sku) {
     document.getElementById('trial-banner')?.remove();
     _updateSettingsAccountSection();
     showToast('Subscription activated. Welcome to T&S Muscle!');
-
-  } catch(e) {
-    if (e.name !== 'AbortError') {
-      const msg = (e && (e.message || e.name)) ? String(e.message || e.name).slice(0, 140) : 'Purchase failed.';
-      showToast(msg, 'error');
+  }).catch((e) => {
+    if (e && e.name !== 'AbortError') {
+      const msg = (e.message || e.name) ? String(e.message || e.name).slice(0,140) : 'Purchase failed.';
+      showToast('show(): ' + msg, 'error');
+    } else {
+      showToast('show() aborted (no activation / no handler)', 'error');
     }
     if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
-  }
+  });
 }
 
 async function _restoreSubscriptionPurchases() {
