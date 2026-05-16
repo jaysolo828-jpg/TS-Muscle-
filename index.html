@@ -17970,12 +17970,61 @@ function _purchaseSubscription(sku) {
     document.getElementById('trial-banner')?.remove();
     _updateSettingsAccountSection();
     showToast('Subscription activated. Welcome to T&S Muscle!');
-  }).catch((e) => {
-    if (e && e.name !== 'AbortError') {
-      showToast(String(e.message || e.name || 'Purchase failed').slice(0,140), 'error');
-    }
+  }).catch(async (e) => {
     if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
+    if (e && e.name === 'AbortError') return;
+    await _showBillingDiagnostic(e, sku);
   });
+}
+
+async function _showBillingDiagnostic(err, sku) {
+  // Build a panel with everything we'd ever need to diagnose a billing
+  // failure on a device with no devtools. Renders ABOVE the subscribe
+  // screen so it can't be hidden by another overlay.
+  const errStr = err ? (err.name + ': ' + (err.message || '(no message)')) : '(no error object)';
+  const ua = navigator.userAgent || '(no UA)';
+  const hasDGS = ('getDigitalGoodsService' in window) ? 'yes' : 'NO';
+  const hasPR = ('PaymentRequest' in window) ? 'yes' : 'NO';
+  const fcmInUrl = /fcm_token=/.test(location.search) ? 'yes (v66+ AAB)' : 'no (older AAB or sideloaded)';
+
+  let dgsStatus = '(skipped)';
+  let detailsStatus = '(skipped)';
+  let listStatus = '(skipped)';
+  try {
+    const svc = await _getDigitalGoodsService();
+    dgsStatus = svc ? 'OK' : 'null';
+    if (svc) {
+      try {
+        const d = await svc.getDetails([sku]);
+        detailsStatus = 'returned ' + d.length + ' item(s)' + (d[0] ? ' price=' + (d[0].price && d[0].price.value) : '');
+      } catch(e2) { detailsStatus = 'threw ' + (e2.name || '') + ': ' + (e2.message || ''); }
+      try {
+        const p = await svc.listPurchases();
+        listStatus = 'returned ' + p.length + ' purchase(s)';
+      } catch(e3) { listStatus = 'threw ' + (e3.name || '') + ': ' + (e3.message || ''); }
+    }
+  } catch(e4) { dgsStatus = 'threw ' + (e4.name || '') + ': ' + (e4.message || ''); }
+
+  const panel = document.createElement('div');
+  panel.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:#0a0a0a;color:#F5E6C8;padding:20px;overflow-y:auto;font-family:monospace;font-size:13px;line-height:1.5;';
+  panel.innerHTML =
+    '<div style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;color:#CC2027;margin-bottom:14px;">BILLING DIAGNOSTIC</div>' +
+    '<div><b>Error:</b> ' + _esc(errStr) + '</div>' +
+    '<div style="margin-top:12px;"><b>SKU requested:</b> ' + _esc(sku) + '</div>' +
+    '<div><b>PaymentRequest API:</b> ' + hasPR + '</div>' +
+    '<div><b>DigitalGoodsService API:</b> ' + hasDGS + '</div>' +
+    '<div><b>getDigitalGoodsService(billing):</b> ' + _esc(dgsStatus) + '</div>' +
+    '<div><b>svc.getDetails([sku]):</b> ' + _esc(detailsStatus) + '</div>' +
+    '<div><b>svc.listPurchases():</b> ' + _esc(listStatus) + '</div>' +
+    '<div><b>FCM token in launch URL:</b> ' + fcmInUrl + '</div>' +
+    '<div style="margin-top:12px;word-break:break-all;"><b>User-Agent:</b> ' + _esc(ua) + '</div>' +
+    '<div style="margin-top:12px;word-break:break-all;"><b>Location:</b> ' + _esc(location.href) + '</div>' +
+    '<button onclick="this.parentNode.remove()" style="margin-top:24px;background:#CC2027;border:none;color:#fff;font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:2px;padding:14px 28px;border-radius:10px;cursor:pointer;">CLOSE</button>';
+  document.body.appendChild(panel);
+}
+
+function _esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 async function _restoreSubscriptionPurchases() {
