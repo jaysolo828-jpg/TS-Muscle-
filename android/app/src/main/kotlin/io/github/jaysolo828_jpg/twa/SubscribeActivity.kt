@@ -22,7 +22,9 @@ class SubscribeActivity : Activity(), PurchasesUpdatedListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        sku = intent?.data?.getQueryParameter("sku") ?: "muscle_monthly"
+        sku = intent?.getStringExtra("sku")
+            ?: intent?.data?.getQueryParameter("sku")
+            ?: "muscle_monthly"
 
         billingClient = BillingClient.newBuilder(this)
             .setListener(this)
