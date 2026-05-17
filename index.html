@@ -3755,26 +3755,23 @@
 
       <!-- Slide 4: Free trial / subscribe -->
       <div class="intro-slide" id="intro-slide-4" style="display:none;">
-        <div style="text-align:center; padding-top:32px; margin-bottom:28px;">
-          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:3px; margin-bottom:16px;">T&amp;S MUSCLE</div>
-          <div style="font-family:'Bebas Neue',cursive; font-size:48px; color:var(--cream); letter-spacing:3px; line-height:1.0; margin-bottom:12px;">14-DAY<br>FREE TRIAL</div>
-          <div style="width:48px; height:3px; background:var(--red); border-radius:2px; margin:0 auto 20px;"></div>
-          <div style="font-size:16px; color:var(--cream); line-height:1.65; max-width:280px; margin:0 auto;">Try everything free for 14 days. No charge until your trial ends.</div>
+        <div style="text-align:center; padding-top:40px; margin-bottom:32px;">
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:13px; color:var(--red-text); letter-spacing:3px; margin-bottom:18px;">T&amp;S MUSCLE</div>
+          <div style="font-family:'Bebas Neue',cursive; font-size:52px; color:var(--cream); letter-spacing:3px; line-height:0.95; margin-bottom:14px;">14-DAY<br>FREE TRIAL</div>
+          <div style="width:48px; height:3px; background:var(--red); border-radius:2px; margin:0 auto 22px;"></div>
+          <div style="font-size:16px; color:var(--cream); line-height:1.6; max-width:300px; margin:0 auto;">Try everything free for 14 days. No charge until your trial ends.</div>
         </div>
-        <div id="intro-price-card" style="display:none; background:var(--dark3); border:1px solid rgba(204,32,39,0.3); border-radius:14px; padding:20px; margin-bottom:24px; text-align:center;">
-          <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:2px; color:#888; margin-bottom:8px;">AFTER YOUR TRIAL</div>
-          <div id="intro-trial-price" style="font-family:'Bebas Neue',cursive; font-size:32px; color:var(--cream); letter-spacing:2px;"></div>
-          <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; color:#888; letter-spacing:1px; margin-top:4px;">PER MONTH &middot; CANCEL ANYTIME</div>
+        <div id="intro-price-card" style="display:none; background:#1a1a1a; border:1px solid rgba(204,32,39,0.35); border-radius:14px; padding:22px; margin-bottom:24px; text-align:center;">
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:2px; color:#888; margin-bottom:10px;">AFTER YOUR TRIAL</div>
+          <div><span id="intro-trial-price" style="font-family:'Bebas Neue',cursive; font-size:40px; color:var(--cream); letter-spacing:2px;"></span><span style="font-family:'Barlow Condensed',sans-serif; font-size:14px; color:#888; letter-spacing:1px; margin-left:6px;">/ MONTH</span></div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-size:11px; color:#666; letter-spacing:1.5px; margin-top:8px;">CANCEL ANYTIME &middot; VIA GOOGLE PLAY</div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
           <button onclick="introDone()" class="onboard-next-btn" style="width:100%;">START FREE TRIAL →</button>
           <button id="intro-subscribe-now-btn" onclick="_introSubscribeNow()" style="width:100%;background:none;border:2px solid #CC2027;color:#CC2027;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;padding:15px;border-radius:12px;cursor:pointer;">SUBSCRIBE NOW</button>
         </div>
-        <div style="font-family:'Barlow',sans-serif; font-size:14px; color:#ccc; text-align:center; line-height:1.7; margin-bottom:8px;">
-          14-day free trial, then <span id="intro-trial-price-legal">—</span>/month via Google Play.<br>Cancel anytime in Google Play settings.
-        </div>
-        <button id="intro-restore-btn" onclick="_introRestorePurchase()" style="width:100%;background:none;border:none;color:#aaa;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px;cursor:pointer;margin-bottom:8px;">RESTORE PURCHASE</button>
-        <button onclick="_redeemPromoCode()" style="width:100%;background:none;border:none;color:#aaa;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px;cursor:pointer;margin-bottom:8px;">REDEEM CODE</button>
+        <button id="intro-restore-btn" onclick="_introRestorePurchase()" style="width:100%;background:none;border:none;color:#F5E6C8;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1.5px;padding:12px;cursor:pointer;">RESTORE PURCHASE</button>
+        <button onclick="_redeemPromoCode()" style="width:100%;background:none;border:none;color:#F5E6C8;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1.5px;padding:12px;cursor:pointer;margin-bottom:8px;">REDEEM CODE</button>
         <div style="display:flex; gap:10px; padding-bottom:32px;">
           <button onclick="introSlideNext(3)" class="onboard-back-btn">← BACK</button>
         </div>
@@ -17926,13 +17923,23 @@ function _showSubscribeScreen(monthlyDetails) {
 
 
 function _purchaseSubscription(sku) {
-  const cta = document.getElementById('sub-cta-btn');
-  if (cta) { cta.disabled = true; cta.textContent = 'OPENING PLAY...'; }
-  // Minimal intent URL — same exact shape as the proven-working
-  // EnableNotificationsActivity launch (no extras, no fallback URL).
-  // SubscribeActivity will default to sku='muscle_monthly' since that's
-  // the only product. If this lands in the activity, we're golden; if it
-  // still falls through, SubscribeActivity genuinely isn't in the APK.
+  const cta   = document.getElementById('sub-cta-btn');
+  const intro = document.getElementById('intro-subscribe-now-btn');
+  const _disable = (el, label) => { if (!el) return; el._origText = el.textContent; el.disabled = true; el.textContent = label; };
+  const _restore = (el, label) => { if (!el) return; el.disabled = false; el.textContent = el._origText || label; };
+  _disable(cta,   'OPENING PLAY...');
+  _disable(intro, 'OPENING PLAY...');
+
+  // If the intent doesn't resolve (user is in plain Chrome, not the TWA),
+  // the page never navigates away. Watchdog: after 3s, if we're still here,
+  // restore buttons and toast so the UI isn't dead.
+  const _t = setTimeout(() => {
+    _restore(cta,   'SUBSCRIBE');
+    _restore(intro, 'SUBSCRIBE NOW');
+    if (typeof showToast === 'function') showToast('Could not open billing. Install from Google Play to subscribe.', 'error');
+  }, 3000);
+  window.addEventListener('pagehide', () => clearTimeout(_t), { once: true });
+
   window.location.href = 'intent://buy#Intent;scheme=ts-muscle-subscribe;package=io.github.jaysolo828_jpg.twa;end';
 }
 
@@ -17967,6 +17974,16 @@ function _handleSubscribeReturn() {
     document.getElementById('trial-banner')?.remove();
     try { _updateSettingsAccountSection?.(); } catch(_) {}
     fireToast('Subscription activated. Welcome to T&S Muscle!');
+    // If user subscribed while still in the onboarding intro, advance to
+    // the profile step so they're not left staring at slide 4.
+    try {
+      const onboardModal = document.getElementById('onboarding-modal');
+      const slide4 = document.getElementById('intro-slide-4');
+      const slide4Visible = slide4 && slide4.offsetParent !== null;
+      if (onboardModal && onboardModal.style.display !== 'none' && slide4Visible && typeof introDone === 'function') {
+        document.addEventListener('DOMContentLoaded', () => { try { introDone(); } catch(_) {} }, { once: true });
+      }
+    } catch(_) {}
     const sb = _getSupabaseClient();
     if (sb && state.supabaseUserId) {
       sb.from('users').update({
