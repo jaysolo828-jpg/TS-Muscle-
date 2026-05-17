@@ -17923,25 +17923,14 @@ function _showSubscribeScreen(monthlyDetails) {
 
 
 function _purchaseSubscription(sku) {
-  // Fire the native Play Billing bridge (SubscribeActivity). Bypasses Chrome's
-  // TWA Play Billing path entirely — that path was hitting clientAppUnavailable
-  // with no actionable fix. SubscribeActivity calls Play Billing Library
-  // directly and returns to this page at /?subscribe=success&subscribe_token=...
-  // which is handled by _handleSubscribeReturn on page load.
   const cta = document.getElementById('sub-cta-btn');
   if (cta) { cta.disabled = true; cta.textContent = 'OPENING PLAY...'; }
-  // No path query string — Chrome's intent:// parser is fussy. Pass sku as a
-  // typed Intent extra (S.sku=...) instead. Fallback URL flags a clear error
-  // back to the page if the activity isn't installed (so we don't dump the
-  // user on the Play Store listing page silently).
-  const fallback = encodeURIComponent('https://app.therapyandsneakers.org/?subscribe=error&subscribe_token=no_activity_in_apk');
-  const url = 'intent://buy#Intent;' +
-              'scheme=ts-muscle-subscribe;' +
-              'package=io.github.jaysolo828_jpg.twa;' +
-              'S.sku=' + encodeURIComponent(sku) + ';' +
-              'S.browser_fallback_url=' + fallback + ';' +
-              'end';
-  window.location.href = url;
+  // Minimal intent URL — same exact shape as the proven-working
+  // EnableNotificationsActivity launch (no extras, no fallback URL).
+  // SubscribeActivity will default to sku='muscle_monthly' since that's
+  // the only product. If this lands in the activity, we're golden; if it
+  // still falls through, SubscribeActivity genuinely isn't in the APK.
+  window.location.href = 'intent://buy#Intent;scheme=ts-muscle-subscribe;package=io.github.jaysolo828_jpg.twa;end';
 }
 
 function _handleSubscribeReturn() {
