@@ -207,5 +207,25 @@
             </intent-filter>
         </service>
 
+        <!-- Native Play Billing bridge. Replaces the broken Chrome-mediated
+             TWA Play Billing path (clientAppUnavailable). Launched from JS
+             via intent://buy#Intent;scheme=ts-muscle-subscribe;...;S.sku=...;end.
+             Calls Play Billing Library directly, returns to the TWA with
+             ?subscribe=success&subscribe_token=... in the URL. -->
+        <activity
+            android:name=".SubscribeActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ts-muscle-subscribe" />
+            </intent-filter>
+        </activity>
+
     </application>
 </manifest>
