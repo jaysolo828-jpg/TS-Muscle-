@@ -17815,28 +17815,36 @@ async function _loadAndCheckSubscription() {
     if (data?.subscription_sku)    { state.subscriptionSku    = data.subscription_sku;    saveState(); }
   } catch(_) {}
 
-  // If marked active, verify via Digital Goods API that the purchase still exists.
-  if (state.subscriptionStatus === 'active') {
-    const svc = await _getDigitalGoodsService();
-    if (svc) {
-      try {
-        const purchases = await svc.listPurchases();
-        const active    = purchases.find(p => p.itemId === _SKU_MONTHLY);
-        if (!active) {
-          state.subscriptionStatus = 'expired';
+  // Always check Play, regardless of local state. This catches three cases:
+  //   1. Local state is 'active' but Play has no purchase → mark expired.
+  //   2. Local state is 'trial'/'expired' but Play DOES have a purchase
+  //      (fresh subscriber whose post-purchase DB sync didn't land, or
+  //      cross-device restore) → upgrade to 'active'.
+  //   3. Active purchase exists but isn't acknowledged → ack it so Play
+  //      doesn't auto-cancel within 72 hours.
+  const svc = await _getDigitalGoodsService();
+  if (svc) {
+    try {
+      const purchases = await svc.listPurchases();
+      const active    = purchases.find(p => p.itemId === _SKU_MONTHLY);
+      if (active) {
+        if (state.subscriptionStatus !== 'active' || state.subscriptionSku !== active.itemId) {
+          state.subscriptionStatus = 'active';
+          state.subscriptionSku    = active.itemId;
           saveState();
-          try { await sb.from('users').update({ subscription_status: 'expired' }).eq('id', state.supabaseUserId); } catch(_) {}
-        } else if (active.purchaseToken) {
-          // Belt-and-suspenders acknowledge: Play auto-cancels subscriptions
-          // that aren't acknowledged within 72 hours. SubscribeActivity acks
-          // once on purchase, but if that attempt failed (network blip) the
-          // sub is silently rotting. Re-ack every launch so we always close
-          // the window. svc.acknowledge is a no-op when already acknowledged.
+          try { await sb.from('users').update({ subscription_status: 'active', subscription_sku: active.itemId }).eq('id', state.supabaseUserId); } catch(_) {}
+        }
+        if (active.purchaseToken) {
+          // svc.acknowledge is a no-op when already acknowledged.
           try { await svc.acknowledge(active.purchaseToken, 'subscription'); } catch(_) {}
         }
-      } catch(_) {
-        // Cannot reach Play — trust DB status rather than revoking access.
+      } else if (state.subscriptionStatus === 'active') {
+        state.subscriptionStatus = 'expired';
+        saveState();
+        try { await sb.from('users').update({ subscription_status: 'expired' }).eq('id', state.supabaseUserId); } catch(_) {}
       }
+    } catch(_) {
+      // Cannot reach Play — trust DB status rather than revoking access.
     }
   }
 
