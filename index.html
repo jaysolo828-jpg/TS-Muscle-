@@ -33565,6 +33565,11 @@ let _obScrollListenerReady = false;
 (async function initApp() {
 try {
   await loadState();
+  // Native BillingClient confirmed an active Play subscription on the
+  // previous launch (via ?sub_active=1) — apply it AFTER loadState so the
+  // IDB-backup recovery path inside loadState cannot clobber it back to
+  // 'trial'. This is the authoritative truth for the device's purchase.
+  try { _applyNativeSubOverride(); } catch(_) {}
   // Restore per-signal reaction push-gate state so the per-type push
   // gate survives page reloads (otherwise a reload-then-retap of the
   // same reaction type would re-fire a push that was already sent).
@@ -33668,6 +33673,9 @@ if (navigator.storage && navigator.storage.persist) {
 
 // ── FCM token: Android TWA passes it as ?fcm_token=... on launch ──
 // ── Subscription truth: Android TWA's BillingClient passes ?sub_active=1 ──
+// Just stash on window + clean the URL. Actual state mutation happens
+// inside initApp AFTER loadState() finishes so the IDB-backup recovery
+// path inside loadState cannot clobber the 'active' flag.
 (function() {
   var p = new URLSearchParams(location.search);
   var token = p.get('fcm_token');
@@ -33678,47 +33686,8 @@ if (navigator.storage && navigator.storage.persist) {
     _saveFcmToken(token);
   }
   if (subActive === '1') {
-    // Native BillingClient confirmed an active Play subscription on the
-    // previous launch — this is the source of truth. Flip local state +
-    // clear trial DOM immediately, write through to DB once the user is
-    // signed in. Cannot rely on the web's DigitalGoodsService listPurchases
-    // — it returns empty for some users with active subs and was the
-    // reason the trial banner stayed stuck on the home screen.
-    try {
-      if (typeof state !== 'undefined' && state) {
-        state.subscriptionStatus = 'active';
-        if (subSku) state.subscriptionSku = subSku;
-        try { saveState(); } catch(_) {}
-      }
-    } catch(_) {}
-    // Remove the trial banner if it's already rendered (renderHome may have
-    // run before this IIFE in some load orders).
-    var removeTrial = function() {
-      try { document.getElementById('trial-banner')?.remove(); } catch(_) {}
-      try { document.getElementById('ts-subscribe-screen')?.remove(); } catch(_) {}
-      try { _updateSettingsAccountSection?.(); } catch(_) {}
-    };
-    removeTrial();
-    document.addEventListener('DOMContentLoaded', removeTrial, { once: true });
-    // Write through to DB as soon as Supabase is ready.
-    var dbWrite = function() {
-      try {
-        var sb = _getSupabaseClient();
-        if (!sb || !state.supabaseUserId) return false;
-        sb.from('users').update({
-          subscription_status: 'active',
-          subscription_sku: subSku || state.subscriptionSku || null
-        }).eq('id', state.supabaseUserId).then(function(){}, function(){});
-        return true;
-      } catch(_) { return false; }
-    };
-    if (!dbWrite()) {
-      var tries = 0;
-      var iv = setInterval(function() {
-        tries++;
-        if (dbWrite() || tries > 40) clearInterval(iv);
-      }, 500);
-    }
+    window._nativeSubActive = true;
+    window._nativeSubSku    = subSku || '';
   }
   if (token || subActive) {
     try {
@@ -33730,6 +33699,41 @@ if (navigator.storage && navigator.storage.persist) {
     } catch(_) {}
   }
 })();
+
+// Applied from initApp after loadState. Defined as a module-level function
+// so the post-loadState block in initApp can call it cleanly. Idempotent
+// — safe to call multiple times.
+function _applyNativeSubOverride() {
+  if (!window._nativeSubActive) return;
+  try {
+    state.subscriptionStatus = 'active';
+    if (window._nativeSubSku) state.subscriptionSku = window._nativeSubSku;
+    saveState();
+  } catch(_) {}
+  try { document.getElementById('trial-banner')?.remove(); } catch(_) {}
+  try { document.getElementById('ts-subscribe-screen')?.remove(); } catch(_) {}
+  try { _updateSettingsAccountSection?.(); } catch(_) {}
+  // Write through to DB as soon as Supabase is ready.
+  var sku = window._nativeSubSku || state.subscriptionSku || null;
+  var dbWrite = function() {
+    try {
+      var sb = _getSupabaseClient();
+      if (!sb || !state.supabaseUserId) return false;
+      sb.from('users').update({
+        subscription_status: 'active',
+        subscription_sku: sku
+      }).eq('id', state.supabaseUserId).then(function(){}, function(){});
+      return true;
+    } catch(_) { return false; }
+  };
+  if (!dbWrite()) {
+    var tries = 0;
+    var iv = setInterval(function() {
+      tries++;
+      if (dbWrite() || tries > 40) clearInterval(iv);
+    }, 500);
+  }
+}
 
 async function _saveFcmToken(token) {
   if (!token) return;
