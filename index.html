@@ -17872,13 +17872,6 @@ function _showSubscribeScreen(monthlyDetails) {
   el.id = 'ts-subscribe-screen';
   el.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0a0a0a;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:0 0 40px;';
 
-  const closeBtn = document.createElement('button');
-  closeBtn.setAttribute('aria-label', 'Close');
-  closeBtn.textContent = '✕';
-  closeBtn.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:16px;width:44px;height:44px;border-radius:22px;background:#CC2027;border:none;color:#fff;font-size:22px;font-weight:bold;line-height:1;cursor:pointer;z-index:1000000;box-shadow:0 2px 12px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:0;';
-  closeBtn.onclick = () => el.remove();
-  el.appendChild(closeBtn);
-
   const monthlyPrice = monthlyDetails?.price || '';
 
   const features = [
@@ -17892,6 +17885,7 @@ function _showSubscribeScreen(monthlyDetails) {
   ];
 
   el.innerHTML = `
+    <button id="ts-subscribe-close" aria-label="Close" style="position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:16px;width:44px;height:44px;border-radius:22px;background:#CC2027;border:none;color:#fff;font-size:22px;font-weight:bold;line-height:1;cursor:pointer;z-index:1000000;box-shadow:0 2px 12px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:0;">&#10005;</button>
     <div style="width:100%;max-width:420px;padding:0 24px;">
       <div style="text-align:center;padding:48px 0 32px;">
         <img src="./icon.png" alt="T&S Muscle" style="width:72px;height:72px;margin-bottom:16px;box-shadow:0 0 24px rgba(204,32,39,0.4);border-radius:18px;">
@@ -17926,6 +17920,7 @@ function _showSubscribeScreen(monthlyDetails) {
     </div>`;
 
   document.body.appendChild(el);
+  el.querySelector('#ts-subscribe-close')?.addEventListener('click', () => el.remove());
 }
 
 
@@ -18038,7 +18033,7 @@ function _esc(s) {
 
 async function _restoreSubscriptionPurchases() {
   const svc = await _getDigitalGoodsService();
-  if (!svc) return;
+  if (!svc) { showToast('Restore only works inside the installed app.', 'error'); return; }
 
   try {
     const purchases = await svc.listPurchases();
@@ -18068,8 +18063,19 @@ async function _restoreSubscriptionPurchases() {
 }
 
 function _redeemPromoCode() {
-  const pkg = 'io.github.jaysolo828_jpg.twa';
-  window.open('https://play.google.com/redeem?package=' + pkg, '_blank');
+  // When user returns from Play (visibility flips back), auto-check for
+  // a newly-redeemed subscription so they don't have to tap RESTORE.
+  const onReturn = () => {
+    if (document.visibilityState !== 'visible') return;
+    document.removeEventListener('visibilitychange', onReturn);
+    setTimeout(() => { try { _restoreSubscriptionPurchases(); } catch(_) {} }, 800);
+  };
+  document.addEventListener('visibilitychange', onReturn);
+
+  // Plain navigation — Android resolves play.google.com URLs to the
+  // Play Store app, which opens its redemption screen. window.open with
+  // _blank is unreliable inside a TWA.
+  window.location.href = 'https://play.google.com/redeem';
 }
 
 function _openSubscriptionManagement() {
