@@ -33667,14 +33667,64 @@ if (navigator.storage && navigator.storage.persist) {
 }
 
 // ── FCM token: Android TWA passes it as ?fcm_token=... on launch ──
+// ── Subscription truth: Android TWA's BillingClient passes ?sub_active=1 ──
 (function() {
   var p = new URLSearchParams(location.search);
   var token = p.get('fcm_token');
+  var subActive = p.get('sub_active');
+  var subSku    = p.get('sub_sku');
   if (token) {
     window._fcmToken = token;
     _saveFcmToken(token);
+  }
+  if (subActive === '1') {
+    // Native BillingClient confirmed an active Play subscription on the
+    // previous launch — this is the source of truth. Flip local state +
+    // clear trial DOM immediately, write through to DB once the user is
+    // signed in. Cannot rely on the web's DigitalGoodsService listPurchases
+    // — it returns empty for some users with active subs and was the
+    // reason the trial banner stayed stuck on the home screen.
+    try {
+      if (typeof state !== 'undefined' && state) {
+        state.subscriptionStatus = 'active';
+        if (subSku) state.subscriptionSku = subSku;
+        try { saveState(); } catch(_) {}
+      }
+    } catch(_) {}
+    // Remove the trial banner if it's already rendered (renderHome may have
+    // run before this IIFE in some load orders).
+    var removeTrial = function() {
+      try { document.getElementById('trial-banner')?.remove(); } catch(_) {}
+      try { document.getElementById('ts-subscribe-screen')?.remove(); } catch(_) {}
+      try { _updateSettingsAccountSection?.(); } catch(_) {}
+    };
+    removeTrial();
+    document.addEventListener('DOMContentLoaded', removeTrial, { once: true });
+    // Write through to DB as soon as Supabase is ready.
+    var dbWrite = function() {
+      try {
+        var sb = _getSupabaseClient();
+        if (!sb || !state.supabaseUserId) return false;
+        sb.from('users').update({
+          subscription_status: 'active',
+          subscription_sku: subSku || state.subscriptionSku || null
+        }).eq('id', state.supabaseUserId).then(function(){}, function(){});
+        return true;
+      } catch(_) { return false; }
+    };
+    if (!dbWrite()) {
+      var tries = 0;
+      var iv = setInterval(function() {
+        tries++;
+        if (dbWrite() || tries > 40) clearInterval(iv);
+      }, 500);
+    }
+  }
+  if (token || subActive) {
     try {
       p.delete('fcm_token');
+      p.delete('sub_active');
+      p.delete('sub_sku');
       var cleanQs = p.toString();
       history.replaceState(null, '', location.pathname + (cleanQs ? '?' + cleanQs : ''));
     } catch(_) {}
