@@ -35222,20 +35222,22 @@ async function _introRestorePurchase() {
 }
 
 async function _introLoadTrialPrice() {
-  const svc = await _getDigitalGoodsService();
-  if (!svc) return;
+  const el = document.getElementById('intro-trial-price');
+  const el2 = document.getElementById('intro-trial-price-legal');
+  const card = document.getElementById('intro-price-card');
+
+  let price = '$9.99';
   try {
-    const details = await svc.getDetails([_SKU_MONTHLY_DETAILS]);
-    const d = details[0];
-    if (d?.price) {
-      const el = document.getElementById('intro-trial-price');
-      const el2 = document.getElementById('intro-trial-price-legal');
-      const card = document.getElementById('intro-price-card');
-      if (el) el.textContent = d.price;
-      if (el2) el2.textContent = d.price;
-      if (card) card.style.display = 'block';
+    const svc = await _getDigitalGoodsService();
+    if (svc) {
+      const details = await svc.getDetails([_SKU_MONTHLY_DETAILS]);
+      if (details[0]?.price) price = details[0].price;
     }
   } catch(_) {}
+
+  if (el) el.textContent = price;
+  if (el2) el2.textContent = price;
+  if (card) card.style.display = 'block';
 }
 
 async function _introSubscribeNow() {
