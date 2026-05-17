@@ -18103,10 +18103,18 @@ function renderHome() {
     if (_daysLeft <= 7 && _daysLeft > 0) {
       const _trialBanner = document.createElement('div');
       _trialBanner.id = 'trial-banner';
-      _trialBanner.style.cssText = 'background:rgba(204,32,39,0.1);border:1px solid rgba(204,32,39,0.25);border-radius:12px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;';
-      _trialBanner.innerHTML = `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#CC2027;letter-spacing:1px;">${_daysLeft} DAY${_daysLeft === 1 ? '' : 'S'} LEFT IN TRIAL</div><button onclick="_showSubscribeScreenAsync()" style="background:#CC2027;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1px;padding:7px 14px;border-radius:8px;cursor:pointer;">SUBSCRIBE</button>`;
+      _trialBanner.style.cssText = 'background:#1a1a1a;border:1px solid rgba(204,32,39,0.35);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;';
+      _trialBanner.innerHTML = `<div style="flex:1;min-width:0;"><div style="font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;color:#F5E6C8;line-height:1.1;">${_daysLeft} DAY${_daysLeft === 1 ? '' : 'S'} LEFT</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;color:#888;margin-top:2px;">FREE TRIAL</div></div><button onclick="_showSubscribeScreenAsync()" style="background:#CC2027;border:none;color:#fff;font-family:'Bebas Neue',cursive;font-size:14px;letter-spacing:1.5px;padding:9px 16px;border-radius:8px;cursor:pointer;flex-shrink:0;">SUBSCRIBE</button>`;
+      // Insert AFTER the deload banner so challenge / chain / deload / pause
+      // / travel banners keep their priority at the top of the home stack.
+      // Trial banner is a soft nudge — it should yield, not interrupt.
+      const _deload = document.getElementById('deload-banner');
       const _homeContent = document.getElementById('home-main-content');
-      if (_homeContent) _homeContent.prepend(_trialBanner);
+      if (_deload && _deload.parentNode) {
+        _deload.insertAdjacentElement('afterend', _trialBanner);
+      } else if (_homeContent) {
+        _homeContent.appendChild(_trialBanner);
+      }
     }
   }
 
