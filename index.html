@@ -17925,12 +17925,17 @@ function _showSubscribeScreen(monthlyDetails) {
 function _purchaseSubscription(sku) {
   const cta = document.getElementById('sub-cta-btn');
   if (cta) { cta.disabled = true; cta.textContent = 'OPENING PLAY...'; }
-  // Minimal intent URL — same exact shape as the proven-working
-  // EnableNotificationsActivity launch (no extras, no fallback URL).
-  // SubscribeActivity will default to sku='muscle_monthly' since that's
-  // the only product. If this lands in the activity, we're golden; if it
-  // still falls through, SubscribeActivity genuinely isn't in the APK.
-  window.location.href = 'intent://buy#Intent;scheme=ts-muscle-subscribe;package=io.github.jaysolo828_jpg.twa;end';
+  // Use the explicit action + scheme form (no //host). If Chrome's package
+  // resolver has stale cache from before SubscribeActivity was installed,
+  // forcing the action makes Android's PackageManager re-query rather than
+  // relying on Chrome's cached resolution.
+  window.location.href = 'intent:#Intent;' +
+    'action=android.intent.action.VIEW;' +
+    'category=android.intent.category.DEFAULT;' +
+    'category=android.intent.category.BROWSABLE;' +
+    'scheme=ts-muscle-subscribe;' +
+    'package=io.github.jaysolo828_jpg.twa;' +
+    'end';
 }
 
 function _handleSubscribeReturn() {
