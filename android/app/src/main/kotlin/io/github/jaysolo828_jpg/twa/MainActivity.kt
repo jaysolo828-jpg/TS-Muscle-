@@ -9,6 +9,14 @@ import androidx.browser.customtabs.CustomTabsServiceConnection
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.android.billingclient.api.AcknowledgePurchaseParams
+import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.PendingPurchasesParams
+import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.PurchasesUpdatedListener
+import com.android.billingclient.api.QueryPurchasesParams
 import com.google.androidbrowserhelper.trusted.LauncherActivity
 import com.google.firebase.messaging.FirebaseMessaging
 import java.util.concurrent.CountDownLatch
@@ -120,7 +128,65 @@ class MainActivity : LauncherActivity() {
         // (via assetlinks.json), delegates to NotificationPermissionRequestActivity
         // (already declared in AndroidManifest.xml), which requests
         // POST_NOTIFICATIONS at the right moment in the lifecycle.
+        // Fire-and-forget acknowledgement of any unacked subscription purchase.
+        // SubscribeActivity acks once at purchase time, but if that single
+        // attempt failed (network blip / BillingClient disconnect) the sub is
+        // silently rotting and Play auto-cancels within 72 hours. Querying +
+        // acking on every launch closes the recovery gap. Runs entirely async
+        // off the BillingClient connection callbacks — does NOT block onCreate.
+        acknowledgeUnackedPurchases()
+
         super.onCreate(savedInstanceState)
+    }
+
+    private fun acknowledgeUnackedPurchases() {
+        try {
+            val client = BillingClient.newBuilder(applicationContext)
+                .setListener(object : PurchasesUpdatedListener {
+                    override fun onPurchasesUpdated(r: BillingResult, p: MutableList<Purchase>?) {}
+                })
+                .enablePendingPurchases(
+                    PendingPurchasesParams.newBuilder().enableOneTimeProducts().build()
+                )
+                .build()
+
+            client.startConnection(object : BillingClientStateListener {
+                override fun onBillingSetupFinished(result: BillingResult) {
+                    if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+                        try { client.endConnection() } catch (_: Exception) {}
+                        return
+                    }
+                    val params = QueryPurchasesParams.newBuilder()
+                        .setProductType(BillingClient.ProductType.SUBS)
+                        .build()
+                    client.queryPurchasesAsync(params) { _, purchases ->
+                        var pending = purchases.count {
+                            it.purchaseState == Purchase.PurchaseState.PURCHASED && !it.isAcknowledged
+                        }
+                        if (pending == 0) {
+                            try { client.endConnection() } catch (_: Exception) {}
+                            return@queryPurchasesAsync
+                        }
+                        for (purchase in purchases) {
+                            if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) continue
+                            if (purchase.isAcknowledged) continue
+                            val ack = AcknowledgePurchaseParams.newBuilder()
+                                .setPurchaseToken(purchase.purchaseToken)
+                                .build()
+                            client.acknowledgePurchase(ack) {
+                                pending -= 1
+                                if (pending <= 0) {
+                                    try { client.endConnection() } catch (_: Exception) {}
+                                }
+                            }
+                        }
+                    }
+                }
+                override fun onBillingServiceDisconnected() {}
+            })
+        } catch (_: Exception) {
+            // Swallow — next launch will retry.
+        }
     }
 
     override fun getLaunchingUrl(): Uri {

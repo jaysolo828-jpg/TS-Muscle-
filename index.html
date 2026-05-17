@@ -17819,9 +17819,10 @@ async function _syncSubscriptionFromPlay() {
       try { document.getElementById('ts-subscribe-screen')?.remove(); } catch(_) {}
       try { _updateSettingsAccountSection?.(); } catch(_) {}
     }
-    if (active.purchaseToken) {
-      try { await svc.acknowledge(active.purchaseToken, 'subscription'); } catch(_) {}
-    }
+    // NOTE: Acknowledgement is handled natively by MainActivity on every
+    // launch (BillingClient.acknowledgePurchase). DGS removed acknowledge()
+    // in spec v2.0 — calling svc.acknowledge() here throws TypeError, which
+    // is why subs were silently auto-cancelling before v73.
   } else if (state.subscriptionStatus === 'active') {
     state.subscriptionStatus = 'expired';
     saveState();
@@ -18085,7 +18086,7 @@ async function _restoreSubscriptionPurchases() {
     if (!active) { showToast('No active subscription found.', 'error'); return; }
 
     const token = active.purchaseToken || '';
-    if (token) { try { await svc.acknowledge(token, 'subscription'); } catch(_) {} }
+    // Acknowledgement runs natively in MainActivity on every launch.
 
     const sb2 = _getSupabaseClient();
     if (sb2 && state.supabaseUserId) {
