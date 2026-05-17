@@ -32512,7 +32512,16 @@ function handleImport(e) {
       // Save snapshot of current data BEFORE replacing it, so user can undo
       // from Settings if they changed their mind or hit restore by accident.
       _savePreRestoreSnapshot().then(() => {
+        // Preserve the current device's subscription state — backups
+        // captured before the user subscribed would otherwise downgrade
+        // an active subscriber back to 'trial'/'expired' on restore.
+        const _currentSubActive = state.subscriptionStatus === 'active';
+        const _preservedSub = _currentSubActive ? {
+          subscriptionStatus: state.subscriptionStatus,
+          subscriptionSku:    state.subscriptionSku,
+        } : null;
         state = { ...state, ...parsed };
+        if (_preservedSub) Object.assign(state, _preservedSub);
         // Gracefully handle missing fields when restoring older backups:
         // betweenSetCoaching: default on (existing check is `!== false`, so undefined = on)
         if (state.betweenSetCoaching === undefined) state.betweenSetCoaching = true;
@@ -32557,9 +32566,9 @@ function showImportSuccessModal({ name, sessionCount, cardioCount, backupDate })
       <div style="font-size:13px;color:var(--gray);line-height:1.5;padding:12px;background:var(--dark);border-radius:10px;border:1px solid var(--dark3);margin-bottom:18px;">
         Didn't mean to do this? You can undo this restore from <strong style="color:var(--cream);">Settings → Undo Last Restore</strong>.
       </div>
-      <button onclick="this.closest('[style*=fixed]').remove();"
+      <button onclick="location.reload();"
         style="width:100%;background:var(--red);border:none;color:white;padding:14px;border-radius:12px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;cursor:pointer;">
-        LET'S GO
+        LET&rsquo;S GO
       </button>
     </div>`;
   document.body.appendChild(modal);
