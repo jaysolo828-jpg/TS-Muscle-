@@ -17872,12 +17872,19 @@ function _showSubscribeScreen(monthlyDetails) {
   el.id = 'ts-subscribe-screen';
   el.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0a0a0a;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:0 0 40px;';
 
+  const closeBtn = document.createElement('button');
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = 'position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:20px;background:#1a1a1a;border:1px solid #2a2a2a;color:#F5E6C8;font-size:18px;line-height:1;cursor:pointer;z-index:1;';
+  closeBtn.onclick = () => el.remove();
+  el.appendChild(closeBtn);
+
   const monthlyPrice = monthlyDetails?.price || '';
 
   const features = [
     'Full training program with progressive overload',
     'AI between-set coaching',
-    '1RM challenges with friends',
+    'Challenges with friends',
     'Workout streaks and volume tracking',
     'Friend activity and reactions',
     'Health Connect sync',
@@ -17908,12 +17915,12 @@ function _showSubscribeScreen(monthlyDetails) {
       </button>
 
       <button onclick="_restoreSubscriptionPurchases()"
-        style="width:100%;background:none;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;cursor:pointer;">
+        style="width:100%;background:none;border:none;color:#F5E6C8;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:1.5px;padding:14px;cursor:pointer;">
         RESTORE PURCHASE
       </button>
 
       <button onclick="_redeemPromoCode()"
-        style="width:100%;background:none;border:none;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;padding:12px;cursor:pointer;">
+        style="width:100%;background:none;border:none;color:#F5E6C8;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:1.5px;padding:14px;cursor:pointer;">
         REDEEM CODE
       </button>
     </div>`;
