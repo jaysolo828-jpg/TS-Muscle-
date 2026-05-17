@@ -18038,7 +18038,7 @@ function _esc(s) {
 
 async function _restoreSubscriptionPurchases() {
   const svc = await _getDigitalGoodsService();
-  if (!svc) return;
+  if (!svc) { showToast('Restore only works inside the installed app.', 'error'); return; }
 
   try {
     const purchases = await svc.listPurchases();
@@ -18068,8 +18068,19 @@ async function _restoreSubscriptionPurchases() {
 }
 
 function _redeemPromoCode() {
-  const pkg = 'io.github.jaysolo828_jpg.twa';
-  window.open('https://play.google.com/redeem?package=' + pkg, '_blank');
+  // When user returns from Play (visibility flips back), auto-check for
+  // a newly-redeemed subscription so they don't have to tap RESTORE.
+  const onReturn = () => {
+    if (document.visibilityState !== 'visible') return;
+    document.removeEventListener('visibilitychange', onReturn);
+    setTimeout(() => { try { _restoreSubscriptionPurchases(); } catch(_) {} }, 800);
+  };
+  document.addEventListener('visibilitychange', onReturn);
+
+  // Plain navigation — Android resolves play.google.com URLs to the
+  // Play Store app, which opens its redemption screen. window.open with
+  // _blank is unreliable inside a TWA.
+  window.location.href = 'https://play.google.com/redeem';
 }
 
 function _openSubscriptionManagement() {
