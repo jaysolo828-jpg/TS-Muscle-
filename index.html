@@ -8493,6 +8493,10 @@ async function _onSupabaseSignIn(user) {
   if (existingUser?.trial_start_at)      { state.trialStartAt       = existingUser.trial_start_at;       saveState(); }
   if (existingUser?.subscription_status) { state.subscriptionStatus = existingUser.subscription_status;  saveState(); }
   if (existingUser?.subscription_sku)    { state.subscriptionSku    = existingUser.subscription_sku;     saveState(); }
+  // After pulling from DB, reconcile against Play so a stale DB 'trial' on a
+  // device that already purchased gets immediately upgraded back to 'active'
+  // (and the trial banner cleared) without waiting for _loadAndCheckSubscription.
+  try { _syncSubscriptionFromPlay(); } catch(_) {}
 
   if (!existingUser) {
     // New user — upsert their profile (username will be set in the bottom sheet)
@@ -17807,17 +17811,20 @@ async function _syncSubscriptionFromPlay() {
   const active = (purchases || []).find(p => p.itemId === _SKU_MONTHLY);
 
   if (active) {
-    if (state.subscriptionStatus !== 'active' || state.subscriptionSku !== active.itemId) {
-      state.subscriptionStatus = 'active';
-      state.subscriptionSku    = active.itemId;
-      saveState();
-      const sb = _getSupabaseClient();
-      if (sb && state.supabaseUserId) {
-        try { await sb.from('users').update({ subscription_status: 'active', subscription_sku: active.itemId }).eq('id', state.supabaseUserId); } catch(_) {}
-      }
-      try { document.getElementById('trial-banner')?.remove(); } catch(_) {}
-      try { document.getElementById('ts-subscribe-screen')?.remove(); } catch(_) {}
-      try { _updateSettingsAccountSection?.(); } catch(_) {}
+    // Always flip local state + clear trial DOM. Cheap, idempotent, and the
+    // ONLY way the badge clears when a prior launch wrote local='active' but
+    // the DB write got dropped (network blip, sign-in race, etc).
+    state.subscriptionStatus = 'active';
+    state.subscriptionSku    = active.itemId;
+    saveState();
+    try { document.getElementById('trial-banner')?.remove(); } catch(_) {}
+    try { document.getElementById('ts-subscribe-screen')?.remove(); } catch(_) {}
+    try { _updateSettingsAccountSection?.(); } catch(_) {}
+    // Always reconcile DB when we have a userId. Cannot gate on "state
+    // changed" — DB may be stale even when local already shows active.
+    const sb = _getSupabaseClient();
+    if (sb && state.supabaseUserId) {
+      try { await sb.from('users').update({ subscription_status: 'active', subscription_sku: active.itemId }).eq('id', state.supabaseUserId); } catch(_) {}
     }
     // NOTE: Acknowledgement is handled natively by MainActivity on every
     // launch (BillingClient.acknowledgePurchase). DGS removed acknowledge()
@@ -17840,25 +17847,31 @@ async function _getDigitalGoodsService() {
 }
 
 async function _loadAndCheckSubscription() {
-  // Always check Play directly, regardless of Supabase sign-in state.
-  // Purchases live on the device's Play account, not in our DB, and an
-  // unacked purchase will be auto-cancelled by Play within 72 hours.
+  if (state.supabaseUserId) {
+    const sb = _getSupabaseClient();
+    if (sb) {
+      // Refresh subscription state from DB first (may have changed on another device).
+      try {
+        const { data } = await sb.from('users')
+          .select('trial_start_at, subscription_status, subscription_sku')
+          .eq('id', state.supabaseUserId)
+          .single();
+        if (data?.trial_start_at)      { state.trialStartAt       = data.trial_start_at;      saveState(); }
+        if (data?.subscription_status) { state.subscriptionStatus = data.subscription_status; saveState(); }
+        if (data?.subscription_sku)    { state.subscriptionSku    = data.subscription_sku;    saveState(); }
+      } catch(_) {}
+    }
+  }
+
+  // Then check Play — Play is the source of truth for the device's purchase.
+  // Running it AFTER the DB read means an active Play purchase always wins
+  // over a stale 'trial'/'expired' value in the DB, and the function writes
+  // the corrected status back to the DB on the way through.
   await _syncSubscriptionFromPlay();
 
   if (!state.supabaseUserId) return;
   const sb = _getSupabaseClient();
   if (!sb) return;
-
-  // Refresh subscription state from DB (may have changed on another device).
-  try {
-    const { data } = await sb.from('users')
-      .select('trial_start_at, subscription_status, subscription_sku')
-      .eq('id', state.supabaseUserId)
-      .single();
-    if (data?.trial_start_at)      { state.trialStartAt       = data.trial_start_at;      saveState(); }
-    if (data?.subscription_status) { state.subscriptionStatus = data.subscription_status; saveState(); }
-    if (data?.subscription_sku)    { state.subscriptionSku    = data.subscription_sku;    saveState(); }
-  } catch(_) {}
 
   // Check if trial window has closed.
   if (state.subscriptionStatus === 'trial' && state.trialStartAt) {
