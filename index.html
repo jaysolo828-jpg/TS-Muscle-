@@ -17984,6 +17984,12 @@ function _purchaseSubscription(sku) {
 }
 
 function _handleSubscribeReturn() {
+  // This runs at MODULE LOAD time, BEFORE loadState(). Any saveState()
+  // call here would write the default empty state to localStorage and
+  // wipe the user's data. Stash the params to sessionStorage and let
+  // _processSubscribeReturnDeferred() process them from initApp AFTER
+  // loadState has hydrated the real state. The URL still gets cleaned
+  // here so a refresh doesn't re-fire.
   const params = new URLSearchParams(location.search);
   const status = params.get('subscribe');
   if (!status) return;
@@ -17991,12 +17997,33 @@ function _handleSubscribeReturn() {
   const token = params.get('subscribe_token') || '';
   const sku   = params.get('subscribe_sku')   || _SKU_MONTHLY;
 
-  // Clean the URL so a refresh doesn't re-fire the handler.
   const clean = new URL(location.href);
   clean.searchParams.delete('subscribe');
   clean.searchParams.delete('subscribe_token');
   clean.searchParams.delete('subscribe_sku');
   history.replaceState(null, '', clean.pathname + (clean.search ? clean.search : '') + clean.hash);
+
+  try {
+    sessionStorage.setItem(
+      'pendingSubscribeReturn',
+      JSON.stringify({ status: status, token: token, sku: sku })
+    );
+  } catch(_) {}
+}
+
+function _processSubscribeReturnDeferred() {
+  let pending;
+  try {
+    const raw = sessionStorage.getItem('pendingSubscribeReturn');
+    if (!raw) return;
+    pending = JSON.parse(raw);
+    sessionStorage.removeItem('pendingSubscribeReturn');
+  } catch(_) { return; }
+  if (!pending || !pending.status) return;
+
+  const status = pending.status;
+  const token  = pending.token || '';
+  const sku    = pending.sku || _SKU_MONTHLY;
 
   const fireToast = (msg, kind) => {
     if (typeof showToast === 'function') { try { showToast(msg, kind); } catch(_) {} return; }
@@ -18006,21 +18033,31 @@ function _handleSubscribeReturn() {
     }, { once: true });
   };
 
-  // Treat ITEM_ALREADY_OWNED (Play response code 7) the same as success:
-  // SubscribeActivity returns ?subscribe=error&subscribe_token=buy_7 when
-  // the user is already subscribed. Play itself just confirmed ownership,
-  // so we know the sub is active even though there's no fresh token to
-  // carry forward. This is the one-tap unstick for any user whose local
-  // state got out of sync with their actual Play subscription.
+  // Treat ITEM_ALREADY_OWNED (Play response code 7) as success: Play
+  // itself just confirmed the user owns the SKU, so the sub is active
+  // even though there's no fresh token. One-tap unstick for any user
+  // whose local state got out of sync with Play.
   const alreadyOwned = status === 'error' && token === 'buy_7';
-  if (alreadyOwned) {
+  const successPath  = (status === 'success' || status === 'success_unacked') && token;
+
+  if (alreadyOwned || successPath) {
     state.subscriptionStatus = 'active';
     if (sku) state.subscriptionSku = sku;
     saveState();
     document.getElementById('ts-subscribe-screen')?.remove();
     document.getElementById('trial-banner')?.remove();
     try { _updateSettingsAccountSection?.(); } catch(_) {}
-    fireToast('Subscription restored. Welcome back!');
+    fireToast(alreadyOwned ? 'Subscription restored. Welcome back!' : 'Subscription activated. Welcome to T&S Muscle!');
+    if (successPath) {
+      try {
+        const onboardModal = document.getElementById('onboarding-modal');
+        const slide4 = document.getElementById('intro-slide-4');
+        const slide4Visible = slide4 && slide4.offsetParent !== null;
+        if (onboardModal && onboardModal.style.display !== 'none' && slide4Visible && typeof introDone === 'function') {
+          document.addEventListener('DOMContentLoaded', () => { try { introDone(); } catch(_) {} }, { once: true });
+        }
+      } catch(_) {}
+    }
     const sb = _getSupabaseClient();
     if (sb && state.supabaseUserId) {
       sb.from('users').update({
@@ -18030,38 +18067,10 @@ function _handleSubscribeReturn() {
     }
     return;
   }
-
-  if ((status === 'success' || status === 'success_unacked') && token) {
-    state.subscriptionStatus = 'active';
-    state.subscriptionSku    = sku;
-    saveState();
-    document.getElementById('ts-subscribe-screen')?.remove();
-    document.getElementById('trial-banner')?.remove();
-    try { _updateSettingsAccountSection?.(); } catch(_) {}
-    fireToast('Subscription activated. Welcome to T&S Muscle!');
-    // If user subscribed while still in the onboarding intro, advance to
-    // the profile step so they're not left staring at slide 4.
-    try {
-      const onboardModal = document.getElementById('onboarding-modal');
-      const slide4 = document.getElementById('intro-slide-4');
-      const slide4Visible = slide4 && slide4.offsetParent !== null;
-      if (onboardModal && onboardModal.style.display !== 'none' && slide4Visible && typeof introDone === 'function') {
-        document.addEventListener('DOMContentLoaded', () => { try { introDone(); } catch(_) {} }, { once: true });
-      }
-    } catch(_) {}
-    const sb = _getSupabaseClient();
-    if (sb && state.supabaseUserId) {
-      sb.from('users').update({
-        subscription_status: 'active',
-        subscription_sku: sku
-      }).eq('id', state.supabaseUserId).then(() => {}, () => {});
-    }
-  } else if (status === 'cancelled') {
-    // User backed out — silent, no toast.
-  } else {
-    fireToast('Purchase failed: ' + token, 'error');
-  }
+  if (status === 'cancelled') return;
+  fireToast('Purchase failed: ' + token, 'error');
 }
+
 try { _handleSubscribeReturn(); } catch(_) {}
 
 async function _showBillingDiagnostic(err, sku) {
@@ -33590,6 +33599,10 @@ let _obScrollListenerReady = false;
 (async function initApp() {
 try {
   await loadState();
+  // Process any deferred ?subscribe=... return params now that state has
+  // been hydrated from localStorage/IDB. Must run AFTER loadState because
+  // it calls saveState() — running before would wipe the user's data.
+  try { _processSubscribeReturnDeferred(); } catch(_) {}
   // Restore per-signal reaction push-gate state so the per-type push
   // gate survives page reloads (otherwise a reload-then-retap of the
   // same reaction type would re-fire a push that was already sent).
