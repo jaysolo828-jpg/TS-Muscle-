@@ -100,8 +100,14 @@ class SubscribeActivity : Activity(), PurchasesUpdatedListener {
                     val ackParams = AcknowledgePurchaseParams.newBuilder()
                         .setPurchaseToken(purchase.purchaseToken)
                         .build()
-                    billingClient.acknowledgePurchase(ackParams) {
-                        returnToWeb("success", purchase.purchaseToken)
+                    billingClient.acknowledgePurchase(ackParams) { ackResult ->
+                        if (ackResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                            returnToWeb("success", purchase.purchaseToken)
+                        } else {
+                            // Tell the web the purchase went through but ack failed
+                            // so it can retry via DGS.acknowledge on next launch.
+                            returnToWeb("success_unacked", purchase.purchaseToken)
+                        }
                     }
                 } else {
                     returnToWeb("success", purchase.purchaseToken)
