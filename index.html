@@ -17793,6 +17793,45 @@ const _SKU_MONTHLY = 'muscle_monthly';
 const _SKU_MONTHLY_DETAILS = _SKU_MONTHLY;
 const _BILLING_URL = 'https://play.google.com/billing';
 
+// Standalone Play-side sync. Runs independent of Supabase auth so a signed-
+// out (or session-restore-pending) user still gets their purchase detected,
+// state promoted to 'active', and the purchase acknowledged. Acknowledge is
+// the bit that prevents Play's "confirm your plan" / "start using the app"
+// auto-cancel within 72 hours.
+async function _syncSubscriptionFromPlay() {
+  const svc = await _getDigitalGoodsService();
+  if (!svc) return;
+  let purchases;
+  try { purchases = await svc.listPurchases(); }
+  catch(_) { return; }
+  const active = (purchases || []).find(p => p.itemId === _SKU_MONTHLY);
+
+  if (active) {
+    if (state.subscriptionStatus !== 'active' || state.subscriptionSku !== active.itemId) {
+      state.subscriptionStatus = 'active';
+      state.subscriptionSku    = active.itemId;
+      saveState();
+      const sb = _getSupabaseClient();
+      if (sb && state.supabaseUserId) {
+        try { await sb.from('users').update({ subscription_status: 'active', subscription_sku: active.itemId }).eq('id', state.supabaseUserId); } catch(_) {}
+      }
+      try { document.getElementById('trial-banner')?.remove(); } catch(_) {}
+      try { document.getElementById('ts-subscribe-screen')?.remove(); } catch(_) {}
+      try { _updateSettingsAccountSection?.(); } catch(_) {}
+    }
+    if (active.purchaseToken) {
+      try { await svc.acknowledge(active.purchaseToken, 'subscription'); } catch(_) {}
+    }
+  } else if (state.subscriptionStatus === 'active') {
+    state.subscriptionStatus = 'expired';
+    saveState();
+    const sb = _getSupabaseClient();
+    if (sb && state.supabaseUserId) {
+      try { await sb.from('users').update({ subscription_status: 'expired' }).eq('id', state.supabaseUserId); } catch(_) {}
+    }
+  }
+}
+
 async function _getDigitalGoodsService() {
   if (!window.getDigitalGoodsService) return null;
   try { return await window.getDigitalGoodsService(_BILLING_URL); }
@@ -17800,6 +17839,11 @@ async function _getDigitalGoodsService() {
 }
 
 async function _loadAndCheckSubscription() {
+  // Always check Play directly, regardless of Supabase sign-in state.
+  // Purchases live on the device's Play account, not in our DB, and an
+  // unacked purchase will be auto-cancelled by Play within 72 hours.
+  await _syncSubscriptionFromPlay();
+
   if (!state.supabaseUserId) return;
   const sb = _getSupabaseClient();
   if (!sb) return;
@@ -17814,39 +17858,6 @@ async function _loadAndCheckSubscription() {
     if (data?.subscription_status) { state.subscriptionStatus = data.subscription_status; saveState(); }
     if (data?.subscription_sku)    { state.subscriptionSku    = data.subscription_sku;    saveState(); }
   } catch(_) {}
-
-  // Always check Play, regardless of local state. This catches three cases:
-  //   1. Local state is 'active' but Play has no purchase → mark expired.
-  //   2. Local state is 'trial'/'expired' but Play DOES have a purchase
-  //      (fresh subscriber whose post-purchase DB sync didn't land, or
-  //      cross-device restore) → upgrade to 'active'.
-  //   3. Active purchase exists but isn't acknowledged → ack it so Play
-  //      doesn't auto-cancel within 72 hours.
-  const svc = await _getDigitalGoodsService();
-  if (svc) {
-    try {
-      const purchases = await svc.listPurchases();
-      const active    = purchases.find(p => p.itemId === _SKU_MONTHLY);
-      if (active) {
-        if (state.subscriptionStatus !== 'active' || state.subscriptionSku !== active.itemId) {
-          state.subscriptionStatus = 'active';
-          state.subscriptionSku    = active.itemId;
-          saveState();
-          try { await sb.from('users').update({ subscription_status: 'active', subscription_sku: active.itemId }).eq('id', state.supabaseUserId); } catch(_) {}
-        }
-        if (active.purchaseToken) {
-          // svc.acknowledge is a no-op when already acknowledged.
-          try { await svc.acknowledge(active.purchaseToken, 'subscription'); } catch(_) {}
-        }
-      } else if (state.subscriptionStatus === 'active') {
-        state.subscriptionStatus = 'expired';
-        saveState();
-        try { await sb.from('users').update({ subscription_status: 'expired' }).eq('id', state.supabaseUserId); } catch(_) {}
-      }
-    } catch(_) {
-      // Cannot reach Play — trust DB status rather than revoking access.
-    }
-  }
 
   // Check if trial window has closed.
   if (state.subscriptionStatus === 'trial' && state.trialStartAt) {
@@ -33582,6 +33593,11 @@ try {
     _maybeHandlePendingNotifOpen();
   })();
   renderHome();
+  // Acknowledge any active Play subscription on every launch — independent
+  // of Supabase auth. Without this, Play auto-cancels the subscription
+  // within 72 hours and shows "confirm your plan" / "start using the app"
+  // warnings to the user.
+  _syncSubscriptionFromPlay().catch(() => {});
   // If this is an OAuth return (Google sign-in redirect), skip onboarding before it renders.
   if (!state.onboardingComplete && window.location.hash && window.location.hash.includes('access_token')) {
     state.onboardingComplete = true;
