@@ -80,7 +80,10 @@ class SubscribeActivity : Activity(), PurchasesUpdatedListener {
                 )).build()
 
             runOnUiThread {
-                billingClient.launchBillingFlow(this, flowParams)
+                val launchResult = billingClient.launchBillingFlow(this, flowParams)
+                if (launchResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                    returnToWeb("error", "launch_${launchResult.responseCode}")
+                }
             }
         }
     }
