@@ -19,6 +19,7 @@ class SubscribeActivity : Activity(), PurchasesUpdatedListener {
 
     private lateinit var billingClient: BillingClient
     private var sku: String = "muscle_monthly"
+    private var offerTag: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +27,10 @@ class SubscribeActivity : Activity(), PurchasesUpdatedListener {
         sku = intent?.getStringExtra("sku")
             ?: intent?.data?.getQueryParameter("sku")
             ?: "muscle_monthly"
+
+        offerTag = intent?.getStringExtra("offer_tag")
+            ?: intent?.data?.getQueryParameter("offer_tag")
+            ?: ""
 
         billingClient = BillingClient.newBuilder(this)
             .setListener(this)
@@ -108,9 +113,12 @@ class SubscribeActivity : Activity(), PurchasesUpdatedListener {
             }
 
             val product = productDetailsList[0]
-            val offerToken = product.subscriptionOfferDetails?.firstOrNull()?.offerToken
+            val tagged = if (offerTag.isNotEmpty()) {
+                product.subscriptionOfferDetails?.firstOrNull { it.offerTags.contains(offerTag) }
+            } else null
+            val offerToken = (tagged ?: product.subscriptionOfferDetails?.firstOrNull())?.offerToken
             if (offerToken == null) {
-                runOnUiThread { returnToWeb("error", "no_offer") }
+                runOnUiThread { returnToWeb("error", if (offerTag.isNotEmpty()) "no_offer_for_tag_$offerTag" else "no_offer") }
                 return@queryProductDetailsAsync
             }
 
