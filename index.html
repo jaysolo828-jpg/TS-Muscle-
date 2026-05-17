@@ -17923,59 +17923,55 @@ function _showSubscribeScreen(monthlyDetails) {
 
 
 function _purchaseSubscription(sku) {
-  // PaymentRequest.show() MUST be called synchronously from the click — any
-  // await before show() consumes user activation and Chrome silently aborts.
-  if (!window.PaymentRequest) {
-    showToast('PaymentRequest API missing (not a TWA?)', 'error');
-    return;
-  }
-
+  // Fire the native Play Billing bridge (SubscribeActivity). Bypasses Chrome's
+  // TWA Play Billing path entirely — that path was hitting clientAppUnavailable
+  // with no actionable fix. SubscribeActivity calls Play Billing Library
+  // directly and returns to this page at /?subscribe=success&subscribe_token=...
+  // which is handled by _handleSubscribeReturn on page load.
   const cta = document.getElementById('sub-cta-btn');
-  if (cta) { cta.disabled = true; cta.textContent = 'PROCESSING...'; }
+  if (cta) { cta.disabled = true; cta.textContent = 'OPENING PLAY...'; }
+  const url = 'intent://buy?sku=' + encodeURIComponent(sku) +
+              '#Intent;scheme=ts-muscle-subscribe;package=io.github.jaysolo828_jpg.twa;end';
+  window.location.href = url;
+}
 
-  let request;
-  try {
-    request = new PaymentRequest(
-      [{ supportedMethods: _BILLING_URL, data: { sku } }],
-      { total: { label: 'T&S Muscle', amount: { currency: 'USD', value: '0' } } }
-    );
-  } catch(e) {
-    showToast('ctor failed: ' + String(e && (e.message || e.name)).slice(0,140), 'error');
-    if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
-    return;
-  }
+function _handleSubscribeReturn() {
+  const params = new URLSearchParams(location.search);
+  const status = params.get('subscribe');
+  if (!status) return;
 
-  request.show().then(async (response) => {
-    const token = response.details?.purchaseToken || '';
-    try { await response.complete('success'); } catch(_) {}
-    if (token) {
-      try {
-        const svc = await _getDigitalGoodsService();
-        if (svc) await svc.acknowledge(token, 'subscription');
-      } catch(_) {}
-    }
-    const sb2 = _getSupabaseClient();
-    if (sb2 && state.supabaseUserId) {
-      try {
-        await sb2.from('users').update({
-          subscription_status: 'active',
-          subscription_sku: sku
-        }).eq('id', state.supabaseUserId);
-      } catch(_) {}
-    }
+  const token = params.get('subscribe_token') || '';
+  const sku   = params.get('subscribe_sku')   || _SKU_MONTHLY;
+
+  // Clean the URL so a refresh doesn't re-fire the handler.
+  const clean = new URL(location.href);
+  clean.searchParams.delete('subscribe');
+  clean.searchParams.delete('subscribe_token');
+  clean.searchParams.delete('subscribe_sku');
+  history.replaceState(null, '', clean.pathname + (clean.search ? clean.search : '') + clean.hash);
+
+  if (status === 'success' && token) {
     state.subscriptionStatus = 'active';
     state.subscriptionSku    = sku;
     saveState();
     document.getElementById('ts-subscribe-screen')?.remove();
     document.getElementById('trial-banner')?.remove();
-    _updateSettingsAccountSection();
+    try { _updateSettingsAccountSection?.(); } catch(_) {}
     showToast('Subscription activated. Welcome to T&S Muscle!');
-  }).catch(async (e) => {
-    if (cta) { cta.disabled = false; cta.textContent = 'SUBSCRIBE'; }
-    if (e && e.name === 'AbortError') return;
-    await _showBillingDiagnostic(e, sku);
-  });
+    const sb = _getSupabaseClient();
+    if (sb && state.supabaseUserId) {
+      sb.from('users').update({
+        subscription_status: 'active',
+        subscription_sku: sku
+      }).eq('id', state.supabaseUserId).then(() => {}, () => {});
+    }
+  } else if (status === 'cancelled') {
+    // User backed out — silent, no toast.
+  } else {
+    showToast('Purchase failed: ' + token, 'error');
+  }
 }
+try { _handleSubscribeReturn(); } catch(_) {}
 
 async function _showBillingDiagnostic(err, sku) {
   // Build a panel with everything we'd ever need to diagnose a billing
