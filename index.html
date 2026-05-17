@@ -17784,7 +17784,10 @@ function _stopMidnightCheckInterval() {
 // ============================================================
 
 // Set to true when ready to enforce the paywall in production.
-const _BILLING_LIVE = true;
+// Currently disabled — TWA Play Billing bridge is broken (clientAppUnavailable),
+// native bridge path needs more work. App stays fully usable for everyone
+// until this is set back to true. No paywall, no trial expiry, no subscribe gate.
+const _BILLING_LIVE = false;
 
 const _SKU_MONTHLY = 'muscle_monthly';
 // TWA Play Billing requires the bare subscription product ID for both
