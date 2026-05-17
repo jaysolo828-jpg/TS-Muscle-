@@ -18006,6 +18006,31 @@ function _handleSubscribeReturn() {
     }, { once: true });
   };
 
+  // Treat ITEM_ALREADY_OWNED (Play response code 7) the same as success:
+  // SubscribeActivity returns ?subscribe=error&subscribe_token=buy_7 when
+  // the user is already subscribed. Play itself just confirmed ownership,
+  // so we know the sub is active even though there's no fresh token to
+  // carry forward. This is the one-tap unstick for any user whose local
+  // state got out of sync with their actual Play subscription.
+  const alreadyOwned = status === 'error' && token === 'buy_7';
+  if (alreadyOwned) {
+    state.subscriptionStatus = 'active';
+    if (sku) state.subscriptionSku = sku;
+    saveState();
+    document.getElementById('ts-subscribe-screen')?.remove();
+    document.getElementById('trial-banner')?.remove();
+    try { _updateSettingsAccountSection?.(); } catch(_) {}
+    fireToast('Subscription restored. Welcome back!');
+    const sb = _getSupabaseClient();
+    if (sb && state.supabaseUserId) {
+      sb.from('users').update({
+        subscription_status: 'active',
+        subscription_sku: sku
+      }).eq('id', state.supabaseUserId).then(() => {}, () => {});
+    }
+    return;
+  }
+
   if ((status === 'success' || status === 'success_unacked') && token) {
     state.subscriptionStatus = 'active';
     state.subscriptionSku    = sku;
@@ -33565,11 +33590,6 @@ let _obScrollListenerReady = false;
 (async function initApp() {
 try {
   await loadState();
-  // Native BillingClient confirmed an active Play subscription on the
-  // previous launch (via ?sub_active=1) — apply it AFTER loadState so the
-  // IDB-backup recovery path inside loadState cannot clobber it back to
-  // 'trial'. This is the authoritative truth for the device's purchase.
-  try { _applyNativeSubOverride(); } catch(_) {}
   // Restore per-signal reaction push-gate state so the per-type push
   // gate survives page reloads (otherwise a reload-then-retap of the
   // same reaction type would re-fire a push that was already sent).
@@ -33672,68 +33692,19 @@ if (navigator.storage && navigator.storage.persist) {
 }
 
 // ── FCM token: Android TWA passes it as ?fcm_token=... on launch ──
-// ── Subscription truth: Android TWA's BillingClient passes ?sub_active=1 ──
-// Just stash on window + clean the URL. Actual state mutation happens
-// inside initApp AFTER loadState() finishes so the IDB-backup recovery
-// path inside loadState cannot clobber the 'active' flag.
 (function() {
   var p = new URLSearchParams(location.search);
   var token = p.get('fcm_token');
-  var subActive = p.get('sub_active');
-  var subSku    = p.get('sub_sku');
   if (token) {
     window._fcmToken = token;
     _saveFcmToken(token);
-  }
-  if (subActive === '1') {
-    window._nativeSubActive = true;
-    window._nativeSubSku    = subSku || '';
-  }
-  if (token || subActive) {
     try {
       p.delete('fcm_token');
-      p.delete('sub_active');
-      p.delete('sub_sku');
       var cleanQs = p.toString();
       history.replaceState(null, '', location.pathname + (cleanQs ? '?' + cleanQs : ''));
     } catch(_) {}
   }
 })();
-
-// Applied from initApp after loadState. Defined as a module-level function
-// so the post-loadState block in initApp can call it cleanly. Idempotent
-// — safe to call multiple times.
-function _applyNativeSubOverride() {
-  if (!window._nativeSubActive) return;
-  try {
-    state.subscriptionStatus = 'active';
-    if (window._nativeSubSku) state.subscriptionSku = window._nativeSubSku;
-    saveState();
-  } catch(_) {}
-  try { document.getElementById('trial-banner')?.remove(); } catch(_) {}
-  try { document.getElementById('ts-subscribe-screen')?.remove(); } catch(_) {}
-  try { _updateSettingsAccountSection?.(); } catch(_) {}
-  // Write through to DB as soon as Supabase is ready.
-  var sku = window._nativeSubSku || state.subscriptionSku || null;
-  var dbWrite = function() {
-    try {
-      var sb = _getSupabaseClient();
-      if (!sb || !state.supabaseUserId) return false;
-      sb.from('users').update({
-        subscription_status: 'active',
-        subscription_sku: sku
-      }).eq('id', state.supabaseUserId).then(function(){}, function(){});
-      return true;
-    } catch(_) { return false; }
-  };
-  if (!dbWrite()) {
-    var tries = 0;
-    var iv = setInterval(function() {
-      tries++;
-      if (dbWrite() || tries > 40) clearInterval(iv);
-    }, 500);
-  }
-}
 
 async function _saveFcmToken(token) {
   if (!token) return;

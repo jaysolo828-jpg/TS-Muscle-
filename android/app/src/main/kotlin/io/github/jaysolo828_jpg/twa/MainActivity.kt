@@ -29,8 +29,6 @@ class MainActivity : LauncherActivity() {
         private const val PREFS                = "ts_muscle_prefs"
         private const val FCM_KEY              = "fcm_token"
         private const val FCM_FETCH_TIMEOUT_MS = 1500L
-        private const val SUB_ACTIVE_KEY       = "sub_active"
-        private const val SUB_SKU_KEY          = "sub_sku"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -143,10 +141,6 @@ class MainActivity : LauncherActivity() {
 
     private fun acknowledgeUnackedPurchases() {
         try {
-            // Use applicationContext so the client + listener outlive the
-            // LauncherActivity (which finishes synchronously once the Custom
-            // Tab launches). PaymentDelegationService keeps the process alive
-            // long enough for the async ack callbacks to fire.
             val client = BillingClient.newBuilder(applicationContext)
                 .setListener(object : PurchasesUpdatedListener {
                     override fun onPurchasesUpdated(r: BillingResult, p: MutableList<Purchase>?) {}
@@ -166,29 +160,6 @@ class MainActivity : LauncherActivity() {
                         .setProductType(BillingClient.ProductType.SUBS)
                         .build()
                     client.queryPurchasesAsync(params) { _, purchases ->
-                        // Cache active subscription state to SharedPreferences
-                        // so getLaunchingUrl() can pass the truth to the web
-                        // page on the NEXT launch. This bypasses Chrome's
-                        // DigitalGoodsService entirely — which has been
-                        // observed returning empty even for active subs and
-                        // is the reason the trial banner stays stuck.
-                        val activeSub = purchases.firstOrNull {
-                            it.purchaseState == Purchase.PurchaseState.PURCHASED
-                        }
-                        val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
-                        if (activeSub != null) {
-                            val sku = activeSub.products.firstOrNull() ?: ""
-                            prefs.edit()
-                                .putString(SUB_ACTIVE_KEY, "1")
-                                .putString(SUB_SKU_KEY, sku)
-                                .apply()
-                        } else {
-                            prefs.edit()
-                                .remove(SUB_ACTIVE_KEY)
-                                .remove(SUB_SKU_KEY)
-                                .apply()
-                        }
-
                         var pending = purchases.count {
                             it.purchaseState == Purchase.PurchaseState.PURCHASED && !it.isAcknowledged
                         }
@@ -219,23 +190,9 @@ class MainActivity : LauncherActivity() {
     }
 
     override fun getLaunchingUrl(): Uri {
-        val base   = super.getLaunchingUrl()
-        val prefs  = getSharedPreferences(PREFS, MODE_PRIVATE)
-        val token  = prefs.getString(FCM_KEY, null)
-        val subAct = prefs.getString(SUB_ACTIVE_KEY, null)
-        val subSku = prefs.getString(SUB_SKU_KEY, null)
-        if (token.isNullOrEmpty() && subAct.isNullOrEmpty()) return base
-        val builder = base.buildUpon()
-        if (!token.isNullOrEmpty()) builder.appendQueryParameter("fcm_token", token)
-        if (!subAct.isNullOrEmpty()) {
-            // sub_active=1 means BillingClient confirmed an active subscription
-            // for THIS device on the PREVIOUS launch. The web page treats this
-            // as authoritative and immediately upgrades local state to 'active'
-            // — bypasses the broken DGS code path that was leaving the trial
-            // banner stuck on screen.
-            builder.appendQueryParameter("sub_active", subAct)
-            if (!subSku.isNullOrEmpty()) builder.appendQueryParameter("sub_sku", subSku)
-        }
-        return builder.build()
+        val base  = super.getLaunchingUrl()
+        val token = getSharedPreferences(PREFS, MODE_PRIVATE).getString(FCM_KEY, null)
+            ?: return base
+        return base.buildUpon().appendQueryParameter("fcm_token", token).build()
     }
 }
