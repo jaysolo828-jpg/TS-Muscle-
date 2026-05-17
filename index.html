@@ -17875,7 +17875,7 @@ function _showSubscribeScreen(monthlyDetails) {
   const closeBtn = document.createElement('button');
   closeBtn.setAttribute('aria-label', 'Close');
   closeBtn.textContent = '✕';
-  closeBtn.style.cssText = 'position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:20px;background:#1a1a1a;border:1px solid #2a2a2a;color:#F5E6C8;font-size:18px;line-height:1;cursor:pointer;z-index:1;';
+  closeBtn.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:16px;width:44px;height:44px;border-radius:22px;background:#CC2027;border:none;color:#fff;font-size:22px;font-weight:bold;line-height:1;cursor:pointer;z-index:1000000;box-shadow:0 2px 12px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:0;';
   closeBtn.onclick = () => el.remove();
   el.appendChild(closeBtn);
 
