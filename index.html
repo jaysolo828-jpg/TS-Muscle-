@@ -17821,11 +17821,18 @@ async function _loadAndCheckSubscription() {
     if (svc) {
       try {
         const purchases = await svc.listPurchases();
-        const hasActive = purchases.some(p => p.itemId === _SKU_MONTHLY);
-        if (!hasActive) {
+        const active    = purchases.find(p => p.itemId === _SKU_MONTHLY);
+        if (!active) {
           state.subscriptionStatus = 'expired';
           saveState();
           try { await sb.from('users').update({ subscription_status: 'expired' }).eq('id', state.supabaseUserId); } catch(_) {}
+        } else if (active.purchaseToken) {
+          // Belt-and-suspenders acknowledge: Play auto-cancels subscriptions
+          // that aren't acknowledged within 72 hours. SubscribeActivity acks
+          // once on purchase, but if that attempt failed (network blip) the
+          // sub is silently rotting. Re-ack every launch so we always close
+          // the window. svc.acknowledge is a no-op when already acknowledged.
+          try { await svc.acknowledge(active.purchaseToken, 'subscription'); } catch(_) {}
         }
       } catch(_) {
         // Cannot reach Play — trust DB status rather than revoking access.
@@ -17966,7 +17973,7 @@ function _handleSubscribeReturn() {
     }, { once: true });
   };
 
-  if (status === 'success' && token) {
+  if ((status === 'success' || status === 'success_unacked') && token) {
     state.subscriptionStatus = 'active';
     state.subscriptionSku    = sku;
     saveState();
