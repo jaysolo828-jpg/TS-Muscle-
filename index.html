@@ -17948,6 +17948,14 @@ function _handleSubscribeReturn() {
   clean.searchParams.delete('subscribe_sku');
   history.replaceState(null, '', clean.pathname + (clean.search ? clean.search : '') + clean.hash);
 
+  const fireToast = (msg, kind) => {
+    if (typeof showToast === 'function') { try { showToast(msg, kind); } catch(_) {} return; }
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof showToast === 'function') { try { showToast(msg, kind); } catch(_) {} }
+      else { try { alert(msg); } catch(_) {} }
+    }, { once: true });
+  };
+
   if (status === 'success' && token) {
     state.subscriptionStatus = 'active';
     state.subscriptionSku    = sku;
@@ -17955,7 +17963,7 @@ function _handleSubscribeReturn() {
     document.getElementById('ts-subscribe-screen')?.remove();
     document.getElementById('trial-banner')?.remove();
     try { _updateSettingsAccountSection?.(); } catch(_) {}
-    showToast('Subscription activated. Welcome to T&S Muscle!');
+    fireToast('Subscription activated. Welcome to T&S Muscle!');
     const sb = _getSupabaseClient();
     if (sb && state.supabaseUserId) {
       sb.from('users').update({
@@ -17966,7 +17974,7 @@ function _handleSubscribeReturn() {
   } else if (status === 'cancelled') {
     // User backed out — silent, no toast.
   } else {
-    showToast('Purchase failed: ' + token, 'error');
+    fireToast('Purchase failed: ' + token, 'error');
   }
 }
 try { _handleSubscribeReturn(); } catch(_) {}
