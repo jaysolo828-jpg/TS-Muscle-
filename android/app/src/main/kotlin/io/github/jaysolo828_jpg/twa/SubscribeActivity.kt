@@ -13,7 +13,6 @@ import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryPurchasesParams
 
 class SubscribeActivity : Activity(), PurchasesUpdatedListener {
 
@@ -39,55 +38,13 @@ class SubscribeActivity : Activity(), PurchasesUpdatedListener {
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    // Check for existing purchases FIRST. If the user is already
-                    // subscribed (Play has a token for this SKU), there's no
-                    // billing flow to launch — Play would just show "you already
-                    // own this" and return ITEM_ALREADY_OWNED. Instead, ack any
-                    // unacked purchase, persist the active state to prefs, and
-                    // return to the web with success so the trial badge clears.
-                    checkExistingThenLaunch()
+                    querySubAndLaunch()
                 } else {
                     returnToWeb("error", "setup_${billingResult.responseCode}")
                 }
             }
             override fun onBillingServiceDisconnected() {}
         })
-    }
-
-    private fun checkExistingThenLaunch() {
-        val params = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.SUBS)
-            .build()
-        billingClient.queryPurchasesAsync(params) { _, purchases ->
-            val existing = purchases.firstOrNull {
-                it.purchaseState == Purchase.PurchaseState.PURCHASED &&
-                it.products.contains(sku)
-            }
-            if (existing != null) {
-                // Cache to prefs so MainActivity's getLaunchingUrl picks it up
-                // on the next cold launch too, even if the user closes the
-                // app before the web-side write finishes.
-                try {
-                    getSharedPreferences("ts_muscle_prefs", MODE_PRIVATE).edit()
-                        .putString("sub_active", "1")
-                        .putString("sub_sku", sku)
-                        .apply()
-                } catch (_: Exception) {}
-
-                if (!existing.isAcknowledged) {
-                    val ackParams = AcknowledgePurchaseParams.newBuilder()
-                        .setPurchaseToken(existing.purchaseToken)
-                        .build()
-                    billingClient.acknowledgePurchase(ackParams) { _ ->
-                        returnToWeb("success", existing.purchaseToken)
-                    }
-                } else {
-                    returnToWeb("success", existing.purchaseToken)
-                }
-            } else {
-                runOnUiThread { querySubAndLaunch() }
-            }
-        }
     }
 
     private fun querySubAndLaunch() {
@@ -157,12 +114,6 @@ class SubscribeActivity : Activity(), PurchasesUpdatedListener {
                 }
             }
             BillingClient.BillingResponseCode.USER_CANCELED -> returnToWeb("cancelled", "")
-            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                // Belt-and-suspenders — checkExistingThenLaunch should catch
-                // this before launchBillingFlow runs, but if Play returns it
-                // anyway, re-query and resolve to success.
-                checkExistingThenLaunch()
-            }
             else -> returnToWeb("error", "buy_${billingResult.responseCode}")
         }
     }
