@@ -18694,8 +18694,11 @@ function renderHome() {
   _calWeekMonday.setDate(_calNow.getDate() - ((_calNow.getDay() + 6) % 7)); // Mon=0…Sun=6
   _calWeekMonday.setHours(0, 0, 0, 0);
 
+  // A session-based rollover (all days done early) opens the next week
+  // immediately instead of waiting for Monday.
+  const _cardWeekStart = Math.max(_calWeekMonday.getTime(), state.weekRolledOverAt || 0);
   const sessionsThisWeek = realSessionsOrdered.filter(
-    e => new Date(e.date).getTime() >= _calWeekMonday.getTime()
+    e => new Date(e.date).getTime() >= _cardWeekStart
   );
   const completedThisWeekIds = new Set(sessionsThisWeek.map(e => e.dayId));
   const _weekFullyDone = sessionsThisWeek.length >= (state.trainingDaysPerWeek || state.program?.length || 4);
@@ -26565,20 +26568,24 @@ function finalizeEndSession(save) {
     };
     if (!state.weekStartTimestamp) state.weekStartTimestamp = _toMondayMidnight(Date.now());
     const _weekLen = state.trainingDaysPerWeek || state.program?.length || 4;
-    const _sessionBased = (state.totalSessions || 0) % _weekLen === 0;
     // Calendar rollover: fires when the Mon–Sun boundary has been crossed since
     // weekStartTimestamp was set — prevents premature mid-week rollovers that
     // happened when the old "7 days since last rollover" check fired on Thursday
     // if the previous week ended on Friday.
     const _currentWeekMonday = _toMondayMidnight(Date.now());
     const _startWeekMonday   = _toMondayMidnight(state.weekStartTimestamp);
+    // Training week starts at the later of the Monday anchor and the last
+    // session-based rollover. Counting sessions since then (instead of
+    // totalSessions % weekLen) keeps rollover correct when totalSessions drifts
+    // from deleted/skipped sessions or a days-per-week change.
+    const _weekAnchor = Math.max(state.weekStartTimestamp || 0, state.weekRolledOverAt || 0);
     const _sessionsThisWeek = (state.history || [])
-      .filter(h => new Date(h.date).getTime() >= (state.weekStartTimestamp || 0)).length;
-    // Guard: if a session-based rollover happened within the last 3 days, suppress
-    // calendar-based rollover. This prevents Sun→Mon back-to-back sessions from
-    // triggering two rollovers in 24 hours (session-based on Sunday, then
-    // calendar-based on Monday when the Mon–Sun boundary crosses).
-    const _recentSessionRollover = state.weekRolledOverAt && (Date.now() - state.weekRolledOverAt) / 86400000 < 3;
+      .filter(h => new Date(h.date).getTime() >= _weekAnchor).length;
+    const _sessionBased = _sessionsThisWeek >= _weekLen;
+    // Guard: if a session-based rollover happened this calendar week or last,
+    // suppress calendar-based rollover. A user who finishes the week early and
+    // starts the next week before Monday must not advance twice.
+    const _recentSessionRollover = state.weekRolledOverAt && state.weekRolledOverAt >= _toMondayMidnight(_currentWeekMonday - 1);
     const _calendarBased = _currentWeekMonday > _startWeekMonday && !_sessionBased && !_recentSessionRollover && _sessionsThisWeek >= 1;
     if (_sessionBased || _calendarBased) {
       if (_sessionBased) state.weekRolledOverAt = Date.now();
