@@ -6134,19 +6134,21 @@ const PP_PROGRAM = [
       DEFAULT_PROGRAM[0].exercises[1], // incline
       DEFAULT_PROGRAM[0].exercises[5], // ohp
       DEFAULT_PROGRAM[0].exercises[3], // pushdown
+      SKULL_CRUSHER_EXERCISE,
       DEFAULT_PROGRAM[0].exercises[6], // lateral
       DEFAULT_PROGRAM[1].exercises[0], // legpress-a
     ]
   },
   {
-    id: 'pp-pull-a', day: 'Tuesday', badge: 'PULL A', name: 'Back, Biceps, Hamstrings',
+    id: 'pp-pull-a', day: 'Tuesday', badge: 'PULL A', name: 'Back, Biceps, Hamstrings, Glutes',
     exercises: [
       DEFAULT_PROGRAM[2].exercises[0], // chest-row
       DEFAULT_PROGRAM[2].exercises[1], // pulldown
       DEFAULT_PROGRAM[1].exercises[1], // rdl
-      DEFAULT_PROGRAM[2].exercises[2], // db-row
       DEFAULT_PROGRAM[2].exercises[3], // ez-curl
+      DEFAULT_PROGRAM[2].exercises[4], // preacher
       DEFAULT_PROGRAM[1].exercises[3], // ham-curl-a
+      DEFAULT_PROGRAM[1].exercises[4], // hip-thrust-a
     ]
   },
   {
@@ -6155,9 +6157,11 @@ const PP_PROGRAM = [
       DEFAULT_PROGRAM[0].exercises[0], // bench
       DEFAULT_PROGRAM[0].exercises[2], // flye
       DEFAULT_PROGRAM[0].exercises[5], // ohp
+      CLOSE_GRIP_EXERCISE,
       DEFAULT_PROGRAM[0].exercises[4], // overhead-tri
       DEFAULT_PROGRAM[0].exercises[6], // lateral
       DEFAULT_PROGRAM[1].exercises[2], // leg-ext-a
+      DEFAULT_PROGRAM[1].exercises[5], // calf-a
     ]
   },
   {
@@ -6166,9 +6170,11 @@ const PP_PROGRAM = [
       DEFAULT_PROGRAM[2].exercises[2], // db-row
       DEFAULT_PROGRAM[2].exercises[1], // pulldown
       DEFAULT_PROGRAM[3].exercises[0], // legpress-b
+      DEFAULT_PROGRAM[2].exercises[3], // ez-curl
       DEFAULT_PROGRAM[2].exercises[4], // preacher
       DEFAULT_PROGRAM[3].exercises[3], // ham-curl-b
       DEFAULT_PROGRAM[2].exercises[5], // rear-delt
+      DEFAULT_PROGRAM[3].exercises[5], // calf-b
     ]
   },
 ];
@@ -33656,6 +33662,31 @@ function healStuckWeekRollover() {
   saveState();
 }
 
+// One-time migration: bring saved Push/Pull programs up to the current
+// PP_PROGRAM layout (more arm work, calves, hip thrust). Keeps the user's own
+// exercise objects (swaps, renames) by id, and keeps custom / priority-boost
+// exercises that aren't part of the base Push/Pull template.
+function migratePushPullArms() {
+  if (localStorage.getItem('ts-pp-arms-v1')) return;
+  if (state.splitType === 'pp' && Array.isArray(state.program)) {
+    const _baseIds = new Set(['bench', 'incline', 'flye', 'ohp', 'pushdown', 'overhead-tri', 'lateral', 'skull-crusher', 'close-grip',
+      'legpress-a', 'leg-ext-a', 'calf-a', 'chest-row', 'pulldown', 'db-row', 'rdl', 'ez-curl', 'preacher', 'ham-curl-a',
+      'hip-thrust-a', 'legpress-b', 'ham-curl-b', 'rear-delt', 'calf-b']);
+    state.program.forEach(day => {
+      const tpl = PP_PROGRAM.find(t => t.id === day.id);
+      if (!tpl || !Array.isArray(day.exercises)) return;
+      const mine = {};
+      day.exercises.forEach(ex => { if (ex && ex.id) mine[ex.id] = ex; });
+      const next = tpl.exercises.map(t => mine[t.id] || JSON.parse(JSON.stringify(t)));
+      day.exercises.forEach(ex => { if (ex && !_baseIds.has(ex.id)) next.push(ex); });
+      day.exercises = next;
+      if (day.name === 'Back, Biceps, Hamstrings') day.name = tpl.name;
+    });
+    saveState();
+  }
+  localStorage.setItem('ts-pp-arms-v1', '1');
+}
+
 // One-time migration: seed periodization state fields for users who were already
 // using the app before the periodization update. Prevents false deload banners
 // on first load. Gates itself so it only runs once.
@@ -33703,6 +33734,7 @@ try {
   // gate survives page reloads (otherwise a reload-then-retap of the
   // same reaction type would re-fire a push that was already sent).
   _loadSignalReactionState();
+  migratePushPullArms();
   _migrateEquipmentTags(); // ensure state.program has equipment tags even on old saves
   migrateSessionCount();
   migratePeriodizationState();
