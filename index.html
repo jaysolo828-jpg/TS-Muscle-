@@ -33626,6 +33626,36 @@ function migrateDoubleRollover() {
   localStorage.setItem('ts-double-rollover-fixed', '1');
 }
 
+// Self-heal: advance a week that should have rolled over but didn't (the old
+// totalSessions % weekLen check drifted). If a full week of real sessions has
+// been logged since the current week started, roll forward one week now so the
+// next week opens without logging another session. Mirrors the session-based
+// rollover in the finish flow. Skips week 1 (test week review) and week 8
+// (cycle completion runs in the finish flow).
+function healStuckWeekRollover() {
+  if (state.programPaused || state.isDeloadWeek || state.isRestWeek) return;
+  const _wk = state.weekCount || 1;
+  if (_wk < 2 || _wk > 7) return;
+  const _weekLen = state.trainingDaysPerWeek || state.program?.length || 4;
+  const _anchor = Math.max(state.weekStartTimestamp || 0, state.weekRolledOverAt || 0);
+  const _times = (state.history || [])
+    .filter(e => Object.values(e.sets || {}).some(sets => sets.some(s => s.done)))
+    .map(e => new Date(e.date).getTime())
+    .filter(t => t >= _anchor);
+  if (_times.length < _weekLen) return;
+  const _lastTs = Math.max(..._times);
+  const _mon = new Date(_lastTs); _mon.setDate(_mon.getDate() - ((_mon.getDay() + 6) % 7)); _mon.setHours(0,0,0,0);
+  state.weekRolledOverAt = _lastTs + 1;
+  state.weekStartTimestamp = _mon.getTime();
+  state.weekRolledOverPrevWeek = _wk;
+  state.weekCount = _wk + 1;
+  state.weeksSinceDeload = (state.weeksSinceDeload || 0) + 1;
+  if (state.deloadPostponedToWeek && state.weekCount > state.deloadPostponedToWeek) {
+    delete state.deloadPostponedToWeek;
+  }
+  saveState();
+}
+
 // One-time migration: seed periodization state fields for users who were already
 // using the app before the periodization update. Prevents false deload banners
 // on first load. Gates itself so it only runs once.
@@ -33677,6 +33707,7 @@ try {
   migrateSessionCount();
   migratePeriodizationState();
   migrateDoubleRollover();
+  healStuckWeekRollover();
   checkPauseAutoExpiry();
   _renderTravelModeHeaderIcon();
   _checkTravelModeExpiry();
