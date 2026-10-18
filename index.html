@@ -7474,7 +7474,7 @@ function getCycleWeekBandRepTarget(exId) {
   const thirdW = Math.floor(span / 3);
   if (band === '1-2') return minReps;
   if (band === '3-4') return minReps + thirdW + 1;
-  return maxReps - thirdW; // '5-6'
+  return maxReps - Math.max(thirdW, 1); // '5-6' — keep the top rep as the weight-increase trigger, not the floor
 }
 
 // Returns a tightened 2-rep range string (e.g. '10-11') for the current cycle
@@ -7487,14 +7487,18 @@ function getCycleWeekBandRepRange(exId) {
   const minReps = parseInt(parts[0]) || 1;
   const maxReps = parseInt(parts[1]) || minReps;
   const span = maxReps - minReps;
+  // Matches getCycleWeekBandRepTarget: ranges of 0–1 reps aren't tightened.
+  if (span <= 1) return span ? `${minReps}-${maxReps}` : `${minReps}`;
   const thirdW = Math.floor(span / 3);
   const band = getCycleWeekBand();
   let lo, hi;
   if (band === '1-2') { lo = minReps; hi = minReps + thirdW; }
   else if (band === '3-4') { lo = minReps + thirdW + 1; hi = maxReps - thirdW - 1; }
-  else { lo = maxReps - thirdW; hi = maxReps; } // '5-6' or recovery
-  // Ensure a 2-number range for display consistency
-  if (lo > hi) { const tmp = lo; lo = hi; hi = tmp; }
+  else { lo = maxReps - Math.max(thirdW, 1); hi = maxReps; } // '5-6' or recovery
+  // Ensure a 2-number range for display consistency. Never let the shown low
+  // end drop below the band target (getCycleWeekBandRepTarget) — swapping lo/hi
+  // here used to show e.g. "11-12" while 11 was graded as a miss.
+  if (lo > hi) hi = lo;
   if (lo === hi) {
     if (lo < maxReps) hi = lo + 1;
     else lo = Math.max(minReps, hi - 1);
@@ -21951,7 +21955,12 @@ function renderSession() {
     const _goalRepMin = parseInt(_goalReps.split(/[–\-]/)[0]) || _initBandTarget;
     const _inManualAdj = !!_getManualAdj(ex.id, activeSession.dayId) || !!(activeSession.pendingManualAdj?.[ex.id]);
     // rep goal label/meta always show a 2-number tight range
-    const _initRepDisplay = _inManualAdj
+    // Use the same source as updateRepGoalLabel / updateRepIndicator so the
+    // goal shown before the first set matches what the rep check grades against.
+    const _initCtx = getContextualRepTarget(ex.id);
+    const _initRepDisplay = _initCtx
+      ? _initCtx.label.replace(/^GOAL:\s*/, '')
+      : _inManualAdj
       ? (_goalRepMin < _repTop ? `${_goalRepMin}-${_goalRepMin + 1}` : `${Math.max(1, _repTop - 1)}-${_repTop}`)
       : getCycleWeekBandRepRange(ex.id);
 
