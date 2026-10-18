@@ -33668,7 +33668,7 @@ function healStuckWeekRollover() {
 // exercises that aren't part of the base Push/Pull template.
 function migratePushPullArms() {
   if (localStorage.getItem('ts-pp-arms-v1')) return;
-  if (state.splitType === 'pp' && Array.isArray(state.program)) {
+  if (Array.isArray(state.program) && state.program.some(d => d && PP_PROGRAM.some(t => t.id === d.id))) {
     const _baseIds = new Set(['bench', 'incline', 'flye', 'ohp', 'pushdown', 'overhead-tri', 'lateral', 'skull-crusher', 'close-grip',
       'legpress-a', 'leg-ext-a', 'calf-a', 'chest-row', 'pulldown', 'db-row', 'rdl', 'ez-curl', 'preacher', 'ham-curl-a',
       'hip-thrust-a', 'legpress-b', 'ham-curl-b', 'rear-delt', 'calf-b']);
