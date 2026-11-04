@@ -7443,9 +7443,9 @@ const CYCLE_WEEK_COACH_COPY = {
 
 // Returns the current cycle week band: '1-2', '3-4', '5-6', or 'recovery'.
 // Based solely on state.weekCount — split type and day count are irrelevant.
-function getCycleWeekBand() {
-  if (state.isDeloadWeek || state.isRestWeek) return 'recovery';
-  const w = state.weekCount || 1;
+function getCycleWeekBand(weekOverride) {
+  if (!weekOverride && (state.isDeloadWeek || state.isRestWeek)) return 'recovery';
+  const w = weekOverride || state.weekCount || 1;
   if (w <= 2) return '1-2';
   if (w <= 4) return '3-4';
   return '5-6';
@@ -7454,7 +7454,7 @@ function getCycleWeekBand() {
 // Returns the tightened single-number rep target for exId based on cycle week band.
 // Progressively narrows toward the top of the range: lower third → middle → upper third.
 // During recovery/deload returns the lower end (no tightening applied).
-function getCycleWeekBandRepTarget(exId) {
+function getCycleWeekBandRepTarget(exId, weekOverride) {
   const _day = state.program?.find(d => d.id === (activeSession?.dayId));
   const _ex = _day?.exercises.find(e => e.id === exId);
   const targetReps = activeSession?.repOverrides?.[exId] || getGoalReps(exId, _ex?.reps);
@@ -7462,7 +7462,7 @@ function getCycleWeekBandRepTarget(exId) {
   const minReps = parseInt(parts[0]) || 1;
   const maxReps = parseInt(parts[1]) || minReps;
   const span = maxReps - minReps;
-  const band = getCycleWeekBand();
+  const band = getCycleWeekBand(weekOverride);
   if (band === 'recovery') return minReps;
   // Test week: no rep tightening — user is testing max effort, not following a band target.
   // Guard on week 1 so a dismissed review modal never permanently blocks week 2+.
@@ -20424,7 +20424,11 @@ function getProgressiveWeight(exId, dayId) {
   // RPE naturally climbs ~0.5-1.0 points from fatigue accumulation alone.
   // Without this offset the engine misreads normal late-block effort as
   // "too heavy" and drops weight across the board.
-  const _weekBand = getCycleWeekBand();
+  // Grade against the week the session was logged in, not the current week.
+  // Otherwise a week 2 -> 3 rollover raises the rep target after the fact and
+  // the increase promised by READY TO PROGRESS never lands.
+  const _loggedWeek = sessions[0]?.weekCount;
+  const _weekBand = getCycleWeekBand(_loggedWeek);
   const _lateBlockRpeOffset = (_weekBand === '5-6') ? 0.5 : 0;
 
   // For trend mode: check consistency — how many sessions had high RPE
@@ -20457,7 +20461,7 @@ function getProgressiveWeight(exId, dayId) {
   // (e.g. 9 reps in weeks 1-2 of an 8-12 range) gets the increase signal even
   // though 9 < 12. Falls back to repRangeTop outside of an active session.
   const _weekBandTop   = (typeof getCycleWeekBandRepTarget === 'function' && activeSession)
-    ? (getCycleWeekBandRepTarget(exId) || repRangeTop)
+    ? (getCycleWeekBandRepTarget(exId, _loggedWeek) || repRangeTop)
     : repRangeTop;
   const hitRepRangeTop = avgReps >= Math.min(repRangeTop, _weekBandTop);
   const hitRepRange    = avgReps >= repRangeMin && avgReps <= repRangeTop;
